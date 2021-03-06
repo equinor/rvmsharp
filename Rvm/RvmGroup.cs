@@ -8,9 +8,10 @@ namespace rvmsharp.Rvm
         public readonly List<RvmGroup> children = new List<RvmGroup>();
         public readonly List<RvmPrimitive> primitives = new List<RvmPrimitive>();
         private uint version;
-        private string name;
+        public readonly string name;
         private readonly Vector3 _translation;
         private readonly uint _materialId;
+        public readonly Dictionary<string, string> Attributes = new();
 
         public RvmGroup(uint version, string name, Vector3 translation, uint materialId)
         {

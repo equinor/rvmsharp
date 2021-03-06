@@ -12,6 +12,9 @@ namespace rvmsharp
         {
             var fileStream = File.OpenRead(@"/Users/GUSH/projects/rvmsharp/testdata/RC110-MECH.RVM");
             var rvm = RvmParser.ReadRvm(fileStream);
+            var p = PdmsTextParser.GetAllPdmsNodesInFile(@"/Users/GUSH/projects/rvmsharp/testdata/RC110-MECH.txt");
+            
+            AssignRecursive(p, rvm.Model.children);
             var leafs = rvm.Model.children.SelectMany((c) => CollectGeometryNodes(c)).ToArray();
             var dic = new Dictionary<int, List<RvmGroup>>();
             var templates = new List<RvmGroup>();
@@ -32,6 +35,29 @@ namespace rvmsharp
             }
 
             Console.WriteLine("Done!");
+        }
+
+        private static void AssignRecursive(IList<PdmsTextParser.PdmsNode> attributes, IList<RvmGroup> groups)
+        {
+            if (attributes.Count != groups.Count)
+                Console.Error.WriteLine("Length of attribute nodes does not match group length");
+            var copy = new List<RvmGroup>(groups);
+            for (var i = 0; i < attributes.Count; i++)
+            {
+                var pdms = attributes[i];
+                for (var k = 0; k < copy.Count; k++)
+                {
+                    var group = copy[k];
+                    if (group.name == pdms.Name)
+                    {
+                        // todo attr
+                        foreach (var kvp in  pdms.MetadataDict)
+                            group.Attributes.Add(kvp.Key, kvp.Value);
+                        AssignRecursive(pdms.Children, group.children);
+                        break;
+                    }
+                }
+            }
         }
 
         private static IEnumerable<RvmGroup> CollectGeometryNodes(RvmGroup root) {

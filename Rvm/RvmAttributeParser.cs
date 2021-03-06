@@ -1,42 +1,178 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace rvmsharp.Rvm
 {
-    public class RvmAttributeParser
+    public static class PdmsTextParser
     {
-        private static void ParseIndentation(string line, out int spaces, out int tabs)
+        private static char[] Quotes = { '\'', '"' };
+        
+        public class PdmsNode
         {
-            spaces = 0;
-            tabs = 0;
-            for (var i = 0; i < line.Length; i++)
+            public string Name;
+            public Dictionary<string, string> MetadataDict;
+            public PdmsNode Parent;
+            public List<PdmsNode> Children;
+        }
+
+        private class StatefullReader : StreamReader
+        {
+            public int LineNumber { get; private set; }
+
+            public StatefullReader(string filename) : base(filename) {}
+
+            override public string ReadLine()
             {
-                switch (line[i])
-                {
-                    case ' ':
-                        spaces++;
-                        break;
-                    case '\t':
-                        tabs++;
-                        break;
-                    default:
-                        i = line.Length;
-                        break;
-                }
+                var line = base.ReadLine();
+                LineNumber++;
+                return line;
             }
         }
 
-        public RvmAttributeParser(Stream stream)
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath)
         {
-            var reader = new StreamReader(stream);
-            string line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                ParseIndentation(line, out var spaces, out var tabs);
-                if (line.StartsWith("NEW ") || line.StartsWith("NEW\t"))
-                {
+            List<PdmsNode> pdmsNodes = new List<PdmsNode>();
 
+            using (var reader = new StatefullReader(pdmsTxtFilePath))
+            {
+                var indentationStack = new Stack<int>();
+                PdmsNode currentPdmsNode = null;
+
+                var headerInfo = ParseHeader(reader);
+                string newItemSeparator = headerInfo.StartSeparator;
+                int newItemSeparatorLength = newItemSeparator.Length;
+                string endItemSeparator = headerInfo.EndSeparator;
+                string[] metadataSplit = new[] {headerInfo.NameEnd};
+                while (!reader.EndOfStream)
+                {
+                    var line = reader.ReadLine();
+                    var trimmedLine = line.Trim();
+                    if (trimmedLine.StartsWith(newItemSeparator))
+                    {
+                        var pdmsNode = new PdmsNode
+                        {
+                            Name = trimmedLine.Substring(newItemSeparatorLength).Trim(),
+                            MetadataDict = new Dictionary<string, string>(),
+                            Parent = currentPdmsNode,
+                            Children = new List<PdmsNode>()
+                        };
+
+                        indentationStack.Push(line.Substring(0, line.IndexOf(newItemSeparator[0])).Length);
+
+                        if (currentPdmsNode == null)
+                            pdmsNodes.Add(pdmsNode);
+                        else
+                            currentPdmsNode.Children.Add(pdmsNode);
+                        currentPdmsNode = pdmsNode;
+                    }
+                    else
+                    {
+                        if (trimmedLine.Equals(endItemSeparator, StringComparison.Ordinal))
+                        {
+                            var indentation = line.Substring(0, line.IndexOf(endItemSeparator[0])).Length;
+                            if (indentation != indentationStack.Peek())
+                            {
+                                Console.Error.WriteLine($"Invalid END at line number: {reader.LineNumber}");
+                            }
+                            else
+                            {
+                                indentationStack.Pop();
+                                currentPdmsNode = currentPdmsNode.Parent;
+                            }
+                        }
+                        else
+                        {
+                            var (key, value) = SplitKeyValue(trimmedLine, headerInfo.NameEnd);
+                            currentPdmsNode.MetadataDict[key] = StripQuotes(value);
+                        }
+                    }
                 }
             }
+
+            return pdmsNodes;
+        }
+
+        private class PdmsFileHeader
+        {
+            public string FileFormat;
+            public string StartSeparator = "NEW";
+            public string EndSeparator = "END";
+            public string NameEnd = ":=";
+            public string Sep = "&end&";
+            public readonly Dictionary<string, string> HeaderMetadata = new();
+        }
+
+        private static PdmsFileHeader ParseHeader(StreamReader reader)
+        {
+            PdmsFileHeader header = new();
+            
+            string[] cadcAttributesFilesSupported = {"CADC_Attributes_File v1.0"};
+
+            // Parse the first line:
+            string firstLine = reader.ReadLine();
+            if (firstLine == null)
+            {
+                throw new Exception("PDMS file header not found!");
+            }
+
+            var firstLineSegments = firstLine.Split(',').Select(x => x.Trim()).ToArray();
+            header.FileFormat = firstLineSegments[0];
+            if (!cadcAttributesFilesSupported.Contains(header.FileFormat))
+            {
+                throw new Exception(
+                    $"Unsupported PDMS file header: {header.FileFormat}. Expected one of: {string.Join(", ", cadcAttributesFilesSupported)}");
+            }
+            header.StartSeparator = firstLineSegments[1].Split(':')[1].Trim();
+            header.EndSeparator = firstLineSegments[2].Split(':')[1].Trim();
+            header.NameEnd = firstLineSegments[3].Substring("name_end:".Length).Trim();
+            header.Sep = firstLineSegments[4].Split(':')[1].Trim();
+
+            // Read Header Information:
+            var firstLineHeaderInformation = reader.ReadLine();
+            if (firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
+            {
+                bool headerEnded = false;
+                while (!headerEnded)
+                {
+                    string currentLine = reader.ReadLine();
+                    if (currentLine.EndsWith(header.EndSeparator))
+                    {
+                        headerEnded = true;
+                    }
+                    else
+                    {
+                        var lineSegments = currentLine.Split(new[] {header.Sep}, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string keyValueSegment in lineSegments)
+                        {
+                            var (key, value) = SplitKeyValue(keyValueSegment, header.NameEnd);
+                            header.HeaderMetadata[key] = value;
+                        }
+                    }
+                }
+            }
+
+            return header;
+        }
+
+        private static (string key, string value) SplitKeyValue(string keyValueSegment, string nameEnd)
+        {
+            var nameSeparatorIndex = keyValueSegment.IndexOf(nameEnd, StringComparison.InvariantCulture);
+            var key = keyValueSegment.Substring(0, nameSeparatorIndex).Trim();
+            var value = keyValueSegment.Substring(nameSeparatorIndex + nameEnd.Length).Trim();
+            return (key, value);
+        }
+        
+
+        private static string StripQuotes(string input)
+        {
+            if (string.IsNullOrEmpty(input) || input.Length < 2)
+                return input;
+            
+            if (input.First() == input.Last() && Quotes.Any(q => q == input.First()))
+                return input.Substring(1, input.Length - 2);
+            return input;
         }
     }
 }
