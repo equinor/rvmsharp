@@ -7,7 +7,7 @@ namespace rvmsharp.Rvm
         public readonly uint Version;
         public readonly string Project;
         public readonly string Name;
-        private readonly List<RvmGroup> children = new List<RvmGroup>();
+        public readonly List<RvmGroup> children = new List<RvmGroup>();
         private readonly List<RvmPrimitive> primitives = new List<RvmPrimitive>();
         private readonly List<RvmColor> colors = new List<RvmColor>();
 

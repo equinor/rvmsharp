@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Numerics;
 using System.Text;
 
 namespace rvmsharp.Rvm
@@ -32,6 +33,14 @@ namespace rvmsharp.Rvm
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(bytes);
             return BitConverter.ToSingle(bytes);
+        }
+
+        private static Vector3 ReadVector3(Stream stream)
+        {
+            var x = ReadFloat(stream);
+            var y = ReadFloat(stream);
+            var z = ReadFloat(stream);
+            return new Vector3(x, y, z);
         }
 
         private static string ReadString(Stream stream)
@@ -93,29 +102,18 @@ namespace rvmsharp.Rvm
         {
             var version = ReadUint(stream);
             var kind = (RvmPrimitiveKind)ReadUint(stream);
-            var matrix = new float[3, 4];
-            var bBoxLocal = new float[2, 3];
+            var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
+                ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
+                ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
+                ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 1);
 
-            for (int row = 0; row < 3; row++)
-            {
-                for (int column = 0; column < 4; column++)
-                {
-                    matrix[row, column] = ReadFloat(stream);
-                }
-            }
+            var bBoxLocal = new RvmBoundingBox { Min = ReadVector3(stream), Max = ReadVector3(stream) };
 
-            for (int row = 0; row < 2; row++)
-            {
-                for (int column = 0; column < 3; column++)
-                {
-                    bBoxLocal[row, column] = ReadFloat(stream);
-                }
-            }
             RvmPrimitive primitive = null;
             switch (kind)
             {
                 case RvmPrimitiveKind.Pyramid:
-                    
+                {
                     var bottomX = ReadFloat(stream);
                     var bottomY = ReadFloat(stream);
                     var topX = ReadFloat(stream);
@@ -123,8 +121,10 @@ namespace rvmsharp.Rvm
                     var offsetX = ReadFloat(stream);
                     var offsetY = ReadFloat(stream);
                     var height = ReadFloat(stream);
-                    primitive = new RvmPyramid(version, kind, matrix, bBoxLocal, bottomX, bottomY, topX, topY, offsetX, offsetY, height);
+                    primitive = new RvmPyramid(version, kind, matrix, bBoxLocal, bottomX, bottomY, topX, topY, offsetX,
+                        offsetY, height);
                     break;
+                }
                 case RvmPrimitiveKind.Box:
                     var lengthX = ReadFloat(stream);
                     var lengthY = ReadFloat(stream);
@@ -132,141 +132,108 @@ namespace rvmsharp.Rvm
                     primitive = new RvmBox(version, kind, matrix, bBoxLocal, lengthX, lengthY, lengthZ);
                     break;
                 case RvmPrimitiveKind.RectangularTorus:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    /*
-                     * g->kind = Geometry::Kind::RectangularTorus;
-                    p = read_float32_be(g->rectangularTorus.inner_radius, p, e);
-                    p = read_float32_be(g->rectangularTorus.outer_radius, p, e);
-                    p = read_float32_be(g->rectangularTorus.height, p, e);
-                    p = read_float32_be(g->rectangularTorus.angle, p, e);
-                    break;*/
+                {
+                    var radiusInner = ReadFloat(stream);
+                    var radiusOuter = ReadFloat(stream);
+                    var height = ReadFloat(stream);
+                    var angle = ReadFloat(stream);
+                    primitive = new RvmRectangularTorus(version, kind, matrix, bBoxLocal, radiusInner, radiusOuter, height, angle);
                     break;
+                }
                 case RvmPrimitiveKind.CircularTorus:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    /* g->kind = Geometry::Kind::CircularTorus;
-                    p = read_float32_be(g->circularTorus.offset, p, e);
-                    p = read_float32_be(g->circularTorus.radius, p, e);
-                    p = read_float32_be(g->circularTorus.angle, p, e);
-                    break;*/
+                {
+                    var offset = ReadFloat(stream);
+                    var radius = ReadFloat(stream);
+                    var angle = ReadFloat(stream);
+                    primitive = new RvmCircularTorus(version, kind, matrix, bBoxLocal, offset, radius, angle);
                     break;
+                }
                 case RvmPrimitiveKind.EllipticalDish:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    /* g->kind = Geometry::Kind::EllipticalDish;
-                    p = read_float32_be(g->ellipticalDish.baseRadius, p, e);
-                    p = read_float32_be(g->ellipticalDish.height, p, e);
-                    break;*/
+                {
+                    var baseRadius = ReadFloat(stream);
+                    var height = ReadFloat(stream);
+                    primitive = new RvmEllipticalDish(version, kind, matrix, bBoxLocal, baseRadius, height);
                     break;
+                }
                 case RvmPrimitiveKind.SphericalDish:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    /*g->kind = Geometry::Kind::SphericalDish;
-                    p = read_float32_be(g->sphericalDish.baseRadius, p, e);
-                    p = read_float32_be(g->sphericalDish.height, p, e);
-                    break;*/
+                {
+                    var baseRadius = ReadFloat(stream);
+                    var height = ReadFloat(stream);
+                    primitive = new RvmSphericalDish(version, kind, matrix, bBoxLocal, baseRadius, height);
                     break;
+                }
                 case RvmPrimitiveKind.Snout:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    /*g->kind = Geometry::Kind::Snout;
-                    p = read_float32_be(g->snout.radius_b, p, e);
-                    p = read_float32_be(g->snout.radius_t, p, e);
-                    p = read_float32_be(g->snout.height, p, e);
-                    p = read_float32_be(g->snout.offset[0], p, e);
-                    p = read_float32_be(g->snout.offset[1], p, e);
-                    p = read_float32_be(g->snout.bshear[0], p, e);
-                    p = read_float32_be(g->snout.bshear[1], p, e);
-                    p = read_float32_be(g->snout.tshear[0], p, e);
-                    p = read_float32_be(g->snout.tshear[1], p, e);*/
+                {
+                    var radiusBottom = ReadFloat(stream);
+                    var radiusTop = ReadFloat(stream);
+                    var height = ReadFloat(stream);
+                    var offsetX = ReadFloat(stream);
+                    var offsetY = ReadFloat(stream);
+                    var bottomShearX = ReadFloat(stream);
+                    var bottomShearY = ReadFloat(stream);
+                    var topShearX = ReadFloat(stream);
+                    var topShearY = ReadFloat(stream);
+                    primitive = new RvmSnout(version, kind, matrix, bBoxLocal, radiusBottom, radiusTop, height,
+                        offsetX, offsetY, bottomShearX, bottomShearY, topShearX, topShearY);
                     break;
+                }
                 case RvmPrimitiveKind.Cylinder:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
-                    /* g->kind = Geometry::Kind::Cylinder;
-                    p = read_float32_be(g->cylinder.radius, p, e);
-                    p = read_float32_be(g->cylinder.height, p, e);
-                    break;*/
+                {
+                    var radius = ReadFloat(stream);
+                    var height = ReadFloat(stream);
+                    primitive = new RvmCylinder(version, kind, matrix, bBoxLocal, radius, height);
                     break;
+                }
                 case RvmPrimitiveKind.Sphere:
-                    ReadFloat(stream);
+                    var diameter = ReadFloat(stream);
+                    primitive = new RvmSphere(version, kind, matrix, bBoxLocal, diameter);
                     break;
                 case RvmPrimitiveKind.Line:
-                    ReadFloat(stream);
-                    ReadFloat(stream);
+                    var a = ReadFloat(stream);
+                    var b = ReadFloat(stream);
+                    primitive = new RvmLine(version, kind, matrix, bBoxLocal, a, b);
                     break;
                 case RvmPrimitiveKind.FacetGroup:
                     var polygonCount = ReadUint(stream);
+                    var polygons = new RvmFacetGroup.RvmPolygon[polygonCount];
                     for (var i = 0; i < polygonCount; i++)
                     {
                         var contourCount = ReadUint(stream);
+                        var contours = new RvmFacetGroup.RvmContour[contourCount];
 
                         for (var k = 0; k < contourCount; k++)
                         {
                             var vertexCount = ReadUint(stream);
+                            var vertices = new(Vector3 v, Vector3 n)[vertexCount];
 
                             for (var n = 0; n < vertexCount; n++)
                             {
-                                var vertex = new[] { ReadFloat(stream), ReadFloat(stream), ReadFloat(stream) };
-                                var normal = new[] { ReadFloat(stream), ReadFloat(stream), ReadFloat(stream) };
+                                var vertex = ReadVector3(stream);
+                                var normal = ReadVector3(stream);
+                                vertices[n] = (vertex, normal);
                             }
+
+                            contours[k] = new RvmFacetGroup.RvmContour(vertices);
                         }
+
+                        polygons[i] = new RvmFacetGroup.RvmPolygon(contours);
                     }
+
+                    primitive = new RvmFacetGroup(version, kind, matrix, bBoxLocal, polygons);
                     break;
             }
             return primitive;
             // transform bb to world?
-            /*
-                    
-                    break;
-
-                case 8:
-                   
-
-                case 9:
-                    g->kind = Geometry::Kind::Sphere;
-                    p = read_float32_be(g->sphere.diameter, p, e);
-                    break;
-
-                case 10:
-                    g->kind = Geometry::Kind::Line;
-                    p = read_float32_be(g->line.a, p, e);
-                    p = read_float32_be(g->line.b, p, e);
-                    break;
-
-                case 11:
-                    g->kind = Geometry::Kind::FacetGroup;
-
-                    
-                    break;
-
-                default:
-                    snprintf(ctx->buf, ctx->buf_size, "In PRIM, unknown primitive kind %d", kind);
-                    ctx->store->setErrorString(ctx->buf);
-                    return nullptr;
-            }
-            return p;*/
             }
 
             public static RvmGroup ReadCntb(Stream stream)
         {
             var version = ReadUint(stream);
             var name = ReadString(stream);
-            var group = new RvmGroup(version, name);
             const float mmToM = 0.001f;
-            var translation = new[] { ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM };
+            var translation = new Vector3(ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM);
             var materialId = ReadUint(stream);
+            var group = new RvmGroup(version, name, translation, materialId);
             uint len, dunno;
             var id = ReadChunkHeader(stream, out len, out dunno);
             while (id != "CNTE")
@@ -291,7 +258,7 @@ namespace rvmsharp.Rvm
             return group;
         }
 
-        public static RvmColor ReadColor(Stream stream)
+        private static RvmColor ReadColor(Stream stream)
         {
             var colorKind = ReadUint(stream);
             var colorIndex = ReadUint(stream);

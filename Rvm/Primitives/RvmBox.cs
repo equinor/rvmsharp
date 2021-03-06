@@ -1,17 +1,19 @@
-﻿namespace rvmsharp.Rvm
+﻿using System.Numerics;
+
+namespace rvmsharp.Rvm
 {
     internal class RvmBox : RvmPrimitive
     {
-        public float lengthX;
-        public float lengthY;
-        public float lengthZ;
+        public readonly float LengthX;
+        public readonly float LengthY;
+        public readonly float LengthZ;
 
-        public RvmBox(uint version, RvmPrimitiveKind kind, float[,] matrix, float[,] bBoxLocal, float lengthX, float lengthY, float lengthZ)
+        public RvmBox(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float lengthX, float lengthY, float lengthZ)
             : base(version, kind, matrix, bBoxLocal)
         {
-            this.lengthX = lengthX;
-            this.lengthY = lengthY;
-            this.lengthZ = lengthZ;
+            LengthX = lengthX;
+            LengthY = lengthY;
+            LengthZ = lengthZ;
         }
     }
 }

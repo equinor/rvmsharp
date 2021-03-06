@@ -20,9 +20,9 @@ namespace rvmsharp.Tessellator
         {
             var mesh = new Mesh();
 
-            var xExtents = 0.5f * box.lengthX;
-            var yExtents = 0.5f * box.lengthY;
-            var zExtents = 0.5f * box.lengthZ;
+            var xExtents = 0.5f * box.LengthX;
+            var yExtents = 0.5f * box.LengthY;
+            var zExtents = 0.5f * box.LengthZ;
 
 
             mesh.Vertices = new List<Vector3>()

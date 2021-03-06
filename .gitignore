@@ -1,4 +1,7 @@
 .vs/*
+.vscode/*
+.idea/*
 bin/*
 obj/*
-
+rvmparserlib/*
+testdata/*
