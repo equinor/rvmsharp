@@ -1,11 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Numerics;
-
-namespace rvmsharp.Tessellator
+﻿namespace rvmsharp.Tessellator
 {
     public class Mesh
     {
-        public List<Vector3> Vertices;
-        public List<Vector3> Normals;
+        internal float error;
+        internal float[] vertices;
+        internal float[] normals;
+        internal int[] indices;
     }
 }
