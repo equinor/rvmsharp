@@ -1,4 +1,5 @@
 ﻿using rvmsharp.Rvm;
+using rvmsharp.Tessellator;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,11 +9,17 @@ namespace rvmsharp
 {
     class Program
     {
+        const string win_path = @"e:\gush\projects\rvmparser\tests\snout\RC110-HVAC.RVM";
         static void Main(string[] args)
         {
-            var fileStream = File.OpenRead(@"/Users/GUSH/projects/rvmsharp/testdata/RC110-MECH.RVM");
+            var fileStream = File.OpenRead(@"e:\gush\projects\rvmparser\tests\snout\RC110-HVAC.RVM");
             var rvm = RvmParser.ReadRvm(fileStream);
-            var p = PdmsTextParser.GetAllPdmsNodesInFile(@"/Users/GUSH/projects/rvmsharp/testdata/RC110-MECH.txt");
+            var p = PdmsTextParser.GetAllPdmsNodesInFile(@"e:\gush\projects\rvmparser\tests\snout\RC110-HVAC.txt");
+
+            var store = new RvmStore();
+            store.RvmFiles.Add(rvm);
+            RvmConnect.Connect(store);
+            RvmAlign.Align(store);
             
             AssignRecursive(p, rvm.Model.children);
             var leafs = rvm.Model.children.SelectMany((c) => CollectGeometryNodes(c)).ToArray();
@@ -26,7 +33,7 @@ namespace rvmsharp
 
             foreach (var t in templates)
             {
-                var pc = t.primitives.Count;
+                var pc = t.Primitives.Count;
                 if (!dic.TryGetValue(pc, out var list)){
                     list = new List<RvmGroup>();
                     dic.Add(pc, list);
@@ -48,12 +55,12 @@ namespace rvmsharp
                 for (var k = 0; k < copy.Count; k++)
                 {
                     var group = copy[k];
-                    if (group.name == pdms.Name)
+                    if (group.Name == pdms.Name)
                     {
                         // todo attr
                         foreach (var kvp in  pdms.MetadataDict)
                             group.Attributes.Add(kvp.Key, kvp.Value);
-                        AssignRecursive(pdms.Children, group.children);
+                        AssignRecursive(pdms.Children, group.Children);
                         break;
                     }
                 }
@@ -61,20 +68,20 @@ namespace rvmsharp
         }
 
         private static IEnumerable<RvmGroup> CollectGeometryNodes(RvmGroup root) {
-            if (root.primitives.Count > 0)
+            if (root.Primitives.Count > 0)
                 yield return root;
-            foreach (var child in root.children)
+            foreach (var child in root.Children)
                 foreach (var p in CollectGeometryNodes(child))
                     yield return p;
         }
 
         private static bool IsEqual(RvmGroup g1, RvmGroup g2)
         {
-            if (g1.primitives.Count != g2.primitives.Count)
+            if (g1.Primitives.Count != g2.Primitives.Count)
                 return false;
-            for (var i = 0; i < g1.primitives.Count; i++) {
-                var p1 = g1.primitives[i];
-                var p2 = g2.primitives[i];
+            for (var i = 0; i < g1.Primitives.Count; i++) {
+                var p1 = g1.Primitives[i];
+                var p2 = g2.Primitives[i];
                 if (p1.Kind != p2.Kind)
                     return false;
                 if (!IsEqual(p1, p2))
@@ -109,27 +116,27 @@ namespace rvmsharp
                 {
                     var o1 = p1 as RvmRectangularTorus;
                     var o2 = p2 as RvmRectangularTorus;
-                    return o1._radiusInner == o2._radiusInner && o1._radiusOuter == o2._radiusOuter &&
-                        o1._height == o2._height && o1._angle == o2._angle;
+                    return o1.RadiusInner == o2.RadiusInner && o1.RadiusOuter == o2.RadiusOuter &&
+                        o1.Height == o2.Height && o1.Angle == o2.Angle;
                 }
                 case RvmPrimitiveKind.CircularTorus:
                 {
                     var o1 = p1 as RvmCircularTorus;
                     var o2 = p2 as RvmCircularTorus;
-                    return o1._offset == o2._offset && o1._radius == o2._radius &&
-                        o1._angle == o2._angle;
+                    return o1.Offset == o2.Offset && o1.Radius == o2.Radius &&
+                        o1.Angle == o2.Angle;
                 }
                 case RvmPrimitiveKind.EllipticalDish:
                 {
                     var o1 = p1 as RvmEllipticalDish;
                     var o2 = p2 as RvmEllipticalDish;
-                    return o1._baseRadius == o2._baseRadius && o1._height == o2._height;
+                    return o1.BaseRadius == o2.BaseRadius && o1.Height == o2.Height;
                 }
                 case RvmPrimitiveKind.SphericalDish:
                 {
                     var o1 = p1 as RvmSphericalDish;
                     var o2 = p2 as RvmSphericalDish;
-                    return o1._baseRadius == o2._baseRadius && o1._height == o2._height;
+                    return o1.BaseRadius == o2.BaseRadius && o1.Height == o2.Height;
                 }
                 case RvmPrimitiveKind.Snout:
                 {

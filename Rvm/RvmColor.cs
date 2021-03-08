@@ -2,15 +2,15 @@
 {
     public class RvmColor
     {
-        public readonly uint colorKind;
-        public readonly uint colorIndex;
-        public readonly byte[] rgb;
+        public readonly uint ColorKind;
+        public readonly uint ColorIndex;
+        public readonly byte[] Rgb;
 
         public RvmColor(uint colorKind, uint colorIndex, byte[] rgb)
         {
-            this.colorKind = colorKind;
-            this.colorIndex = colorIndex;
-            this.rgb = rgb;
+            this.ColorKind = colorKind;
+            this.ColorIndex = colorIndex;
+            this.Rgb = rgb;
         }
     }
 }

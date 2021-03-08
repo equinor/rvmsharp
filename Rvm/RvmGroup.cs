@@ -1,34 +1,36 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace rvmsharp.Rvm
 {
     public class RvmGroup
     {
-        public readonly List<RvmGroup> children = new List<RvmGroup>();
-        public readonly List<RvmPrimitive> primitives = new List<RvmPrimitive>();
-        private uint version;
-        public readonly string name;
-        private readonly Vector3 _translation;
-        private readonly uint _materialId;
+        public readonly List<RvmGroup> Children = new List<RvmGroup>();
+        public readonly List<RvmPrimitive> Primitives = new List<RvmPrimitive>();
+        public readonly uint Version;
+        public readonly string Name;
+        public readonly Vector3 Translation;
+        public readonly uint MaterialId;
         public readonly Dictionary<string, string> Attributes = new();
 
         public RvmGroup(uint version, string name, Vector3 translation, uint materialId)
         {
-            this.version = version;
-            this.name = name;
-            _translation = translation;
-            _materialId = materialId;
+            this.Version = version;
+            this.Name = name;
+            Translation = translation;
+            MaterialId = materialId;
         }
 
         internal void AddChild(RvmGroup rvmGroup)
         {
-            children.Add(rvmGroup);
+            Children.Add(rvmGroup);
         }
 
         internal void AddPrimitive(RvmPrimitive rvmPrimitive)
         {
-            primitives.Add(rvmPrimitive);
+            Primitives.Add(rvmPrimitive);
         }
+
     }
 }

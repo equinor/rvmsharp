@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using rvmsharp.Rvm.Primitives;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace rvmsharp.Rvm
@@ -9,6 +10,8 @@ namespace rvmsharp.Rvm
         public readonly RvmPrimitiveKind Kind;
         public readonly Matrix4x4 Matrix;
         public readonly RvmBoundingBox BoundingBoxLocal;
+        public readonly RvmConnection[] Connections = { null, null, null, null, null, null};
+        internal float SampleStartAngle;
 
         public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal)
         {

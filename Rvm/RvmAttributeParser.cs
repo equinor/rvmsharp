@@ -7,7 +7,7 @@ namespace rvmsharp.Rvm
 {
     public static class PdmsTextParser
     {
-        private static char[] Quotes = { '\'', '"' };
+        private static readonly char[] Quotes = { '\'', '"' };
         
         public class PdmsNode
         {
@@ -17,11 +17,11 @@ namespace rvmsharp.Rvm
             public List<PdmsNode> Children;
         }
 
-        private class StatefullReader : StreamReader
+        private class StatefulReader : StreamReader
         {
             public int LineNumber { get; private set; }
 
-            public StatefullReader(string filename) : base(filename) {}
+            public StatefulReader(string filename) : base(filename) {}
 
             override public string ReadLine()
             {
@@ -35,7 +35,7 @@ namespace rvmsharp.Rvm
         {
             List<PdmsNode> pdmsNodes = new List<PdmsNode>();
 
-            using (var reader = new StatefullReader(pdmsTxtFilePath))
+            using (var reader = new StatefulReader(pdmsTxtFilePath))
             {
                 var indentationStack = new Stack<int>();
                 PdmsNode currentPdmsNode = null;
