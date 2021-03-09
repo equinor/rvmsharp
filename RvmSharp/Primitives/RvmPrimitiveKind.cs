@@ -1,4 +1,4 @@
-﻿namespace rvmsharp.Rvm
+﻿namespace RvmSharp.Primitives
 {
     public enum RvmPrimitiveKind
     {

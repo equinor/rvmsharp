@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
-
-namespace rvmsharp.Rvm
+﻿namespace RvmSharp.Containers
 {
+    using Primitives;
+    using System.Collections.Generic;
+
     public class RvmModel
     {
         public readonly uint Version;

@@ -1,7 +1,7 @@
-﻿using System.Numerics;
-
-namespace rvmsharp.Rvm
+﻿namespace RvmSharp.Primitives
 {
+    using System.Numerics;
+
     internal class RvmPyramid : RvmPrimitive
     {
         public readonly float BottomX;

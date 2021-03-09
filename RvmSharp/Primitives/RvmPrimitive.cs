@@ -1,9 +1,7 @@
-﻿using rvmsharp.Rvm.Primitives;
-using System.Collections.Generic;
-using System.Numerics;
-
-namespace rvmsharp.Rvm
+﻿namespace RvmSharp.Primitives
 {
+    using System.Numerics;
+
     public abstract class RvmPrimitive
     {
         public readonly uint Version;

@@ -1,10 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Numerics;
-using System.Text;
-
-namespace rvmsharp.Rvm
+﻿namespace RvmSharp
 {
+    using Containers;
+    using Primitives;
+    using System;
+    using System.IO;
+    using System.Numerics;
+    using System.Text;
+
     public static class RvmParser
     {
         private static byte ReadByte(Stream stream)

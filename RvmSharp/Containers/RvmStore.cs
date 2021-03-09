@@ -1,7 +1,6 @@
-﻿namespace rvmsharp.Rvm
+﻿namespace RvmSharp.Containers
 {
-    using rvmsharp.Rvm.Primitives;
-    using System;
+    using Primitives;
     using System.Collections.Generic;
 
     public class RvmStore

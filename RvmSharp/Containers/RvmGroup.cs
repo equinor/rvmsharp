@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Numerics;
-
-namespace rvmsharp.Rvm
+﻿namespace RvmSharp.Containers
 {
+    using Primitives;
+    using System.Collections.Generic;
+    using System.Numerics;
+
     public class RvmGroup
     {
         public readonly List<RvmGroup> Children = new List<RvmGroup>();

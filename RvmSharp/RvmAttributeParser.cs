@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
-namespace rvmsharp.Rvm
+﻿namespace RvmSharp
 {
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+
     public static class PdmsTextParser
     {
         private static readonly char[] Quotes = { '\'', '"' };

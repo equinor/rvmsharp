@@ -1,7 +1,7 @@
-using System.Numerics;
-
-namespace rvmsharp.Rvm
+namespace RvmSharp.Primitives
 {
+    using System.Numerics;
+
     public class RvmRectangularTorus : RvmPrimitive
     {
         public readonly float RadiusInner;

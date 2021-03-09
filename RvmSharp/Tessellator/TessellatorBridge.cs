@@ -1,13 +1,13 @@
-﻿using rvmsharp.Rvm;
-using rvmsharp.Rvm.Primitives;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using static rvmsharp.Rvm.RvmFacetGroup;
+using static RvmSharp.Primitives.RvmFacetGroup;
 
 namespace rvmsharp.Tessellator
 {
+    using RvmSharp.Primitives;
+
     public class TessellatorBridge
     {
         public static Mesh Tessellate(RvmPrimitive geometry, float scale)

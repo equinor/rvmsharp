@@ -1,6 +1,4 @@
-﻿using rvmsharp.Rvm;
-using rvmsharp.Rvm.Primitives;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -8,6 +6,9 @@ using System.Numerics;
 
 namespace rvmsharp.Tessellator
 {
+    using RvmSharp.Containers;
+    using RvmSharp.Primitives;
+
     public class RvmConnect
     {
         class Anchor
