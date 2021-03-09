@@ -59,8 +59,8 @@ namespace Equinor.MeshOptimizationPipeline
                 _writer.WriteLine($"f {v1}//{n1} {v0}//{n0} {v2}//{n2}");
             }
 
-            _vertexCount += mesh.Vertices.Length / 3;
-            _normalCount += mesh.Normals.Length / 3;
+            _vertexCount += mesh.Vertices.Length;
+            _normalCount += mesh.Normals.Length;
         }
     }
 }

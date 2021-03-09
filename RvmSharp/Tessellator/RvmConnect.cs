@@ -77,7 +77,6 @@ namespace rvmsharp.Tessellator
 
                         a[j].matched = true;
                         a[i].matched = true;
-                        Console.WriteLine($"m: {j + off}:{i + off}");
                         context.anchors_matched += 2;
 
 
