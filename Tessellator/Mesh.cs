@@ -29,6 +29,20 @@ namespace rvmsharp.Tessellator
             
         }
 
+        public Mesh(Vector3[] verexData, Vector3[] normalData, int[] indexData, float error)
+        {
+            this.error = error;
+            if (verexData.Length != normalData.Length)
+                throw new ArgumentNullException("Normal buffer is not equials to vertex buffer");
+
+            vertices = verexData;
+            normals = normalData;
+
+            indices = new int[indexData.Length];
+            Array.Copy(indexData, indices, indexData.Length);
+
+        }
+
         public void Apply(Matrix4x4 matrix)
         {
             for (var i = 0; i < vertices.Length; i++)

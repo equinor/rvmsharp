@@ -1,11 +1,11 @@
-﻿using Equinor.MeshOptimizationPipeline;
-using rvmsharp.Rvm;
+﻿using rvmsharp.Rvm;
 using rvmsharp.Rvm.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using static rvmsharp.Rvm.RvmFacetGroup;
 
 namespace rvmsharp.Tessellator
 {
@@ -371,123 +371,41 @@ namespace rvmsharp.Tessellator
 
         private static Mesh Tessellate(RvmFacetGroup facetGroup, float scale)
         {
-            var vertices = new List<float>();
-            var normals = new List<float>();
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
             var indices = new List<int>();
 
             for (var p = 0; p < facetGroup._polygons.Length; p++)
             {
                 var poly = facetGroup._polygons[p];
-                if (poly._contours.Length == 1 && poly._contours[0]._vertices.Length == 3)
+                
+                var (bMin, bMax) = (new Vector3(float.MaxValue), new Vector3(float.MinValue));
+                foreach (var cont in poly._contours)
                 {
-                    var cont = poly._contours[0];
-                    var vo = vertices.Count / 3;
-
-                    for (var v = 0; v < cont._vertices.Length;v++)
+                    foreach (var vn in cont._vertices)
                     {
-                        var vv = cont._vertices[v];
-                        vertices.Add(vv.v.X);
-                        vertices.Add(vv.v.Y);
-                        vertices.Add(vv.v.Z);
-                        normals.Add(vv.n.X);
-                        normals.Add(vv.n.Y);
-                        normals.Add(vv.n.Z);
+                        (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.v.X), Math.Min(bMin.Y, vn.v.Y), Math.Min(bMin.Z, vn.v.Z));
+                        (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.v.X), Math.Max(bMax.Y, vn.v.Y), Math.Max(bMax.Z, vn.v.Z));
                     }
-
-                    indices.Add(vo + 0);
-                    indices.Add(vo + 1);
-                    indices.Add(vo + 2);
-                } else if (poly._contours.Length == 1 && poly._contours[0]._vertices.Length == 4)
-                {
-                    var cont = poly._contours[0];
-                    var V = cont._vertices;
-                    var vo = vertices.Count / 3;
-
-                    for (var v = 0; v < 4; v++)
-                    {
-                        var vv = cont._vertices[v];
-                        vertices.Add(vv.v.X);
-                        vertices.Add(vv.v.Y);
-                        vertices.Add(vv.v.Z);
-                        normals.Add(vv.n.X);
-                        normals.Add(vv.n.Y);
-                        normals.Add(vv.n.Z);
-                    }
-
-                    // find least folding diagonal
-                    var v01 = V[1].v - V[0].v;
-                    var v12 = V[2].v - V[1].v;
-                    var v23 = V[3].v - V[2].v;
-                    var v30 = V[0].v - V[3].v;
-                    var n0 = Vector3.Cross(v01, v30);
-                    var n1 = Vector3.Cross(v12, v01);
-                    var n2 = Vector3.Cross(v23, v12);
-                    var n3 = Vector3.Cross(v30, v23);
-
-                    if (Vector3.Dot(n0, n2) < Vector3.Dot(n1, n3))
-                    {
-                        indices.Add(vo + 0);
-                        indices.Add(vo + 1);
-                        indices.Add(vo + 2);
-
-                        indices.Add(vo + 2);
-                        indices.Add(vo + 3);
-                        indices.Add(vo + 0);
-                    }
-                    else
-                    {
-                        indices.Add(vo + 3);
-                        indices.Add(vo + 0);
-                        indices.Add(vo + 1);
-
-                        indices.Add(vo + 1);
-                        indices.Add(vo + 2);
-                        indices.Add(vo + 3);
-                    }
-                } else {
-                    var (bMin, bMax) = (new Vector3(float.MaxValue), new Vector3(float.MinValue));
-                    foreach (var cont in poly._contours)
-                    {
-                        foreach (var vn in cont._vertices)
-                        {
-                            (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.v.X), Math.Min(bMin.Y, vn.v.Y), Math.Min(bMin.Z, vn.v.Z));
-                            (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.v.X), Math.Max(bMax.Y, vn.v.Y), Math.Max(bMax.Z, vn.v.Z));
-                        }
-                    }
-                    var m = 0.5f * (bMin + bMax);
-
-                    var vo = vertices.Count / 3;
-                    float[] vertex_data = poly._contours.SelectMany(c => c._vertices).Select(vn => vn.v - m).SelectMany(v => new[] { v.X, v.Y, v.Z }).ToArray();
-                    float[] normal_data = poly._contours.SelectMany(c => c._vertices).Select(vn => vn.n).SelectMany(v => new[] { v.X, v.Y, v.Z }).ToArray();
-                    int[] vertex_counts = poly._contours.Select(c => c._vertices.Length).ToArray();
-                    int counter_count = poly._contours.Length;
-
-                    var jobId = tessellate(vertex_data, normal_data, vertex_counts, counter_count, out var out_vertex_count, out var out_normal_count, out var out_index_count);
-                    if (jobId < 0) throw new Exception();
-                    var out_vertex_data = new float[out_vertex_count];
-                    var out_normal_data = new float[out_normal_count];
-                    var out_index_data = new int[out_index_count];
-                    collect_result(jobId, out_vertex_data, out_normal_data, out_index_data);
-
-                    for (var i = 0; i < out_vertex_data.Length / 3; i++)
-                    {
-                        out_vertex_data[i*3 + 0] += m.X;
-                        out_vertex_data[i*3 + 1] += m.Y;
-                        out_vertex_data[i*3 + 2] += m.Z;
-                    }
-
-                    vertices.AddRange(out_vertex_data);
-                    normals.AddRange(out_normal_data);
-
-                    foreach (var index in out_index_data)
-                    {
-                        indices.Add(index + vo);
-                    }
-
-                    if (vertices.Count != normals.Count)
-                        throw new Exception();
-
                 }
+                var m = 0.5f * (bMin + bMax);
+
+                var vo = vertices.Count;
+                int counter_count = poly._contours.Length;
+
+                var adjustedContours = poly._contours.Select(v => new RvmContour(
+                    v._vertices.Select(x => (x.v - m, x.n)).ToArray()
+                    )).ToArray();
+
+                var outJob = TessNet.Tessellate(adjustedContours);
+
+                vertices.AddRange(outJob.VertexData.Select(v => v + m));
+                normals.AddRange(outJob.NormalData);
+                indices.AddRange(outJob.Indices.Select(i => i + vo));
+
+                if (vertices.Count != normals.Count)
+                    throw new Exception();
+
             }
 
             return new Mesh(vertices.ToArray(), normals.ToArray(), indices.ToArray(), 0);

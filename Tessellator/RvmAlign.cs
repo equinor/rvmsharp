@@ -171,7 +171,6 @@ namespace rvmsharp.Tessellator
                         case RvmLine:
                         case RvmFacetGroup:
                             throw new Exception("Got geometry with non-circular intersection.");
-                            break;
 
                         case RvmSnout:
                         case RvmEllipticalDish:
