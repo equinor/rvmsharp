@@ -1,6 +1,11 @@
-.vs/*
-.vscode/*
-.idea/*
-*/bin/*
-*/obj/*
-testdata/*
+# IDE Settings
+.vs/
+.vscode/
+.idea/
+
+# Build files
+**/bin/**
+**/obj/**
+
+# Ignore test data because of large or confidential files.
+/TestData/*
