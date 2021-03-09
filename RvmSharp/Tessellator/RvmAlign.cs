@@ -8,7 +8,7 @@ using System.Numerics;
 
 namespace rvmsharp.Tessellator
 {
-    class RvmAlign
+    public class RvmAlign
     {
         class QueueItem
         {

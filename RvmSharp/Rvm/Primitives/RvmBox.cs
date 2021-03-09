@@ -2,7 +2,7 @@
 
 namespace rvmsharp.Rvm
 {
-    internal class RvmBox : RvmPrimitive
+    public class RvmBox : RvmPrimitive
     {
         public readonly float LengthX;
         public readonly float LengthY;
