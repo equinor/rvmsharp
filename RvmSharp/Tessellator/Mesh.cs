@@ -1,8 +1,8 @@
-﻿using System;
-using System.Numerics;
-
-namespace rvmsharp.Tessellator
+﻿namespace rvmsharp.Tessellator
 {
+    using System;
+    using System.Numerics;
+    
     public class Mesh
     {
         public readonly float Error;
@@ -10,17 +10,17 @@ namespace rvmsharp.Tessellator
         public readonly Vector3[] Normals;
         public readonly int[] Triangles;
 
-        public Mesh(float[] verexData, float[] normalData, int[] triangleData, float error)
+        public Mesh(float[] vertexData, float[] normalData, int[] triangleData, float error)
         {
             Error = error;
-            if (verexData.Length != normalData.Length)
-                throw new ArgumentException("Vertex and normal arrays must have equial length");
+            if (vertexData.Length != normalData.Length)
+                throw new ArgumentException("Vertex and normal arrays must have equal length");
 
-            Vertices = new Vector3[verexData.Length / 3];
+            Vertices = new Vector3[vertexData.Length / 3];
             Normals = new Vector3[normalData.Length / 3];
-            for (var i = 0; i < verexData.Length / 3; i++)
+            for (var i = 0; i < vertexData.Length / 3; i++)
             {
-                Vertices[i] = new Vector3(verexData[i * 3], verexData[i * 3 + 1], verexData[i * 3 + 2]);
+                Vertices[i] = new Vector3(vertexData[i * 3], vertexData[i * 3 + 1], vertexData[i * 3 + 2]);
                 Normals[i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
             }
 

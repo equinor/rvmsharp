@@ -1,19 +1,18 @@
-﻿using rvmsharp.Tessellator;
-using System;
-using System.Globalization;
-using System.IO;
-using System.Text;
-
-namespace Equinor.MeshOptimizationPipeline
+﻿namespace RvmSharp.Tessellator
 {
-    public sealed class OBJExporter : IDisposable
+    using rvmsharp.Tessellator;
+    using System;
+    using System.Globalization;
+    using System.IO;
+    using System.Text;
+
+    public sealed class ObjExporter : IDisposable
     {
         private readonly StreamWriter _writer;
         private int _vertexCount;
         private int _normalCount;
-        private int _meshCount;
 
-        public OBJExporter(string filename)
+        public ObjExporter(string filename)
         {
             _writer = new StreamWriter(File.Create(filename), Encoding.ASCII);
         }
@@ -24,13 +23,18 @@ namespace Equinor.MeshOptimizationPipeline
             _writer?.Dispose();
         }
 
+        public void StartGroup(string name)
+        {
+            _writer.WriteLine("g " + name);
+        }
+
+        public void StartObject(string name)
+        {
+            _writer.WriteLine("o " + name);
+        }
+
         public void WriteMesh(Mesh mesh, string name = null)
         {
-            if (string.IsNullOrWhiteSpace(name))
-                name = _meshCount.ToString();
-            _meshCount++;
-            _writer.WriteLine("o " + name);
-            _writer.WriteLine("g " + name);
             foreach (var v in mesh.Vertices)
             {
                 _writer.WriteLine("v " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Y.ToString("0.000000", CultureInfo.InvariantCulture));

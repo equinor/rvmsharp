@@ -6,30 +6,30 @@ namespace RvmSharp.Primitives
     {
         public class RvmContour
         {
-            public readonly (Vector3 v, Vector3 n)[] _vertices;
+            public readonly (Vector3 v, Vector3 n)[] Vertices;
 
             public RvmContour((Vector3 v, Vector3 n)[] vertices)
             {
-                _vertices = vertices;
+                Vertices = vertices;
             }
         }
 
         public class RvmPolygon
         {
-            public readonly RvmContour[] _contours;
+            public readonly RvmContour[] Contours;
 
             public RvmPolygon(RvmContour[] contours)
             {
-                _contours = contours;
+                Contours = contours;
             }
         }
         
-        public readonly RvmPolygon[] _polygons;
+        public readonly RvmPolygon[] Polygons;
 
         public RvmFacetGroup(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, RvmPolygon[] polygons)
             : base(version, kind, matrix, bBoxLocal)
         {
-            _polygons = polygons;
+            Polygons = polygons;
         }
     }
 }

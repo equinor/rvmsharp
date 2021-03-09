@@ -24,12 +24,12 @@ namespace rvmsharp.Tessellator
 
             foreach (var contour in contours)
             {
-                if (contour._vertices.Length < 3)
+                if (contour.Vertices.Length < 3)
                 {
                     // Skip degenerate contour with less than 3 vertices
                     continue;
                 }
-                var cv = contour._vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z), v.n)).ToArray();
+                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z), v.n)).ToArray();
                 tess.AddContour(cv);
 
                 bContourFound = true;

@@ -1,19 +1,17 @@
 ﻿using CommandLine;
-using Equinor.MeshOptimizationPipeline;
 using rvmsharp.Tessellator;
 using ShellProgressBar;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Threading;
 
 namespace RvmSharp.Exe
 {
     using Containers;
     using Primitives;
     using System.Text.RegularExpressions;
+    using Tessellator;
 
     class Program
     {
@@ -21,11 +19,13 @@ namespace RvmSharp.Exe
         {
             private readonly string _inputFolder;
             private readonly string _filter;
+            private readonly string _output;
 
-            public Options(string inputFolder, string filter)
+            public Options(string inputFolder, string filter, string output)
             {
-                this._inputFolder = inputFolder;
-                this._filter = filter;
+                _inputFolder = inputFolder;
+                _filter = filter;
+                _output = output;
             }
 
             [Option('i', "input", Required = true, HelpText = "Input folder containing RVM and TXT files.")]
@@ -33,6 +33,9 @@ namespace RvmSharp.Exe
             
             [Option('f', "filter", Required = false, HelpText = "Regex filter to match files in input folder")]
             public string Filter { get { return _filter; } }
+            
+            [Option('o', "output", Required = true, HelpText = "Output folder")]
+            public string Output { get { return _output; } }
         }
 
         private static void Main(string[] args)
@@ -69,8 +72,7 @@ namespace RvmSharp.Exe
                 var rvmFile = RvmParser.ReadRvm(File.OpenRead(rvmFilename));
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-                    var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename);
-                    AssignRecursive(pdms, rvmFile.Model.children);
+                    rvmFile.AttachAttributes(txtFilename);
                 }
 
                 progressBar.Tick();
@@ -89,7 +91,7 @@ namespace RvmSharp.Exe
 
             var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.children.SelectMany(CollectGeometryNodes)).ToArray();
             progressBar = new ProgressBar(leafs.Length, "Tessellating");
-            var meshes = leafs.AsParallel().SelectMany(leaf =>
+            var meshes = leafs.AsParallel().Select(leaf =>
             {
                 progressBar.Message = leaf.Name;
                 var meshes = leaf.Primitives.Select(p =>
@@ -99,76 +101,23 @@ namespace RvmSharp.Exe
                     return mesh;
                 }).Where(m => m!= null);
                 progressBar.Tick();
-                return meshes;
+                return (leaf.Name, meshes);
             }).ToArray();
             progressBar.Dispose();
             progressBar = new ProgressBar(meshes.Length, "Exporting");
             
-            /*var iii = 0;
-            using var objExporter = new OBJExporter( $"E:/test{iii}.obj");
+            using var objExporter = new ObjExporter( options.Output);
             foreach (var mesh in meshes)
             {
-                
-                objExporter.WriteMesh(mesh);
+                objExporter.StartObject(mesh.Name);
+                foreach (var m in mesh.meshes)
+                    objExporter.WriteMesh(m);
                 progressBar.Tick();
-                if (iii++ > 5000)
-                    break;
             }
-            progressBar.Dispose();*/
+            progressBar.Dispose();
 
             Console.WriteLine("Done!");
             return 0;
-
-
-            /*var leafs = rvm.Model.children.SelectMany((c) => CollectGeometryNodes(c)).ToArray();
-
-            var i = 0;
-            foreach (var leaf in leafs)
-            {
-                var found = false;
-                using OBJExporter o = new OBJExporter($"E:/testdata{i++}.obj");
-                foreach (var p in leaf.Primitives)
-                {
-                    switch (p)
-                    {
-                        case RvmBox:
-                        case RvmFacetGroup:
-                            var mesh = TessellatorBridge.Tessellate(p, 1);
-                            mesh.Apply(p.Matrix);
-                            found = true;
-                            o.WriteMesh(mesh);
-                            break;
-                    }
-                }
-
-            }
-
-            */
-        }
-
-        
-
-        private static void AssignRecursive(IList<PdmsTextParser.PdmsNode> attributes, IList<RvmGroup> groups)
-        {
-            //if (attributes.Count != groups.Count)
-            //    Console.Error.WriteLine("Length of attribute nodes does not match group length");
-            var copy = new List<RvmGroup>(groups);
-            for (var i = 0; i < attributes.Count; i++)
-            {
-                var pdms = attributes[i];
-                for (var k = 0; k < copy.Count; k++)
-                {
-                    var group = copy[k];
-                    if (group.Name == pdms.Name)
-                    {
-                        // todo attr
-                        foreach (var kvp in pdms.MetadataDict)
-                            group.Attributes.Add(kvp.Key, kvp.Value);
-                        AssignRecursive(pdms.Children, group.Children);
-                        break;
-                    }
-                }
-            }
         }
 
         private static IEnumerable<RvmGroup> CollectGeometryNodes(RvmGroup root)
