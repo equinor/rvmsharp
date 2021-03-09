@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RvmSharp", "RvmSharp\RvmSharp.csproj", "{BF0ECF01-2077-480F-844C-693B179728CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RvmSharp.Exe", "RvmSharp.Exe\RvmSharp.Exe.csproj", "{601615C3-1DD2-4F1F-906D-9DEFDA760211}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RvmSharp.Exe", "RvmSharp.Exe\RvmSharp.Exe.csproj", "{601615C3-1DD2-4F1F-906D-9DEFDA760211}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RvmSharp.Tests", "RvmSharp.Tests\RvmSharp.Tests.csproj", "{9A8F74BD-4842-4907-A393-76F0A9D599E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{601615C3-1DD2-4F1F-906D-9DEFDA760211}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{601615C3-1DD2-4F1F-906D-9DEFDA760211}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{601615C3-1DD2-4F1F-906D-9DEFDA760211}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A8F74BD-4842-4907-A393-76F0A9D599E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A8F74BD-4842-4907-A393-76F0A9D599E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A8F74BD-4842-4907-A393-76F0A9D599E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A8F74BD-4842-4907-A393-76F0A9D599E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
