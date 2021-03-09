@@ -192,7 +192,6 @@ namespace rvmsharp.Tessellator
 
                         default:
                             throw new InvalidOperationException("Illegal kind");
-                            break;
                     }
                 }
             }
