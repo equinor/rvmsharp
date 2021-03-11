@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
+  </ItemGroup>
+
 </Project>
