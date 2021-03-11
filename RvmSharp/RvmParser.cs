@@ -74,21 +74,8 @@
                     throw new IOException("Unexpected data in header");
                 builder.Append((char)bytes[3]);
             }
-            len = 0;
-            dunno = 0;
-            
-            try
-            {
-                if (stream.Position != stream.Length)
-                {
-                    len = ReadUint(stream);
-                    dunno = ReadUint(stream);
-                }
-            } catch (IOException)
-            {
-                // can we ignore EOF?
-                throw; // let's throw for now
-            }
+            len = ReadUint(stream);
+            dunno = ReadUint(stream);
             return builder.ToString();
         }
 
@@ -235,6 +222,12 @@
             const float mmToM = 0.001f;
             var translation = new Vector3(ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM);
             var materialId = ReadUint(stream);
+            if (version == 3)
+            {
+                // FIXME: On version 3 there is an unknown value
+                ReadUint(stream);
+            }
+                
             var group = new RvmGroup(version, name, translation, materialId);
             uint len, dunno;
             var id = ReadChunkHeader(stream, out len, out dunno);
@@ -265,6 +258,7 @@
             var colorKind = ReadUint(stream);
             var colorIndex = ReadUint(stream);
             byte[] rgb = new[] { ReadByte(stream), ReadByte(stream), ReadByte(stream) };
+            ReadByte(stream);
             return new RvmColor(colorKind, colorIndex, rgb);
         }
 
