@@ -16,6 +16,7 @@ namespace rvmsharp.Tessellator
             {
                 RvmBox box => Tessellate(box, scale),
                 RvmFacetGroup facetGroup => Tessellate(facetGroup, scale),
+                RvmPyramid pyramid => Tessellate(pyramid, scale),
                 _ => null
                 //_ => throw new NotImplementedException($"Unsupported type for tesselation: {geometry.Kind}"),
             };
@@ -268,6 +269,117 @@ namespace rvmsharp.Tessellator
 
                 return true;
             }
+        }
+
+        private static Mesh Tessellate(RvmPyramid pyramid, float scale)
+        {
+  var bx = 0.5f * pyramid.BottomX;
+  var by = 0.5f * pyramid.BottomY;
+  var tx = 0.5f * pyramid.TopX;
+  var ty = 0.5f * pyramid.TopY;
+  var ox = 0.5f * pyramid.OffsetX;
+  var oy = 0.5f * pyramid.OffsetY;
+  var h2 = 0.5f * pyramid.Height;
+
+  
+
+  Vector3[,] quad =
+  {
+    {
+      new Vector3( -bx - ox, -by - oy, -h2 ),
+      new Vector3(  bx - ox, -by - oy, -h2 ),
+      new Vector3(  bx - ox,  by - oy, -h2 ),
+      new Vector3(-bx - ox,  by - oy, -h2 )
+    },
+    {
+       new Vector3(-tx + ox, -ty + oy, h2),
+       new Vector3(tx + ox, -ty + oy, h2),
+       new Vector3(tx + ox,  ty + oy, h2),
+       new Vector3(-tx + ox,  ty + oy, h2)
+    },
+  };
+
+  Vector3[] n = {
+    new Vector3( 0.0f, -h2,  (quad[1,0].Y - quad[0,0].Y) ),
+    new Vector3(  h2, 0.0f, -(quad[1,1].X - quad[0,1].X) ),
+    new Vector3( 0.0f,  h2, -(quad[1,2].Y - quad[0,2].Y) ),
+    new Vector3( -h2, 0.0f,  (quad[1,3].X - quad[0,3].X) ),
+    new Vector3(0, 0, -1 ),
+    new Vector3(0, 0, 1),
+  };
+
+  bool[] cap = {
+      true,
+      true,
+      true,
+      true,
+      1e-7f <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
+      1e-7f <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
+  };
+
+  for (var i = 0; i < 6; i++) {
+    var con = pyramid.Connections[i];
+    if (cap[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
+
+    if (DoInterfacesMatch(pyramid, con)) {
+      cap[i] = false;
+    }
+  }
+
+  var caps = 0;
+  for (var i = 0; i < 6; i++) if (cap[i]) caps++;
+
+  var error = 0.0f;
+
+  var vertices = new float[3 * 4 * caps];
+  var normals = new float[3 * 4 * caps];
+
+  var l = 0;
+  for (var i = 0; i < 4; i++) {
+    if (cap[i] == false) continue;
+    var ii = (i + 1) & 3;
+    l = vertex(normals, vertices, l, n[i], quad[0,i]);
+    l = vertex(normals, vertices, l, n[i], quad[0,ii]);
+    l = vertex(normals, vertices, l, n[i], quad[1,ii]);
+    l = vertex(normals, vertices, l, n[i], quad[1,i]);
+  }
+  if (cap[4]) {
+    for (var i = 0; i < 4; i++) {
+      l = vertex(normals, vertices, l, n[4], quad[0,i]);
+    }
+  }
+  if (cap[5]) {
+    for (var i = 0; i < 4; i++) {
+      l = vertex(normals, vertices, l, n[5], quad[1,i]);
+    }
+  }
+
+  if (l != vertices.Length)
+      throw new Exception("Missing vertices");
+
+  l = 0;
+  var o = 0;
+  var indices = new int[3 * 2 * caps];
+  for (var i = 0; i < 4; i++) {
+    if (cap[i] == false) continue;
+    l = quadIndices(indices, l, o /*4 * i*/, 0, 1, 2, 3);
+    o += 4;
+  }
+  if (cap[4]) {
+    l = quadIndices(indices, l, o, 3, 2, 1, 0);
+    o += 4;
+  }
+  if (cap[5]) {
+    l = quadIndices(indices, l, o, 0, 1, 2, 3);
+    o += 4;
+  }
+
+  if (l != 3 * 2 * caps || o != vertices.Length / 3)
+      throw new Exception();
+
+  return new Mesh(vertices, normals, indices, error);
+
+
         }
 
         private static Mesh Tessellate(RvmBox box, float scale)
