@@ -18,6 +18,7 @@ namespace rvmsharp.Tessellator
                 RvmFacetGroup facetGroup => Tessellate(facetGroup, scale),
                 RvmPyramid pyramid => Tessellate(pyramid, scale),
                 RvmRectangularTorus rectangularTorus => Tessellate(rectangularTorus, scale, tolerance),
+                RvmCylinder cylinder => TessellateCylinder(cylinder, scale, tolerance),
                 _ => null
                 //_ => throw new NotImplementedException($"Unsupported type for tesselation: {geometry.Kind}"),
             };
@@ -44,14 +45,30 @@ namespace rvmsharp.Tessellator
             return l;
         }
 
-        private static int vertex(float[] normals, float[] vertices, int l, Vector3 n, Vector3 p)
+        private static int vertex(Vector3[] normals, Vector3[] vertices, int l, Vector3 normal, Vector3 point)
         {
-            normals[l] = n.X;
-            vertices[l++] = p.X;
-            normals[l] = n.Y;
-            vertices[l++] = p.Y;
-            normals[l] = n.Z;
-            vertices[l++] = p.Z;
+            normals[l] = new Vector3(normal.X, normal.Y, normal.Z);
+            vertices[l] = new Vector3(point.X, point.Y, point.Z);
+            return ++l;
+        }
+        
+        
+        private static int vertex(Vector3[] normals, Vector3[] vertices, int l, float nx, float ny, float nz, float px,
+            float py, float pz)
+        {
+            normals[l] = new Vector3(nx, ny, nz);
+            vertices[l] = new Vector3(px, py, pz);
+            return ++l;
+        }
+
+        private static int vertex(float[] normals, float[] vertices, int l, Vector3 normal, Vector3 point)
+        {
+            normals[l] = normal.X;
+            vertices[l++] = point.X;
+            normals[l] = normal.Y;
+            vertices[l++] = point.Y;
+            normals[l] = normal.Z;
+            vertices[l++] = point.Z;
             return l;
         }
 
@@ -69,16 +86,17 @@ namespace rvmsharp.Tessellator
 
         private const int minSamples = 3;
         private const int maxSamples = 100;
+        private const float MinimumThreshold = 1e-7f;
 
 
-        private static int sagittaBasedSegmentCount(float arc, float radius, float scale, float tolerance)
+        private static int sagittaBasedSegmentCount(double arc, float radius, float scale, float tolerance)
         {
             var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - tolerance / (scale * radius)));
             return Math.Min(maxSamples, (int)(Math.Max(minSamples, Math.Ceiling(samples))));
         }
 
 
-        private static float sagittaBasedError(float arc, float radius, float scale, int segments)
+        private static float sagittaBasedError(double arc, float radius, float scale, int segments)
         {
             var s = scale * radius * (1.0f - Math.Cos(arc / segments)); // Length of sagitta
             //assert(s <= tolerance);
@@ -324,8 +342,8 @@ namespace rvmsharp.Tessellator
 
             bool[] cap =
             {
-                true, true, true, true, 1e-7f <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
-                1e-7f <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
+                true, true, true, true, MinimumThreshold <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
+                MinimumThreshold <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
             };
 
             for (var i = 0; i < 6; i++)
@@ -702,6 +720,178 @@ namespace rvmsharp.Tessellator
             }
 
             return new Mesh(vertices.ToArray(), normals.ToArray(), indices.ToArray(), 0);
+        }
+
+
+        private static Mesh TessellateCylinder(RvmCylinder cylinder, float scale, float tolerance)
+        {
+            //if (cullTiny && cy.radius*scale < tolerance) {
+            //  tri->error = cy.radius * scale;
+            //  return;
+            //}
+            
+            int segments = sagittaBasedSegmentCount( Math.PI * 2, cylinder.Radius, scale, tolerance);
+            int samples = segments; // Assumed to be closed
+
+            var error = sagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
+
+            bool shell = true;
+            bool[] shouldCap = {true, true};
+            
+            
+            for (int i = 0; i < 2; i++)
+            {
+                var con = cylinder.Connections[i];
+                if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
+                {
+                    if (DoInterfacesMatch(cylinder, con))
+                    {
+                        shouldCap[i] = false;
+                        //discardedCaps++;
+                    }
+                    else
+                    {
+                        //store->addDebugLine(con->p.data, (con->p.data + 0.05f*con->d).data, 0x00ffff);
+                    }
+                }
+            }
+
+            int vertCount = (shell ? 2 * samples : 0) + (shouldCap[0] ? samples : 0) + (shouldCap[1] ? samples : 0);
+            var vertices = new Vector3[vertCount];
+            var normals = new Vector3[vertCount];
+            
+            int triangles_n = (shell ? 2 * samples : 0) + (shouldCap[0] ? samples - 2 : 0) + (shouldCap[1] ? samples - 2 : 0);
+            var indices = new int[triangles_n * 3];
+
+            float[] t0 = new float[2* samples];
+            for (int i = 0; i < samples; i++)
+            {
+                t0[2 * i + 0] = (float) Math.Cos(((Math.Tau) / samples) * i + cylinder.SampleStartAngle);
+                t0[2 * i + 1] = (float) Math.Sin((Math.Tau / samples) * i + cylinder.SampleStartAngle);
+            }
+
+            float[] t1 = new float[2 * samples];
+            for (int i = 0; i < 2 * samples; i++)
+            {
+                t1[i] = cylinder.Radius * t0[i];
+            }
+
+            float h2 = 0.5f * cylinder.Height;
+            int l = 0;
+
+            if (shell)
+            {
+                for (int i = 0; i < samples; i++)
+                {
+                    l = vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1], -h2);
+                    l = vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1], h2);
+                }
+            }
+
+            if (shouldCap[0])
+            {
+                for (int i = 0; i < samples; i++)
+                {
+                    l = vertex(normals, vertices, l, new Vector3(0, 0, -1), new Vector3(t1[2 * i + 0], t1[2 * i + 1], -h2));
+                }
+            }
+
+            if (shouldCap[1])
+            {
+                for (int i = 0; i < samples; i++)
+                {
+                    l = vertex(normals, vertices, l, new Vector3(0, 0, 1), new Vector3(t1[2 * i + 0], t1[2 * i + 1], h2));
+                }
+            }
+
+            AssertEquals(nameof(l) , l, nameof(vertCount), vertCount);
+
+            l = 0;
+            int o = 0;
+            if (shell)
+            {
+                for (int i = 0; i < samples; i++)
+                {
+                    int ii = (i + 1) % samples;
+                    l = quadIndices(indices, l, 0, 2 * i, 2 * ii, 2 * ii + 1, 2 * i + 1);
+                }
+
+                o += 2 * samples;
+            }
+
+            var u1 = new int[samples];
+            var u2 = new int[samples];
+            if (shouldCap[0])
+            {
+                for (int i = 0; i < samples; i++)
+                {
+                    u1[i] = o + (samples - 1) - i;
+                }
+
+                l = TessellateCircle(indices, l, u2, u1, samples);
+                o += samples;
+            }
+
+            if (shouldCap[1])
+            {
+                for (int i = 0; i < samples; i++)
+                {
+                    u1[i] = o + i;
+                }
+
+                l = TessellateCircle(indices, l, u2, u1, samples);
+                o += samples;
+            }
+
+            AssertEquals(nameof(l),l , nameof(triangles_n), triangles_n * 3);
+            AssertEquals(nameof(o),o , nameof(vertCount), vertCount);
+            
+            return new Mesh(vertices, normals, indices, error);
+        }
+
+        static int TessellateCircle(int[] indices, int l, int[] t, int[] src, int N)
+        {
+            while (3 <= N) {
+                int m = 0;
+                int i;
+                for (i = 0; i + 2 < N; i += 2) {
+                    indices[l++] = src[i];
+                    indices[l++] = src[i + 1];
+                    indices[l++] = src[i + 2];
+                    t[m++] = src[i];
+                }
+                for (; i < N; i++) {
+                    t[m++] = src[i];
+                }
+                N = m;
+                
+                // TODO: What does the swap do here.
+                // Was: std::swap(t, src);
+                Swap(ref t, ref src);
+            }
+            
+            return l;
+        }
+        
+        /// <summary>
+        /// Copy of std::swap(t, src);
+        /// Not sure if this is needed in dotnet.
+        /// </summary>
+        static void Swap<T>(ref T lhs, ref T rhs)
+        {
+            // ReSharper disable once JoinDeclarationAndInitializer
+            T temp;
+            temp = lhs;
+            lhs = rhs;
+            rhs = temp;
+        }
+
+        private static void AssertEquals<T>(string name1, T value1, string name2, T value2) where T : IEquatable<T>
+        {
+            if ((value1?.Equals(value2) == true))
+                return;
+
+            throw new Exception($"Expected {name1} {value1} to equal {name2} {value2}.");
         }
     }
 }
