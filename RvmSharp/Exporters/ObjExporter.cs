@@ -1,10 +1,10 @@
-﻿namespace RvmSharp.Tessellator
+﻿namespace RvmSharp.Exporters
 {
-    using rvmsharp.Tessellator;
     using System;
     using System.Globalization;
     using System.IO;
     using System.Text;
+    using Tessellation;
 
     public sealed class ObjExporter : IDisposable
     {

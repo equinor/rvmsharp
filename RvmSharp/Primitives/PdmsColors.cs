@@ -1,6 +1,4 @@
-﻿// unset
-
-namespace RvmSharp.Tessellator
+﻿namespace RvmSharp.Primitives
 {
     using System;
     using System.Collections.Generic;

@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-
-namespace rvmsharp.Tessellator
+﻿namespace RvmSharp.Operations
 {
-    using RvmSharp.Containers;
-    using RvmSharp.Primitives;
+    using Containers;
+    using Primitives;
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Numerics;
 
     public class RvmConnect
     {

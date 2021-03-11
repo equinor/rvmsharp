@@ -3,7 +3,7 @@
 namespace RvmSharp.Tests.Tesselator
 {
     using Primitives;
-    using rvmsharp.Tessellator;
+    using Tessellation;
     using System.Numerics;
 
     [TestFixture]

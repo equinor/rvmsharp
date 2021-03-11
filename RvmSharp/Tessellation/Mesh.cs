@@ -1,4 +1,4 @@
-﻿namespace rvmsharp.Tessellator
+﻿namespace RvmSharp.Tessellation
 {
     using System;
     using System.Numerics;
@@ -31,7 +31,7 @@
         public Mesh(Vector3[] vertices, Vector3[] normals, int[] triangles, float error)
         {
             if (vertices.Length != normals.Length)
-                throw new ArgumentException("Vertex and normal arrays must have equial length");
+                throw new ArgumentException("Vertex and normal arrays must have equal length");
 
             Error = error;
             Vertices = vertices;

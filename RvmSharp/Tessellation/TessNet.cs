@@ -5,7 +5,7 @@ using System.Linq;
 using System.Numerics;
 using static RvmSharp.Primitives.RvmFacetGroup;
 
-namespace rvmsharp.Tessellator
+namespace RvmSharp.Tessellation
 {
     class TessNet
     {
