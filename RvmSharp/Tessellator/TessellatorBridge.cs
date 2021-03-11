@@ -20,8 +20,8 @@ namespace rvmsharp.Tessellator
                 RvmRectangularTorus rectangularTorus => Tessellate(rectangularTorus, scale, tolerance),
                 RvmCylinder cylinder => TessellateCylinder(cylinder, scale, tolerance),
                 RvmCircularTorus circularTorus => Tessellate(circularTorus, scale, tolerance),
+                RvmSnout snout => Tessellate(snout, scale, tolerance),
                 /*RvmLine line => throw new NotImplementedException(),
-                RvmSnout snout => throw new NotImplementedException(),
                 RvmSphere sphere => throw new NotImplementedException(),
                 RvmSphericalDish sphericalDish => throw new NotImplementedException(),
                 RvmEllipticalDish ellipticalDish => throw new NotImplementedException(),*/
@@ -1026,6 +1026,164 @@ namespace rvmsharp.Tessellator
 
             AssertEquals(nameof(l), l, nameof(triangles_n), triangles_n * 3);
             AssertEquals(nameof(o), o, nameof(vertCount), vertCount);
+
+            return new Mesh(vertices, normals, indices, error);
+        }
+
+        private static Mesh Tessellate(RvmSnout snout, float scale, float tolerance)
+        {
+            var radius_max = Math.Max(snout.RadiusBottom, snout.RadiusTop);
+            var segments = sagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
+            var samples = segments; // assumed to be closed
+
+            var error = sagittaBasedError(Math.PI * 2, radius_max, scale, segments);
+
+            bool shell = true;
+            bool[] cap = {true, true};
+            float[] radii = {snout.RadiusBottom, snout.RadiusTop};
+            for (var i = 0; i < 2; i++)
+            {
+                var con = snout.Connections[i];
+                if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
+                {
+                    if (DoInterfacesMatch(snout, con))
+                    {
+                        cap[i] = false;
+                    }
+                    else
+                    {
+                        //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
+                    }
+                }
+            }
+
+            var t0 = new float[2 * samples];
+            for (var i = 0; i < samples; i++)
+            {
+                t0[2 * i + 0] = (float)Math.Cos((Math.PI * 2 / samples) * i + snout.SampleStartAngle);
+                t0[2 * i + 1] = (float)Math.Sin((Math.PI * 2 / samples) * i + snout.SampleStartAngle);
+            }
+
+            var t1 = new float[2 * samples];
+            for (var i = 0; i < 2 * samples; i++)
+            {
+                t1[i] = snout.RadiusBottom * t0[i];
+            }
+
+            var t2 = new float[2 * samples];
+            for (var i = 0; i < 2 * samples; i++)
+            {
+                t2[i] = snout.RadiusTop * t0[i];
+            }
+
+            float h2 = 0.5f * snout.Height;
+            var l = 0;
+            var ox = 0.5f * snout.OffsetX;
+            var oy = 0.5f * snout.OffsetY;
+            float[] mb = {(float)Math.Tan(snout.BottomShearX), (float)Math.Tan(snout.BottomShearX)};
+            float[] mt = {(float)Math.Tan(snout.TopShearX), (float)Math.Tan(snout.TopShearY)};
+
+            var vertices_n = (shell ? 2 * samples : 0) + (cap[0] ? samples : 0) + (cap[1] ? samples : 0);
+            var vertices = new float[3 * vertices_n];
+            var normals = new float[3 * vertices_n];
+
+            var triangles_n = (shell ? 2 * samples : 0) + (cap[0] ? samples - 2 : 0) + (cap[1] ? samples - 2 : 0);
+            var indices = new int[3 * triangles_n];
+
+            if (shell)
+            {
+                for (var i = 0; i < samples; i++)
+                {
+                    float xb = t1[2 * i + 0] - ox;
+                    float yb = t1[2 * i + 1] - oy;
+                    float zb = -h2 + mb[0] * t1[2 * i + 0] + mb[1] * t1[2 * i + 1];
+
+                    float xt = t2[2 * i + 0] + ox;
+                    float yt = t2[2 * i + 1] + oy;
+                    float zt = h2 + mt[0] * t2[2 * i + 0] + mt[1] * t2[2 * i + 1];
+
+                    float s = (snout.OffsetX * t0[2 * i + 0] + snout.OffsetY * t0[2 * i + 1]);
+                    float nx = t0[2 * i + 0];
+                    float ny = t0[2 * i + 1];
+                    float nz = Math.Abs(snout.Height) < 0.00001f
+                        ? 0
+                        : -(snout.RadiusTop - snout.RadiusBottom + s) / snout.Height;
+
+                    l = vertex(normals, vertices, l, nx, ny, nz, xb, yb, zb);
+                    l = vertex(normals, vertices, l, nx, ny, nz, xt, yt, zt);
+                }
+            }
+
+            if (cap[0])
+            {
+                var nx = (float)(Math.Sin(snout.BottomShearX) * Math.Cos(snout.BottomShearY));
+                var ny = (float)Math.Sin(snout.BottomShearY);
+                var nz = (float)(-Math.Cos(snout.BottomShearX) * Math.Cos(snout.BottomShearY));
+                for (var i = 0; cap[0] && i < samples; i++)
+                {
+                    l = vertex(normals, vertices, l, nx, ny, nz,
+                        t1[2 * i + 0] - ox,
+                        t1[2 * i + 1] - oy,
+                        -h2 + mb[0] * t1[2 * i + 0] + mb[1] * t1[2 * i + 1]);
+                }
+            }
+
+            if (cap[1])
+            {
+                var nx = (float)(-Math.Sin(snout.TopShearX) * Math.Cos(snout.TopShearY));
+                var ny = (float)(-Math.Sin(snout.TopShearY));
+                var nz = (float)(Math.Cos(snout.TopShearX) * Math.Cos(snout.TopShearY));
+                for (var i = 0; i < samples; i++)
+                {
+                    l = vertex(normals, vertices, l, nx, ny, nz,
+                        t2[2 * i + 0] + ox,
+                        t2[2 * i + 1] + oy,
+                        h2 + mt[0] * t2[2 * i + 0] + mt[1] * t2[2 * i + 1]);
+                }
+            }
+
+            AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
+
+            l = 0;
+            var o = 0;
+            if (shell)
+            {
+                for (var i = 0; i < samples; i++)
+                {
+                    var ii = (i + 1) % samples;
+                    l = quadIndices(indices, l, 0, 2 * i, 2 * ii, 2 * ii + 1, 2 * i + 1);
+                }
+
+                o += 2 * samples;
+            }
+
+
+            var u1 = new int[samples];
+            var u2 = new int[samples];
+            if (cap[0])
+            {
+                for (var i = 0; i < samples; i++)
+                {
+                    u1[i] = o + (samples - 1) - i;
+                }
+
+                l = TessellateCircle(indices, l, u2, u1, samples);
+                o += samples;
+            }
+
+            if (cap[1])
+            {
+                for (var i = 0; i < samples; i++)
+                {
+                    u1[i] = o + i;
+                }
+
+                l = TessellateCircle(indices, l, u2, u1, samples);
+                o += samples;
+            }
+
+            AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
+            AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
 
             return new Mesh(vertices, normals, indices, error);
         }
