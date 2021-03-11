@@ -26,8 +26,8 @@ namespace RvmSharp.Primitives
         
         public readonly RvmPolygon[] Polygons;
 
-        public RvmFacetGroup(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, RvmPolygon[] polygons)
-            : base(version, kind, matrix, bBoxLocal)
+        public RvmFacetGroup(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, RvmPolygon[] polygons)
+            : base(version, RvmPrimitiveKind.FacetGroup, matrix, bBoxLocal)
         {
             Polygons = polygons;
         }

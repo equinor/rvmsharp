@@ -6,8 +6,8 @@ namespace RvmSharp.Primitives
     {
         public readonly float Radius;
         public readonly float Height;
-        public RvmCylinder(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float radius, float height)
-            : base(version, kind, matrix, bBoxLocal)
+        public RvmCylinder(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float radius, float height)
+            : base(version, RvmPrimitiveKind.Cylinder, matrix, bBoxLocal)
         {
             Radius = radius;
             Height = height;

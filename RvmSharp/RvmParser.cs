@@ -102,7 +102,7 @@
                     var offsetX = ReadFloat(stream);
                     var offsetY = ReadFloat(stream);
                     var height = ReadFloat(stream);
-                    primitive = new RvmPyramid(version, kind, matrix, bBoxLocal, bottomX, bottomY, topX, topY, offsetX,
+                    primitive = new RvmPyramid(version, matrix, bBoxLocal, bottomX, bottomY, topX, topY, offsetX,
                         offsetY, height);
                     break;
                 }
@@ -110,7 +110,7 @@
                     var lengthX = ReadFloat(stream);
                     var lengthY = ReadFloat(stream);
                     var lengthZ = ReadFloat(stream);
-                    primitive = new RvmBox(version, kind, matrix, bBoxLocal, lengthX, lengthY, lengthZ);
+                    primitive = new RvmBox(version, matrix, bBoxLocal, lengthX, lengthY, lengthZ);
                     break;
                 case RvmPrimitiveKind.RectangularTorus:
                 {
@@ -118,7 +118,7 @@
                     var radiusOuter = ReadFloat(stream);
                     var height = ReadFloat(stream);
                     var angle = ReadFloat(stream);
-                    primitive = new RvmRectangularTorus(version, kind, matrix, bBoxLocal, radiusInner, radiusOuter, height, angle);
+                    primitive = new RvmRectangularTorus(version, matrix, bBoxLocal, radiusInner, radiusOuter, height, angle);
                     break;
                 }
                 case RvmPrimitiveKind.CircularTorus:
@@ -126,21 +126,21 @@
                     var offset = ReadFloat(stream);
                     var radius = ReadFloat(stream);
                     var angle = ReadFloat(stream);
-                    primitive = new RvmCircularTorus(version, kind, matrix, bBoxLocal, offset, radius, angle);
+                    primitive = new RvmCircularTorus(version, matrix, bBoxLocal, offset, radius, angle);
                     break;
                 }
                 case RvmPrimitiveKind.EllipticalDish:
                 {
                     var baseRadius = ReadFloat(stream);
                     var height = ReadFloat(stream);
-                    primitive = new RvmEllipticalDish(version, kind, matrix, bBoxLocal, baseRadius, height);
+                    primitive = new RvmEllipticalDish(version, matrix, bBoxLocal, baseRadius, height);
                     break;
                 }
                 case RvmPrimitiveKind.SphericalDish:
                 {
                     var baseRadius = ReadFloat(stream);
                     var height = ReadFloat(stream);
-                    primitive = new RvmSphericalDish(version, kind, matrix, bBoxLocal, baseRadius, height);
+                    primitive = new RvmSphericalDish(version, matrix, bBoxLocal, baseRadius, height);
                     break;
                 }
                 case RvmPrimitiveKind.Snout:
@@ -154,7 +154,7 @@
                     var bottomShearY = ReadFloat(stream);
                     var topShearX = ReadFloat(stream);
                     var topShearY = ReadFloat(stream);
-                    primitive = new RvmSnout(version, kind, matrix, bBoxLocal, radiusBottom, radiusTop, height,
+                    primitive = new RvmSnout(version, matrix, bBoxLocal, radiusBottom, radiusTop, height,
                         offsetX, offsetY, bottomShearX, bottomShearY, topShearX, topShearY);
                     break;
                 }
@@ -162,17 +162,17 @@
                 {
                     var radius = ReadFloat(stream);
                     var height = ReadFloat(stream);
-                    primitive = new RvmCylinder(version, kind, matrix, bBoxLocal, radius, height);
+                    primitive = new RvmCylinder(version, matrix, bBoxLocal, radius, height);
                     break;
                 }
                 case RvmPrimitiveKind.Sphere:
                     var diameter = ReadFloat(stream);
-                    primitive = new RvmSphere(version, kind, matrix, bBoxLocal, diameter);
+                    primitive = new RvmSphere(version, matrix, bBoxLocal, diameter);
                     break;
                 case RvmPrimitiveKind.Line:
                     var a = ReadFloat(stream);
                     var b = ReadFloat(stream);
-                    primitive = new RvmLine(version, kind, matrix, bBoxLocal, a, b);
+                    primitive = new RvmLine(version, matrix, bBoxLocal, a, b);
                     break;
                 case RvmPrimitiveKind.FacetGroup:
                     var polygonCount = ReadUint(stream);
@@ -200,7 +200,7 @@
                         polygons[i] = new RvmFacetGroup.RvmPolygon(contours);
                     }
 
-                    primitive = new RvmFacetGroup(version, kind, matrix, bBoxLocal, polygons);
+                    primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygons);
                     break;
             }
             return primitive;

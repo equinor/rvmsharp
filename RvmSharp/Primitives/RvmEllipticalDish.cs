@@ -7,8 +7,8 @@ namespace RvmSharp.Primitives
         public readonly float BaseRadius;
         public readonly float Height;
 
-        public RvmEllipticalDish(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float baseRadius, float height)
-            : base(version, kind, matrix, bBoxLocal)
+        public RvmEllipticalDish(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float baseRadius, float height)
+            : base(version, RvmPrimitiveKind.EllipticalDish, matrix, bBoxLocal)
         {
             BaseRadius = baseRadius;
             Height = height;

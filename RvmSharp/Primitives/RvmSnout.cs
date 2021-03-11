@@ -14,8 +14,8 @@ namespace RvmSharp.Primitives
         public readonly float TopShearX;
         public readonly float TopShearY;
 
-        public RvmSnout(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float radiusBottom, float radiusTop, float height, float offsetX, float offsetY, float bottomShearX, float bottomShearY, float topShearX, float topShearY)
-            : base(version, kind, matrix, bBoxLocal)
+        public RvmSnout(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float radiusBottom, float radiusTop, float height, float offsetX, float offsetY, float bottomShearX, float bottomShearY, float topShearX, float topShearY)
+            : base(version, RvmPrimitiveKind.Snout, matrix, bBoxLocal)
         {
             RadiusBottom = radiusBottom;
             RadiusTop = radiusTop;

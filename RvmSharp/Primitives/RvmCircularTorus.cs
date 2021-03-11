@@ -8,8 +8,8 @@ namespace RvmSharp.Primitives
         public readonly float Radius;
         public readonly float Angle;
 
-        public RvmCircularTorus(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float offset, float radius, float angle)
-            : base(version, kind, matrix, bBoxLocal)
+        public RvmCircularTorus(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, float offset, float radius, float angle)
+            : base(version, RvmPrimitiveKind.CircularTorus, matrix, bBoxLocal)
         {
             Offset = offset;
             Radius = radius;

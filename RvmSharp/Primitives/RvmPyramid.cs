@@ -12,9 +12,9 @@
         public readonly  float OffsetY;
         public readonly  float Height;
 
-        public RvmPyramid(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal,
+        public RvmPyramid(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal,
             float bottomX, float bottomY, float topX, float topY, float offsetX, float offsetY, float height) 
-            : base(version, kind, matrix, bBoxLocal)
+            : base(version, RvmPrimitiveKind.Pyramid, matrix, bBoxLocal)
         {
             BottomX = bottomX;
             BottomY = bottomY;
