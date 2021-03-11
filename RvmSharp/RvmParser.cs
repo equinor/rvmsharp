@@ -9,14 +9,6 @@
 
     public static class RvmParser
     {
-        private static byte ReadByte(Stream stream)
-        {
-            var value = stream.ReadByte();
-            if (value == -1)
-                throw new IOException("Unexpected end of stream");
-            return (byte)value;
-        }
-
         private static uint ReadUint(Stream stream)
         {
             var bytes = new byte[4];
@@ -61,7 +53,7 @@
             return Encoding.UTF8.GetString(bytes, 0, end);
         }
 
-        private static string ReadChunkHeader(Stream stream, out uint len, out uint dunno)
+        private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
         {
             var builder = new StringBuilder();
             var bytes = new byte[4];
@@ -74,7 +66,7 @@
                     throw new IOException("Unexpected data in header");
                 builder.Append((char)bytes[3]);
             }
-            len = ReadUint(stream);
+            nextHeaderOffset = ReadUint(stream);
             dunno = ReadUint(stream);
             return builder.ToString();
         }
@@ -229,8 +221,8 @@
             }
                 
             var group = new RvmGroup(version, name, translation, materialId);
-            uint len, dunno;
-            var id = ReadChunkHeader(stream, out len, out dunno);
+            uint nextHeaderOffset, dunno;
+            var id = ReadChunkHeader(stream, out nextHeaderOffset, out dunno);
             while (id != "CNTE")
             {
                 switch (id)
@@ -244,7 +236,7 @@
                     default:
                         throw new NotImplementedException($"Unknown chunk: {id}");
                 }
-                id = ReadChunkHeader(stream, out len, out dunno);
+                id = ReadChunkHeader(stream, out nextHeaderOffset, out dunno);
             }
             if (id == "CNTE")
             {
@@ -257,12 +249,16 @@
         {
             var colorKind = ReadUint(stream);
             var colorIndex = ReadUint(stream);
-            byte[] rgb = new[] { ReadByte(stream), ReadByte(stream), ReadByte(stream) };
-            ReadByte(stream);
+            var color = ReadUint(stream);
+            byte[] rgb = {
+                (byte)((color) >> 24 & 0xff),
+                (byte)((color) >> 16 & 0xff),
+                (byte)((color) >> 8 & 0xff),
+            };
             return new RvmColor(colorKind, colorIndex, rgb);
         }
 
-        public static RvmFile ReadHead(Stream stream)
+        private static RvmFile ReadHead(Stream stream)
         {
             var version = ReadUint(stream);
             var info = ReadString(stream);
