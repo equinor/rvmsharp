@@ -53,11 +53,6 @@ namespace rvmsharp.Tessellator
                     bool close = Vector3.DistanceSquared(a[j].p, a[i].p) <= ee;
                     bool aligned = Vector3.Dot(a[j].d, a[i].d) < -0.98f;
 
-                    if (j + off == 120 && i + off == 125)
-                    {
-                        var h = 5;
-                    }
-
                     if (canMatch && close && aligned)
                     {
                         RvmConnection connection = new RvmConnection();

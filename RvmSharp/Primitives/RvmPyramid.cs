@@ -2,7 +2,7 @@
 {
     using System.Numerics;
 
-    internal class RvmPyramid : RvmPrimitive
+    public class RvmPyramid : RvmPrimitive
     {
         public readonly float BottomX;
         public readonly  float BottomY;
