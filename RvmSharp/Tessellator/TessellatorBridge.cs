@@ -12,22 +12,46 @@ namespace rvmsharp.Tessellator
     {
         public static Mesh Tessellate(RvmPrimitive geometry, float scale, float tolerance)
         {
-            return geometry switch
+            switch (geometry)
             {
-                RvmBox box => Tessellate(box, scale),
-                RvmFacetGroup facetGroup => Tessellate(facetGroup, scale),
-                RvmPyramid pyramid => Tessellate(pyramid, scale),
-                RvmRectangularTorus rectangularTorus => Tessellate(rectangularTorus, scale, tolerance),
-                RvmCylinder cylinder => TessellateCylinder(cylinder, scale, tolerance),
-                RvmCircularTorus circularTorus => Tessellate(circularTorus, scale, tolerance),
-                RvmSnout snout => Tessellate(snout, scale, tolerance),
-                /*RvmLine line => throw new NotImplementedException(),
-                RvmSphere sphere => throw new NotImplementedException(),
-                RvmSphericalDish sphericalDish => throw new NotImplementedException(),
-                RvmEllipticalDish ellipticalDish => throw new NotImplementedException(),*/
-                _ => null
-                //_ => throw new NotImplementedException($"Unsupported type for tesselation: {geometry?.Kind}"),
-            };
+                case RvmBox box:
+                    return Tessellate(box, scale);
+                case RvmFacetGroup facetGroup:
+                    return Tessellate(facetGroup, scale);
+                case RvmPyramid pyramid:
+                    return Tessellate(pyramid, scale);
+                case RvmRectangularTorus rectangularTorus:
+                    return Tessellate(rectangularTorus, scale, tolerance);
+                case RvmCylinder cylinder:
+                    return TessellateCylinder(cylinder, scale, tolerance);
+                case RvmCircularTorus circularTorus:
+                    return Tessellate(circularTorus, scale, tolerance);
+                case RvmSnout snout:
+                    return Tessellate(snout, scale, tolerance);
+                case RvmLine:
+                    // we cannot tessellate a line, we should handle it elsewhere
+                    return null;
+                case RvmSphere sphere:
+                    return Tessellate(sphere, 0.5f * sphere.Diameter, MathF.PI, 0.0f, 1.0f, scale, tolerance);
+                case RvmEllipticalDish ellipticalDish:
+                    return Tessellate(ellipticalDish, ellipticalDish.BaseRadius, MathF.PI / 2, 0.0f,
+                        ellipticalDish.Height / ellipticalDish.BaseRadius, scale, tolerance);
+                case RvmSphericalDish sphericalDish:
+                {
+                    float r_circ = sphericalDish.BaseRadius;
+                    var h = sphericalDish.Height;
+                    float r_sphere = (r_circ * r_circ + h * h) / (2.0f * h);
+                    float sinval = MathF.Min(1.0f, MathF.Max(-1.0f, r_circ / r_sphere));
+                    float arc = MathF.Asin(sinval);
+                    if (r_circ < h) { arc = MathF.PI - arc; }
+
+                    return Tessellate(sphericalDish, r_sphere, arc, h - r_sphere, 1.0f, scale, tolerance);
+                }
+                default:
+                    throw new NotImplementedException($"Unsupported type for tesselation: {geometry?.Kind}");
+            }
+
+            ;
         }
 
         private static int triIndices(int[] indices, int l, int o, int v0, int v1, int v2)
@@ -1188,6 +1212,138 @@ namespace rvmsharp.Tessellator
             return new Mesh(vertices, normals, indices, error);
         }
 
+        private static Mesh Tessellate(RvmPrimitive sphereBasedPrimitive, float radius, float arc, float shift_z,
+            float scale_z, float scale, float tolerance)
+        {
+            var segments = sagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
+            var samples = segments; // Assumed to be closed
+
+            var error = sagittaBasedError(Math.PI * 2, radius, scale, samples);
+
+            bool is_sphere = false;
+            if (Math.PI - 1e-3 <= arc)
+            {
+                arc = (float)Math.PI;
+                is_sphere = true;
+            }
+
+            var min_rings = 3; // arc <= half_pi ? 2 : 3;
+            var rings = (int)(Math.Max(min_rings, scale_z * samples * arc * (1.0f / Math.PI * 2)));
+
+
+            var u0 = new int[rings];
+            var t0 = new float[2 * rings];
+            var theta_scale = arc / (rings - 1);
+            for (var r = 0; r < rings; r++)
+            {
+                float theta = theta_scale * r;
+                t0[2 * r + 0] = (float)Math.Cos(theta);
+                t0[2 * r + 1] = (float)Math.Sin(theta);
+                u0[r] = (int)(Math.Max(3.0f, t0[2 * r + 1] * samples)); // samples in this ring
+            }
+
+            u0[0] = 1;
+            if (is_sphere)
+            {
+                u0[rings - 1] = 1;
+            }
+
+            var s = 0;
+            for (var r = 0; r < rings; r++)
+            {
+                s += u0[r];
+            }
+
+
+            var vertices_n = s;
+            var vertices = new float[3 * vertices_n];
+            var normals = new float[3 * vertices_n];
+
+            var l = 0;
+            for (var r = 0; r < rings; r++)
+            {
+                var nz = t0[2 * r + 0];
+                var z = radius * scale_z * nz + shift_z;
+                var w = t0[2 * r + 1];
+                var n = u0[r];
+
+                var phi_scale = Math.PI * 2 / n;
+                for (var i = 0; i < n; i++)
+                {
+                    var phi = (float)(phi_scale * i + sphereBasedPrimitive.SampleStartAngle);
+                    var nx = (float)(w * Math.Cos(phi));
+                    var ny = (float)(w * Math.Sin(phi));
+                    l = vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny, z);
+                }
+            }
+
+            AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", vertices_n * 3);
+
+            var o_c = 0;
+            var indices = new List<int>();
+            for (var r = 0; r + 1 < rings; r++)
+            {
+                var n_c = u0[r];
+                var n_n = u0[r + 1];
+                var o_n = o_c + n_c;
+
+                if (n_c < n_n)
+                {
+                    for (var i_n = 0; i_n < n_n; i_n++)
+                    {
+                        var ii_n = (i_n + 1);
+                        var i_c = (n_c * (i_n + 1)) / n_n;
+                        var ii_c = (n_c * (ii_n + 1)) / n_n;
+
+                        i_c %= n_c;
+                        ii_c %= n_c;
+                        ii_n %= n_n;
+
+                        if (i_c != ii_c)
+                        {
+                            indices.Add(o_c + i_c);
+                            indices.Add(o_n + ii_n);
+                            indices.Add(o_c + ii_c);
+                        }
+
+                        AssertNotEquals(nameof(i_n), i_n, nameof(ii_n), ii_n);
+                        indices.Add(o_c + i_c);
+                        indices.Add(o_n + i_n);
+                        indices.Add(o_n + ii_n);
+                    }
+                }
+                else
+                {
+                    for (var i_c = 0; i_c < n_c; i_c++)
+                    {
+                        var ii_c = (i_c + 1);
+                        var i_n = (n_n * (i_c + 0)) / n_c;
+                        var ii_n = (n_n * (ii_c + 0)) / n_c;
+
+                        i_n %= n_n;
+                        ii_n %= n_n;
+                        ii_c %= n_c;
+
+                        AssertNotEquals(nameof(i_c), i_c, nameof(ii_c), ii_c);
+                        indices.Add(o_c + i_c);
+                        indices.Add(o_n + ii_n);
+                        indices.Add(o_c + ii_c);
+
+                        if (i_n != ii_n)
+                        {
+                            indices.Add(o_c + i_c);
+                            indices.Add(o_n + i_n);
+                            indices.Add(o_n + ii_n);
+                        }
+                    }
+                }
+
+                o_c = o_n;
+            }
+
+            return new Mesh(vertices, normals, indices.ToArray(), error);
+        }
+
         static int TessellateCircle(int[] indices, int l, int[] t, int[] src, int N)
         {
             while (3 <= N)
@@ -1233,6 +1389,14 @@ namespace rvmsharp.Tessellator
         private static void AssertEquals<T>(string name1, T value1, string name2, T value2) where T : IEquatable<T>
         {
             if ((value1?.Equals(value2) == true))
+                return;
+
+            throw new Exception($"Expected {name1} {value1} to equal {name2} {value2}.");
+        }
+
+        private static void AssertNotEquals<T>(string name1, T value1, string name2, T value2) where T : IEquatable<T>
+        {
+            if ((value1?.Equals(value2) != true))
                 return;
 
             throw new Exception($"Expected {name1} {value1} to equal {name2} {value2}.");
