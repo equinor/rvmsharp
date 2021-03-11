@@ -10,13 +10,14 @@ namespace rvmsharp.Tessellator
 
     public class TessellatorBridge
     {
-        public static Mesh Tessellate(RvmPrimitive geometry, float scale)
+        public static Mesh Tessellate(RvmPrimitive geometry, float scale, float tolerance)
         {
             return geometry switch
             {
                 RvmBox box => Tessellate(box, scale),
                 RvmFacetGroup facetGroup => Tessellate(facetGroup, scale),
                 RvmPyramid pyramid => Tessellate(pyramid, scale),
+                RvmRectangularTorus rectangularTorus => Tessellate(rectangularTorus, scale, tolerance),
                 _ => null
                 //_ => throw new NotImplementedException($"Unsupported type for tesselation: {geometry.Kind}"),
             };
@@ -65,6 +66,25 @@ namespace rvmsharp.Tessellator
             vertices[l++] = pz;
             return l;
         }
+
+        private const int minSamples = 3;
+        private const int maxSamples = 100;
+
+
+        private static int sagittaBasedSegmentCount(float arc, float radius, float scale, float tolerance)
+        {
+            var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - tolerance / (scale * radius)));
+            return Math.Min(maxSamples, (int)(Math.Max(minSamples, Math.Ceiling(samples))));
+        }
+
+
+        private static float sagittaBasedError(float arc, float radius, float scale, int segments)
+        {
+            var s = scale * radius * (1.0f - Math.Cos(arc / segments)); // Length of sagitta
+            //assert(s <= tolerance);
+            return (float)s;
+        }
+
 
         private class Interface
         {
@@ -273,114 +293,279 @@ namespace rvmsharp.Tessellator
 
         private static Mesh Tessellate(RvmPyramid pyramid, float scale)
         {
-  var bx = 0.5f * pyramid.BottomX;
-  var by = 0.5f * pyramid.BottomY;
-  var tx = 0.5f * pyramid.TopX;
-  var ty = 0.5f * pyramid.TopY;
-  var ox = 0.5f * pyramid.OffsetX;
-  var oy = 0.5f * pyramid.OffsetY;
-  var h2 = 0.5f * pyramid.Height;
-
-  
-
-  Vector3[,] quad =
-  {
-    {
-      new Vector3( -bx - ox, -by - oy, -h2 ),
-      new Vector3(  bx - ox, -by - oy, -h2 ),
-      new Vector3(  bx - ox,  by - oy, -h2 ),
-      new Vector3(-bx - ox,  by - oy, -h2 )
-    },
-    {
-       new Vector3(-tx + ox, -ty + oy, h2),
-       new Vector3(tx + ox, -ty + oy, h2),
-       new Vector3(tx + ox,  ty + oy, h2),
-       new Vector3(-tx + ox,  ty + oy, h2)
-    },
-  };
-
-  Vector3[] n = {
-    new Vector3( 0.0f, -h2,  (quad[1,0].Y - quad[0,0].Y) ),
-    new Vector3(  h2, 0.0f, -(quad[1,1].X - quad[0,1].X) ),
-    new Vector3( 0.0f,  h2, -(quad[1,2].Y - quad[0,2].Y) ),
-    new Vector3( -h2, 0.0f,  (quad[1,3].X - quad[0,3].X) ),
-    new Vector3(0, 0, -1 ),
-    new Vector3(0, 0, 1),
-  };
-
-  bool[] cap = {
-      true,
-      true,
-      true,
-      true,
-      1e-7f <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
-      1e-7f <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
-  };
-
-  for (var i = 0; i < 6; i++) {
-    var con = pyramid.Connections[i];
-    if (cap[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
-
-    if (DoInterfacesMatch(pyramid, con)) {
-      cap[i] = false;
-    }
-  }
-
-  var caps = 0;
-  for (var i = 0; i < 6; i++) if (cap[i]) caps++;
-
-  var error = 0.0f;
-
-  var vertices = new float[3 * 4 * caps];
-  var normals = new float[3 * 4 * caps];
-
-  var l = 0;
-  for (var i = 0; i < 4; i++) {
-    if (cap[i] == false) continue;
-    var ii = (i + 1) & 3;
-    l = vertex(normals, vertices, l, n[i], quad[0,i]);
-    l = vertex(normals, vertices, l, n[i], quad[0,ii]);
-    l = vertex(normals, vertices, l, n[i], quad[1,ii]);
-    l = vertex(normals, vertices, l, n[i], quad[1,i]);
-  }
-  if (cap[4]) {
-    for (var i = 0; i < 4; i++) {
-      l = vertex(normals, vertices, l, n[4], quad[0,i]);
-    }
-  }
-  if (cap[5]) {
-    for (var i = 0; i < 4; i++) {
-      l = vertex(normals, vertices, l, n[5], quad[1,i]);
-    }
-  }
-
-  if (l != vertices.Length)
-      throw new Exception("Missing vertices");
-
-  l = 0;
-  var o = 0;
-  var indices = new int[3 * 2 * caps];
-  for (var i = 0; i < 4; i++) {
-    if (cap[i] == false) continue;
-    l = quadIndices(indices, l, o /*4 * i*/, 0, 1, 2, 3);
-    o += 4;
-  }
-  if (cap[4]) {
-    l = quadIndices(indices, l, o, 3, 2, 1, 0);
-    o += 4;
-  }
-  if (cap[5]) {
-    l = quadIndices(indices, l, o, 0, 1, 2, 3);
-    o += 4;
-  }
-
-  if (l != 3 * 2 * caps || o != vertices.Length / 3)
-      throw new Exception();
-
-  return new Mesh(vertices, normals, indices, error);
+            var bx = 0.5f * pyramid.BottomX;
+            var by = 0.5f * pyramid.BottomY;
+            var tx = 0.5f * pyramid.TopX;
+            var ty = 0.5f * pyramid.TopY;
+            var ox = 0.5f * pyramid.OffsetX;
+            var oy = 0.5f * pyramid.OffsetY;
+            var h2 = 0.5f * pyramid.Height;
 
 
+            Vector3[,] quad =
+            {
+                {
+                    new Vector3(-bx - ox, -by - oy, -h2), new Vector3(bx - ox, -by - oy, -h2),
+                    new Vector3(bx - ox, by - oy, -h2), new Vector3(-bx - ox, by - oy, -h2)
+                },
+                {
+                    new Vector3(-tx + ox, -ty + oy, h2), new Vector3(tx + ox, -ty + oy, h2),
+                    new Vector3(tx + ox, ty + oy, h2), new Vector3(-tx + ox, ty + oy, h2)
+                },
+            };
+
+            Vector3[] n =
+            {
+                new Vector3(0.0f, -h2, (quad[1, 0].Y - quad[0, 0].Y)),
+                new Vector3(h2, 0.0f, -(quad[1, 1].X - quad[0, 1].X)),
+                new Vector3(0.0f, h2, -(quad[1, 2].Y - quad[0, 2].Y)),
+                new Vector3(-h2, 0.0f, (quad[1, 3].X - quad[0, 3].X)), new Vector3(0, 0, -1), new Vector3(0, 0, 1),
+            };
+
+            bool[] cap =
+            {
+                true, true, true, true, 1e-7f <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
+                1e-7f <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
+            };
+
+            for (var i = 0; i < 6; i++)
+            {
+                var con = pyramid.Connections[i];
+                if (cap[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
+
+                if (DoInterfacesMatch(pyramid, con))
+                {
+                    cap[i] = false;
+                }
+            }
+
+            var caps = 0;
+            for (var i = 0; i < 6; i++)
+                if (cap[i])
+                    caps++;
+
+            var error = 0.0f;
+
+            var vertices = new float[3 * 4 * caps];
+            var normals = new float[3 * 4 * caps];
+
+            var l = 0;
+            for (var i = 0; i < 4; i++)
+            {
+                if (cap[i] == false) continue;
+                var ii = (i + 1) & 3;
+                l = vertex(normals, vertices, l, n[i], quad[0, i]);
+                l = vertex(normals, vertices, l, n[i], quad[0, ii]);
+                l = vertex(normals, vertices, l, n[i], quad[1, ii]);
+                l = vertex(normals, vertices, l, n[i], quad[1, i]);
+            }
+
+            if (cap[4])
+            {
+                for (var i = 0; i < 4; i++)
+                {
+                    l = vertex(normals, vertices, l, n[4], quad[0, i]);
+                }
+            }
+
+            if (cap[5])
+            {
+                for (var i = 0; i < 4; i++)
+                {
+                    l = vertex(normals, vertices, l, n[5], quad[1, i]);
+                }
+            }
+
+            if (l != vertices.Length)
+                throw new Exception("Missing vertices");
+
+            l = 0;
+            var o = 0;
+            var indices = new int[3 * 2 * caps];
+            for (var i = 0; i < 4; i++)
+            {
+                if (cap[i] == false) continue;
+                l = quadIndices(indices, l, o /*4 * i*/, 0, 1, 2, 3);
+                o += 4;
+            }
+
+            if (cap[4])
+            {
+                l = quadIndices(indices, l, o, 3, 2, 1, 0);
+                o += 4;
+            }
+
+            if (cap[5])
+            {
+                l = quadIndices(indices, l, o, 0, 1, 2, 3);
+                o += 4;
+            }
+
+            if (l != 3 * 2 * caps || o != vertices.Length / 3)
+                throw new Exception();
+
+            return new Mesh(vertices, normals, indices, error);
         }
+
+
+        private static Mesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
+        {
+            var segments =
+                sagittaBasedSegmentCount(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, tolerance);
+            var samples = segments + 1; // Assumed to be open, add extra sample.
+
+            var error = sagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, segments);
+
+            bool shell = true;
+            bool[] cap = {true, true};
+
+            for (var i = 0; i < 2; i++)
+            {
+                var con = rectangularTorus.Connections[i];
+                if (con != null && con.flags == RvmConnection.Flags.HasRectangularSide)
+                {
+                    if (DoInterfacesMatch(rectangularTorus, con))
+                    {
+                        cap[i] = false;
+                    }
+                }
+            }
+
+            var h2 = 0.5f * rectangularTorus.Height;
+            float[,] square =
+            {
+                {rectangularTorus.RadiusOuter, -h2}, {rectangularTorus.RadiusInner, -h2},
+                {rectangularTorus.RadiusInner, h2}, {rectangularTorus.RadiusOuter, h2},
+            };
+
+            // Not closed
+            var t0 = new float[2 * samples + 1];
+            for (var i = 0; i < samples; i++)
+            {
+                t0[2 * i + 0] = (float)Math.Cos((rectangularTorus.Angle / segments) * i);
+                t0[2 * i + 1] = (float)Math.Sin((rectangularTorus.Angle / segments) * i);
+            }
+
+            var l = 0;
+
+            var vertices_n = (shell ? 4 * 2 * samples : 0) + (cap[0] ? 4 : 0) + (cap[1] ? 4 : 0);
+
+            var vertices = new float[3 * vertices_n];
+            var normals = new float[3 * vertices_n];
+
+            if (shell)
+            {
+                for (var i = 0; i < samples; i++)
+                {
+                    float[,] n =
+                    {
+                        {0.0f, 0.0f, -1.0f}, {-t0[2 * i + 0], -t0[2 * i + 1], 0.0f}, {0.0f, 0.0f, 1.0f},
+                        {t0[2 * i + 0], t0[2 * i + 1], 0.0f},
+                    };
+
+                    for (var k = 0; k < 4; k++)
+                    {
+                        var kk = (k + 1) & 3;
+
+                        normals[l] = n[k, 0];
+                        vertices[l++] = square[k, 0] * t0[2 * i + 0];
+                        normals[l] = n[k, 1];
+                        vertices[l++] = square[k, 0] * t0[2 * i + 1];
+                        normals[l] = n[k, 2];
+                        vertices[l++] = square[k, 1];
+
+                        normals[l] = n[k, 0];
+                        vertices[l++] = square[kk, 0] * t0[2 * i + 0];
+                        normals[l] = n[k, 1];
+                        vertices[l++] = square[kk, 0] * t0[2 * i + 1];
+                        normals[l] = n[k, 2];
+                        vertices[l++] = square[kk, 1];
+                    }
+                }
+            }
+
+            if (cap[0])
+            {
+                for (var k = 0; k < 4; k++)
+                {
+                    normals[l] = 0.0f;
+                    vertices[l++] = square[k, 0] * t0[0];
+                    normals[l] = -1.0f;
+                    vertices[l++] = square[k, 0] * t0[1];
+                    normals[l] = 0.0f;
+                    vertices[l++] = square[k, 1];
+                }
+            }
+
+            if (cap[1])
+            {
+                for (var k = 0; k < 4; k++)
+                {
+                    normals[l] = -t0[2 * (samples - 1) + 1];
+                    vertices[l++] = square[k, 0] * t0[2 * (samples - 1) + 0];
+                    normals[l] = t0[2 * (samples - 1) + 0];
+                    vertices[l++] = square[k, 0] * t0[2 * (samples - 1) + 1];
+                    normals[l] = 0.0f;
+                    vertices[l++] = square[k, 1];
+                }
+            }
+
+            if (l != 3 * vertices_n)
+                throw new Exception();
+
+            l = 0;
+            var o = 0;
+
+            var triangles_n = (shell ? 4 * 2 * (samples - 1) : 0) + (cap[0] ? 2 : 0) + (cap[1] ? 2 : 0);
+            var indices = new int[3 * triangles_n];
+
+            if (shell)
+            {
+                for (var i = 0; i + 1 < samples; i++)
+                {
+                    for (var k = 0; k < 4; k++)
+                    {
+                        indices[l++] = 4 * 2 * (i + 0) + 0 + 2 * k;
+                        indices[l++] = 4 * 2 * (i + 0) + 1 + 2 * k;
+                        indices[l++] = 4 * 2 * (i + 1) + 0 + 2 * k;
+
+                        indices[l++] = 4 * 2 * (i + 1) + 0 + 2 * k;
+                        indices[l++] = 4 * 2 * (i + 0) + 1 + 2 * k;
+                        indices[l++] = 4 * 2 * (i + 1) + 1 + 2 * k;
+                    }
+                }
+
+                o += 4 * 2 * samples;
+            }
+
+            if (cap[0])
+            {
+                indices[l++] = o + 0;
+                indices[l++] = o + 2;
+                indices[l++] = o + 1;
+                indices[l++] = o + 2;
+                indices[l++] = o + 0;
+                indices[l++] = o + 3;
+                o += 4;
+            }
+
+            if (cap[1])
+            {
+                indices[l++] = o + 0;
+                indices[l++] = o + 1;
+                indices[l++] = o + 2;
+                indices[l++] = o + 2;
+                indices[l++] = o + 3;
+                indices[l++] = o + 0;
+                o += 4;
+            }
+
+            if (o != vertices_n || l != 3 * triangles_n)
+                throw new Exception();
+
+            return new Mesh(vertices, normals, indices, error);
+        }
+
 
         private static Mesh Tessellate(RvmBox box, float scale)
         {
@@ -433,7 +618,6 @@ namespace rvmsharp.Tessellator
                 if (faces[i]) faces_n++;
             }
 
-            
 
             if (faces_n > 0)
             {
@@ -469,6 +653,7 @@ namespace rvmsharp.Tessellator
                 {
                     throw new Exception();
                 }
+
                 return tri;
             }
 
@@ -484,16 +669,19 @@ namespace rvmsharp.Tessellator
             for (var p = 0; p < facetGroup.Polygons.Length; p++)
             {
                 var poly = facetGroup.Polygons[p];
-                
+
                 var (bMin, bMax) = (new Vector3(float.MaxValue), new Vector3(float.MinValue));
                 foreach (var cont in poly.Contours)
                 {
                     foreach (var vn in cont.Vertices)
                     {
-                        (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.v.X), Math.Min(bMin.Y, vn.v.Y), Math.Min(bMin.Z, vn.v.Z));
-                        (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.v.X), Math.Max(bMax.Y, vn.v.Y), Math.Max(bMax.Z, vn.v.Z));
+                        (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.v.X), Math.Min(bMin.Y, vn.v.Y),
+                            Math.Min(bMin.Z, vn.v.Z));
+                        (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.v.X), Math.Max(bMax.Y, vn.v.Y),
+                            Math.Max(bMax.Z, vn.v.Z));
                     }
                 }
+
                 var m = 0.5f * (bMin + bMax);
 
                 var vo = vertices.Count;
@@ -501,7 +689,7 @@ namespace rvmsharp.Tessellator
 
                 var adjustedContours = poly.Contours.Select(v => new RvmContour(
                     v.Vertices.Select(x => (x.v - m, x.n)).ToArray()
-                    )).ToArray();
+                )).ToArray();
 
                 var outJob = TessNet.Tessellate(adjustedContours);
 
@@ -511,7 +699,6 @@ namespace rvmsharp.Tessellator
 
                 if (vertices.Count != normals.Count)
                     throw new Exception();
-
             }
 
             return new Mesh(vertices.ToArray(), normals.ToArray(), indices.ToArray(), 0);

@@ -45,7 +45,7 @@
                 progressBar.Message = leaf.Name;
                 var meshes = leaf.Primitives.Select(p =>
                 {
-                    var mesh = TessellatorBridge.Tessellate(p, 1f);
+                    var mesh = TessellatorBridge.Tessellate(p, 1f, options.Tolerance);
                     mesh?.Apply(p.Matrix);
                     return mesh;
                 }).Where(m => m!= null);
