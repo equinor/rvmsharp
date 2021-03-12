@@ -70,13 +70,25 @@
             return 0;
         }
         
-        private static (string rvmFilename, string txtFilename)[] CollectWorkload(Options options1)
+        private static (string rvmFilename, string txtFilename)[] CollectWorkload(Options options)
         {
-            var regexFilter = options1.Filter != null ? new Regex(options1.Filter) : null;
-            var inputFiles = Directory.GetFiles(options1.InputFolder, "*.rvm")
-                .Concat(Directory.GetFiles(options1.InputFolder, "*.txt"))
-                .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f)))
-                .GroupBy(Path.GetFileNameWithoutExtension).ToArray();
+            var regexFilter = options.Filter != null ? new Regex(options.Filter) : null;
+            var directories = options.Inputs.Where(Directory.Exists).ToArray();
+            var files = options.Inputs.Where(File.Exists).ToArray();
+            var missingInputs = options.Inputs.Where(i => !files.Contains(i) && !directories.Contains(i)).ToArray();
+            
+            if (missingInputs.Any())
+            {
+                throw new ArgumentException("Missing file or folder: " + Environment.NewLine +
+                                            string.Join(Environment.NewLine, missingInputs));
+            }
+
+            var inputFiles = 
+                directories.SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
+                .Concat(directories.SelectMany(directory=> Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
+                .Concat(files) // Append single files
+                .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
+                .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
 
             var workload = (from filePair in inputFiles
                 select filePair.ToArray()

@@ -1,24 +1,25 @@
 ﻿namespace RvmSharp.Exe
 {
     using CommandLine;
+    using System.Collections.Generic;
 
     internal class Options
     {
-        private readonly string _inputFolder;
+        private readonly IEnumerable<string>_inputs;
         private readonly string _filter;
         private readonly string _output;
         private readonly float _tolerance;
 
-        public Options(string inputFolder, string filter, string output, float tolerance)
+        public Options(IEnumerable<string> inputs, string filter, string output, float tolerance)
         {
-            _inputFolder = inputFolder;
+            _inputs = inputs;
             _filter = filter;
             _output = output;
             _tolerance = tolerance;
         }
 
         [Option('i', "input", Required = true, HelpText = "Input folder containing RVM and TXT files.")]
-        public string InputFolder { get { return _inputFolder; } }
+        public IEnumerable<string> Inputs { get { return _inputs; } }
         
         [Option('f', "filter", Required = false, HelpText = "Regex filter to match files in input folder")]
         public string Filter { get { return _filter; } }
