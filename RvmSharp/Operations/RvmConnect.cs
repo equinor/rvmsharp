@@ -113,13 +113,13 @@
             context.anchors_total++;
         }
 
-        private static void Recurse(Context context, RvmGroup group)
+        private static void Recurse(Context context, RvmNode group)
         {
             var offset = context.AnchorsN;
-            foreach (var child in group.Children)
+            foreach (var child in @group.Children.OfType<RvmNode>())
                 Recurse(context, child);
 
-            foreach (var prim in group.Primitives)
+            foreach (var prim in group.Children.OfType<RvmPrimitive>())
             {
                 switch (prim)
                 {

@@ -1,6 +1,8 @@
 ﻿namespace RvmSharp.Containers
 {
+    using Primitives;
     using System.Collections.Generic;
+    using System.Linq;
 
     public class RvmFile
     {
@@ -29,11 +31,11 @@
             AssignRecursive(pdms, Model.children);
         }
         
-        private static void AssignRecursive(IList<PdmsTextParser.PdmsNode> attributes, IList<RvmGroup> groups)
+        private static void AssignRecursive(IList<PdmsTextParser.PdmsNode> attributes, IList<RvmNode> groups)
         {
             //if (attributes.Count != groups.Count)
             //    Console.Error.WriteLine("Length of attribute nodes does not match group length");
-            var copy = new List<RvmGroup>(groups);
+            var copy = new List<RvmNode>(groups);
             for (var i = 0; i < attributes.Count; i++)
             {
                 var pdms = attributes[i];
@@ -45,7 +47,7 @@
                         // todo attr
                         foreach (var kvp in pdms.MetadataDict)
                             group.Attributes.Add(kvp.Key, kvp.Value);
-                        AssignRecursive(pdms.Children, group.Children);
+                        AssignRecursive(pdms.Children, group.Children.OfType<RvmNode>().ToArray());
                         break;
                     }
                 }

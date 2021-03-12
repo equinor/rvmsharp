@@ -10,6 +10,7 @@
     using Containers;
     using Exporters;
     using Operations;
+    using Primitives;
     using System.Diagnostics;
     using System.Text.RegularExpressions;
 
@@ -32,7 +33,7 @@
 
             var rvmStore = ReadRvmData(workload);
             
-            var progressBar = new ProgressBar(2, "Aligining");
+            var progressBar = new ProgressBar(2, "Aligning");
             RvmConnect.Connect(rvmStore);
             progressBar.Tick();
             RvmAlign.Align(rvmStore);
@@ -106,7 +107,7 @@
         {
             using var progressBar = new ProgressBar(workload.Length, "Parsing input");
 
-            var rvmFiles = workload.AsParallel().WithDegreeOfParallelism(64).Select(filePair =>
+            var rvmFiles = workload.Select(filePair =>
             {
                 (string rvmFilename, string txtFilename) = filePair;
                 Debug.Assert(true, nameof(progressBar) + " != null");
@@ -127,11 +128,11 @@
             return rvmStore;
         }
 
-        private static IEnumerable<RvmGroup> CollectGeometryNodes(RvmGroup root)
+        private static IEnumerable<RvmNode> CollectGeometryNodes(RvmNode root)
         {
-            if (root.Primitives.Count > 0)
+            if (root.Children.OfType<RvmPrimitive>().Any())
                 yield return root;
-            foreach (var geometryNode in root.Children.SelectMany(CollectGeometryNodes))
+            foreach (var geometryNode in root.Children.OfType<RvmNode>().SelectMany(CollectGeometryNodes))
                 yield return geometryNode;
         }
     }

@@ -8,7 +8,7 @@
         public readonly uint Version;
         public readonly string Project;
         public readonly string Name;
-        public readonly List<RvmGroup> children = new List<RvmGroup>();
+        public readonly List<RvmNode> children = new List<RvmNode>();
         private readonly List<RvmPrimitive> primitives = new List<RvmPrimitive>();
         private readonly List<RvmColor> colors = new List<RvmColor>();
 
@@ -19,9 +19,9 @@
             Name = name;
         }
 
-        internal void AddChild(RvmGroup rvmGroup)
+        internal void AddChild(RvmNode rvmNode)
         {
-            children.Add(rvmGroup);
+            children.Add(rvmNode);
         }
 
         internal void AddPrimitive(RvmPrimitive rvmPrimitive)

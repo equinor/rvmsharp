@@ -1,36 +1,12 @@
 ﻿namespace RvmSharp.Containers
 {
-    using Primitives;
-    using System.Collections.Generic;
-    using System.Numerics;
-
-    public class RvmGroup
+    public abstract class RvmGroup
     {
-        public readonly List<RvmGroup> Children = new List<RvmGroup>();
-        public readonly List<RvmPrimitive> Primitives = new List<RvmPrimitive>();
         public readonly uint Version;
-        public readonly string Name;
-        public readonly Vector3 Translation;
-        public readonly uint MaterialId;
-        public readonly Dictionary<string, string> Attributes = new();
 
-        public RvmGroup(uint version, string name, Vector3 translation, uint materialId)
+        public RvmGroup(uint version)
         {
             this.Version = version;
-            this.Name = name;
-            Translation = translation;
-            MaterialId = materialId;
         }
-
-        internal void AddChild(RvmGroup rvmGroup)
-        {
-            Children.Add(rvmGroup);
-        }
-
-        internal void AddPrimitive(RvmPrimitive rvmPrimitive)
-        {
-            Primitives.Add(rvmPrimitive);
-        }
-
     }
 }

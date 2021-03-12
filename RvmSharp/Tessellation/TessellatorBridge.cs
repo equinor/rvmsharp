@@ -15,9 +15,9 @@ namespace RvmSharp.Tessellation
         private const int MaxSamples = 100;
         private const float MinimumThreshold = 1e-7f;
 
-        public static Mesh[] Tessellate(RvmGroup group, float tolerance)
+        public static Mesh[] Tessellate(RvmNode group, float tolerance)
         {   
-            var meshes = group.Primitives.Select(p =>
+            var meshes = group.Children.OfType<RvmPrimitive>().Select(p =>
             {
                 if (!Matrix4x4.Decompose(p.Matrix, out var scale, out var rotation, out var translation))
                 {

@@ -207,7 +207,7 @@
             // transform bb to world?
             }
 
-            public static RvmGroup ReadCntb(Stream stream)
+            public static RvmNode ReadCntb(Stream stream)
         {
             var version = ReadUint(stream);
             var name = ReadString(stream);
@@ -220,7 +220,7 @@
                 ReadUint(stream);
             }
                 
-            var group = new RvmGroup(version, name, translation, materialId);
+            var group = new RvmNode(version, name, translation, materialId);
             uint nextHeaderOffset, dunno;
             var id = ReadChunkHeader(stream, out nextHeaderOffset, out dunno);
             while (id != "CNTE")
@@ -231,7 +231,7 @@
                         group.AddChild(ReadCntb(stream));
                         break;
                     case "PRIM":
-                        group.AddPrimitive(ReadPrimitive(stream));
+                        group.AddChild(ReadPrimitive(stream));
                         break;
                     default:
                         throw new NotImplementedException($"Unknown chunk: {id}");

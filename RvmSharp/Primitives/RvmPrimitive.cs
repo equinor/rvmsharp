@@ -1,8 +1,9 @@
 ﻿namespace RvmSharp.Primitives
 {
+    using Containers;
     using System.Numerics;
 
-    public abstract class RvmPrimitive
+    public abstract class RvmPrimitive : RvmGroup
     {
         public readonly uint Version;
         public readonly RvmPrimitiveKind Kind;
@@ -11,7 +12,7 @@
         public readonly RvmConnection[] Connections = { null, null, null, null, null, null};
         internal float SampleStartAngle;
 
-        public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal)
+        public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal) : base(version)
         {
             Version = version;
             Kind = kind;
