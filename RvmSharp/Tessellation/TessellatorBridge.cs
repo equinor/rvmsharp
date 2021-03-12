@@ -6,6 +6,7 @@ using static RvmSharp.Primitives.RvmFacetGroup;
 
 namespace RvmSharp.Tessellation
 {
+    using Containers;
     using Primitives;
 
     public class TessellatorBridge
@@ -13,6 +14,23 @@ namespace RvmSharp.Tessellation
         private const int MinSamples = 3;
         private const int MaxSamples = 100;
         private const float MinimumThreshold = 1e-7f;
+
+        public static Mesh[] Tessellate(RvmGroup group, float tolerance)
+        {   
+            var meshes = group.Primitives.Select(p =>
+            {
+                if (!Matrix4x4.Decompose(p.Matrix, out var scale, out var rotation, out var translation))
+                {
+                    throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
+                }
+
+                var scaleScalar = MathF.Max(scale.X, MathF.Max(scale.Y, scale.Z));
+                var mesh = TessellatorBridge.Tessellate(p, scaleScalar, tolerance);
+                mesh?.Apply(p.Matrix);
+                return mesh;
+            }).Where(m => m!= null);
+            return meshes.ToArray();
+        }
         
         public static Mesh Tessellate(RvmPrimitive geometry, float scale, float tolerance)
         {

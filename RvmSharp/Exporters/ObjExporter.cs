@@ -37,11 +37,11 @@
         {
             foreach (var v in mesh.Vertices)
             {
-                _writer.WriteLine("v " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Y.ToString("0.000000", CultureInfo.InvariantCulture));
+                _writer.WriteLine("v " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + (-v.Y).ToString("0.000000", CultureInfo.InvariantCulture));
             }
             foreach (var v in mesh.Normals)
             {
-                _writer.WriteLine("vn " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Y.ToString("0.000000", CultureInfo.InvariantCulture));
+                _writer.WriteLine("vn " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + (-v.Y).ToString("0.000000", CultureInfo.InvariantCulture));
             }
 
             _writer.WriteLine("s off");

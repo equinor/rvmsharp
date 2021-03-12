@@ -44,12 +44,7 @@
             var meshes = leafs.AsParallel().Select(leaf =>
             {
                 progressBar.Message = leaf.Name;
-                var meshes = leaf.Primitives.Select(p =>
-                {
-                    var mesh = TessellatorBridge.Tessellate(p, 1f, options.Tolerance);
-                    mesh?.Apply(p.Matrix);
-                    return mesh;
-                }).Where(m => m!= null);
+                var meshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
                 progressBar.Tick();
                 return (leaf.Name, meshes);
             }).ToArray();
