@@ -79,8 +79,8 @@
             
             if (missingInputs.Any())
             {
-                throw new ArgumentException("Missing file or folder: " + Environment.NewLine +
-                                            string.Join(Environment.NewLine, missingInputs));
+                throw new FileNotFoundException(
+                    $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}");
             }
 
             var inputFiles = 
@@ -95,9 +95,16 @@
                 into filePairStatic
                 let rvmFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".rvm"))
                 let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
-                where rvmFilename != null
                 select (rvmFilename, txtFilename)).ToArray();
-            return workload;
+
+            foreach (var workItem in workload)
+            {
+                if (workItem.rvmFilename == null)
+                    Console.WriteLine(
+                        $"No corresponding RVM file found for attributes: '{workItem.txtFilename}', the file will be skipped.");
+            }
+            
+            return workload.Where(rvmTxt => rvmTxt.rvmFilename != null).ToArray();
         }
 
         private static RvmStore ReadRvmData((string rvmFilename, string txtFilename)[] workload)
