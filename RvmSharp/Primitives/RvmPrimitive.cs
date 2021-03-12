@@ -5,7 +5,6 @@
 
     public abstract class RvmPrimitive : RvmGroup
     {
-        public readonly uint Version;
         public readonly RvmPrimitiveKind Kind;
         public readonly Matrix4x4 Matrix;
         public readonly RvmBoundingBox BoundingBoxLocal;
@@ -14,7 +13,6 @@
 
         public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal) : base(version)
         {
-            Version = version;
             Kind = kind;
             Matrix = matrix;
             BoundingBoxLocal = bBoxLocal;
