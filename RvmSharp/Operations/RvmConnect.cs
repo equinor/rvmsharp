@@ -48,7 +48,7 @@
 
                 for (int i = j + 1; i < a.Length && a[i].p.X <= a[j].p.X + e; i++)
                 {
-                    bool canMatch = a[i].matched == false;
+                    bool canMatch = a[i].matched == false && a[i].geo != a[j].geo;
                     bool close = Vector3.DistanceSquared(a[j].p, a[i].p) <= ee;
                     bool aligned = Vector3.Dot(a[j].d, a[i].d) < -0.98f;
 
