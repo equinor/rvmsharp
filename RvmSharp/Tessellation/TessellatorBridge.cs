@@ -22,7 +22,7 @@ namespace RvmSharp.Tessellation
                 }
 
                 var scaleScalar = MathF.Max(scale.X, MathF.Max(scale.Y, scale.Z));
-                var mesh = TessellatorBridge.Tessellate(p, scaleScalar, tolerance);
+                var mesh = Tessellate(p, scaleScalar, tolerance);
                 mesh?.Apply(p.Matrix);
                 return mesh;
             }).Where(m => m!= null);
@@ -34,11 +34,11 @@ namespace RvmSharp.Tessellation
             switch (geometry)
             {
                 case RvmBox box:
-                    return Tessellate(box, scale);
+                    return Tessellate(box);
                 case RvmFacetGroup facetGroup:
-                    return Tessellate(facetGroup, scale);
+                    return Tessellate(facetGroup);
                 case RvmPyramid pyramid:
-                    return Tessellate(pyramid, scale);
+                    return Tessellate(pyramid);
                 case RvmRectangularTorus rectangularTorus:
                     return Tessellate(rectangularTorus, scale, tolerance);
                 case RvmCylinder cylinder:
@@ -108,7 +108,7 @@ namespace RvmSharp.Tessellation
             return true;
         }
 
-        private static Mesh Tessellate(RvmPyramid pyramid, float scale)
+        private static Mesh Tessellate(RvmPyramid pyramid)
         {
             var bx = 0.5f * pyramid.BottomX;
             var by = 0.5f * pyramid.BottomY;
@@ -552,7 +552,7 @@ namespace RvmSharp.Tessellation
         }
 
 
-        private static Mesh Tessellate(RvmBox box, float scale)
+        private static Mesh Tessellate(RvmBox box)
         {
             var xp = 0.5f * box.LengthX;
             var xm = -xp;
@@ -645,7 +645,7 @@ namespace RvmSharp.Tessellation
             return new Mesh(new float[0], new float[0], new int[0], 0);
         }
 
-        private static Mesh Tessellate(RvmFacetGroup facetGroup, float scale)
+        private static Mesh Tessellate(RvmFacetGroup facetGroup)
         {
             var vertices = new List<Vector3>();
             var normals = new List<Vector3>();
