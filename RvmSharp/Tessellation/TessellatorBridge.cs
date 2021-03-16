@@ -6,13 +6,10 @@ using static RvmSharp.Primitives.RvmFacetGroup;
 
 namespace RvmSharp.Tessellation
 {
-    using Containers;
     using Primitives;
 
     public class TessellatorBridge
     {
-        private const int MinSamples = 3;
-        private const int MaxSamples = 100;
         private const float MinimumThreshold = 1e-7f;
 
         public static Mesh[] Tessellate(RvmNode group, float tolerance)
@@ -72,239 +69,6 @@ namespace RvmSharp.Tessellation
                 default:
                     throw new NotImplementedException($"Unsupported type for tesselation: {geometry?.Kind}");
             }
-
-            ;
-        }
-
-
-        private static int quadIndices(int[] indices, int l, int o, int v0, int v1, int v2, int v3)
-        {
-            indices[l++] = o + v0;
-            indices[l++] = o + v1;
-            indices[l++] = o + v2;
-
-            indices[l++] = o + v2;
-            indices[l++] = o + v3;
-            indices[l++] = o + v0;
-            return l;
-        }
-
-        private static int vertex(Vector3[] normals, Vector3[] vertices, int l, Vector3 normal, Vector3 point)
-        {
-            normals[l] = new Vector3(normal.X, normal.Y, normal.Z);
-            vertices[l] = new Vector3(point.X, point.Y, point.Z);
-            return ++l;
-        }
-
-
-        private static int vertex(Vector3[] normals, Vector3[] vertices, int l, float nx, float ny, float nz, float px,
-            float py, float pz)
-        {
-            normals[l] = new Vector3(nx, ny, nz);
-            vertices[l] = new Vector3(px, py, pz);
-            return ++l;
-        }
-
-        private static int vertex(float[] normals, float[] vertices, int l, Vector3 normal, Vector3 point)
-        {
-            normals[l] = normal.X;
-            vertices[l++] = point.X;
-            normals[l] = normal.Y;
-            vertices[l++] = point.Y;
-            normals[l] = normal.Z;
-            vertices[l++] = point.Z;
-            return l;
-        }
-
-        private static int vertex(float[] normals, float[] vertices, int l, float nx, float ny, float nz, float px,
-            float py, float pz)
-        {
-            normals[l] = nx;
-            vertices[l++] = px;
-            normals[l] = ny;
-            vertices[l++] = py;
-            normals[l] = nz;
-            vertices[l++] = pz;
-            return l;
-        }
-
-        private static int SagittaBasedSegmentCount(double arc, float radius, float scale, float tolerance)
-        {
-            var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - tolerance / (scale * radius)));
-            return Math.Min(MaxSamples, (int)(Math.Max(MinSamples, Math.Ceiling(samples))));
-        }
-
-        private static float SagittaBasedError(double arc, float radius, float scale, int segments)
-        {
-            var s = scale * radius * (1.0f - Math.Cos(arc / segments)); // Length of sagitta
-            //assert(s <= tolerance);
-            return (float)s;
-        }
-
-
-        private class ConnectionInterface
-        {
-            public enum Type
-            {
-                Undefined,
-                Square,
-                Circular
-            }
-
-            public Type InterfaceType = Type.Undefined;
-            public readonly Vector3[] SquareConnectionPoints = new Vector3[4];
-            public float CircularRadius;
-        }
-
-        private static ConnectionInterface GetInterface(RvmPrimitive geo, int o)
-        {
-            var iface = new ConnectionInterface();
-            var connection = geo.Connections[o];
-            var ix = connection.p1 == geo ? 1 : 0;
-            if (!Matrix4x4.Decompose(geo.Matrix, out var vscale, out var _, out var _))
-                throw new Exception();
-            var scale = Math.Max(vscale.X, Math.Max(vscale.Y, vscale.Z));
-            switch (geo)
-            {
-                case RvmPyramid pyramid:
-                {
-                    var bx = 0.5f * pyramid.BottomX;
-                    var by = 0.5f * pyramid.BottomY;
-                    var tx = 0.5f * pyramid.TopX;
-                    var ty = 0.5f * pyramid.TopY;
-                    var ox = 0.5f * pyramid.OffsetX;
-                    var oy = 0.5f * pyramid.OffsetY;
-                    var h2 = 0.5f * pyramid.Height;
-                    Vector3[,] quad = {
-                        {
-                            new Vector3(-bx - ox, -by - oy, -h2), new Vector3(bx - ox, -by - oy, -h2),
-                            new Vector3(bx - ox, by - oy, -h2), new Vector3(-bx - ox, by - oy, -h2)
-                        },
-                        {
-                            new Vector3(-tx + ox, -ty + oy, h2), new Vector3(tx + ox, -ty + oy, h2),
-                            new Vector3(tx + ox, ty + oy, h2), new Vector3(-tx + ox, ty + oy, h2)
-                        },
-                    };
-
-                    iface.InterfaceType = ConnectionInterface.Type.Square;
-                    if (o < 4)
-                    {
-                        var oo = (o + 1) & 3;
-                        iface.SquareConnectionPoints[0] = Vector3.Transform(quad[0, o], geo.Matrix);
-                        iface.SquareConnectionPoints[1] = Vector3.Transform(quad[0, oo], geo.Matrix);
-                        iface.SquareConnectionPoints[2] = Vector3.Transform(quad[1, oo], geo.Matrix);
-                        iface.SquareConnectionPoints[3] = Vector3.Transform(quad[1, o], geo.Matrix);
-                    }
-                    else
-                    {
-                        for (var k = 0; k < 4; k++) iface.SquareConnectionPoints[k] = Vector3.Transform(quad[o - 4, k], geo.Matrix);
-                    }
-
-                    break;
-                }
-                case RvmBox box:
-                {
-                    var xp = 0.5f * box.LengthX;
-                    var xm = -xp;
-                    var yp = 0.5f * box.LengthY;
-                    var ym = -yp;
-                    var zp = 0.5f * box.LengthZ;
-                    var zm = -zp;
-                    Vector3[,] V =
-                    {
-                        {
-                            new Vector3(xm, ym, zp), new Vector3(xm, yp, zp), new Vector3(xm, yp, zm),
-                            new Vector3(xm, ym, zm)
-                        },
-                        {
-                            new Vector3(xp, ym, zm), new Vector3(xp, yp, zm), new Vector3(xp, yp, zp),
-                            new Vector3(xp, ym, zp)
-                        },
-                        {
-                            new Vector3(xp, ym, zm), new Vector3(xp, ym, zp), new Vector3(xm, ym, zp),
-                            new Vector3(xm, ym, zm)
-                        },
-                        {
-                            new Vector3(xm, yp, zm), new Vector3(xm, yp, zp), new Vector3(xp, yp, zp),
-                            new Vector3(xp, yp, zm)
-                        },
-                        {
-                            new Vector3(xm, yp, zm), new Vector3(xp, yp, zm), new Vector3(xp, ym, zm),
-                            new Vector3(xm, ym, zm)
-                        },
-                        {
-                            new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp),
-                            new Vector3(xm, yp, zp)
-                        }
-                    };
-                    for (var k = 0; k < 4; k++) iface.SquareConnectionPoints[k] = Vector3.Transform(V[o, k], geo.Matrix);
-                    break;
-                }
-                case RvmRectangularTorus tor:
-                {
-                    var h2 = 0.5f * tor.Height;
-                    float[,] square =
-                    {
-                        {tor.RadiusOuter, -h2}, {tor.RadiusInner, -h2}, {tor.RadiusInner, h2},
-                        {tor.RadiusOuter, h2},
-                    };
-                    if (o == 0)
-                    {
-                        for (var k = 0; k < 4; k++)
-                        {
-                            iface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3(square[k, 0], 0.0f, square[k, 1]), geo.Matrix);
-                        }
-                    }
-                    else
-                    {
-                        for (var k = 0; k < 4; k++)
-                        {
-                            iface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3((float)(square[k, 0] * Math.Cos(tor.Angle)),
-                                (float)(square[k, 0] * Math.Sin(tor.Angle)),
-                                square[k, 1]), geo.Matrix);
-                        }
-                    }
-
-                    break;
-                }
-                case RvmCircularTorus circularTorus:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
-                    iface.CircularRadius = scale * circularTorus.Radius;
-                    break;
-
-                case RvmEllipticalDish ellipticalDish:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
-                    iface.CircularRadius = scale * ellipticalDish.BaseRadius;
-                    break;
-
-                case RvmSphericalDish sphericalDish:
-                {
-                    float r_circ = sphericalDish.BaseRadius;
-                    var h = sphericalDish.Height;
-                    float r_sphere = (r_circ * r_circ + h * h) / (2.0f * h);
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
-                    iface.CircularRadius = scale * r_sphere;
-                    break;
-                }
-                case RvmSnout snout:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
-                    var offset = ix == 0 ? connection.OffsetX : connection.OffsetY;
-                    iface.CircularRadius = scale * (offset == 0 ? snout.RadiusBottom : snout.RadiusTop);
-                    break;
-                case RvmCylinder cylinder:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
-                    iface.CircularRadius = scale * cylinder.Radius;
-                    break;
-                case RvmSphere:
-                case RvmLine:
-                case RvmFacetGroup:
-                    iface.InterfaceType = ConnectionInterface.Type.Undefined;
-                    break;
-                default:
-                    throw new NotSupportedException("Unhandled primitive type");
-            }
-
-            return iface;
         }
 
         private static bool DoInterfacesMatch(RvmPrimitive primitive, RvmConnection connection)
@@ -313,11 +77,11 @@ namespace RvmSharp.Tessellation
 
             var thisGeo = isFirst ? connection.p1 : connection.p2;
             var thisOffset = isFirst ? connection.OffsetX : connection.OffsetY;
-            var thisIFace = GetInterface(thisGeo, (int)thisOffset);
+            var thisIFace = ConnectionInterface.GetInterface(thisGeo, (int)thisOffset);
 
             var thatGeo = isFirst ? connection.p2 : connection.p1;
             var thatOffset = isFirst ? connection.OffsetY : connection.OffsetX;
-            var thatIFace = GetInterface(thatGeo, (int)thatOffset);
+            var thatIFace = ConnectionInterface.GetInterface(thatGeo, (int)thatOffset);
 
 
             if (thisIFace.InterfaceType != thatIFace.InterfaceType) 
@@ -409,17 +173,17 @@ namespace RvmSharp.Tessellation
             {
                 if (cap[i] == false) continue;
                 var ii = (i + 1) & 3;
-                l = vertex(normals, vertices, l, n[i], quad[0, i]);
-                l = vertex(normals, vertices, l, n[i], quad[0, ii]);
-                l = vertex(normals, vertices, l, n[i], quad[1, ii]);
-                l = vertex(normals, vertices, l, n[i], quad[1, i]);
+                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[0, i]);
+                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[0, ii]);
+                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[1, ii]);
+                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[1, i]);
             }
 
             if (cap[4])
             {
                 for (var i = 0; i < 4; i++)
                 {
-                    l = vertex(normals, vertices, l, n[4], quad[0, i]);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, n[4], quad[0, i]);
                 }
             }
 
@@ -427,7 +191,7 @@ namespace RvmSharp.Tessellation
             {
                 for (var i = 0; i < 4; i++)
                 {
-                    l = vertex(normals, vertices, l, n[5], quad[1, i]);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, n[5], quad[1, i]);
                 }
             }
 
@@ -440,19 +204,19 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 4; i++)
             {
                 if (cap[i] == false) continue;
-                l = quadIndices(indices, l, o /*4 * i*/, 0, 1, 2, 3);
+                l = TessellationHelpers.QuadIndices(indices, l, o /*4 * i*/, 0, 1, 2, 3);
                 o += 4;
             }
 
             if (cap[4])
             {
-                l = quadIndices(indices, l, o, 3, 2, 1, 0);
+                l = TessellationHelpers.QuadIndices(indices, l, o, 3, 2, 1, 0);
                 o += 4;
             }
 
             if (cap[5])
             {
-                l = quadIndices(indices, l, o, 0, 1, 2, 3);
+                l = TessellationHelpers.QuadIndices(indices, l, o, 0, 1, 2, 3);
                 o += 4;
             }
 
@@ -465,11 +229,10 @@ namespace RvmSharp.Tessellation
 
         private static Mesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
         {
-            var segments =
-                SagittaBasedSegmentCount(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, tolerance);
+            var segments = TessellationHelpers.SagittaBasedSegmentCount(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, tolerance);
             var samples = segments + 1; // Assumed to be open, add extra sample.
 
-            var error = SagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, segments);
+            var error = TessellationHelpers.SagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, segments);
 
             bool shell = true;
             bool[] cap = {true, true};
@@ -624,15 +387,12 @@ namespace RvmSharp.Tessellation
 
         private static Mesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
         {
-            var segments_l = SagittaBasedSegmentCount(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
+            var segments_l = TessellationHelpers.SagittaBasedSegmentCount(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
                 scale, tolerance); // large radius, toroidal direction
-            var segments_s =
-                SagittaBasedSegmentCount(Math.PI * 2, circularTorus.Radius, scale,
+            var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, circularTorus.Radius, scale,
                     tolerance); // small radius, poloidal direction
 
-            var error = Math.Max(
-                SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius, scale, segments_l),
-                SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
+            var error = Math.Max(TessellationHelpers.SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius, scale, segments_l), TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
 
             var samples_l = segments_l + 1; // Assumed to be open, add extra sample
             var samples_s = segments_s; // Assumed to be closed
@@ -862,10 +622,10 @@ namespace RvmSharp.Tessellation
 
                     for (var i = 0; i < 4; i++)
                     {
-                        i_v = vertex(normals, vertices, i_v, N[f], V[f, i]);
+                        i_v = TessellationHelpers.Vertex(normals, vertices, i_v, N[f], V[f, i]);
                     }
 
-                    i_p = quadIndices(indices, i_p, o, 0, 1, 2, 3);
+                    i_p = TessellationHelpers.QuadIndices(indices, i_p, o, 0, 1, 2, 3);
 
                     o += 4;
                 }
@@ -937,10 +697,10 @@ namespace RvmSharp.Tessellation
             //  return;
             //}
 
-            int segments = SagittaBasedSegmentCount(Math.PI * 2, cylinder.Radius, scale, tolerance);
+            int segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, cylinder.Radius, scale, tolerance);
             int samples = segments; // Assumed to be closed
 
-            var error = SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
+            var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
 
             bool shell = true;
             bool[] shouldCap = {true, true};
@@ -991,9 +751,9 @@ namespace RvmSharp.Tessellation
             {
                 for (int i = 0; i < samples; i++)
                 {
-                    l = vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1],
+                    l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1],
                         -h2);
-                    l = vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1], h2);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1], h2);
                 }
             }
 
@@ -1001,7 +761,7 @@ namespace RvmSharp.Tessellation
             {
                 for (int i = 0; i < samples; i++)
                 {
-                    l = vertex(normals, vertices, l, new Vector3(0, 0, -1),
+                    l = TessellationHelpers.Vertex(normals, vertices, l, new Vector3(0, 0, -1),
                         new Vector3(t1[2 * i + 0], t1[2 * i + 1], -h2));
                 }
             }
@@ -1010,7 +770,7 @@ namespace RvmSharp.Tessellation
             {
                 for (int i = 0; i < samples; i++)
                 {
-                    l = vertex(normals, vertices, l, new Vector3(0, 0, 1),
+                    l = TessellationHelpers.Vertex(normals, vertices, l, new Vector3(0, 0, 1),
                         new Vector3(t1[2 * i + 0], t1[2 * i + 1], h2));
                 }
             }
@@ -1024,7 +784,7 @@ namespace RvmSharp.Tessellation
                 for (int i = 0; i < samples; i++)
                 {
                     int ii = (i + 1) % samples;
-                    l = quadIndices(indices, l, 0, 2 * i, 2 * ii, 2 * ii + 1, 2 * i + 1);
+                    l = TessellationHelpers.QuadIndices(indices, l, 0, 2 * i, 2 * ii, 2 * ii + 1, 2 * i + 1);
                 }
 
                 o += 2 * samples;
@@ -1063,10 +823,10 @@ namespace RvmSharp.Tessellation
         private static Mesh Tessellate(RvmSnout snout, float scale, float tolerance)
         {
             var radius_max = Math.Max(snout.RadiusBottom, snout.RadiusTop);
-            var segments = SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
+            var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
             var samples = segments; // assumed to be closed
 
-            var error = SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
+            var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
 
             bool shell = true;
             bool[] cap = {true, true};
@@ -1139,8 +899,8 @@ namespace RvmSharp.Tessellation
                         ? 0
                         : -(snout.RadiusTop - snout.RadiusBottom + s) / snout.Height;
 
-                    l = vertex(normals, vertices, l, nx, ny, nz, xb, yb, zb);
-                    l = vertex(normals, vertices, l, nx, ny, nz, xt, yt, zt);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz, xb, yb, zb);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz, xt, yt, zt);
                 }
             }
 
@@ -1151,7 +911,7 @@ namespace RvmSharp.Tessellation
                 var nz = (float)(-Math.Cos(snout.BottomShearX) * Math.Cos(snout.BottomShearY));
                 for (var i = 0; cap[0] && i < samples; i++)
                 {
-                    l = vertex(normals, vertices, l, nx, ny, nz,
+                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz,
                         t1[2 * i + 0] - ox,
                         t1[2 * i + 1] - oy,
                         -h2 + mb[0] * t1[2 * i + 0] + mb[1] * t1[2 * i + 1]);
@@ -1165,7 +925,7 @@ namespace RvmSharp.Tessellation
                 var nz = (float)(Math.Cos(snout.TopShearX) * Math.Cos(snout.TopShearY));
                 for (var i = 0; i < samples; i++)
                 {
-                    l = vertex(normals, vertices, l, nx, ny, nz,
+                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz,
                         t2[2 * i + 0] + ox,
                         t2[2 * i + 1] + oy,
                         h2 + mt[0] * t2[2 * i + 0] + mt[1] * t2[2 * i + 1]);
@@ -1181,7 +941,7 @@ namespace RvmSharp.Tessellation
                 for (var i = 0; i < samples; i++)
                 {
                     var ii = (i + 1) % samples;
-                    l = quadIndices(indices, l, 0, 2 * i, 2 * ii, 2 * ii + 1, 2 * i + 1);
+                    l = TessellationHelpers.QuadIndices(indices, l, 0, 2 * i, 2 * ii, 2 * ii + 1, 2 * i + 1);
                 }
 
                 o += 2 * samples;
@@ -1221,10 +981,10 @@ namespace RvmSharp.Tessellation
         private static Mesh Tessellate(RvmPrimitive sphereBasedPrimitive, float radius, float arc, float shift_z,
             float scale_z, float scale, float tolerance)
         {
-            var segments = SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
+            var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
             var samples = segments; // Assumed to be closed
 
-            var error = SagittaBasedError(Math.PI * 2, radius, scale, samples);
+            var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius, scale, samples);
 
             bool is_sphere = false;
             if (Math.PI - 1e-3 <= arc)
@@ -1279,7 +1039,7 @@ namespace RvmSharp.Tessellation
                     var phi = (float)(phi_scale * i + sphereBasedPrimitive.SampleStartAngle);
                     var nx = (float)(w * Math.Cos(phi));
                     var ny = (float)(w * Math.Sin(phi));
-                    l = vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny, z);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny, z);
                 }
             }
 
