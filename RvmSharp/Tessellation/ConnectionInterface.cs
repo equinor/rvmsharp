@@ -16,7 +16,9 @@
         public readonly Vector3[] SquareConnectionPoints = new Vector3[4];
         public float CircularRadius;
 
-        internal static ConnectionInterface GetInterface(RvmPrimitive geo, int o)
+        private ConnectionInterface() { }
+
+        private static ConnectionInterface GetInterface(RvmPrimitive geo, int o)
         {
             var iface = new ConnectionInterface();
             var connection = geo.Connections[o];
@@ -165,6 +167,43 @@
             }
 
             return iface;
+        }
+
+        internal static bool DoInterfacesMatch(RvmPrimitive primitive, RvmConnection connection)
+        {
+            bool isFirst = primitive == connection.p1;
+
+            var thisGeo = isFirst ? connection.p1 : connection.p2;
+            var thisOffset = isFirst ? connection.OffsetX : connection.OffsetY;
+            var thisIFace = ConnectionInterface.GetInterface(thisGeo, (int)thisOffset);
+
+            var thatGeo = isFirst ? connection.p2 : connection.p1;
+            var thatOffset = isFirst ? connection.OffsetY : connection.OffsetX;
+            var thatIFace = ConnectionInterface.GetInterface(thatGeo, (int)thatOffset);
+
+
+            if (thisIFace.InterfaceType != thatIFace.InterfaceType) 
+                return false;
+
+            if (thisIFace.InterfaceType == ConnectionInterface.Type.Circular)
+                return thisIFace.CircularRadius <= 1.05f * thatIFace.CircularRadius;
+            
+            for (var j = 0; j < 4; j++)
+            {
+                bool found = false;
+                for (var i = 0; i < 4; i++)
+                {
+                    if (Vector3.DistanceSquared(thisIFace.SquareConnectionPoints[j], thatIFace.SquareConnectionPoints[i]) < 0.001f * 0.001f)
+                    {
+                        found = true;
+                    }
+                }
+
+                if (!found) 
+                    return false;
+            }
+
+            return true;
         }
     }
 }

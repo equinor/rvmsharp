@@ -71,43 +71,6 @@ namespace RvmSharp.Tessellation
             }
         }
 
-        private static bool DoInterfacesMatch(RvmPrimitive primitive, RvmConnection connection)
-        {
-            bool isFirst = primitive == connection.p1;
-
-            var thisGeo = isFirst ? connection.p1 : connection.p2;
-            var thisOffset = isFirst ? connection.OffsetX : connection.OffsetY;
-            var thisIFace = ConnectionInterface.GetInterface(thisGeo, (int)thisOffset);
-
-            var thatGeo = isFirst ? connection.p2 : connection.p1;
-            var thatOffset = isFirst ? connection.OffsetY : connection.OffsetX;
-            var thatIFace = ConnectionInterface.GetInterface(thatGeo, (int)thatOffset);
-
-
-            if (thisIFace.InterfaceType != thatIFace.InterfaceType) 
-                return false;
-
-            if (thisIFace.InterfaceType == ConnectionInterface.Type.Circular)
-                return thisIFace.CircularRadius <= 1.05f * thatIFace.CircularRadius;
-            
-            for (var j = 0; j < 4; j++)
-            {
-                bool found = false;
-                for (var i = 0; i < 4; i++)
-                {
-                    if (Vector3.DistanceSquared(thisIFace.SquareConnectionPoints[j], thatIFace.SquareConnectionPoints[i]) < 0.001f * 0.001f)
-                    {
-                        found = true;
-                    }
-                }
-
-                if (!found) 
-                    return false;
-            }
-
-            return true;
-        }
-
         private static Mesh Tessellate(RvmPyramid pyramid)
         {
             var bx = 0.5f * pyramid.BottomX;
@@ -152,7 +115,7 @@ namespace RvmSharp.Tessellation
                 var con = pyramid.Connections[i];
                 if (cap[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
 
-                if (DoInterfacesMatch(pyramid, con))
+                if (ConnectionInterface.DoInterfacesMatch(pyramid, con))
                 {
                     cap[i] = false;
                 }
@@ -242,7 +205,7 @@ namespace RvmSharp.Tessellation
                 var con = rectangularTorus.Connections[i];
                 if (con != null && con.flags == RvmConnection.Flags.HasRectangularSide)
                 {
-                    if (DoInterfacesMatch(rectangularTorus, con))
+                    if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
                     {
                         cap[i] = false;
                     }
@@ -404,7 +367,7 @@ namespace RvmSharp.Tessellation
                 var con = circularTorus.Connections[i];
                 if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
                 {
-                    if (DoInterfacesMatch(circularTorus, con))
+                    if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
                     {
                         cap[i] = false;
                     }
@@ -590,7 +553,7 @@ namespace RvmSharp.Tessellation
                 var con = box.Connections[i];
                 if (faces[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
 
-                if (DoInterfacesMatch(box, con))
+                if (ConnectionInterface.DoInterfacesMatch(box, con))
                 {
                     faces[i] = false;
                     //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0xff0000);
@@ -711,7 +674,7 @@ namespace RvmSharp.Tessellation
                 var con = cylinder.Connections[i];
                 if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
                 {
-                    if (DoInterfacesMatch(cylinder, con))
+                    if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
                     {
                         shouldCap[i] = false;
                         //discardedCaps++;
@@ -836,7 +799,7 @@ namespace RvmSharp.Tessellation
                 var con = snout.Connections[i];
                 if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
                 {
-                    if (DoInterfacesMatch(snout, con))
+                    if (ConnectionInterface.DoInterfacesMatch(snout, con))
                     {
                         cap[i] = false;
                     }
