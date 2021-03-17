@@ -16,7 +16,7 @@ namespace RvmSharp.Tessellation
         {   
             var meshes = group.Children.OfType<RvmPrimitive>().Select(p =>
             {
-                if (!Matrix4x4.Decompose(p.Matrix, out var scale, out var rotation, out var translation))
+                if (!Matrix4x4.Decompose(p.Matrix, out var scale, out _, out _))
                 {
                     throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
                 }
@@ -57,14 +57,14 @@ namespace RvmSharp.Tessellation
                         ellipticalDish.Height / ellipticalDish.BaseRadius, scale, tolerance);
                 case RvmSphericalDish sphericalDish:
                 {
-                    float r_circ = sphericalDish.BaseRadius;
-                    var h = sphericalDish.Height;
-                    float r_sphere = (r_circ * r_circ + h * h) / (2.0f * h);
-                    float sinval = MathF.Min(1.0f, MathF.Max(-1.0f, r_circ / r_sphere));
-                    float arc = MathF.Asin(sinval);
-                    if (r_circ < h) { arc = MathF.PI - arc; }
+                    var baseRadius = sphericalDish.BaseRadius;
+                    var height = sphericalDish.Height;
+                    var sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
+                    var sinval = Math.Clamp((baseRadius / sphereRadius), -1.0f, 1.0f);
+                    var arc = MathF.Asin(sinval);
+                    if (baseRadius < height) { arc = MathF.PI - arc; }
 
-                    return Tessellate(sphericalDish, r_sphere, arc, h - r_sphere, 1.0f, scale, tolerance);
+                    return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale, tolerance);
                 }
                 default:
                     throw new NotImplementedException($"Unsupported type for tesselation: {geometry?.Kind}");
