@@ -21,7 +21,7 @@ namespace RvmSharp.Tessellation
                     throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
                 }
 
-                var scaleScalar = MathF.Max(scale.X, MathF.Max(scale.Y, scale.Z));
+                var scaleScalar = Math.Max(scale.X, Math.Max(scale.Y, scale.Z));
                 var mesh = Tessellate(p, scaleScalar, tolerance);
                 mesh?.Apply(p.Matrix);
                 return mesh;
@@ -51,18 +51,18 @@ namespace RvmSharp.Tessellation
                     // we cannot tessellate a line, we should handle it elsewhere
                     return null;
                 case RvmSphere sphere:
-                    return Tessellate(sphere, 0.5f * sphere.Diameter, MathF.PI, 0.0f, 1.0f, scale, tolerance);
+                    return Tessellate(sphere, 0.5f * sphere.Diameter, (float)Math.PI, 0.0f, 1.0f, scale, tolerance);
                 case RvmEllipticalDish ellipticalDish:
-                    return Tessellate(ellipticalDish, ellipticalDish.BaseRadius, MathF.PI / 2, 0.0f,
+                    return Tessellate(ellipticalDish, ellipticalDish.BaseRadius, (float)Math.PI / 2, 0.0f,
                         ellipticalDish.Height / ellipticalDish.BaseRadius, scale, tolerance);
                 case RvmSphericalDish sphericalDish:
                 {
                     var baseRadius = sphericalDish.BaseRadius;
                     var height = sphericalDish.Height;
                     var sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
-                    var sinval = Math.Clamp((baseRadius / sphereRadius), -1.0f, 1.0f);
-                    var arc = MathF.Asin(sinval);
-                    if (baseRadius < height) { arc = MathF.PI - arc; }
+                    var sinval = Math.Min(1.0f, Math.Max(-1.0, (baseRadius / sphereRadius)));
+                    var arc = (float)Math.Asin(sinval);
+                    if (baseRadius < height) { arc = (float)Math.PI - arc; }
 
                     return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale, tolerance);
                 }
@@ -121,32 +121,29 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            var caps = 0;
-            for (var i = 0; i < 6; i++)
-                if (cap[i])
-                    caps++;
+            var capCount = cap.Count(c => c);
 
             var error = 0.0f;
 
-            var vertices = new float[3 * 4 * caps];
-            var normals = new float[3 * 4 * caps];
+            var vertices = new float[3 * 4 * capCount];
+            var normals = new float[3 * 4 * capCount];
 
-            var l = 0;
+            var arrayPosition = 0;
             for (var i = 0; i < 4; i++)
             {
                 if (cap[i] == false) continue;
                 var ii = (i + 1) & 3;
-                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[0, i]);
-                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[0, ii]);
-                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[1, ii]);
-                l = TessellationHelpers.Vertex(normals, vertices, l, n[i], quad[1, i]);
+                arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[i], quad[0, i]);
+                arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[i], quad[0, ii]);
+                arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[i], quad[1, ii]);
+                arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[i], quad[1, i]);
             }
 
             if (cap[4])
             {
                 for (var i = 0; i < 4; i++)
                 {
-                    l = TessellationHelpers.Vertex(normals, vertices, l, n[4], quad[0, i]);
+                    arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[4], quad[0, i]);
                 }
             }
 
@@ -154,36 +151,36 @@ namespace RvmSharp.Tessellation
             {
                 for (var i = 0; i < 4; i++)
                 {
-                    l = TessellationHelpers.Vertex(normals, vertices, l, n[5], quad[1, i]);
+                    arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[5], quad[1, i]);
                 }
             }
 
-            if (l != vertices.Length)
+            if (arrayPosition != vertices.Length)
                 throw new Exception("Missing vertices");
 
-            l = 0;
+            arrayPosition = 0;
             var o = 0;
-            var indices = new int[3 * 2 * caps];
+            var indices = new int[3 * 2 * capCount];
             for (var i = 0; i < 4; i++)
             {
                 if (cap[i] == false) continue;
-                l = TessellationHelpers.QuadIndices(indices, l, o /*4 * i*/, 0, 1, 2, 3);
+                arrayPosition = TessellationHelpers.QuadIndices(indices, arrayPosition, o /*4 * i*/, 0, 1, 2, 3);
                 o += 4;
             }
 
             if (cap[4])
             {
-                l = TessellationHelpers.QuadIndices(indices, l, o, 3, 2, 1, 0);
+                arrayPosition = TessellationHelpers.QuadIndices(indices, arrayPosition, o, 3, 2, 1, 0);
                 o += 4;
             }
 
             if (cap[5])
             {
-                l = TessellationHelpers.QuadIndices(indices, l, o, 0, 1, 2, 3);
+                arrayPosition = TessellationHelpers.QuadIndices(indices, arrayPosition, o, 0, 1, 2, 3);
                 o += 4;
             }
 
-            if (l != 3 * 2 * caps || o != vertices.Length / 3)
+            if (arrayPosition != 3 * 2 * capCount || o != vertices.Length / 3)
                 throw new Exception();
 
             return new Mesh(vertices, normals, indices, error);
@@ -697,8 +694,8 @@ namespace RvmSharp.Tessellation
             float[] t0 = new float[2 * samples];
             for (int i = 0; i < samples; i++)
             {
-                t0[2 * i + 0] = (float)Math.Cos(((Math.Tau) / samples) * i + cylinder.SampleStartAngle);
-                t0[2 * i + 1] = (float)Math.Sin((Math.Tau / samples) * i + cylinder.SampleStartAngle);
+                t0[2 * i + 0] = (float)Math.Cos((Math.PI * 2 / samples) * i + cylinder.SampleStartAngle);
+                t0[2 * i + 1] = (float)Math.Sin((Math.PI * 2 / samples) * i + cylinder.SampleStartAngle);
             }
 
             float[] t1 = new float[2 * samples];

@@ -62,7 +62,7 @@
             }
 
             ct.SampleStartAngle = (float)Math.Atan2(upLocal.Z, upLocal.X);
-            if (!float.IsFinite(ct.SampleStartAngle))
+            if (!FloatExtensions.IsFinite(ct.SampleStartAngle))
             {
                 ct.SampleStartAngle = 0.0f;
             }
@@ -134,7 +134,7 @@
             upLocal.Z = 0.0f; // project to xy-plane
 
             geo.SampleStartAngle = (float)Math.Atan2(upLocal.Y, upLocal.X);
-            if (!float.IsFinite(geo.SampleStartAngle))
+            if (!FloatExtensions.IsFinite(geo.SampleStartAngle))
             {
                 geo.SampleStartAngle = 0.0f;
             }
@@ -232,7 +232,7 @@
                 }
 
                 var upWorld = Vector3.Normalize(Vector3.Cross(d, b));
-                if (!float.IsFinite(upWorld.LengthSquared()))
+                if (!FloatExtensions.IsFinite(upWorld.LengthSquared()))
                     throw new Exception("Invalid world");
 
                 context.Front = 0;

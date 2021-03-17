@@ -2,7 +2,6 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.Linq;
 
@@ -70,7 +69,7 @@
             return PdmsColorsList[code - 1].color;
         }
 
-        public static float[] GetColorByName([NotNull] string name)
+        public static float[] GetColorByName(string name)
         {
             var match = PdmsColorsList.FirstOrDefault(p =>
                 p.name.ToLower(CultureInfo.InvariantCulture) == name.ToLower(CultureInfo.InvariantCulture));
