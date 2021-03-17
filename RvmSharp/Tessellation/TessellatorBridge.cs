@@ -490,7 +490,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
+            Asserts.AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
 
             // generate indices
             l = 0;
@@ -545,8 +545,8 @@ namespace RvmSharp.Tessellation
                 o += samples_s;
             }
 
-            AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
-            AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
+            Asserts.AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
+            Asserts.AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
 
             return new Mesh(vertices, normals, indices, error);
         }
@@ -775,7 +775,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            AssertEquals(nameof(l), l, nameof(vertCount), vertCount);
+            Asserts.AssertEquals(nameof(l), l, nameof(vertCount), vertCount);
 
             l = 0;
             int o = 0;
@@ -814,8 +814,8 @@ namespace RvmSharp.Tessellation
                 o += samples;
             }
 
-            AssertEquals(nameof(l), l, nameof(triangles_n), triangles_n * 3);
-            AssertEquals(nameof(o), o, nameof(vertCount), vertCount);
+            Asserts.AssertEquals(nameof(l), l, nameof(triangles_n), triangles_n * 3);
+            Asserts.AssertEquals(nameof(o), o, nameof(vertCount), vertCount);
 
             return new Mesh(vertices, normals, indices, error);
         }
@@ -932,7 +932,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
+            Asserts.AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
 
             l = 0;
             var o = 0;
@@ -972,8 +972,8 @@ namespace RvmSharp.Tessellation
                 o += samples;
             }
 
-            AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
-            AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
+            Asserts.AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
+            Asserts.AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
 
             return new Mesh(vertices, normals, indices, error);
         }
@@ -1043,7 +1043,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", vertices_n * 3);
+            Asserts.AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", vertices_n * 3);
 
             var o_c = 0;
             var indices = new List<int>();
@@ -1072,7 +1072,7 @@ namespace RvmSharp.Tessellation
                             indices.Add(o_c + ii_c);
                         }
 
-                        AssertNotEquals(nameof(i_n), i_n, nameof(ii_n), ii_n);
+                        Asserts.AssertNotEquals(nameof(i_n), i_n, nameof(ii_n), ii_n);
                         indices.Add(o_c + i_c);
                         indices.Add(o_n + i_n);
                         indices.Add(o_n + ii_n);
@@ -1090,7 +1090,7 @@ namespace RvmSharp.Tessellation
                         ii_n %= n_n;
                         ii_c %= n_c;
 
-                        AssertNotEquals(nameof(i_c), i_c, nameof(ii_c), ii_c);
+                        Asserts.AssertNotEquals(nameof(i_c), i_c, nameof(ii_c), ii_c);
                         indices.Add(o_c + i_c);
                         indices.Add(o_n + ii_n);
                         indices.Add(o_c + ii_c);
@@ -1150,22 +1150,6 @@ namespace RvmSharp.Tessellation
             temp = lhs;
             lhs = rhs;
             rhs = temp;
-        }
-
-        private static void AssertEquals<T>(string name1, T value1, string name2, T value2) where T : IEquatable<T>
-        {
-            if ((value1?.Equals(value2) == true))
-                return;
-
-            throw new Exception($"Expected {name1} {value1} to equal {name2} {value2}.");
-        }
-
-        private static void AssertNotEquals<T>(string name1, T value1, string name2, T value2) where T : IEquatable<T>
-        {
-            if ((value1?.Equals(value2) != true))
-                return;
-
-            throw new Exception($"Expected {name1} {value1} to equal {name2} {value2}.");
         }
     }
 }
