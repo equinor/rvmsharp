@@ -7,7 +7,7 @@ using static RvmSharp.Primitives.RvmFacetGroup;
 
 namespace RvmSharp.Tessellation
 {
-    class TessNet
+    public class TessNet
     {
         public class TessellateResult
         {
@@ -20,6 +20,7 @@ namespace RvmSharp.Tessellation
         {
             var result = new TessellateResult();
             var tess = new Tess();
+            var normal = default(Vec3);
             bool shouldTessellate = false;
 
             foreach (var contour in contours)
@@ -29,17 +30,19 @@ namespace RvmSharp.Tessellation
                     // Skip degenerate contour with less than 3 vertices
                     continue;
                 }
-                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z), v.n)).ToArray();
+                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z))).ToArray();
                 tess.AddContour(cv);
+                var n = contour.Vertices[0].n;
+                normal = new Vec3(n.X, n.Y, n.Z);
 
                 shouldTessellate = true;
             }
 
             if (shouldTessellate)
             {
-                tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, VertexCombine);
+                tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, null, normal);
                 result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
-                result.NormalData = tess.Vertices.Select(v => (Vector3)v.Data).ToArray();
+                result.NormalData = Enumerable.Repeat(new Vector3(normal.X, normal.Y, normal.Z), tess.Vertices.Length).ToArray();
 
                 for (var i = 0; i < tess.ElementCount; i++)
                 {
@@ -51,12 +54,6 @@ namespace RvmSharp.Tessellation
                 }
             }
             return result;
-        }
-
-        private static object VertexCombine(Vec3 position, object[] normals, float[] weights)
-        {
-            var max = weights.Select((w, i) => (w, i)).OrderByDescending(p => p.w).Select(p => p.i).First();
-            return normals[max];
         }
     }
 }

@@ -270,7 +270,7 @@
                 Recurse(context, root);
             }
 
-            if (context.anchors.Any(a => a.matched == true))
+            if (context.anchors.Any(a => a.matched))
             {
                 throw new Exception("Matched connections left in context");
             }

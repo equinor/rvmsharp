@@ -630,7 +630,6 @@ namespace RvmSharp.Tessellation
                 var m = 0.5f * (bMin + bMax);
 
                 var vo = vertices.Count;
-                int counter_count = poly.Contours.Length;
 
                 var adjustedContours = poly.Contours.Select(v => new RvmContour(
                     v.Vertices.Select(x => (x.v - m, x.n)).ToArray()
@@ -790,7 +789,6 @@ namespace RvmSharp.Tessellation
 
             bool shell = true;
             bool[] cap = {true, true};
-            float[] radii = {snout.RadiusBottom, snout.RadiusTop};
             for (var i = 0; i < 2; i++)
             {
                 var con = snout.Connections[i];

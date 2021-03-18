@@ -3,6 +3,7 @@
     using Primitives;
     using System;
     using System.Numerics;
+
     internal class ConnectionInterface
     {
         public enum Type
@@ -39,8 +40,8 @@
                     var h2 = 0.5f * pyramid.Height;
                     Vector3[,] quad = {
                         {
-                            new Vector3(-bx - ox, -@by - oy, -h2), new Vector3(bx - ox, -@by - oy, -h2),
-                            new Vector3(bx - ox, @by - oy, -h2), new Vector3(-bx - ox, @by - oy, -h2)
+                            new Vector3(-bx - ox, -by - oy, -h2), new Vector3(bx - ox, -by - oy, -h2),
+                            new Vector3(bx - ox, by - oy, -h2), new Vector3(-bx - ox, by - oy, -h2)
                         },
                         {
                             new Vector3(-tx + ox, -ty + oy, h2), new Vector3(tx + ox, -ty + oy, h2),
@@ -48,7 +49,7 @@
                         },
                     };
 
-                    iface.InterfaceType = ConnectionInterface.Type.Square;
+                    iface.InterfaceType = Type.Square;
                     if (o < 4)
                     {
                         var oo = (o + 1) & 3;
@@ -130,12 +131,12 @@
                     break;
                 }
                 case RvmCircularTorus circularTorus:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
+                    iface.InterfaceType = Type.Circular;
                     iface.CircularRadius = scale * circularTorus.Radius;
                     break;
 
                 case RvmEllipticalDish ellipticalDish:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
+                    iface.InterfaceType = Type.Circular;
                     iface.CircularRadius = scale * ellipticalDish.BaseRadius;
                     break;
 
@@ -144,23 +145,23 @@
                     float r_circ = sphericalDish.BaseRadius;
                     var h = sphericalDish.Height;
                     float r_sphere = (r_circ * r_circ + h * h) / (2.0f * h);
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
+                    iface.InterfaceType = Type.Circular;
                     iface.CircularRadius = scale * r_sphere;
                     break;
                 }
                 case RvmSnout snout:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
+                    iface.InterfaceType = Type.Circular;
                     var offset = ix == 0 ? connection.OffsetX : connection.OffsetY;
                     iface.CircularRadius = scale * (offset == 0 ? snout.RadiusBottom : snout.RadiusTop);
                     break;
                 case RvmCylinder cylinder:
-                    iface.InterfaceType = ConnectionInterface.Type.Circular;
+                    iface.InterfaceType = Type.Circular;
                     iface.CircularRadius = scale * cylinder.Radius;
                     break;
                 case RvmSphere:
                 case RvmLine:
                 case RvmFacetGroup:
-                    iface.InterfaceType = ConnectionInterface.Type.Undefined;
+                    iface.InterfaceType = Type.Undefined;
                     break;
                 default:
                     throw new NotSupportedException("Unhandled primitive type");
@@ -175,17 +176,17 @@
 
             var thisGeo = isFirst ? connection.p1 : connection.p2;
             var thisOffset = isFirst ? connection.OffsetX : connection.OffsetY;
-            var thisIFace = ConnectionInterface.GetInterface(thisGeo, (int)thisOffset);
+            var thisIFace = GetInterface(thisGeo, (int)thisOffset);
 
             var thatGeo = isFirst ? connection.p2 : connection.p1;
             var thatOffset = isFirst ? connection.OffsetY : connection.OffsetX;
-            var thatIFace = ConnectionInterface.GetInterface(thatGeo, (int)thatOffset);
+            var thatIFace = GetInterface(thatGeo, (int)thatOffset);
 
 
             if (thisIFace.InterfaceType != thatIFace.InterfaceType) 
                 return false;
 
-            if (thisIFace.InterfaceType == ConnectionInterface.Type.Circular)
+            if (thisIFace.InterfaceType == Type.Circular)
                 return thisIFace.CircularRadius <= 1.05f * thatIFace.CircularRadius;
             
             for (var j = 0; j < 4; j++)

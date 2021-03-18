@@ -20,12 +20,12 @@
 
         class Context
         {
-            public List<QueueItem> Queue = new List<QueueItem>();
-            public int Front = 0;
-            public int Back = 0;
-            public int ConnectedComponents = 0;
-            public int CircularConnections = 0;
-            public int Connections = 0;
+            public List<QueueItem> Queue = new();
+            public int Front;
+            public int Back;
+            public int ConnectedComponents;
+            public int CircularConnections;
+            public int Connections;
         };
 
         private static void Enqueue(Context context, RvmPrimitive from, RvmConnection connection, Vector3 upWorld)
@@ -96,19 +96,6 @@
 
                 var a1 = Vector3.Transform(p1, ct.Matrix);
                 var b1 = a1 + 1.5f * ct.Radius * upNewWorld[1];
-
-                //if (context.front == 1) {
-                //  if (geo.connections[0]) context.store.addDebugLine(a0.data, b0.data, 0x00ffff);
-                //  if (geo.connections[1]) context.store.addDebugLine(a1.data, b1.data, 0x00ff88);
-                //}
-                //else if (offset == 0) {
-                //  if (geo.connections[0]) context.store.addDebugLine(a0.data, b0.data, 0x0000ff);
-                //  if (geo.connections[1]) context.store.addDebugLine(a1.data, b1.data, 0x000088);
-                //}
-                //else {
-                //  if (geo.connections[0]) context.store.addDebugLine(a0.data, b0.data, 0x000088);
-                //  if (geo.connections[1]) context.store.addDebugLine(a1.data, b1.data, 0x0000ff);
-                //}
             }
 
             for (uint k = 0; k < 2; k++)
