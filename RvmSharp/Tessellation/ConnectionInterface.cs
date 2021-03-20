@@ -21,12 +21,18 @@
 
         private static ConnectionInterface GetInterface(RvmPrimitive geo, int o)
         {
-            var iface = new ConnectionInterface();
+            var connectionInterface = new ConnectionInterface();
             var connection = geo.Connections[o];
-            var ix = connection.p1 == geo ? 1 : 0;
-            if (!Matrix4x4.Decompose(geo.Matrix, out var vscale, out var _, out var _))
+            
+            if (connection == null)
+                throw new Exception($"Got Unexpected Null-Connection in 'geo.Connections' for index: {o}");
+            
+            var ix = connection.Primitive1 == geo ? 1 : 0;
+            
+            if (!Matrix4x4.Decompose(geo.Matrix, out var geoScale, out _, out _))
                 throw new Exception();
-            var scale = Math.Max(vscale.X, Math.Max(vscale.Y, vscale.Z));
+            
+            var scale = Math.Max(geoScale.X, Math.Max(geoScale.Y, geoScale.Z));
             switch (geo)
             {
                 case RvmPyramid pyramid:
@@ -49,18 +55,18 @@
                         },
                     };
 
-                    iface.InterfaceType = Type.Square;
+                    connectionInterface.InterfaceType = Type.Square;
                     if (o < 4)
                     {
                         var oo = (o + 1) & 3;
-                        iface.SquareConnectionPoints[0] = Vector3.Transform(quad[0, o], geo.Matrix);
-                        iface.SquareConnectionPoints[1] = Vector3.Transform(quad[0, oo], geo.Matrix);
-                        iface.SquareConnectionPoints[2] = Vector3.Transform(quad[1, oo], geo.Matrix);
-                        iface.SquareConnectionPoints[3] = Vector3.Transform(quad[1, o], geo.Matrix);
+                        connectionInterface.SquareConnectionPoints[0] = Vector3.Transform(quad[0, o], geo.Matrix);
+                        connectionInterface.SquareConnectionPoints[1] = Vector3.Transform(quad[0, oo], geo.Matrix);
+                        connectionInterface.SquareConnectionPoints[2] = Vector3.Transform(quad[1, oo], geo.Matrix);
+                        connectionInterface.SquareConnectionPoints[3] = Vector3.Transform(quad[1, o], geo.Matrix);
                     }
                     else
                     {
-                        for (var k = 0; k < 4; k++) iface.SquareConnectionPoints[k] = Vector3.Transform(quad[o - 4, k], geo.Matrix);
+                        for (var k = 0; k < 4; k++) connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(quad[o - 4, k], geo.Matrix);
                     }
 
                     break;
@@ -100,7 +106,12 @@
                             new Vector3(xm, yp, zp)
                         }
                     };
-                    for (var k = 0; k < 4; k++) iface.SquareConnectionPoints[k] = Vector3.Transform(V[o, k], geo.Matrix);
+                    
+                    for (var k = 0; k < 4; k++)
+                    {
+                        connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(V[o, k], geo.Matrix);
+                    }
+
                     break;
                 }
                 case RvmRectangularTorus tor:
@@ -115,14 +126,14 @@
                     {
                         for (var k = 0; k < 4; k++)
                         {
-                            iface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3(square[k, 0], 0.0f, square[k, 1]), geo.Matrix);
+                            connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3(square[k, 0], 0.0f, square[k, 1]), geo.Matrix);
                         }
                     }
                     else
                     {
                         for (var k = 0; k < 4; k++)
                         {
-                            iface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3((float)(square[k, 0] * Math.Cos(tor.Angle)),
+                            connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3((float)(square[k, 0] * Math.Cos(tor.Angle)),
                                 (float)(square[k, 0] * Math.Sin(tor.Angle)),
                                 square[k, 1]), geo.Matrix);
                         }
@@ -131,54 +142,54 @@
                     break;
                 }
                 case RvmCircularTorus circularTorus:
-                    iface.InterfaceType = Type.Circular;
-                    iface.CircularRadius = scale * circularTorus.Radius;
+                    connectionInterface.InterfaceType = Type.Circular;
+                    connectionInterface.CircularRadius = scale * circularTorus.Radius;
                     break;
 
                 case RvmEllipticalDish ellipticalDish:
-                    iface.InterfaceType = Type.Circular;
-                    iface.CircularRadius = scale * ellipticalDish.BaseRadius;
+                    connectionInterface.InterfaceType = Type.Circular;
+                    connectionInterface.CircularRadius = scale * ellipticalDish.BaseRadius;
                     break;
 
                 case RvmSphericalDish sphericalDish:
                 {
-                    float r_circ = sphericalDish.BaseRadius;
-                    var h = sphericalDish.Height;
-                    float r_sphere = (r_circ * r_circ + h * h) / (2.0f * h);
-                    iface.InterfaceType = Type.Circular;
-                    iface.CircularRadius = scale * r_sphere;
+                    float radiusCircle = sphericalDish.BaseRadius;
+                    var height = sphericalDish.Height;
+                    float radiusSphere = (radiusCircle * radiusCircle + height * height) / (2.0f * height);
+                    connectionInterface.InterfaceType = Type.Circular;
+                    connectionInterface.CircularRadius = scale * radiusSphere;
                     break;
                 }
                 case RvmSnout snout:
-                    iface.InterfaceType = Type.Circular;
+                    connectionInterface.InterfaceType = Type.Circular;
                     var offset = ix == 0 ? connection.OffsetX : connection.OffsetY;
-                    iface.CircularRadius = scale * (offset == 0 ? snout.RadiusBottom : snout.RadiusTop);
+                    connectionInterface.CircularRadius = scale * (offset == 0 ? snout.RadiusBottom : snout.RadiusTop);
                     break;
                 case RvmCylinder cylinder:
-                    iface.InterfaceType = Type.Circular;
-                    iface.CircularRadius = scale * cylinder.Radius;
+                    connectionInterface.InterfaceType = Type.Circular;
+                    connectionInterface.CircularRadius = scale * cylinder.Radius;
                     break;
                 case RvmSphere:
                 case RvmLine:
                 case RvmFacetGroup:
-                    iface.InterfaceType = Type.Undefined;
+                    connectionInterface.InterfaceType = Type.Undefined;
                     break;
                 default:
                     throw new NotSupportedException("Unhandled primitive type");
             }
 
-            return iface;
+            return connectionInterface;
         }
 
         internal static bool DoInterfacesMatch(RvmPrimitive primitive, RvmConnection connection)
         {
-            bool isFirst = primitive == connection.p1;
+            bool isFirst = primitive == connection.Primitive1;
 
-            var thisGeo = isFirst ? connection.p1 : connection.p2;
+            var thisGeo = isFirst ? connection.Primitive1 : connection.Primitive2;
             var thisOffset = isFirst ? connection.OffsetX : connection.OffsetY;
             var thisIFace = GetInterface(thisGeo, (int)thisOffset);
 
-            var thatGeo = isFirst ? connection.p2 : connection.p1;
+            var thatGeo = isFirst ? connection.Primitive2 : connection.Primitive1;
             var thatOffset = isFirst ? connection.OffsetY : connection.OffsetX;
             var thatIFace = GetInterface(thatGeo, (int)thatOffset);
 

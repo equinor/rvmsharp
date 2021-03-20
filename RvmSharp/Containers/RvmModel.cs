@@ -1,16 +1,21 @@
 ﻿namespace RvmSharp.Containers
 {
+    using JetBrains.Annotations;
     using Primitives;
     using System.Collections.Generic;
 
+    [PublicAPI]
     public class RvmModel
     {
-        public readonly uint Version;
-        public readonly string Project;
-        public readonly string Name;
-        public readonly List<RvmNode> children = new List<RvmNode>();
-        private readonly List<RvmPrimitive> primitives = new List<RvmPrimitive>();
-        private readonly List<RvmColor> colors = new List<RvmColor>();
+        public uint Version { get; }
+        public string Project  { get; }
+        public string Name { get; }
+
+        public IReadOnlyList<RvmNode> Children => _children;
+
+        private readonly List<RvmNode> _children = new List<RvmNode>();
+        private readonly List<RvmPrimitive> _primitives = new List<RvmPrimitive>();
+        private readonly List<RvmColor> _colors = new List<RvmColor>();
 
         public RvmModel(uint version, string project, string name)
         {
@@ -21,17 +26,17 @@
 
         internal void AddChild(RvmNode rvmNode)
         {
-            children.Add(rvmNode);
+            _children.Add(rvmNode);
         }
 
         internal void AddPrimitive(RvmPrimitive rvmPrimitive)
         {
-            primitives.Add(rvmPrimitive);
+            _primitives.Add(rvmPrimitive);
         }
 
         internal void AddColor(RvmColor rvmColor)
         {
-            colors.Add(rvmColor);
+            _colors.Add(rvmColor);
         }
     }
 }

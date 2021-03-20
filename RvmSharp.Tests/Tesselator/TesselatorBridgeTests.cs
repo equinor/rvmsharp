@@ -19,9 +19,8 @@ namespace RvmSharp.Tests.Tesselator
 
                 var randomToleranceValue = 0.1f;
                 var box = TessellatorBridge.Tessellate(unitBox, 1, randomToleranceValue);
-                Assert.That(box.Vertices, Has.Exactly(24).Items);
-
                 Assert.That(box, Is.Not.Null);
+                Assert.That(box.Vertices, Has.Exactly(24).Items);
             }
         }
 
@@ -34,8 +33,8 @@ namespace RvmSharp.Tests.Tesselator
                 var unitPyramid = new RvmPyramid(1, Matrix4x4.Identity, new RvmBoundingBox(), 0, 0, 0, 1, 0, 0, 1);
                 
                 var randomToleranceValue = 0.1f;
-                var expectedPyramid = TessellatorBridge.Tessellate(unitPyramid, 1, randomToleranceValue);
-                
+                var pyramid = TessellatorBridge.Tessellate(unitPyramid, 1, randomToleranceValue);
+                Assert.That(pyramid, Is.Not.Null);
             }
         }
         
@@ -50,7 +49,24 @@ namespace RvmSharp.Tests.Tesselator
                 var randomToleranceValue = 0.1f;
                 var cylinder = TessellatorBridge.Tessellate(unitCylinder, 1, randomToleranceValue);
 
+                Assert.That(cylinder, Is.Not.Null);
                 Assert.That(cylinder.Triangles, Has.Exactly(156).Items);
+            }
+        }
+        
+        [TestFixture]
+        public class TessellateLineTests
+        {
+            [Test]
+            public void TessellateLine_IsNotPossible_ReturnsNull()
+            {
+                // If somehow Line is tessellated, improve this test.
+                var rvmLine = new RvmLine(1, Matrix4x4.Identity, new RvmBoundingBox(), 1, 3);
+
+                var randomToleranceValue = 0.1f;
+                var line = TessellatorBridge.Tessellate(rvmLine, 1, randomToleranceValue);
+
+                Assert.That(line, Is.Null);
             }
         }
     }

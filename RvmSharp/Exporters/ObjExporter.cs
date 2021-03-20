@@ -19,8 +19,8 @@
 
         public void Dispose()
         {
-            _writer?.Close();
-            _writer?.Dispose();
+            _writer.Close();
+            _writer.Dispose();
         }
 
         public void StartGroup(string name)
@@ -33,7 +33,7 @@
             _writer.WriteLine("o " + name);
         }
 
-        public void WriteMesh(Mesh mesh, string name = null)
+        public void WriteMesh(Mesh mesh, string? name = null)
         {
             foreach (var v in mesh.Vertices)
             {

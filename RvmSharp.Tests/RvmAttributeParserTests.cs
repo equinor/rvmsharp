@@ -1,13 +1,9 @@
-﻿// unset
-
-using NUnit.Framework;
+﻿using NUnit.Framework;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace RvmSharp.Tests
 {
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-
     [TestFixture]
     public class RvmAttributeParserTests
     {
@@ -32,7 +28,7 @@ namespace RvmSharp.Tests
                 {"NumbDb", "437"},
                 {"Discipline", "PSUP"},
             };
-            
+
             Assert.That(pdmsNodesInFile.First().MetadataDict, Is.EquivalentTo(expectedMetadata));
             Assert.That(pdmsNodesInFile, Is.Not.Null);
         }

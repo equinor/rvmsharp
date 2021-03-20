@@ -8,7 +8,7 @@ namespace RvmSharp.Tessellation
 {
     using Primitives;
 
-    public class TessellatorBridge
+    public static class TessellatorBridge
     {
         private const float MinimumThreshold = 1e-7f;
 
@@ -25,11 +25,13 @@ namespace RvmSharp.Tessellation
                 var mesh = Tessellate(p, scaleScalar, tolerance);
                 mesh?.Apply(p.Matrix);
                 return mesh;
-            }).Where(m => m!= null);
+            }).Where(m => m != null).Select(m => m!);
+            
+            
             return meshes.ToArray();
         }
         
-        public static Mesh Tessellate(RvmPrimitive geometry, float scale, float tolerance)
+        public static Mesh? Tessellate(RvmPrimitive geometry, float scale, float tolerance)
         {
             switch (geometry)
             {
@@ -67,7 +69,7 @@ namespace RvmSharp.Tessellation
                     return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale, tolerance);
                 }
                 default:
-                    throw new NotImplementedException($"Unsupported type for tesselation: {geometry?.Kind}");
+                    throw new ArgumentOutOfRangeException($"(Currently) Unsupported type for tesselation: {geometry.Kind}");
             }
         }
 
@@ -113,7 +115,7 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 6; i++)
             {
                 var con = pyramid.Connections[i];
-                if (cap[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
+                if (cap[i] == false || con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
 
                 if (ConnectionInterface.DoInterfacesMatch(pyramid, con))
                 {
@@ -200,7 +202,7 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 2; i++)
             {
                 var con = rectangularTorus.Connections[i];
-                if (con != null && con.flags == RvmConnection.Flags.HasRectangularSide)
+                if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasRectangularSide)
                 {
                     if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
                     {
@@ -362,7 +364,7 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 2; i++)
             {
                 var con = circularTorus.Connections[i];
-                if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
+                if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
                 {
                     if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
                     {
@@ -521,7 +523,7 @@ namespace RvmSharp.Tessellation
             var zp = 0.5f * box.LengthZ;
             var zm = -zp;
 
-            Vector3[,] V = new Vector3[,]
+            Vector3[,] v = new Vector3[,]
             {
                 {
                     new Vector3(xm, ym, zp), new Vector3(xm, yp, zp), new Vector3(xm, yp, zm), new Vector3(xm, ym, zm)
@@ -533,7 +535,7 @@ namespace RvmSharp.Tessellation
                 {new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp), new Vector3(xm, yp, zp)}
             };
 
-            Vector3[] N =
+            Vector3[] n =
             {
                 new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, -1, 0), new Vector3(0, 1, 0),
                 new Vector3(0, 0, -1), new Vector3(0, 0, 1)
@@ -548,7 +550,7 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 6; i++)
             {
                 var con = box.Connections[i];
-                if (faces[i] == false || con == null || con.flags != RvmConnection.Flags.HasRectangularSide) continue;
+                if (faces[i] == false || con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
 
                 if (ConnectionInterface.DoInterfacesMatch(box, con))
                 {
@@ -582,7 +584,7 @@ namespace RvmSharp.Tessellation
 
                     for (var i = 0; i < 4; i++)
                     {
-                        i_v = TessellationHelpers.Vertex(normals, vertices, i_v, N[f], V[f, i]);
+                        i_v = TessellationHelpers.Vertex(normals, vertices, i_v, n[f], v[f, i]);
                     }
 
                     i_p = TessellationHelpers.QuadIndices(indices, i_p, o, 0, 1, 2, 3);
@@ -668,7 +670,7 @@ namespace RvmSharp.Tessellation
             for (int i = 0; i < 2; i++)
             {
                 var con = cylinder.Connections[i];
-                if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
+                if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
                 {
                     if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
                     {
@@ -792,7 +794,7 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 2; i++)
             {
                 var con = snout.Connections[i];
-                if (con != null && con.flags == RvmConnection.Flags.HasCircularSide)
+                if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
                 {
                     if (ConnectionInterface.DoInterfacesMatch(snout, con))
                     {
