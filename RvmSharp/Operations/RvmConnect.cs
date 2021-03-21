@@ -8,7 +8,7 @@
     using System.Linq;
     using System.Numerics;
 
-    public class RvmConnect
+    public static class RvmConnect
     {
         class Anchor
         {

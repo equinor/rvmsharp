@@ -7,14 +7,14 @@
     using System.Diagnostics;
     using System.Numerics;
 
-    public class RvmAlign
+    // ReSharper disable once UnusedType.Global -- This is public API
+    public static class RvmAlign
     {
-        record QueueItem(RvmPrimitive? From, RvmConnection Connection, Vector3 UpWorld);
-
-
-        class Context
+        private record QueueItem(RvmPrimitive? From, RvmConnection Connection, Vector3 UpWorld);
+        
+        private class Context
         {
-            public List<QueueItem> Queue = new List<QueueItem>();
+            public List<QueueItem> Queue = new();
             public int Front;
             public int Back;
             public int ConnectedComponents;
@@ -40,6 +40,7 @@
             //var  N_inv = inverse(N);
             if (!Matrix4x4.Invert(M, out var N_inv))
                 throw new Exception("Inversion failed");
+            
             var c = (float)Math.Cos(ct.Angle);
             var s = (float)Math.Sin(ct.Angle);
 
@@ -96,7 +97,6 @@
             {
                 var con = ct.Connections[k];
 
-                // ReSharper disable once ConditionIsAlwaysTrueOrFalse
                 if (con != null && !con.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide) && !con.IsEnqueued)
                 {
                     Enqueue(context, ct, con, upNewWorld[k]);
@@ -175,6 +175,8 @@
         }
 
 
+        
+        // ReSharper disable once UnusedMember.Global -- Align is Public Api
         public static void Align(RvmStore store)
         {
             var context = new Context();

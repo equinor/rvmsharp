@@ -6,7 +6,7 @@
     using System.IO;
     using System.Numerics;
     using System.Text;
-
+    
     public static class RvmParser
     {
         private static uint ReadUint(Stream stream)
@@ -120,7 +120,8 @@
                     var radiusOuter = ReadFloat(stream);
                     var height = ReadFloat(stream);
                     var angle = ReadFloat(stream);
-                    primitive = new RvmRectangularTorus(version, matrix, bBoxLocal, radiusInner, radiusOuter, height, angle);
+                    primitive = new RvmRectangularTorus(version, matrix, bBoxLocal, radiusInner, radiusOuter, height,
+                        angle);
                     break;
                 }
                 case RvmPrimitiveKind.CircularTorus:
@@ -212,12 +213,17 @@
             // transform bb to world?
         }
 
-        public static RvmNode ReadCntb(Stream stream)
+        private static RvmNode ReadCntb(Stream stream)
         {
             var version = ReadUint(stream);
             var name = ReadString(stream);
+            
             const float mmToM = 0.001f;
-            var translation = new Vector3(ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM);
+            var translation = new Vector3(
+                ReadFloat(stream) * mmToM,
+                ReadFloat(stream) * mmToM,
+                ReadFloat(stream) * mmToM);
+            
             var materialId = ReadUint(stream);
             if (version == 3)
             {
@@ -226,12 +232,10 @@
             }
 
             var group = new RvmNode(version, name, translation, materialId);
-            
-            // ReSharper disable once NotAccessedVariable
-            uint unusedNextHeaderOffset;            
-            // ReSharper disable once NotAccessedVariable
+
+            uint unusedNextHeaderOffset;
             uint dontKnowWhatThisValueDoes;
-            
+
             var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
             while (id != "CNTE")
             {
@@ -278,15 +282,12 @@
             var encoding = (version >= 2) ? ReadString(stream) : "";
 
             return new RvmFile.RvmHeader(version, info, note, date, user, encoding);
-
         }
 
         public static RvmFile ReadRvm(Stream stream)
         {
-            // ReSharper disable NotAccessedVariable
             uint len, dunno;
-            // ReSharper restore NotAccessedVariable
-            
+
             var head = ReadChunkHeader(stream, out len, out dunno);
             if (head != "HEAD")
                 throw new IOException($"Expected HEAD, found {head}");
