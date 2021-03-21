@@ -12,23 +12,23 @@
     {
         class Anchor
         {
-            public Anchor(RvmPrimitive geo, Vector3 p, Vector3 d, uint o, RvmConnection.ConnectionType connectionTypeFlags)
-            {
-                Geo = geo;
-                P = p;
-                D = d;
-                Offset = o;
-                ConnectionTypeFlags = connectionTypeFlags;
-            }
-
             public RvmPrimitive Geo { get; } // Not sure if this can be null.
-            public Vector3 P { get; }
-            public Vector3 D { get; }
+            public Vector3 Position { get; }
+            public Vector3 Direction { get; }
             public uint Offset { get; }
             public RvmConnection.ConnectionType ConnectionTypeFlags { get; }
-
-
+            
             public bool Matched { get; set; }
+            
+            public Anchor(RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
+                RvmConnection.ConnectionType connectionTypeFlags)
+            {
+                Geo = geo;
+                Position = position;
+                Direction = direction;
+                Offset = offset;
+                ConnectionTypeFlags = connectionTypeFlags;
+            }
         };
 
         class Context
@@ -51,25 +51,27 @@
             var anchorsCount = context.AnchorsCount;
 
             const float epsilon = Context.epsilon;
-            const float epsilonTimesEpsilon = epsilon * epsilon;
+            const float epsilonSquared = epsilon * epsilon;
 
             if (offset > anchorsCount)
-                throw new ArgumentOutOfRangeException(nameof(offset), offset, $"{nameof(offset)} is greater than {nameof(anchorsCount)} {anchorsCount}");
+                throw new ArgumentOutOfRangeException(nameof(offset), offset,
+                    $"{nameof(offset)} is greater than {nameof(anchorsCount)} {anchorsCount}");
 
-            var anchors = context.Anchors.Skip(offset).OrderBy(e => e.P.X).ToArray();
+            var anchors = context.Anchors.Skip(offset).OrderBy(e => e.Position.X).ToArray();
 
 
             for (int j = 0; j < anchors.Length; j++)
             {
-                if (anchors[j].Matched) continue;
+                if (anchors[j].Matched)
+                    continue;
 
-                for (int i = j + 1; i < anchors.Length && anchors[i].P.X <= anchors[j].P.X + epsilon; i++)
+                for (int i = j + 1; i < anchors.Length && anchors[i].Position.X <= anchors[j].Position.X + epsilon; i++)
                 {
                     bool canMatch = anchors[i].Matched == false && anchors[i].Geo != anchors[j].Geo;
-                    bool close = Vector3.DistanceSquared(anchors[j].P, anchors[i].P) <= epsilonTimesEpsilon;
+                    bool close = Vector3.DistanceSquared(anchors[j].Position, anchors[i].Position) <= epsilonSquared;
 
                     const float alignedThreshold = -0.98f;
-                    bool aligned = Vector3.Dot(anchors[j].D, anchors[i].D) < alignedThreshold;
+                    bool aligned = Vector3.Dot(anchors[j].Direction, anchors[i].Direction) < alignedThreshold;
 
                     if (canMatch && close && aligned)
                     {
@@ -79,9 +81,9 @@
                             primitive2: anchors[i].Geo,
                             offsetX: anchors[j].Offset,
                             offsetY: anchors[i].Offset,
-                            p: anchors[j].P,
-                            d: anchors[j].D,
-                            connectionTypeFlags: RvmConnection.ConnectionType.None | anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
+                            position: anchors[j].Position,
+                            direction: anchors[j].Direction,
+                            connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
                         );
 
                         context.store.Connections.Add(connection);
@@ -118,14 +120,14 @@
                 throw new Exception("Something went wrong");
         }
 
-        private static void AddAnchor(Context context, RvmPrimitive geo, Vector3 p, Vector3 d, uint o,
+        private static void AddAnchor(Context context, RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
             RvmConnection.ConnectionType flags)
         {
             Anchor a = new Anchor(
                 geo: geo,
-                p: Vector3.Transform(p, geo.Matrix),
-                d: Vector3.Normalize(Vector3.TransformNormal(d, geo.Matrix)),
-                o: o,
+                position: Vector3.Transform(position, geo.Matrix),
+                direction: Vector3.Normalize(Vector3.TransformNormal(direction, geo.Matrix)),
+                offset: offset,
                 connectionTypeFlags: flags
             );
 
@@ -155,8 +157,28 @@
 
                         var M = prim.Matrix;
 
-                        Vector3[] n = {new Vector3(0.0f, -h, (-t.Y + o.Y) - (-b.Y - o.Y)), new Vector3(h, 0.0f, -((t.X + o.X) - (b.X - o.X))), new Vector3(0.0f, h, -((t.Y + o.Y) - (b.Y - o.Y))), new Vector3(-h, 0.0f, (-t.X + o.X) - (-b.X - o.X)), new Vector3(0.0f, 0.0f, -1.0f), new Vector3(0.0f, 0.0f, 1.0f)};
-                        Vector3[] p = {new Vector3(0.0f, -m.Y, 0.0f), new Vector3(m.X, 0.0f, 0.0f), new Vector3(0.0f, m.Y, 0.0f), new Vector3(-m.X, 0.0f, 0.0f), new Vector3(-o.X, -o.Y, -h), new Vector3(o.X, o.Y, h)};
+
+                        Vector3[] n =
+                        {
+                            new Vector3(0.0f, -h, (-t.Y + o.Y) - (-b.Y - o.Y)),
+                            new Vector3(h, 0.0f, -((t.X + o.X) - (b.X - o.X))),
+                            new Vector3(0.0f, h, -((t.Y + o.Y) - (b.Y - o.Y))),
+                            new Vector3(-h, 0.0f, (-t.X + o.X) - (-b.X - o.X)),
+                            new Vector3(0.0f, 0.0f, -1.0f),
+                            new Vector3(0.0f, 0.0f, 1.0f)
+                        };
+                        
+                        
+                        Vector3[] p =
+                        {
+                            new Vector3(0.0f, -m.Y, 0.0f),
+                            new Vector3(m.X, 0.0f, 0.0f),
+                            new Vector3(0.0f, m.Y, 0.0f),
+                            new Vector3(-m.X, 0.0f, 0.0f),
+                            new Vector3(-o.X, -o.Y, -h),
+                            new Vector3(o.X, o.Y, h)
+                        };
+                        
                         for (uint i = 0; i < 6; i++)
                         {
                             AddAnchor(context, pyramid, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
@@ -166,14 +188,30 @@
                     }
                     case RvmBox box:
                     {
-                        Vector3[] n = {new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, -1, 0), new Vector3(0, 1, 0), new Vector3(0, 0, -1), new Vector3(0, 0, 1)};
+                        Vector3[] n =
+                        {
+                            new Vector3(-1, 0, 0),
+                            new Vector3(1, 0, 0),
+                            new Vector3(0, -1, 0),
+                            new Vector3(0, 1, 0),
+                            new Vector3(0, 0, -1),
+                            new Vector3(0, 0, 1)
+                        };
                         var xp = 0.5f * box.LengthX;
                         var xm = -xp;
                         var yp = 0.5f * box.LengthY;
                         var ym = -yp;
                         var zp = 0.5f * box.LengthZ;
                         var zm = -zp;
-                        Vector3[] p = {new Vector3(xm, 0.0f, 0.0f), new Vector3(xp, 0.0f, 0.0f), new Vector3(0.0f, ym, 0.0f), new Vector3(0.0f, yp, 0.0f), new Vector3(0.0f, 0.0f, zm), new Vector3(0.0f, 0.0f, zp)};
+                        Vector3[] p =
+                        {
+                            new Vector3(xm, 0.0f, 0.0f),
+                            new Vector3(xp, 0.0f, 0.0f),
+                            new Vector3(0.0f, ym, 0.0f),
+                            new Vector3(0.0f, yp, 0.0f),
+                            new Vector3(0.0f, 0.0f, zm),
+                            new Vector3(0.0f, 0.0f, zp)
+                        };
                         for (uint i = 0; i < 6; i++)
                             AddAnchor(context, box, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
                         break;
@@ -195,7 +233,10 @@
                         var c = (float)Math.Cos(ct.Angle);
                         var s = (float)Math.Sin(ct.Angle);
                         Vector3[] n = {new Vector3(0, -1, 0.0f), new Vector3(-s, c, 0.0f)};
-                        Vector3[] p = {new Vector3(ct.Offset, 0, 0.0f), new Vector3(ct.Offset * c, ct.Offset * s, 0.0f)};
+                        Vector3[] p =
+                        {
+                            new Vector3(ct.Offset, 0, 0.0f), new Vector3(ct.Offset * c, ct.Offset * s, 0.0f)
+                        };
                         for (uint i = 0; i < 2; i++)
                             AddAnchor(context, ct, p[i], n[i], i, RvmConnection.ConnectionType.HasCircularSide);
                         break;
@@ -220,7 +261,11 @@
                                 -(float)Math.Sin(sn.TopShearY),
                                 (float)Math.Cos(sn.TopShearX) * (float)Math.Cos(sn.TopShearY))
                         };
-                        Vector3[] p = {new Vector3(-0.5f * sn.OffsetX, -0.5f * sn.OffsetY, -0.5f * sn.Height), new Vector3(0.5f * sn.OffsetX, 0.5f * sn.OffsetY, 0.5f * sn.Height)};
+                        Vector3[] p =
+                        {
+                            new Vector3(-0.5f * sn.OffsetX, -0.5f * sn.OffsetY, -0.5f * sn.Height),
+                            new Vector3(0.5f * sn.OffsetX, 0.5f * sn.OffsetY, 0.5f * sn.Height)
+                        };
                         for (uint i = 0; i < 2; i++)
                             AddAnchor(context, sn, p[i], n[i], i, RvmConnection.ConnectionType.HasCircularSide);
                         break;
@@ -229,7 +274,10 @@
                     case RvmCylinder cylinder:
                     {
                         Vector3[] d = {new Vector3(0, 0, -1.0f), new Vector3(0, 0, 1.0f)};
-                        Vector3[] p = {new Vector3(0, 0, -0.5f * cylinder.Height), new Vector3(0, 0, 0.5f * cylinder.Height)};
+                        Vector3[] p =
+                        {
+                            new Vector3(0, 0, -0.5f * cylinder.Height), new Vector3(0, 0, 0.5f * cylinder.Height)
+                        };
                         for (uint i = 0; i < 2; i++)
                             AddAnchor(context, cylinder, p[i], d[i], i, RvmConnection.ConnectionType.HasCircularSide);
                         break;

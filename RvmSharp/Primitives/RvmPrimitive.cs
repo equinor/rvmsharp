@@ -5,13 +5,15 @@
 
     public abstract class RvmPrimitive : RvmGroup
     {
-        public readonly RvmPrimitiveKind Kind;
-        public readonly Matrix4x4 Matrix;
-        public readonly RvmBoundingBox BoundingBoxLocal;
-        public readonly RvmConnection?[] Connections = new RvmConnection[6]; // One Connection in each direction.
+        public RvmPrimitiveKind Kind { get; }
+        public Matrix4x4 Matrix { get; }
+        public RvmBoundingBox BoundingBoxLocal { get; }
+        public RvmConnection?[] Connections { get; } = {null, null, null, null, null, null}; // Up to six connections. Connections depend on primitive type.
+
         internal float SampleStartAngle;
 
-        public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal) : base(version)
+        public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal) :
+            base(version)
         {
             Kind = kind;
             Matrix = matrix;

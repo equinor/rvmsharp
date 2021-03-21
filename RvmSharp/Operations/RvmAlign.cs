@@ -84,11 +84,11 @@
 
 
                 var a0 = Vector3.Transform(p0, ct.Matrix);
-                // ReSharper disable once UnusedVariable
+                
                 var b0 = a0 + 1.5f * ct.Radius * upNewWorld[0];
 
                 var a1 = Vector3.Transform(p1, ct.Matrix);
-                // ReSharper disable once UnusedVariable
+                
                 var b1 = a1 + 1.5f * ct.Radius * upNewWorld[1];
             }
 
@@ -201,7 +201,7 @@
                     continue;
 
                 // Create an arbitrary vector in plane of intersection as seed.
-                var d = connection.D;
+                var d = connection.Direction;
                 Vector3 b;
                 if (Math.Abs(d.X) > Math.Abs(d.Y) && Math.Abs(d.X) > Math.Abs(d.Z))
                 {

@@ -13,14 +13,13 @@ namespace RvmSharp.Tessellation
         {
             public Vector3[] VertexData = Array.Empty<Vector3>();
             public Vector3[] NormalData = Array.Empty<Vector3>();
-            public List<int> Indices = new List<int>();
+            public readonly List<int> Indices = new List<int>();
         }
 
         public static TessellateResult Tessellate(RvmContour[] contours)
         {
-            var result = new TessellateResult();
             var tess = new Tess();
-            var normal = default(Vec3);
+            Vec3 normal = default;
             bool shouldTessellate = false;
 
             foreach (var contour in contours)
@@ -34,24 +33,26 @@ namespace RvmSharp.Tessellation
                 tess.AddContour(cv);
                 var n = contour.Vertices[0].n;
                 normal = new Vec3(n.X, n.Y, n.Z);
-
                 shouldTessellate = true;
             }
 
-            if (shouldTessellate)
-            {
-                tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, null, normal);
-                result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
-                result.NormalData = Enumerable.Repeat(new Vector3(normal.X, normal.Y, normal.Z), tess.Vertices.Length).ToArray();
+            if (!shouldTessellate)
+                return new TessellateResult();
+            
+            
+            var result = new TessellateResult();
+            
+            tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, null, normal);
+            result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
+            result.NormalData = Enumerable.Repeat(new Vector3(normal.X, normal.Y, normal.Z), tess.Vertices.Length).ToArray();
 
-                for (var i = 0; i < tess.ElementCount; i++)
-                {
-                    var t = new int[3];
-                    Array.Copy(tess.Elements, i * 3, t, 0, 3);
-                    if (t.Any(e => e == Tess.Undef))
-                        continue;
-                    result.Indices.AddRange(t);
-                }
+            for (var i = 0; i < tess.ElementCount; i++)
+            {
+                var t = new int[3];
+                Array.Copy(tess.Elements, i * 3, t, 0, 3);
+                if (t.Any(e => e == Tess.Undef))
+                    continue;
+                result.Indices.AddRange(t);
             }
             return result;
         }

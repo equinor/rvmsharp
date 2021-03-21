@@ -7,7 +7,7 @@
     {
         private const int MinSamples = 3;
         private const int MaxSamples = 100;
-            
+
         public static int QuadIndices(int[] indices, int l, int o, int v0, int v1, int v2, int v3)
         {
             indices[l++] = o + v0;
@@ -22,8 +22,8 @@
 
         public static int Vertex(Vector3[] normals, Vector3[] vertices, int l, Vector3 normal, Vector3 point)
         {
-            normals[l] = new Vector3(normal.X, normal.Y, normal.Z);
-            vertices[l] = new Vector3(point.X, point.Y, point.Z);
+            normals[l] = normal;
+            vertices[l] = point;
             return ++l;
         }
 

@@ -7,13 +7,14 @@ using static RvmSharp.Primitives.RvmFacetGroup;
 namespace RvmSharp.Tessellation
 {
     using Primitives;
+    using System.Diagnostics;
 
     public static class TessellatorBridge
     {
         private const float MinimumThreshold = 1e-7f;
 
         public static Mesh[] Tessellate(RvmNode group, float tolerance)
-        {   
+        {
             var meshes = group.Children.OfType<RvmPrimitive>().Select(p =>
             {
                 if (!Matrix4x4.Decompose(p.Matrix, out var scale, out _, out _))
@@ -26,11 +27,10 @@ namespace RvmSharp.Tessellation
                 mesh?.Apply(p.Matrix);
                 return mesh;
             }).Where(m => m != null).Select(m => m!);
-            
-            
+
             return meshes.ToArray();
         }
-        
+
         public static Mesh? Tessellate(RvmPrimitive geometry, float scale, float tolerance)
         {
             switch (geometry)
@@ -69,7 +69,8 @@ namespace RvmSharp.Tessellation
                     return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale, tolerance);
                 }
                 default:
-                    throw new ArgumentOutOfRangeException($"(Currently) Unsupported type for tesselation: {geometry.Kind}");
+                    throw new ArgumentOutOfRangeException(
+                        $"(Currently) Unsupported type for tesselation: {geometry.Kind}");
             }
         }
 
@@ -87,12 +88,16 @@ namespace RvmSharp.Tessellation
             Vector3[,] quad =
             {
                 {
-                    new Vector3(-bx - ox, -by - oy, -halfHeight), new Vector3(bx - ox, -by - oy, -halfHeight),
-                    new Vector3(bx - ox, by - oy, -halfHeight), new Vector3(-bx - ox, by - oy, -halfHeight)
+                    new Vector3(-bx - ox, -by - oy, -halfHeight),
+                    new Vector3(bx - ox, -by - oy, -halfHeight),
+                    new Vector3(bx - ox, by - oy, -halfHeight),
+                    new Vector3(-bx - ox, by - oy, -halfHeight)
                 },
                 {
-                    new Vector3(-tx + ox, -ty + oy, halfHeight), new Vector3(tx + ox, -ty + oy, halfHeight),
-                    new Vector3(tx + ox, ty + oy, halfHeight), new Vector3(-tx + ox, ty + oy, halfHeight)
+                    new Vector3(-tx + ox, -ty + oy, halfHeight),
+                    new Vector3(tx + ox, -ty + oy, halfHeight),
+                    new Vector3(tx + ox, ty + oy, halfHeight),
+                    new Vector3(-tx + ox, ty + oy, halfHeight)
                 },
             };
 
@@ -101,13 +106,17 @@ namespace RvmSharp.Tessellation
                 new Vector3(0.0f, -halfHeight, (quad[1, 0].Y - quad[0, 0].Y)),
                 new Vector3(halfHeight, 0.0f, -(quad[1, 1].X - quad[0, 1].X)),
                 new Vector3(0.0f, halfHeight, -(quad[1, 2].Y - quad[0, 2].Y)),
-                new Vector3(-halfHeight, 0.0f, (quad[1, 3].X - quad[0, 3].X)), 
-                new Vector3(0, 0, -1), new Vector3(0, 0, 1),
+                new Vector3(-halfHeight, 0.0f, (quad[1, 3].X - quad[0, 3].X)),
+                new Vector3(0, 0, -1),
+                new Vector3(0, 0, 1),
             };
 
             bool[] cap =
             {
-                true, true, true, true,
+                true,
+                true,
+                true,
+                true,
                 MinimumThreshold <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
                 MinimumThreshold <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
             };
@@ -115,7 +124,8 @@ namespace RvmSharp.Tessellation
             for (var i = 0; i < 6; i++)
             {
                 var con = pyramid.Connections[i];
-                if (cap[i] == false || con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
+                if (cap[i] == false || con == null ||
+                    con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
 
                 if (ConnectionInterface.DoInterfacesMatch(pyramid, con))
                 {
@@ -133,7 +143,9 @@ namespace RvmSharp.Tessellation
             var arrayPosition = 0;
             for (var i = 0; i < 4; i++)
             {
-                if (cap[i] == false) continue;
+                if (cap[i] == false)
+                    continue;
+
                 var ii = (i + 1) & 3;
                 arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[i], quad[0, i]);
                 arrayPosition = TessellationHelpers.Vertex(normals, vertices, arrayPosition, n[i], quad[0, ii]);
@@ -191,10 +203,12 @@ namespace RvmSharp.Tessellation
 
         private static Mesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
         {
-            var segments = TessellationHelpers.SagittaBasedSegmentCount(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, tolerance);
+            var segments = TessellationHelpers.SagittaBasedSegmentCount(rectangularTorus.Angle,
+                rectangularTorus.RadiusOuter, scale, tolerance);
             var samples = segments + 1; // Assumed to be open, add extra sample.
 
-            var error = TessellationHelpers.SagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter, scale, segments);
+            var error = TessellationHelpers.SagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter,
+                scale, segments);
 
             bool shell = true;
             bool[] cap = {true, true};
@@ -214,8 +228,10 @@ namespace RvmSharp.Tessellation
             var h2 = 0.5f * rectangularTorus.Height;
             float[,] square =
             {
-                {rectangularTorus.RadiusOuter, -h2}, {rectangularTorus.RadiusInner, -h2},
-                {rectangularTorus.RadiusInner, h2}, {rectangularTorus.RadiusOuter, h2},
+                {rectangularTorus.RadiusOuter, -h2},
+                {rectangularTorus.RadiusInner, -h2},
+                {rectangularTorus.RadiusInner, h2},
+                {rectangularTorus.RadiusOuter, h2},
             };
 
             // Not closed
@@ -239,7 +255,9 @@ namespace RvmSharp.Tessellation
                 {
                     float[,] n =
                     {
-                        {0.0f, 0.0f, -1.0f}, {-t0[2 * i + 0], -t0[2 * i + 1], 0.0f}, {0.0f, 0.0f, 1.0f},
+                        {0.0f, 0.0f, -1.0f},
+                        {-t0[2 * i + 0], -t0[2 * i + 1], 0.0f},
+                        {0.0f, 0.0f, 1.0f},
                         {t0[2 * i + 0], t0[2 * i + 1], 0.0f},
                     };
 
@@ -349,12 +367,16 @@ namespace RvmSharp.Tessellation
 
         private static Mesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
         {
-            var segments_l = TessellationHelpers.SagittaBasedSegmentCount(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
+            var segments_l = TessellationHelpers.SagittaBasedSegmentCount(circularTorus.Angle,
+                circularTorus.Offset + circularTorus.Radius,
                 scale, tolerance); // large radius, toroidal direction
             var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, circularTorus.Radius, scale,
-                    tolerance); // small radius, poloidal direction
+                tolerance); // small radius, poloidal direction
 
-            var error = Math.Max(TessellationHelpers.SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius, scale, segments_l), TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
+            var error = Math.Max(
+                TessellationHelpers.SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
+                    scale, segments_l),
+                TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
 
             var samples_l = segments_l + 1; // Assumed to be open, add extra sample
             var samples_s = segments_s; // Assumed to be closed
@@ -452,7 +474,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
+            Debug.Assert(l == 3 * vertices_n, "l == 3*vertices_n");
 
             // generate indices
             l = 0;
@@ -507,8 +529,8 @@ namespace RvmSharp.Tessellation
                 o += samples_s;
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
-            Asserts.AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
+            Debug.Assert(l == 3 * triangles_n);
+            Debug.Assert(o == vertices_n);
 
             return new Mesh(vertices, normals, indices, error);
         }
@@ -537,20 +559,29 @@ namespace RvmSharp.Tessellation
 
             Vector3[] n =
             {
-                new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, -1, 0), new Vector3(0, 1, 0),
-                new Vector3(0, 0, -1), new Vector3(0, 0, 1)
+                new Vector3(-1, 0, 0),
+                new Vector3(1, 0, 0),
+                new Vector3(0, -1, 0),
+                new Vector3(0, 1, 0),
+                new Vector3(0, 0, -1),
+                new Vector3(0, 0, 1)
             };
 
             bool[] faces =
             {
-                1e-5 <= box.LengthX, 1e-5 <= box.LengthX, 1e-5 <= box.LengthY, 1e-5 <= box.LengthY,
-                1e-5 <= box.LengthZ, 1e-5 <= box.LengthZ,
+                1e-5 <= box.LengthX,
+                1e-5 <= box.LengthX,
+                1e-5 <= box.LengthY,
+                1e-5 <= box.LengthY,
+                1e-5 <= box.LengthZ,
+                1e-5 <= box.LengthZ,
             };
 
             for (var i = 0; i < 6; i++)
             {
                 var con = box.Connections[i];
-                if (faces[i] == false || con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
+                if (faces[i] == false || con == null ||
+                    con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
 
                 if (ConnectionInterface.DoInterfacesMatch(box, con))
                 {
@@ -712,9 +743,11 @@ namespace RvmSharp.Tessellation
             {
                 for (int i = 0; i < samples; i++)
                 {
-                    l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1],
+                    l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0],
+                        t1[2 * i + 1],
                         -h2);
-                    l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0], t1[2 * i + 1], h2);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0],
+                        t1[2 * i + 1], h2);
                 }
             }
 
@@ -736,7 +769,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(vertCount), vertCount);
+            Debug.Assert(l == vertCount);
 
             l = 0;
             int o = 0;
@@ -775,8 +808,8 @@ namespace RvmSharp.Tessellation
                 o += samples;
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(triangles_n), triangles_n * 3);
-            Asserts.AssertEquals(nameof(o), o, nameof(vertCount), vertCount);
+            Debug.Assert(l == triangles_n * 3);
+            Debug.Assert(o == vertCount);
 
             return new Mesh(vertices, normals, indices, error);
         }
@@ -892,7 +925,7 @@ namespace RvmSharp.Tessellation
                 }
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", 3 * vertices_n);
+            Debug.Assert(l == vertices_n * 3);
 
             l = 0;
             var o = 0;
@@ -932,8 +965,8 @@ namespace RvmSharp.Tessellation
                 o += samples;
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(triangles_n) + " * 3", 3 * triangles_n);
-            Asserts.AssertEquals(nameof(o), o, nameof(vertices_n), vertices_n);
+            Debug.Assert(l == triangles_n * 3);
+            Debug.Assert(o == vertices_n);
 
             return new Mesh(vertices, normals, indices, error);
         }
@@ -999,11 +1032,12 @@ namespace RvmSharp.Tessellation
                     var phi = (float)(phi_scale * i + sphereBasedPrimitive.SampleStartAngle);
                     var nx = (float)(w * Math.Cos(phi));
                     var ny = (float)(w * Math.Sin(phi));
-                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny, z);
+                    l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny,
+                        z);
                 }
             }
 
-            Asserts.AssertEquals(nameof(l), l, nameof(vertices_n) + " * 3", vertices_n * 3);
+            Debug.Assert(l == vertices_n * 3);
 
             var o_c = 0;
             var indices = new List<int>();
@@ -1032,7 +1066,8 @@ namespace RvmSharp.Tessellation
                             indices.Add(o_c + ii_c);
                         }
 
-                        Asserts.AssertNotEquals(nameof(i_n), i_n, nameof(ii_n), ii_n);
+                        Debug.Assert(i_n != ii_n, $"{nameof(i_n)} should not equal {nameof(ii_n)}");
+
                         indices.Add(o_c + i_c);
                         indices.Add(o_n + i_n);
                         indices.Add(o_n + ii_n);
@@ -1050,7 +1085,8 @@ namespace RvmSharp.Tessellation
                         ii_n %= n_n;
                         ii_c %= n_c;
 
-                        Asserts.AssertNotEquals(nameof(i_c), i_c, nameof(ii_c), ii_c);
+                        Debug.Assert(i_c != ii_c, $"{nameof(i_c)} should not equal {nameof(ii_c)}");
+
                         indices.Add(o_c + i_c);
                         indices.Add(o_n + ii_n);
                         indices.Add(o_c + ii_c);

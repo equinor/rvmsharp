@@ -102,13 +102,13 @@
             public string EndSeparator = "END";
             public string NameEnd = ":=";
             public string Sep = "&end&";
-            // ReSharper disable once CollectionNeverQueried.Local
+            // ReSharper disable once CollectionNeverQueried.Local -- We currently do not use this for anything, but it can be used in the future.
             public readonly Dictionary<string, string> HeaderMetadata = new();
         }
 
         private static PdmsFileHeader ParseHeader(StreamReader reader)
         {
-            PdmsFileHeader header = new PdmsFileHeader();
+            var header = new PdmsFileHeader();
             
             string[] cadcAttributesFilesSupported = {"CADC_Attributes_File v1.0"};
 
@@ -133,26 +133,24 @@
             
             // Read Header Information:
             var firstLineHeaderInformation = reader.ReadLine()!;
-            if (!firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
+            if (firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
             {
-                return header;
-            }
-
-            bool headerEnded = false;
-            while (!headerEnded)
-            {
-                string currentLine = reader.ReadLine()!;
-                if (currentLine.EndsWith(header.EndSeparator))
+                bool headerEnded = false;
+                while (!headerEnded)
                 {
-                    headerEnded = true;
-                }
-                else
-                {
-                    var lineSegments = currentLine.Split(new[] {header.Sep}, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string keyValueSegment in lineSegments)
+                    string currentLine = reader.ReadLine()!;
+                    if (currentLine.EndsWith(header.EndSeparator))
                     {
-                        var (key, value) = SplitKeyValue(keyValueSegment, header.NameEnd);
-                        header.HeaderMetadata[key] = value;
+                        headerEnded = true;
+                    }
+                    else
+                    {
+                        var lineSegments = currentLine.Split(new[] {header.Sep}, StringSplitOptions.RemoveEmptyEntries);
+                        foreach (string keyValueSegment in lineSegments)
+                        {
+                            var (key, value) = SplitKeyValue(keyValueSegment, header.NameEnd);
+                            header.HeaderMetadata[key] = value;
+                        }
                     }
                 }
             }

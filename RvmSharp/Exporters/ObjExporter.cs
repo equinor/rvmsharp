@@ -33,7 +33,7 @@
             _writer.WriteLine("o " + name);
         }
 
-        public void WriteMesh(Mesh mesh, string? name = null)
+        public void WriteMesh(Mesh mesh)
         {
             foreach (var v in mesh.Vertices)
             {
