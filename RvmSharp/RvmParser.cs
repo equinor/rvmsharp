@@ -6,7 +6,7 @@
     using System.IO;
     using System.Numerics;
     using System.Text;
-    
+
     public static class RvmParser
     {
         private static uint ReadUint(Stream stream)
@@ -217,13 +217,13 @@
         {
             var version = ReadUint(stream);
             var name = ReadString(stream);
-            
+
             const float mmToM = 0.001f;
             var translation = new Vector3(
                 ReadFloat(stream) * mmToM,
                 ReadFloat(stream) * mmToM,
                 ReadFloat(stream) * mmToM);
-            
+
             var materialId = ReadUint(stream);
             if (version == 3)
             {

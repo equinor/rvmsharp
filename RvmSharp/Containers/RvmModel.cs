@@ -1,10 +1,8 @@
 ﻿namespace RvmSharp.Containers
 {
-    using JetBrains.Annotations;
     using Primitives;
     using System.Collections.Generic;
 
-    [PublicAPI]
     public class RvmModel
     {
         public uint Version { get; }

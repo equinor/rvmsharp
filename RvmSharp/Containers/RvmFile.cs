@@ -1,14 +1,13 @@
 ﻿namespace RvmSharp.Containers
 {
-    using JetBrains.Annotations;
     using Primitives;
     using System.Collections.Generic;
     using System.Linq;
 
-    [PublicAPI]
+    // Public Api
     public class RvmFile
-    {
-        [PublicAPI]
+    {    
+        // Public Api
         public record RvmHeader(uint Version, string Info, string Note, string Date, string User, string Encoding);
 
         public RvmHeader Header { get; }
