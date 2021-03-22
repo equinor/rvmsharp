@@ -32,7 +32,7 @@
             var workload = CollectWorkload(options);
 
             var rvmStore = ReadRvmData(workload);
-            
+
             var progressBar = new ProgressBar(2, "Aligning");
             RvmConnect.Connect(rvmStore);
             progressBar.Tick();
@@ -40,19 +40,19 @@
             progressBar.Tick();
             progressBar.Dispose();
 
-            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.children.SelectMany(CollectGeometryNodes)).ToArray();
+            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectGeometryNodes)).ToArray();
             progressBar = new ProgressBar(leafs.Length, "Tessellating");
             var meshes = leafs.AsParallel().Select(leaf =>
             {
                 progressBar.Message = leaf.Name;
-                var meshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
+                var tesselatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
                 progressBar.Tick();
-                return (leaf.Name, meshes);
+                return (leaf.Name, tesselatedMeshes);
             }).ToArray();
             progressBar.Dispose();
             progressBar = new ProgressBar(meshes.Length, "Exporting");
-            
-            using var objExporter = new ObjExporter( options.Output);
+
+            using var objExporter = new ObjExporter(options.Output);
             foreach ((string objectName, IEnumerable<Mesh> primitives) in meshes)
             {
                 objExporter.StartObject(objectName);
@@ -60,31 +60,32 @@
                     objExporter.WriteMesh(primitive);
                 progressBar.Tick();
             }
+
             progressBar.Dispose();
 
             Console.WriteLine("Done!");
             return 0;
         }
-        
+
         private static (string rvmFilename, string txtFilename)[] CollectWorkload(Options options)
         {
             var regexFilter = options.Filter != null ? new Regex(options.Filter) : null;
             var directories = options.Inputs.Where(Directory.Exists).ToArray();
             var files = options.Inputs.Where(File.Exists).ToArray();
             var missingInputs = options.Inputs.Where(i => !files.Contains(i) && !directories.Contains(i)).ToArray();
-            
+
             if (missingInputs.Any())
             {
                 throw new FileNotFoundException(
                     $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}");
             }
 
-            var inputFiles = 
+            var inputFiles =
                 directories.SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
-                .Concat(directories.SelectMany(directory=> Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
-                .Concat(files) // Append single files
-                .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
-                .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
+                    .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
+                    .Concat(files) // Append single files
+                    .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
+                    .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
 
             var workload = (from filePair in inputFiles
                 select filePair.ToArray()
@@ -99,7 +100,7 @@
                     Console.WriteLine(
                         $"No corresponding RVM file found for attributes: '{workItem.txtFilename}', the file will be skipped.");
             }
-            
+
             return workload.Where(rvmTxt => rvmTxt.rvmFilename != null).ToArray();
         }
 
@@ -123,7 +124,7 @@
             });
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
-            
+
             progressBar.Dispose();
             return rvmStore;
         }

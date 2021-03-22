@@ -4,52 +4,43 @@
     using System.Collections.Generic;
     using System.Linq;
 
+    // Public Api
     public class RvmFile
-    {
-        public readonly uint Version;
-        public readonly string Info;
-        public readonly string Note;
-        public readonly string Date;
-        public readonly string User;
-        public readonly string Encoding;
+    {    
+        // Public Api
+        public record RvmHeader(uint Version, string Info, string Note, string Date, string User, string Encoding);
 
-        public RvmModel Model { get; internal set; }
+        public RvmHeader Header { get; }
+        public RvmModel Model { get; }
 
-        public RvmFile(uint version, string info, string note, string date, string user, string encoding)
+        public RvmFile(RvmHeader header, RvmModel model)
         {
-            Version = version;
-            Info = info;
-            Note = note;
-            Date = date;
-            User = user;
-            Encoding = encoding;
+            Header = header;
+            Model = model;
         }
 
         public void AttachAttributes(string txtFilename)
         {
             var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename);
-            AssignRecursive(pdms, Model.children);
+            AssignRecursive(pdms, Model.Children);
         }
-        
-        private static void AssignRecursive(IList<PdmsTextParser.PdmsNode> attributes, IList<RvmNode> groups)
+
+        private static void AssignRecursive(IReadOnlyList<PdmsTextParser.PdmsNode> attributeNodes,
+            IReadOnlyList<RvmNode> groups)
         {
             //if (attributes.Count != groups.Count)
             //    Console.Error.WriteLine("Length of attribute nodes does not match group length");
-            var copy = new List<RvmNode>(groups);
-            for (var i = 0; i < attributes.Count; i++)
+            var rvmNodeNameLookup = groups.ToDictionary(x => x.Name, y => y);
+
+            foreach (var attributeNode in attributeNodes)
             {
-                var pdms = attributes[i];
-                for (var k = 0; k < copy.Count; k++)
+                if (rvmNodeNameLookup.TryGetValue(attributeNode.Name, out var rvmNode))
                 {
-                    var group = copy[k];
-                    if (group.Name == pdms.Name)
-                    {
-                        // todo attr
-                        foreach (var kvp in pdms.MetadataDict)
-                            group.Attributes.Add(kvp.Key, kvp.Value);
-                        AssignRecursive(pdms.Children, group.Children.OfType<RvmNode>().ToArray());
-                        break;
-                    }
+                    // todo attr
+                    foreach (var kvp in attributeNode.MetadataDict)
+                        rvmNode.Attributes.Add(kvp.Key, kvp.Value);
+                    AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
+                    break;
                 }
             }
         }

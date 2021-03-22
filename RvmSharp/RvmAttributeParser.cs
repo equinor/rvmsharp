@@ -8,14 +8,12 @@
     public static class PdmsTextParser
     {
         private static readonly char[] Quotes = { '\'', '"' };
-        
-        public class PdmsNode
-        {
-            public string Name;
-            public Dictionary<string, string> MetadataDict;
-            public PdmsNode Parent;
-            public List<PdmsNode> Children;
-        }
+
+        public record PdmsNode(
+            string Name, 
+            Dictionary<string, string> MetadataDict,
+            PdmsNode? Parent, 
+            List<PdmsNode> Children);
 
         private class StatefulReader : StreamReader
         {
@@ -23,7 +21,7 @@
 
             public StatefulReader(string filename) : base(filename) {}
 
-            override public string ReadLine()
+            override public string? ReadLine()
             {
                 var line = base.ReadLine();
                 LineNumber++;
@@ -38,26 +36,28 @@
             using (var reader = new StatefulReader(pdmsTxtFilePath))
             {
                 var indentationStack = new Stack<int>();
-                PdmsNode currentPdmsNode = null;
+                PdmsNode? currentPdmsNode = null;
 
                 var headerInfo = ParseHeader(reader);
                 string newItemSeparator = headerInfo.StartSeparator;
                 int newItemSeparatorLength = newItemSeparator.Length;
                 string endItemSeparator = headerInfo.EndSeparator;
-                string[] metadataSplit = new[] {headerInfo.NameEnd};
                 while (!reader.EndOfStream)
                 {
                     var line = reader.ReadLine();
+                    if (line == null)
+                        throw new NullReferenceException( $"Unexpected null in {nameof(line)}");
+                    
                     var trimmedLine = line.Trim();
                     if (trimmedLine.StartsWith(newItemSeparator))
                     {
                         var pdmsNode = new PdmsNode
-                        {
-                            Name = trimmedLine.Substring(newItemSeparatorLength).Trim(),
-                            MetadataDict = new Dictionary<string, string>(),
-                            Parent = currentPdmsNode,
-                            Children = new List<PdmsNode>()
-                        };
+                        (
+                            Name: trimmedLine.Substring(newItemSeparatorLength).Trim(),
+                            MetadataDict: new Dictionary<string, string>(),
+                            Parent: currentPdmsNode,
+                            Children: new List<PdmsNode>()
+                        );
 
                         indentationStack.Push(line.Substring(0, line.IndexOf(newItemSeparator[0])).Length);
 
@@ -65,6 +65,7 @@
                             pdmsNodes.Add(pdmsNode);
                         else
                             currentPdmsNode.Children.Add(pdmsNode);
+                        
                         currentPdmsNode = pdmsNode;
                     }
                     else
@@ -79,13 +80,13 @@
                             else
                             {
                                 indentationStack.Pop();
-                                currentPdmsNode = currentPdmsNode.Parent;
+                                currentPdmsNode = currentPdmsNode!.Parent;
                             }
                         }
                         else
                         {
                             var (key, value) = SplitKeyValue(trimmedLine, headerInfo.NameEnd);
-                            currentPdmsNode.MetadataDict[key] = StripQuotes(value);
+                            currentPdmsNode!.MetadataDict[key] = StripQuotes(value);
                         }
                     }
                 }
@@ -96,22 +97,23 @@
 
         private class PdmsFileHeader
         {
-            public string FileFormat;
+            public string FileFormat = "Unknown";
             public string StartSeparator = "NEW";
             public string EndSeparator = "END";
             public string NameEnd = ":=";
             public string Sep = "&end&";
+            // ReSharper disable once CollectionNeverQueried.Local -- We currently do not use this for anything, but it can be used in the future.
             public readonly Dictionary<string, string> HeaderMetadata = new();
         }
 
         private static PdmsFileHeader ParseHeader(StreamReader reader)
         {
-            PdmsFileHeader header = new();
+            var header = new PdmsFileHeader();
             
             string[] cadcAttributesFilesSupported = {"CADC_Attributes_File v1.0"};
 
             // Parse the first line:
-            string firstLine = reader.ReadLine();
+            string? firstLine = reader.ReadLine();
             if (firstLine == null)
             {
                 throw new Exception("PDMS file header not found!");
@@ -128,15 +130,15 @@
             header.EndSeparator = firstLineSegments[2].Split(':')[1].Trim();
             header.NameEnd = firstLineSegments[3].Substring("name_end:".Length).Trim();
             header.Sep = firstLineSegments[4].Split(':')[1].Trim();
-
+            
             // Read Header Information:
-            var firstLineHeaderInformation = reader.ReadLine();
+            var firstLineHeaderInformation = reader.ReadLine()!;
             if (firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
             {
                 bool headerEnded = false;
                 while (!headerEnded)
                 {
-                    string currentLine = reader.ReadLine();
+                    string currentLine = reader.ReadLine()!;
                     if (currentLine.EndsWith(header.EndSeparator))
                     {
                         headerEnded = true;
@@ -172,6 +174,7 @@
             
             if (input.First() == input.Last() && Quotes.Any(q => q == input.First()))
                 return input.Substring(1, input.Length - 2);
+            
             return input;
         }
     }

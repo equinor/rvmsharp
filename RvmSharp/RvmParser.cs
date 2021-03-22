@@ -50,6 +50,7 @@
                 if (bytes[end] == 0)
                     break;
             }
+
             return Encoding.UTF8.GetString(bytes, 0, end);
         }
 
@@ -66,6 +67,7 @@
                     throw new IOException("Unexpected data in header");
                 builder.Append((char)bytes[3]);
             }
+
             nextHeaderOffset = ReadUint(stream);
             dunno = ReadUint(stream);
             return builder.ToString();
@@ -88,9 +90,9 @@
                 ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
                 ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 1);
 
-            var bBoxLocal = new RvmBoundingBox { Min = ReadVector3(stream), Max = ReadVector3(stream) };
+            var bBoxLocal = new RvmBoundingBox {Min = ReadVector3(stream), Max = ReadVector3(stream)};
 
-            RvmPrimitive primitive = null;
+            RvmPrimitive primitive;
             switch (kind)
             {
                 case RvmPrimitiveKind.Pyramid:
@@ -118,7 +120,8 @@
                     var radiusOuter = ReadFloat(stream);
                     var height = ReadFloat(stream);
                     var angle = ReadFloat(stream);
-                    primitive = new RvmRectangularTorus(version, matrix, bBoxLocal, radiusInner, radiusOuter, height, angle);
+                    primitive = new RvmRectangularTorus(version, matrix, bBoxLocal, radiusInner, radiusOuter, height,
+                        angle);
                     break;
                 }
                 case RvmPrimitiveKind.CircularTorus:
@@ -185,7 +188,7 @@
                         for (var k = 0; k < contourCount; k++)
                         {
                             var vertexCount = ReadUint(stream);
-                            var vertices = new(Vector3 v, Vector3 n)[vertexCount];
+                            var vertices = new (Vector3 v, Vector3 n)[vertexCount];
 
                             for (var n = 0; n < vertexCount; n++)
                             {
@@ -202,27 +205,38 @@
 
                     primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygons);
                     break;
-            }
-            return primitive;
-            // transform bb to world?
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unexpected Kind");
             }
 
-            public static RvmNode ReadCntb(Stream stream)
+            return primitive;
+            // transform bb to world?
+        }
+
+        private static RvmNode ReadCntb(Stream stream)
         {
             var version = ReadUint(stream);
             var name = ReadString(stream);
+
             const float mmToM = 0.001f;
-            var translation = new Vector3(ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM);
+            var translation = new Vector3(
+                ReadFloat(stream) * mmToM,
+                ReadFloat(stream) * mmToM,
+                ReadFloat(stream) * mmToM);
+
             var materialId = ReadUint(stream);
             if (version == 3)
             {
                 // FIXME: On version 3 there is an unknown value
                 ReadUint(stream);
             }
-                
+
             var group = new RvmNode(version, name, translation, materialId);
-            uint nextHeaderOffset, dunno;
-            var id = ReadChunkHeader(stream, out nextHeaderOffset, out dunno);
+
+            uint unusedNextHeaderOffset;
+            uint dontKnowWhatThisValueDoes;
+
+            var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
             while (id != "CNTE")
             {
                 switch (id)
@@ -236,12 +250,16 @@
                     default:
                         throw new NotImplementedException($"Unknown chunk: {id}");
                 }
-                id = ReadChunkHeader(stream, out nextHeaderOffset, out dunno);
+
+                id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
             }
+
             if (id == "CNTE")
             {
+                // ReSharper disable once UnusedVariable
                 var endVersion = ReadUint(stream);
             }
+
             return group;
         }
 
@@ -250,15 +268,11 @@
             var colorKind = ReadUint(stream);
             var colorIndex = ReadUint(stream);
             var color = ReadUint(stream);
-            byte[] rgb = {
-                (byte)((color) >> 24 & 0xff),
-                (byte)((color) >> 16 & 0xff),
-                (byte)((color) >> 8 & 0xff),
-            };
+            byte[] rgb = {(byte)((color) >> 24 & 0xff), (byte)((color) >> 16 & 0xff), (byte)((color) >> 8 & 0xff),};
             return new RvmColor(colorKind, colorIndex, rgb);
         }
 
-        private static RvmFile ReadHead(Stream stream)
+        private static RvmFile.RvmHeader ReadHead(Stream stream)
         {
             var version = ReadUint(stream);
             var info = ReadString(stream);
@@ -266,21 +280,22 @@
             var date = ReadString(stream);
             var user = ReadString(stream);
             var encoding = (version >= 2) ? ReadString(stream) : "";
-            return new RvmFile(version, info, note, date, user, encoding);
+
+            return new RvmFile.RvmHeader(version, info, note, date, user, encoding);
         }
 
         public static RvmFile ReadRvm(Stream stream)
         {
             uint len, dunno;
+
             var head = ReadChunkHeader(stream, out len, out dunno);
             if (head != "HEAD")
                 throw new IOException($"Expected HEAD, found {head}");
-            var file = ReadHead(stream);
+            var header = ReadHead(stream);
             var modl = ReadChunkHeader(stream, out len, out dunno);
             if (modl != "MODL")
                 throw new IOException($"Expected MODL, found {modl}");
             var model = ReadModel(stream);
-            file.Model = model;
 
             var chunk = ReadChunkHeader(stream, out len, out dunno);
             while (chunk != "END:")
@@ -299,9 +314,11 @@
                     default:
                         throw new NotImplementedException($"Unknown chunk: {chunk}");
                 }
+
                 chunk = ReadChunkHeader(stream, out len, out dunno);
             }
-            return file;
+
+            return new RvmFile(header, model);
         }
     }
 }

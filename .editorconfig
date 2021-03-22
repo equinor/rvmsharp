@@ -10,6 +10,7 @@ root = true
 indent_size = 4
 indent_style = space
 tab_width = 4
+max_line_length = 120
 
 # New line preferences
 end_of_line = crlf
@@ -204,3 +205,6 @@ dotnet_naming_style.begins_with_i.required_prefix = I
 dotnet_naming_style.begins_with_i.required_suffix =
 dotnet_naming_style.begins_with_i.word_separator =
 dotnet_naming_style.begins_with_i.capitalization = pascal_case
+
+# ReSharper properties
+resharper_wrap_array_initializer_style = chop_if_long
