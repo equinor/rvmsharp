@@ -29,7 +29,7 @@ namespace RvmSharp.Tessellation
                     // Skip degenerate contour with less than 3 vertices
                     continue;
                 }
-                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z))).ToArray();
+                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z), v.n)).ToArray();
                 tess.AddContour(cv);
                 var n = contour.Vertices[0].n;
                 normal = new Vec3(n.X, n.Y, n.Z);
@@ -42,9 +42,9 @@ namespace RvmSharp.Tessellation
             
             var result = new TessellateResult();
             
-            tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, null, normal);
+            tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, CombineNormals, normal);
             result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
-            result.NormalData = Enumerable.Repeat(new Vector3(normal.X, normal.Y, normal.Z), tess.Vertices.Length).ToArray();
+            result.NormalData = tess.Vertices.Select(v => (Vector3)v.Data).ToArray();
 
             for (var i = 0; i < tess.ElementCount; i++)
             {
@@ -55,6 +55,12 @@ namespace RvmSharp.Tessellation
                 result.Indices.AddRange(t);
             }
             return result;
+        }
+
+        private static object CombineNormals(Vec3 position, object[] data, float[] weights)
+        {
+            var max = weights.Select((w, i) => (w, i)).OrderByDescending(p => p.w).Select(p => p.i).First();
+            return data[max];
         }
     }
 }
