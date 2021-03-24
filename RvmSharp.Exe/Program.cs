@@ -113,7 +113,8 @@
                 (string rvmFilename, string txtFilename) = filePair;
                 Debug.Assert(true, nameof(progressBar) + " != null");
                 progressBar.Message = Path.GetFileNameWithoutExtension(rvmFilename);
-                var rvmFile = RvmParser.ReadRvm(File.OpenRead(rvmFilename));
+                using var stream = File.OpenRead(rvmFilename);
+                var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
                     rvmFile.AttachAttributes(txtFilename);
