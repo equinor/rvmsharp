@@ -32,9 +32,10 @@
 
             var rvmStore = ReadRvmData(workload);
 
-            var progressBar = new ProgressBar(2, "Aligning");
+            var progressBar = new ProgressBar(2, "Connecting geometry");
             RvmConnect.Connect(rvmStore);
             progressBar.Tick();
+            progressBar.Message = "Aligning geometry";
             RvmAlign.Align(rvmStore);
             progressBar.Tick();
             progressBar.Dispose();
@@ -66,7 +67,7 @@
             return 0;
         }
 
-        private static (string rvmFilename, string txtFilename)[] CollectWorkload(Options options)
+        private static (string rvmFilename, string? txtFilename)[] CollectWorkload(Options options)
         {
             var regexFilter = options.Filter != null ? new Regex(options.Filter) : null;
             var directories = options.Inputs.Where(Directory.Exists).ToArray();
@@ -93,23 +94,26 @@
                 let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
                 select (rvmFilename, txtFilename)).ToArray();
 
-            foreach (var workItem in workload)
+            var result = new List<(string, string?)>();
+            foreach ((string? rvmFilename, string? txtFilename) in workload)
             {
-                if (workItem.rvmFilename == null)
+                if (rvmFilename == null)
                     Console.WriteLine(
-                        $"No corresponding RVM file found for attributes: '{workItem.txtFilename}', the file will be skipped.");
+                        $"No corresponding RVM file found for attributes: '{txtFilename}', the file will be skipped.");
+                else
+                    result.Add((rvmFilename, txtFilename));
             }
 
-            return workload.Where(rvmTxt => rvmTxt.rvmFilename != null).ToArray();
+            return result.ToArray();
         }
 
-        private static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string txtFilename)> workload)
+        private static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload)
         {
             using var progressBar = new ProgressBar(workload.Count, "Parsing input");
 
             var rvmFiles = workload.Select(filePair =>
             {
-                (string rvmFilename, string txtFilename) = filePair;
+                (string rvmFilename, string? txtFilename) = filePair;
                 progressBar.Message = Path.GetFileNameWithoutExtension(rvmFilename);
                 using var stream = File.OpenRead(rvmFilename);
                 var rvmFile = RvmParser.ReadRvm(stream);
@@ -123,8 +127,6 @@
             }).ToArray();
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
-
-            progressBar.Dispose();
             return rvmStore;
         }
 

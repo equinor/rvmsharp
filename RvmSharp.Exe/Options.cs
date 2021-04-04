@@ -17,7 +17,7 @@
         public IEnumerable<string> Inputs { get; }
 
         [Option('f', "filter", Required = false, HelpText = "Regex filter to match files in input folder")]
-        public string Filter { get; }
+        public string? Filter { get; }
 
         [Option('o', "output", Required = true, HelpText = "Output folder")]
         public string Output { get; }
