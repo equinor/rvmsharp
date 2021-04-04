@@ -11,7 +11,6 @@
     using Exporters;
     using Operations;
     using Primitives;
-    using System.Diagnostics;
     using System.Text.RegularExpressions;
 
     static class Program
@@ -104,14 +103,13 @@
             return workload.Where(rvmTxt => rvmTxt.rvmFilename != null).ToArray();
         }
 
-        private static RvmStore ReadRvmData((string rvmFilename, string txtFilename)[] workload)
+        private static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string txtFilename)> workload)
         {
-            using var progressBar = new ProgressBar(workload.Length, "Parsing input");
+            using var progressBar = new ProgressBar(workload.Count, "Parsing input");
 
             var rvmFiles = workload.Select(filePair =>
             {
                 (string rvmFilename, string txtFilename) = filePair;
-                Debug.Assert(true, nameof(progressBar) + " != null");
                 progressBar.Message = Path.GetFileNameWithoutExtension(rvmFilename);
                 using var stream = File.OpenRead(rvmFilename);
                 var rvmFile = RvmParser.ReadRvm(stream);
@@ -122,7 +120,7 @@
 
                 progressBar.Tick();
                 return rvmFile;
-            });
+            }).ToArray();
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
 
