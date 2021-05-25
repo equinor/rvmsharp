@@ -6,12 +6,12 @@
     // FIXME: placeholder implementation
     public class NodeIdProvider
     {
-        private Random _random = new Random();
+        private readonly Random _random = new Random();
 
-        private HashSet<ulong> _generatedIds = new HashSet<ulong>();
-        
-        // TODO: this will generate or fetch Node ID based on project, hierarchy, name.
-        public ulong GetNodeId(CadNode node)
+        private readonly HashSet<ulong> _generatedIds = new HashSet<ulong>();
+
+        // TODO: this will generate or fetch Node ID based on project, hierarchy, name. The idea is to keep it deterministic if possible
+        public ulong GetNodeId(CadNode? cadNode)
         {
             ulong value;
             do
