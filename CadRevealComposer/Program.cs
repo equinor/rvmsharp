@@ -6,7 +6,7 @@ namespace CadRevealComposer
     using RvmSharp.Primitives;
     using System.Linq;
 
-    static class Program
+    public static class Program
     {
         static readonly TreeIndexGenerator TreeIndexGenerator = new TreeIndexGenerator();
         static readonly NodeIdProvider NodeIdGenerator = new NodeIdProvider();
@@ -41,7 +41,7 @@ namespace CadRevealComposer
             Console.WriteLine("Hello World!");
         }
 
-        private static CadNode CollectGeometryNodesRecursive(RvmNode root, CadNode parent)
+        public static CadNode CollectGeometryNodesRecursive(RvmNode root, CadNode parent)
         {
             var node = new CadNode
             {
