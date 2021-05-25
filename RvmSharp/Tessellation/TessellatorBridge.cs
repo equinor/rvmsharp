@@ -370,7 +370,8 @@ namespace RvmSharp.Tessellation
             var segments_l = TessellationHelpers.SagittaBasedSegmentCount(circularTorus.Angle,
                 circularTorus.Offset + circularTorus.Radius,
                 scale, tolerance); // large radius, toroidal direction
-            var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, circularTorus.Radius, scale,
+            // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
+            var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, Math.Abs(circularTorus.Radius), scale,
                 tolerance); // small radius, poloidal direction
 
             var error = Math.Max(
