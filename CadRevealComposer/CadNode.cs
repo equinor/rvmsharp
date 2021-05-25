@@ -7,9 +7,9 @@ namespace CadRevealComposer
         public ulong NodeId;
         public ulong TreeIndex;
         // TODO support Store, Model, File and maybe not RVM
-        public RvmGroup Group; // PDMS inside, children inside
-        public CadNode Parent;
-        public CadNode[] Children;
+        public RvmGroup? Group; // PDMS inside, children inside
+        public CadNode? Parent;
+        public CadNode[]? Children;
         // Bounding box
         // Depth
         // Subtree size
