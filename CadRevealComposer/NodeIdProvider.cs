@@ -11,7 +11,7 @@
         private readonly HashSet<ulong> _generatedIds = new HashSet<ulong>();
 
         // TODO: this will generate or fetch Node ID based on project, hierarchy, name. The idea is to keep it deterministic if possible
-        public ulong GetNodeId(CadNode? cadNode)
+        public ulong GetNodeId(CadRevealNode? cadNode)
         {
             ulong value;
             do
