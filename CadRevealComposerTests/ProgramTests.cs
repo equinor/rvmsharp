@@ -16,13 +16,13 @@ namespace CadRevealComposerTests
             var leaf = new RvmBox(2, Matrix4x4.Identity, new RvmBoundingBox() {Max = Vector3.One, Min = Vector3.Zero},
                 1, 1, 1);
             
-            var node1 = new RvmNode(2, "Node1", Vector3.Zero, 0);
+            var node1 = new RvmNode(2, "Node1", Vector3.Zero, 1);
             
             node1.Children.Add(leaf);
-            var rvmRootNode = new RvmNode(2, "Root", Vector3.Zero, 0);
+            var rvmRootNode = new RvmNode(2, "Root", Vector3.Zero, 1);
             rvmRootNode.Children.Add(node1);
 
-            var rootNodeCadNode = CadRevealComposer.Program.CollectGeometryNodesRecursive(rvmRootNode, new CadNode());
+            var rootNodeCadNode = CadRevealComposer.Program.CollectGeometryNodesRecursive(rvmRootNode, new CadRevealNode());
             
             Assert.That(rootNodeCadNode.Children, Has.One.Items);
             Assert.That(rootNodeCadNode.Children![0].Group, Is.EqualTo(node1));

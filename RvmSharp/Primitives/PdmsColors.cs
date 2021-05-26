@@ -61,12 +61,29 @@
             ("DarkBrown", new[] {55 / 100.0f, 27 / 100.0f, 8 / 100.0f})
         };
 
-        public static float[] GetColorByCode(int code)
+        public static float[] GetColorByCode(uint code)
         {
             if (code < 1 || code > PdmsColorsList.Count)
-                throw new ArgumentOutOfRangeException($"Color code must be between 1 and {PdmsColorsList.Count} inclusive, got: {code}");
+                throw new ArgumentOutOfRangeException(
+                    $"Color code must be between 1 and {PdmsColorsList.Count} inclusive, got: {code}");
 
-            return PdmsColorsList[code - 1].color;
+            var index = (int)code - 1;
+
+            return PdmsColorsList[index].color;
+        }
+
+        public static byte[] GetColorAsBytesByCode(uint code)
+        {
+            var color = GetColorByCode(code);
+
+            var colorAsByte = color.Select(x => (byte) Math.Round((x * 255)));
+            var colorAsByteWithAlpha = colorAsByte.ToList();
+            colorAsByteWithAlpha.Add(255);
+
+            if (colorAsByteWithAlpha.Count != 4)
+                throw new Exception("Expected 4 element of color, got " + colorAsByteWithAlpha.Count);
+            
+            return colorAsByteWithAlpha.ToArray();
         }
 
         public static float[] GetColorByName(string name)
