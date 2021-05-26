@@ -16,8 +16,9 @@
             ulong value;
             do
             {
-                value = ((ulong)_random.Next(Int32.MinValue, Int32.MaxValue) << 32) &
-                        (ulong)_random.Next(Int32.MinValue, Int32.MaxValue);
+                value = Math.Clamp(
+                    ((ulong)_random.Next(Int32.MinValue, Int32.MaxValue) << 32) & (ulong)_random.Next(Int32.MinValue, Int32.MaxValue),
+                    0, (1L << 53) - 1);
             } while (_generatedIds.Contains(value));
 
             _generatedIds.Add(value);

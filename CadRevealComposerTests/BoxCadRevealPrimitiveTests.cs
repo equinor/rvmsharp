@@ -28,7 +28,7 @@ namespace CadRevealComposerTests
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
-            var box = BoxACadRevealGeometry.FromPrimitive(revealNode, container, rvmBox);
+            var box = Box.FromRvmPrimitive(revealNode, container, rvmBox);
 
 
             Assert.That(box.CenterX, Is.EqualTo(10));
