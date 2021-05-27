@@ -1,15 +1,14 @@
-﻿using System;
-
-namespace CadRevealComposer
+﻿namespace CadRevealComposer
 {
-    using System.Collections.Generic;
-    using System.IO;
-    using RvmSharp.BatchUtils;
-    using RvmSharp.Primitives;
-    using System.Linq;
-    using System.Numerics;
     using Newtonsoft.Json;
     using Primitives;
+    using RvmSharp.BatchUtils;
+    using RvmSharp.Primitives;
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Numerics;
     using Utils;
 
     public static class Program
@@ -20,7 +19,7 @@ namespace CadRevealComposer
         // ReSharper disable once UnusedParameter.Local
         static void Main(string[] args)
         {
-            var workload = Workload.CollectWorkload(new[] { @"/Users/GUSH/data/hda" });
+            var workload = Workload.CollectWorkload(new[] {Options.InputRvmPath});
             var progressReport = new Progress<(string fileName, int progress, int total)>((x) =>
             {
                 Console.WriteLine(x.fileName);
@@ -49,19 +48,21 @@ namespace CadRevealComposer
             var distinctCenterX = geometries.CollectProperties<float, APrimitive>("CenterX").Distinct();
             var distinctCenterY = geometries.CollectProperties<float, APrimitive>("CenterY").Distinct();
             var distinctCenterZ = geometries.CollectProperties<float, APrimitive>("CenterZ").Distinct();
-            
-            
+
+
             var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis")
-                .Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => new[] { y.X, y.Y, y.Z });
-            
-            var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ").Distinct();
-            
+                .Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => new[] {y.X, y.Y, y.Z});
+
+            var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ")
+                .Distinct();
+
             var height = geometries.CollectProperties<float, APrimitive>("Height").Distinct();
             var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius").Distinct();
             var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
-            
+
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
-                .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct().Select(x => new int[] { (byte) x.X, (byte)x.Y, (byte)x.Z, (byte)x.W });
+                .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
+                .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W});
 
 
             var file = new FileI3D()
@@ -178,7 +179,8 @@ namespace CadRevealComposer
                 Children = null
             };
 
-            var childrenCadNodes = root.Children.OfType<RvmNode>().Select(n => CollectGeometryNodesRecursive(n, node)).ToArray();
+            var childrenCadNodes = root.Children.OfType<RvmNode>().Select(n => CollectGeometryNodesRecursive(n, node))
+                .ToArray();
             if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
             {
                 // TODO: Implicit Pipes
@@ -186,7 +188,7 @@ namespace CadRevealComposer
             }
 
             var geometries = root.Children.OfType<RvmPrimitive>()
-                .Select(x => APrimitive.FromRvmPrimitive(node, root, x)).Where( g => g != null);
+                .Select(x => APrimitive.FromRvmPrimitive(node, root, x)).Where(g => g != null);
 
             node.Geometries = geometries.ToArray()!;
             node.Children = childrenCadNodes;
