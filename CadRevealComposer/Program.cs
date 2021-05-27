@@ -20,12 +20,18 @@
         static void Main(string[] args)
         {
             var workload = Workload.CollectWorkload(new[] {Options.InputRvmPath});
+
+
+            Console.WriteLine("Reading RvmData");
             var progressReport = new Progress<(string fileName, int progress, int total)>((x) =>
             {
-                Console.WriteLine(x.fileName);
+                Console.WriteLine(x.fileName + $" ({x.progress}/{x.total})");
             });
-
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
+
+
+            Console.WriteLine("Generating i3d");
+
             // Project name og project parameters tull from Cad Control Center
             var rootNode =
                 new CadRevealNode
@@ -157,9 +163,11 @@
             };
 
 
-            File.WriteAllText("output.json", JsonConvert.SerializeObject(file));
+            string outputPath = "output.json";
+            File.WriteAllText(outputPath, JsonConvert.SerializeObject(file));
 
 
+            Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputPath)}\"");
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
             // BOX treeIndex, transform -> cadreveal, 
 
