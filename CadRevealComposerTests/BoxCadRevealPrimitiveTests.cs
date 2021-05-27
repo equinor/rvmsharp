@@ -3,6 +3,7 @@
 namespace CadRevealComposerTests
 {
     using CadRevealComposer;
+    using CadRevealComposer.Primitives;
     using RvmSharp.Primitives;
     using System.Numerics;
 
@@ -28,7 +29,7 @@ namespace CadRevealComposerTests
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
-            var box = Box.FromRvmPrimitive(revealNode, container, rvmBox);
+            var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox) as Box;
 
 
             Assert.That(box.CenterX, Is.EqualTo(10));

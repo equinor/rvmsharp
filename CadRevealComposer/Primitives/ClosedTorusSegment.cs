@@ -1,16 +1,9 @@
-namespace CadRevealComposer
+namespace CadRevealComposer.Primitives
 {
     using Newtonsoft.Json;
-    using Primitives;
 
-    public class Box : APrimitive
+    public class ClosedTorusSegment : APrimitive
     {
-        [JsonProperty("node_id")]
-        public ulong NodeId { get; set; }
-
-        [JsonProperty("tree_index")]
-        public ulong TreeIndex { get; set; }
-
         [JsonProperty("color")]
         public int[] Color { get; set; }
 
@@ -29,16 +22,16 @@ namespace CadRevealComposer
         [JsonProperty("normal")]
         public float[] Normal { get; set; }
 
-        [JsonProperty("delta_x")]
-        public float DeltaX { get; set; }
+        [JsonProperty("radius")]
+        public float Radius { get; set; }
 
-        [JsonProperty("delta_y")]
-        public float DeltaY { get; set; }
-
-        [JsonProperty("delta_z")]
-        public float DeltaZ { get; set; }
-
+        [JsonProperty("tube_radius")]
+        public float TubeRadius { get; set; }
+        
         [JsonProperty("rotation_angle")]
         public float RotationAngle { get; set; }
+        
+        [JsonProperty("arc_angle")]
+        public float ArcAngle { get; set; }
     }
 }
