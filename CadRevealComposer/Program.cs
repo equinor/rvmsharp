@@ -10,11 +10,12 @@ namespace CadRevealComposer
     using System.Numerics;
     using Newtonsoft.Json;
     using Primitives;
+    using Utils;
 
     public static class Program
     {
-        static readonly TreeIndexGenerator TreeIndexGenerator = new TreeIndexGenerator();
-        static readonly NodeIdProvider NodeIdGenerator = new NodeIdProvider();
+        static readonly TreeIndexGenerator TreeIndexGenerator = new();
+        static readonly NodeIdProvider NodeIdGenerator = new();
 
         // ReSharper disable once UnusedParameter.Local
         static void Main(string[] args)
@@ -42,25 +43,25 @@ namespace CadRevealComposer
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
-            var boxes = allNodes.SelectMany(x => x.Geometries).OfType<Box>().ToArray();
-            var cylinders = allNodes.SelectMany(x => x.Geometries).OfType<Cylinder>().ToArray();
+            var geometries = allNodes.SelectMany(x => x.Geometries).ToArray();
 
-            var distinctDiagonals = boxes.Select(x => x.Diagonal).Concat(
-                cylinders.Select(x => x.Diagonal)).Distinct();
-            var distinctCenterX = boxes.Select(x => x.CenterX).Concat(
-                cylinders.Select(x => x.CenterX)).Distinct();
-            var distinctCenterY = boxes.Select(x => x.CenterY).Concat(
-                cylinders.Select(x => x.CenterY)).Distinct();
-            var distinctCenterZ = boxes.Select(x => x.CenterZ).Concat(
-                cylinders.Select(x => x.CenterZ)).Distinct();
-            var distinctNormals = boxes.Select(x => new Vector3(x.Normal[0], x.Normal[1], x.Normal[2])).Concat(
-                cylinders.Select(x => new Vector3(x.CenterAxis[0], x.CenterAxis[1], x.CenterAxis[2]))).Distinct().Select(y => new[] { y.X, y.Y, y.Z });
-            var distinctDelta = boxes.SelectMany(x => new[] { x.DeltaX, x.DeltaY, x.DeltaZ }).Distinct();
-            var height = cylinders.Select(x => x.Height).Distinct();
-            var radius = cylinders.Select(x => x.Radius).Distinct();
-            var angle = boxes.Select(x => x.RotationAngle).Distinct();
-            var color = boxes.Select(x => x.Color).Select(c => new Vector4(c[0], c[1], c[2], c[3])).Distinct()
-                .Select(x => new int[] { (byte) x.X, (byte)x.Y, (byte)x.Z, (byte)x.W });
+            var distinctDiagonals = geometries.CollectProperties<float, APrimitive>("Diagonal").Distinct();
+            var distinctCenterX = geometries.CollectProperties<float, APrimitive>("CenterX").Distinct();
+            var distinctCenterY = geometries.CollectProperties<float, APrimitive>("CenterY").Distinct();
+            var distinctCenterZ = geometries.CollectProperties<float, APrimitive>("CenterZ").Distinct();
+            
+            
+            var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis")
+                .Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => new[] { y.X, y.Y, y.Z });
+            
+            var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ").Distinct();
+            
+            var height = geometries.CollectProperties<float, APrimitive>("Height").Distinct();
+            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius").Distinct();
+            var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
+            
+            var color = geometries.CollectProperties<int[], APrimitive>("Color")
+                .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct().Select(x => new int[] { (byte) x.X, (byte)x.Y, (byte)x.Z, (byte)x.W });
 
 
             var file = new FileI3D()
@@ -103,28 +104,28 @@ namespace CadRevealComposer
                     },
                     PrimitiveCollections = new Dictionary<string, APrimitive[]>()
                     {
-                        {"box_collection", boxes.OfType<APrimitive>().ToArray()},
+                        {"box_collection", geometries.OfType<Box>().ToArray()},
                         {"circle_collection", new APrimitive[0]},
                         {"closed_cone_collection", new APrimitive[0]},
-                        {"closed_cylinder_collection", cylinders.OfType<APrimitive>().ToArray()},
+                        {"closed_cylinder_collection", geometries.OfType<ClosedCylinder>().ToArray()},
                         {"closed_eccentric_cone_collection", new APrimitive[0]},
                         {"closed_ellipsoid_segment_collection", new APrimitive[0]},
                         {"closed_extruded_ring_segment_collection", new APrimitive[0]},
                         {"closed_spherical_segment_collection", new APrimitive[0]},
-                        {"closed_torus_segment_collection", new APrimitive[0]},
+                        {"closed_torus_segment_collection", geometries.OfType<ClosedTorusSegment>().ToArray()},
                         {"ellipsoid_collection", new APrimitive[0]},
                         {"extruded_ring_collection", new APrimitive[0]},
                         {"nut_collection", new APrimitive[0]},
                         {"open_cone_collection", new APrimitive[0]},
-                        {"open_cylinder_collection", new APrimitive[0]},
+                        {"open_cylinder_collection", geometries.OfType<OpenCylinder>().ToArray()},
                         {"open_eccentric_cone_collection", new APrimitive[0]},
                         {"open_ellipsoid_segment_collection", new APrimitive[0]},
                         {"open_extruded_ring_segment_collection", new APrimitive[0]},
                         {"open_spherical_segment_collection", new APrimitive[0]},
-                        {"open_torus_segment_collection", new APrimitive[0]},
+                        {"open_torus_segment_collection", geometries.OfType<OpenTorusSegment>().ToArray()},
                         {"ring_collection", new APrimitive[0]},
                         {"sphere_collection", new APrimitive[0]},
-                        {"torus_collection", new APrimitive[0]},
+                        {"torus_collection", geometries.OfType<Torus>().ToArray()},
                         {"open_general_cylinder_collection", new APrimitive[0]},
                         {"closed_general_cylinder_collection", new APrimitive[0]},
                         {"solid_open_general_cylinder_collection", new APrimitive[0]},
@@ -148,8 +149,6 @@ namespace CadRevealComposer
 
             // TODO: For each CadRevealNode -> Collect CadRevealGeometries -> 
             // TODO: Translate Rvm
-
-            Console.WriteLine("Hello World!!");
         }
 
         public static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
@@ -186,27 +185,10 @@ namespace CadRevealComposer
                 // TODO: Keep Child order when implicit pipes.
             }
 
-            var geometries = new List<APrimitive>();
-            var boxes = root.Children.SelectMany(x =>
-            {
-                switch (x)
-                {
-                    case RvmBox box:
-                        return new[] {Box.FromRvmPrimitive(node, root, box)};
-                    case RvmCylinder cylinder:
-                        return new[] {Cylinder.FromRvmPrimitive(node, root, cylinder)};
-                    default:
-                        return Array.Empty<APrimitive>();
-                }
-            });
-                
-            // TODO: I think the order is important, process all children in correct order.
-            // XXX: GUSH, the order is not important here, it is only important on metadata export, reveal groups
-            // all primitives by ids anyway
-            geometries.AddRange(boxes);
+            var geometries = root.Children.OfType<RvmPrimitive>()
+                .Select(x => APrimitive.FromRvmPrimitive(node, root, x)).Where( g => g != null);
 
-            node.Geometries = geometries.ToArray();
-
+            node.Geometries = geometries.ToArray()!;
             node.Children = childrenCadNodes;
             return node;
         }
