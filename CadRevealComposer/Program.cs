@@ -34,11 +34,15 @@
                     TreeIndex = TreeIndexGenerator.GetNextId(),
                     Parent = null,
                     Group = null,
-                    Children = null
+                    Children = null,
                 };
 
             rootNode.Children = rvmStore.RvmFiles.SelectMany(f => f.Model.Children)
                 .Select(root => CollectGeometryNodesRecursive(root, rootNode)).ToArray();
+
+            rootNode.BoundingBoxAxisAligned =
+                BoundingBoxEncapsulate(rootNode.Children.Select(x => x.BoundingBoxAxisAligned).WhereNotNull()
+                    .ToArray());
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
@@ -63,7 +67,6 @@
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
                 .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
                 .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W});
-
 
             var file = new FileI3D()
             {
@@ -105,28 +108,40 @@
                     },
                     PrimitiveCollections = new Dictionary<string, APrimitive[]>()
                     {
-                        {"box_collection", geometries.OfType<Box>().ToArray()},
+                        {"box_collection", geometries.OfType<Box>().OfType<APrimitive>().ToArray()},
                         {"circle_collection", new APrimitive[0]},
                         {"closed_cone_collection", new APrimitive[0]},
-                        {"closed_cylinder_collection", geometries.OfType<ClosedCylinder>().ToArray()},
+                        {
+                            "closed_cylinder_collection",
+                            geometries.OfType<ClosedCylinder>().OfType<APrimitive>().ToArray()
+                        },
                         {"closed_eccentric_cone_collection", new APrimitive[0]},
                         {"closed_ellipsoid_segment_collection", new APrimitive[0]},
                         {"closed_extruded_ring_segment_collection", new APrimitive[0]},
                         {"closed_spherical_segment_collection", new APrimitive[0]},
-                        {"closed_torus_segment_collection", geometries.OfType<ClosedTorusSegment>().ToArray()},
+                        {
+                            "closed_torus_segment_collection",
+                            geometries.OfType<ClosedTorusSegment>().OfType<APrimitive>().ToArray()
+                        },
                         {"ellipsoid_collection", new APrimitive[0]},
                         {"extruded_ring_collection", new APrimitive[0]},
                         {"nut_collection", new APrimitive[0]},
                         {"open_cone_collection", new APrimitive[0]},
-                        {"open_cylinder_collection", geometries.OfType<OpenCylinder>().ToArray()},
+                        {
+                            "open_cylinder_collection",
+                            geometries.OfType<OpenCylinder>().OfType<APrimitive>().ToArray()
+                        },
                         {"open_eccentric_cone_collection", new APrimitive[0]},
                         {"open_ellipsoid_segment_collection", new APrimitive[0]},
                         {"open_extruded_ring_segment_collection", new APrimitive[0]},
                         {"open_spherical_segment_collection", new APrimitive[0]},
-                        {"open_torus_segment_collection", geometries.OfType<OpenTorusSegment>().ToArray()},
+                        {
+                            "open_torus_segment_collection",
+                            geometries.OfType<OpenTorusSegment>().OfType<APrimitive>().ToArray()
+                        },
                         {"ring_collection", new APrimitive[0]},
                         {"sphere_collection", new APrimitive[0]},
-                        {"torus_collection", geometries.OfType<Torus>().ToArray()},
+                        {"torus_collection", geometries.OfType<Torus>().OfType<APrimitive>().ToArray()},
                         {"open_general_cylinder_collection", new APrimitive[0]},
                         {"closed_general_cylinder_collection", new APrimitive[0]},
                         {"solid_open_general_cylinder_collection", new APrimitive[0]},
@@ -170,7 +185,7 @@
 
         public static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode parent)
         {
-            var node = new CadRevealNode
+            var newNode = new CadRevealNode
             {
                 NodeId = NodeIdGenerator.GetNodeId(null),
                 TreeIndex = TreeIndexGenerator.GetNextId(),
@@ -179,8 +194,10 @@
                 Children = null
             };
 
-            var childrenCadNodes = root.Children.OfType<RvmNode>().Select(n => CollectGeometryNodesRecursive(n, node))
+            var childrenCadNodes = root.Children.OfType<RvmNode>()
+                .Select(n => CollectGeometryNodesRecursive(n, newNode))
                 .ToArray();
+
             if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
             {
                 // TODO: Implicit Pipes
@@ -188,11 +205,35 @@
             }
 
             var geometries = root.Children.OfType<RvmPrimitive>()
-                .Select(x => APrimitive.FromRvmPrimitive(node, root, x)).Where(g => g != null);
+                .Select(x => APrimitive.FromRvmPrimitive(newNode, root, x)).Where(g => g != null);
 
-            node.Geometries = geometries.ToArray()!;
-            node.Children = childrenCadNodes;
-            return node;
+
+            newNode.Geometries = geometries.ToArray()!;
+            newNode.Children = childrenCadNodes;
+
+            var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
+                .Select(x => x.CalculateAxisAlignedBoundingBox()).ToArray();
+            var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned)
+                .WhereNotNull();
+
+            var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
+            newNode.BoundingBoxAxisAligned = BoundingBoxEncapsulate(primitiveAndChildrenBoundingBoxes);
+
+            return newNode;
+        }
+
+        private static RvmBoundingBox? BoundingBoxEncapsulate(
+            RvmBoundingBox[] boundingBoxes)
+        {
+            var boxes = boundingBoxes;
+
+            if (!boxes.Any())
+                return null;
+
+            (Vector3 minSeed, Vector3 maxSeed) = boxes.First();
+            var min = boxes.Aggregate(minSeed, (aggMin, box) => Vector3.Min(aggMin, box.Min));
+            var max = boxes.Aggregate(maxSeed, (aggMax, box) => Vector3.Max(aggMax, box.Max));
+            return new RvmBoundingBox(Min: min, Max: max);
         }
     }
 }

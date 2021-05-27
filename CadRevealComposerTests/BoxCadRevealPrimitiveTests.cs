@@ -1,9 +1,9 @@
-﻿using NUnit.Framework;
-
-namespace CadRevealComposerTests
+﻿namespace CadRevealComposerTests
 {
     using CadRevealComposer;
     using CadRevealComposer.Primitives;
+    using NUnit.Framework;
+    using RvmSharp.Operations;
     using RvmSharp.Primitives;
     using System.Numerics;
 
@@ -21,10 +21,11 @@ namespace CadRevealComposerTests
             var expectedAngle = 1.337f;
 
             // TODO: Test with real values.
-            var matrix = Matrix4x4.CreateScale(2, 2, 2) * Matrix4x4.CreateFromAxisAngle(new Vector3(0.0f, -0.70710677f, 0.70710677f), expectedAngle) * Matrix4x4.CreateTranslation(center);
+            var matrix = Matrix4x4Helpers.CalculateTransformMatrix(center,
+                Quaternion.CreateFromAxisAngle(new Vector3(0.0f, -0.70710677f, 0.70710677f), expectedAngle),
+                new Vector3(2, 2, 2));
 
-
-            var boundingBox = new RvmBoundingBox() { Min = new Vector3(9, -1, -1), Max = new Vector3(11, 1, 1) };
+            var boundingBox = new RvmBoundingBox(Min: new Vector3(9, -1, -1), Max: new Vector3(11, 1, 1));
             var expectedDiagonal = Vector3.Distance(boundingBox.Min, boundingBox.Max);
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
