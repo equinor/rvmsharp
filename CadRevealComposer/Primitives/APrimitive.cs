@@ -161,7 +161,9 @@ namespace CadRevealComposer.Primitives
 
         private static int[] GetColor(RvmNode container)
         {
-            return PdmsColors.GetColorAsBytesByCode(container.MaterialId < 50 ? container.MaterialId : 1).Select(x => (int)x).ToArray();
+            // TODO: Fallback color is arbitrarily chosen, it should probably be handled differently
+            return PdmsColors.GetColorAsBytesByCode(container.MaterialId < 50 ? container.MaterialId : 1)
+                .Select(x => (int)x).ToArray();
         }
     }
 }
