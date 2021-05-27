@@ -230,9 +230,9 @@
             if (!boxes.Any())
                 return null;
 
-            (Vector3 minSeed, Vector3 maxSeed) = boxes.First();
-            var min = boxes.Aggregate(minSeed, (aggMin, box) => Vector3.Min(aggMin, box.Min));
-            var max = boxes.Aggregate(maxSeed, (aggMax, box) => Vector3.Max(aggMax, box.Max));
+            // Find the min and max values for each of x,y, and z dimensions.
+            var min = boxes.Select(x => x.Min).Aggregate(Vector3.Min);
+            var max = boxes.Select(x => x.Max).Aggregate(Vector3.Max);
             return new RvmBoundingBox(Min: min, Max: max);
         }
     }
