@@ -1,8 +1,6 @@
-namespace RvmSharp.Primitives {
+namespace RvmSharp.Primitives
+{
     using System.Numerics;
 
-    public struct RvmBoundingBox {
-        public Vector3 Min;
-        public Vector3 Max;
-    }
+    public record RvmBoundingBox (Vector3 Min, Vector3 Max);
 }
