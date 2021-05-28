@@ -1,6 +1,5 @@
-namespace CadRevealComposerTests
+namespace CadRevealComposer.Tests
 {
-    using CadRevealComposer;
     using NUnit.Framework;
     using RvmSharp.Primitives;
     using System.Numerics;
