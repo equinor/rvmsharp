@@ -24,8 +24,7 @@ namespace CadRevealComposer.Primitives
             // TODO: Verify that this gives expected diagonal for scaled sizes.
             var diagonal = CalculateDiagonal(rvmPrimitive.BoundingBoxLocal, scale, rot);
             var colors = GetColor(container);
-            var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
-            var rotAngle = AlgebraUtils.DecomposeQuaternion(rot).yaw;
+            (Vector3 normal, float rotationAngle) = ConvertRotationToAxisAngle(rot);
 
             switch (rvmPrimitive)
             {
@@ -46,7 +45,7 @@ namespace CadRevealComposer.Primitives
                             DeltaY = unitBoxScale.Y,
                             DeltaZ = unitBoxScale.Z,
                             Normal = new[] {normal.X, normal.Y, normal.Z},
-                            RotationAngle = rotAngle,
+                            RotationAngle = rotationAngle,
                         };
                     }
                 case RvmCylinder rvmCylinder:
@@ -128,7 +127,7 @@ namespace CadRevealComposer.Primitives
                                 Normal = new[] {normal.X, normal.Y, normal.Z},
                                 Radius = radius,
                                 TubeRadius = tubeRadius,
-                                RotationAngle = rotAngle,
+                                RotationAngle = rotationAngle,
                                 ArcAngle = circularTorus.Angle
                             };
 
@@ -144,13 +143,20 @@ namespace CadRevealComposer.Primitives
                             Normal = new[] {normal.X, normal.Y, normal.Z},
                             Radius = radius,
                             TubeRadius = tubeRadius,
-                            RotationAngle = rotAngle,
+                            RotationAngle = rotationAngle,
                             ArcAngle = circularTorus.Angle
                         };
                     }
                 default:
                     return null;
             }
+        }
+
+        private static (Vector3 normal, float rotationAngle) ConvertRotationToAxisAngle(Quaternion rot)
+        {
+            var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
+            var rotationAngle = AlgebraUtils.DecomposeQuaternion(rot).yaw;
+            return (normal, rotationAngle);
         }
 
         private static float CalculateDiagonal(RvmBoundingBox boundingBoxLocal, Vector3 scale, Quaternion rot)
