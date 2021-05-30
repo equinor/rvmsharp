@@ -58,7 +58,7 @@ namespace CadRevealComposer.Primitives
                             //throw new Exception("Not implemented!");
                         }
 
-                        if (rvmCylinder.Connections?[0] != null || rvmCylinder?.Connections?[1] != null)
+                        if (rvmCylinder.Connections[0] != null || rvmCylinder.Connections[1] != null)
                         {
                             return new ClosedCylinder
                             {
@@ -152,7 +152,7 @@ namespace CadRevealComposer.Primitives
             }
         }
 
-        private static (Vector3 normal, float rotationAngle) ConvertRotationToAxisAngle(Quaternion rot)
+        private static (Vector3 Normal, float RotationAngle) ConvertRotationToAxisAngle(Quaternion rot)
         {
             var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
             var rotationAngle = AlgebraUtils.DecomposeQuaternion(rot).yaw;
