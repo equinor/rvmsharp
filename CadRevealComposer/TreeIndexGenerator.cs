@@ -4,7 +4,7 @@ namespace CadRevealComposer
 
     public class TreeIndexGenerator
     {
-        private const ulong MaxSafeInteger = (1L << 53) - 1;
+        public const ulong MaxSafeInteger = (1L << 53) - 1;
         
         // ReSharper disable once RedundantDefaultMemberInitializer
         private ulong _internalIdCounter = 0;

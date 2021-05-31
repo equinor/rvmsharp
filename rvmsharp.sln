@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer", "CadRev
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Tests", "CadRevealComposer.Tests\CadRevealComposer.Tests.csproj", "{10E0729E-2D44-4865-A417-018D30CB8F20}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Exe", "CadRevealComposer.Exe\CadRevealComposer.Exe.csproj", "{82622167-F4E4-4224-AC14-E54E8EE8E2D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{10E0729E-2D44-4865-A417-018D30CB8F20}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10E0729E-2D44-4865-A417-018D30CB8F20}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10E0729E-2D44-4865-A417-018D30CB8F20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
