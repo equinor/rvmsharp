@@ -1,9 +1,14 @@
 ﻿namespace CadRevealComposer
 {
+    using CommandLine;
+    using System.IO;
+
     public class CommandLineOptions
     {
-        // This class is currently used to avoid having changes in code for local rvm path.
-        // Todo: Convert this class to command line arguments instead.
-        public const string InputRvmPath = @"C:\Users\nhals\GitRepos\rvmsharp\TestData\HDA_RVM_lite\";
+        [Option("InputDirectory", Required = true, HelpText = "The path to the RVM and .txt folder you want to convert")]
+        public DirectoryInfo InputDirectory {get;set;} = null!;
+
+        [Option("OutputDirectory", Required = true, HelpText = "Where to position the output .i3df file(s)")]
+        public DirectoryInfo OutputDirectory { get; set; } = null!;
     }
 }

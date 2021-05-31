@@ -18,9 +18,9 @@
         static readonly NodeIdProvider NodeIdGenerator = new();
 
         // ReSharper disable once UnusedParameter.Local
-        public static void Process(string inputRvmFolderPath)
+        public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory)
         {
-            var workload = Workload.CollectWorkload(new[] {inputRvmFolderPath});
+            var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
 
 
             Console.WriteLine("Reading RvmData");
@@ -76,7 +76,7 @@
 
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
                 .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
-                .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W});
+                .Select(x => new int[] { (byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W });
 
             var file = new FileI3D()
             {
@@ -167,11 +167,11 @@
             };
 
 
-            string outputPath = "output.json";
-            File.WriteAllText(outputPath, JsonConvert.SerializeObject(file));
+            string outputFileName = "output.json";
+            File.WriteAllText(Path.Combine(outputDirectory.FullName, outputFileName), JsonConvert.SerializeObject(file));
 
 
-            Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputPath)}\"");
+            Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputFileName)}\"");
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
             // BOX treeIndex, transform -> cadreveal, 
 
