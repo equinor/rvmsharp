@@ -30,8 +30,8 @@
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
             var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox) as Box;
-
-
+            
+            Assert.That(box, Is.Not.Null);
             Assert.That(box.CenterX, Is.EqualTo(10));
             Assert.That(box.CenterY, Is.EqualTo(0));
             Assert.That(box.CenterZ, Is.EqualTo(0));
