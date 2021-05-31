@@ -1,3 +1,6 @@
+// ReSharper disable ArgumentsStyleNamedExpression
+// ReSharper disable ArgumentsStyleOther
+
 namespace CadRevealComposer.Primitives
 {
     using Newtonsoft.Json;
@@ -8,12 +11,16 @@ namespace CadRevealComposer.Primitives
     using System.Numerics;
     using Utils;
 
-    public abstract class APrimitive
+    public abstract record APrimitive(
+        [property: JsonProperty("node_id")] ulong NodeId,
+        [property: JsonProperty("tree_index")] ulong TreeIndex,
+        [property: JsonProperty("color")] int[] Color,
+        [property: JsonProperty("diagonal")] float Diagonal,
+        [property: JsonProperty("center_x")] float CenterX,
+        [property: JsonProperty("center_y")] float CenterY,
+        [property: JsonProperty("center_z")] float CenterZ
+    )
     {
-        [JsonProperty("node_id")] public ulong NodeId { get; set; }
-
-        [JsonProperty("tree_index")] public ulong TreeIndex { get; set; }
-
         public static APrimitive? FromRvmPrimitive(CadRevealNode revealNode, RvmNode container,
             RvmPrimitive rvmPrimitive)
         {
@@ -23,7 +30,7 @@ namespace CadRevealComposer.Primitives
             }
 
             var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
-            
+
             var colors = GetColor(container);
             (Vector3 normal, float rotationAngle) = rot.DecomposeQuaternion();
 
@@ -33,21 +40,20 @@ namespace CadRevealComposer.Primitives
                     {
                         var unitBoxScale = Vector3.Multiply(scale,
                             new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
-                        return new Box
-                        {
-                            NodeId = revealNode.NodeId,
-                            TreeIndex = revealNode.TreeIndex,
-                            Color = colors,
-                            Diagonal = axisAlignedDiagonal,
-                            CenterX = pos.X,
-                            CenterY = pos.Y,
-                            CenterZ = pos.Z,
-                            DeltaX = unitBoxScale.X,
-                            DeltaY = unitBoxScale.Y,
-                            DeltaZ = unitBoxScale.Z,
-                            Normal = new[] {normal.X, normal.Y, normal.Z},
-                            RotationAngle = rotationAngle,
-                        };
+
+                        return new Box(
+                            NodeId: revealNode.NodeId,
+                            TreeIndex: revealNode.TreeIndex,
+                            Color: colors,
+                            Diagonal: axisAlignedDiagonal,
+                            Normal: normal.CopyToNewArray(),
+                            CenterX: pos.X,
+                            CenterY: pos.Y,
+                            CenterZ: pos.Z,
+                            DeltaX: unitBoxScale.X,
+                            DeltaY: unitBoxScale.Y,
+                            DeltaZ: unitBoxScale.Z,
+                            RotationAngle: rotationAngle);
                     }
                 case RvmCylinder rvmCylinder:
                     {
@@ -61,35 +67,35 @@ namespace CadRevealComposer.Primitives
 
                         if (rvmCylinder.Connections[0] != null || rvmCylinder.Connections[1] != null)
                         {
-                            return new OpenCylinder
-                            {
-                                NodeId = revealNode.NodeId,
-                                TreeIndex = revealNode.TreeIndex,
-                                Color = colors,
-                                Diagonal = axisAlignedDiagonal,
-                                CenterX = pos.X,
-                                CenterY = pos.Y,
-                                CenterZ = pos.Z,
-                                CenterAxis = new[] {normal.X, normal.Y, normal.Z},
-                                Height = height,
-                                Radius = radius
-                            };
+                            return new ClosedCylinder
+                            (
+                                NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                CenterAxis: normal.CopyToNewArray(),
+                                Height: height,
+                                Radius: radius
+                            );
                         }
                         else
                         {
-                            return new ClosedCylinder
-                            {
-                                NodeId = revealNode.NodeId,
-                                TreeIndex = revealNode.TreeIndex,
-                                Color = colors,
-                                Diagonal = axisAlignedDiagonal,
-                                CenterX = pos.X,
-                                CenterY = pos.Y,
-                                CenterZ = pos.Z,
-                                CenterAxis = new[] {normal.X, normal.Y, normal.Z},
-                                Height = height,
-                                Radius = radius
-                            };
+                            return new OpenCylinder
+                            (
+                                NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                CenterAxis: normal.CopyToNewArray(),
+                                Height: height,
+                                Radius: radius
+                            );
                         }
                     }
                 case RvmCircularTorus circularTorus:
@@ -100,68 +106,68 @@ namespace CadRevealComposer.Primitives
                         if (circularTorus.Angle >= Math.PI * 2)
                         {
                             return new Torus
-                            {
-                                NodeId = revealNode.NodeId,
-                                TreeIndex = revealNode.TreeIndex,
-                                Color = colors,
-                                Diagonal = axisAlignedDiagonal,
-                                CenterX = pos.X,
-                                CenterY = pos.Y,
-                                CenterZ = pos.Z,
-                                Normal = new[] {normal.X, normal.Y, normal.Z},
-                                Radius = radius,
-                                TubeRadius = tubeRadius,
-                            };
+                            (
+                                NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                Normal: normal.CopyToNewArray(),
+                                Radius: radius,
+                                TubeRadius: tubeRadius
+                            );
                         }
 
                         if (circularTorus.Connections[0] != null || circularTorus.Connections[1] != null)
-                            return new ClosedTorusSegment()
-                            {
-                                NodeId = revealNode.NodeId,
-                                TreeIndex = revealNode.TreeIndex,
-                                Color = colors,
-                                Diagonal = axisAlignedDiagonal,
-                                CenterX = pos.X,
-                                CenterY = pos.Y,
-                                CenterZ = pos.Z,
-                                Normal = new[] {normal.X, normal.Y, normal.Z},
-                                Radius = radius,
-                                TubeRadius = tubeRadius,
-                                RotationAngle = rotationAngle,
-                                ArcAngle = circularTorus.Angle
-                            };
+                            return new ClosedTorusSegment
+                            (
+                                NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                Normal: normal.CopyToNewArray(),
+                                Radius: radius,
+                                TubeRadius: tubeRadius,
+                                RotationAngle: rotationAngle,
+                                ArcAngle: circularTorus.Angle
+                            );
 
                         return new OpenTorusSegment
-                        {
-                            NodeId = revealNode.NodeId,
-                            TreeIndex = revealNode.TreeIndex,
-                            Color = colors,
-                            Diagonal = axisAlignedDiagonal,
-                            CenterX = pos.X,
-                            CenterY = pos.Y,
-                            CenterZ = pos.Z,
-                            Normal = new[] {normal.X, normal.Y, normal.Z},
-                            Radius = radius,
-                            TubeRadius = tubeRadius,
-                            RotationAngle = rotationAngle,
-                            ArcAngle = circularTorus.Angle
-                        };
+                        (
+                            NodeId: revealNode.NodeId,
+                            TreeIndex: revealNode.TreeIndex,
+                            Color: colors,
+                            Diagonal: axisAlignedDiagonal,
+                            CenterX: pos.X,
+                            CenterY: pos.Y,
+                            CenterZ: pos.Z,
+                            Normal: normal.CopyToNewArray(),
+                            Radius: radius,
+                            TubeRadius: tubeRadius,
+                            RotationAngle: rotationAngle,
+                            ArcAngle: circularTorus.Angle
+                        );
                     }
                 case RvmSphere rvmSphere:
                     {
                         AssertUniformScale(scale);
                         var radius = (rvmSphere.Diameter / 2) * scale.X;
                         return new Sphere
-                        {
-                            NodeId = revealNode.NodeId,
-                            TreeIndex = revealNode.TreeIndex,
-                            Color = colors,
-                            Diagonal = axisAlignedDiagonal,
-                            CenterX = pos.X,
-                            CenterY = pos.Y,
-                            CenterZ = pos.Z,
-                            Radius = radius 
-                        };
+                        (
+                            NodeId: revealNode.NodeId,
+                            TreeIndex: revealNode.TreeIndex,
+                            Color: colors,
+                            Diagonal: axisAlignedDiagonal,
+                            CenterX: pos.X,
+                            CenterY: pos.Y,
+                            CenterZ: pos.Z,
+                            Radius: radius
+                        );
                     }
                 case RvmSnout rvmSnout:
                     {
@@ -174,36 +180,34 @@ namespace CadRevealComposer.Primitives
                             if (rvmSnout.Connections[0] != null || rvmSnout.Connections[1] != null)
                             {
                                 return new OpenCone
-                                {
-                                    NodeId = revealNode.NodeId,
-                                    TreeIndex = revealNode.TreeIndex,
-                                    Color = colors,
-                                    Diagonal = axisAlignedDiagonal,
-                                    CenterX = pos.X,
-                                    CenterY = pos.Y,
-                                    CenterZ = pos.Z,
-                                    CenterAxis = new[] {normal.X, normal.Y, normal.Z},
-                                    Height = height,
-                                    RadiusA = radiusA,
-                                    RadiusB = radiusB
-                                };
+                                    (NodeId: revealNode.NodeId,
+                                        TreeIndex: revealNode.TreeIndex,
+                                        Color: colors,
+                                        Diagonal: axisAlignedDiagonal,
+                                        CenterX: pos.X,
+                                        CenterY: pos.Y,
+                                        CenterZ: pos.Z,
+                                        CenterAxis: new[] {normal.X, normal.Y, normal.Z},
+                                        Height: height,
+                                        RadiusA: radiusA,
+                                        RadiusB: radiusB)
+                                    ;
                             }
                             else
                             {
-                                return new ClosedCone()
-                                {
-                                    NodeId = revealNode.NodeId,
-                                    TreeIndex = revealNode.TreeIndex,
-                                    Color = colors,
-                                    Diagonal = axisAlignedDiagonal,
-                                    CenterX = pos.X,
-                                    CenterY = pos.Y,
-                                    CenterZ = pos.Z,
-                                    CenterAxis = new[] {normal.X, normal.Y, normal.Z},
-                                    Height = height,
-                                    RadiusA = radiusA,
-                                    RadiusB = radiusB
-                                };
+                                return new ClosedCone(
+                                    NodeId: revealNode.NodeId,
+                                    TreeIndex: revealNode.TreeIndex,
+                                    Color: colors,
+                                    Diagonal: axisAlignedDiagonal,
+                                    CenterX: pos.X,
+                                    CenterY: pos.Y,
+                                    CenterZ: pos.Z,
+                                    CenterAxis: new[] {normal.X, normal.Y, normal.Z},
+                                    Height: height,
+                                    RadiusA: radiusA,
+                                    RadiusB: radiusB);
+                                ;
                             }
                         }
 
@@ -214,18 +218,17 @@ namespace CadRevealComposer.Primitives
                     AssertUniformScale(scale);
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)
                     {
-                        return new Ring
-                        {
-                            NodeId = revealNode.NodeId,
-                            TreeIndex = revealNode.TreeIndex,
-                            Color = colors,
-                            Diagonal = axisAlignedDiagonal,
-                            CenterX = pos.X,
-                            CenterY = pos.Y,
-                            CenterZ = pos.Z,
-                            InnerRadius = rvmRectangularTorus.RadiusInner * scale.X,
-                            OuterRadius = rvmRectangularTorus.RadiusOuter * scale.X
-                        };
+                        return new Ring(
+                            NodeId: revealNode.NodeId,
+                            TreeIndex: revealNode.TreeIndex,
+                            Color: colors,
+                            Diagonal: axisAlignedDiagonal,
+                            CenterX: pos.X,
+                            CenterY: pos.Y,
+                            CenterZ: pos.Z,
+                            InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
+                            OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X
+                        );
                     }
                     else
                     {
