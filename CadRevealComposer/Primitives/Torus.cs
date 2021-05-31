@@ -2,30 +2,17 @@ namespace CadRevealComposer.Primitives
 {
     using Newtonsoft.Json;
 
-    public class Torus : APrimitive
-    {
-        [JsonProperty("color")]
-        public int[] Color { get; set; }
-
-        [JsonProperty("diagonal")]
-        public float Diagonal { get; set; }
-
-        [JsonProperty("center_x")]
-        public float CenterX { get; set; }
-
-        [JsonProperty("center_y")]
-        public float CenterY { get; set; }
-
-        [JsonProperty("center_z")]
-        public float CenterZ { get; set; }
-
-        [JsonProperty("normal")]
-        public float[] Normal { get; set; }
-
-        [JsonProperty("radius")]
-        public float Radius { get; set; }
-
-        [JsonProperty("tube_radius")]
-        public float TubeRadius { get; set; }
-    }
+    public record Torus(
+            ulong NodeId,
+            ulong TreeIndex,
+            int[] Color,
+            float Diagonal,
+            float CenterX,
+            float CenterY,
+            float CenterZ,
+            [property: JsonProperty("normal")] float[] Normal,
+            [property: JsonProperty("radius")] float Radius,
+            [property: JsonProperty("tube_radius")]
+            float TubeRadius)
+        : APrimitive(NodeId: NodeId, TreeIndex: TreeIndex, Color: Color, Diagonal: Diagonal, CenterX: CenterX, CenterY: CenterY, CenterZ: CenterZ);
 }
