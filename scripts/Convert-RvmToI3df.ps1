@@ -11,13 +11,12 @@ begin {
 }
 
 process {
-    
 }
 
 end {
-    
+
     #region PsSetup
-    Set-StrictMode -Version 3 
+    Set-StrictMode -Version 3
     [Console]::ResetColor()
     $ErrorActionPreference = 'Stop'
     #endregion PsSetup
@@ -36,13 +35,13 @@ end {
         Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
     }
     #endregion Guards
-    
+
 
     #region Reveal Composer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
     & dotnet.exe run --project $cadRevealComposerPath -- --InputDirectory $inputDirectory --OutputDirectory $outputDirectory
     #endregion Reveal Composer
-    
+
 
     #region i3df-converter
     $expectedOutputPath = Join-Path (Resolve-Path $outputDirectory) "output.json"
