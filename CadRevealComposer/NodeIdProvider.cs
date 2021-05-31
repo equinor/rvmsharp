@@ -16,7 +16,7 @@
             ulong value;
             do
             {
-                value = (ulong)_random.Next(Int32.MinValue, Int32.MaxValue); // TODO: Expand to Javascript Safe Number range ((2^53)-1)
+                value = (uint)_random.Next(Int32.MinValue, Int32.MaxValue); // TODO: Expand to Javascript Safe Number range ((2^53)-1)
             } while (_generatedIds.Contains(value));
 
             _generatedIds.Add(value);
