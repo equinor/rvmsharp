@@ -16,7 +16,7 @@ namespace CadRevealComposer.Utils
             return (T?)obj.GetType().GetProperty(propertyName)?.GetValue(obj);
         }
         
-        public static IEnumerable<T> CollectProperties<T, TG>(this IEnumerable<TG> collection, params string[] propertyNames)
+        public static IEnumerable<T?> CollectProperties<T, TG>(this IEnumerable<TG> collection, params string[] propertyNames) where TG : notnull
         {
             return propertyNames.SelectMany(
                 propertyName => collection
