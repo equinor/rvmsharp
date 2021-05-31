@@ -1,4 +1,4 @@
-namespace CadRevealComposer
+namespace CadRevealComposer.IdProviders
 {
     using System;
 
