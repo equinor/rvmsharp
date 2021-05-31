@@ -17,15 +17,18 @@ variables:
 steps:
 - task: NuGetToolInstaller@1
 - task: DotNetCoreCLI@2
+  displayName: 'Restore NuGet'
   inputs:
     command: 'restore'
     projects: '$(solution)'
 
 - task: DotNetCoreCLI@2
+  displayName: 'Build'
   inputs:
     command: 'build'
     projects: '$(solution)'
 - task: DotNetCoreCLI@2
+  displayName: 'Test'
   continueOnError: true
   inputs:
     command: 'test'
