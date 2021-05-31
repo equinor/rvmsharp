@@ -6,6 +6,7 @@
     using RvmSharp.Primitives;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Numerics;
@@ -50,6 +51,9 @@
                 BoundingBoxEncapsulate(rootNode.Children.Select(x => x.BoundingBoxAxisAligned).WhereNotNull()
                     .ToArray());
 
+            Debug.Assert(rootNode.BoundingBoxAxisAligned != null, "Root node has no bounding box. Are there any meshes in the input?");
+            var boundingBox = rootNode.BoundingBoxAxisAligned!;
+
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
             var geometries = allNodes.SelectMany(x => x.Geometries).ToArray();
@@ -61,7 +65,7 @@
 
 
             var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis")
-                .Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => new[] {y.X, y.Y, y.Z});
+                .Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
 
             var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ")
                 .Distinct();
@@ -88,8 +92,8 @@
                         // Arbitrary selected numbers 
                         SectorId = 0,
                         ParentSectorId = null,
-                        BboxMax = new[] {1000, 1000, 1000.0},
-                        BboxMin = new[] {0, 0, 0.0},
+                        BboxMax = boundingBox.Max.CopyToNewArray(),
+                        BboxMin = boundingBox.Min.CopyToNewArray(),
                         Attributes = new Attributes()
                         {
                             Angle = angle.ToArray(),
