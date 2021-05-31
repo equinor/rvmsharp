@@ -1,7 +1,7 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $inputDirectory = $(Join-Path ".." "TestData" "HDA_RVM_lite"),
+    [string] $inputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
     [string] $outputDirectory = ".\outputs\",
     [string] $i3dfPath = "C:\Users\nhals\GitRepos\conceal\i3df",
     [switch] $Force = $false
@@ -40,6 +40,10 @@ end {
     #region Reveal Composer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
     & dotnet.exe run --project $cadRevealComposerPath -- --InputDirectory $inputDirectory --OutputDirectory $outputDirectory
+    if ($LASTEXITCODE) {
+        Write-Error "Dotnet failed with exit code $LASTEXITCODE"
+    }
+
     #endregion Reveal Composer
 
 
@@ -54,6 +58,10 @@ end {
     $i3dfCargoPath = Join-Path $i3dfPath "Cargo.toml"
 
     & cargo.exe run --manifest-path $i3dfCargoPath --release --features dump --bin i3df-converter -- $expectedOutputPath $outputi3dFile
+    if ($LASTEXITCODE) {
+        Write-Error "cargo failed with exit code $LASTEXITCODE"
+    }
+
     #endregion i3df-converter
 
     Write-Host "Success. I3d file available at ""$outputi3dFile"""
