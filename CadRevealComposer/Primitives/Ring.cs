@@ -2,27 +2,17 @@ namespace CadRevealComposer.Primitives
 {
     using Newtonsoft.Json;
 
-    public class Ring : APrimitive
-    {
-        [JsonProperty("color")]
-        public int[] Color { get; set; }
-
-        [JsonProperty("diagonal")]
-        public float Diagonal { get; set; }
-
-        [JsonProperty("center_x")]
-        public float CenterX { get; set; }
-
-        [JsonProperty("center_y")]
-        public float CenterY { get; set; }
-
-        [JsonProperty("center_z")]
-        public float CenterZ { get; set; }
-
-        [JsonProperty("inner_radius")]
-        public float InnerRadius { get; set; }
-        
-        [JsonProperty("outer_radius")]
-        public float OuterRadius { get; set; }
-    }
+    public record Ring(
+        ulong NodeId,
+        ulong TreeIndex,
+        int[] Color,
+        float Diagonal,
+        float CenterX,
+        float CenterY,
+        float CenterZ,
+        [property: JsonProperty("inner_radius")]
+        float InnerRadius,
+        [property: JsonProperty("outer_radius")]
+        float OuterRadius
+    ) : APrimitive(NodeId, TreeIndex, Color, Diagonal, CenterX, CenterY, CenterZ);
 }
