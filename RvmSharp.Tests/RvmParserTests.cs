@@ -6,6 +6,7 @@ namespace RvmSharp.Tests
     public class RvmParserTests
     {
         [Test]
+        [Explicit("Need to verify that we can push the test-files")]
         public void CanReadBasicRvmFile()
         {
             using var rvmFile = TestFileHelpers.GetTestfile(TestFileHelpers.BasicRvmTestFile);
@@ -23,6 +24,5 @@ namespace RvmSharp.Tests
             
             rvm.AttachAttributes(TestFileHelpers.BasicTxtAttTestFile);
         }
-        
     }
 }

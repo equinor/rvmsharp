@@ -8,6 +8,7 @@ namespace RvmSharp.Tests
     public class RvmAttributeParserTests
     {
         [Test]
+        [Explicit("Need to verify that we can push the test-files")]
         public void ParsesValidAttributeFile()
         {
             var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(TestFileHelpers.BasicTxtAttTestFile);
