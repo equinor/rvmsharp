@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer
 {
+    using IdProviders;
     using Newtonsoft.Json;
     using Primitives;
     using RvmSharp.BatchUtils;
