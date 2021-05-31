@@ -20,7 +20,7 @@ namespace CadRevealComposer.Tests
             rvmRootNode.Children.Add(node1);
 
             var rootNodeCadNode =
-                CadRevealComposer.Program.CollectGeometryNodesRecursive(rvmRootNode, new CadRevealNode());
+                CadRevealComposerRunner.CollectGeometryNodesRecursive(rvmRootNode, new CadRevealNode());
 
             Assert.That(rootNodeCadNode.Children, Has.One.Items);
             Assert.That(rootNodeCadNode.Children![0].Group, Is.EqualTo(node1));
