@@ -41,9 +41,96 @@ namespace CadRevealComposer
         [JsonProperty("header")] public Header? Header { get; set; }
 
         [JsonProperty("primitive_collections")]
-        public Dictionary<string, APrimitive[]> PrimitiveCollections { get; set; } =
-            new Dictionary<string, APrimitive[]>();
+        public PrimitiveCollections PrimitiveCollections { get; set; } = new PrimitiveCollections();
     }
+
+    public class PrimitiveCollections
+    {
+        [JsonProperty("box_collection")] public Box[] BoxCollection = Array.Empty<Box>();
+        [JsonProperty("circle_collection")] public APrimitive[] CircleCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_cone_collection")]
+        public APrimitive[] ClosedConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_cylinder_collection")]
+        public ClosedCylinder[] ClosedCylinderCollection = Array.Empty<ClosedCylinder>();
+
+        [JsonProperty("closed_eccentric_cone_collection")]
+        public APrimitive[] ClosedEccentricConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_ellipsoid_segment_collection")]
+        public APrimitive[] ClosedEllipsoidSegmentCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_extruded_ring_segment_collection")]
+        public APrimitive[] ClosedExtrudedRingSegmentCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_spherical_segment_collection")]
+        public APrimitive[] ClosedSphericalSegmentCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_torus_segment_collection")]
+        public ClosedTorusSegment[] ClosedTorusSegmentCollection = Array.Empty<ClosedTorusSegment>();
+
+        [JsonProperty("ellipsoid_collection")] public APrimitive[] EllipsoidCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("extruded_ring_collection")]
+        public APrimitive[] ExtrudedRingCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("nut_collection")] public APrimitive[] NutCollection = Array.Empty<APrimitive>();
+        [JsonProperty("open_cone_collection")] public APrimitive[] OpenConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("open_cylinder_collection")]
+        public OpenCylinder[] OpenCylinderCollection = Array.Empty<OpenCylinder>();
+
+        [JsonProperty("open_eccentric_cone_collection")]
+        public APrimitive[] OpenEccentricConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("open_ellipsoid_segment_collection")]
+        public APrimitive[] OpenEllipsoidSegmentCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("open_extruded_ring_segment_collection")]
+        public APrimitive[] OpenExtrudedRingSegmentCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("open_spherical_segment_collection")]
+        public APrimitive[] OpenSphericalSegmentCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("open_torus_segment_collection")]
+        public OpenTorusSegment[] OpenTorusSegmentCollection = Array.Empty<OpenTorusSegment>();
+
+        [JsonProperty("ring_collection")] public APrimitive[] RingCollection = Array.Empty<APrimitive>();
+        [JsonProperty("sphere_collection")] public APrimitive[] SphereCollection = Array.Empty<APrimitive>();
+        [JsonProperty("torus_collection")] public Torus[] TorusCollection = Array.Empty<Torus>();
+
+        [JsonProperty("open_general_cylinder_collection")]
+        public APrimitive[] OpenGeneralCylinderCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_general_cylinder_collection")]
+        public APrimitive[] ClosedGeneralCylinderCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("solid_open_general_cylinder_collection")]
+        public APrimitive[] SolidOpenGeneralCylinderCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("solid_closed_general_cylinder_collection")]
+        public APrimitive[] SolidClosedGeneralCylinderCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("open_general_cone_collection")]
+        public APrimitive[] OpenGeneralConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("closed_general_cone_collection")]
+        public APrimitive[] ClosedGeneralConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("solid_open_general_cone_collection")]
+        public APrimitive[] SolidOpenGeneralConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("solid_closed_general_cone_collection")]
+        public APrimitive[] SolidClosedGeneralConeCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("triangle_mesh_collection")]
+        public APrimitive[] TriangleMeshCollection = Array.Empty<APrimitive>();
+
+        [JsonProperty("instanced_mesh_collection")]
+        public APrimitive[] InstancedMeshCollection = Array.Empty<APrimitive>();
+    }
+
 
     public class Header
     {

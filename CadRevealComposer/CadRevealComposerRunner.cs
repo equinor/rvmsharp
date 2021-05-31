@@ -21,7 +21,7 @@
         // ReSharper disable once UnusedParameter.Local
         public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory)
         {
-            var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
+            var workload = Workload.CollectWorkload(new[] {inputRvmFolderPath.FullName});
 
 
             Console.WriteLine("Reading RvmData");
@@ -52,7 +52,8 @@
                 BoundingBoxEncapsulate(rootNode.Children.Select(x => x.BoundingBoxAxisAligned).WhereNotNull()
                     .ToArray());
 
-            Debug.Assert(rootNode.BoundingBoxAxisAligned != null, "Root node has no bounding box. Are there any meshes in the input?");
+            Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
+                "Root node has no bounding box. Are there any meshes in the input?");
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
@@ -66,7 +67,7 @@
 
 
             var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis")
-                .Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
+                .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
 
             var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ")
                 .Distinct();
@@ -76,8 +77,9 @@
             var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
 
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
+                .WhereNotNull()
                 .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
-                .Select(x => new int[] { (byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W });
+                .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W});
 
             var file = new FileI3D()
             {
@@ -105,64 +107,30 @@
                             Normal = distinctNormals.ToArray(),
                             Delta = distinctDelta.ToArray(),
                             Diagonal = distinctDiagonals.ToArray(),
-                            ScaleX = new object[0],
-                            ScaleY = new object[0],
-                            ScaleZ = new object[0],
-                            TranslationX = new object[0],
-                            TranslationY = new object[0],
-                            TranslationZ = new object[0],
+                            ScaleX = Array.Empty<object>(),
+                            ScaleY = Array.Empty<object>(),
+                            ScaleZ = Array.Empty<object>(),
+                            TranslationX = Array.Empty<object>(),
+                            TranslationY = Array.Empty<object>(),
+                            TranslationZ = Array.Empty<object>(),
                             Radius = radius.ToArray(),
-                            FileId = new object[0],
+                            FileId = Array.Empty<object>(),
                             Height = height.ToArray(),
-                            Texture = new object[0]
+                            Texture = Array.Empty<object>()
                         }
                     },
-                    PrimitiveCollections = new Dictionary<string, APrimitive[]>()
+                    PrimitiveCollections = new PrimitiveCollections()
                     {
-                        {"box_collection", geometries.OfType<Box>().OfType<APrimitive>().ToArray()},
-                        {"circle_collection", new APrimitive[0]},
-                        {"closed_cone_collection", new APrimitive[0]},
-                        {
-                            "closed_cylinder_collection",
-                            geometries.OfType<ClosedCylinder>().OfType<APrimitive>().ToArray()
-                        },
-                        {"closed_eccentric_cone_collection", new APrimitive[0]},
-                        {"closed_ellipsoid_segment_collection", new APrimitive[0]},
-                        {"closed_extruded_ring_segment_collection", new APrimitive[0]},
-                        {"closed_spherical_segment_collection", new APrimitive[0]},
-                        {
-                            "closed_torus_segment_collection",
-                            geometries.OfType<ClosedTorusSegment>().OfType<APrimitive>().ToArray()
-                        },
-                        {"ellipsoid_collection", new APrimitive[0]},
-                        {"extruded_ring_collection", new APrimitive[0]},
-                        {"nut_collection", new APrimitive[0]},
-                        {"open_cone_collection", new APrimitive[0]},
-                        {
-                            "open_cylinder_collection",
-                            geometries.OfType<OpenCylinder>().OfType<APrimitive>().ToArray()
-                        },
-                        {"open_eccentric_cone_collection", new APrimitive[0]},
-                        {"open_ellipsoid_segment_collection", new APrimitive[0]},
-                        {"open_extruded_ring_segment_collection", new APrimitive[0]},
-                        {"open_spherical_segment_collection", new APrimitive[0]},
-                        {
-                            "open_torus_segment_collection",
-                            geometries.OfType<OpenTorusSegment>().OfType<APrimitive>().ToArray()
-                        },
-                        {"ring_collection", new APrimitive[0]},
-                        {"sphere_collection", new APrimitive[0]},
-                        {"torus_collection", geometries.OfType<Torus>().OfType<APrimitive>().ToArray()},
-                        {"open_general_cylinder_collection", new APrimitive[0]},
-                        {"closed_general_cylinder_collection", new APrimitive[0]},
-                        {"solid_open_general_cylinder_collection", new APrimitive[0]},
-                        {"solid_closed_general_cylinder_collection", new APrimitive[0]},
-                        {"open_general_cone_collection", new APrimitive[0]},
-                        {"closed_general_cone_collection", new APrimitive[0]},
-                        {"solid_open_general_cone_collection", new APrimitive[0]},
-                        {"solid_closed_general_cone_collection", new APrimitive[0]},
-                        {"triangle_mesh_collection", new APrimitive[0]},
-                        {"instanced_mesh_collection", new APrimitive[0]}
+                        ClosedCylinderCollection =
+                            geometries.OfType<ClosedCylinder>().ToArray(),
+                        ClosedTorusSegmentCollection = 
+                            geometries.OfType<ClosedTorusSegment>().ToArray(),
+                        OpenCylinderCollection =
+                            geometries.OfType<OpenCylinder>().ToArray(),
+                        OpenTorusSegmentCollection =
+                            geometries.OfType<OpenTorusSegment>().ToArray(),
+                        TorusCollection =
+                            geometries.OfType<Torus>().ToArray()
                     }
                 }
             };
