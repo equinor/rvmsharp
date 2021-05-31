@@ -57,9 +57,9 @@ namespace CadRevealComposer
 
         [JsonProperty("parent_sector_id")] public long? ParentSectorId { get; set; }
 
-        [JsonProperty("bbox_min")] public double[] BboxMin { get; set; }
+        [JsonProperty("bbox_min")] public float[] BboxMin { get; set; }
 
-        [JsonProperty("bbox_max")] public double[] BboxMax { get; set; }
+        [JsonProperty("bbox_max")] public float[] BboxMax { get; set; }
 
         [JsonProperty("attributes")] public Attributes Attributes { get; set; }
     }
