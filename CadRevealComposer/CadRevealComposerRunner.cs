@@ -12,7 +12,7 @@
     using System.Numerics;
     using Utils;
 
-    public static class CadRevealComposer
+    public static class CadRevealComposerRunner
     {
         static readonly TreeIndexGenerator TreeIndexGenerator = new();
         static readonly NodeIdProvider NodeIdGenerator = new();
