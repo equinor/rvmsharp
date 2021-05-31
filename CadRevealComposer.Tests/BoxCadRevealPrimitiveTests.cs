@@ -21,11 +21,11 @@
 
             // TODO: Test with real values.
             var matrix = Matrix4x4Helpers.CalculateTransformMatrix(center,
-                Quaternion.CreateFromAxisAngle(new Vector3(0.0f, -0.70710677f, 0.70710677f), expectedAngle),
+                Quaternion.CreateFromAxisAngle(new Vector3(0.0f, 0, 1), expectedAngle),
                 new Vector3(2, 2, 2));
 
             var boundingBox = new RvmBoundingBox(Min: new Vector3(9, -1, -1), Max: new Vector3(11, 1, 1));
-            var expectedDiagonal = Vector3.Distance(boundingBox.Min, boundingBox.Max);
+            var expectedDiagonal = 6.92820311; // Diagonal of scaled bounding box.
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
@@ -35,7 +35,6 @@
             Assert.That(box.CenterX, Is.EqualTo(10));
             Assert.That(box.CenterY, Is.EqualTo(0));
             Assert.That(box.CenterZ, Is.EqualTo(0));
-            Assert.That(box.DeltaX, Is.EqualTo(2));
             Assert.That(box.Diagonal, Is.EqualTo(expectedDiagonal));
             Assert.That(box.RotationAngle, Is.EqualTo(expectedAngle));
         }
