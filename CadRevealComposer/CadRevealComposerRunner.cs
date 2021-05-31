@@ -167,8 +167,8 @@
             };
 
 
-            string outputFileName = "output.json";
-            File.WriteAllText(Path.Combine(outputDirectory.FullName, outputFileName), JsonConvert.SerializeObject(file));
+            string outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
+            File.WriteAllText(outputFileName, JsonConvert.SerializeObject(file));
 
 
             Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputFileName)}\"");
