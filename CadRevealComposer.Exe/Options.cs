@@ -1,6 +1,6 @@
 ﻿namespace CadRevealComposer
 {
-    public static class Options
+    public class Options
     {
         // This class is currently used to avoid having changes in code for local rvm path.
         // Todo: Convert this class to command line arguments instead.
