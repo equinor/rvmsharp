@@ -13,7 +13,7 @@
         static void Main(string[] args)
         {
             
-            var result = Parser.Default.ParseArguments<Options>(args).MapResult(RunOptionsAndReturnExitCode, HandleParseError);
+            var result = Parser.Default.ParseArguments<CommandLineOptions>(args).MapResult(RunOptionsAndReturnExitCode, HandleParseError);
             Environment.Exit(result);
         }
 
@@ -24,9 +24,9 @@
             return -1;
         }
 
-        private static int RunOptionsAndReturnExitCode(Options arg)
+        private static int RunOptionsAndReturnExitCode(CommandLineOptions options)
         {
-            CadRevealComposerRunner.Process(Options.InputRvmPath);
+            CadRevealComposerRunner.Process(CommandLineOptions.InputRvmPath);
             
             return Success;
         }
