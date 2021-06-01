@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer
+namespace CadRevealComposer
 {
     using IdProviders;
     using Newtonsoft.Json;
