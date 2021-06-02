@@ -1,10 +1,12 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $inputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
-    [string] $outputDirectory = ".\outputs\",
-    [string] $i3dfPath = "C:\Users\nhals\GitRepos\conceal\i3df",
-    [switch] $Force = $false
+    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
+    [string] $OutputDirectory = $(Join-Path "$PSScriptRoot" ".\outputs\"),
+    [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\uncover\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
+    [string] $I3dfPath = "C:\Users\nhals\GitRepos\conceal\i3df",
+    [switch] $Force = $true,
+    [switch] $UploadToDev = $false
 )
 
 begin {
@@ -39,7 +41,7 @@ end {
 
     #region Reveal Composer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
-    & dotnet.exe run --project $cadRevealComposerPath -- --InputDirectory $inputDirectory --OutputDirectory $outputDirectory
+    & dotnet.exe run --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $OutputDirectory
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
@@ -48,14 +50,14 @@ end {
 
 
     #region i3df-converter
-    $expectedOutputPath = Join-Path (Resolve-Path $outputDirectory) "output.json"
+    $expectedOutputPath = Join-Path (Resolve-Path $OutputDirectory) "output.json"
     if (-not (Test-Path $expectedOutputPath)) {
         Write-Error "Expected the output from dotnet to be at ""$expectedOutputPath"". Could not find the file. Has anything changed?"
     }
 
-    $outputi3dFile = (Join-Path (Resolve-Path $outputDirectory) "output.i3d")
+    $outputi3dFile = (Join-Path (Resolve-Path $OutputDirectory) "sector_0.i3d")
 
-    $i3dfCargoPath = Join-Path $i3dfPath "Cargo.toml"
+    $i3dfCargoPath = Join-Path $I3dfPath "Cargo.toml"
 
     & cargo.exe run --manifest-path $i3dfCargoPath --release --features dump --bin i3df-converter -- $expectedOutputPath $outputi3dFile
     if ($LASTEXITCODE) {
@@ -63,6 +65,19 @@ end {
     }
 
     #endregion i3df-converter
+
+    Copy-Item -Path $outputi3dFile $ArtifactDirectory
+
+    if ($UploadToDev) {
+        if (-not (Get-Command "az" -ErrorAction 'SilentlyContinue')) {
+            Write-Error "Could not find az. Do you have Azure Cli installed?"
+        }
+        az storage azcopy blob upload `
+            --container models `
+            --account-name stechoreflectapidev `
+            --source $(Join-Path $OutputDirectory "*") `
+            --destination "hda/demomodel2/reflect/"
+    }
 
     Write-Host "Success. I3d file available at ""$outputi3dFile"""
 }
