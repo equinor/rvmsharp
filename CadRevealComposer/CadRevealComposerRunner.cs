@@ -121,6 +121,8 @@ namespace CadRevealComposer
                     },
                     PrimitiveCollections = new PrimitiveCollections()
                     {
+                        BoxCollection = 
+                            geometries.OfType<Box>().ToArray(),
                         ClosedCylinderCollection =
                             geometries.OfType<ClosedCylinder>().ToArray(),
                         ClosedTorusSegmentCollection = 
