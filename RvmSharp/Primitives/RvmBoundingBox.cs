@@ -8,10 +8,10 @@ namespace RvmSharp.Primitives
     {
         /// <summary>
         /// Generate all 8 corners of the bounding box.
+        /// Remark: This can be "Flat" (Zero width) in one or more dimensions.
         /// </summary>
         public Vector3[] GenerateBoxVertexes()
         {
-            // make longer to distinguish form from "min"
             var cube = new[]
             {
                 Max, 
@@ -24,11 +24,12 @@ namespace RvmSharp.Primitives
                 new Vector3(Min.X, Max.Y, Max.Z)
             };
 
-            // Some objects are flat (Zero in multiple dimensions
-            // if (cube.Distinct().Count() != 8)
-            //     throw new ArgumentException("A cube should have exactly 8 unique corners"); // This is unexpected.
-            
             return cube;
         }
+
+        /// <summary>
+        /// Calculate the diagonal size (distance between "min" and "max")
+        /// </summary>
+        public float Diagonal => Vector3.Distance(Min, Max);
     };
 }
