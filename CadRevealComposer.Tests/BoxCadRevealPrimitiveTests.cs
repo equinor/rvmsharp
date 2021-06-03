@@ -25,7 +25,7 @@
                 new Vector3(2, 2, 2));
 
             var boundingBox = new RvmBoundingBox(Min: new Vector3(9, -1, -1), Max: new Vector3(11, 1, 1));
-            var expectedDiagonal = 6.92820311; // Diagonal of scaled bounding box.
+            var expectedDiagonal = 7.90086317; // Diagonal of scaled, rotated bounding box.
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
