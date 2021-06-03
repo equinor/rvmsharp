@@ -24,7 +24,7 @@ namespace CadRevealComposer.Primitives
             var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
             
             var colors = GetColor(container);
-            (Vector3 normal, float rotationAngle) = ConvertRotationToAxisAngle(rot);
+            (Vector3 normal, float rotationAngle) = rot.DecomposeQuaternion();
 
             switch (rvmPrimitive)
             {
@@ -150,13 +150,6 @@ namespace CadRevealComposer.Primitives
                 default:
                     return null;
             }
-        }
-
-        private static (Vector3 Normal, float RotationAngle) ConvertRotationToAxisAngle(Quaternion rot)
-        {
-            var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
-            var rotationAngle = AlgebraUtils.DecomposeQuaternion(rot).yaw;
-            return (normal, rotationAngle);
         }
 
         private static int[] GetColor(RvmNode container)

@@ -139,7 +139,35 @@ namespace CadRevealComposer
 
 
             string outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
-            File.WriteAllText(outputFileName, JsonConvert.SerializeObject(file));
+            File.WriteAllText(outputFileName, JsonConvert.SerializeObject(file, Formatting.Indented));
+
+            
+
+            var infoNodes = allNodes.Where(n => n.Group != null).Select(n =>
+            {
+                var rvmNode = (RvmNode)n.Group;
+                return new CadInfoNode
+                {
+                    TreeIndex = n.TreeIndex,
+                    Name = rvmNode.Name,
+                    Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
+                    {
+                        Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
+                        return new CadGeometry
+                        {
+                            TypeName = g.GetType().ToString(),
+                            Scale = scale,
+                            Location = transform,
+                            Rotation = rotation,
+                            Properties = g.GetType().GetFields()
+                                .ToDictionary(f => f.Name, f => f.GetValue(g).ToString())
+                        };
+                    }).ToList()
+                };
+            }).ToArray();
+
+            string outputFileName2 = Path.Combine(outputDirectory.FullName, "data.json");
+            File.WriteAllText(outputFileName2, JsonConvert.SerializeObject(infoNodes, Formatting.Indented));
 
 
             Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputFileName)}\"");
