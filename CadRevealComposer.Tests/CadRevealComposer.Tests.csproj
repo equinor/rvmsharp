@@ -20,4 +20,10 @@
       <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="TestSamples\TestData.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

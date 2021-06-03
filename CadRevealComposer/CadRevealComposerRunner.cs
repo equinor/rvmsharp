@@ -141,7 +141,7 @@ namespace CadRevealComposer
             string outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
             File.WriteAllText(outputFileName, JsonConvert.SerializeObject(file, Formatting.Indented));
 
-            var problematicNode = allNodes.First(n => n.TreeIndex == 182812);//179417);
+            
 
             var infoNodes = allNodes.Where(n => n.Group != null).Select(n =>
             {
@@ -168,13 +168,6 @@ namespace CadRevealComposer
 
             string outputFileName2 = Path.Combine(outputDirectory.FullName, "data.json");
             File.WriteAllText(outputFileName2, JsonConvert.SerializeObject(infoNodes, Formatting.Indented));
-
-            var rvmProblematic = (RvmNode)problematicNode.Group;
-            var circularTorus = (RvmCircularTorus)rvmProblematic.Children[0];
-
-            Matrix4x4.Decompose(circularTorus.Matrix, out var scale, out var rotation, out var translation);
-            var normal = Vector3.Transform(Vector3.UnitZ, rotation);
-            var zzz = AlgebraUtils.DecomposeQuaternion(rotation);
 
 
             Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputFileName)}\"");

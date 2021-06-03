@@ -21,10 +21,10 @@ namespace CadRevealComposer.Primitives
                 throw new Exception("Failed to decompose matrix." + rvmPrimitive.Matrix);
             }
 
-            var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
-            
+            // TODO: Verify that this gives expected diagonal for scaled sizes.
+            var diagonal = CalculateDiagonal(rvmPrimitive.BoundingBoxLocal, scale, rot);
             var colors = GetColor(container);
-            (Vector3 normal, float rotationAngle) = ConvertRotationToAxisAngle(rot);
+            (Vector3 normal, float rotationAngle) = rot.DecomposeQuaternion();
 
             switch (rvmPrimitive)
             {
@@ -37,7 +37,7 @@ namespace CadRevealComposer.Primitives
                             NodeId = revealNode.NodeId,
                             TreeIndex = revealNode.TreeIndex,
                             Color = colors,
-                            Diagonal = axisAlignedDiagonal,
+                            Diagonal = diagonal,
                             CenterX = pos.X,
                             CenterY = pos.Y,
                             CenterZ = pos.Z,
@@ -65,7 +65,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = axisAlignedDiagonal,
+                                Diagonal = diagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -81,7 +81,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = axisAlignedDiagonal,
+                                Diagonal = diagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -104,7 +104,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = axisAlignedDiagonal,
+                                Diagonal = diagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -120,7 +120,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = axisAlignedDiagonal,
+                                Diagonal = diagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -136,7 +136,7 @@ namespace CadRevealComposer.Primitives
                             NodeId = revealNode.NodeId,
                             TreeIndex = revealNode.TreeIndex,
                             Color = colors,
-                            Diagonal = axisAlignedDiagonal,
+                            Diagonal = diagonal,
                             CenterX = pos.X,
                             CenterY = pos.Y,
                             CenterZ = pos.Z,
@@ -152,11 +152,13 @@ namespace CadRevealComposer.Primitives
             }
         }
 
-        private static (Vector3 Normal, float RotationAngle) ConvertRotationToAxisAngle(Quaternion rot)
+        private static float CalculateDiagonal(RvmBoundingBox boundingBoxLocal, Vector3 scale, Quaternion rot)
         {
-            var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
-            var rotationAngle = AlgebraUtils.DecomposeQuaternion(rot).yaw;
-            return (normal, rotationAngle);
+            var halfBox = Vector3.Multiply(scale, (boundingBoxLocal.Max - boundingBoxLocal.Min)) / 2;
+            var boxVertice = Vector3.Abs(Vector3.Transform(halfBox, rot)) * 2;
+            var diagonal = MathF.Sqrt(boxVertice.X * boxVertice.X + boxVertice.Y * boxVertice.Y +
+                                      boxVertice.Z * boxVertice.Z);
+            return diagonal;
         }
 
         private static int[] GetColor(RvmNode container)
