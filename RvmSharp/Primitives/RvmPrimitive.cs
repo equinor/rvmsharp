@@ -17,7 +17,7 @@
 
         internal float SampleStartAngle;
 
-        public RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal) :
+        protected RvmPrimitive(uint version, RvmPrimitiveKind kind, Matrix4x4 matrix, RvmBoundingBox bBoxLocal) :
             base(version)
         {
             Kind = kind;
