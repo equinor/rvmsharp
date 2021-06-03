@@ -21,8 +21,8 @@ namespace CadRevealComposer.Primitives
                 throw new Exception("Failed to decompose matrix." + rvmPrimitive.Matrix);
             }
 
-            // TODO: Verify that this gives expected diagonal for scaled sizes.
-            var diagonal = CalculateDiagonal(rvmPrimitive.BoundingBoxLocal, scale, rot);
+            var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
+            
             var colors = GetColor(container);
             (Vector3 normal, float rotationAngle) = rot.DecomposeQuaternion();
 
@@ -37,7 +37,7 @@ namespace CadRevealComposer.Primitives
                             NodeId = revealNode.NodeId,
                             TreeIndex = revealNode.TreeIndex,
                             Color = colors,
-                            Diagonal = diagonal,
+                            Diagonal = axisAlignedDiagonal,
                             CenterX = pos.X,
                             CenterY = pos.Y,
                             CenterZ = pos.Z,
@@ -65,7 +65,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = diagonal,
+                                Diagonal = axisAlignedDiagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -81,7 +81,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = diagonal,
+                                Diagonal = axisAlignedDiagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -104,7 +104,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = diagonal,
+                                Diagonal = axisAlignedDiagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -120,7 +120,7 @@ namespace CadRevealComposer.Primitives
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
                                 Color = colors,
-                                Diagonal = diagonal,
+                                Diagonal = axisAlignedDiagonal,
                                 CenterX = pos.X,
                                 CenterY = pos.Y,
                                 CenterZ = pos.Z,
@@ -136,7 +136,7 @@ namespace CadRevealComposer.Primitives
                             NodeId = revealNode.NodeId,
                             TreeIndex = revealNode.TreeIndex,
                             Color = colors,
-                            Diagonal = diagonal,
+                            Diagonal = axisAlignedDiagonal,
                             CenterX = pos.X,
                             CenterY = pos.Y,
                             CenterZ = pos.Z,
