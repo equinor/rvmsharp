@@ -23,9 +23,10 @@ namespace RvmSharp.Primitives
                 new Vector3(Max.X, Min.Y, Max.Z),
                 new Vector3(Min.X, Max.Y, Max.Z)
             };
-            
-            if (cube.Distinct().Count() != 8)
-                throw new ArgumentException("A cube should have exactly 8 unique corners"); // This is unexpected.
+
+            // Some objects are flat (Zero in multiple dimensions
+            // if (cube.Distinct().Count() != 8)
+            //     throw new ArgumentException("A cube should have exactly 8 unique corners"); // This is unexpected.
             
             return cube;
         }
