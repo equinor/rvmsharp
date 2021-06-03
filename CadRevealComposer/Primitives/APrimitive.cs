@@ -152,15 +152,6 @@ namespace CadRevealComposer.Primitives
             }
         }
 
-        private static float CalculateDiagonal(RvmBoundingBox boundingBoxLocal, Vector3 scale, Quaternion rot)
-        {
-            var halfBox = Vector3.Multiply(scale, (boundingBoxLocal.Max - boundingBoxLocal.Min)) / 2;
-            var boxVertice = Vector3.Abs(Vector3.Transform(halfBox, rot)) * 2;
-            var diagonal = MathF.Sqrt(boxVertice.X * boxVertice.X + boxVertice.Y * boxVertice.Y +
-                                      boxVertice.Z * boxVertice.Z);
-            return diagonal;
-        }
-
         private static int[] GetColor(RvmNode container)
         {
             // TODO: Fallback color is arbitrarily chosen, it should probably be handled differently
