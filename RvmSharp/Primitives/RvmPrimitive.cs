@@ -1,6 +1,7 @@
 ﻿namespace RvmSharp.Primitives
 {
     using Containers;
+    using System.Linq;
     using System.Numerics;
 
     public abstract class RvmPrimitive : RvmGroup
@@ -31,11 +32,14 @@
         /// <returns>Bounding box in World Space.</returns>
         public RvmBoundingBox CalculateAxisAlignedBoundingBox()
         {
-            var rotatedMax = Vector3.Transform(BoundingBoxLocal.Max, this.Matrix);
-            var rotatedMin = Vector3.Transform(BoundingBoxLocal.Min, this.Matrix);
-            var min = Vector3.Min(rotatedMax, rotatedMin);
-            var max = Vector3.Max(rotatedMax, rotatedMin);
+            var box = BoundingBoxLocal.GenerateBoxVertexes();
+
+            var rotatedBox = box.Select(v => Vector3.Transform(v, this.Matrix)).ToArray();
+            
+            var min = rotatedBox.Aggregate(Vector3.Min);
+            var max = rotatedBox.Aggregate(Vector3.Max);
             return new RvmBoundingBox(Min: min, Max: max);
         }
+
     }
 }
