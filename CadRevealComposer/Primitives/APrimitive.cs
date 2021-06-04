@@ -60,7 +60,7 @@ namespace CadRevealComposer.Primitives
 
                         if (rvmCylinder.Connections[0] != null || rvmCylinder.Connections[1] != null)
                         {
-                            return new ClosedCylinder
+                            return new OpenCylinder
                             {
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
@@ -76,7 +76,7 @@ namespace CadRevealComposer.Primitives
                         }
                         else
                         {
-                            return new OpenCylinder
+                            return new ClosedCylinder
                             {
                                 NodeId = revealNode.NodeId,
                                 TreeIndex = revealNode.TreeIndex,
@@ -161,6 +161,53 @@ namespace CadRevealComposer.Primitives
                             CenterZ = pos.Z,
                             Radius = radius 
                         };
+                    }
+                case RvmSnout rvmSnout:
+                    {
+                        CheckUniformScale(scale);
+                        var height = rvmSnout.Height * scale.Z;
+                        var radiusA = rvmSnout.RadiusBottom * scale.X;
+                        var radiusB = rvmSnout.RadiusTop * scale.X;
+                        if (rvmSnout.OffsetX == rvmSnout.OffsetY && rvmSnout.OffsetX == 0)
+                        {
+                            if (rvmSnout.Connections[0] != null || rvmSnout.Connections[1] != null)
+                            {
+                                return new OpenCone
+                                {
+                                    NodeId = revealNode.NodeId,
+                                    TreeIndex = revealNode.TreeIndex,
+                                    Color = colors,
+                                    Diagonal = axisAlignedDiagonal,
+                                    CenterX = pos.X,
+                                    CenterY = pos.Y,
+                                    CenterZ = pos.Z,
+                                    CenterAxis = new[] {normal.X, normal.Y, normal.Z},
+                                    Height = height,
+                                    RadiusA = radiusA,
+                                    RadiusB = radiusB
+                                };
+                            }
+                            else
+                            {
+                                return new ClosedCone()
+                                {
+                                    NodeId = revealNode.NodeId,
+                                    TreeIndex = revealNode.TreeIndex,
+                                    Color = colors,
+                                    Diagonal = axisAlignedDiagonal,
+                                    CenterX = pos.X,
+                                    CenterY = pos.Y,
+                                    CenterZ = pos.Z,
+                                    CenterAxis = new[] {normal.X, normal.Y, normal.Z},
+                                    Height = height,
+                                    RadiusA = radiusA,
+                                    RadiusB = radiusB
+                                };
+                            }
+                        }
+
+                        // TODO
+                        return null;
                     }
                 default:
                     return null;
