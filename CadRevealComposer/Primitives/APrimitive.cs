@@ -93,8 +93,7 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmCircularTorus circularTorus:
                     {
-                        // TODO: non uniform scale not supported
-
+                        CheckUniformScale(scale);
                         var tubeRadius = circularTorus.Radius * scale.X;
                         var radius = circularTorus.Offset * scale.X;
                         if (circularTorus.Angle >= Math.PI * 2)
@@ -147,9 +146,31 @@ namespace CadRevealComposer.Primitives
                             ArcAngle = circularTorus.Angle
                         };
                     }
+                case RvmSphere rvmSphere:
+                    {
+                        CheckUniformScale(scale);
+                        var radius = (rvmSphere.Diameter / 2) * scale.X;
+                        return new Sphere
+                        {
+                            NodeId = revealNode.NodeId,
+                            TreeIndex = revealNode.TreeIndex,
+                            Color = colors,
+                            Diagonal = axisAlignedDiagonal,
+                            CenterX = pos.X,
+                            CenterY = pos.Y,
+                            CenterZ = pos.Z,
+                            Radius = radius 
+                        };
+                    }
                 default:
                     return null;
             }
+        }
+
+        private static void CheckUniformScale(Vector3 scale)
+        {
+            if (MathF.Abs(scale.X - scale.Y) > 0.0001f || MathF.Abs(scale.X - scale.Z) > 0.0001f)
+                throw new NotImplementedException("Only uniform scale supported");
         }
 
         private static int[] GetColor(RvmNode container)
