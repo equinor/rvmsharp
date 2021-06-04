@@ -3,6 +3,7 @@ namespace CadRevealComposer.Primitives
     using Newtonsoft.Json;
     using RvmSharp.Primitives;
     using System;
+    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
     using Utils;
@@ -93,7 +94,7 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmCircularTorus circularTorus:
                     {
-                        CheckUniformScale(scale);
+                        AssertUniformScale(scale);
                         var tubeRadius = circularTorus.Radius * scale.X;
                         var radius = circularTorus.Offset * scale.X;
                         if (circularTorus.Angle >= Math.PI * 2)
@@ -148,7 +149,7 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmSphere rvmSphere:
                     {
-                        CheckUniformScale(scale);
+                        AssertUniformScale(scale);
                         var radius = (rvmSphere.Diameter / 2) * scale.X;
                         return new Sphere
                         {
@@ -164,7 +165,7 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmSnout rvmSnout:
                     {
-                        CheckUniformScale(scale);
+                        AssertUniformScale(scale);
                         var height = rvmSnout.Height * scale.Z;
                         var radiusA = rvmSnout.RadiusBottom * scale.X;
                         var radiusB = rvmSnout.RadiusTop * scale.X;
@@ -210,7 +211,7 @@ namespace CadRevealComposer.Primitives
                         return null;
                     }
                 case RvmRectangularTorus rvmRectangularTorus:
-                    CheckUniformScale(scale);
+                    AssertUniformScale(scale);
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)
                     {
                         return new Ring
@@ -236,10 +237,9 @@ namespace CadRevealComposer.Primitives
             }
         }
 
-        private static void CheckUniformScale(Vector3 scale)
+        private static void AssertUniformScale(Vector3 scale)
         {
-            if (MathF.Abs(scale.X - scale.Y) > 0.0001f || MathF.Abs(scale.X - scale.Z) > 0.0001f)
-                throw new NotImplementedException("Only uniform scale supported");
+            Trace.Assert(scale.IsUniform(), $"Expected uniform scale. Was {scale}.");
         }
 
         private static int[] GetColor(RvmNode container)
