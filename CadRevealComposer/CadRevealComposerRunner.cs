@@ -73,7 +73,7 @@ namespace CadRevealComposer
                 .Distinct();
 
             var height = geometries.CollectProperties<float, APrimitive>("Height").Distinct();
-            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius").Distinct();
+            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius", "RadiusA", "RadiusB").Distinct();
             var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
 
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
@@ -135,6 +135,10 @@ namespace CadRevealComposer
                             geometries.OfType<Torus>().ToArray(),
                         SphereCollection = 
                             geometries.OfType<Sphere>().ToArray(),
+                        ClosedConeCollection = 
+                            geometries.OfType<ClosedCone>().ToArray(),
+                        OpenConeCollection = 
+                            geometries.OfType<OpenCone>().ToArray()
                     }
                 }
             };
