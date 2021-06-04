@@ -11,7 +11,7 @@ namespace CadRevealComposer.Tests
     [TestFixture]
     public class RotationTests
     {
-        private static readonly DirectoryInfo TestSamplesDirectory = new(Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples")));
+        private static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
         
         [Serializable]
         public class RotationTestCase
@@ -38,7 +38,7 @@ namespace CadRevealComposer.Tests
 
         private static TestCaseData[] ReadTestCases()
         {
-            var tests = JsonConvert.DeserializeObject<RotationTestCase[]>(File.ReadAllText(Path.Combine(TestSamplesDirectory.FullName, "TestData.json")));
+            var tests = JsonConvert.DeserializeObject<RotationTestCase[]>(File.ReadAllText(Path.Combine(TestSamplesDirectory, "TestData.json")));
             return tests?.Select(x => new TestCaseData(x).SetName(x.Name)).ToArray();
         }
 
@@ -46,7 +46,7 @@ namespace CadRevealComposer.Tests
 
         [Test]
         [TestCaseSource(nameof(DivideCases))]
-        public void CheckRotation1(RotationTestCase test)
+        public void TestQuaternionDecomposition(RotationTestCase test)
         {
             var q = new Quaternion(test.QuaternionIn.X,test.QuaternionIn.Y,test.QuaternionIn.Z,test.QuaternionIn.W);
             var components = q.DecomposeQuaternion();
