@@ -50,7 +50,7 @@ namespace CadRevealComposer
         [JsonProperty("circle_collection")] public APrimitive[] CircleCollection = Array.Empty<APrimitive>();
 
         [JsonProperty("closed_cone_collection")]
-        public APrimitive[] ClosedConeCollection = Array.Empty<APrimitive>();
+        public ClosedCone[] ClosedConeCollection = Array.Empty<ClosedCone>();
 
         [JsonProperty("closed_cylinder_collection")]
         public ClosedCylinder[] ClosedCylinderCollection = Array.Empty<ClosedCylinder>();
@@ -76,7 +76,7 @@ namespace CadRevealComposer
         public APrimitive[] ExtrudedRingCollection = Array.Empty<APrimitive>();
 
         [JsonProperty("nut_collection")] public APrimitive[] NutCollection = Array.Empty<APrimitive>();
-        [JsonProperty("open_cone_collection")] public APrimitive[] OpenConeCollection = Array.Empty<APrimitive>();
+        [JsonProperty("open_cone_collection")] public OpenCone[] OpenConeCollection = Array.Empty<OpenCone>();
 
         [JsonProperty("open_cylinder_collection")]
         public OpenCylinder[] OpenCylinderCollection = Array.Empty<OpenCylinder>();
@@ -97,7 +97,7 @@ namespace CadRevealComposer
         public OpenTorusSegment[] OpenTorusSegmentCollection = Array.Empty<OpenTorusSegment>();
 
         [JsonProperty("ring_collection")] public APrimitive[] RingCollection = Array.Empty<APrimitive>();
-        [JsonProperty("sphere_collection")] public APrimitive[] SphereCollection = Array.Empty<APrimitive>();
+        [JsonProperty("sphere_collection")] public Sphere[] SphereCollection = Array.Empty<Sphere>();
         [JsonProperty("torus_collection")] public Torus[] TorusCollection = Array.Empty<Torus>();
 
         [JsonProperty("open_general_cylinder_collection")]
