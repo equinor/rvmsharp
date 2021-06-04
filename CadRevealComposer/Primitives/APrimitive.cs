@@ -209,6 +209,28 @@ namespace CadRevealComposer.Primitives
                         // TODO
                         return null;
                     }
+                case RvmRectangularTorus rvmRectangularTorus:
+                    CheckUniformScale(scale);
+                    if (rvmRectangularTorus.Angle >= MathF.PI * 2)
+                    {
+                        return new Ring
+                        {
+                            NodeId = revealNode.NodeId,
+                            TreeIndex = revealNode.TreeIndex,
+                            Color = colors,
+                            Diagonal = axisAlignedDiagonal,
+                            CenterX = pos.X,
+                            CenterY = pos.Y,
+                            CenterZ = pos.Z,
+                            InnerRadius = rvmRectangularTorus.RadiusInner * scale.X,
+                            OuterRadius = rvmRectangularTorus.RadiusOuter * scale.X
+                        };
+                    }
+                    else
+                    {
+                        // TODO: segment
+                        return null;
+                    }
                 default:
                     return null;
             }

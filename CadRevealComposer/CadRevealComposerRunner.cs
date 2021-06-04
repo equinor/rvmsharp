@@ -73,7 +73,7 @@ namespace CadRevealComposer
                 .Distinct();
 
             var height = geometries.CollectProperties<float, APrimitive>("Height").Distinct();
-            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius", "RadiusA", "RadiusB").Distinct();
+            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius", "RadiusA", "RadiusB", "InnerRadius", "OuterRadius").Distinct();
             var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
 
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
@@ -211,21 +211,34 @@ namespace CadRevealComposer
                 Children = null
             };
 
-            var childrenCadNodes = root.Children.OfType<RvmNode>()
-                .Select(n => CollectGeometryNodesRecursive(n, newNode))
-                .ToArray();
+            CadRevealNode[] childrenCadNodes;
+            APrimitive[] geometries = Array.Empty<APrimitive>();
 
             if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
             {
-                // TODO: Implicit Pipes
-                // TODO: Keep Child order when implicit pipes.
+                childrenCadNodes = root.Children.Select(child =>
+                {
+                    switch (child)
+                    {
+                        case RvmPrimitive rvmPrimitive:
+                            return CollectGeometryNodesRecursive(new RvmNode(1, "Implicit geometry", root.Translation, root.MaterialId) { Children = {rvmPrimitive}}, newNode);
+                        case RvmNode rvmNode:
+                            return CollectGeometryNodesRecursive(rvmNode, newNode);
+                        default:
+                            throw new Exception();
+                    }
+                }).ToArray();
+            }
+            else
+            {
+                childrenCadNodes = root.Children.OfType<RvmNode>()
+                    .Select(n => CollectGeometryNodesRecursive(n, newNode))
+                    .ToArray();
+                geometries = root.Children.OfType<RvmPrimitive>()
+                    .Select(x => APrimitive.FromRvmPrimitive(newNode, root, x)).Where(g => g != null).ToArray()!;
             }
 
-            var geometries = root.Children.OfType<RvmPrimitive>()
-                .Select(x => APrimitive.FromRvmPrimitive(newNode, root, x)).Where(g => g != null);
-
-
-            newNode.Geometries = geometries.ToArray()!;
+            newNode.Geometries = geometries;
             newNode.Children = childrenCadNodes;
 
             var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
