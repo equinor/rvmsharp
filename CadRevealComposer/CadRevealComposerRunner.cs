@@ -132,7 +132,9 @@ namespace CadRevealComposer
                         OpenTorusSegmentCollection =
                             geometries.OfType<OpenTorusSegment>().ToArray(),
                         TorusCollection =
-                            geometries.OfType<Torus>().ToArray()
+                            geometries.OfType<Torus>().ToArray(),
+                        SphereCollection = 
+                            geometries.OfType<Sphere>().ToArray(),
                     }
                 }
             };
