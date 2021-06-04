@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Utils
 {
+    using System;
     using System.Numerics;
 
     public static class VectorExtensions
@@ -22,6 +23,17 @@
             var floats = new float[4];
             vector4.CopyTo(floats);
             return floats;
+        }
+
+        /// <summary>
+        /// Check if X == Y == Z, within a given tolerance.
+        /// </summary>
+        /// <param name="vector"></param>
+        /// <param name="tolerance">Tolerance. For example 0.0001</param>
+        /// <returns></returns>
+        public static bool IsUniform(this Vector3 vector, float tolerance = 0.00001f)
+        {
+            return Math.Abs(vector.X - vector.Y) < tolerance && Math.Abs(vector.X - vector.Z) < tolerance;
         }
     }
 }
