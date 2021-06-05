@@ -189,7 +189,7 @@
                         for (var k = 0; k < contourCount; k++)
                         {
                             var vertexCount = ReadUint(stream);
-                            var vertices = new (Vector3 v, Vector3 n)[vertexCount];
+                            var vertices = new (Vector3 Vertex, Vector3 Normal)[vertexCount];
 
                             for (var n = 0; n < vertexCount; n++)
                             {
