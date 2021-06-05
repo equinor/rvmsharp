@@ -2,34 +2,15 @@ namespace RvmSharp.Primitives
 {
     using System.Numerics;
 
-    public class RvmFacetGroup : RvmPrimitive
+    public record RvmFacetGroup(
+        uint Version,
+        Matrix4x4 Matrix,
+        RvmBoundingBox BoundingBoxLocal,
+        RvmFacetGroup.RvmPolygon[] Polygons) 
+        : RvmPrimitive(Version, RvmPrimitiveKind.FacetGroup, Matrix, BoundingBoxLocal)
     {
-        public class RvmContour
-        {
-            public readonly (Vector3 v, Vector3 n)[] Vertices;
+        public record RvmContour((Vector3 Vertex, Vector3 Normal)[] Vertices);
 
-            public RvmContour((Vector3 v, Vector3 n)[] vertices)
-            {
-                Vertices = vertices;
-            }
-        }
-
-        public class RvmPolygon
-        {
-            public readonly RvmContour[] Contours;
-
-            public RvmPolygon(RvmContour[] contours)
-            {
-                Contours = contours;
-            }
-        }
-        
-        public readonly RvmPolygon[] Polygons;
-
-        public RvmFacetGroup(uint version, Matrix4x4 matrix, RvmBoundingBox bBoxLocal, RvmPolygon[] polygons)
-            : base(version, RvmPrimitiveKind.FacetGroup, matrix, bBoxLocal)
-        {
-            Polygons = polygons;
-        }
+        public record RvmPolygon(RvmContour[] Contours);
     }
 }
