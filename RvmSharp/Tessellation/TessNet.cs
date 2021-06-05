@@ -29,9 +29,9 @@ namespace RvmSharp.Tessellation
                     // Skip degenerate contour with less than 3 vertices
                     continue;
                 }
-                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.v.X, v.v.Y, v.v.Z), v.n)).ToArray();
+                var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal)).ToArray();
                 tess.AddContour(cv);
-                var n = contour.Vertices[0].n;
+                var n = contour.Vertices[0].Normal;
                 normal = new Vec3(n.X, n.Y, n.Z);
                 shouldTessellate = true;
             }

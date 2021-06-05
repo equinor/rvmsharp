@@ -654,10 +654,10 @@ namespace RvmSharp.Tessellation
                 {
                     foreach (var vn in cont.Vertices)
                     {
-                        (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.v.X), Math.Min(bMin.Y, vn.v.Y),
-                            Math.Min(bMin.Z, vn.v.Z));
-                        (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.v.X), Math.Max(bMax.Y, vn.v.Y),
-                            Math.Max(bMax.Z, vn.v.Z));
+                        (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.Vertex.X), Math.Min(bMin.Y, vn.Vertex.Y),
+                            Math.Min(bMin.Z, vn.Vertex.Z));
+                        (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.Vertex.X), Math.Max(bMax.Y, vn.Vertex.Y),
+                            Math.Max(bMax.Z, vn.Vertex.Z));
                     }
                 }
 
@@ -666,7 +666,7 @@ namespace RvmSharp.Tessellation
                 var vo = vertices.Count;
 
                 var adjustedContours = poly.Contours.Select(v => new RvmContour(
-                    v.Vertices.Select(x => (x.v - m, x.n)).ToArray()
+                    v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()
                 )).ToArray();
 
                 var outJob = TessNet.Tessellate(adjustedContours);
