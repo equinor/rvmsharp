@@ -40,28 +40,40 @@
             progressBar.Tick();
             progressBar.Dispose();
 
-            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectGeometryNodes)).ToArray();
-            progressBar = new ProgressBar(leafs.Length, "Tessellating");
-            var meshes = leafs.AsParallel().Select(leaf =>
+            var allNodes = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectAllNodes))
+                .ToArray();
+            var separationAttributre = "Discipline";
+            var projectAttribute = "ProjectNo";
+            var allProjects = allNodes.Where(n => n.Attributes.ContainsKey(separationAttributre)).Select(n => n.Attributes[separationAttributre]).Distinct().ToArray();
+            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(n => CollectGeometryNodes(n, Array.Empty<RvmNode>()))).ToArray();
+            foreach (var project in allProjects)
             {
-                progressBar.Message = leaf.Name;
-                var tesselatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
-                progressBar.Tick();
-                return (leaf.Name, tesselatedMeshes);
-            }).ToArray();
-            progressBar.Dispose();
-            progressBar = new ProgressBar(meshes.Length, "Exporting");
+                var leafs2 = leafs.Where(z => z.Item2.Any(n => n.Attributes.ContainsKey(separationAttributre)
+                                                               && n.Attributes[separationAttributre] == project) &&
+                                              !z.Item2.Any(n => n.Attributes.ContainsKey(projectAttribute)))
+                    .Select(z => z.Item1).ToArray();
+                progressBar = new ProgressBar(leafs.Length, "Tessellating");
+                var meshes = leafs2.AsParallel().Select(leaf =>
+                {
+                    progressBar.Message = leaf.Name;
+                    var tesselatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
+                    progressBar.Tick();
+                    return (leaf.Name, tesselatedMeshes);
+                }).ToArray();
+                progressBar.Dispose();
+                progressBar = new ProgressBar(meshes.Length, "Exporting");
 
-            using var objExporter = new ObjExporter(options.Output);
-            foreach ((string objectName, IEnumerable<Mesh> primitives) in meshes)
-            {
-                objExporter.StartObject(objectName);
-                foreach (var primitive in primitives)
-                    objExporter.WriteMesh(primitive);
-                progressBar.Tick();
+                using var objExporter = new ObjExporter(options.Output +"/" + project + ".obj");
+                foreach ((string objectName, IEnumerable<Mesh> primitives) in meshes)
+                {
+                    objExporter.StartObject(objectName);
+                    foreach (var primitive in primitives)
+                        objExporter.WriteMesh(primitive);
+                    progressBar.Tick();
+                }
+
+                progressBar.Dispose();
             }
-
-            progressBar.Dispose();
 
             Console.WriteLine("Done!");
             return 0;
@@ -130,12 +142,19 @@
             return rvmStore;
         }
 
-        private static IEnumerable<RvmNode> CollectGeometryNodes(RvmNode root)
+        private static IEnumerable<(RvmNode, RvmNode[])> CollectGeometryNodes(RvmNode root, RvmNode[] path)
         {
             if (root.Children.OfType<RvmPrimitive>().Any())
-                yield return root;
-            foreach (var geometryNode in root.Children.OfType<RvmNode>().SelectMany(CollectGeometryNodes))
+                yield return (root, path);
+            var childPath = path.Append(root).ToArray();
+            foreach (var geometryNode in root.Children.OfType<RvmNode>().SelectMany(n => CollectGeometryNodes(n, childPath)))
                 yield return geometryNode;
+        }
+        private static IEnumerable<RvmNode> CollectAllNodes(RvmNode root)
+        {
+            yield return root;
+            foreach (var node in root.Children.OfType<RvmNode>().SelectMany(CollectAllNodes))
+                yield return node;
         }
     }
 }
