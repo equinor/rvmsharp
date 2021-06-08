@@ -67,7 +67,7 @@ namespace CadRevealComposer.Primitives
 
                         if (rvmCylinder.Connections[0] != null || rvmCylinder.Connections[1] != null)
                         {
-                            return new ClosedCylinder
+                            return new OpenCylinder
                             (
                                 NodeId: revealNode.NodeId,
                                 TreeIndex: revealNode.TreeIndex,
@@ -83,7 +83,7 @@ namespace CadRevealComposer.Primitives
                         }
                         else
                         {
-                            return new OpenCylinder
+                            return new ClosedCylinder
                             (
                                 NodeId: revealNode.NodeId,
                                 TreeIndex: revealNode.TreeIndex,
@@ -173,8 +173,8 @@ namespace CadRevealComposer.Primitives
                     {
                         AssertUniformScale(scale);
                         var height = rvmSnout.Height * scale.Z;
-                        var radiusA = rvmSnout.RadiusBottom * scale.X;
-                        var radiusB = rvmSnout.RadiusTop * scale.X;
+                        var radiusB = rvmSnout.RadiusBottom * scale.X;
+                        var radiusA = rvmSnout.RadiusTop * scale.X;
                         if (rvmSnout.OffsetX == rvmSnout.OffsetY && rvmSnout.OffsetX == 0)
                         {
                             if (rvmSnout.Connections[0] != null || rvmSnout.Connections[1] != null)
