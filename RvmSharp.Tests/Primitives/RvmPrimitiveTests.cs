@@ -103,5 +103,16 @@ namespace RvmSharp.Tests.Primitives
             Assert.That(bb.Max, Is.EqualTo(testCaseDescription.ExpectedMax));
             Assert.That(diagonal, Is.EqualTo(testCaseDescription.ExpectedDiagonal));
         }
+
+        [Test]
+        public void RvmPrimitive_WhenEqualValues_AreValueEqual()
+        {
+            var box = new RvmBox(1, Matrix4x4.Identity, DefaultBoundingBox, 1, 1, 1);
+            var boxCopy = box with { };
+            var newIdenticalBox = new RvmBox(1, Matrix4x4.Identity, DefaultBoundingBox, 1, 1, 1);
+
+            Assert.That(box, Is.EqualTo(boxCopy));
+            Assert.That(box, Is.EqualTo(newIdenticalBox));
+        }
     }
 }
