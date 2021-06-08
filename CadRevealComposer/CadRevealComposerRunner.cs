@@ -147,11 +147,10 @@ namespace CadRevealComposer
             string outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
             File.WriteAllText(outputFileName, JsonConvert.SerializeObject(file, Formatting.Indented));
 
-            
 
-            var infoNodes = allNodes.Where(n => n.Group != null).Select(n =>
+            var infoNodes = allNodes.Where(n => n.Group is RvmNode).Select(n =>
             {
-                var rvmNode = (RvmNode)n.Group;
+                var rvmNode = (RvmNode)n.Group!;
                 return new CadInfoNode
                 {
                     TreeIndex = n.TreeIndex,
@@ -159,14 +158,15 @@ namespace CadRevealComposer
                     Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
                     {
                         Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
+
                         return new CadGeometry
                         {
                             TypeName = g.GetType().ToString(),
                             Scale = scale,
                             Location = transform,
                             Rotation = rotation,
-                            Properties = g.GetType().GetFields()
-                                .ToDictionary(f => f.Name, f => f.GetValue(g).ToString())
+                            Properties = g.GetType().GetProperties()
+                                .ToDictionary(f => f.Name, f => f.GetValue(g)?.ToString())
                         };
                     }).ToList()
                 };
