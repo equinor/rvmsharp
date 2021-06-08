@@ -269,7 +269,8 @@
             var colorKind = ReadUint(stream);
             var colorIndex = ReadUint(stream);
             var color = ReadUint(stream);
-            byte[] rgb = {(byte)((color) >> 24 & 0xff), (byte)((color) >> 16 & 0xff), (byte)((color) >> 8 & 0xff),};
+            // TODO: Is it correct to discard the alpha byte of the color?
+            var rgb = ((byte)((color) >> 24 & 0xff), (byte)((color) >> 16 & 0xff), (byte)((color) >> 8 & 0xff));
             return new RvmColor(colorKind, colorIndex, rgb);
         }
 
