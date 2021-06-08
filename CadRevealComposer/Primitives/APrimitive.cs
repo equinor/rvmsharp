@@ -24,6 +24,7 @@ namespace CadRevealComposer.Primitives
         public static APrimitive? FromRvmPrimitive(CadRevealNode revealNode, RvmNode container,
             RvmPrimitive rvmPrimitive)
         {
+            PrimitiveCounter.pc++;
             if (!Matrix4x4.Decompose(rvmPrimitive.Matrix, out var scale, out var rot, out var pos))
             {
                 throw new Exception("Failed to decompose matrix." + rvmPrimitive.Matrix);
@@ -98,6 +99,18 @@ namespace CadRevealComposer.Primitives
                             );
                         }
                     }
+                case RvmEllipticalDish rvmEllipticalDish:
+                    PrimitiveCounter.eDish++;
+                    return null;
+                case RvmFacetGroup rvmFacetGroup:
+                    PrimitiveCounter.mesh++;
+                    return null;
+                case RvmLine rvmLine:
+                    PrimitiveCounter.line++;
+                    return null;
+                case RvmPyramid rvmPyramid:
+                    PrimitiveCounter.pyramid++;
+                    return null;
                 case RvmCircularTorus circularTorus:
                     {
                         AssertUniformScale(scale);
@@ -169,6 +182,38 @@ namespace CadRevealComposer.Primitives
                             Radius: radius
                         );
                     }
+                case RvmSphericalDish rvmSphericalDish:
+                    {
+                        AssertUniformScale(scale);
+                        var height = rvmSphericalDish.Height;
+                        var radius = rvmSphericalDish.BaseRadius;
+                        if (rvmSphericalDish.Connections[0] != null)
+                        {
+                            return new ClosedSphericalSegment(NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                Normal: normal.CopyToNewArray(),
+                                Height: height,
+                                Radius: radius);
+                        }
+                        else
+                        {
+                            return new ClosedSphericalSegment(NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                Normal: normal.CopyToNewArray(),
+                                Height: height,
+                                Radius: radius);
+                        }
+                    }
                 case RvmSnout rvmSnout:
                     {
                         AssertUniformScale(scale);
@@ -210,11 +255,12 @@ namespace CadRevealComposer.Primitives
                                 ;
                             }
                         }
-
+                        PrimitiveCounter.snout++;
                         // TODO
                         return null;
                     }
                 case RvmRectangularTorus rvmRectangularTorus:
+                    
                     AssertUniformScale(scale);
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)
                     {
@@ -232,11 +278,12 @@ namespace CadRevealComposer.Primitives
                     }
                     else
                     {
+                        PrimitiveCounter.rTorus++;
                         // TODO: segment
                         return null;
                     }
                 default:
-                    return null;
+                    throw new InvalidOperationException();
             }
         }
 

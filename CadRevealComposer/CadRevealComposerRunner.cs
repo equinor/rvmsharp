@@ -174,7 +174,8 @@ namespace CadRevealComposer
 
             string outputFileName2 = Path.Combine(outputDirectory.FullName, "data.json");
             File.WriteAllText(outputFileName2, JsonConvert.SerializeObject(infoNodes, Formatting.Indented));
-
+            Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
+            Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
             Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputFileName)}\"");
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
