@@ -3,11 +3,11 @@
 
 namespace CadRevealComposer.Primitives
 {
+    using Converters;
     using Newtonsoft.Json;
     using RvmSharp.Primitives;
     using System;
     using System.Diagnostics;
-    using System.Linq;
     using System.Numerics;
     using Utils;
 
@@ -25,36 +25,14 @@ namespace CadRevealComposer.Primitives
             RvmPrimitive rvmPrimitive)
         {
             PrimitiveCounter.pc++;
-            if (!Matrix4x4.Decompose(rvmPrimitive.Matrix, out var scale, out var rot, out var pos))
-            {
-                throw new Exception("Failed to decompose matrix." + rvmPrimitive.Matrix);
-            }
-
-            var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
-
-            var colors = GetColor(container);
-            (Vector3 normal, float rotationAngle) = rot.DecomposeQuaternion();
+            (Vector3 pos, Quaternion _, Vector3 scale, float axisAlignedDiagonal, var colors,
+                (Vector3 normal, float rotationAngle)) = rvmPrimitive.GetCommonProps(container);
 
             switch (rvmPrimitive)
             {
                 case RvmBox rvmBox:
                     {
-                        var unitBoxScale = Vector3.Multiply(scale,
-                            new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
-
-                        return new Box(
-                            NodeId: revealNode.NodeId,
-                            TreeIndex: revealNode.TreeIndex,
-                            Color: colors,
-                            Diagonal: axisAlignedDiagonal,
-                            Normal: normal.CopyToNewArray(),
-                            CenterX: pos.X,
-                            CenterY: pos.Y,
-                            CenterZ: pos.Z,
-                            DeltaX: unitBoxScale.X,
-                            DeltaY: unitBoxScale.Y,
-                            DeltaZ: unitBoxScale.Z,
-                            RotationAngle: rotationAngle);
+                        return rvmBox.ConvertToRevealPrimitive(revealNode, container);
                     }
                 case RvmCylinder rvmCylinder:
                     {
@@ -290,13 +268,6 @@ namespace CadRevealComposer.Primitives
         private static void AssertUniformScale(Vector3 scale)
         {
             Trace.Assert(scale.IsUniform(), $"Expected uniform scale. Was {scale}.");
-        }
-
-        private static int[] GetColor(RvmNode container)
-        {
-            // TODO: Fallback color is arbitrarily chosen, it should probably be handled differently
-            return PdmsColors.GetColorAsBytesByCode(container.MaterialId < 50 ? container.MaterialId : 1)
-                .Select(x => (int)x).ToArray();
         }
     }
 }
