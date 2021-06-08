@@ -5,9 +5,9 @@
     using System.Numerics;
 
     public abstract record RvmPrimitive(uint Version,
-        RvmPrimitiveKind Kind,
-        Matrix4x4 Matrix,
-        RvmBoundingBox BoundingBoxLocal) 
+            RvmPrimitiveKind Kind,
+            Matrix4x4 Matrix,
+            RvmBoundingBox BoundingBoxLocal)
         : RvmGroup(Version)
     {
         public RvmConnection?[]
@@ -16,6 +16,17 @@
             null, null, null, null, null, null
         }; // Up to six connections. Connections depend on primitive type.
 
+        public virtual bool Equals(RvmPrimitive? other)
+        {
+            return this.GetHashCode() == other?.GetHashCode();
+        }
+
+        public override int GetHashCode()
+        {
+            // As connections is an array, we use this for comparison.
+            var connectionsHash = (Connections[0],Connections[1],Connections[2],Connections[3],Connections[4],Connections[5]).GetHashCode();
+            return (base.GetHashCode(), connectionsHash, SampleStartAngle, (int) Kind, Matrix, BoundingBoxLocal).GetHashCode();
+        }
 
         /// <summary>
         /// Temporary value for the Sample Start Angle.
