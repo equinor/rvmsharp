@@ -194,48 +194,8 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmSnout rvmSnout:
                     {
-                        AssertUniformScale(scale);
-                        var height = rvmSnout.Height * scale.Z;
-                        var radiusB = rvmSnout.RadiusBottom * scale.X;
-                        var radiusA = rvmSnout.RadiusTop * scale.X;
-                        if (rvmSnout.OffsetX == rvmSnout.OffsetY && rvmSnout.OffsetX == 0)
-                        {
-                            if (rvmSnout.Connections[0] != null || rvmSnout.Connections[1] != null)
-                            {
-                                return new OpenCone
-                                    (NodeId: revealNode.NodeId,
-                                        TreeIndex: revealNode.TreeIndex,
-                                        Color: colors,
-                                        Diagonal: axisAlignedDiagonal,
-                                        CenterX: pos.X,
-                                        CenterY: pos.Y,
-                                        CenterZ: pos.Z,
-                                        CenterAxis: new[] {normal.X, normal.Y, normal.Z},
-                                        Height: height,
-                                        RadiusA: radiusA,
-                                        RadiusB: radiusB)
-                                    ;
-                            }
-                            else
-                            {
-                                return new ClosedCone(
-                                    NodeId: revealNode.NodeId,
-                                    TreeIndex: revealNode.TreeIndex,
-                                    Color: colors,
-                                    Diagonal: axisAlignedDiagonal,
-                                    CenterX: pos.X,
-                                    CenterY: pos.Y,
-                                    CenterZ: pos.Z,
-                                    CenterAxis: new[] {normal.X, normal.Y, normal.Z},
-                                    Height: height,
-                                    RadiusA: radiusA,
-                                    RadiusB: radiusB);
-                                ;
-                            }
-                        }
                         PrimitiveCounter.snout++;
-                        // TODO
-                        return null;
+                        return rvmSnout.ConvertToRevealPrimitive(revealNode, container);
                     }
                 case RvmRectangularTorus rvmRectangularTorus:
                     
