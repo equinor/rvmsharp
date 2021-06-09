@@ -11,6 +11,16 @@ namespace CadRevealComposer.Primitives
     using System.Numerics;
     using Utils;
 
+    public record CommonPrimitiveProperties(
+        ulong NodeId,
+        ulong TreeIndex,
+        Vector3 Position,
+        Quaternion Rotation,
+        Vector3 Scale,
+        float AxisAlignedDiagonal,
+        int[] Color,
+        (Vector3 Normal, float RotationAngle) RotationDecomposed);
+
     public abstract record APrimitive(
         [property: JsonProperty("node_id")] ulong NodeId,
         [property: JsonProperty("tree_index")] ulong TreeIndex,
@@ -18,15 +28,37 @@ namespace CadRevealComposer.Primitives
         [property: JsonProperty("diagonal")] float Diagonal,
         [property: JsonProperty("center_x")] float CenterX,
         [property: JsonProperty("center_y")] float CenterY,
-        [property: JsonProperty("center_z")] float CenterZ
+        [property: JsonProperty("center_z")] float CenterZ,
+        [property: JsonIgnore,
+                   Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true)]
+        CommonPrimitiveProperties? CommonPrimitiveProperties =
+            null! // The hack: Add JsonIgnore here, but in all inheritors use the simplified constructor.
     )
     {
+        /// <summary>
+        /// Alternative constructor to simplify inheritance
+        /// </summary>
+        /// <param name="commonPrimitiveProperties"></param>
+        protected APrimitive(CommonPrimitiveProperties commonPrimitiveProperties)
+            : this(
+                commonPrimitiveProperties.NodeId,
+                commonPrimitiveProperties.TreeIndex,
+                commonPrimitiveProperties.Color,
+                commonPrimitiveProperties.AxisAlignedDiagonal,
+                commonPrimitiveProperties.Position.X,
+                commonPrimitiveProperties.Position.Y,
+                commonPrimitiveProperties.Position.Z)
+        {
+        }
+
         public static APrimitive? FromRvmPrimitive(CadRevealNode revealNode, RvmNode container,
             RvmPrimitive rvmPrimitive)
         {
             PrimitiveCounter.pc++;
-            (Vector3 pos, Quaternion _, Vector3 scale, float axisAlignedDiagonal, var colors,
-                (Vector3 normal, float rotationAngle)) = rvmPrimitive.GetCommonProps(container);
+            var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(container, revealNode);
+            (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _,
+                _,
+                (Vector3 normal, float rotationAngle)) = commonPrimitiveProperties;
 
             switch (rvmPrimitive)
             {
@@ -48,13 +80,7 @@ namespace CadRevealComposer.Primitives
                         {
                             return new OpenCylinder
                             (
-                                NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                                commonPrimitiveProperties,
                                 CenterAxis: normal.CopyToNewArray(),
                                 Height: height,
                                 Radius: radius
@@ -64,13 +90,7 @@ namespace CadRevealComposer.Primitives
                         {
                             return new ClosedCylinder
                             (
-                                NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                                commonPrimitiveProperties,
                                 CenterAxis: normal.CopyToNewArray(),
                                 Height: height,
                                 Radius: radius
@@ -84,13 +104,7 @@ namespace CadRevealComposer.Primitives
                         var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
                         if (rvmEllipticalDish.Connections[0] != null)
                         {
-                            return new ClosedEllipsoidSegment(NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                            return new ClosedEllipsoidSegment(commonPrimitiveProperties,
                                 Normal: normal.CopyToNewArray(),
                                 Height: verticalRadius,
                                 HorizontalRadius: horizontalRadius,
@@ -98,27 +112,20 @@ namespace CadRevealComposer.Primitives
                         }
                         else
                         {
-                            return new OpenEllipsoidSegment(NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                            return new OpenEllipsoidSegment(commonPrimitiveProperties,
                                 Normal: normal.CopyToNewArray(),
                                 Height: verticalRadius,
                                 HorizontalRadius: horizontalRadius,
                                 VerticalRadius: verticalRadius);
                         }
                     }
-                    return null;
-                case RvmFacetGroup rvmFacetGroup:
+                case RvmFacetGroup:
                     PrimitiveCounter.mesh++;
                     return null;
-                case RvmLine rvmLine:
+                case RvmLine:
                     PrimitiveCounter.line++;
                     return null;
-                case RvmPyramid rvmPyramid:
+                case RvmPyramid:
                     PrimitiveCounter.pyramid++;
                     return null;
                 case RvmCircularTorus circularTorus:
@@ -130,13 +137,7 @@ namespace CadRevealComposer.Primitives
                         {
                             return new Torus
                             (
-                                NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                                commonPrimitiveProperties,
                                 Normal: normal.CopyToNewArray(),
                                 Radius: radius,
                                 TubeRadius: tubeRadius
@@ -146,13 +147,7 @@ namespace CadRevealComposer.Primitives
                         if (circularTorus.Connections[0] != null || circularTorus.Connections[1] != null)
                             return new ClosedTorusSegment
                             (
-                                NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                                commonPrimitiveProperties,
                                 Normal: normal.CopyToNewArray(),
                                 Radius: radius,
                                 TubeRadius: tubeRadius,
@@ -162,13 +157,7 @@ namespace CadRevealComposer.Primitives
 
                         return new OpenTorusSegment
                         (
-                            NodeId: revealNode.NodeId,
-                            TreeIndex: revealNode.TreeIndex,
-                            Color: colors,
-                            Diagonal: axisAlignedDiagonal,
-                            CenterX: pos.X,
-                            CenterY: pos.Y,
-                            CenterZ: pos.Z,
+                            commonPrimitiveProperties,
                             Normal: normal.CopyToNewArray(),
                             Radius: radius,
                             TubeRadius: tubeRadius,
@@ -182,13 +171,7 @@ namespace CadRevealComposer.Primitives
                         var radius = (rvmSphere.Diameter / 2) * scale.X;
                         return new Sphere
                         (
-                            NodeId: revealNode.NodeId,
-                            TreeIndex: revealNode.TreeIndex,
-                            Color: colors,
-                            Diagonal: axisAlignedDiagonal,
-                            CenterX: pos.X,
-                            CenterY: pos.Y,
-                            CenterZ: pos.Z,
+                            commonPrimitiveProperties,
                             Radius: radius
                         );
                     }
@@ -199,26 +182,14 @@ namespace CadRevealComposer.Primitives
                         var radius = rvmSphericalDish.BaseRadius * scale.X;
                         if (rvmSphericalDish.Connections[0] != null)
                         {
-                            return new ClosedSphericalSegment(NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                            return new ClosedSphericalSegment(commonPrimitiveProperties,
                                 Normal: normal.CopyToNewArray(),
                                 Height: height,
                                 Radius: radius);
                         }
                         else
                         {
-                            return new ClosedSphericalSegment(NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                            return new ClosedSphericalSegment(commonPrimitiveProperties,
                                 Normal: normal.CopyToNewArray(),
                                 Height: height,
                                 Radius: radius);
@@ -234,13 +205,7 @@ namespace CadRevealComposer.Primitives
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)
                     {
                         return new ExtrudedRing(
-                            NodeId: revealNode.NodeId,
-                            TreeIndex: revealNode.TreeIndex,
-                            Color: colors,
-                            Diagonal: axisAlignedDiagonal,
-                            CenterX: pos.X,
-                            CenterY: pos.Y,
-                            CenterZ: pos.Z,
+                            commonPrimitiveProperties,
                             CenterAxis: normal.CopyToNewArray(),
                             Height: rvmRectangularTorus.Height * scale.Z,
                             InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
@@ -252,13 +217,7 @@ namespace CadRevealComposer.Primitives
                         if (rvmRectangularTorus.Connections[0] != null && rvmRectangularTorus.Connections[1] != null)
                         {
                             return new OpenExtrudedRingSegment(
-                                NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                                commonPrimitiveProperties,
                                 CenterAxis: normal.CopyToNewArray(),
                                 Height: rvmRectangularTorus.Height * scale.Z,
                                 InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
@@ -269,13 +228,7 @@ namespace CadRevealComposer.Primitives
                         else
                         {
                             return new ClosedExtrudedRingSegment(
-                                NodeId: revealNode.NodeId,
-                                TreeIndex: revealNode.TreeIndex,
-                                Color: colors,
-                                Diagonal: axisAlignedDiagonal,
-                                CenterX: pos.X,
-                                CenterY: pos.Y,
-                                CenterZ: pos.Z,
+                                commonPrimitiveProperties,
                                 CenterAxis: normal.CopyToNewArray(),
                                 Height: rvmRectangularTorus.Height * scale.Z,
                                 InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,

@@ -10,7 +10,7 @@
         public static APrimitive? ConvertToRevealPrimitive(this RvmSnout rvmSnout, CadRevealNode revealNode,
             RvmNode container)
         {
-            var commons = rvmSnout.GetCommonProps(container);
+            var commons = rvmSnout.GetCommonProps(container,revealNode);
             var scale = commons.Scale;
             Trace.Assert(scale.IsUniform(), $"Expected Uniform scale, was {scale}");
             var height = rvmSnout.Height * scale.Z;
@@ -22,29 +22,19 @@
             {
                 if (rvmSnout.Connections[0] != null || rvmSnout.Connections[1] != null)
                 {
-                    return new OpenCone(
-                        NodeId: revealNode.NodeId,
-                        TreeIndex: revealNode.TreeIndex,
-                        Color: commons.Color,
-                        Diagonal: commons.AxisAlignedDiagonal,
-                        CenterX: commons.Position.X,
-                        CenterY: commons.Position.Y,
-                        CenterZ: commons.Position.Z,
+                    var c =  new OpenCone(
+                        commons,
                         CenterAxis: commons.RotationDecomposed.Normal.CopyToNewArray(),
                         Height: height,
                         RadiusA: radiusA,
                         RadiusB: radiusB);
+                    
+                    return c;
                 }
                 else
                 {
                     return new ClosedCone(
-                        NodeId: revealNode.NodeId,
-                        TreeIndex: revealNode.TreeIndex,
-                        Color: commons.Color,
-                        Diagonal: commons.AxisAlignedDiagonal,
-                        CenterX: commons.Position.X,
-                        CenterY: commons.Position.Y,
-                        CenterZ: commons.Position.Z,
+                        commons,
                         CenterAxis: commons.RotationDecomposed.Normal.CopyToNewArray(),
                         Height: height,
                         RadiusA: radiusA,
