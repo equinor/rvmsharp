@@ -3,13 +3,7 @@ namespace CadRevealComposer.Primitives
     using Newtonsoft.Json;
 
     public record OpenExtrudedRingSegment(
-        ulong NodeId,
-        ulong TreeIndex,
-        int[] Color,
-        float Diagonal,
-        float CenterX,
-        float CenterY,
-        float CenterZ,
+        CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: JsonProperty("center_axis")] float[] CenterAxis,
         [property: JsonProperty("height")] float Height,
         [property: JsonProperty("inner_radius")]
@@ -20,5 +14,5 @@ namespace CadRevealComposer.Primitives
         float RotationAngle,
         [property: JsonProperty("arc_angle")]
         float ArcAngle
-    ) : APrimitive(NodeId, TreeIndex, Color, Diagonal, CenterX, CenterY, CenterZ);
+    ) : APrimitive(CommonPrimitiveProperties);
 }
