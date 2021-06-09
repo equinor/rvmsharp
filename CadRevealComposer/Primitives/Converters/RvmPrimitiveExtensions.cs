@@ -15,19 +15,11 @@
                 .Select(x => (int)x).ToArray();
         }
 
-        public record CommonProps(
-            Vector3 Position,
-            Quaternion Rotation,
-            Vector3 Scale,
-            float AxisAlignedDiagonal,
-            int[] Color,
-            (Vector3 Normal, float RotationAngle) RotationDecomposed);
-
         /// <summary>
         /// Retrieve the common properties, that are present for all RvmPrimitives.
         /// Converted to world space.
         /// </summary>
-        public static CommonProps GetCommonProps(this RvmPrimitive rvmPrimitive, RvmNode container)
+        internal static CommonPrimitiveProperties GetCommonProps(this RvmPrimitive rvmPrimitive, RvmNode container, CadRevealNode cadNode)
         {
             if (!Matrix4x4.Decompose(rvmPrimitive.Matrix, out var scale, out var rot, out var pos))
             {
@@ -38,7 +30,7 @@
 
             var colors = GetColor(container);
 
-            return new CommonProps(pos, rot, scale, axisAlignedDiagonal, colors, RotationDecomposed: rot.DecomposeQuaternion());
+            return new CommonPrimitiveProperties(cadNode.NodeId, cadNode.TreeIndex,pos, rot, scale, axisAlignedDiagonal, colors, RotationDecomposed: rot.DecomposeQuaternion());
         }
     }
 }
