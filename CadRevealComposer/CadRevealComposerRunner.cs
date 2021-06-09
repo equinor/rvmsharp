@@ -203,7 +203,7 @@ namespace CadRevealComposer
         private static void SerializeObject<T>(T obj, string filename, Formatting formatting = Formatting.None)
         {
             using var stream = File.Create(filename);
-            using var writer = new StreamWriter(File.OpenWrite(filename));
+            using var writer = new StreamWriter(stream);
             using var jsonWriter = new JsonTextWriter(writer);
             var jsonSerializer = new JsonSerializer {Formatting = formatting};
             jsonSerializer.Serialize(jsonWriter, obj);
