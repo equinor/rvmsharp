@@ -158,8 +158,8 @@ namespace CadRevealComposer
             };
 
 
-            string outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
-            File.WriteAllText(outputFileName, JsonConvert.SerializeObject(file, Formatting.Indented));
+            var outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
+            SerializeObject(file, outputFileName);
 
 
             var infoNodes = allNodes.Where(n => n.Group is RvmNode).Select(n =>
@@ -186,15 +186,8 @@ namespace CadRevealComposer
                 };
             }).ToArray();
 
-            
-            string outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
-            using (StreamWriter writer = new StreamWriter(File.OpenWrite(outputFileName2)))
-            using (JsonTextWriter jsonWriter = new JsonTextWriter(writer))
-            {
-                var jsonSerializer = new JsonSerializer();
-                jsonSerializer.Serialize(jsonWriter, infoNodes);
-                jsonWriter.Flush();
-            }
+            var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
+            SerializeObject(infoNodes, outputFileName2);
             
             Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
@@ -205,6 +198,16 @@ namespace CadRevealComposer
 
             // TODO: For each CadRevealNode -> Collect CadRevealGeometries -> 
             // TODO: Translate Rvm
+        }
+
+        private static void SerializeObject<T>(T obj, string filename, Formatting formatting = Formatting.None)
+        {
+            using var stream = File.Create(filename);
+            using var writer = new StreamWriter(File.OpenWrite(filename));
+            using var jsonWriter = new JsonTextWriter(writer);
+            var jsonSerializer = new JsonSerializer {Formatting = formatting};
+            jsonSerializer.Serialize(jsonWriter, obj);
+            jsonWriter.Flush();
         }
 
         public static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
