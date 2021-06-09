@@ -73,7 +73,7 @@ namespace CadRevealComposer
                 .Distinct();
 
             var height = geometries.CollectProperties<float, APrimitive>("Height").Distinct();
-            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius", "RadiusA", "RadiusB", "InnerRadius", "OuterRadius").Distinct();
+            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius", "RadiusA", "RadiusB", "InnerRadius", "OuterRadius", "VerticalRadius", "HorizontalRadius").Distinct();
             var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
 
             var color = geometries.CollectProperties<int[], APrimitive>("Color")
@@ -138,7 +138,17 @@ namespace CadRevealComposer
                         ClosedConeCollection = 
                             geometries.OfType<ClosedCone>().ToArray(),
                         OpenConeCollection = 
-                            geometries.OfType<OpenCone>().ToArray()
+                            geometries.OfType<OpenCone>().ToArray(),
+                        OpenSphericalSegmentCollection = 
+                            geometries.OfType<OpenSphericalSegment>().ToArray(),
+                        ClosedSphericalSegmentCollection = 
+                            geometries.OfType<ClosedSphericalSegment>().ToArray(),
+                        OpenEllipsoidSegmentCollection = 
+                            geometries.OfType<OpenEllipsoidSegment>().ToArray(),
+                        ClosedEllipsoidSegmentCollection = 
+                            geometries.OfType<ClosedEllipsoidSegment>().ToArray(),
+                        RingCollection = 
+                            geometries.OfType<Ring>().ToArray(),
                     }
                 }
             };
@@ -172,7 +182,7 @@ namespace CadRevealComposer
                 };
             }).ToArray();
 
-            string outputFileName2 = Path.Combine(outputDirectory.FullName, "data.json");
+            string outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
             File.WriteAllText(outputFileName2, JsonConvert.SerializeObject(infoNodes, Formatting.Indented));
             Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
