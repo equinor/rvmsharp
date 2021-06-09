@@ -66,7 +66,7 @@ namespace CadRevealComposer
             var distinctCenterZ = geometries.CollectProperties<float, APrimitive>("CenterZ").Distinct();
 
 
-            var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis")
+            var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis", "CapNormal")
                 .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
 
             var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ")
@@ -186,8 +186,16 @@ namespace CadRevealComposer
                 };
             }).ToArray();
 
+            
             string outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
-            File.WriteAllText(outputFileName2, JsonConvert.SerializeObject(infoNodes, Formatting.Indented));
+            using (StreamWriter writer = new StreamWriter(File.OpenWrite(outputFileName2)))
+            using (JsonTextWriter jsonWriter = new JsonTextWriter(writer))
+            {
+                var jsonSerializer = new JsonSerializer();
+                jsonSerializer.Serialize(jsonWriter, infoNodes);
+                jsonWriter.Flush();
+            }
+            
             Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
