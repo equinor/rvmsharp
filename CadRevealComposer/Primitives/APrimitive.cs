@@ -230,11 +230,10 @@ namespace CadRevealComposer.Primitives
                         return rvmSnout.ConvertToRevealPrimitive(revealNode, container);
                     }
                 case RvmRectangularTorus rvmRectangularTorus:
-                    
                     AssertUniformScale(scale);
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)
                     {
-                        return new Ring(
+                        return new ExtrudedRing(
                             NodeId: revealNode.NodeId,
                             TreeIndex: revealNode.TreeIndex,
                             Color: colors,
@@ -242,15 +241,48 @@ namespace CadRevealComposer.Primitives
                             CenterX: pos.X,
                             CenterY: pos.Y,
                             CenterZ: pos.Z,
+                            CenterAxis: normal.CopyToNewArray(),
+                            Height: rvmRectangularTorus.Height * scale.Z,
                             InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
                             OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X
                         );
                     }
                     else
                     {
-                        PrimitiveCounter.rTorus++;
-                        // TODO: segment
-                        return null;
+                        if (rvmRectangularTorus.Connections[0] != null && rvmRectangularTorus.Connections[1] != null)
+                        {
+                            return new OpenExtrudedRingSegment(
+                                NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                CenterAxis: normal.CopyToNewArray(),
+                                Height: rvmRectangularTorus.Height * scale.Z,
+                                InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
+                                OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
+                                RotationAngle: rotationAngle,
+                                ArcAngle: rvmRectangularTorus.Angle);
+                        }
+                        else
+                        {
+                            return new ClosedExtrudedRingSegment(
+                                NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                CenterAxis: normal.CopyToNewArray(),
+                                Height: rvmRectangularTorus.Height * scale.Z,
+                                InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
+                                OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
+                                RotationAngle: rotationAngle,
+                                ArcAngle: rvmRectangularTorus.Angle);
+                        }
                     }
                 default:
                     throw new InvalidOperationException();

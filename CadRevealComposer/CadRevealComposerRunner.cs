@@ -149,6 +149,10 @@ namespace CadRevealComposer
                             geometries.OfType<ClosedEllipsoidSegment>().ToArray(),
                         RingCollection = 
                             geometries.OfType<Ring>().ToArray(),
+                        ClosedExtrudedRingSegmentCollection = 
+                            geometries.OfType<ClosedExtrudedRingSegment>().ToArray(),
+                        OpenExtrudedRingSegmentCollection = 
+                            geometries.OfType<OpenExtrudedRingSegment>().ToArray(),
                     }
                 }
             };

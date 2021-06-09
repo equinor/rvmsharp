@@ -59,13 +59,13 @@ namespace CadRevealComposer
         public APrimitive[] ClosedEccentricConeCollection = Array.Empty<APrimitive>();
 
         [JsonProperty("closed_ellipsoid_segment_collection")]
-        public APrimitive[] ClosedEllipsoidSegmentCollection = Array.Empty<APrimitive>();
+        public ClosedEllipsoidSegment[] ClosedEllipsoidSegmentCollection = Array.Empty<ClosedEllipsoidSegment>();
 
         [JsonProperty("closed_extruded_ring_segment_collection")]
-        public APrimitive[] ClosedExtrudedRingSegmentCollection = Array.Empty<APrimitive>();
+        public ClosedExtrudedRingSegment[] ClosedExtrudedRingSegmentCollection = Array.Empty<ClosedExtrudedRingSegment>();
 
         [JsonProperty("closed_spherical_segment_collection")]
-        public APrimitive[] ClosedSphericalSegmentCollection = Array.Empty<APrimitive>();
+        public ClosedSphericalSegment[] ClosedSphericalSegmentCollection = Array.Empty<ClosedSphericalSegment>();
 
         [JsonProperty("closed_torus_segment_collection")]
         public ClosedTorusSegment[] ClosedTorusSegmentCollection = Array.Empty<ClosedTorusSegment>();
@@ -85,18 +85,18 @@ namespace CadRevealComposer
         public APrimitive[] OpenEccentricConeCollection = Array.Empty<APrimitive>();
 
         [JsonProperty("open_ellipsoid_segment_collection")]
-        public APrimitive[] OpenEllipsoidSegmentCollection = Array.Empty<APrimitive>();
+        public OpenEllipsoidSegment[] OpenEllipsoidSegmentCollection = Array.Empty<OpenEllipsoidSegment>();
 
         [JsonProperty("open_extruded_ring_segment_collection")]
-        public APrimitive[] OpenExtrudedRingSegmentCollection = Array.Empty<APrimitive>();
+        public OpenExtrudedRingSegment[] OpenExtrudedRingSegmentCollection = Array.Empty<OpenExtrudedRingSegment>();
 
         [JsonProperty("open_spherical_segment_collection")]
-        public APrimitive[] OpenSphericalSegmentCollection = Array.Empty<APrimitive>();
+        public OpenSphericalSegment[] OpenSphericalSegmentCollection = Array.Empty<OpenSphericalSegment>();
 
         [JsonProperty("open_torus_segment_collection")]
         public OpenTorusSegment[] OpenTorusSegmentCollection = Array.Empty<OpenTorusSegment>();
 
-        [JsonProperty("ring_collection")] public APrimitive[] RingCollection = Array.Empty<APrimitive>();
+        [JsonProperty("ring_collection")] public Ring[] RingCollection = Array.Empty<Ring>();
         [JsonProperty("sphere_collection")] public Sphere[] SphereCollection = Array.Empty<Sphere>();
         [JsonProperty("torus_collection")] public Torus[] TorusCollection = Array.Empty<Torus>();
 
