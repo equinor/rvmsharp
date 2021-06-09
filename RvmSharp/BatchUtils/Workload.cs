@@ -52,7 +52,7 @@
         public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null)
         {
             var progress = 0;
-            var rvmFiles = workload.Select(filePair =>
+            var rvmFiles = workload.AsParallel().Select(filePair =>
             {
                 (string rvmFilename, string? txtFilename) = filePair;
                 progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), progress, workload.Count));
