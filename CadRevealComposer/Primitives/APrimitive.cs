@@ -78,7 +78,39 @@ namespace CadRevealComposer.Primitives
                         }
                     }
                 case RvmEllipticalDish rvmEllipticalDish:
-                    PrimitiveCounter.eDish++;
+                    {
+                        AssertUniformScale(scale);
+                        var verticalRadius = rvmEllipticalDish.Height * scale.X;
+                        var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
+                        if (rvmEllipticalDish.Connections[0] != null)
+                        {
+                            return new ClosedEllipsoidSegment(NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                Normal: normal.CopyToNewArray(),
+                                Height: verticalRadius,
+                                HorizontalRadius: horizontalRadius,
+                                VerticalRadius: verticalRadius);
+                        }
+                        else
+                        {
+                            return new OpenEllipsoidSegment(NodeId: revealNode.NodeId,
+                                TreeIndex: revealNode.TreeIndex,
+                                Color: colors,
+                                Diagonal: axisAlignedDiagonal,
+                                CenterX: pos.X,
+                                CenterY: pos.Y,
+                                CenterZ: pos.Z,
+                                Normal: normal.CopyToNewArray(),
+                                Height: verticalRadius,
+                                HorizontalRadius: horizontalRadius,
+                                VerticalRadius: verticalRadius);
+                        }
+                    }
                     return null;
                 case RvmFacetGroup rvmFacetGroup:
                     PrimitiveCounter.mesh++;
@@ -163,8 +195,8 @@ namespace CadRevealComposer.Primitives
                 case RvmSphericalDish rvmSphericalDish:
                     {
                         AssertUniformScale(scale);
-                        var height = rvmSphericalDish.Height;
-                        var radius = rvmSphericalDish.BaseRadius;
+                        var height = rvmSphericalDish.Height * scale.X;
+                        var radius = rvmSphericalDish.BaseRadius * scale.X;
                         if (rvmSphericalDish.Connections[0] != null)
                         {
                             return new ClosedSphericalSegment(NodeId: revealNode.NodeId,
