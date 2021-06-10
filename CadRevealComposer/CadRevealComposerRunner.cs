@@ -159,7 +159,7 @@ namespace CadRevealComposer
 
 
             var outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
-            SerializeObject(file, outputFileName);
+            JsonSerializeToFile(file, outputFileName);
 
 
             var infoNodes = allNodes.Where(n => n.Group is RvmNode).Select(n =>
@@ -187,7 +187,7 @@ namespace CadRevealComposer
             }).ToArray();
 
             var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
-            SerializeObject(infoNodes, outputFileName2);
+            JsonSerializeToFile(infoNodes, outputFileName2);
 
             var sectorFileHeader = file.FileSector.Header;
             var scene = new Scene()
@@ -237,7 +237,7 @@ namespace CadRevealComposer
             };
 
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
-            SerializeObject(scene, scenePath, Formatting.Indented);
+            JsonSerializeToFile(scene, scenePath, Formatting.Indented);
             
             Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
@@ -250,7 +250,7 @@ namespace CadRevealComposer
             // TODO: Translate Rvm
         }
         
-        private static void SerializeObject<T>(T obj, string filename, Formatting formatting = Formatting.None)
+        private static void JsonSerializeToFile<T>(T obj, string filename, Formatting formatting = Formatting.None)
         {
             using var stream = File.Create(filename);
             using var writer = new StreamWriter(stream);
