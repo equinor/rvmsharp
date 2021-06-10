@@ -188,18 +188,68 @@ namespace CadRevealComposer
 
             var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
             SerializeObject(infoNodes, outputFileName2);
+
+            var sectorFileHeader = file.FileSector.Header;
+            var scene = new Scene()
+            {
+                Version = 8,
+                ProjectId = 1337,
+                ModelId = 13337,
+                RevisionId = 31337,
+                SubRevisionId = -1,
+                MaxTreeIndex = TreeIndexGenerator.CurrentMaxGeneratedIndex,
+                Unit = "Meters",
+                Sectors = new[]
+                {
+                    new Sector()
+                    {
+                        Id = sectorFileHeader.SectorId,
+                        ParentId = sectorFileHeader.ParentSectorId ?? -1,
+                        BoundingBox =
+                            new BoundingBox()
+                            {
+                                Max = new BbVector3
+                                {
+                                    X = sectorFileHeader.BboxMax[0],
+                                    Y = sectorFileHeader.BboxMax[1],
+                                    Z = sectorFileHeader.BboxMax[2]
+                                },
+                                Min = new BbVector3()
+                                {
+                                    X = sectorFileHeader.BboxMin[0],
+                                    Y = sectorFileHeader.BboxMin[1],
+                                    Z = sectorFileHeader.BboxMin[2]
+                                },
+                            },
+                        Depth = sectorFileHeader.ParentSectorId == null ? 1 : throw new NotImplementedException(),
+                        Path = sectorFileHeader.SectorId == 0 ? "0/" : throw new NotImplementedException(),
+                        IndexFile = new IndexFile()
+                        {
+                            DownloadSize = 500001,
+                            FileName = "sector_" + sectorFileHeader.SectorId + ".i3d",
+                            PeripheralFiles = Array.Empty<string>()
+                        },
+                        FacesFile = null, // Not implemented
+                        EstimatedTriangleCount = 1337, // Not calculated,
+                        EstimatedDrawCallCount = 1337 // Not calculated
+                    }
+                }
+            };
+
+            var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
+            SerializeObject(scene, scenePath, Formatting.Indented);
             
             Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
-            Console.WriteLine($"Wrote i3d file to \"{Path.GetFullPath(outputFileName)}\"");
+            Console.WriteLine($"Wrote json files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
             // BOX treeIndex, transform -> cadreveal, 
 
             // TODO: For each CadRevealNode -> Collect CadRevealGeometries -> 
             // TODO: Translate Rvm
         }
-
+        
         private static void SerializeObject<T>(T obj, string filename, Formatting formatting = Formatting.None)
         {
             using var stream = File.Create(filename);

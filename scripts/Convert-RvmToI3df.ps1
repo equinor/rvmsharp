@@ -3,7 +3,7 @@
 param (
     [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
     [string] $OutputDirectory = $(Join-Path "$PSScriptRoot" ".\outputs\"),
-    [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\uncover\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
+    [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\Echo3DWeb\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
     [string] $I3dfPath = "C:\Users\nhals\GitRepos\conceal\i3df",
     [switch] $Force = $true,
     [switch] $UploadToDev = $false
@@ -66,7 +66,7 @@ end {
 
     #endregion i3df-converter
 
-    Copy-Item -Path $outputi3dFile $ArtifactDirectory
+    Copy-Item -Path "$OutputDirectory/*" $ArtifactDirectory
 
     if ($UploadToDev) {
         if (-not (Get-Command "az" -ErrorAction 'SilentlyContinue')) {
@@ -79,6 +79,6 @@ end {
             --destination "hda/demomodel2/reflect/"
     }
 
-    Write-Host "Success. I3d file available at ""$outputi3dFile"""
+    Write-Host "Success. I3d file available at ""$ArtifactDirectory"""
 }
 
