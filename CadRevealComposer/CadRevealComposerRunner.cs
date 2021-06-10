@@ -15,6 +15,7 @@ namespace CadRevealComposer
 
     public static class CadRevealComposerRunner
     {
+        private const int I3DFMagicBytes = 1178874697; // I3DF chars as bytes.
         static readonly TreeIndexGenerator TreeIndexGenerator = new();
         static readonly NodeIdProvider NodeIdGenerator = new();
 
@@ -88,7 +89,7 @@ namespace CadRevealComposer
                     Header = new Header()
                     {
                         // Constants
-                        MagicBytes = 1178874697,
+                        MagicBytes = I3DFMagicBytes,
                         FormatVersion = 8,
                         OptimizerVersion = 1,
 
