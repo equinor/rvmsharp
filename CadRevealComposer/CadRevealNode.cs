@@ -73,7 +73,7 @@ namespace CadRevealComposer
         [JsonProperty("ellipsoid_collection")] public APrimitive[] EllipsoidCollection = Array.Empty<APrimitive>();
 
         [JsonProperty("extruded_ring_collection")]
-        public APrimitive[] ExtrudedRingCollection = Array.Empty<APrimitive>();
+        public ExtrudedRing[] ExtrudedRingCollection = Array.Empty<ExtrudedRing>();
 
         [JsonProperty("nut_collection")] public APrimitive[] NutCollection = Array.Empty<APrimitive>();
         [JsonProperty("open_cone_collection")] public OpenCone[] OpenConeCollection = Array.Empty<OpenCone>();
