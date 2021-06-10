@@ -14,7 +14,7 @@
                 new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
 
             Box revealBox = new Box(
-                commons,
+                CommonPrimitiveProperties: commons,
                 Normal: commons.RotationDecomposed.Normal.CopyToNewArray(),
                 DeltaX: unitBoxScale.X,
                 DeltaY: unitBoxScale.Y,
