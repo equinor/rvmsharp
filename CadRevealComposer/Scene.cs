@@ -5,23 +5,17 @@
 
     public class Scene
     {
-        [JsonProperty("version")]
-        public long Version { get; set; }
+        [JsonProperty("version")] public long Version { get; set; }
 
-        [JsonProperty("projectId")]
-        public long ProjectId { get; set; }
+        [JsonProperty("projectId")] public long ProjectId { get; set; }
 
-        [JsonProperty("modelId")]
-        public long ModelId { get; set; }
+        [JsonProperty("modelId")] public long ModelId { get; set; }
 
-        [JsonProperty("revisionId")]
-        public long RevisionId { get; set; }
+        [JsonProperty("revisionId")] public long RevisionId { get; set; }
 
-        [JsonProperty("subRevisionId")]
-        public long SubRevisionId { get; set; }
+        [JsonProperty("subRevisionId")] public long SubRevisionId { get; set; }
 
-        [JsonProperty("maxTreeIndex")]
-        public ulong MaxTreeIndex { get; set; }
+        [JsonProperty("maxTreeIndex")] public ulong MaxTreeIndex { get; set; }
 
         [JsonProperty("unit")] public string Unit { get; set; } = "Meters";
 
@@ -30,23 +24,19 @@
 
     public class Sector
     {
-        [JsonProperty("id")]
-        public long Id { get; set; }
+        [JsonProperty("id")] public long Id { get; set; }
 
-        [JsonProperty("parentId")]
-        public long ParentId { get; set; }
+        [JsonProperty("parentId")] public long ParentId { get; set; }
 
         [JsonProperty("path")] public string Path { get; set; } = "";
 
-        [JsonProperty("depth")]
-        public long Depth { get; set; }
+        [JsonProperty("depth")] public long Depth { get; set; }
 
         [JsonProperty("boundingBox")] public BoundingBox BoundingBox { get; set; } = null!;
 
         [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
 
-        [JsonProperty("facesFile")]
-        public FacesFile? FacesFile { get; set; }
+        [JsonProperty("facesFile")] public FacesFile? FacesFile { get; set; }
 
         [JsonProperty("estimatedTriangleCount")]
         public long EstimatedTriangleCount { get; set; }
@@ -55,32 +45,23 @@
         public long EstimatedDrawCallCount { get; set; }
     }
 
-    public class BoundingBox
-    {
-        [JsonProperty("min")] public BbVector3 Min { get; set; } = null!;
-
-        [JsonProperty("max")] public BbVector3 Max { get; set; } = null!;
-    }
-
-    public class BbVector3
-    {
-        [JsonProperty("x")]
-        public double X { get; set; }
-
-        [JsonProperty("y")]
-        public double Y { get; set; }
-
-        [JsonProperty("z")]
-        public double Z { get; set; }
-    }
+    public record BoundingBox(
+        [property: JsonProperty("min")] BbVector3 Min,
+        [property: JsonProperty("max")] BbVector3 Max
+    );
+    
+    public record BbVector3
+    (
+        [property: JsonProperty("x")] double X,
+        [property: JsonProperty("y")] double Y,
+        [property: JsonProperty("z")] double Z
+    );
 
     public class FacesFile
     {
-        [JsonProperty("quadSize")]
-        public double QuadSize { get; set; }
+        [JsonProperty("quadSize")] public double QuadSize { get; set; }
 
-        [JsonProperty("facesCount")]
-        public long FacesCount { get; set; }
+        [JsonProperty("facesCount")] public long FacesCount { get; set; }
 
         [JsonProperty("recursiveCoverageFactors")]
         public CoverageFactors RecursiveCoverageFactors { get; set; } = null!;
@@ -89,30 +70,22 @@
 
         [JsonProperty("fileName")] public string FileName { get; set; } = "";
 
-        [JsonProperty("downloadSize")]
-        public long DownloadSize { get; set; }
+        [JsonProperty("downloadSize")] public long DownloadSize { get; set; }
     }
 
     public class CoverageFactors
     {
-        [JsonProperty("yz")]
-        public double Yz { get; set; }
+        [JsonProperty("yz")] public double Yz { get; set; }
 
-        [JsonProperty("xz")]
-        public double Xz { get; set; }
+        [JsonProperty("xz")] public double Xz { get; set; }
 
-        [JsonProperty("xy")]
-        public double Xy { get; set; }
+        [JsonProperty("xy")] public double Xy { get; set; }
     }
 
-    public class IndexFile
-    {
-        [JsonProperty("peripheralFiles")] public string[] PeripheralFiles { get; set; } = null!;
-
-        [JsonProperty("fileName")]
-        public string FileName { get; set; } = "";
-
-        [JsonProperty("downloadSize")]
-        public long DownloadSize { get; set; } = 1;
-    }
+    public record IndexFile(
+        [property: JsonProperty("fileName")] string FileName,
+        [property: JsonProperty("downloadSize")]
+        long DownloadSize,
+        [property: JsonProperty("peripheralFiles")]
+        string[] PeripheralFiles);
 }

@@ -206,29 +206,16 @@ namespace CadRevealComposer
                         Id = sectorFileHeader.SectorId,
                         ParentId = sectorFileHeader.ParentSectorId ?? -1,
                         BoundingBox =
-                            new BoundingBox()
-                            {
-                                Max = new BbVector3
-                                {
-                                    X = sectorFileHeader.BboxMax[0],
-                                    Y = sectorFileHeader.BboxMax[1],
-                                    Z = sectorFileHeader.BboxMax[2]
-                                },
-                                Min = new BbVector3()
-                                {
-                                    X = sectorFileHeader.BboxMin[0],
-                                    Y = sectorFileHeader.BboxMin[1],
-                                    Z = sectorFileHeader.BboxMin[2]
-                                },
-                            },
+                            new BoundingBox(
+                                Min: new BbVector3(sectorFileHeader.BboxMin[0], sectorFileHeader.BboxMin[1], sectorFileHeader.BboxMin[2]),
+                                Max: new BbVector3(sectorFileHeader.BboxMax[0], sectorFileHeader.BboxMax[1], sectorFileHeader.BboxMax[2])
+                            ),
                         Depth = sectorFileHeader.ParentSectorId == null ? 1 : throw new NotImplementedException(),
                         Path = sectorFileHeader.SectorId == 0 ? "0/" : throw new NotImplementedException(),
-                        IndexFile = new IndexFile()
-                        {
-                            DownloadSize = 500001,
-                            FileName = "sector_" + sectorFileHeader.SectorId + ".i3d",
-                            PeripheralFiles = Array.Empty<string>()
-                        },
+                        IndexFile = new IndexFile(
+                            FileName: "sector_" + sectorFileHeader.SectorId + ".i3d",
+                            DownloadSize: 500001,
+                            PeripheralFiles: Array.Empty<string>()),
                         FacesFile = null, // Not implemented
                         EstimatedTriangleCount = 1337, // Not calculated,
                         EstimatedDrawCallCount = 1337 // Not calculated
