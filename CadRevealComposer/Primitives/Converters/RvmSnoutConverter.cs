@@ -5,7 +5,7 @@
     using System.Diagnostics;
     using Utils;
 
-    public static class RvmConeConverter
+    public static class RvmSnoutConverter
     {
         public static APrimitive? ConvertToRevealPrimitive(this RvmSnout rvmSnout, CadRevealNode revealNode,
             RvmNode container)
