@@ -30,7 +30,15 @@
 
             var colors = GetColor(container);
 
-            return new CommonPrimitiveProperties(cadNode.NodeId, cadNode.TreeIndex,pos, rot, scale, axisAlignedDiagonal, colors, RotationDecomposed: rot.DecomposeQuaternion());
+            return new CommonPrimitiveProperties(
+                cadNode.NodeId,
+                cadNode.TreeIndex,
+                pos,
+                rot,
+                scale,
+                axisAlignedDiagonal,
+                colors,
+                RotationDecomposed: rot.DecomposeQuaternion());
         }
     }
 }
