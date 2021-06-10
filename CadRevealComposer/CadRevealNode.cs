@@ -5,7 +5,6 @@ namespace CadRevealComposer
     using RvmSharp.Containers;
     using RvmSharp.Primitives;
     using System;
-    using System.Collections.Generic;
 
     public class CadRevealNode
     {
@@ -56,7 +55,7 @@ namespace CadRevealComposer
         public ClosedCylinder[] ClosedCylinderCollection = Array.Empty<ClosedCylinder>();
 
         [JsonProperty("closed_eccentric_cone_collection")]
-        public APrimitive[] ClosedEccentricConeCollection = Array.Empty<APrimitive>();
+        public ClosedEccentricCone[] ClosedEccentricConeCollection = Array.Empty<ClosedEccentricCone>();
 
         [JsonProperty("closed_ellipsoid_segment_collection")]
         public ClosedEllipsoidSegment[] ClosedEllipsoidSegmentCollection = Array.Empty<ClosedEllipsoidSegment>();
@@ -82,7 +81,7 @@ namespace CadRevealComposer
         public OpenCylinder[] OpenCylinderCollection = Array.Empty<OpenCylinder>();
 
         [JsonProperty("open_eccentric_cone_collection")]
-        public APrimitive[] OpenEccentricConeCollection = Array.Empty<APrimitive>();
+        public OpenEccentricCone[] OpenEccentricConeCollection = Array.Empty<OpenEccentricCone>();
 
         [JsonProperty("open_ellipsoid_segment_collection")]
         public OpenEllipsoidSegment[] OpenEllipsoidSegmentCollection = Array.Empty<OpenEllipsoidSegment>();
