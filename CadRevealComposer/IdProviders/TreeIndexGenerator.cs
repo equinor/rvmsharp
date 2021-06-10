@@ -16,5 +16,7 @@ namespace CadRevealComposer.IdProviders
                 throw new Exception("Too many ids generated");
             return candidate;
         }
+
+        public ulong CurrentMaxGeneratedIndex => _internalIdCounter;
     }
 }
