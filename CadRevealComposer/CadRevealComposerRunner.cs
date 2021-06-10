@@ -153,6 +153,10 @@ namespace CadRevealComposer
                             geometries.OfType<ClosedExtrudedRingSegment>().ToArray(),
                         OpenExtrudedRingSegmentCollection = 
                             geometries.OfType<OpenExtrudedRingSegment>().ToArray(),
+                        OpenEccentricConeCollection = 
+                            geometries.OfType<OpenEccentricCone>().ToArray(),
+                        ClosedEccentricConeCollection = 
+                            geometries.OfType<ClosedEccentricCone>().ToArray()
                     }
                 }
             };
