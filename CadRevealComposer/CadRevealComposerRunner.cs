@@ -77,7 +77,7 @@ namespace CadRevealComposer
             geometries.AddRange(meshes[meshId]);
             
             
-            var gpas = geometries
+            var attributeGrouping = geometries
                 .SelectMany(g => g.GetType().GetProperties().Select(p => (g, p)))
                 .Where(gp => gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
                 .Select(gp => (gp.g, gp.p, gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().First()))
@@ -102,73 +102,72 @@ namespace CadRevealComposer
             ulong[] fileIds = Array.Empty<ulong>();
             TriangleMesh.Texture[] textures = Array.Empty<TriangleMesh.Texture>();
 
-            Parallel.ForEach(gpas, gpa =>
-                    //foreach (var gpa in gpas)
+            Parallel.ForEach(attributeGrouping, gpas =>
                 {
-                    switch (gpa.Key)
+                    switch (gpas.Key)
                     {
                         case I3dfAttribute.AttributeType.Null:
                             break;
                         case I3dfAttribute.AttributeType.Color:
-                            colors = gpa.Select(gpa => gpa.g.GetProperty<int[]>(gpa.p.Name)).WhereNotNull()
+                            colors = gpas.Select(gpa => gpa.g.GetProperty<int[]>(gpa.p.Name)).WhereNotNull()
                                 .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
                                 .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W}).ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Diagonal:
-                            diagonals = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            diagonals = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.CenterX:
-                            centerX = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            centerX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.CenterY:
-                            centerY = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            centerY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.CenterZ:
-                            centerZ = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            centerZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Normal:
-                            normals = gpa.Select(gpa => gpa.g.GetProperty<float[]>(gpa.p.Name))
+                            normals = gpas.Select(gpa => gpa.g.GetProperty<float[]>(gpa.p.Name))
                                 .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct()
                                 .Select(y => y.CopyToNewArray()).ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Delta:
-                            deltas = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            deltas = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Height:
-                            heights = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            heights = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Radius:
-                            radii = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            radii = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Angle:
-                            angles = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            angles = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.TranslationX:
-                            translationsX = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                            translationsX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
                                 .ToArray();
                             break;
                         case I3dfAttribute.AttributeType.TranslationY:
-                            translationsY = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                            translationsY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
                                 .ToArray();
                             break;
                         case I3dfAttribute.AttributeType.TranslationZ:
-                            translationsZ = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                            translationsZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
                                 .ToArray();
                             break;
                         case I3dfAttribute.AttributeType.ScaleX:
-                            scalesX = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            scalesX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.ScaleY:
-                            scalesY = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            scalesY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.ScaleZ:
-                            scalesZ = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            scalesZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.FileId:
-                            fileIds = gpa.Select(gpa => gpa.g.GetProperty<ulong>(gpa.p.Name)).Distinct().ToArray();
+                            fileIds = gpas.Select(gpa => gpa.g.GetProperty<ulong>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Texture:
-                            textures = gpa.Select(gpa => gpa.g.GetProperty<TriangleMesh.Texture>(gpa.p.Name)).ToArray();
+                            textures = gpas.Select(gpa => gpa.g.GetProperty<TriangleMesh.Texture>(gpa.p.Name)).WhereNotNull().ToArray();
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
