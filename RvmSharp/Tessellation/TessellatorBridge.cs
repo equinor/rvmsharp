@@ -13,27 +13,40 @@ namespace RvmSharp.Tessellation
     {
         private const float MinimumThreshold = 1e-7f;
 
+        
         public static Mesh[] Tessellate(RvmNode group, float tolerance)
         {
-            var meshes = group.Children.OfType<RvmPrimitive>().Select(p =>
+            var meshes = group.Children.OfType<RvmPrimitive>().Select(primitive =>
             {
-                if (!Matrix4x4.Decompose(p.Matrix, out var scale, out _, out _))
+#if DEBUG
+                // Assert that the decomposition works.
+                if ( !Matrix4x4.Decompose(primitive.Matrix, out _, out _, out _))
                 {
                     throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
                 }
-
-                var scaleScalar = Math.Max(scale.X, Math.Max(scale.Y, scale.Z));
-                var mesh = Tessellate(p, scaleScalar, tolerance);
-                mesh?.Apply(p.Matrix);
-                return mesh;
+#endif
+                return Tessellate(primitive, tolerance);
             }).Where(m => m != null).Select(m => m!);
 
             return meshes.ToArray();
         }
 
-        public static Mesh? Tessellate(RvmPrimitive geometry, float scale, float tolerance)
+        public static Mesh? Tessellate(RvmPrimitive primitive, float tolerance)
         {
-            switch (geometry)
+            if (!Matrix4x4.Decompose(primitive.Matrix, out var scale, out _, out _))
+            {
+                throw new InvalidOperationException($"Could not decompose matrix for {primitive}");
+            }
+
+            var scaleScalar = Math.Max(scale.X, Math.Max(scale.Y, scale.Z));
+            var mesh = Tessellate(primitive, scaleScalar, tolerance);
+            mesh?.Apply(primitive.Matrix);
+            return mesh;
+        }
+
+        public static Mesh? Tessellate(RvmPrimitive primitive, float scale, float tolerance)
+        {
+            switch (primitive)
             {
                 case RvmBox box:
                     return Tessellate(box);
@@ -70,7 +83,7 @@ namespace RvmSharp.Tessellation
                 }
                 default:
                     throw new ArgumentOutOfRangeException(
-                        $"(Currently) Unsupported type for tesselation: {geometry.Kind}");
+                        $"(Currently) Unsupported type for tesselation: {primitive.Kind}");
             }
         }
 
