@@ -3,6 +3,7 @@
     using CommandLine;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
 
@@ -27,10 +28,12 @@
 
         private static int RunOptionsAndReturnExitCode(CommandLineOptions options)
         {
+            var timer = Stopwatch.StartNew();
             ValidateOptions(options);
 
             CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory);
 
+            Console.WriteLine("Export completed. Total runtime: " + timer.Elapsed);
             return Success;
         }
 
