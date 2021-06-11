@@ -46,7 +46,7 @@ namespace CadRevealComposer
     public class PrimitiveCollections
     {
         [JsonProperty("box_collection")] public Box[] BoxCollection = Array.Empty<Box>();
-        [JsonProperty("circle_collection")] public APrimitive[] CircleCollection = Array.Empty<APrimitive>();
+        [JsonProperty("circle_collection")] public Circle[] CircleCollection = Array.Empty<Circle>();
 
         [JsonProperty("closed_cone_collection")]
         public ClosedCone[] ClosedConeCollection = Array.Empty<ClosedCone>();
@@ -69,12 +69,12 @@ namespace CadRevealComposer
         [JsonProperty("closed_torus_segment_collection")]
         public ClosedTorusSegment[] ClosedTorusSegmentCollection = Array.Empty<ClosedTorusSegment>();
 
-        [JsonProperty("ellipsoid_collection")] public APrimitive[] EllipsoidCollection = Array.Empty<APrimitive>();
+        [JsonProperty("ellipsoid_collection")] public Ellipsoid[] EllipsoidCollection = Array.Empty<Ellipsoid>();
 
         [JsonProperty("extruded_ring_collection")]
         public ExtrudedRing[] ExtrudedRingCollection = Array.Empty<ExtrudedRing>();
 
-        [JsonProperty("nut_collection")] public APrimitive[] NutCollection = Array.Empty<APrimitive>();
+        [JsonProperty("nut_collection")] public Nut[] NutCollection = Array.Empty<Nut>();
         [JsonProperty("open_cone_collection")] public OpenCone[] OpenConeCollection = Array.Empty<OpenCone>();
 
         [JsonProperty("open_cylinder_collection")]
@@ -100,34 +100,34 @@ namespace CadRevealComposer
         [JsonProperty("torus_collection")] public Torus[] TorusCollection = Array.Empty<Torus>();
 
         [JsonProperty("open_general_cylinder_collection")]
-        public APrimitive[] OpenGeneralCylinderCollection = Array.Empty<APrimitive>();
+        public OpenGeneralCylinder[] OpenGeneralCylinderCollection = Array.Empty<OpenGeneralCylinder>();
 
         [JsonProperty("closed_general_cylinder_collection")]
-        public APrimitive[] ClosedGeneralCylinderCollection = Array.Empty<APrimitive>();
+        public ClosedGeneralCylinder[] ClosedGeneralCylinderCollection = Array.Empty<ClosedGeneralCylinder>();
 
         [JsonProperty("solid_open_general_cylinder_collection")]
-        public APrimitive[] SolidOpenGeneralCylinderCollection = Array.Empty<APrimitive>();
+        public SolidOpenGeneralCylinder[] SolidOpenGeneralCylinderCollection = Array.Empty<SolidOpenGeneralCylinder>();
 
         [JsonProperty("solid_closed_general_cylinder_collection")]
-        public APrimitive[] SolidClosedGeneralCylinderCollection = Array.Empty<APrimitive>();
+        public SolidClosedGeneralCylinder[] SolidClosedGeneralCylinderCollection = Array.Empty<SolidClosedGeneralCylinder>();
 
         [JsonProperty("open_general_cone_collection")]
-        public APrimitive[] OpenGeneralConeCollection = Array.Empty<APrimitive>();
+        public OpenGeneralCone[] OpenGeneralConeCollection = Array.Empty<OpenGeneralCone>();
 
         [JsonProperty("closed_general_cone_collection")]
-        public APrimitive[] ClosedGeneralConeCollection = Array.Empty<APrimitive>();
+        public ClosedGeneralCone[] ClosedGeneralConeCollection = Array.Empty<ClosedGeneralCone>();
 
         [JsonProperty("solid_open_general_cone_collection")]
-        public APrimitive[] SolidOpenGeneralConeCollection = Array.Empty<APrimitive>();
+        public SolidOpenGeneralCone[] SolidOpenGeneralConeCollection = Array.Empty<SolidOpenGeneralCone>();
 
         [JsonProperty("solid_closed_general_cone_collection")]
-        public APrimitive[] SolidClosedGeneralConeCollection = Array.Empty<APrimitive>();
+        public SolidClosedGeneralCone[] SolidClosedGeneralConeCollection = Array.Empty<SolidClosedGeneralCone>();
 
         [JsonProperty("triangle_mesh_collection")]
-        public APrimitive[] TriangleMeshCollection = Array.Empty<APrimitive>();
+        public TriangleMesh[] TriangleMeshCollection = Array.Empty<TriangleMesh>();
 
         [JsonProperty("instanced_mesh_collection")]
-        public APrimitive[] InstancedMeshCollection = Array.Empty<APrimitive>();
+        public InstancedMesh[] InstancedMeshCollection = Array.Empty<InstancedMesh>();
     }
 
 
@@ -172,19 +172,19 @@ namespace CadRevealComposer
 
         [JsonProperty("angle")] public float[]? Angle { get; set; }
 
-        [JsonProperty("translation_x")] public object[]? TranslationX { get; set; }
+        [JsonProperty("translation_x")] public float[]? TranslationX { get; set; }
 
-        [JsonProperty("translation_y")] public object[]? TranslationY { get; set; }
+        [JsonProperty("translation_y")] public float[]? TranslationY { get; set; }
 
-        [JsonProperty("translation_z")] public object[]? TranslationZ { get; set; }
+        [JsonProperty("translation_z")] public float[]? TranslationZ { get; set; }
 
-        [JsonProperty("scale_x")] public object[]? ScaleX { get; set; }
+        [JsonProperty("scale_x")] public float[]? ScaleX { get; set; }
 
-        [JsonProperty("scale_y")] public object[]? ScaleY { get; set; }
+        [JsonProperty("scale_y")] public float[]? ScaleY { get; set; }
 
-        [JsonProperty("scale_z")] public object[]? ScaleZ { get; set; }
+        [JsonProperty("scale_z")] public float[]? ScaleZ { get; set; }
 
-        [JsonProperty("file_id")] public object[]? FileId { get; set; }
+        [JsonProperty("file_id")] public ulong[]? FileId { get; set; }
 
         [JsonProperty("texture")] public object[]? Texture { get; set; }
     }

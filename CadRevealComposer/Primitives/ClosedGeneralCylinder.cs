@@ -2,7 +2,7 @@
 {
     using Newtonsoft.Json;
 
-    public record ClosedGeneralCone(
+    public record ClosedGeneralCylinder(
         CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Normal)]
         [property: JsonProperty("center_axis")]
@@ -10,9 +10,7 @@
         [property: I3df(I3dfAttribute.AttributeType.Height)]
         [property: JsonProperty("height")] float Height,
         [property: I3df(I3dfAttribute.AttributeType.Radius)]
-        [property: JsonProperty("radius_a")] float RadiusA,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
-        [property: JsonProperty("radius_b")] float RadiusB,
+        [property: JsonProperty("radius")] float Radius,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
         [property: JsonProperty("rotation_angle")] float RotationAngle,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]

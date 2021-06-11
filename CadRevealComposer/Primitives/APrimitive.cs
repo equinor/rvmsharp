@@ -22,12 +22,18 @@ namespace CadRevealComposer.Primitives
         (Vector3 Normal, float RotationAngle) RotationDecomposed);
 
     public abstract record APrimitive(
-        [property: JsonProperty("node_id")] ulong NodeId,
+        [property: JsonProperty("node_id")]
+        ulong NodeId,
         [property: JsonProperty("tree_index")] ulong TreeIndex,
+        [property: I3df(I3dfAttribute.AttributeType.Color)]
         [property: JsonProperty("color")] int[] Color,
+        [property: I3df(I3dfAttribute.AttributeType.Diagonal)]
         [property: JsonProperty("diagonal")] float Diagonal,
+        [property: I3df(I3dfAttribute.AttributeType.CenterX)]
         [property: JsonProperty("center_x")] float CenterX,
+        [property: I3df(I3dfAttribute.AttributeType.CenterY)]
         [property: JsonProperty("center_y")] float CenterY,
+        [property: I3df(I3dfAttribute.AttributeType.CenterZ)]
         [property: JsonProperty("center_z")] float CenterZ,
         [property: JsonIgnore,
                    Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true)]
