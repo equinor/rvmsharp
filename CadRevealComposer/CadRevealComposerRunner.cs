@@ -33,8 +33,6 @@ namespace CadRevealComposer
                 Console.WriteLine(x.fileName + $" ({x.progress}/{x.total})");
             });
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
-
-
             Console.WriteLine("Generating i3d");
 
             // Project name og project parameters tull from Cad Control Center
@@ -67,7 +65,7 @@ namespace CadRevealComposer
                 .SelectMany(g => g.GetType().GetProperties().Select(p => (g, p)))
                 .Where(gp => gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
                 .Select(gp => (gp.g, gp.p, gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().First()))
-                .GroupBy(gpa => gpa.Item3.Type);
+                .GroupBy(gpa => gpa.Item3.Type).ToArray();
 
             int[][] colors = Array.Empty<int[]>();
             float[] diagonals = Array.Empty<float>();
