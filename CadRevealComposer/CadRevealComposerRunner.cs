@@ -61,34 +61,77 @@ namespace CadRevealComposer
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
             var geometries = allNodes.SelectMany(x => x.Geometries).ToArray();
-
-            
             var distinctDiagonals = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Diagonal).Distinct();
             var distinctCenterX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterX).Distinct();
             var distinctCenterY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterY).Distinct();
             var distinctCenterZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterZ).Distinct();
-
-
             var distinctNormals = geometries.CollectProperties<float[]>(I3dfAttribute.AttributeType.Normal)
                 .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
-
             var distinctDelta = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Delta)
                 .Distinct();
-
             var height = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Height).Distinct();
             var radius = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Radius).Distinct();
             var angle = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Angle).Distinct();
-            
-            
             var translationX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationX).Distinct();
             var translationY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationY).Distinct();
             var translationZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationZ).Distinct();
             var scaleX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleX).Distinct();
             var scaleY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleY).Distinct();
             var scaleZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleZ).Distinct();
-            
-            
             var fileId = geometries.CollectProperties<ulong>(I3dfAttribute.AttributeType.FileId).Distinct();
+
+            var gpas = geometries
+                .SelectMany(g => g.GetType().GetProperties()
+                    .Where(p => p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
+                    .Select(p => (g, p, p.GetCustomAttributes(true).OfType<I3dfAttribute>().First())).ToArray())
+                .GroupBy(gpa => gpa.Item3.Type);
+            foreach (var gpa in gpas)
+            {
+                switch (gpa.Key)
+                {
+                    case I3dfAttribute.AttributeType.Null:
+                        break;
+                    case I3dfAttribute.AttributeType.Color:
+                        break;
+                    case I3dfAttribute.AttributeType.Diagonal:
+                        break;
+                    case I3dfAttribute.AttributeType.CenterX:
+                        break;
+                    case I3dfAttribute.AttributeType.CenterY:
+                        break;
+                    case I3dfAttribute.AttributeType.CenterZ:
+                        break;
+                    case I3dfAttribute.AttributeType.Normal:
+                        break;
+                    case I3dfAttribute.AttributeType.Delta:
+                        break;
+                    case I3dfAttribute.AttributeType.Height:
+                        break;
+                    case I3dfAttribute.AttributeType.Radius:
+                        break;
+                    case I3dfAttribute.AttributeType.Angle:
+                        break;
+                    case I3dfAttribute.AttributeType.TranslationX:
+                        break;
+                    case I3dfAttribute.AttributeType.TranslationY:
+                        break;
+                    case I3dfAttribute.AttributeType.TranslationZ:
+                        break;
+                    case I3dfAttribute.AttributeType.ScaleX:
+                        break;
+                    case I3dfAttribute.AttributeType.ScaleY:
+                        break;
+                    case I3dfAttribute.AttributeType.ScaleZ:
+                        break;
+                    case I3dfAttribute.AttributeType.FileId:
+                        break;
+                    case I3dfAttribute.AttributeType.Texture:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
             
             // TODO texture
 
