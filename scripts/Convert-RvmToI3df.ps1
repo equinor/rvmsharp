@@ -33,6 +33,10 @@ end {
         Write-Error "Could not find cargo. Do you have Rust and Cargo installed?"
     }
 
+    if (-not (Get-Command "ctmconv" -ErrorAction 'SilentlyContinue')) {
+        Write-Error "Could not find ctmconv. You need to install OpenCTM, and restart the terminal. http://openctm.sourceforge.net/?page=download"
+    }
+
     if (-not $Force -and (Get-ChildItem $outputDirectory)) {
         Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
     }
@@ -66,6 +70,23 @@ end {
 
     #endregion i3df-converter
 
+    #region ctm-converter
+
+    Get-ChildItem -Path "$OutputDirectory/*" -Filter "*.obj" | ForEach-Object {
+        $ctmInputPath = $_.FullName
+
+        $ctmFileName = $_.BaseName + ".ctm"
+        $ctmOutputPath = Join-Path $OutputDirectory $ctmFileName
+
+        $compressionLevel = 4
+        & ctmconv $ctmInputPath $ctmOutputPath --comment "Echo was here." --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
+        if ($LASTEXITCODE) {
+            Write-Error "ctmconv failed." -ErrorAction Stop
+        }
+    }
+
+    #endregion
+
     Copy-Item -Path "$OutputDirectory/*" $ArtifactDirectory
 
     if ($UploadToDev) {
@@ -79,6 +100,6 @@ end {
             --destination "hda/demomodel2/reflect/"
     }
 
-    Write-Host "Success. I3d file available at ""$ArtifactDirectory"""
+    Write-Host "Success. Output copied to ""$ArtifactDirectory"""
 }
 
