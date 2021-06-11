@@ -12,6 +12,7 @@ namespace CadRevealComposer
     using System.Linq;
     using System.Numerics;
     using System.Reflection;
+    using System.Threading.Tasks;
     using Utils;
 
     public static class CadRevealComposerRunner
@@ -61,84 +62,103 @@ namespace CadRevealComposer
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
             var geometries = allNodes.SelectMany(x => x.Geometries).ToArray();
-            var distinctDiagonals = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Diagonal).Distinct();
-            var distinctCenterX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterX).Distinct();
-            var distinctCenterY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterY).Distinct();
-            var distinctCenterZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterZ).Distinct();
-            var distinctNormals = geometries.CollectProperties<float[]>(I3dfAttribute.AttributeType.Normal)
-                .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
-            var distinctDelta = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Delta)
-                .Distinct();
-            var height = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Height).Distinct();
-            var radius = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Radius).Distinct();
-            var angle = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Angle).Distinct();
-            var translationX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationX).Distinct();
-            var translationY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationY).Distinct();
-            var translationZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationZ).Distinct();
-            var scaleX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleX).Distinct();
-            var scaleY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleY).Distinct();
-            var scaleZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleZ).Distinct();
-            var fileId = geometries.CollectProperties<ulong>(I3dfAttribute.AttributeType.FileId).Distinct();
 
             var gpas = geometries
                 .SelectMany(g => g.GetType().GetProperties()
                     .Where(p => p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
                     .Select(p => (g, p, p.GetCustomAttributes(true).OfType<I3dfAttribute>().First())).ToArray())
                 .GroupBy(gpa => gpa.Item3.Type);
-            foreach (var gpa in gpas)
+
+            int[][] colors = Array.Empty<int[]>();
+            float[] diagonals = Array.Empty<float>();
+            float[] centerX = Array.Empty<float>();
+            float[] centerY = Array.Empty<float>();
+            float[] centerZ = Array.Empty<float>();
+            float[][] normals = Array.Empty<float[]>();
+            float[] deltas = Array.Empty<float>();
+            float[] heights = Array.Empty<float>();
+            float[] radii = Array.Empty<float>();
+            float[] angles = Array.Empty<float>();
+            float[] translationsX = Array.Empty<float>();
+            float[] translationsY = Array.Empty<float>();
+            float[] translationsZ = Array.Empty<float>();
+            float[] scalesX = Array.Empty<float>();
+            float[] scalesY = Array.Empty<float>();
+            float[] scalesZ = Array.Empty<float>();
+            ulong[] fileIds = Array.Empty<ulong>();
+            
+            Parallel.ForEach(gpas, gpa =>
             {
                 switch (gpa.Key)
                 {
                     case I3dfAttribute.AttributeType.Null:
                         break;
                     case I3dfAttribute.AttributeType.Color:
+                        colors = gpa.Select(gpa => gpa.g.GetProperty<int[]>(gpa.p.Name)).WhereNotNull()
+                            .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
+                            .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W}).ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Diagonal:
+                        diagonals = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.CenterX:
+                        centerX = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.CenterY:
+                        centerY = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.CenterZ:
+                        centerZ = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Normal:
+                        normals = gpa.Select(gpa => gpa.g.GetProperty<float[]>(gpa.p.Name))
+                            .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray()).ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Delta:
+                        deltas = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Height:
+                        heights = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Radius:
+                        radii = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Angle:
+                        angles = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.TranslationX:
+                        translationsX = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.TranslationY:
+                        translationsY = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.TranslationZ:
+                        translationsZ = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.ScaleX:
+                        scalesX = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.ScaleY:
+                        scalesY = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.ScaleZ:
+                        scalesZ = gpa.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.FileId:
+                        fileIds = gpa.Select(gpa => gpa.g.GetProperty<ulong>(gpa.p.Name)).Distinct().ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Texture:
+                        // TODO
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-            }
+            });
 
             
             // TODO texture
 
-            var color = geometries.CollectProperties<int[]>(I3dfAttribute.AttributeType.Color)
-                .WhereNotNull()
-                .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
-                .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W});
+            
 
             var primitiveCollections = new PrimitiveCollections();
             foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
@@ -169,23 +189,23 @@ namespace CadRevealComposer
                         BboxMin = boundingBox.Min.CopyToNewArray(),
                         Attributes = new Attributes()
                         {
-                            Angle = angle.ToArray(),
-                            CenterX = distinctCenterX.ToArray(),
-                            CenterY = distinctCenterY.ToArray(),
-                            CenterZ = distinctCenterZ.ToArray(),
-                            Color = color.ToArray(),
-                            Normal = distinctNormals.ToArray(),
-                            Delta = distinctDelta.ToArray(),
-                            Diagonal = distinctDiagonals.ToArray(),
-                            ScaleX = scaleX.ToArray(),
-                            ScaleY = scaleY.ToArray(),
-                            ScaleZ = scaleZ.ToArray(),
-                            TranslationX = translationX.ToArray(),
-                            TranslationY = translationY.ToArray(),
-                            TranslationZ = translationZ.ToArray(),
-                            Radius = radius.ToArray(),
-                            FileId = fileId.ToArray(),
-                            Height = height.ToArray(),
+                            Angle = angles,
+                            CenterX = centerX,
+                            CenterY = centerY,
+                            CenterZ = centerZ,
+                            Color = colors,
+                            Normal = normals,
+                            Delta = deltas,
+                            Diagonal = diagonals,
+                            ScaleX = scalesX,
+                            ScaleY = scalesY,
+                            ScaleZ = scalesZ,
+                            TranslationX = translationsX,
+                            TranslationY = translationsY,
+                            TranslationZ = translationsZ,
+                            Radius = radii,
+                            FileId = fileIds,
+                            Height = heights,
                             Texture = Array.Empty<object>()
                         }
                     },
