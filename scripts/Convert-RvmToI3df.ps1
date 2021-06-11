@@ -79,7 +79,7 @@ end {
         $ctmOutputPath = Join-Path $OutputDirectory $ctmFileName
 
         $compressionLevel = 4
-        & ctmconv $ctmInputPath $ctmOutputPath --comment "Echo was here." --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
+        & ctmconv.exe $ctmInputPath $ctmOutputPath --comment "Echo was here." --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
         if ($LASTEXITCODE) {
             Write-Error "ctmconv failed." -ErrorAction Stop
         }
