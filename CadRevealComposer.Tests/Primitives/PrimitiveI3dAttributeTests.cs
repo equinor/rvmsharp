@@ -22,7 +22,7 @@
                     .Any(a => a is I3dfAttribute or JsonIgnoreAttribute));
                 var totalPropertiesCount = type.GetProperties().Length;
                 
-                Assert.That(i3dfPropertiesCount, Is.EqualTo(totalPropertiesCount));
+                Assert.That(i3dfPropertiesCount, Is.EqualTo(totalPropertiesCount), $"Type {type} is missing i3df attribute");
             }
         }
         
