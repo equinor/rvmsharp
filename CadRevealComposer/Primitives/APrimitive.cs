@@ -59,11 +59,11 @@ namespace CadRevealComposer.Primitives
         {
         }
 
-        public static APrimitive? FromRvmPrimitive(CadRevealNode revealNode, RvmNode container,
+        public static APrimitive? FromRvmPrimitive(CadRevealNode revealNode, RvmNode rvmNode,
             RvmPrimitive rvmPrimitive)
         {
             PrimitiveCounter.pc++;
-            var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(container, revealNode);
+            var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
             (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _,
                 _,
                 (Vector3 normal, float rotationAngle)) = commonPrimitiveProperties;
@@ -72,7 +72,7 @@ namespace CadRevealComposer.Primitives
             {
                 case RvmBox rvmBox:
                     {
-                        return rvmBox.ConvertToRevealPrimitive(revealNode, container);
+                        return rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
                     }
                 case RvmCylinder rvmCylinder:
                     {
@@ -206,7 +206,7 @@ namespace CadRevealComposer.Primitives
                 case RvmSnout rvmSnout:
                     {
                         PrimitiveCounter.snout++;
-                        return rvmSnout.ConvertToRevealPrimitive(revealNode, container);
+                        return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
                     }
                 case RvmRectangularTorus rvmRectangularTorus:
                     AssertUniformScale(scale);
