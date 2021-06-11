@@ -1,5 +1,6 @@
 namespace CadRevealComposer.Utils
 {
+    using Primitives;
     using System.Collections.Generic;
     using System.Linq;
 
@@ -22,6 +23,15 @@ namespace CadRevealComposer.Utils
                 propertyName => collection
                     .Where(x => x.HasProperty<T>(propertyName))
                     .Select(x => x.GetProperty<T>(propertyName)));
+        }
+
+        public static IEnumerable<T?> CollectProperties<T>(this IEnumerable<APrimitive> collection, I3dfAttribute.AttributeType type)
+        {
+            return collection
+                .AsParallel().SelectMany(x => (x.GetType().GetProperties()
+                    .Where(p => p.GetCustomAttributes(true).Any(a => a is I3dfAttribute attr && attr.Type == type))
+                    .Select(p => (x, p))))
+                    .Select(x => x.x.GetProperty<T>(x.p.Name));
         }
     }
 }

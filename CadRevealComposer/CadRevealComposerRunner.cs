@@ -11,6 +11,7 @@ namespace CadRevealComposer
     using System.IO;
     using System.Linq;
     using System.Numerics;
+    using System.Reflection;
     using Utils;
 
     public static class CadRevealComposerRunner
@@ -61,26 +62,51 @@ namespace CadRevealComposer
 
             var geometries = allNodes.SelectMany(x => x.Geometries).ToArray();
 
-            var distinctDiagonals = geometries.CollectProperties<float, APrimitive>("Diagonal").Distinct();
-            var distinctCenterX = geometries.CollectProperties<float, APrimitive>("CenterX").Distinct();
-            var distinctCenterY = geometries.CollectProperties<float, APrimitive>("CenterY").Distinct();
-            var distinctCenterZ = geometries.CollectProperties<float, APrimitive>("CenterZ").Distinct();
+            
+            var distinctDiagonals = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Diagonal).Distinct();
+            var distinctCenterX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterX).Distinct();
+            var distinctCenterY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterY).Distinct();
+            var distinctCenterZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.CenterZ).Distinct();
 
 
-            var distinctNormals = geometries.CollectProperties<float[], APrimitive>("Normal", "CenterAxis", "CapNormal")
+            var distinctNormals = geometries.CollectProperties<float[]>(I3dfAttribute.AttributeType.Normal)
                 .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct().Select(y => y.CopyToNewArray());
 
-            var distinctDelta = geometries.CollectProperties<float, APrimitive>("DeltaX", "DeltaY", "DeltaZ")
+            var distinctDelta = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Delta)
                 .Distinct();
 
-            var height = geometries.CollectProperties<float, APrimitive>("Height").Distinct();
-            var radius = geometries.CollectProperties<float, APrimitive>("Radius", "TubeRadius", "RadiusA", "RadiusB", "InnerRadius", "OuterRadius", "VerticalRadius", "HorizontalRadius").Distinct();
-            var angle = geometries.CollectProperties<float, APrimitive>("RotationAngle", "ArcAngle").Distinct();
+            var height = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Height).Distinct();
+            var radius = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Radius).Distinct();
+            var angle = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.Angle).Distinct();
+            
+            
+            var translationX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationX).Distinct();
+            var translationY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationY).Distinct();
+            var translationZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.TranslationZ).Distinct();
+            var scaleX = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleX).Distinct();
+            var scaleY = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleY).Distinct();
+            var scaleZ = geometries.CollectProperties<float>(I3dfAttribute.AttributeType.ScaleZ).Distinct();
+            
+            
+            var fileId = geometries.CollectProperties<ulong>(I3dfAttribute.AttributeType.FileId).Distinct();
+            
+            // TODO texture
 
-            var color = geometries.CollectProperties<int[], APrimitive>("Color")
+            var color = geometries.CollectProperties<int[]>(I3dfAttribute.AttributeType.Color)
                 .WhereNotNull()
                 .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
                 .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W});
+
+            var primitiveCollections = new PrimitiveCollections();
+            foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
+            {
+                var elementType = geometriesByType.Key;
+                var elements = geometriesByType.ToArray();
+                var fieldInfo = primitiveCollections.GetType().GetFields().First(pc => pc.FieldType.GetElementType() == elementType);
+                var typedArray = Array.CreateInstance(elementType, elements.Length);
+                Array.Copy(elements, typedArray, elements.Length);
+                fieldInfo.SetValue(primitiveCollections, typedArray);
+            }
 
             var file = new FileI3D()
             {
@@ -108,57 +134,19 @@ namespace CadRevealComposer
                             Normal = distinctNormals.ToArray(),
                             Delta = distinctDelta.ToArray(),
                             Diagonal = distinctDiagonals.ToArray(),
-                            ScaleX = Array.Empty<object>(),
-                            ScaleY = Array.Empty<object>(),
-                            ScaleZ = Array.Empty<object>(),
-                            TranslationX = Array.Empty<object>(),
-                            TranslationY = Array.Empty<object>(),
-                            TranslationZ = Array.Empty<object>(),
+                            ScaleX = scaleX.ToArray(),
+                            ScaleY = scaleY.ToArray(),
+                            ScaleZ = scaleZ.ToArray(),
+                            TranslationX = translationX.ToArray(),
+                            TranslationY = translationY.ToArray(),
+                            TranslationZ = translationZ.ToArray(),
                             Radius = radius.ToArray(),
-                            FileId = Array.Empty<object>(),
+                            FileId = fileId.ToArray(),
                             Height = height.ToArray(),
                             Texture = Array.Empty<object>()
                         }
                     },
-                    PrimitiveCollections = new PrimitiveCollections()
-                    {
-                        BoxCollection = 
-                            geometries.OfType<Box>().ToArray(),
-                        ClosedCylinderCollection =
-                            geometries.OfType<ClosedCylinder>().ToArray(),
-                        ClosedTorusSegmentCollection = 
-                            geometries.OfType<ClosedTorusSegment>().ToArray(),
-                        OpenCylinderCollection =
-                            geometries.OfType<OpenCylinder>().ToArray(),
-                        OpenTorusSegmentCollection =
-                            geometries.OfType<OpenTorusSegment>().ToArray(),
-                        TorusCollection =
-                            geometries.OfType<Torus>().ToArray(),
-                        SphereCollection = 
-                            geometries.OfType<Sphere>().ToArray(),
-                        ClosedConeCollection = 
-                            geometries.OfType<ClosedCone>().ToArray(),
-                        OpenConeCollection = 
-                            geometries.OfType<OpenCone>().ToArray(),
-                        OpenSphericalSegmentCollection = 
-                            geometries.OfType<OpenSphericalSegment>().ToArray(),
-                        ClosedSphericalSegmentCollection = 
-                            geometries.OfType<ClosedSphericalSegment>().ToArray(),
-                        OpenEllipsoidSegmentCollection = 
-                            geometries.OfType<OpenEllipsoidSegment>().ToArray(),
-                        ClosedEllipsoidSegmentCollection = 
-                            geometries.OfType<ClosedEllipsoidSegment>().ToArray(),
-                        ExtrudedRingCollection = 
-                            geometries.OfType<ExtrudedRing>().ToArray(),
-                        ClosedExtrudedRingSegmentCollection = 
-                            geometries.OfType<ClosedExtrudedRingSegment>().ToArray(),
-                        OpenExtrudedRingSegmentCollection = 
-                            geometries.OfType<OpenExtrudedRingSegment>().ToArray(),
-                        OpenEccentricConeCollection = 
-                            geometries.OfType<OpenEccentricCone>().ToArray(),
-                        ClosedEccentricConeCollection = 
-                            geometries.OfType<ClosedEccentricCone>().ToArray()
-                    }
+                    PrimitiveCollections = primitiveCollections
                 }
             };
 
