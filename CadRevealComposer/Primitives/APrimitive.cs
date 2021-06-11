@@ -23,7 +23,9 @@ namespace CadRevealComposer.Primitives
 
     public abstract record APrimitive(
         [property: JsonProperty("node_id")]
+        [property: I3df(I3dfAttribute.AttributeType.Null)]
         ulong NodeId,
+        [property: I3df(I3dfAttribute.AttributeType.Null)]
         [property: JsonProperty("tree_index")] ulong TreeIndex,
         [property: I3df(I3dfAttribute.AttributeType.Color)]
         [property: JsonProperty("color")] int[] Color,
