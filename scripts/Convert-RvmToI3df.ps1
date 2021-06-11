@@ -85,7 +85,9 @@ end {
         }
     }
 
-    #endregion
+    #endregion ctm-converter
+
+    #region Artifact Staging
 
     $artifactStagingDirectory = Join-Path $OutputDirectory "ArtifactStaging"
     If (-not (Test-Path $artifactStagingDirectory)) {
@@ -101,10 +103,12 @@ end {
     )
 
     foreach ($filter in $artifactStagingGlobs) {
-        Copy-Item -Path (Join-Path $OutputDirectory $filter) $artifactStagingDirectory
+        Copy-Item -Path (Join-Path $OutputDirectory $filter) -Destination $artifactStagingDirectory
     }
 
-    Copy-Item -Path (Join-Path $artifactStagingDirectory "*") $ArtifactDirectory
+    #endregion Artifact Staging
+
+    Copy-Item -Path (Join-Path $artifactStagingDirectory "*") -Destination $ArtifactDirectory
 
     if ($UploadToDev) {
         if (-not (Get-Command "az" -ErrorAction 'SilentlyContinue')) {
