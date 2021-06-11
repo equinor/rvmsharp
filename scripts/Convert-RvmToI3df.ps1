@@ -87,17 +87,37 @@ end {
 
     #endregion
 
-    Copy-Item -Path "$OutputDirectory/*" $ArtifactDirectory
+    $artifactStagingDirectory = Join-Path $OutputDirectory "ArtifactStaging"
+    If (-not (Test-Path $artifactStagingDirectory)) {
+        New-Item -Path $artifactStagingDirectory -ItemType Directory -Force
+    }
+
+    $artifactStagingGlobs = @(
+        "scene.json"
+        "cadnodeinfo.json"
+        "*.i3d"
+        "*.f3d"
+        "*.ctm"
+    )
+
+    foreach ($filter in $artifactStagingGlobs) {
+        Copy-Item -Path (Join-Path $OutputDirectory $filter) $artifactStagingDirectory
+    }
+
+    Copy-Item -Path (Join-Path $artifactStagingDirectory "*") $ArtifactDirectory
 
     if ($UploadToDev) {
         if (-not (Get-Command "az" -ErrorAction 'SilentlyContinue')) {
             Write-Error "Could not find az. Do you have Azure Cli installed?"
         }
+
+        $destination = "hda/demomodel/reveal/"
+
         az storage azcopy blob upload `
-            --container models `
-            --account-name stechoreflectapidev `
-            --source $(Join-Path $OutputDirectory "*") `
-            --destination "hda/demomodel2/reflect/"
+            --container 'models' `
+            --account-name 'stechoreflectapidev' `
+            --source "$artifactStagingDirectory/*" `
+            --destination $destination
     }
 
     Write-Host "Success. Output copied to ""$ArtifactDirectory"""
