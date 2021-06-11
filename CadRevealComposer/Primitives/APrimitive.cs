@@ -138,40 +138,7 @@ namespace CadRevealComposer.Primitives
                     return null;
                 case RvmCircularTorus circularTorus:
                     {
-                        AssertUniformScale(scale);
-                        var tubeRadius = circularTorus.Radius * scale.X;
-                        var radius = circularTorus.Offset * scale.X;
-                        if (circularTorus.Angle >= Math.PI * 2)
-                        {
-                            return new Torus
-                            (
-                                commonPrimitiveProperties,
-                                Normal: normal.CopyToNewArray(),
-                                Radius: radius,
-                                TubeRadius: tubeRadius
-                            );
-                        }
-
-                        if (circularTorus.Connections[0] != null || circularTorus.Connections[1] != null)
-                            return new ClosedTorusSegment
-                            (
-                                commonPrimitiveProperties,
-                                Normal: normal.CopyToNewArray(),
-                                Radius: radius,
-                                TubeRadius: tubeRadius,
-                                RotationAngle: rotationAngle,
-                                ArcAngle: circularTorus.Angle
-                            );
-
-                        return new OpenTorusSegment
-                        (
-                            commonPrimitiveProperties,
-                            Normal: normal.CopyToNewArray(),
-                            Radius: radius,
-                            TubeRadius: tubeRadius,
-                            RotationAngle: rotationAngle,
-                            ArcAngle: circularTorus.Angle
-                        );
+                        return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
                     }
                 case RvmSphere rvmSphere:
                     {
