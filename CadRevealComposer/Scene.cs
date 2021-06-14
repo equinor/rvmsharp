@@ -5,13 +5,18 @@
 
     public class Scene
     {
-        [JsonProperty("version")] public long Version { get; set; }
+        [JsonProperty("version")] public long Version { get; init; }
 
-        [JsonProperty("projectId")] public long ProjectId { get; set; }
+        [JsonProperty("projectId")] private long ProjectIdJson => ProjectId.Value;
+        [JsonIgnore] public ProjectId ProjectId { get; init; } = new ProjectId(0);
 
-        [JsonProperty("modelId")] public long ModelId { get; set; }
+        [JsonProperty("modelId")] public long ModelIdJson => ModelId.Value;
+        [JsonIgnore] public ModelId ModelId { get; init; } = new ModelId(0);
 
-        [JsonProperty("revisionId")] public long RevisionId { get; set; }
+
+        [JsonProperty("revisionId")] public long RevisionIdJson => RevisionId.Value;
+        [JsonIgnore] public RevisionId RevisionId { get; init; } = new RevisionId(0);
+
 
         [JsonProperty("subRevisionId")] public long SubRevisionId { get; set; }
 
@@ -49,7 +54,7 @@
         [property: JsonProperty("min")] BbVector3 Min,
         [property: JsonProperty("max")] BbVector3 Max
     );
-    
+
     public record BbVector3
     (
         [property: JsonProperty("x")] double X,
