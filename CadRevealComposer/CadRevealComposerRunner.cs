@@ -321,7 +321,7 @@ namespace CadRevealComposer
             {
                 return kvp.Value.Select(facetGroup =>
                 {
-                    const float minimumDiagonalToExport = 5f;
+                    const float minimumDiagonalToExport = 10f;
                     const float tolerance = 0.1f;
                     bool shouldExport = facetGroup.CalculateAxisAlignedBoundingBox().Diagonal > minimumDiagonalToExport;
                     return shouldExport ? (kvp.Key, facetGroup, Mesh: TessellatorBridge.Tessellate(facetGroup, tolerance)) : ((RvmNode Key, RvmFacetGroup facetGroup, Mesh? Mesh)?) null;
