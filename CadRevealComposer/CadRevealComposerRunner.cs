@@ -17,6 +17,12 @@ namespace CadRevealComposer
     using System.Threading.Tasks;
     using Utils;
 
+    public record ProjectId(long Value);
+
+    public record ModelId(long Value);
+
+    public record RevisionId(long Value);
+    
     public static class CadRevealComposerRunner
     {
         private const int I3DFMagicBytes = 1178874697; // I3DF chars as bytes.
@@ -24,10 +30,11 @@ namespace CadRevealComposer
         static readonly NodeIdProvider NodeIdGenerator = new();
         private static readonly SequentialIdGenerator MeshIdGenerator = new SequentialIdGenerator();
         
-        
+        public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
+
         // ReSharper disable once UnusedParameter.Local
         // ReSharper disable once CognitiveComplexity
-        public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory)
+        public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory, Parameters parameters)
         {
             var workload = Workload.CollectWorkload(new[] {inputRvmFolderPath.FullName});
 
@@ -265,9 +272,9 @@ namespace CadRevealComposer
             var scene = new Scene()
             {
                 Version = 8,
-                ProjectId = 1337,
-                ModelId = 13337,
-                RevisionId = 31337,
+                ProjectId = parameters.ProjectId,
+                ModelId = parameters.ModelId,
+                RevisionId = parameters.RevisionId,
                 SubRevisionId = -1,
                 MaxTreeIndex = TreeIndexGenerator.CurrentMaxGeneratedIndex,
                 Unit = "Meters",
