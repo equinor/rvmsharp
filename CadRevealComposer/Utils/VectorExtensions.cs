@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Utils
 {
     using System;
+    using System.Collections.Generic;
     using System.Numerics;
 
     public static class VectorExtensions
@@ -13,6 +14,16 @@
             var floats = new float[3];
             vector3.CopyTo(floats);
             return floats;
+        }
+        
+        /// <summary>
+        /// Yield return the 3 items in XYZ order.
+        /// </summary>
+        public static IEnumerable<float> AsEnumerable(this Vector3 v)
+        {
+            yield return v.X;
+            yield return v.Y;
+            yield return v.Z;
         }
 
         /// <summary>
