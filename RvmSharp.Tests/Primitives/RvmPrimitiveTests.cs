@@ -113,6 +113,11 @@ namespace RvmSharp.Tests.Primitives
 
             Assert.That(box, Is.EqualTo(boxCopy));
             Assert.That(box, Is.EqualTo(newIdenticalBox));
+
+            box.Connections[1] = new RvmConnection(box, box, 0, 0, Vector3.Zero, Vector3.UnitZ,
+                RvmConnection.ConnectionType.HasRectangularSide);
+            
+            Assert.That(box, Is.Not.EqualTo(newIdenticalBox));
         }
     }
 }
