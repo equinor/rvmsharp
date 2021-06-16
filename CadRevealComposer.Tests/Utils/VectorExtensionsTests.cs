@@ -2,6 +2,8 @@
 {
     using CadRevealComposer.Utils;
     using NUnit.Framework;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Numerics;
 
     [TestFixture]
@@ -37,5 +39,11 @@
         [TestCase(new[] {1f, 1, 0}, ExpectedResult = false)]
         [TestCase(new[] {0.00001f, 0.00002f, 0.00001f}, ExpectedResult = true)] // Tolerance is lower than this.
         public bool Vector3_IsUniform(float[] v) => new Vector3(v[0], v[1], v[2]).IsUniform(0.0001f);
+        
+        
+        [Test]
+        [TestCase(new[] {0f, 1, 2}, ExpectedResult = new[] {0f, 1, 2})]
+        [TestCase(new[] {0.00001f, 0.00002f, 0.00001f}, ExpectedResult = new[] {0.00001f, 0.00002f, 0.00001f})] // Tolerance is lower than this.
+        public IEnumerable<float> Vector3_AsEnumerable(float[] v) => new Vector3(v[0], v[1], v[2]).AsEnumerable();
     }
 }
