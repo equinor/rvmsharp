@@ -1,10 +1,13 @@
 ﻿namespace RvmSharp.Exporters
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using Tessellation;
+    using System.Linq;
 
     public sealed class ObjExporter : IDisposable
     {
@@ -33,15 +36,20 @@
             _writer.WriteLine("o " + name);
         }
 
+        /// <summary>
+        /// Add a mesh to the current Object.
+        /// </summary>
+        /// <param name="mesh">The mesh to serialize</param>
         public void WriteMesh(Mesh mesh)
         {
-            foreach (var v in mesh.Vertices)
+            foreach (var vertex in mesh.Vertices)
             {
-                _writer.WriteLine("v " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + (-v.Y).ToString("0.000000", CultureInfo.InvariantCulture));
+                _writer.WriteLine($"v {FastToString(vertex.X)} {FastToString(vertex.Z)} {FastToString(-vertex.Y)}");
             }
-            foreach (var v in mesh.Normals)
+
+            foreach (var normal in mesh.Normals)
             {
-                _writer.WriteLine("vn " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + (-v.Y).ToString("0.000000", CultureInfo.InvariantCulture));
+                _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
             }
 
             _writer.WriteLine("s off");
@@ -65,6 +73,19 @@
 
             _vertexCount += mesh.Vertices.Length;
             _normalCount += mesh.Normals.Length;
+        }
+
+        private readonly List<(float Orig, float ParsedDecimal, float ParsedFloat)> _differences = new List<(float Orig, float ParcedDecimal, float ParsedFloat)>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string FastToString(float number)
+        {
+            // Using Math.Round, and Decimal instead of "float.ToString("0.000000") as it is roughly 100% faster,
+            // and produces (within our tolerances) identical results. And avoids E notation.
+            // This is potentially lossy, but produces as-good or better results than float.ToString(0.000000)
+            // in average, and with lower "max" differences.
+            const int significantFigures = 6; // Arbitrary-ish, as the rounding here is not perfect.
+            return Convert.ToDecimal(Math.Round(number, significantFigures)).ToString(CultureInfo.InvariantCulture);
         }
     }
 }
