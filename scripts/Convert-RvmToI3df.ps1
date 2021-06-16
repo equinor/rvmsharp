@@ -75,7 +75,7 @@ end {
 
     #region ctm-converter
 
-    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "mesh2ctm.exe"
+    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.exe"
     Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
         $ctmInputPath = $_.FullName
 
