@@ -321,7 +321,7 @@ namespace CadRevealComposer
 
         private static Dictionary<ulong, IReadOnlyCollection<TriangleMesh>> ExportMeshesToFile(DirectoryInfo outputDirectory, IReadOnlyCollection<RvmNode> rvmNodes)
         {
-            
+            var timer = Stopwatch.StartNew();
             var rvmNodesWithFacetGroups = rvmNodes.ToDictionary(x => x, x => x.Children.OfType<RvmFacetGroup>());
 
             var tessellatedFacetGroups = rvmNodesWithFacetGroups.Select(kvp =>
@@ -359,7 +359,8 @@ namespace CadRevealComposer
                 triangleMeshes.Add(triangleMesh);
             }
 
-            return new Dictionary<ulong, IReadOnlyCollection<TriangleMesh>>(){{meshId, triangleMeshes}};
+            Console.WriteLine($"{nameof(ExportMeshesToFile)} time: {timer.Elapsed}.");
+            return new Dictionary<ulong, IReadOnlyCollection<TriangleMesh>>() {{meshId, triangleMeshes}};
         }
 
         private static void JsonSerializeToFile<T>(T obj, string filename, Formatting formatting = Formatting.None)
