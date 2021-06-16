@@ -331,7 +331,10 @@ namespace CadRevealComposer
             
             var rvmNodesWithFacetGroups = rvmNodes.ToDictionary(x => x, x => x.Children.OfType<RvmFacetGroup>());
 
-            var tessellatedFacetGroups = rvmNodesWithFacetGroups.Select(kvp =>
+            var tessellatedFacetGroups = rvmNodesWithFacetGroups
+                .AsParallel()
+                .AsOrdered()
+                .Select(kvp =>
             {
                 return kvp.Value.Select(facetGroup =>
                 {
@@ -340,14 +343,14 @@ namespace CadRevealComposer
                     bool shouldExport = facetGroup.CalculateAxisAlignedBoundingBox().Diagonal > minimumDiagonalToExport;
                     return shouldExport ? (kvp.Key, facetGroup, Mesh: TessellatorBridge.Tessellate(facetGroup, tolerance)) : ((RvmNode Key, RvmFacetGroup facetGroup, Mesh? Mesh)?) null;
                 });
-            }).SelectMany(x => x).WhereNotNull().Where(x => x.Mesh != null);
+            }).SelectMany(x => x).WhereNotNull().Where(x => x.Mesh != null).AsSequential();
             
 
             var meshId = MeshIdGenerator.GetNextId();
             var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
             objExporter.StartObject($"root"); // Keep a single object in each file
             var triangleMeshes = new List<TriangleMesh>();
-            
+
             foreach ((var rvmNode, var facetGroup, Mesh? mesh) in tessellatedFacetGroups)
             {
                 if (mesh == null)
