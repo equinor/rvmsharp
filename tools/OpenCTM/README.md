@@ -1,9 +1,8 @@
 # Mesh2CTM
 
-This is a modification of [OpenCTM](https://github.com/Danny02/OpenCTM/tree/d8a213e5711259839cdad3779be3b855658a9b89)
-with [fast_obj](https://github.com/thisistherk/fast_obj/tree/92551724cf800386952f94502e1454bf7e37ae32)  as OBJ reader.
+The compiled `mesh2ctm.exe` file is based on this commit of the Equinor fork <https://github.com/equinor/OpenCTM/commit/c7dd46aa5b5f24253f217f1cc3bfba4df221c114>. This adds ~60x faster reading of `.obj` files compared with the "current" OpenCTM v1.0.3 release on Windows.
 
-> TODO: fork coming soon
+Mesh2CTM is a modification of [OpenCTM](https://github.com/Danny02/OpenCTM/tree/d8a213e5711259839cdad3779be3b855658a9b89), where the original OBJ reader was speed up using [fast_obj](https://github.com/thisistherk/fast_obj/tree/92551724cf800386952f94502e1454bf7e37ae32). Links are to the used commits.
 
 ## Licenses
 
@@ -57,5 +56,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
-
