@@ -1,8 +1,11 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
-    [string] $OutputDirectory = $(Join-Path "$PSScriptRoot" ".\outputs\"),
+    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM"),
+    [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\outputs\"),
+    [Parameter(Mandatory = $false)][long] $ProjectId = 10000,
+    [Parameter(Mandatory = $false)][long] $ModelId = 1,
+    [Parameter(Mandatory = $false)][long] $RevisionId = 0,
     [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\Echo3DWeb\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
     [string] $I3dfPath = "C:\Users\nhals\GitRepos\conceal\i3df",
     [switch] $Force = $true,
@@ -37,7 +40,7 @@ end {
         Write-Error "Could not find ctmconv. You need to install OpenCTM, and restart the terminal. http://openctm.sourceforge.net/?page=download"
     }
 
-    if (-not $Force -and (Get-ChildItem $outputDirectory)) {
+    if (-not $Force -and (Get-ChildItem $WorkDirectory)) {
         Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
     }
     #endregion Guards
@@ -45,7 +48,7 @@ end {
 
     #region Reveal Composer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
-    & dotnet.exe run --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $OutputDirectory
+    & dotnet.exe run --configuration Release --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $WorkDirectory --ProjectId $ProjectId --ModelId $ModelId --RevisionId $RevisionId
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
@@ -54,12 +57,12 @@ end {
 
 
     #region i3df-converter
-    $expectedOutputPath = Join-Path (Resolve-Path $OutputDirectory) "output.json"
+    $expectedOutputPath = Join-Path (Resolve-Path $WorkDirectory) "output.json"
     if (-not (Test-Path $expectedOutputPath)) {
         Write-Error "Expected the output from dotnet to be at ""$expectedOutputPath"". Could not find the file. Has anything changed?"
     }
 
-    $outputi3dFile = (Join-Path (Resolve-Path $OutputDirectory) "sector_0.i3d")
+    $outputi3dFile = (Join-Path (Resolve-Path $WorkDirectory) "sector_0.i3d")
 
     $i3dfCargoPath = Join-Path $I3dfPath "Cargo.toml"
 
@@ -72,14 +75,15 @@ end {
 
     #region ctm-converter
 
-    Get-ChildItem -Path "$OutputDirectory/*" -Filter "*.obj" | ForEach-Object {
+    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "mesh2ctm.exe"
+    Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
         $ctmInputPath = $_.FullName
 
         $ctmFileName = $_.BaseName + ".ctm"
-        $ctmOutputPath = Join-Path $OutputDirectory $ctmFileName
+        $ctmOutputPath = Join-Path $WorkDirectory $ctmFileName
 
         $compressionLevel = 4
-        & ctmconv.exe $ctmInputPath $ctmOutputPath --comment "Echo was here." --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
+        & $CtmConverterPath $ctmInputPath $ctmOutputPath --comment "Echo was here." --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
         if ($LASTEXITCODE) {
             Write-Error "ctmconv failed." -ErrorAction Stop
         }
@@ -89,7 +93,7 @@ end {
 
     #region Artifact Staging
 
-    $artifactStagingDirectory = Join-Path $OutputDirectory "ArtifactStaging"
+    $artifactStagingDirectory = Join-Path $WorkDirectory "ArtifactStaging"
     If (-not (Test-Path $artifactStagingDirectory)) {
         New-Item -Path $artifactStagingDirectory -ItemType Directory -Force
     }
@@ -103,7 +107,7 @@ end {
     )
 
     foreach ($filter in $artifactStagingGlobs) {
-        Copy-Item -Path (Join-Path $OutputDirectory $filter) -Destination $artifactStagingDirectory
+        Copy-Item -Path (Join-Path $WorkDirectory $filter) -Destination $artifactStagingDirectory
     }
 
     #endregion Artifact Staging
