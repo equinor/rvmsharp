@@ -83,7 +83,7 @@ end {
         $ctmOutputPath = Join-Path $WorkDirectory $ctmFileName
 
         $compressionLevel = 4
-        & $CtmConverterPath $ctmInputPath $ctmOutputPath --comment "Echo was here." --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
+        & $CtmConverterPath $ctmInputPath $ctmOutputPath --comment "RvmSharp" --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
         if ($LASTEXITCODE) {
             Write-Error "ctmconv failed." -ErrorAction Stop
         }
