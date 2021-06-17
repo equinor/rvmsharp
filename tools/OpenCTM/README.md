@@ -4,6 +4,15 @@ The compiled `mesh2ctm.exe` file is based on this commit of the Equinor fork <ht
 
 Mesh2CTM is a modification of [OpenCTM](https://github.com/Danny02/OpenCTM/tree/d8a213e5711259839cdad3779be3b855658a9b89), where the original OBJ reader was speed up using [fast_obj](https://github.com/thisistherk/fast_obj/tree/92551724cf800386952f94502e1454bf7e37ae32). Links are to the used commits.
 
+## Building
+
+```bash
+git clone https://github.com/equinor/OpenCTM -b Feature/FastObjParser
+cd OpenCTM
+mkdir build && cd build
+cmake -DCMAKE_BUILD_TYPE=Release .. && make
+```
+
 ## Licenses
 
 ### OpenCTM
