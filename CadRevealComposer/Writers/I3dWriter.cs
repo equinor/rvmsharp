@@ -857,6 +857,7 @@ namespace CadRevealComposer.Writers
         {
             for (int i = 0; i < attributeArray.Length; i++)
             {
+                // TODO: decide on precision here and in Runner
                 if (targetFloat == attributeArray[i])
                 {
                     return (ulong)i;
