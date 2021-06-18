@@ -238,11 +238,13 @@ namespace CadRevealComposer
                 }
             };
 
+            var i3dTimer = Stopwatch.StartNew();
+            using var i3dSectorFile = File.Create(Path.Join(outputDirectory.FullName, $"sector_{file.FileSector.Header.SectorId}.i3d"));
+            I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
+            Console.WriteLine("Finished writing i3d Sectors in " + i3dTimer.Elapsed);
 
-            var outputFileName = Path.Combine(outputDirectory.FullName, "output.json");
-            JsonSerializeToFile(file, outputFileName);
 
-
+            var infoNodesTimer = Stopwatch.StartNew();
             var infoNodes = allNodes.Where(n => n.Group is RvmNode).Select(n =>
             {
                 var rvmNode = (RvmNode)n.Group!;
@@ -269,6 +271,7 @@ namespace CadRevealComposer
 
             var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
             JsonSerializeToFile(infoNodes, outputFileName2);
+            Console.WriteLine("Done serializing infonodes in " + infoNodesTimer);
 
             var sectorFileHeader = file.FileSector.Header;
             var scene = new Scene()
@@ -315,8 +318,6 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Wrote json files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
 
-            using var i3dSectorFile = File.Create(Path.Join(outputDirectory.FullName, $"sector_{file.FileSector.Header.SectorId}.i3d"));
-            I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
             
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
             // BOX treeIndex, transform -> cadreveal, 

@@ -1,13 +1,12 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM"),
+    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
     [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\outputs\"),
     [Parameter(Mandatory = $false)][long] $ProjectId = 10000,
     [Parameter(Mandatory = $false)][long] $ModelId = 1,
     [Parameter(Mandatory = $false)][long] $RevisionId = 0,
     [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\Echo3DWeb\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
-    [string] $I3dfPath = "C:\Users\nhals\GitRepos\conceal\i3df",
     [switch] $Force = $true,
     [switch] $UploadToDev = $false
 )
@@ -32,10 +31,6 @@ end {
         Write-Error "Could not find dotnet. Is the Dotnet CLI installed?"
     }
 
-    if (-not (Get-Command "cargo" -ErrorAction 'SilentlyContinue')) {
-        Write-Error "Could not find cargo. Do you have Rust and Cargo installed?"
-    }
-
     if (-not (Get-Command "ctmconv" -ErrorAction 'SilentlyContinue')) {
         Write-Error "Could not find ctmconv. You need to install OpenCTM, and restart the terminal. http://openctm.sourceforge.net/?page=download"
     }
@@ -54,24 +49,6 @@ end {
     }
 
     #endregion Reveal Composer
-
-
-    #region i3df-converter
-    $expectedOutputPath = Join-Path (Resolve-Path $WorkDirectory) "output.json"
-    if (-not (Test-Path $expectedOutputPath)) {
-        Write-Error "Expected the output from dotnet to be at ""$expectedOutputPath"". Could not find the file. Has anything changed?"
-    }
-
-    $outputi3dFile = (Join-Path (Resolve-Path $WorkDirectory) "sector_0.i3d")
-
-    $i3dfCargoPath = Join-Path $I3dfPath "Cargo.toml"
-
-    & cargo.exe run --manifest-path $i3dfCargoPath --release --features dump --bin i3df-converter -- $expectedOutputPath $outputi3dFile
-    if ($LASTEXITCODE) {
-        Write-Error "cargo failed with exit code $LASTEXITCODE"
-    }
-
-    #endregion i3df-converter
 
     #region ctm-converter
 
