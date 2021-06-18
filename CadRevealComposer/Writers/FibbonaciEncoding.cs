@@ -82,9 +82,9 @@ namespace CadRevealComposer.Writers
 
         public static byte[] EncodeArray(ulong[] input)
         {
-            List<byte>? output = new List<byte>();
+            var output = new List<byte>();
 
-            ulong[]? encoded = input.Select(v => FibEncode(v)).ToArray();
+            var encoded = input.Select(v => FibEncode(v)).ToArray();
 
             byte current = 0;
             int pos = 0;
