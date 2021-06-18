@@ -16,13 +16,15 @@ namespace CadRevealComposer
     using System.Numerics;
     using System.Threading.Tasks;
     using Utils;
+    using Writers;
+
 
     public record ProjectId(long Value);
 
     public record ModelId(long Value);
 
     public record RevisionId(long Value);
-    
+
     public static class CadRevealComposerRunner
     {
         private const int I3DFMagicBytes = 1178874697; // I3DF chars as bytes.
@@ -31,7 +33,7 @@ namespace CadRevealComposer
         private static readonly SequentialIdGenerator MeshIdGenerator = new SequentialIdGenerator();
         
         public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
-
+        
         // ReSharper disable once UnusedParameter.Local
         // ReSharper disable once CognitiveComplexity
         public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory, Parameters parameters)
@@ -312,6 +314,9 @@ namespace CadRevealComposer
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
             Console.WriteLine($"Wrote json files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+
+            using var stream = File.OpenWrite($"sector_{file.FileSector.Header.SectorId}.i3d");
+            I3dWriter.WriteSector(file.FileSector, stream);
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
             // BOX treeIndex, transform -> cadreveal, 
 
@@ -321,14 +326,14 @@ namespace CadRevealComposer
 
         private static Dictionary<ulong, IReadOnlyCollection<TriangleMesh>> ExportMeshesToFile(DirectoryInfo outputDirectory, IReadOnlyCollection<RvmNode> rvmNodes)
         {
-            var timer = Stopwatch.StartNew();
+            
             var rvmNodesWithFacetGroups = rvmNodes.ToDictionary(x => x, x => x.Children.OfType<RvmFacetGroup>());
 
             var tessellatedFacetGroups = rvmNodesWithFacetGroups.Select(kvp =>
             {
                 return kvp.Value.Select(facetGroup =>
                 {
-                    const float minimumDiagonalToExport = 10f;
+                    const float minimumDiagonalToExport = -10f;
                     const float tolerance = 0.1f;
                     bool shouldExport = facetGroup.CalculateAxisAlignedBoundingBox().Diagonal > minimumDiagonalToExport;
                     return shouldExport ? (kvp.Key, facetGroup, Mesh: TessellatorBridge.Tessellate(facetGroup, tolerance)) : ((RvmNode Key, RvmFacetGroup facetGroup, Mesh? Mesh)?) null;
@@ -359,8 +364,7 @@ namespace CadRevealComposer
                 triangleMeshes.Add(triangleMesh);
             }
 
-            Console.WriteLine($"{nameof(ExportMeshesToFile)} time: {timer.Elapsed}.");
-            return new Dictionary<ulong, IReadOnlyCollection<TriangleMesh>>() {{meshId, triangleMeshes}};
+            return new Dictionary<ulong, IReadOnlyCollection<TriangleMesh>>(){{meshId, triangleMeshes}};
         }
 
         private static void JsonSerializeToFile<T>(T obj, string filename, Formatting formatting = Formatting.None)

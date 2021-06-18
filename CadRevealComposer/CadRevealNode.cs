@@ -37,7 +37,7 @@ namespace CadRevealComposer
 
     public class FileSector
     {
-        [JsonProperty("header")] public Header? Header { get; set; }
+        [JsonProperty("header")] public Header Header { get; set; }
 
         [JsonProperty("primitive_collections")]
         public PrimitiveCollections PrimitiveCollections { get; set; } = new PrimitiveCollections();
@@ -133,59 +133,59 @@ namespace CadRevealComposer
 
     public class Header
     {
-        [JsonProperty("magic_bytes")] public long MagicBytes { get; set; }
+        [JsonProperty("magic_bytes")] public uint MagicBytes { get; set; }
 
-        [JsonProperty("format_version")] public long FormatVersion { get; set; }
+        [JsonProperty("format_version")] public uint FormatVersion { get; set; }
 
-        [JsonProperty("optimizer_version")] public long OptimizerVersion { get; set; }
+        [JsonProperty("optimizer_version")] public uint OptimizerVersion { get; set; }
 
-        [JsonProperty("sector_id")] public long SectorId { get; set; }
+        [JsonProperty("sector_id")] public uint SectorId { get; set; }
 
-        [JsonProperty("parent_sector_id")] public long? ParentSectorId { get; set; }
+        [JsonProperty("parent_sector_id")] public long? ParentSectorId { get; set; } // FIXME this one is actually ulong, but JSON export requires -1 for no parent
 
-        [JsonProperty("bbox_min")] public float[]? BboxMin { get; set; }
+        [JsonProperty("bbox_min")] public float[] BboxMin { get; set; }
 
-        [JsonProperty("bbox_max")] public float[]? BboxMax { get; set; }
+        [JsonProperty("bbox_max")] public float[] BboxMax { get; set; }
 
-        [JsonProperty("attributes")] public Attributes Attributes { get; set; } = new Attributes();
+        [JsonProperty("attributes")] public Attributes? Attributes { get; set; } = new Attributes();
     }
 
     public class Attributes
     {
-        [JsonProperty("color")] public int[][]? Color { get; set; }
+        [JsonProperty("color")] public int[][] Color { get; set; }
 
-        [JsonProperty("diagonal")] public float[]? Diagonal { get; set; }
+        [JsonProperty("diagonal")] public float[] Diagonal { get; set; }
 
-        [JsonProperty("center_x")] public float[]? CenterX { get; set; }
+        [JsonProperty("center_x")] public float[] CenterX { get; set; }
 
-        [JsonProperty("center_y")] public float[]? CenterY { get; set; }
+        [JsonProperty("center_y")] public float[] CenterY { get; set; }
 
-        [JsonProperty("center_z")] public float[]? CenterZ { get; set; }
+        [JsonProperty("center_z")] public float[] CenterZ { get; set; }
 
-        [JsonProperty("normal")] public float[][]? Normal { get; set; }
+        [JsonProperty("normal")] public float[][] Normal { get; set; }
 
-        [JsonProperty("delta")] public float[]? Delta { get; set; }
+        [JsonProperty("delta")] public float[] Delta { get; set; }
 
-        [JsonProperty("height")] public float[]? Height { get; set; }
+        [JsonProperty("height")] public float[] Height { get; set; }
 
-        [JsonProperty("radius")] public float[]? Radius { get; set; }
+        [JsonProperty("radius")] public float[] Radius { get; set; }
 
-        [JsonProperty("angle")] public float[]? Angle { get; set; }
+        [JsonProperty("angle")] public float[] Angle { get; set; }
 
-        [JsonProperty("translation_x")] public float[]? TranslationX { get; set; }
+        [JsonProperty("translation_x")] public float[] TranslationX { get; set; }
 
-        [JsonProperty("translation_y")] public float[]? TranslationY { get; set; }
+        [JsonProperty("translation_y")] public float[] TranslationY { get; set; }
 
-        [JsonProperty("translation_z")] public float[]? TranslationZ { get; set; }
+        [JsonProperty("translation_z")] public float[] TranslationZ { get; set; }
 
-        [JsonProperty("scale_x")] public float[]? ScaleX { get; set; }
+        [JsonProperty("scale_x")] public float[] ScaleX { get; set; }
 
-        [JsonProperty("scale_y")] public float[]? ScaleY { get; set; }
+        [JsonProperty("scale_y")] public float[] ScaleY { get; set; }
 
-        [JsonProperty("scale_z")] public float[]? ScaleZ { get; set; }
+        [JsonProperty("scale_z")] public float[] ScaleZ { get; set; }
 
-        [JsonProperty("file_id")] public ulong[]? FileId { get; set; }
+        [JsonProperty("file_id")] public ulong[] FileId { get; set; }
 
-        [JsonProperty("texture")] public TriangleMesh.Texture[]? Texture { get; set; }
+        [JsonProperty("texture")] public TriangleMesh.Texture[] Texture { get; set; }
     }
 }
