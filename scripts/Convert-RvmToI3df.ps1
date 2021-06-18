@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param (
     [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
-    [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\outputs\"),
+    [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
     [Parameter(Mandatory = $false)][long] $ProjectId = 10000,
     [Parameter(Mandatory = $false)][long] $ModelId = 1,
     [Parameter(Mandatory = $false)][long] $RevisionId = 0,
@@ -23,6 +23,7 @@ end {
     Set-StrictMode -Version 3
     [Console]::ResetColor()
     $ErrorActionPreference = 'Stop'
+    $scriptTimer = [system.diagnostics.stopwatch]::StartNew()
     #endregion PsSetup
 
 
@@ -38,6 +39,10 @@ end {
     if (-not $Force -and (Get-ChildItem $WorkDirectory)) {
         Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
     }
+
+    Remove-Item -Path $WorkDirectory -Recurse -Force -ErrorAction Ignore
+    New-Item -Path $WorkDirectory -ItemType Directory -Force | Out-Null
+
     #endregion Guards
 
 
@@ -54,6 +59,7 @@ end {
 
     $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.exe"
     Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
+        Write-Output ("Converting " + $_.Name + " (" + ("{0:n2} MB" -f ($_.Length / 1MB) + ") to CTM"))
         $ctmInputPath = $_.FullName
 
         $ctmFileName = $_.BaseName + ".ctm"
@@ -71,9 +77,9 @@ end {
     #region Artifact Staging
 
     $artifactStagingDirectory = Join-Path $WorkDirectory "ArtifactStaging"
-    If (-not (Test-Path $artifactStagingDirectory)) {
-        New-Item -Path $artifactStagingDirectory -ItemType Directory -Force
-    }
+
+    New-Item -Path $artifactStagingDirectory -ItemType Directory -Force | Out-Null
+
 
     $artifactStagingGlobs = @(
         "scene.json"
@@ -105,6 +111,5 @@ end {
             --destination $destination
     }
 
-    Write-Host "Success. Output copied to ""$ArtifactDirectory"""
+    Write-Host "Success. Output copied to ""$ArtifactDirectory"". Total time: $($scriptTimer.Elapsed)"
 }
-
