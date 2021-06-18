@@ -315,8 +315,9 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Wrote json files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
 
-            using var stream = File.OpenWrite($"sector_{file.FileSector.Header.SectorId}.i3d");
-            I3dWriter.WriteSector(file.FileSector, stream);
+            using var i3dSectorFile = File.Create(Path.Join(outputDirectory.FullName, $"sector_{file.FileSector.Header.SectorId}.i3d"));
+            I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
+            
             // TODO: Nodes must be generated for implicit geometry like implicit pipes
             // BOX treeIndex, transform -> cadreveal, 
 
