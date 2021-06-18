@@ -239,7 +239,11 @@ namespace CadRevealComposer
             };
 
             var i3dTimer = Stopwatch.StartNew();
-            using var i3dSectorFile = File.Create(Path.Join(outputDirectory.FullName, $"sector_{file.FileSector.Header.SectorId}.i3d"));
+            using var i3dSectorFile = File.Create(
+                Path.Join(
+                    outputDirectory.FullName, 
+                    $"sector_{file.FileSector.Header.SectorId}.i3d"
+                    ));
             I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
             Console.WriteLine("Finished writing i3d Sectors in " + i3dTimer.Elapsed);
 
@@ -271,7 +275,7 @@ namespace CadRevealComposer
 
             var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
             JsonSerializeToFile(infoNodes, outputFileName2);
-            Console.WriteLine("Done serializing infonodes in " + infoNodesTimer);
+            Console.WriteLine("Done serializing infonodes in " + infoNodesTimer.Elapsed);
 
             var sectorFileHeader = file.FileSector.Header;
             var scene = new Scene()
@@ -312,18 +316,12 @@ namespace CadRevealComposer
 
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
             JsonSerializeToFile(scene, scenePath, Formatting.Indented);
-            
+
             Console.WriteLine($"Total primitives {geometries.Count}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
-            Console.WriteLine($"Wrote json files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-
-            
-            // TODO: Nodes must be generated for implicit geometry like implicit pipes
-            // BOX treeIndex, transform -> cadreveal, 
-
-            // TODO: For each CadRevealNode -> Collect CadRevealGeometries -> 
-            // TODO: Translate Rvm
+            Console.WriteLine(
+                $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         }
 
         private static Dictionary<ulong, IReadOnlyCollection<TriangleMesh>> ExportMeshesToFile(DirectoryInfo outputDirectory, IReadOnlyCollection<RvmNode> rvmNodes)
@@ -382,7 +380,7 @@ namespace CadRevealComposer
             jsonWriter.Flush();
         }
 
-        public static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
+        private static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
         {
             yield return root;
 
