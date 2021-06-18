@@ -347,7 +347,7 @@ namespace CadRevealComposer
             
 
             var meshId = MeshIdGenerator.GetNextId();
-            var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
+            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
             objExporter.StartObject($"root"); // Keep a single object in each file
             var triangleMeshes = new List<TriangleMesh>();
 
