@@ -3,19 +3,23 @@ namespace CadRevealComposer.Writers
     using Primitives;
     using System;
     using System.IO;
+    using System.Runtime.CompilerServices;
 
     public static class ByteWriterUtils
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteUint16(this Stream stream, ushort value)
         {
             stream.Write(BitConverter.GetBytes(value), 0, sizeof(ushort));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteUint32(this Stream stream, uint value)
         {
             stream.Write(BitConverter.GetBytes(value), 0, sizeof(uint));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteUint48(this Stream stream, ulong value)
         {
             for (int i = 0; i < 48; i += 8)
@@ -29,16 +33,19 @@ namespace CadRevealComposer.Writers
             stream.Write(BitConverter.GetBytes(value), 0, sizeof(ulong));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteFloat(this Stream stream, float value)
         {
             stream.Write(BitConverter.GetBytes(value), 0, sizeof(float));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteDouble(this Stream stream, double value)
         {
             stream.Write(BitConverter.GetBytes(value), 0, sizeof(double));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteFloatArray(this Stream stream, float[] value)
         {
             stream.WriteUint32((uint)value.Length);
@@ -50,6 +57,7 @@ namespace CadRevealComposer.Writers
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteUint64Array(this Stream stream, ulong[] value)
         {
             stream.WriteUint32((uint)value.Length);
@@ -61,6 +69,7 @@ namespace CadRevealComposer.Writers
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteRgbaArray(this Stream stream, int[][] value)
         {
             stream.WriteUint32((uint)value.Length);
@@ -75,6 +84,7 @@ namespace CadRevealComposer.Writers
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteNormalArray(this Stream stream, float[][] value)
         {
             stream.WriteUint32((uint)value.Length);
@@ -88,6 +98,7 @@ namespace CadRevealComposer.Writers
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteTextureArray(this Stream stream, TriangleMesh.Texture[] value)
         {
             stream.WriteUint32((uint)value.Length);
