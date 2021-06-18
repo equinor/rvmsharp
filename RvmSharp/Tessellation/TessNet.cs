@@ -7,7 +7,7 @@ using static RvmSharp.Primitives.RvmFacetGroup;
 
 namespace RvmSharp.Tessellation
 {
-    public class TessNet
+    public static class TessNet
     {
         public class TessellateResult
         {
