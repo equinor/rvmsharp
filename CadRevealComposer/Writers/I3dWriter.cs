@@ -17,17 +17,17 @@ namespace CadRevealComposer.Writers
             stream.WriteUint32(0); // size will be set at the end
             WriteHeader(sector.Header, stream);
 
-            WritePrimitives(sector.PrimitiveCollections, sector.Header.Attributes, stream);
+            if (sector.Header.Attributes != null)
+                WritePrimitives(sector.PrimitiveCollections, sector.Header.Attributes, stream);
 
-            long position = stream.Position;
-            Console.WriteLine("position " + position);
+            var position = stream.Position;
             stream.Seek(0, SeekOrigin.Begin);
             stream.WriteUint32((uint)(position - 4));
             stream.Flush();
         }
 
         private static void WritePrimitives(PrimitiveCollections sectorPrimitiveCollections,
-            Attributes? headerAttributes, Stream stream)
+            Attributes headerAttributes, Stream stream)
         {
             {
                 var boxCollection = sectorPrimitiveCollections.BoxCollection;
@@ -104,24 +104,24 @@ namespace CadRevealComposer.Writers
             if (closedCylinderCollection.Length > 0)
             {
                 var indices = new List<ulong>();
-                foreach (var closed_cylinder in closedCylinderCollection)
+                foreach (var closedCylinder in closedCylinderCollection)
                 {
-                    indices.Add(closed_cylinder.TreeIndex);
-                    indices.Add(GetColorIndex(closed_cylinder.Color, headerAttributes.Color));
-                    indices.Add(GetFloatIndex(closed_cylinder.Diagonal, headerAttributes.Diagonal));
-                    indices.Add(GetFloatIndex(closed_cylinder.CenterX, headerAttributes.CenterX));
-                    indices.Add(GetFloatIndex(closed_cylinder.CenterY, headerAttributes.CenterY));
-                    indices.Add(GetFloatIndex(closed_cylinder.CenterZ, headerAttributes.CenterZ));
-                    indices.Add(GetNormalIndex(closed_cylinder.CenterAxis, headerAttributes.Normal));
-                    indices.Add(GetFloatIndex(closed_cylinder.Height, headerAttributes.Height));
-                    indices.Add(GetFloatIndex(closed_cylinder.Radius, headerAttributes.Radius));
+                    indices.Add(closedCylinder.TreeIndex);
+                    indices.Add(GetColorIndex(closedCylinder.Color, headerAttributes.Color));
+                    indices.Add(GetFloatIndex(closedCylinder.Diagonal, headerAttributes.Diagonal));
+                    indices.Add(GetFloatIndex(closedCylinder.CenterX, headerAttributes.CenterX));
+                    indices.Add(GetFloatIndex(closedCylinder.CenterY, headerAttributes.CenterY));
+                    indices.Add(GetFloatIndex(closedCylinder.CenterZ, headerAttributes.CenterZ));
+                    indices.Add(GetNormalIndex(closedCylinder.CenterAxis, headerAttributes.Normal));
+                    indices.Add(GetFloatIndex(closedCylinder.Height, headerAttributes.Height));
+                    indices.Add(GetFloatIndex(closedCylinder.Radius, headerAttributes.Radius));
                 }
 
                 var nodeIds = closedCylinderCollection.Select(b => b.NodeId).ToArray();
                 WritePrimitiveCollection(stream, 4, nodeIds, indices.ToArray());
             }
 
-            ClosedEccentricCone[]? closedEccentricConeCollection =
+            var closedEccentricConeCollection =
                 sectorPrimitiveCollections.ClosedEccentricConeCollection;
             if (closedEccentricConeCollection.Length > 0)
             {
@@ -145,7 +145,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 5, nodeIds, indices.ToArray());
             }
 
-            ClosedEllipsoidSegment[]? closedEllipsoidSegmentCollection =
+            var closedEllipsoidSegmentCollection =
                 sectorPrimitiveCollections.ClosedEllipsoidSegmentCollection;
             if (closedEllipsoidSegmentCollection.Length > 0)
             {
@@ -168,7 +168,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 6, nodeIds, indices.ToArray());
             }
 
-            ClosedExtrudedRingSegment[]? closedExtrudedRingSegmentCollection =
+            var closedExtrudedRingSegmentCollection =
                 sectorPrimitiveCollections.ClosedExtrudedRingSegmentCollection;
             if (closedExtrudedRingSegmentCollection.Length > 0)
             {
@@ -193,7 +193,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 7, nodeIds, indices.ToArray());
             }
 
-            ClosedSphericalSegment[]? closedSphericalSegmentCollection =
+            var closedSphericalSegmentCollection =
                 sectorPrimitiveCollections.ClosedSphericalSegmentCollection;
             if (closedSphericalSegmentCollection.Length > 0)
             {
@@ -215,7 +215,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 9, nodeIds, indices.ToArray());
             }
 
-            ClosedTorusSegment[]? closedTorusSegmentCollection =
+            var closedTorusSegmentCollection =
                 sectorPrimitiveCollections.ClosedTorusSegmentCollection;
             if (closedTorusSegmentCollection.Length > 0)
             {
@@ -239,11 +239,11 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 10, nodeIds, indices.ToArray());
             }
 
-            Ellipsoid[]? EllipsoidCollection = sectorPrimitiveCollections.EllipsoidCollection;
-            if (EllipsoidCollection.Length > 0)
+            var ellipsoidCollection = sectorPrimitiveCollections.EllipsoidCollection;
+            if (ellipsoidCollection.Length > 0)
             {
                 var indices = new List<ulong>();
-                foreach (var geometry in EllipsoidCollection)
+                foreach (var geometry in ellipsoidCollection)
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
@@ -256,11 +256,11 @@ namespace CadRevealComposer.Writers
                     indices.Add(GetFloatIndex(geometry.VerticalRadius, headerAttributes.Radius));
                 }
 
-                var nodeIds = EllipsoidCollection.Select(b => b.NodeId).ToArray();
+                var nodeIds = ellipsoidCollection.Select(b => b.NodeId).ToArray();
                 WritePrimitiveCollection(stream, 11, nodeIds, indices.ToArray());
             }
 
-            ExtrudedRing[]? extrudedRingCollection = sectorPrimitiveCollections.ExtrudedRingCollection;
+            var extrudedRingCollection = sectorPrimitiveCollections.ExtrudedRingCollection;
             if (extrudedRingCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -282,7 +282,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 12, nodeIds, indices.ToArray());
             }
 
-            Nut[]? nutCollection = sectorPrimitiveCollections.NutCollection;
+            var nutCollection = sectorPrimitiveCollections.NutCollection;
             if (nutCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -304,7 +304,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 13, nodeIds, indices.ToArray());
             }
 
-            OpenCone[]? openConeCollection = sectorPrimitiveCollections.OpenConeCollection;
+            var openConeCollection = sectorPrimitiveCollections.OpenConeCollection;
             if (openConeCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -326,7 +326,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 14, nodeIds, indices.ToArray());
             }
 
-            OpenCylinder[]? openCylinderCollection = sectorPrimitiveCollections.OpenCylinderCollection;
+            var openCylinderCollection = sectorPrimitiveCollections.OpenCylinderCollection;
             if (openCylinderCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -347,7 +347,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 15, nodeIds, indices.ToArray());
             }
 
-            OpenEccentricCone[]? openEccentricConeCollection = sectorPrimitiveCollections.OpenEccentricConeCollection;
+            var openEccentricConeCollection = sectorPrimitiveCollections.OpenEccentricConeCollection;
             if (openEccentricConeCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -370,7 +370,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 16, nodeIds, indices.ToArray());
             }
 
-            OpenEllipsoidSegment[]? openEllipsoidSegmentCollection =
+            var openEllipsoidSegmentCollection =
                 sectorPrimitiveCollections.OpenEllipsoidSegmentCollection;
             if (openEllipsoidSegmentCollection.Length > 0)
             {
@@ -393,7 +393,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 17, nodeIds, indices.ToArray());
             }
 
-            OpenExtrudedRingSegment[]? openExtrudedRingSegmentCollection =
+            var openExtrudedRingSegmentCollection =
                 sectorPrimitiveCollections.OpenExtrudedRingSegmentCollection;
             if (openExtrudedRingSegmentCollection.Length > 0)
             {
@@ -418,7 +418,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 18, nodeIds, indices.ToArray());
             }
 
-            OpenSphericalSegment[]? openSphericalSegmentCollection =
+            var openSphericalSegmentCollection =
                 sectorPrimitiveCollections.OpenSphericalSegmentCollection;
             if (openSphericalSegmentCollection.Length > 0)
             {
@@ -440,7 +440,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 20, nodeIds, indices.ToArray());
             }
 
-            OpenTorusSegment[]? openTorusSegmentCollection = sectorPrimitiveCollections.OpenTorusSegmentCollection;
+            var openTorusSegmentCollection = sectorPrimitiveCollections.OpenTorusSegmentCollection;
             if (openTorusSegmentCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -463,7 +463,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 21, nodeIds, indices.ToArray());
             }
 
-            Ring[]? ringCollection = sectorPrimitiveCollections.RingCollection;
+            var ringCollection = sectorPrimitiveCollections.RingCollection;
             if (ringCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -484,7 +484,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 22, nodeIds, indices.ToArray());
             }
 
-            Sphere[]? sphereCollection = sectorPrimitiveCollections.SphereCollection;
+            var sphereCollection = sectorPrimitiveCollections.SphereCollection;
             if (sphereCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -503,7 +503,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 23, nodeIds, indices.ToArray());
             }
 
-            Torus[]? torusCollection = sectorPrimitiveCollections.TorusCollection;
+            var torusCollection = sectorPrimitiveCollections.TorusCollection;
             if (torusCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -524,7 +524,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 24, nodeIds, indices.ToArray());
             }
 
-            OpenGeneralCylinder[]? openGeneralCylinderCollection =
+            var openGeneralCylinderCollection =
                 sectorPrimitiveCollections.OpenGeneralCylinderCollection;
             if (openGeneralCylinderCollection.Length > 0)
             {
@@ -552,12 +552,12 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 30, nodeIds, indices.ToArray());
             }
 
-            ClosedGeneralCylinder[]? ClosedGeneralCylinderCollection =
+            var closedGeneralCylinderCollection =
                 sectorPrimitiveCollections.ClosedGeneralCylinderCollection;
-            if (ClosedGeneralCylinderCollection.Length > 0)
+            if (closedGeneralCylinderCollection.Length > 0)
             {
                 var indices = new List<ulong>();
-                foreach (var geometry in ClosedGeneralCylinderCollection)
+                foreach (var geometry in closedGeneralCylinderCollection)
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
@@ -576,11 +576,11 @@ namespace CadRevealComposer.Writers
                     indices.Add(GetFloatIndex(geometry.ZangleB, headerAttributes.Angle));
                 }
 
-                var nodeIds = ClosedGeneralCylinderCollection.Select(b => b.NodeId).ToArray();
+                var nodeIds = closedGeneralCylinderCollection.Select(b => b.NodeId).ToArray();
                 WritePrimitiveCollection(stream, 31, nodeIds, indices.ToArray());
             }
 
-            SolidOpenGeneralCylinder[]? solidOpenGeneralCylinderCollection =
+            var solidOpenGeneralCylinderCollection =
                 sectorPrimitiveCollections.SolidOpenGeneralCylinderCollection;
             if (solidOpenGeneralCylinderCollection.Length > 0)
             {
@@ -608,7 +608,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 32, nodeIds, indices.ToArray());
             }
 
-            SolidClosedGeneralCylinder[]? solidClosedGeneralCylinderCollection =
+            var solidClosedGeneralCylinderCollection =
                 sectorPrimitiveCollections.SolidClosedGeneralCylinderCollection;
             if (solidClosedGeneralCylinderCollection.Length > 0)
             {
@@ -636,11 +636,11 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 33, nodeIds, indices.ToArray());
             }
 
-            OpenGeneralCone[]? OpenGeneralConeCollection = sectorPrimitiveCollections.OpenGeneralConeCollection;
-            if (OpenGeneralConeCollection.Length > 0)
+            var openGeneralConeCollection = sectorPrimitiveCollections.OpenGeneralConeCollection;
+            if (openGeneralConeCollection.Length > 0)
             {
                 var indices = new List<ulong>();
-                foreach (var geometry in OpenGeneralConeCollection)
+                foreach (var geometry in openGeneralConeCollection)
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
@@ -660,11 +660,11 @@ namespace CadRevealComposer.Writers
                     indices.Add(GetFloatIndex(geometry.ZangleB, headerAttributes.Angle));
                 }
 
-                var nodeIds = OpenGeneralConeCollection.Select(b => b.NodeId).ToArray();
+                var nodeIds = openGeneralConeCollection.Select(b => b.NodeId).ToArray();
                 WritePrimitiveCollection(stream, 34, nodeIds, indices.ToArray());
             }
 
-            ClosedGeneralCone[]? closedGeneralConeCollection = sectorPrimitiveCollections.ClosedGeneralConeCollection;
+            var closedGeneralConeCollection = sectorPrimitiveCollections.ClosedGeneralConeCollection;
             if (closedGeneralConeCollection.Length > 0)
             {
                 var indices = new List<ulong>();
@@ -692,7 +692,7 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 35, nodeIds, indices.ToArray());
             }
 
-            SolidOpenGeneralCone[]? solidOpenGeneralConeCollection =
+            var solidOpenGeneralConeCollection =
                 sectorPrimitiveCollections.SolidOpenGeneralConeCollection;
             if (solidOpenGeneralConeCollection.Length > 0)
             {
@@ -721,12 +721,12 @@ namespace CadRevealComposer.Writers
                 WritePrimitiveCollection(stream, 36, nodeIds, indices.ToArray());
             }
 
-            SolidClosedGeneralCone[]? SolidClosedGeneralConeCollection =
+            var solidClosedGeneralConeCollection =
                 sectorPrimitiveCollections.SolidClosedGeneralConeCollection;
-            if (SolidClosedGeneralConeCollection.Length > 0)
+            if (solidClosedGeneralConeCollection.Length > 0)
             {
                 var indices = new List<ulong>();
-                foreach (var geometry in SolidClosedGeneralConeCollection)
+                foreach (var geometry in solidClosedGeneralConeCollection)
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
@@ -746,7 +746,7 @@ namespace CadRevealComposer.Writers
                     indices.Add(GetFloatIndex(geometry.ZangleB, headerAttributes.Angle));
                 }
 
-                var nodeIds = SolidClosedGeneralConeCollection.Select(b => b.NodeId).ToArray();
+                var nodeIds = solidClosedGeneralConeCollection.Select(b => b.NodeId).ToArray();
                 WritePrimitiveCollection(stream, 37, nodeIds, indices.ToArray());
             }
 
@@ -758,11 +758,13 @@ namespace CadRevealComposer.Writers
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetUint64Index(geometry.FileId, headerAttributes.FileId));
+#pragma warning disable 612
                     indices.Add(GetTextureIndex(geometry.DiffuseTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.SpecularTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.AmbientTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.NormalTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.BumpTexture, headerAttributes.Texture));
+#pragma warning restore 612
                     indices.Add(geometry.TriangleCount);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
                     indices.Add(GetFloatIndex(geometry.Diagonal, headerAttributes.Diagonal));
@@ -780,11 +782,13 @@ namespace CadRevealComposer.Writers
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetUint64Index(geometry.FileId, headerAttributes.FileId));
+#pragma warning disable 612
                     indices.Add(GetTextureIndex(geometry.DiffuseTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.SpecularTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.AmbientTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.NormalTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.BumpTexture, headerAttributes.Texture));
+#pragma warning enable 612
                     indices.Add(geometry.TriangleOffset);
                     indices.Add(geometry.TriangleCount);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
@@ -805,12 +809,12 @@ namespace CadRevealComposer.Writers
             }
         }
 
-        private static ulong GetColorIndex(int[] boxColor, int[][] colors)
+        private static ulong GetColorIndex(int[] targetColor, int[][] colorAttributeArray)
         {
-            for (int i = 0; i < colors.Length; i++)
+            for (int i = 0; i < colorAttributeArray.Length; i++)
             {
-                int[]? color = colors[i];
-                if (boxColor.SequenceEqual(color))
+                var colorAttribute = colorAttributeArray[i];
+                if (targetColor.SequenceEqual(colorAttribute))
                 {
                     return (ulong)i + 1;
                 }
@@ -819,14 +823,14 @@ namespace CadRevealComposer.Writers
             throw new KeyNotFoundException();
         }
 
-        private static ulong GetTextureIndex(TriangleMesh.Texture boxDiagonal,
-            TriangleMesh.Texture[] headerAttributesDiagonal)
+        private static ulong GetTextureIndex(TriangleMesh.Texture targetTexture,
+            TriangleMesh.Texture[] textureAttributeArray)
         {
-            if (boxDiagonal.FileId == 0.0 && boxDiagonal.Width == 0 && boxDiagonal.Height == 0) { return 0; }
-            for (int i = 0; i < headerAttributesDiagonal.Length; i++)
+            if (targetTexture.FileId == 0.0 && targetTexture.Width == 0 && targetTexture.Height == 0) { return 0; }
+            for (int i = 0; i < textureAttributeArray.Length; i++)
             {
-                var t = headerAttributesDiagonal[i];
-                if (boxDiagonal.Height == t.Height && boxDiagonal.Width == t.Width && boxDiagonal.FileId == t.FileId)
+                var attributeTexture = textureAttributeArray[i];
+                if (targetTexture.Height == attributeTexture.Height && targetTexture.Width == attributeTexture.Width && targetTexture.FileId == attributeTexture.FileId)
                 {
                     return (ulong)i;
                 }
@@ -835,12 +839,12 @@ namespace CadRevealComposer.Writers
             throw new KeyNotFoundException();
         }
 
-        private static ulong GetNormalIndex(float[] boxColor, float[][] colors)
+        private static ulong GetNormalIndex(float[] targetNormal, float[][] attributeArray)
         {
-            for (int i = 0; i < colors.Length; i++)
+            for (int i = 0; i < attributeArray.Length; i++)
             {
-                float[]? color = colors[i];
-                if (boxColor.SequenceEqual(color))
+                var attributeNormal = attributeArray[i];
+                if (targetNormal.SequenceEqual(attributeNormal))
                 {
                     return (ulong)i;
                 }
@@ -849,11 +853,11 @@ namespace CadRevealComposer.Writers
             throw new KeyNotFoundException();
         }
 
-        private static ulong GetFloatIndex(float boxDiagonal, float[] headerAttributesDiagonal)
+        private static ulong GetFloatIndex(float targetFloat, float[] attributeArray)
         {
-            for (int i = 0; i < headerAttributesDiagonal.Length; i++)
+            for (int i = 0; i < attributeArray.Length; i++)
             {
-                if (boxDiagonal == headerAttributesDiagonal[i])
+                if (targetFloat == attributeArray[i])
                 {
                     return (ulong)i;
                 }
@@ -862,11 +866,11 @@ namespace CadRevealComposer.Writers
             throw new KeyNotFoundException();
         }
 
-        private static ulong GetUint64Index(ulong boxDiagonal, ulong[] headerAttributesDiagonal)
+        private static ulong GetUint64Index(ulong targetUlong, ulong[] attributeArray)
         {
-            for (int i = 0; i < headerAttributesDiagonal.Length; i++)
+            for (int i = 0; i < attributeArray.Length; i++)
             {
-                if (boxDiagonal == headerAttributesDiagonal[i])
+                if (targetUlong == attributeArray[i])
                 {
                     return (ulong)i;
                 }
