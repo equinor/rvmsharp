@@ -5,7 +5,9 @@ namespace CadRevealComposer.Primitives
 {
     using Converters;
     using Newtonsoft.Json;
+    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
+    using RvmSharp.Tessellation;
     using System;
     using System.Diagnostics;
     using System.Numerics;
@@ -68,6 +70,8 @@ namespace CadRevealComposer.Primitives
                 _,
                 (Vector3 normal, float rotationAngle)) = commonPrimitiveProperties;
 
+            const uint tempHackMeshFileId = 0; // TODO: Unhardcode
+
             switch (rvmPrimitive)
             {
                 case RvmBox rvmBox:
@@ -127,15 +131,47 @@ namespace CadRevealComposer.Primitives
                                 VerticalRadius: verticalRadius);
                         }
                     }
-                case RvmFacetGroup:
-                    PrimitiveCounter.mesh++;
-                    return null;
+                case RvmFacetGroup facetGroup:
+                    const float minBoundsToExport = -1; // Temp: Adjust to create simpler models
+                    if (commonPrimitiveProperties.AxisAlignedDiagonal < minBoundsToExport)
+                    {
+                        return null;
+                    }
+
+                    const float hardcodedTolerance = 0.1f; // TODO: Unhardcode
+                    var facetGroupMesh = TessellatorBridge.Tessellate(facetGroup, tolerance: hardcodedTolerance);
+                    if (facetGroupMesh == null)
+                        throw new Exception($"Expected a {nameof(RvmFacetGroup)} to always tessellate. Was {facetGroupMesh}.");
+                    return new TriangleMesh(
+                        commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Length / 3, facetGroupMesh);
                 case RvmLine:
                     PrimitiveCounter.line++;
                     return null;
-                case RvmPyramid:
-                    PrimitiveCounter.pyramid++;
-                    return null;
+                case RvmPyramid rvmPyramid:
+                    // A "Pyramid" that has an equal Top plane size to its bottom plane, and has no offset... is a box.
+                    if (Math.Abs(rvmPyramid.BottomX - rvmPyramid.TopX) < 0.01 && Math.Abs(rvmPyramid.TopY - rvmPyramid.BottomY) < 0.01 &&
+                        Math.Abs(rvmPyramid.OffsetX - rvmPyramid.OffsetY) < 0.01 && rvmPyramid.OffsetX == 0)
+                    {
+                        var unitBoxScale = Vector3.Multiply(
+                            scale,
+                            new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
+                        PrimitiveCounter.pyramidAsBox++;
+                        return new Box(commonPrimitiveProperties,
+                            normal.CopyToNewArray(), unitBoxScale.X,
+                            unitBoxScale.Y, unitBoxScale.Z, rotationAngle);
+                    }
+                    else
+                    {
+                        // TODO: Pyramids are a good candidate for instancing. Investigate how to best apply it.
+                        var pyramidMesh = TessellatorBridge.Tessellate(rvmPyramid, tolerance: -1 /* Unused for pyramids */ );
+
+                        PrimitiveCounter.pyramid++;
+                        if (pyramidMesh == null)
+                            throw new Exception($"Expected a pyramid to always tessellate. Was {pyramidMesh}");
+
+                        return new TriangleMesh(
+                            commonPrimitiveProperties, tempHackMeshFileId, (uint)pyramidMesh.Triangles.Length / 3, pyramidMesh);
+                    }
                 case RvmCircularTorus circularTorus:
                     {
                         return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
