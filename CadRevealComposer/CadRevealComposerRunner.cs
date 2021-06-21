@@ -3,11 +3,9 @@ namespace CadRevealComposer
     using IdProviders;
     using Newtonsoft.Json;
     using Primitives;
-    using Primitives.Converters;
     using RvmSharp.BatchUtils;
     using RvmSharp.Exporters;
     using RvmSharp.Primitives;
-    using RvmSharp.Tessellation;
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
@@ -31,9 +29,9 @@ namespace CadRevealComposer
         static readonly TreeIndexGenerator TreeIndexGenerator = new();
         static readonly NodeIdProvider NodeIdGenerator = new();
         private static readonly SequentialIdGenerator MeshIdGenerator = new SequentialIdGenerator();
-        
+
         public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
-        
+
         // ReSharper disable once UnusedParameter.Local
         // ReSharper disable once CognitiveComplexity
         public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory, Parameters parameters)
@@ -59,33 +57,43 @@ namespace CadRevealComposer
                     Group = null,
                     Children = null,
                 };
-            
+
+
+            var meshId = MeshIdGenerator.GetNextId();
+            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
+            objExporter.StartObject($"root"); // Keep a single object in each file
+
             rootNode.Children = rvmStore.RvmFiles.SelectMany(f => f.Model.Children)
                 .Select(root => CollectGeometryNodesRecursive(root, rootNode)).ToArray();
 
             rootNode.BoundingBoxAxisAligned =
                 BoundingBoxEncapsulate(rootNode.Children.Select(x => x.BoundingBoxAxisAligned).WhereNotNull()
                     .ToArray());
-            
-            var rvmNodes = rvmStore.RvmFiles.SelectMany(x => x.Model.Children.SelectMany(GetAllNodesFlat)).ToArray();
-
-            const ulong meshId = 0; // TODO: Unhardcode this.
-            var meshes = ExportMeshesToFile(outputDirectory, rvmNodes);
-
-            Console.WriteLine("TriangleMeshesCount: " + meshes[meshId].Count);
 
             Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
                 "Root node has no bounding box. Are there any meshes in the input?");
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
-            
-            var geometries = allNodes.SelectMany(x => x.Geometries).ToList();
-            
-            // TODO: Unhack the triangleMeshes. They should be added in the Recursive process to avoid having separate tree-indexes.
-            geometries.AddRange(meshes[meshId]);
-            
-            
+
+            var geometryConversionTimer = Stopwatch.StartNew();
+            // TODO: AsOrdered here is now important, and it might cause problems later. And I dont like it...
+            //  - Its important because of the "TriangleMesh TriangleCount" is "sequential-additive".
+            // So the position offset in the mesh is determined on the TriangleCount of all items in the Sequence "12"+"16"+"10", and needs the identical order.
+            var geometries = allNodes.AsParallel().AsOrdered().SelectMany(x => x.RvmGeometries.Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive))).WhereNotNull().ToList();
+            Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
+
+            var objExportTimer = Stopwatch.StartNew();
+            // Export Meshes
+            foreach (var triangleMesh in geometries.OfType<TriangleMesh>())
+            {
+                if (triangleMesh.TempTessellatedMesh == null)
+                    throw new ArgumentNullException(nameof(triangleMesh.TempTessellatedMesh), "Expected all TriangleMeshes to have a temp mesh when exporting");
+                objExporter.WriteMesh(triangleMesh.TempTessellatedMesh);
+            }
+
+            Console.WriteLine("Object Export: " + objExportTimer.Elapsed);
+
             var attributeGrouping = geometries
                 .SelectMany(g => g.GetType().GetProperties().Select(p => (g, p)))
                 .Where(gp => gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
@@ -120,7 +128,7 @@ namespace CadRevealComposer
                         case I3dfAttribute.AttributeType.Color:
                             colors = gpas.Select(gpa => gpa.g.GetProperty<int[]>(gpa.p.Name)).WhereNotNull()
                                 .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
-                                .Select(x => new int[] {(byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W}).ToArray();
+                                .Select(x => new int[] { (byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W }).ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Diagonal:
                             diagonals = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
@@ -207,7 +215,7 @@ namespace CadRevealComposer
                         FormatVersion = 8,
                         OptimizerVersion = 1,
 
-                        // Arbitrary selected numbers 
+                        // Arbitrary selected numbers
                         SectorId = 0,
                         ParentSectorId = null,
                         BboxMax = boundingBox.Max.CopyToNewArray(),
@@ -241,7 +249,7 @@ namespace CadRevealComposer
             var i3dTimer = Stopwatch.StartNew();
             using var i3dSectorFile = File.Create(
                 Path.Join(
-                    outputDirectory.FullName, 
+                    outputDirectory.FullName,
                     $"sector_{file.FileSector.Header.SectorId}.i3d"
                     ));
             I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
@@ -303,12 +311,9 @@ namespace CadRevealComposer
                         IndexFile = new IndexFile(
                             FileName: "sector_" + sectorFileHeader.SectorId + ".i3d",
                             DownloadSize: 500001, // TODO: Find a real download size
-                            PeripheralFiles: new[]
-                            {
-                                $"mesh_{meshId}.ctm"
-                            }),
+                            PeripheralFiles: new[] {$"mesh_{meshId}.ctm"}),
                         FacesFile = null, // Not implemented
-                        EstimatedTriangleCount = meshes[meshId].Sum(x => (long)x.TriangleCount), // This is a guesstimate, not sure how to calculate non-mesh triangle count,
+                        EstimatedTriangleCount = geometries.OfType<TriangleMesh>().Sum(x => Convert.ToInt64(x.TriangleCount)), // This is a guesstimate, not sure how to calculate non-mesh triangle count,
                         EstimatedDrawCallCount = 1337 // Not calculated
                     }
                 }
@@ -322,52 +327,6 @@ namespace CadRevealComposer
 
             Console.WriteLine(
                 $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-        }
-
-        private static Dictionary<ulong, IReadOnlyCollection<TriangleMesh>> ExportMeshesToFile(DirectoryInfo outputDirectory, IReadOnlyCollection<RvmNode> rvmNodes)
-        {
-            
-            var rvmNodesWithFacetGroups = rvmNodes.ToDictionary(x => x, x => x.Children.OfType<RvmFacetGroup>());
-
-            var tessellatedFacetGroups = rvmNodesWithFacetGroups
-                .AsParallel()
-                .AsOrdered()
-                .Select(kvp =>
-            {
-                return kvp.Value.Select(facetGroup =>
-                {
-                    const float minimumDiagonalToExport = -10f;
-                    const float tolerance = 0.1f;
-                    bool shouldExport = facetGroup.CalculateAxisAlignedBoundingBox().Diagonal > minimumDiagonalToExport;
-                    return shouldExport ? (kvp.Key, facetGroup, Mesh: TessellatorBridge.Tessellate(facetGroup, tolerance)) : ((RvmNode Key, RvmFacetGroup facetGroup, Mesh? Mesh)?) null;
-                });
-            }).SelectMany(x => x).WhereNotNull().Where(x => x.Mesh != null).AsSequential();
-            
-
-            var meshId = MeshIdGenerator.GetNextId();
-            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
-            objExporter.StartObject($"root"); // Keep a single object in each file
-            var triangleMeshes = new List<TriangleMesh>();
-
-            foreach ((var rvmNode, var facetGroup, Mesh? mesh) in tessellatedFacetGroups)
-            {
-                if (mesh == null)
-                    continue;
-
-                var commonProps = facetGroup.GetCommonProps(rvmNode,
-                    new CadRevealNode()
-                    {
-                        NodeId = NodeIdGenerator.GetNodeId(null), TreeIndex = TreeIndexGenerator.GetNextId()
-                    });
-                
-                var triangleMesh = new TriangleMesh(
-                    commonProps, meshId, (uint) mesh.Triangles.Length);
-                objExporter.WriteMesh(mesh);
-
-                triangleMeshes.Add(triangleMesh);
-            }
-
-            return new Dictionary<ulong, IReadOnlyCollection<TriangleMesh>>(){{meshId, triangleMeshes}};
         }
 
         private static void JsonSerializeToFile<T>(T obj, string filename, Formatting formatting = Formatting.None)
@@ -396,19 +355,6 @@ namespace CadRevealComposer
             }
         }
 
-        private static IEnumerable<RvmNode> GetAllNodesFlat(RvmNode root)
-        {
-            yield return root;
-
-            foreach (RvmNode rvmNode in root.Children.OfType<RvmNode>())
-            {
-                foreach (RvmNode revealNode in GetAllNodesFlat(rvmNode))
-                {
-                    yield return revealNode;
-                }
-            }
-        }
-
         public static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode parent)
         {
             var newNode = new CadRevealNode
@@ -421,7 +367,8 @@ namespace CadRevealComposer
             };
 
             CadRevealNode[] childrenCadNodes;
-            APrimitive[] geometries = Array.Empty<APrimitive>();
+            RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
+
 
             if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
             {
@@ -430,7 +377,11 @@ namespace CadRevealComposer
                     switch (child)
                     {
                         case RvmPrimitive rvmPrimitive:
-                            return CollectGeometryNodesRecursive(new RvmNode(1, "Implicit geometry", root.Translation, root.MaterialId) { Children = {rvmPrimitive}}, newNode);
+                            return CollectGeometryNodesRecursive(
+                                new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
+                                {
+                                    Children = { rvmPrimitive }
+                                }, newNode);
                         case RvmNode rvmNode:
                             return CollectGeometryNodesRecursive(rvmNode, newNode);
                         default:
@@ -443,11 +394,10 @@ namespace CadRevealComposer
                 childrenCadNodes = root.Children.OfType<RvmNode>()
                     .Select(n => CollectGeometryNodesRecursive(n, newNode))
                     .ToArray();
-                geometries = root.Children.OfType<RvmPrimitive>()
-                    .Select(x => APrimitive.FromRvmPrimitive(newNode, root, x)).Where(g => g != null).ToArray()!;
+                rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
             }
 
-            newNode.Geometries = geometries;
+            newNode.RvmGeometries = rvmGeometries;
             newNode.Children = childrenCadNodes;
 
             var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
