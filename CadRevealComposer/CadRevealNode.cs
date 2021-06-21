@@ -19,6 +19,7 @@ namespace CadRevealComposer
 
 
         public APrimitive[] Geometries = Array.Empty<APrimitive>();
+        public RvmPrimitive[] RvmGeometries = Array.Empty<RvmPrimitive>();
 
         /// <summary>
         /// This is a bounding box encapsulating all childrens bounding boxes.
