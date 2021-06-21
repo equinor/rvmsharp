@@ -1,5 +1,6 @@
 ﻿namespace RvmSharp.Exporters
 {
+    using Operations;
     using System;
     using System.Collections.Generic;
     using System.Globalization;
@@ -7,7 +8,6 @@
     using System.Runtime.CompilerServices;
     using System.Text;
     using Tessellation;
-    using System.Linq;
 
     public sealed class ObjExporter : IDisposable
     {
@@ -80,6 +80,14 @@
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private string FastToString(float number)
         {
+            if (!number.IsFinite())
+            {
+                // This is a development guard. A non finite number can happen when a matrix
+                // has a Zero scale in one direction. Need to figure out a nice way to handle this.
+                // Consider ignoring. or serializing as "NaN"?
+                throw new ArgumentOutOfRangeException(nameof(number), $"Expected {nameof(number)} to be finite. Was {number}.");
+            }
+
             // Using Math.Round, and Decimal instead of "float.ToString("0.000000") as it is roughly 100% faster,
             // and produces (within our tolerances) identical results. And avoids E notation.
             // This is potentially lossy, but produces as-good or better results than float.ToString(0.000000)
