@@ -17,30 +17,25 @@
             ulong FileId,
             [property: I3df(I3dfAttribute.AttributeType.Null), JsonProperty("triangle_count")]
             ulong TriangleCount,
-            [property: JsonIgnore]
-            Mesh? TempTessellatedMesh = null // Store the mesh here, for serializing to file later
+            [property: JsonIgnore] Mesh? TempTessellatedMesh =
+                null // Store the mesh here, for serializing to file later
         )
         : APrimitive(CommonPrimitiveProperties)
     {
-        /// <summary>
-        /// A Texture. This is currently Unused in the Reveal format, but it is required in the exported JSON.
-        /// </summary>
-        public record Texture([property: JsonProperty("file_id")] ulong FileId = 0,
-            [property: JsonProperty("width")] ushort Width = 0, [property: JsonProperty("height")] ushort Height = 0);
 
         [Obsolete, JsonProperty("diffuse_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
-        public readonly Texture DiffuseTexture = new Texture();
+        public Texture DiffuseTexture { get; init; } = new Texture();
 
         [Obsolete, JsonProperty("specular_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
-        public readonly Texture SpecularTexture = new Texture();
+        public Texture SpecularTexture { get; init; } = new Texture();
 
         [Obsolete, JsonProperty("ambient_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
-        public readonly Texture AmbientTexture = new Texture();
+        public Texture AmbientTexture { get; init; } = new Texture();
 
         [Obsolete, JsonProperty("normal_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
-        public readonly Texture NormalTexture = new Texture();
+        public Texture NormalTexture { get; init; } = new Texture();
 
         [Obsolete, JsonProperty("bump_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
-        public readonly Texture BumpTexture = new Texture();
+        public Texture BumpTexture { get; init; } = new Texture();
     };
 }

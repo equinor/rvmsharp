@@ -186,6 +186,6 @@ namespace CadRevealComposer
 
         [JsonProperty("file_id")] public ulong[] FileId { get; set; } = Array.Empty<ulong>();
 
-        [JsonProperty("texture")] public TriangleMesh.Texture[] Texture { get; set; } = Array.Empty<TriangleMesh.Texture>();
+        [JsonProperty("texture")] public Texture[] Texture { get; set; } = Array.Empty<Texture>();
     }
 }
