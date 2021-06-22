@@ -824,8 +824,8 @@ namespace CadRevealComposer.Writers
             throw new KeyNotFoundException();
         }
 
-        private static ulong GetTextureIndex(TriangleMesh.Texture targetTexture,
-            TriangleMesh.Texture[] textureAttributeArray)
+        private static ulong GetTextureIndex(Texture targetTexture,
+            Texture[] textureAttributeArray)
         {
             if (targetTexture.FileId == 0.0 && targetTexture.Width == 0 && targetTexture.Height == 0) { return 0; }
             for (int i = 0; i < textureAttributeArray.Length; i++)

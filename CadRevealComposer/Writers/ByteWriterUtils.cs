@@ -112,7 +112,7 @@ namespace CadRevealComposer.Writers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteTextureArray(this Stream stream, TriangleMesh.Texture[] value)
+        public static void WriteTextureArray(this Stream stream, Texture[] value)
         {
             stream.WriteUint32((uint)value.Length);
             stream.WriteByte(16);
