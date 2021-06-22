@@ -5,6 +5,7 @@ namespace CadRevealComposer
     using RvmSharp.Containers;
     using RvmSharp.Primitives;
     using System;
+    using System.Collections.Immutable;
 
     public class CadRevealNode
     {
@@ -17,8 +18,6 @@ namespace CadRevealComposer
         public CadRevealNode? Parent;
         public CadRevealNode[]? Children;
 
-
-        public APrimitive[] Geometries = Array.Empty<APrimitive>();
         public RvmPrimitive[] RvmGeometries = Array.Empty<RvmPrimitive>();
 
         /// <summary>
@@ -144,46 +143,46 @@ namespace CadRevealComposer
 
         [JsonProperty("parent_sector_id")] public long? ParentSectorId { get; set; } // FIXME this one is actually ulong, but JSON export requires -1 for no parent
 
-        [JsonProperty("bbox_min")] public float[] BboxMin { get; set; } = {0f, 0f, 0f};
+        [JsonProperty("bbox_min")] public float[] BboxMin { get; set; } = { 0f, 0f, 0f };
 
-        [JsonProperty("bbox_max")] public float[] BboxMax { get; set; } = {0f, 0f, 0f};
+        [JsonProperty("bbox_max")] public float[] BboxMax { get; set; } = { 0f, 0f, 0f };
 
-        [JsonProperty("attributes")] public Attributes? Attributes { get; set; } = new();
+        [JsonProperty("attributes")] public Attributes? Attributes { get; set; } = new Attributes();
     }
 
     public class Attributes
     {
         [JsonProperty("color")] public int[][] Color { get; set; } = Array.Empty<int[]>();
 
-        [JsonProperty("diagonal")] public float[] Diagonal { get; set; }  = Array.Empty<float>();
+        [JsonProperty("diagonal")] public ImmutableSortedSet<float> Diagonal { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("center_x")] public float[] CenterX { get; set; } = Array.Empty<float>();
+        [JsonProperty("center_x")] public ImmutableSortedSet<float> CenterX { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("center_y")] public float[] CenterY { get; set; } = Array.Empty<float>();
+        [JsonProperty("center_y")] public ImmutableSortedSet<float> CenterY { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("center_z")] public float[] CenterZ { get; set; } = Array.Empty<float>();
+        [JsonProperty("center_z")] public ImmutableSortedSet<float> CenterZ { get; set; } = ImmutableSortedSet<float>.Empty;
 
         [JsonProperty("normal")] public float[][] Normal { get; set; } = Array.Empty<float[]>();
 
-        [JsonProperty("delta")] public float[] Delta { get; set; } = Array.Empty<float>();
+        [JsonProperty("delta")] public ImmutableSortedSet<float> Delta { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("height")] public float[] Height { get; set; } = Array.Empty<float>();
+        [JsonProperty("height")] public ImmutableSortedSet<float> Height { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("radius")] public float[] Radius { get; set; } = Array.Empty<float>();
+        [JsonProperty("radius")] public ImmutableSortedSet<float> Radius { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("angle")] public float[] Angle { get; set; } = Array.Empty<float>();
+        [JsonProperty("angle")] public ImmutableSortedSet<float> Angle { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("translation_x")] public float[] TranslationX { get; set; } = Array.Empty<float>();
+        [JsonProperty("translation_x")] public ImmutableSortedSet<float> TranslationX { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("translation_y")] public float[] TranslationY { get; set; } = Array.Empty<float>();
+        [JsonProperty("translation_y")] public ImmutableSortedSet<float> TranslationY { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("translation_z")] public float[] TranslationZ { get; set; } = Array.Empty<float>();
+        [JsonProperty("translation_z")] public ImmutableSortedSet<float> TranslationZ { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("scale_x")] public float[] ScaleX { get; set; } = Array.Empty<float>();
+        [JsonProperty("scale_x")] public ImmutableSortedSet<float> ScaleX { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("scale_y")] public float[] ScaleY { get; set; } = Array.Empty<float>();
+        [JsonProperty("scale_y")] public ImmutableSortedSet<float> ScaleY { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("scale_z")] public float[] ScaleZ { get; set; } = Array.Empty<float>();
+        [JsonProperty("scale_z")] public ImmutableSortedSet<float> ScaleZ { get; set; } = ImmutableSortedSet<float>.Empty;
 
         [JsonProperty("file_id")] public ulong[] FileId { get; set; } = Array.Empty<ulong>();
 
