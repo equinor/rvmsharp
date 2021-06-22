@@ -8,6 +8,7 @@ namespace CadRevealComposer
     using RvmSharp.Primitives;
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
@@ -34,9 +35,10 @@ namespace CadRevealComposer
 
         // ReSharper disable once UnusedParameter.Local
         // ReSharper disable once CognitiveComplexity
-        public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory, Parameters parameters)
+        public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory,
+            Parameters parameters)
         {
-            var workload = Workload.CollectWorkload(new[] {inputRvmFolderPath.FullName});
+            var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
 
 
             Console.WriteLine("Reading RvmData");
@@ -60,9 +62,6 @@ namespace CadRevealComposer
 
 
             var meshId = MeshIdGenerator.GetNextId();
-            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
-            objExporter.StartObject($"root"); // Keep a single object in each file
-
             rootNode.Children = rvmStore.RvmFiles.SelectMany(f => f.Model.Children)
                 .Select(root => CollectGeometryNodesRecursive(root, rootNode)).ToArray();
 
@@ -80,19 +79,54 @@ namespace CadRevealComposer
             // TODO: AsOrdered here is now important, and it might cause problems later. And I dont like it...
             //  - Its important because of the "TriangleMesh TriangleCount" is "sequential-additive".
             // So the position offset in the mesh is determined on the TriangleCount of all items in the Sequence "12"+"16"+"10", and needs the identical order.
-            var geometries = allNodes.AsParallel().AsOrdered().SelectMany(x => x.RvmGeometries.Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive))).WhereNotNull().ToList();
+            var geometries = allNodes.AsParallel().AsOrdered().SelectMany(x => x.RvmGeometries.Select(primitive =>
+                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
+                        primitive)))
+                .WhereNotNull().ToImmutableArray();
             Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
 
-            var objExportTimer = Stopwatch.StartNew();
-            // Export Meshes
-            foreach (var triangleMesh in geometries.OfType<TriangleMesh>())
+            var exportObjTask = Task.Run(() =>
             {
-                if (triangleMesh.TempTessellatedMesh == null)
-                    throw new ArgumentNullException(nameof(triangleMesh.TempTessellatedMesh), "Expected all TriangleMeshes to have a temp mesh when exporting");
-                objExporter.WriteMesh(triangleMesh.TempTessellatedMesh);
-            }
+                var objExportTimer = Stopwatch.StartNew();
+                ExportMeshesToObjFile(outputDirectory, meshId, geometries.OfType<TriangleMesh>().ToImmutableArray());
+                Console.WriteLine("Mesh .obj file exported (On background thread) in " + objExportTimer.Elapsed);
+            });
 
-            Console.WriteLine("Object Export: " + objExportTimer.Elapsed);
+            var infoNodesTask = Task.Run(() =>
+            {
+                var infoNodesTimer = Stopwatch.StartNew();
+                var infoNodes = allNodes
+                    .Where(n => n.Group is RvmNode).Select(n =>
+                {
+                    var rvmNode = (RvmNode)n.Group!;
+                    return new CadInfoNode
+                    {
+                        TreeIndex = n.TreeIndex,
+                        Name = rvmNode.Name,
+                        Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
+                        {
+                            Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
+
+                            return new CadGeometry
+                            {
+                                TypeName = g.GetType().ToString(),
+                                Scale = scale,
+                                Location = transform,
+                                Rotation = rotation,
+                                Properties = g.GetType().GetProperties()
+                                    .ToDictionary(f => f.Name, f => f.GetValue(g)?.ToString())
+                            };
+                        }).ToList()
+                    };
+                }).ToArray();
+
+                var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
+                JsonSerializeToFile(infoNodes, outputFileName2);
+                Console.WriteLine("Serialized infonodes (On background thread) in " + infoNodesTimer.Elapsed);
+            });
+
+            var groupAttributesTimer = Stopwatch.StartNew();
+            Console.WriteLine("Start Group Attributes and create i3d file structure");
 
             var attributeGrouping = geometries
                 .SelectMany(g => g.GetType().GetProperties().Select(p => (g, p)))
@@ -100,22 +134,23 @@ namespace CadRevealComposer
                 .Select(gp => (gp.g, gp.p, gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().First()))
                 .GroupBy(gpa => gpa.Item3.Type).ToArray();
 
+
             int[][] colors = Array.Empty<int[]>();
-            float[] diagonals = Array.Empty<float>();
-            float[] centerX = Array.Empty<float>();
-            float[] centerY = Array.Empty<float>();
-            float[] centerZ = Array.Empty<float>();
+            ImmutableSortedSet<float> diagonals = Array.Empty<float>().ToImmutableSortedSet();
+            ImmutableSortedSet<float> centerX = Array.Empty<float>().ToImmutableSortedSet();
+            ImmutableSortedSet<float> centerY = Array.Empty<float>().ToImmutableSortedSet();
+            ImmutableSortedSet<float> centerZ = Array.Empty<float>().ToImmutableSortedSet();
             float[][] normals = Array.Empty<float[]>();
-            float[] deltas = Array.Empty<float>();
-            float[] heights = Array.Empty<float>();
-            float[] radii = Array.Empty<float>();
-            float[] angles = Array.Empty<float>();
-            float[] translationsX = Array.Empty<float>();
-            float[] translationsY = Array.Empty<float>();
-            float[] translationsZ = Array.Empty<float>();
-            float[] scalesX = Array.Empty<float>();
-            float[] scalesY = Array.Empty<float>();
-            float[] scalesZ = Array.Empty<float>();
+            ImmutableSortedSet<float> deltas = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> heights = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> radii = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> angles = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> translationsX = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> translationsY = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> translationsZ = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> scalesX = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> scalesY = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> scalesZ = ImmutableSortedSet<float>.Empty;
             ulong[] fileIds = Array.Empty<ulong>();
             TriangleMesh.Texture[] textures = Array.Empty<TriangleMesh.Texture>();
 
@@ -131,16 +166,20 @@ namespace CadRevealComposer
                                 .Select(x => new int[] { (byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W }).ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Diagonal:
-                            diagonals = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            diagonals = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.CenterX:
-                            centerX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            centerX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.CenterY:
-                            centerY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            centerY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.CenterZ:
-                            centerZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            centerZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.Normal:
                             normals = gpas.Select(gpa => gpa.g.GetProperty<float[]>(gpa.p.Name))
@@ -148,43 +187,51 @@ namespace CadRevealComposer
                                 .Select(y => y.CopyToNewArray()).ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Delta:
-                            deltas = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            deltas = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.Height:
-                            heights = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            heights = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.Radius:
-                            radii = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            radii = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.Angle:
-                            angles = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            angles = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.TranslationX:
                             translationsX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToArray();
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.TranslationY:
                             translationsY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToArray();
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.TranslationZ:
                             translationsZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToArray();
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.ScaleX:
-                            scalesX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            scalesX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.ScaleY:
-                            scalesY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            scalesY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.ScaleZ:
-                            scalesZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct().ToArray();
+                            scalesZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
+                                .ToImmutableSortedSet();
                             break;
                         case I3dfAttribute.AttributeType.FileId:
                             fileIds = gpas.Select(gpa => gpa.g.GetProperty<ulong>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Texture:
-                            textures = gpas.Select(gpa => gpa.g.GetProperty<TriangleMesh.Texture>(gpa.p.Name)).WhereNotNull().ToArray();
+                            textures = gpas.Select(gpa => gpa.g.GetProperty<TriangleMesh.Texture>(gpa.p.Name))
+                                .WhereNotNull().ToArray();
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
@@ -198,7 +245,8 @@ namespace CadRevealComposer
             {
                 var elementType = geometriesByType.Key;
                 var elements = geometriesByType.ToArray();
-                var fieldInfo = primitiveCollections.GetType().GetFields().First(pc => pc.FieldType.GetElementType() == elementType);
+                var fieldInfo = primitiveCollections.GetType().GetFields()
+                    .First(pc => pc.FieldType.GetElementType() == elementType);
                 var typedArray = Array.CreateInstance(elementType, elements.Length);
                 Array.Copy(elements, typedArray, elements.Length);
                 fieldInfo.SetValue(primitiveCollections, typedArray);
@@ -245,45 +293,16 @@ namespace CadRevealComposer
                     PrimitiveCollections = primitiveCollections
                 }
             };
+            Console.WriteLine("Group Attributes and create i3d file structure: " + groupAttributesTimer.Elapsed);
 
             var i3dTimer = Stopwatch.StartNew();
             using var i3dSectorFile = File.Create(
                 Path.Join(
                     outputDirectory.FullName,
                     $"sector_{file.FileSector.Header.SectorId}.i3d"
-                    ));
+                ));
             I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
             Console.WriteLine("Finished writing i3d Sectors in " + i3dTimer.Elapsed);
-
-
-            var infoNodesTimer = Stopwatch.StartNew();
-            var infoNodes = allNodes.Where(n => n.Group is RvmNode).Select(n =>
-            {
-                var rvmNode = (RvmNode)n.Group!;
-                return new CadInfoNode
-                {
-                    TreeIndex = n.TreeIndex,
-                    Name = rvmNode.Name,
-                    Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
-                    {
-                        Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
-
-                        return new CadGeometry
-                        {
-                            TypeName = g.GetType().ToString(),
-                            Scale = scale,
-                            Location = transform,
-                            Rotation = rotation,
-                            Properties = g.GetType().GetProperties()
-                                .ToDictionary(f => f.Name, f => f.GetValue(g)?.ToString())
-                        };
-                    }).ToList()
-                };
-            }).ToArray();
-
-            var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
-            JsonSerializeToFile(infoNodes, outputFileName2);
-            Console.WriteLine("Done serializing infonodes in " + infoNodesTimer.Elapsed);
 
             var sectorFileHeader = file.FileSector.Header;
             var scene = new Scene()
@@ -303,8 +322,10 @@ namespace CadRevealComposer
                         ParentId = sectorFileHeader.ParentSectorId ?? -1,
                         BoundingBox =
                             new BoundingBox(
-                                Min: new BbVector3(sectorFileHeader.BboxMin[0], sectorFileHeader.BboxMin[1], sectorFileHeader.BboxMin[2]),
-                                Max: new BbVector3(sectorFileHeader.BboxMax[0], sectorFileHeader.BboxMax[1], sectorFileHeader.BboxMax[2])
+                                Min: new BbVector3(sectorFileHeader.BboxMin[0], sectorFileHeader.BboxMin[1],
+                                    sectorFileHeader.BboxMin[2]),
+                                Max: new BbVector3(sectorFileHeader.BboxMax[0], sectorFileHeader.BboxMax[1],
+                                    sectorFileHeader.BboxMax[2])
                             ),
                         Depth = sectorFileHeader.ParentSectorId == null ? 1 : throw new NotImplementedException(),
                         Path = sectorFileHeader.SectorId == 0 ? "0/" : throw new NotImplementedException(),
@@ -313,7 +334,10 @@ namespace CadRevealComposer
                             DownloadSize: 500001, // TODO: Find a real download size
                             PeripheralFiles: new[] {$"mesh_{meshId}.ctm"}),
                         FacesFile = null, // Not implemented
-                        EstimatedTriangleCount = geometries.OfType<TriangleMesh>().Sum(x => Convert.ToInt64(x.TriangleCount)), // This is a guesstimate, not sure how to calculate non-mesh triangle count,
+                        EstimatedTriangleCount =
+                            geometries.OfType<TriangleMesh>()
+                                .Sum(x => Convert.ToInt64(x
+                                    .TriangleCount)), // This is a guesstimate, not sure how to calculate non-mesh triangle count,
                         EstimatedDrawCallCount = 1337 // Not calculated
                     }
                 }
@@ -322,11 +346,29 @@ namespace CadRevealComposer
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
             JsonSerializeToFile(scene, scenePath, Formatting.Indented);
 
-            Console.WriteLine($"Total primitives {geometries.Count}/{PrimitiveCounter.pc}");
+            Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
+            // Wait until obj export is done (Its probably finished ages ago)
+            Task.WaitAll(exportObjTask, infoNodesTask);
+
             Console.WriteLine(
-                $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+                    $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        }
+
+        private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<TriangleMesh> meshGeometries)
+        {
+            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
+            objExporter.StartObject($"root"); // Keep a single object in each file
+
+            // Export Meshes
+            foreach (var triangleMesh in meshGeometries)
+            {
+                if (triangleMesh.TempTessellatedMesh == null)
+                    throw new ArgumentNullException(nameof(triangleMesh.TempTessellatedMesh),
+                        "Expected all TriangleMeshes to have a temp mesh when exporting");
+                objExporter.WriteMesh(triangleMesh.TempTessellatedMesh);
+            }
         }
 
         private static void JsonSerializeToFile<T>(T obj, string filename, Formatting formatting = Formatting.None)
@@ -334,9 +376,8 @@ namespace CadRevealComposer
             using var stream = File.Create(filename);
             using var writer = new StreamWriter(stream);
             using var jsonWriter = new JsonTextWriter(writer);
-            var jsonSerializer = new JsonSerializer {Formatting = formatting};
+            var jsonSerializer = new JsonSerializer { Formatting = formatting };
             jsonSerializer.Serialize(jsonWriter, obj);
-            jsonWriter.Flush();
         }
 
         private static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
