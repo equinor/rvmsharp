@@ -30,22 +30,22 @@
             float ScaleY,
             [property: I3df(I3dfAttribute.AttributeType.ScaleZ)] [property: JsonProperty("scale_z")]
             float ScaleZ)
-        // TODO remove some common properties 
+        // TODO remove some common properties
         : APrimitive(CommonPrimitiveProperties)
     {
-        [Obsolete, JsonProperty("diffuse_texture"), I3df(I3dfAttribute.AttributeType.Texture)]  
-        public readonly TriangleMesh.Texture DiffuseTexture = new TriangleMesh.Texture();
+        [Obsolete, JsonProperty("diffuse_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        public Texture DiffuseTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("specular_texture"), I3df(I3dfAttribute.AttributeType.Texture)]  
-        public readonly TriangleMesh.Texture SpecularTexture = new TriangleMesh.Texture();
+        [Obsolete, JsonProperty("specular_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        public Texture SpecularTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("ambient_texture"), I3df(I3dfAttribute.AttributeType.Texture)]  
-        public readonly TriangleMesh.Texture AmbientTexture = new TriangleMesh.Texture();
+        [Obsolete, JsonProperty("ambient_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        public Texture AmbientTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("normal_texture"), I3df(I3dfAttribute.AttributeType.Texture)]  
-        public readonly TriangleMesh.Texture NormalTexture = new TriangleMesh.Texture();
+        [Obsolete, JsonProperty("normal_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        public Texture NormalTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("bump_texture"), I3df(I3dfAttribute.AttributeType.Texture)]  
-        public readonly TriangleMesh.Texture BumpTexture = new TriangleMesh.Texture();
+        [Obsolete, JsonProperty("bump_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        public Texture BumpTexture { get; init; } = new Texture();
     }
 }

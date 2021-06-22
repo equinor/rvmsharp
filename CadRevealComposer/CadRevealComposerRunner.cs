@@ -152,7 +152,7 @@ namespace CadRevealComposer
             ImmutableSortedSet<float> scalesY = ImmutableSortedSet<float>.Empty;
             ImmutableSortedSet<float> scalesZ = ImmutableSortedSet<float>.Empty;
             ulong[] fileIds = Array.Empty<ulong>();
-            TriangleMesh.Texture[] textures = Array.Empty<TriangleMesh.Texture>();
+            Texture[] textures = Array.Empty<Texture>();
 
             Parallel.ForEach(attributeGrouping, gpas =>
                 {
@@ -230,8 +230,8 @@ namespace CadRevealComposer
                             fileIds = gpas.Select(gpa => gpa.g.GetProperty<ulong>(gpa.p.Name)).Distinct().ToArray();
                             break;
                         case I3dfAttribute.AttributeType.Texture:
-                            textures = gpas.Select(gpa => gpa.g.GetProperty<TriangleMesh.Texture>(gpa.p.Name))
-                                .WhereNotNull().ToArray();
+                            textures = gpas.Select(gpa => gpa.g.GetProperty<Texture>(gpa.p.Name))
+                                .WhereNotNull().Distinct().ToArray();
                             break;
                         default:
                             throw new ArgumentOutOfRangeException();
