@@ -2,6 +2,7 @@ namespace CadRevealComposer.Writers
 {
     using Primitives;
     using System;
+    using System.Collections.Immutable;
     using System.IO;
     using System.Runtime.CompilerServices;
 
@@ -49,6 +50,18 @@ namespace CadRevealComposer.Writers
         public static void WriteFloatArray(this Stream stream, float[] value)
         {
             stream.WriteUint32((uint)value.Length);
+            stream.WriteByte(sizeof(float));
+
+            foreach (float v in value)
+            {
+                stream.WriteFloat(v);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteFloatArray(this Stream stream, ImmutableSortedSet<float> value)
+        {
+            stream.WriteUint32((uint)value.Count);
             stream.WriteByte(sizeof(float));
 
             foreach (float v in value)

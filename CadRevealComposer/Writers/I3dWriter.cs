@@ -3,6 +3,7 @@ namespace CadRevealComposer.Writers
     using Primitives;
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
 
@@ -851,6 +852,16 @@ namespace CadRevealComposer.Writers
             }
 
             throw new KeyNotFoundException();
+        }
+
+        private static ulong GetFloatIndex(float targetFloat, ImmutableSortedSet<float> attributeArray)
+        {
+
+            var index = attributeArray.IndexOf(targetFloat);
+            if (index < 0)
+                throw new KeyNotFoundException();
+
+            return (ulong)index;
         }
 
         private static ulong GetFloatIndex(float targetFloat, float[] attributeArray)
