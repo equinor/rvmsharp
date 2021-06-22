@@ -75,8 +75,6 @@
             _normalCount += mesh.Normals.Length;
         }
 
-        private readonly List<(float Orig, float ParsedDecimal, float ParsedFloat)> _differences = new List<(float Orig, float ParcedDecimal, float ParsedFloat)>();
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private string FastToString(float number)
         {
