@@ -3,19 +3,19 @@
     using System;
     using System.Collections.Generic;
     using System.Numerics;
+    using System.Runtime.CompilerServices;
 
     public static class VectorExtensions
     {
         /// <summary>
         /// Copy the items to a new array of 3 items in XYZ order.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float[] CopyToNewArray(this Vector3 vector3)
         {
-            var floats = new float[3];
-            vector3.CopyTo(floats);
-            return floats;
+            return new[] { vector3.X, vector3.Y, vector3.Z };
         }
-        
+
         /// <summary>
         /// Yield return the 3 items in XYZ order.
         /// </summary>
@@ -29,11 +29,10 @@
         /// <summary>
         /// Copy the items to an Array of 4 items in XYZW order.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float[] CopyToNewArray(this Vector4 vector4)
         {
-            var floats = new float[4];
-            vector4.CopyTo(floats);
-            return floats;
+            return new[] {vector4.X, vector4.Y, vector4.Z, vector4.W};
         }
 
         /// <summary>
