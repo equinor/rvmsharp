@@ -1,14 +1,15 @@
 namespace CadRevealComposer.Primitives
 {
     using Newtonsoft.Json;
+    using System.Numerics;
 
     public record ClosedExtrudedRingSegment(
         CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Normal)]
-        [property: JsonProperty("center_axis")] 
-        float[] CenterAxis,
+        [property: JsonProperty("center_axis")]
+        Vector3 CenterAxis,
         [property: I3df(I3dfAttribute.AttributeType.Height)]
-        [property: JsonProperty("height")] 
+        [property: JsonProperty("height")]
         float Height,
         [property: I3df(I3dfAttribute.AttributeType.Radius)]
         [property: JsonProperty("inner_radius")]

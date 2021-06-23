@@ -22,7 +22,7 @@
                 return new Torus
                 (
                     commonPrimitiveProperties,
-                    Normal: normal.CopyToNewArray(),
+                    Normal: normal,
                     Radius: radius,
                     TubeRadius: tubeRadius
                 );
@@ -32,7 +32,7 @@
                 return new OpenTorusSegment
                 (
                     commonPrimitiveProperties,
-                    Normal: normal.CopyToNewArray(),
+                    Normal: normal,
                     Radius: radius,
                     TubeRadius: tubeRadius,
                     RotationAngle: rotationAngle,
@@ -42,12 +42,12 @@
             return new ClosedTorusSegment
             (
                 commonPrimitiveProperties,
-                Normal: normal.CopyToNewArray(),
+                Normal: normal,
                 Radius: radius,
                 TubeRadius: tubeRadius,
                 RotationAngle: rotationAngle,
                 ArcAngle: rvmCircularTorus.Angle
             );
-        } 
+        }
     }
 }

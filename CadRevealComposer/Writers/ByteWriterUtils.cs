@@ -2,8 +2,12 @@ namespace CadRevealComposer.Writers
 {
     using Primitives;
     using System;
+    using System.Collections;
+    using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Drawing;
     using System.IO;
+    using System.Numerics;
     using System.Runtime.CompilerServices;
 
     public static class ByteWriterUtils
@@ -83,31 +87,31 @@ namespace CadRevealComposer.Writers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteRgbaArray(this Stream stream, int[][] value)
+        public static void WriteRgbaArray(this Stream stream, ImmutableSortedSet<Color> values)
         {
-            stream.WriteUint32((uint)value.Length);
+            stream.WriteUint32((uint)values.Count);
             stream.WriteByte(4);
 
-            foreach (var c in value)
+            foreach (var c in values)
             {
-                stream.WriteByte((byte)c[0]);
-                stream.WriteByte((byte)c[1]);
-                stream.WriteByte((byte)c[2]);
-                stream.WriteByte((byte)c[3]);
+                stream.WriteByte(c.R);
+                stream.WriteByte(c.G);
+                stream.WriteByte(c.B);
+                stream.WriteByte(c.A);
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void WriteNormalArray(this Stream stream, float[][] value)
+        public static void WriteNormalArray(this Stream stream, ImmutableSortedSet<Vector3> value)
         {
-            stream.WriteUint32((uint)value.Length);
+            stream.WriteUint32((uint)value.Count);
             stream.WriteByte(sizeof(float) * 3);
 
             foreach (var n in value)
             {
-                stream.WriteFloat(n[0]);
-                stream.WriteFloat(n[1]);
-                stream.WriteFloat(n[2]);
+                stream.WriteFloat(n.X);
+                stream.WriteFloat(n.Y);
+                stream.WriteFloat(n.Z);
             }
         }
 
