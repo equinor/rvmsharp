@@ -32,10 +32,6 @@ end {
         Write-Error "Could not find dotnet. Is the Dotnet CLI installed?"
     }
 
-    if (-not (Get-Command "ctmconv" -ErrorAction 'SilentlyContinue')) {
-        Write-Error "Could not find ctmconv. You need to install OpenCTM, and restart the terminal. http://openctm.sourceforge.net/?page=download"
-    }
-
     if (-not $Force -and (Get-ChildItem $WorkDirectory)) {
         Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
     }
