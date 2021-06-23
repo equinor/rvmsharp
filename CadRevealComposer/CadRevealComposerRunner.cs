@@ -10,11 +10,14 @@ namespace CadRevealComposer
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
+    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Numerics;
+    using System.Reflection;
     using System.Threading.Tasks;
     using Utils;
+    using Utils.Comparers;
     using Writers;
 
 
@@ -42,13 +45,15 @@ namespace CadRevealComposer
 
 
             Console.WriteLine("Reading RvmData");
+            var rvmTimer = Stopwatch.StartNew();
             var progressReport = new Progress<(string fileName, int progress, int total)>((x) =>
             {
                 Console.WriteLine(x.fileName + $" ({x.progress}/{x.total})");
             });
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
-            Console.WriteLine("Generating i3d");
+            Console.WriteLine("Read RvmData in " + rvmTimer.Elapsed);
 
+            Console.WriteLine("Generating i3d");
             // Project name og project parameters tull from Cad Control Center
             var rootNode =
                 new CadRevealNode
@@ -76,19 +81,19 @@ namespace CadRevealComposer
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
             var geometryConversionTimer = Stopwatch.StartNew();
-            // TODO: AsOrdered here is now important, and it might cause problems later. And I dont like it...
-            //  - Its important because of the "TriangleMesh TriangleCount" is "sequential-additive".
+            // AsOrdered is important. And I dont like it...
+            //  - Its important  of the "TriangleMesh TriangleCount" is "sequential-additive".
             // So the position offset in the mesh is determined on the TriangleCount of all items in the Sequence "12"+"16"+"10", and needs the identical order.
             var geometries = allNodes.AsParallel().AsOrdered().SelectMany(x => x.RvmGeometries.Select(primitive =>
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
                         primitive)))
-                .WhereNotNull().ToImmutableArray();
+                .WhereNotNull().ToArray();
             Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
 
             var exportObjTask = Task.Run(() =>
             {
                 var objExportTimer = Stopwatch.StartNew();
-                ExportMeshesToObjFile(outputDirectory, meshId, geometries.OfType<TriangleMesh>().ToImmutableArray());
+                ExportMeshesToObjFile(outputDirectory, meshId, geometries.OfType<TriangleMesh>().ToArray());
                 Console.WriteLine("Mesh .obj file exported (On background thread) in " + objExportTimer.Elapsed);
             });
 
@@ -128,19 +133,33 @@ namespace CadRevealComposer
             var groupAttributesTimer = Stopwatch.StartNew();
             Console.WriteLine("Start Group Attributes and create i3d file structure");
 
-            var attributeGrouping = geometries
+            var attributeGrouping = Array.Empty<APrimitive>()
                 .SelectMany(g => g.GetType().GetProperties().Select(p => (g, p)))
                 .Where(gp => gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
                 .Select(gp => (gp.g, gp.p, gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().First()))
                 .GroupBy(gpa => gpa.Item3.Type).ToArray();
 
+            var attributesTimer = Stopwatch.StartNew();
+            var attributeLookup = typeof(APrimitive)
+                .Assembly.GetTypes()
+                .Where(t => t.IsSubclassOf(typeof(APrimitive)) && !t.IsAbstract)
+                .Distinct()
+                .SelectMany(pt => pt.GetProperties().Select(p => (pt, p)))
+                .Select(p => (p.pt, p.p, p.p.GetCustomAttributes(true).OfType<I3dfAttribute>().FirstOrDefault()))
+                .Where(p => p.Item3 != null)
+                .GroupBy(ptp => ptp.pt)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x.GroupBy(x => x.Item3!.Type).ToDictionary(x => x.Key, y => y.Select(x => x.p)));
 
-            int[][] colors = Array.Empty<int[]>();
-            ImmutableSortedSet<float> diagonals = Array.Empty<float>().ToImmutableSortedSet();
-            ImmutableSortedSet<float> centerX = Array.Empty<float>().ToImmutableSortedSet();
-            ImmutableSortedSet<float> centerY = Array.Empty<float>().ToImmutableSortedSet();
-            ImmutableSortedSet<float> centerZ = Array.Empty<float>().ToImmutableSortedSet();
-            float[][] normals = Array.Empty<float[]>();
+            Console.WriteLine("Attribute Grouping: " + attributesTimer.Elapsed);
+
+            ImmutableSortedSet<Color> colors = ImmutableSortedSet<Color>.Empty;
+            ImmutableSortedSet<float> diagonals = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> centerX = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> centerY = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<float> centerZ = ImmutableSortedSet<float>.Empty;
+            ImmutableSortedSet<Vector3> normals = ImmutableSortedSet<Vector3>.Empty;
             ImmutableSortedSet<float> deltas = ImmutableSortedSet<float>.Empty;
             ImmutableSortedSet<float> heights = ImmutableSortedSet<float>.Empty;
             ImmutableSortedSet<float> radii = ImmutableSortedSet<float>.Empty;
@@ -154,91 +173,74 @@ namespace CadRevealComposer
             ulong[] fileIds = Array.Empty<ulong>();
             Texture[] textures = Array.Empty<Texture>();
 
-            Parallel.ForEach(attributeGrouping, gpas =>
+            var getAttributeValuesTimer = Stopwatch.StartNew();
+            foreach (var attributeType in (I3dfAttribute.AttributeType[])Enum.GetValues(typeof(I3dfAttribute.AttributeType)))
+            {
+                switch (attributeType)
                 {
-                    switch (gpas.Key)
-                    {
-                        case I3dfAttribute.AttributeType.Null:
-                            break;
-                        case I3dfAttribute.AttributeType.Color:
-                            colors = gpas.Select(gpa => gpa.g.GetProperty<int[]>(gpa.p.Name)).WhereNotNull()
-                                .Select(x => new Vector4(x[0], x[1], x[2], x[3])).Distinct()
-                                .Select(x => new int[] { (byte)x.X, (byte)x.Y, (byte)x.Z, (byte)x.W }).ToArray();
-                            break;
-                        case I3dfAttribute.AttributeType.Diagonal:
-                            diagonals = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.CenterX:
-                            centerX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.CenterY:
-                            centerY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.CenterZ:
-                            centerZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.Normal:
-                            normals = gpas.Select(gpa => gpa.g.GetProperty<float[]>(gpa.p.Name))
-                                .WhereNotNull().Select(x => new Vector3(x[0], x[1], x[2])).Distinct()
-                                .Select(y => y.CopyToNewArray()).ToArray();
-                            break;
-                        case I3dfAttribute.AttributeType.Delta:
-                            deltas = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.Height:
-                            heights = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.Radius:
-                            radii = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.Angle:
-                            angles = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.TranslationX:
-                            translationsX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.TranslationY:
-                            translationsY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.TranslationZ:
-                            translationsZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.ScaleX:
-                            scalesX = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.ScaleY:
-                            scalesY = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.ScaleZ:
-                            scalesZ = gpas.Select(gpa => gpa.g.GetProperty<float>(gpa.p.Name)).Distinct()
-                                .ToImmutableSortedSet();
-                            break;
-                        case I3dfAttribute.AttributeType.FileId:
-                            fileIds = gpas.Select(gpa => gpa.g.GetProperty<ulong>(gpa.p.Name)).Distinct().ToArray();
-                            break;
-                        case I3dfAttribute.AttributeType.Texture:
-                            textures = gpas.Select(gpa => gpa.g.GetProperty<Texture>(gpa.p.Name))
-                                .WhereNotNull().Distinct().ToArray();
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
+                    case I3dfAttribute.AttributeType.Null:
+                        // Intentionally ignored
+                        break;
+                    case I3dfAttribute.AttributeType.Color:
+                        colors = GetDistinctValuesOfAllPropertiesMatchingKind<Color>(geometries, attributeType, attributeLookup, new RgbaColorComparer());
+                        break;
+                    case I3dfAttribute.AttributeType.Diagonal:
+                        diagonals = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.CenterX:
+                        centerX = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.CenterY:
+                        centerY = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.CenterZ:
+                        centerZ = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.Normal:
+                        normals = GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(geometries, attributeType, attributeLookup, new XyzVector3Comparer());
+                        break;
+                    case I3dfAttribute.AttributeType.Delta:
+                        deltas = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.Height:
+                        heights = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.Radius:
+                        radii = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.Angle:
+                        angles = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.TranslationX:
+                        translationsX = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.TranslationY:
+                        translationsY = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.TranslationZ:
+                        translationsZ = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.ScaleX:
+                        scalesX = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.ScaleY:
+                        scalesY = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.ScaleZ:
+                        scalesZ = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        break;
+                    case I3dfAttribute.AttributeType.FileId:
+                        fileIds = GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeType, attributeLookup).ToArray();
+                        break;
+                    case I3dfAttribute.AttributeType.Texture:
+                        textures = Array.Empty<Texture>();
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
-            );
+            }
 
+            Console.WriteLine("Retrieved all distinct attributes in: " + getAttributeValuesTimer.Elapsed);
 
             var primitiveCollections = new PrimitiveCollections();
             foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
@@ -266,8 +268,8 @@ namespace CadRevealComposer
                         // Arbitrary selected numbers
                         SectorId = 0,
                         ParentSectorId = null,
-                        BboxMax = boundingBox.Max.CopyToNewArray(),
-                        BboxMin = boundingBox.Min.CopyToNewArray(),
+                        BboxMax = boundingBox.Max,
+                        BboxMin = boundingBox.Min,
                         Attributes = new Attributes()
                         {
                             Angle = angles,
@@ -322,10 +324,10 @@ namespace CadRevealComposer
                         ParentId = sectorFileHeader.ParentSectorId ?? -1,
                         BoundingBox =
                             new BoundingBox(
-                                Min: new BbVector3(sectorFileHeader.BboxMin[0], sectorFileHeader.BboxMin[1],
-                                    sectorFileHeader.BboxMin[2]),
-                                Max: new BbVector3(sectorFileHeader.BboxMax[0], sectorFileHeader.BboxMax[1],
-                                    sectorFileHeader.BboxMax[2])
+                                Min: new BbVector3(sectorFileHeader.BboxMin.X, sectorFileHeader.BboxMin.Y,
+                                    sectorFileHeader.BboxMin.Z),
+                                Max: new BbVector3(sectorFileHeader.BboxMax.X, sectorFileHeader.BboxMax.Y,
+                                    sectorFileHeader.BboxMax.Z)
                             ),
                         Depth = sectorFileHeader.ParentSectorId == null ? 1 : throw new NotImplementedException(),
                         Path = sectorFileHeader.SectorId == 0 ? "0/" : throw new NotImplementedException(),
@@ -346,7 +348,7 @@ namespace CadRevealComposer
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
             JsonSerializeToFile(scene, scenePath, Formatting.Indented);
 
-            Console.WriteLine($"Total primitives {geometries.Length}/{PrimitiveCounter.pc}");
+            Console.WriteLine($"Total primitives {geometries.Count()}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
             // Wait until obj export is done (Its probably finished ages ago)
@@ -354,6 +356,30 @@ namespace CadRevealComposer
 
             Console.WriteLine(
                     $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        }
+
+
+        private static ImmutableSortedSet<T> GetDistinctValuesOfAllPropertiesMatchingKind<T>(IEnumerable<APrimitive> x, I3dfAttribute.AttributeType kind,
+            Dictionary<Type, Dictionary<I3dfAttribute.AttributeType, IEnumerable<PropertyInfo>>> attributeLookupDict, IComparer<T>? comparer = null)
+        {
+            var data = x
+                .AsParallel()
+                .SelectMany(y => GetAllValuesOfAttributeKind<T>(y, kind, attributeLookupDict))
+                .ToImmutableSortedSet(comparer);
+
+            return data;
+        }
+
+        private static IEnumerable<T> GetAllValuesOfAttributeKind<T>(APrimitive x, I3dfAttribute.AttributeType attributeKind, Dictionary<Type, Dictionary<I3dfAttribute.AttributeType, IEnumerable<PropertyInfo>>> attributeLookup)
+        {
+            var type = x.GetType();
+            if (!attributeLookup[type].TryGetValue(attributeKind, out var propertyInfos))
+            {
+                return ArraySegment<T>.Empty;
+            }
+            IEnumerable<T> i3dfAttributes = propertyInfos!.Select(pi => (T)(pi.GetValue(x) ?? throw new InvalidOperationException()));
+
+            return i3dfAttributes;
         }
 
         private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<TriangleMesh> meshGeometries)

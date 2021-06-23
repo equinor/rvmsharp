@@ -6,6 +6,8 @@ namespace CadRevealComposer
     using RvmSharp.Primitives;
     using System;
     using System.Collections.Immutable;
+    using System.Drawing;
+    using System.Numerics;
 
     public class CadRevealNode
     {
@@ -143,16 +145,16 @@ namespace CadRevealComposer
 
         [JsonProperty("parent_sector_id")] public long? ParentSectorId { get; set; } // FIXME this one is actually ulong, but JSON export requires -1 for no parent
 
-        [JsonProperty("bbox_min")] public float[] BboxMin { get; set; } = { 0f, 0f, 0f };
+        [JsonProperty("bbox_min")] public Vector3 BboxMin { get; set; } = Vector3.Zero;
 
-        [JsonProperty("bbox_max")] public float[] BboxMax { get; set; } = { 0f, 0f, 0f };
+        [JsonProperty("bbox_max")] public Vector3 BboxMax { get; set; } = Vector3.Zero;
 
         [JsonProperty("attributes")] public Attributes? Attributes { get; set; } = new Attributes();
     }
 
     public class Attributes
     {
-        [JsonProperty("color")] public int[][] Color { get; set; } = Array.Empty<int[]>();
+        [JsonProperty("color")] public ImmutableSortedSet<Color> Color { get; set; } = ImmutableSortedSet<Color>.Empty;
 
         [JsonProperty("diagonal")] public ImmutableSortedSet<float> Diagonal { get; set; } = ImmutableSortedSet<float>.Empty;
 
@@ -162,7 +164,7 @@ namespace CadRevealComposer
 
         [JsonProperty("center_z")] public ImmutableSortedSet<float> CenterZ { get; set; } = ImmutableSortedSet<float>.Empty;
 
-        [JsonProperty("normal")] public float[][] Normal { get; set; } = Array.Empty<float[]>();
+        [JsonProperty("normal")] public ImmutableSortedSet<Vector3> Normal { get; set; } = ImmutableSortedSet<Vector3>.Empty;
 
         [JsonProperty("delta")] public ImmutableSortedSet<float> Delta { get; set; } = ImmutableSortedSet<float>.Empty;
 

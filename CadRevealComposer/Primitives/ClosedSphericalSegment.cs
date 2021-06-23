@@ -1,12 +1,13 @@
 namespace CadRevealComposer.Primitives
 {
     using Newtonsoft.Json;
+    using System.Numerics;
 
     public record ClosedSphericalSegment(
             CommonPrimitiveProperties CommonPrimitiveProperties,
             [property: I3df(I3dfAttribute.AttributeType.Normal)]
             [property: JsonProperty("normal")]
-            float[] Normal,
+            Vector3 Normal,
             [property: I3df(I3dfAttribute.AttributeType.Height)]
             [property: JsonProperty("height")] float Height,
             [property: I3df(I3dfAttribute.AttributeType.Radius)]

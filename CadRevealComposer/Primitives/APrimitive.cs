@@ -10,6 +10,7 @@ namespace CadRevealComposer.Primitives
     using RvmSharp.Tessellation;
     using System;
     using System.Diagnostics;
+    using System.Drawing;
     using System.Numerics;
     using Utils;
 
@@ -20,7 +21,7 @@ namespace CadRevealComposer.Primitives
         Quaternion Rotation,
         Vector3 Scale,
         float AxisAlignedDiagonal,
-        int[] Color,
+        Color Color,
         (Vector3 Normal, float RotationAngle) RotationDecomposed);
 
     public abstract record APrimitive(
@@ -30,7 +31,7 @@ namespace CadRevealComposer.Primitives
         [property: I3df(I3dfAttribute.AttributeType.Null)]
         [property: JsonProperty("tree_index")] ulong TreeIndex,
         [property: I3df(I3dfAttribute.AttributeType.Color)]
-        [property: JsonProperty("color")] int[] Color,
+        [property: JsonProperty("color")] Color Color,
         [property: I3df(I3dfAttribute.AttributeType.Diagonal)]
         [property: JsonProperty("diagonal")] float Diagonal,
         [property: I3df(I3dfAttribute.AttributeType.CenterX)]
@@ -93,7 +94,7 @@ namespace CadRevealComposer.Primitives
                             return new OpenCylinder
                             (
                                 commonPrimitiveProperties,
-                                CenterAxis: normal.CopyToNewArray(),
+                                CenterAxis: normal,
                                 Height: height,
                                 Radius: radius
                             );
@@ -103,7 +104,7 @@ namespace CadRevealComposer.Primitives
                             return new ClosedCylinder
                             (
                                 commonPrimitiveProperties,
-                                CenterAxis: normal.CopyToNewArray(),
+                                CenterAxis: normal,
                                 Height: height,
                                 Radius: radius
                             );
@@ -117,7 +118,7 @@ namespace CadRevealComposer.Primitives
                         if (rvmEllipticalDish.Connections[0] != null)
                         {
                             return new ClosedEllipsoidSegment(commonPrimitiveProperties,
-                                Normal: normal.CopyToNewArray(),
+                                Normal: normal,
                                 Height: verticalRadius,
                                 HorizontalRadius: horizontalRadius,
                                 VerticalRadius: verticalRadius);
@@ -125,7 +126,7 @@ namespace CadRevealComposer.Primitives
                         else
                         {
                             return new OpenEllipsoidSegment(commonPrimitiveProperties,
-                                Normal: normal.CopyToNewArray(),
+                                Normal: normal,
                                 Height: verticalRadius,
                                 HorizontalRadius: horizontalRadius,
                                 VerticalRadius: verticalRadius);
@@ -157,7 +158,7 @@ namespace CadRevealComposer.Primitives
                             new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
                         PrimitiveCounter.pyramidAsBox++;
                         return new Box(commonPrimitiveProperties,
-                            normal.CopyToNewArray(), unitBoxScale.X,
+                            normal, unitBoxScale.X,
                             unitBoxScale.Y, unitBoxScale.Z, rotationAngle);
                     }
                     else
@@ -194,14 +195,14 @@ namespace CadRevealComposer.Primitives
                         if (rvmSphericalDish.Connections[0] != null)
                         {
                             return new ClosedSphericalSegment(commonPrimitiveProperties,
-                                Normal: normal.CopyToNewArray(),
+                                Normal: normal,
                                 Height: height,
                                 Radius: radius);
                         }
                         else
                         {
                             return new ClosedSphericalSegment(commonPrimitiveProperties,
-                                Normal: normal.CopyToNewArray(),
+                                Normal: normal,
                                 Height: height,
                                 Radius: radius);
                         }
@@ -217,7 +218,7 @@ namespace CadRevealComposer.Primitives
                     {
                         return new ExtrudedRing(
                             commonPrimitiveProperties,
-                            CenterAxis: normal.CopyToNewArray(),
+                            CenterAxis: normal,
                             Height: rvmRectangularTorus.Height * scale.Z,
                             InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
                             OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X
@@ -229,7 +230,7 @@ namespace CadRevealComposer.Primitives
                         {
                             return new OpenExtrudedRingSegment(
                                 commonPrimitiveProperties,
-                                CenterAxis: normal.CopyToNewArray(),
+                                CenterAxis: normal,
                                 Height: rvmRectangularTorus.Height * scale.Z,
                                 InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
                                 OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
@@ -240,7 +241,7 @@ namespace CadRevealComposer.Primitives
                         {
                             return new ClosedExtrudedRingSegment(
                                 commonPrimitiveProperties,
-                                CenterAxis: normal.CopyToNewArray(),
+                                CenterAxis: normal,
                                 Height: rvmRectangularTorus.Height * scale.Z,
                                 InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
                                 OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
