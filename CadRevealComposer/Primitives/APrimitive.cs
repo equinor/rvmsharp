@@ -137,7 +137,7 @@ namespace CadRevealComposer.Primitives
                         return null;
                     }
 
-                    const float unusedTolerance = -1f; // Tolerance is currently unused for FacetGroups
+                    const float unusedTolerance = 5f; // Tolerance is currently unused for FacetGroups
                     var facetGroupMesh = TessellatorBridge.Tessellate(facetGroup, tolerance: unusedTolerance);
                     if (facetGroupMesh == null)
                         throw new Exception(
@@ -149,33 +149,7 @@ namespace CadRevealComposer.Primitives
                     PrimitiveCounter.line++;
                     return null;
                 case RvmPyramid rvmPyramid:
-                    // A "Pyramid" that has an equal Top plane size to its bottom plane, and has no offset... is a box.
-                    if (Math.Abs(rvmPyramid.BottomX - rvmPyramid.TopX) < 0.01 &&
-                        Math.Abs(rvmPyramid.TopY - rvmPyramid.BottomY) < 0.01 &&
-                        Math.Abs(rvmPyramid.OffsetX - rvmPyramid.OffsetY) < 0.01 && rvmPyramid.OffsetX == 0)
-                    {
-                        var unitBoxScale = Vector3.Multiply(
-                            scale,
-                            new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
-                        PrimitiveCounter.pyramidAsBox++;
-                        return new Box(commonPrimitiveProperties,
-                            normal, unitBoxScale.X,
-                            unitBoxScale.Y, unitBoxScale.Z, rotationAngle);
-                    }
-                    else
-                    {
-                        // TODO: Pyramids are a good candidate for instancing. Investigate how to best apply it.
-                        var pyramidMesh =
-                            TessellatorBridge.Tessellate(rvmPyramid, tolerance: -1 /* Unused for pyramids */);
-
-                        PrimitiveCounter.pyramid++;
-                        if (pyramidMesh == null)
-                            throw new Exception($"Expected a pyramid to always tessellate. Was {pyramidMesh}");
-
-                        return new TriangleMesh(
-                            commonPrimitiveProperties, tempHackMeshFileId, (uint)pyramidMesh.Triangles.Length / 3,
-                            pyramidMesh);
-                    }
+                    return rvmPyramid.ConvertToRevealPrimitive(tempHackMeshFileId, revealNode, rvmNode);
                 case RvmCircularTorus circularTorus:
                     {
                         return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
