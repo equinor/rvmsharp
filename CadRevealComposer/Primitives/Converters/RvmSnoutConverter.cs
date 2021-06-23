@@ -11,12 +11,12 @@
         public static APrimitive? ConvertToRevealPrimitive(this RvmSnout rvmSnout, CadRevealNode revealNode,
             RvmNode container)
         {
-            var commons = rvmSnout.GetCommonProps(container,revealNode);
+            var commons = rvmSnout.GetCommonProps(container, revealNode);
             var scale = commons.Scale;
             Trace.Assert(scale.IsUniform(), $"Expected Uniform scale, was {scale}");
             var height = MathF.Sqrt(
                 rvmSnout.Height * rvmSnout.Height + rvmSnout.OffsetX * rvmSnout.OffsetX + rvmSnout.OffsetY * rvmSnout.OffsetY) * scale.Z;
-            
+
             var radiusA = rvmSnout.RadiusTop * scale.X;
             var radiusB = rvmSnout.RadiusBottom * scale.X;
 
@@ -39,7 +39,8 @@
                         return ClosedGeneralCone();
                     }*/
                 }
-            } else 
+            }
+            else
             {
                 if (IsEccentric(rvmSnout))
                 {
@@ -48,27 +49,29 @@
                     {
                         return new OpenEccentricCone(
                             commons,
-                            CenterAxis: capNormal.CopyToNewArray(),
+                            CenterAxis: capNormal,
                             Height: height,
                             RadiusA: radiusA,
                             RadiusB: radiusB,
-                            CapNormal: commons.RotationDecomposed.Normal.CopyToNewArray());
+                            CapNormal: commons.RotationDecomposed.Normal);
                     }
                     else
                     {
                         return new ClosedEccentricCone(commons,
-                            CenterAxis: capNormal.CopyToNewArray(),
+                            CenterAxis: capNormal,
                             Height: height,
                             RadiusA: radiusA,
                             RadiusB: radiusB,
-                            CapNormal: commons.RotationDecomposed.Normal.CopyToNewArray());
+                            CapNormal: commons.RotationDecomposed.Normal);
                     }
-                } else {
+                }
+                else
+                {
                     if (IsOpen(rvmSnout))
                     {
                         var c = new OpenCone(
                             commons,
-                            CenterAxis: commons.RotationDecomposed.Normal.CopyToNewArray(),
+                            CenterAxis: commons.RotationDecomposed.Normal,
                             Height: height,
                             RadiusA: radiusA,
                             RadiusB: radiusB);
@@ -79,7 +82,7 @@
                     {
                         return new ClosedCone(
                             commons,
-                            CenterAxis: commons.RotationDecomposed.Normal.CopyToNewArray(),
+                            CenterAxis: commons.RotationDecomposed.Normal,
                             Height: height,
                             RadiusA: radiusA,
                             RadiusB: radiusB);

@@ -2,17 +2,18 @@
 {
     using RvmSharp.Primitives;
     using System;
+    using System.Drawing;
     using System.Linq;
     using System.Numerics;
     using Utils;
 
     public static class RvmPrimitiveExtensions
     {
-        private static int[] GetColor(RvmNode container)
+        private static Color GetColor(RvmNode container)
         {
+
             // TODO: Fallback color is arbitrarily chosen, it should probably be handled differently
-            return PdmsColors.GetColorAsBytesByCode(container.MaterialId < 50 ? container.MaterialId : 1)
-                .Select(x => (int)x).ToArray();
+            return PdmsColors.GetColorAsColorByCode(container.MaterialId < 50 ? container.MaterialId : 1);
         }
 
         /// <summary>
