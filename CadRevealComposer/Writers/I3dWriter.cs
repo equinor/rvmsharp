@@ -4,8 +4,11 @@ namespace CadRevealComposer.Writers
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Drawing;
     using System.IO;
     using System.Linq;
+    using System.Numerics;
+    using Utils;
 
     public static class I3dWriter
     {
@@ -38,12 +41,12 @@ namespace CadRevealComposer.Writers
                     foreach (var box in boxCollection)
                     {
                         indices.Add(box.TreeIndex);
-                        indices.Add(GetColorIndex(box.Color, headerAttributes.Color));
+                        indices.Add(GetIndex(box.Color, headerAttributes.Color));
                         indices.Add(GetFloatIndex(box.Diagonal, headerAttributes.Diagonal));
                         indices.Add(GetFloatIndex(box.CenterX, headerAttributes.CenterX));
                         indices.Add(GetFloatIndex(box.CenterY, headerAttributes.CenterY));
                         indices.Add(GetFloatIndex(box.CenterZ, headerAttributes.CenterZ));
-                        indices.Add(GetNormalIndex(box.Normal, headerAttributes.Normal));
+                        indices.Add(GetIndex(box.Normal, headerAttributes.Normal));
                         indices.Add(GetFloatIndex(box.DeltaX, headerAttributes.Delta));
                         indices.Add(GetFloatIndex(box.DeltaY, headerAttributes.Delta));
                         indices.Add(GetFloatIndex(box.DeltaZ, headerAttributes.Delta));
@@ -63,12 +66,12 @@ namespace CadRevealComposer.Writers
                     foreach (var circle in circleCollection)
                     {
                         indices.Add(circle.TreeIndex);
-                        indices.Add(GetColorIndex(circle.Color, headerAttributes.Color));
+                        indices.Add(GetIndex(circle.Color, headerAttributes.Color));
                         indices.Add(GetFloatIndex(circle.Diagonal, headerAttributes.Diagonal));
                         indices.Add(GetFloatIndex(circle.CenterX, headerAttributes.CenterX));
                         indices.Add(GetFloatIndex(circle.CenterY, headerAttributes.CenterY));
                         indices.Add(GetFloatIndex(circle.CenterZ, headerAttributes.CenterZ));
-                        indices.Add(GetNormalIndex(circle.Normal, headerAttributes.Normal));
+                        indices.Add(GetIndex(circle.Normal, headerAttributes.Normal));
                         indices.Add(GetFloatIndex(circle.Radius, headerAttributes.Radius));
                     }
 
@@ -85,12 +88,12 @@ namespace CadRevealComposer.Writers
                     foreach (var geometry in closedConeCollection)
                     {
                         indices.Add(geometry.TreeIndex);
-                        indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
+                        indices.Add(GetIndex(geometry.Color, headerAttributes.Color));
                         indices.Add(GetFloatIndex(geometry.Diagonal, headerAttributes.Diagonal));
                         indices.Add(GetFloatIndex(geometry.CenterX, headerAttributes.CenterX));
                         indices.Add(GetFloatIndex(geometry.CenterY, headerAttributes.CenterY));
                         indices.Add(GetFloatIndex(geometry.CenterZ, headerAttributes.CenterZ));
-                        indices.Add(GetNormalIndex(geometry.CenterAxis, headerAttributes.Normal));
+                        indices.Add(GetIndex(geometry.CenterAxis, headerAttributes.Normal));
                         indices.Add(GetFloatIndex(geometry.Height, headerAttributes.Height));
                         indices.Add(GetFloatIndex(geometry.RadiusA, headerAttributes.Radius));
                         indices.Add(GetFloatIndex(geometry.RadiusB, headerAttributes.Radius));
@@ -810,18 +813,9 @@ namespace CadRevealComposer.Writers
             }
         }
 
-        private static ulong GetColorIndex(int[] targetColor, int[][] colorAttributeArray)
+        private static ulong GetColorIndex(Color targetColor, ImmutableSortedSet<Color> colorAttributeArray)
         {
-            for (int i = 0; i < colorAttributeArray.Length; i++)
-            {
-                var colorAttribute = colorAttributeArray[i];
-                if (targetColor.SequenceEqual(colorAttribute))
-                {
-                    return (ulong)i + 1;
-                }
-            }
-
-            throw new KeyNotFoundException();
+            return GetIndex(targetColor, colorAttributeArray);
         }
 
         private static ulong GetTextureIndex(Texture targetTexture,
@@ -840,19 +834,20 @@ namespace CadRevealComposer.Writers
             throw new KeyNotFoundException();
         }
 
-        private static ulong GetNormalIndex(float[] targetNormal, float[][] attributeArray)
+        private static ulong GetNormalIndex(Vector3 targetNormal, ImmutableSortedSet<Vector3> attributes)
         {
-            for (int i = 0; i < attributeArray.Length; i++)
-            {
-                var attributeNormal = attributeArray[i];
-                if (targetNormal.SequenceEqual(attributeNormal))
-                {
-                    return (ulong)i;
-                }
-            }
-
-            throw new KeyNotFoundException();
+            return GetIndex(targetNormal, attributes);
         }
+
+        private static ulong GetIndex<T>(T target, ImmutableSortedSet<T> set)
+        {
+            var index = set.IndexOf(target);
+            if (index < 0)
+                throw new KeyNotFoundException();
+
+            return Convert.ToUInt64(index);
+        }
+
 
         private static ulong GetFloatIndex(float targetFloat, ImmutableSortedSet<float> attributeArray)
         {
@@ -920,12 +915,12 @@ namespace CadRevealComposer.Writers
             stream.WriteUint64(sectorHeader.SectorId);
             ulong parentSectorId = (ulong?)sectorHeader.ParentSectorId ?? ulong.MaxValue;
             stream.WriteUint64(parentSectorId);
-            stream.WriteFloat(sectorHeader.BboxMin[0]);
-            stream.WriteFloat(sectorHeader.BboxMin[1]);
-            stream.WriteFloat(sectorHeader.BboxMin[2]);
-            stream.WriteFloat(sectorHeader.BboxMax[0]);
-            stream.WriteFloat(sectorHeader.BboxMax[1]);
-            stream.WriteFloat(sectorHeader.BboxMax[2]);
+            stream.WriteFloat(sectorHeader.BboxMin.X);
+            stream.WriteFloat(sectorHeader.BboxMin.Y);
+            stream.WriteFloat(sectorHeader.BboxMin.Z);
+            stream.WriteFloat(sectorHeader.BboxMax.X);
+            stream.WriteFloat(sectorHeader.BboxMax.Y);
+            stream.WriteFloat(sectorHeader.BboxMax.Z);
 
             stream.WriteUint32(AttributeCount);
 

@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Diagnostics.Contracts;
     using System.Linq;
 
@@ -43,5 +44,24 @@
         {
             return parallelQuery.Where(e => e != null).Select(e => e!.Value)!;
         }
+
+
+        [Pure]
+        public static ImmutableSortedSet<T> ToImmutableSortedSetFast<T>(this IEnumerable<T> enumerable, IComparer<T>? comparer = null)
+        {
+            // This is twice as fast as "ToImmutableSortedSet". No known issues.
+            var builder = ImmutableSortedSet.CreateBuilder<T>();
+
+            if (comparer != null)
+                builder.KeyComparer = comparer;
+
+            foreach (T e in enumerable)
+            {
+                builder.Add(e);
+            }
+
+            return builder.ToImmutable();
+        }
+
     }
 }

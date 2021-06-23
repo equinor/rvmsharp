@@ -15,12 +15,12 @@
 
             Box revealBox = new Box(
                 CommonPrimitiveProperties: commons,
-                Normal: commons.RotationDecomposed.Normal.CopyToNewArray(),
+                Normal: commons.RotationDecomposed.Normal,
                 DeltaX: unitBoxScale.X,
                 DeltaY: unitBoxScale.Y,
                 DeltaZ: unitBoxScale.Z,
                 RotationAngle: commons.RotationDecomposed.RotationAngle);
-            
+
             return revealBox;
         }
     }
