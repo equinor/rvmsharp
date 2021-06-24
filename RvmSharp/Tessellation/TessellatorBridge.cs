@@ -114,12 +114,14 @@ namespace RvmSharp.Tessellation
                 },
             };
 
+            float heightNormal = Math.Abs(halfHeight) < 0.00001f ? 1 : halfHeight;
+
             Vector3[] n =
             {
-                new Vector3(0.0f, -halfHeight, (quad[1, 0].Y - quad[0, 0].Y)),
-                new Vector3(halfHeight, 0.0f, -(quad[1, 1].X - quad[0, 1].X)),
-                new Vector3(0.0f, halfHeight, -(quad[1, 2].Y - quad[0, 2].Y)),
-                new Vector3(-halfHeight, 0.0f, (quad[1, 3].X - quad[0, 3].X)),
+                new Vector3(0.0f, -heightNormal, (quad[1, 0].Y - quad[0, 0].Y)),
+                new Vector3(heightNormal, 0.0f, -(quad[1, 1].X - quad[0, 1].X)),
+                new Vector3(0.0f, heightNormal, -(quad[1, 2].Y - quad[0, 2].Y)),
+                new Vector3(-heightNormal, 0.0f, (quad[1, 3].X - quad[0, 3].X)),
                 new Vector3(0, 0, -1),
                 new Vector3(0, 0, 1),
             };
