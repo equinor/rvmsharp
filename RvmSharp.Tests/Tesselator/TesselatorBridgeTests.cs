@@ -1,6 +1,7 @@
 ﻿namespace RvmSharp.Tests.Tesselator
 {
     using NUnit.Framework;
+    using RvmSharp.Operations;
     using RvmSharp.Primitives;
     using System.Numerics;
     using Tessellation;
@@ -34,11 +35,24 @@
             [Test]
             public void TessellatePyramid_WithUnitPyramid_MatchesReferenceMethod()
             {
-                var unitPyramid = new RvmPyramid(1, Matrix4x4.Identity, ArbitraryBoundingBox, 0, 0, 0, 1, 0, 0, 1);
+                var unitPyramid = new RvmPyramid(1, Matrix4x4.Identity, ArbitraryBoundingBox, 1, 1, 0, 1, 0, 0, 1);
 
                 var randomToleranceValue = 0.1f;
                 var pyramid = TessellatorBridge.Tessellate(unitPyramid, 1, randomToleranceValue);
                 Assert.That(pyramid, Is.Not.Null);
+            }
+
+            [Test]
+            public void TessellatePyramid_WithHeightZero_HasNormalsThatAreNotNan()
+            {
+                var unitPyramid = new RvmPyramid(1, Matrix4x4.Identity, ArbitraryBoundingBox, 1, 1, 0, 1, 0, 0, 0);
+
+                var unusedTolerance = 0.1f;
+                var pyramid = TessellatorBridge.Tessellate(unitPyramid, unusedTolerance);
+                Assert.That(pyramid, Is.Not.Null);
+
+                // Normals should never be NaN or infinite
+                Assert.That(pyramid.Normals, Has.All.Matches<Vector3>(x => x.X.IsFinite() && x.Y.IsFinite() && x.Z.IsFinite()));
             }
         }
 
