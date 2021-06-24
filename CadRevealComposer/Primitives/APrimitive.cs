@@ -5,7 +5,6 @@ namespace CadRevealComposer.Primitives
 {
     using Converters;
     using Newtonsoft.Json;
-    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
@@ -25,21 +24,20 @@ namespace CadRevealComposer.Primitives
         (Vector3 Normal, float RotationAngle) RotationDecomposed);
 
     public abstract record APrimitive(
-
         [property: I3df(I3dfAttribute.AttributeType.Null)]
         ulong NodeId,
         [property: I3df(I3dfAttribute.AttributeType.Null)]
-         ulong TreeIndex,
+        ulong TreeIndex,
         [property: I3df(I3dfAttribute.AttributeType.Color)]
-         Color Color,
+        Color Color,
         [property: I3df(I3dfAttribute.AttributeType.Diagonal)]
-         float Diagonal,
+        float Diagonal,
         [property: I3df(I3dfAttribute.AttributeType.CenterX)]
-         float CenterX,
+        float CenterX,
         [property: I3df(I3dfAttribute.AttributeType.CenterY)]
-         float CenterY,
+        float CenterY,
         [property: I3df(I3dfAttribute.AttributeType.CenterZ)]
-         float CenterZ,
+        float CenterZ,
         [property: JsonIgnore,
                    Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true)]
         CommonPrimitiveProperties? CommonPrimitiveProperties =
@@ -139,18 +137,21 @@ namespace CadRevealComposer.Primitives
                         return null;
                     }
 
-                    const float hardcodedTolerance = 0.1f; // TODO: Unhardcode
-                    var facetGroupMesh = TessellatorBridge.Tessellate(facetGroup, tolerance: hardcodedTolerance);
+                    const float unusedTolerance = -1f; // Tolerance is currently unused for FacetGroups
+                    var facetGroupMesh = TessellatorBridge.Tessellate(facetGroup, tolerance: unusedTolerance);
                     if (facetGroupMesh == null)
-                        throw new Exception($"Expected a {nameof(RvmFacetGroup)} to always tessellate. Was {facetGroupMesh}.");
+                        throw new Exception(
+                            $"Expected a {nameof(RvmFacetGroup)} to always tessellate. Was {facetGroupMesh}.");
                     return new TriangleMesh(
-                        commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Length / 3, facetGroupMesh);
+                        commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Length / 3,
+                        facetGroupMesh);
                 case RvmLine:
                     PrimitiveCounter.line++;
                     return null;
                 case RvmPyramid rvmPyramid:
                     // A "Pyramid" that has an equal Top plane size to its bottom plane, and has no offset... is a box.
-                    if (Math.Abs(rvmPyramid.BottomX - rvmPyramid.TopX) < 0.01 && Math.Abs(rvmPyramid.TopY - rvmPyramid.BottomY) < 0.01 &&
+                    if (Math.Abs(rvmPyramid.BottomX - rvmPyramid.TopX) < 0.01 &&
+                        Math.Abs(rvmPyramid.TopY - rvmPyramid.BottomY) < 0.01 &&
                         Math.Abs(rvmPyramid.OffsetX - rvmPyramid.OffsetY) < 0.01 && rvmPyramid.OffsetX == 0)
                     {
                         var unitBoxScale = Vector3.Multiply(
@@ -164,14 +165,16 @@ namespace CadRevealComposer.Primitives
                     else
                     {
                         // TODO: Pyramids are a good candidate for instancing. Investigate how to best apply it.
-                        var pyramidMesh = TessellatorBridge.Tessellate(rvmPyramid, tolerance: -1 /* Unused for pyramids */ );
+                        var pyramidMesh =
+                            TessellatorBridge.Tessellate(rvmPyramid, tolerance: -1 /* Unused for pyramids */);
 
                         PrimitiveCounter.pyramid++;
                         if (pyramidMesh == null)
                             throw new Exception($"Expected a pyramid to always tessellate. Was {pyramidMesh}");
 
                         return new TriangleMesh(
-                            commonPrimitiveProperties, tempHackMeshFileId, (uint)pyramidMesh.Triangles.Length / 3, pyramidMesh);
+                            commonPrimitiveProperties, tempHackMeshFileId, (uint)pyramidMesh.Triangles.Length / 3,
+                            pyramidMesh);
                     }
                 case RvmCircularTorus circularTorus:
                     {
