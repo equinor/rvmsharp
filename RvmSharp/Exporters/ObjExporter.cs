@@ -80,10 +80,15 @@
         {
             if (!number.IsFinite())
             {
+#if DEBUG
                 // This is a development guard. A non finite number can happen when a matrix
                 // has a Zero scale in one direction. Need to figure out a nice way to handle this.
                 // Consider ignoring. or serializing as "NaN"?
                 throw new ArgumentOutOfRangeException(nameof(number), $"Expected {nameof(number)} to be finite. Was {number}.");
+#else
+                // TODO: This is the "legacy" behavior (float.ToString("0.0000") with a Float.Nan --> "NaN"
+                return "NaN"; // This will be ignored by most parsers, and is never valid.
+#endif
             }
 
             // Using Math.Round, and Decimal instead of "float.ToString("0.000000") as it is roughly 100% faster,
