@@ -114,6 +114,7 @@ namespace RvmSharp.Tessellation
                 },
             };
 
+            // Avoid the normal in the height direction ever being Zero. (This can lead to Normals without direction)
             float heightNormal = Math.Abs(halfHeight) < 0.00001f ? 1 : halfHeight;
 
             Vector3[] n =
