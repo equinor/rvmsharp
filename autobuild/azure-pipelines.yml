@@ -15,7 +15,6 @@ variables:
   buildConfiguration: "Release"
 
 steps:
-  - task: NuGetToolInstaller@1
   - task: DotNetCoreCLI@2
     displayName: "Restore NuGet"
     inputs:
