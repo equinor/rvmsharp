@@ -1,14 +1,12 @@
 ﻿namespace CadRevealComposer.Primitives
 {
-    using Newtonsoft.Json;
     using System.Numerics;
 
     public record Circle(
             CommonPrimitiveProperties CommonPrimitiveProperties,
             [property: I3df(I3dfAttribute.AttributeType.Normal)]
-            [property: JsonProperty("normal")]
             Vector3 Normal,
             [property: I3df(I3dfAttribute.AttributeType.Radius)]
-            [property: JsonProperty("radius")] float Radius)
+            float Radius)
         : APrimitive(CommonPrimitiveProperties);
 }

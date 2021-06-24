@@ -6,23 +6,23 @@
     public record ClosedGeneralCylinder(
         CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Normal)]
-        [property: JsonProperty("center_axis")]
+
         Vector3 CenterAxis,
         [property: I3df(I3dfAttribute.AttributeType.Height)]
-        [property: JsonProperty("height")] float Height,
+         float Height,
         [property: I3df(I3dfAttribute.AttributeType.Radius)]
-        [property: JsonProperty("radius")] float Radius,
+         float Radius,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-        [property: JsonProperty("rotation_angle")] float RotationAngle,
+         float RotationAngle,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-        [property: JsonProperty("arc_angle")] float ArcAngle,
+         float ArcAngle,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-        [property: JsonProperty("slope_a")] float SlopeA,
+         float SlopeA,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-        [property: JsonProperty("slope_b")] float SlopeB,
+         float SlopeB,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-        [property: JsonProperty("zangle_a")] float ZangleA,
+         float ZangleA,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-        [property: JsonProperty("zangle_b")] float ZangleB
+         float ZangleB
     ) : APrimitive(CommonPrimitiveProperties);
 }

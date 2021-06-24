@@ -5,47 +5,47 @@
 
     public record InstancedMesh(
             CommonPrimitiveProperties CommonPrimitiveProperties,
-            [property: I3df(I3dfAttribute.AttributeType.FileId)] [property: JsonProperty("file_id")]
+            [property: I3df(I3dfAttribute.AttributeType.FileId)]
             ulong FileId,
             // TODO textures
-            [property: I3df(I3dfAttribute.AttributeType.Null)] [property: JsonProperty("triangle_offset")]
+            [property: I3df(I3dfAttribute.AttributeType.Null)]
             ulong TriangleOffset,
-            [property: I3df(I3dfAttribute.AttributeType.Null)] [property: JsonProperty("triangle_count")]
+            [property: I3df(I3dfAttribute.AttributeType.Null)]
             ulong TriangleCount,
-            [property: I3df(I3dfAttribute.AttributeType.TranslationX)] [property: JsonProperty("translation_x")]
+            [property: I3df(I3dfAttribute.AttributeType.TranslationX)]
             float TranslationX,
-            [property: I3df(I3dfAttribute.AttributeType.TranslationY)] [property: JsonProperty("translation_y")]
+            [property: I3df(I3dfAttribute.AttributeType.TranslationY)]
             float TranslationY,
-            [property: I3df(I3dfAttribute.AttributeType.TranslationZ)] [property: JsonProperty("translation_z")]
+            [property: I3df(I3dfAttribute.AttributeType.TranslationZ)]
             float TranslationZ,
-            [property: I3df(I3dfAttribute.AttributeType.Angle)] [property: JsonProperty("rotation_x")]
+            [property: I3df(I3dfAttribute.AttributeType.Angle)]
             float RotationX,
-            [property: I3df(I3dfAttribute.AttributeType.Angle)] [property: JsonProperty("rotation_y")]
+            [property: I3df(I3dfAttribute.AttributeType.Angle)]
             float RotationY,
-            [property: I3df(I3dfAttribute.AttributeType.Angle)] [property: JsonProperty("rotation_z")]
+            [property: I3df(I3dfAttribute.AttributeType.Angle)]
             float RotationZ,
-            [property: I3df(I3dfAttribute.AttributeType.ScaleX)] [property: JsonProperty("scale_x")]
+            [property: I3df(I3dfAttribute.AttributeType.ScaleX)]
             float ScaleX,
-            [property: I3df(I3dfAttribute.AttributeType.ScaleY)] [property: JsonProperty("scale_y")]
+            [property: I3df(I3dfAttribute.AttributeType.ScaleY)]
             float ScaleY,
-            [property: I3df(I3dfAttribute.AttributeType.ScaleZ)] [property: JsonProperty("scale_z")]
+            [property: I3df(I3dfAttribute.AttributeType.ScaleZ)]
             float ScaleZ)
         // TODO remove some common properties
         : APrimitive(CommonPrimitiveProperties)
     {
-        [Obsolete, JsonProperty("diffuse_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture DiffuseTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("specular_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture SpecularTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("ambient_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture AmbientTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("normal_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture NormalTexture { get; init; } = new Texture();
 
-        [Obsolete, JsonProperty("bump_texture"), I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture BumpTexture { get; init; } = new Texture();
     }
 }
