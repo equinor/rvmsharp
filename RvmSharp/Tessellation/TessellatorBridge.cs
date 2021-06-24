@@ -9,18 +9,18 @@ namespace RvmSharp.Tessellation
     using Primitives;
     using System.Diagnostics;
 
+    // ReSharper disable once UnusedType.Global -- Public API
     public static class TessellatorBridge
     {
         private const float MinimumThreshold = 1e-7f;
 
-        
         public static Mesh[] Tessellate(RvmNode group, float tolerance)
         {
             var meshes = group.Children.OfType<RvmPrimitive>().Select(primitive =>
             {
 #if DEBUG
                 // Assert that the decomposition works.
-                if ( !Matrix4x4.Decompose(primitive.Matrix, out _, out _, out _))
+                if (!Matrix4x4.Decompose(primitive.Matrix, out _, out _, out _))
                 {
                     throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
                 }
@@ -41,6 +41,7 @@ namespace RvmSharp.Tessellation
             var scaleScalar = Math.Max(scale.X, Math.Max(scale.Y, scale.Z));
             var mesh = Tessellate(primitive, scaleScalar, tolerance);
             mesh?.Apply(primitive.Matrix);
+
             return mesh;
         }
 
@@ -71,16 +72,17 @@ namespace RvmSharp.Tessellation
                     return Tessellate(ellipticalDish, ellipticalDish.BaseRadius, (float)Math.PI / 2, 0.0f,
                         ellipticalDish.Height / ellipticalDish.BaseRadius, scale, tolerance);
                 case RvmSphericalDish sphericalDish:
-                {
-                    var baseRadius = sphericalDish.BaseRadius;
-                    var height = sphericalDish.Height;
-                    var sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
-                    var sinval = Math.Min(1.0f, Math.Max(-1.0, (baseRadius / sphereRadius)));
-                    var arc = (float)Math.Asin(sinval);
-                    if (baseRadius < height) { arc = (float)Math.PI - arc; }
+                    {
+                        var baseRadius = sphericalDish.BaseRadius;
+                        var height = sphericalDish.Height;
+                        var sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
+                        var sinval = Math.Min(1.0f, Math.Max(-1.0, (baseRadius / sphereRadius)));
+                        var arc = (float)Math.Asin(sinval);
+                        if (baseRadius < height) { arc = (float)Math.PI - arc; }
 
-                    return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale, tolerance);
-                }
+                        return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale,
+                            tolerance);
+                    }
                 default:
                     throw new ArgumentOutOfRangeException(
                         $"(Currently) Unsupported type for tesselation: {primitive.Kind}");
@@ -227,7 +229,7 @@ namespace RvmSharp.Tessellation
                 scale, segments);
 
             bool shell = true;
-            bool[] cap = {true, true};
+            bool[] cap = { true, true };
 
             for (var i = 0; i < 2; i++)
             {
@@ -387,7 +389,8 @@ namespace RvmSharp.Tessellation
                 circularTorus.Offset + circularTorus.Radius,
                 scale, tolerance); // large radius, toroidal direction
             // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
-            var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, Math.Abs(circularTorus.Radius), scale,
+            var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, Math.Abs(circularTorus.Radius),
+                scale,
                 tolerance); // small radius, poloidal direction
 
             var error = Math.Max(
@@ -399,7 +402,7 @@ namespace RvmSharp.Tessellation
             var samples_s = segments_s; // Assumed to be closed
 
             bool shell = true;
-            bool[] cap = {true, true};
+            bool[] cap = { true, true };
             for (var i = 0; i < 2; i++)
             {
                 var con = circularTorus.Connections[i];
@@ -712,7 +715,7 @@ namespace RvmSharp.Tessellation
             var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
 
             bool shell = true;
-            bool[] shouldCap = {true, true};
+            bool[] shouldCap = { true, true };
 
 
             for (int i = 0; i < 2; i++)
@@ -840,7 +843,7 @@ namespace RvmSharp.Tessellation
             var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
 
             bool shell = true;
-            bool[] cap = {true, true};
+            bool[] cap = { true, true };
             for (var i = 0; i < 2; i++)
             {
                 var con = snout.Connections[i];
@@ -880,8 +883,8 @@ namespace RvmSharp.Tessellation
             var l = 0;
             var ox = 0.5f * snout.OffsetX;
             var oy = 0.5f * snout.OffsetY;
-            float[] mb = {(float)Math.Tan(snout.BottomShearX), (float)Math.Tan(snout.BottomShearX)};
-            float[] mt = {(float)Math.Tan(snout.TopShearX), (float)Math.Tan(snout.TopShearY)};
+            float[] mb = { (float)Math.Tan(snout.BottomShearX), (float)Math.Tan(snout.BottomShearX) };
+            float[] mt = { (float)Math.Tan(snout.TopShearX), (float)Math.Tan(snout.TopShearY) };
 
             var vertices_n = (shell ? 2 * samples : 0) + (cap[0] ? samples : 0) + (cap[1] ? samples : 0);
             var vertices = new float[3 * vertices_n];
