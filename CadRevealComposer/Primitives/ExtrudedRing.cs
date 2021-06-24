@@ -6,14 +6,14 @@ namespace CadRevealComposer.Primitives
     public record ExtrudedRing(
         CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Normal)]
-        [property: JsonProperty("center_axis")] Vector3 CenterAxis,
+         Vector3 CenterAxis,
         [property: I3df(I3dfAttribute.AttributeType.Height)]
-        [property: JsonProperty("height")] float Height,
+         float Height,
         [property: I3df(I3dfAttribute.AttributeType.Radius)]
-        [property: JsonProperty("inner_radius")]
+
         float InnerRadius,
         [property: I3df(I3dfAttribute.AttributeType.Radius)]
-        [property: JsonProperty("outer_radius")]
+
         float OuterRadius
     ) : APrimitive(CommonPrimitiveProperties);
 }

@@ -25,21 +25,21 @@ namespace CadRevealComposer.Primitives
         (Vector3 Normal, float RotationAngle) RotationDecomposed);
 
     public abstract record APrimitive(
-        [property: JsonProperty("node_id")]
+
         [property: I3df(I3dfAttribute.AttributeType.Null)]
         ulong NodeId,
         [property: I3df(I3dfAttribute.AttributeType.Null)]
-        [property: JsonProperty("tree_index")] ulong TreeIndex,
+         ulong TreeIndex,
         [property: I3df(I3dfAttribute.AttributeType.Color)]
-        [property: JsonProperty("color")] Color Color,
+         Color Color,
         [property: I3df(I3dfAttribute.AttributeType.Diagonal)]
-        [property: JsonProperty("diagonal")] float Diagonal,
+         float Diagonal,
         [property: I3df(I3dfAttribute.AttributeType.CenterX)]
-        [property: JsonProperty("center_x")] float CenterX,
+         float CenterX,
         [property: I3df(I3dfAttribute.AttributeType.CenterY)]
-        [property: JsonProperty("center_y")] float CenterY,
+         float CenterY,
         [property: I3df(I3dfAttribute.AttributeType.CenterZ)]
-        [property: JsonProperty("center_z")] float CenterZ,
+         float CenterZ,
         [property: JsonIgnore,
                    Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true)]
         CommonPrimitiveProperties? CommonPrimitiveProperties =
