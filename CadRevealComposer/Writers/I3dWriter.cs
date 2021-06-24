@@ -847,29 +847,9 @@ namespace CadRevealComposer.Writers
             return Convert.ToUInt64(index);
         }
 
-
         private static ulong GetFloatIndex(float targetFloat, ImmutableSortedSet<float> attributeArray)
         {
-
-            var index = attributeArray.IndexOf(targetFloat);
-            if (index < 0)
-                throw new KeyNotFoundException();
-
-            return (ulong)index;
-        }
-
-        private static ulong GetFloatIndex(float targetFloat, float[] attributeArray)
-        {
-            for (int i = 0; i < attributeArray.Length; i++)
-            {
-                // TODO: decide on precision here and in Runner
-                if (targetFloat == attributeArray[i])
-                {
-                    return (ulong)i;
-                }
-            }
-
-            throw new KeyNotFoundException();
+            return GetIndex(targetFloat, attributeArray);
         }
 
         private static ulong GetUint64Index(ulong targetUlong, ulong[] attributeArray)
