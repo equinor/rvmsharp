@@ -5,8 +5,8 @@
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
-    
-    public class Mesh
+
+    public class Mesh : IEquatable<Mesh>
     {
         public float Error { get; }
 
@@ -67,24 +67,57 @@
             var error = Math.Max(mesh1.Error, mesh2.Error);
             return new Mesh(vertices, normals, triangles, error);
         }
-    }
-}
+
+        /// <summary>
+        /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc)
+        /// </summary>
+        public bool Equals(Mesh? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return Error.Equals(other.Error) && Vertices.SequenceEqual(other.Vertices) &&
+                   Normals.SequenceEqual(other.Normals) && Triangles.SequenceEqual(other.Triangles);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is Mesh other)
+            {
+                return Equals(other);
+            }
+
+            return false;
+        }
 
         public override int GetHashCode()
         {
             var errorHashCode = Error.GetHashCode();
-            var verticesHashCode = ((IStructuralEquatable)Vertices).GetHashCode(EqualityComparer<float>.Default);
-            var normalsHashCode = ((IStructuralEquatable)Normals).GetHashCode(EqualityComparer<float>.Default);
-            var trianglesHashCode = ((IStructuralEquatable)Triangles).GetHashCode(EqualityComparer<float>.Default);
+            var verticesHashCode = GetStructuralHashCode(_vertices);
+            var normalsHashCode = GetStructuralHashCode(_normals);
+            var trianglesHashCode = GetStructuralHashCode(_triangles);
             unchecked
             {
                 // https://stackoverflow.com/a/1646913 (Replacement for HashCode.Combine since its not available on dotnet standard 2.0)
                 int hash = 17;
-                hash = hash * 31 + errorHashCode.GetHashCode();
-                hash = hash * 31 + verticesHashCode.GetHashCode();
-                hash = hash * 31 + normalsHashCode.GetHashCode();
-                hash = hash * 31 + trianglesHashCode.GetHashCode();
+                hash = hash * 31 + errorHashCode;
+                hash = hash * 31 + verticesHashCode;
+                hash = hash * 31 + normalsHashCode;
+                hash = hash * 31 + trianglesHashCode;
                 return hash;
+            }
+
+            // Helper to get structural (ListContent-based) hash code
+            static int GetStructuralHashCode<T>(IReadOnlyList<T> input) where T : IEquatable<T>
+            {
+                return ((IStructuralEquatable)input).GetHashCode(EqualityComparer<T>.Default);
             }
         }
     }
