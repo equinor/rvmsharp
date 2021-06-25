@@ -7,16 +7,16 @@
         /// <summary>
         /// Most our measurements are in meters. So this 0.00001 value gives us 1 micrometer leeway (usually the floats start having trouble here anyway).
         /// </summary>
-        private const double DefaultTolerance = 0.00001f;
+        private const decimal NearlyEqualsDefaultTolerance = 0.00001m; // Using decimal here to avoid the "default" inspector value of 0.00001D -> 0.999E-6D
 
         /// <summary>
-        /// Check if two floats are equal within a tolerance.
+        /// Check if the floats are equal within tolerance.
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="tolerance">The tolerance </param>
+        /// <param name="self"></param>
+        /// <param name="other"></param>
+        /// <param name="tolerance">The tolerance. Defaults to <see cref="NearlyEqualsDefaultTolerance"/></param>
         /// <returns>True if nearly equal.</returns>
-        public static bool NearlyEquals(this float a, float b, double tolerance = DefaultTolerance)
-            => Math.Abs(a - b) < tolerance;
+        public static bool NearlyEquals(this float self, float other, double tolerance = (double)NearlyEqualsDefaultTolerance)
+            => Math.Abs(self - other) < tolerance;
     }
 }
