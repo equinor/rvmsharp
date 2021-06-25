@@ -35,7 +35,7 @@
                     throw new Exception($"Expected a pyramid to always tessellate. Was {pyramidMesh}");
 
                 return new TriangleMesh(
-                    commonProps, meshFileId, (uint)pyramidMesh.Triangles.Length / 3, pyramidMesh);
+                    commonProps, meshFileId, (uint)pyramidMesh.Triangles.Count / 3, pyramidMesh);
             }
         }
 
