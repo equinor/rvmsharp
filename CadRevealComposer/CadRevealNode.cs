@@ -47,6 +47,7 @@ namespace CadRevealComposer
 
     public class PrimitiveCollections
     {
+        // ReSharper disable FieldCanBeMadeReadOnly.Global -- Fields are initialized using reflection.
         public Box[] BoxCollection = Array.Empty<Box>();
         public Circle[] CircleCollection = Array.Empty<Circle>();
 
@@ -130,6 +131,7 @@ namespace CadRevealComposer
 
 
         public InstancedMesh[] InstancedMeshCollection = Array.Empty<InstancedMesh>();
+        // ReSharper restore FieldCanBeMadeReadOnly.Global
     }
 
 
