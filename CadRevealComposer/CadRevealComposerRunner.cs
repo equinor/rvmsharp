@@ -236,7 +236,7 @@ namespace CadRevealComposer
                         textures = Array.Empty<Texture>();
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentOutOfRangeException(nameof(attributeType), attributeType, "Unexpected i3df attribute.");
                 }
             }
 
