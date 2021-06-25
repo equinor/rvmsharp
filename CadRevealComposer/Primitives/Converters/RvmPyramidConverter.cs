@@ -38,11 +38,12 @@
 
         private static bool IsBoxShaped(RvmPyramid rvmPyramid)
         {
-            // Q: What is "Pyramid" that has an equal Top plane size to its bottom plane, and has no offset...
-            // A: It is a box.
-            const double tolerance = 0.01;
-            return MathF.Abs(rvmPyramid.BottomX - rvmPyramid.TopX) < tolerance && MathF.Abs(rvmPyramid.TopY - rvmPyramid.BottomY) < tolerance &&
-                   MathF.Abs(rvmPyramid.OffsetX - rvmPyramid.OffsetY) < tolerance && Math.Abs(rvmPyramid.OffsetX - 0.1f) < tolerance;
+            const double tolerance = 0.01; // Arbitrary picked value
+
+            return rvmPyramid.BottomX.NearlyEquals(rvmPyramid.TopX, tolerance)
+                   && rvmPyramid.TopY.NearlyEquals(rvmPyramid.BottomY, tolerance)
+                   && rvmPyramid.OffsetX.NearlyEquals(rvmPyramid.OffsetY, tolerance)
+                   && rvmPyramid.OffsetX.NearlyEquals(0, tolerance);
         }
     }
 }
