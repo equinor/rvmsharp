@@ -143,7 +143,7 @@ namespace CadRevealComposer.Primitives
                         throw new Exception(
                             $"Expected a {nameof(RvmFacetGroup)} to always tessellate. Was {facetGroupMesh}.");
                     return new TriangleMesh(
-                        commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Length / 3,
+                        commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Count / 3,
                         facetGroupMesh);
                 case RvmLine:
                     PrimitiveCounter.line++;
