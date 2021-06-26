@@ -1,6 +1,5 @@
 namespace CadRevealComposer.Primitives
 {
-    using Newtonsoft.Json;
     using System.Numerics;
 
     public record ClosedSphericalSegment(

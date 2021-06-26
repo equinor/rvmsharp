@@ -1,6 +1,5 @@
 ﻿namespace CadRevealComposer.Primitives
 {
-    using Newtonsoft.Json;
     using System;
 
     public record InstancedMesh(
