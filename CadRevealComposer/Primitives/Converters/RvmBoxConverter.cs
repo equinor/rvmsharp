@@ -2,7 +2,6 @@
 {
     using RvmSharp.Primitives;
     using System.Numerics;
-    using Utils;
 
     public static class RvmBoxExtensions
     {
