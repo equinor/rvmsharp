@@ -2,8 +2,6 @@ namespace CadRevealComposer.Writers
 {
     using Primitives;
     using System;
-    using System.Collections;
-    using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Drawing;
     using System.IO;
