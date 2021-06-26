@@ -27,10 +27,10 @@
                 aPrimitiveDerivingTypes
                     .SelectMany(pt => pt.GetProperties().Select(p => (PrimitiveType: pt, Property: p)))
                     .Select(pair =>
-                        (PrimitiveType: pair.PrimitiveType,
+                        (pair.PrimitiveType,
                             Attributes: pair.Property.GetCustomAttributes(inherit: true).OfType<I3dfAttribute>()
                                 .FirstOrDefault(),
-                            Property: pair.Property))
+                            pair.Property))
                     .Where(triple => triple.Attributes != null)
                     .GroupBy(triple => triple.PrimitiveType);
 
