@@ -167,6 +167,7 @@ namespace CadRevealComposer
                         // Intentionally ignored
                         break;
                     case I3dfAttribute.AttributeType.Color:
+                        // ReSharper disable once RedundantTypeArgumentsOfMethod
                         colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(geometries, attributeKind, new RgbaColorComparer());
                         break;
                     case I3dfAttribute.AttributeType.Diagonal:
@@ -182,6 +183,7 @@ namespace CadRevealComposer
                         centerZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Normal:
+                        // ReSharper disable once RedundantTypeArgumentsOfMethod
                         normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(geometries, attributeKind, new XyzVector3Comparer());
                         break;
                     case I3dfAttribute.AttributeType.Delta:
