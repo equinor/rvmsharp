@@ -6,11 +6,11 @@
         Inherited = true)]
     public class I3dfAttribute : System.Attribute
     {
-        public readonly AttributeType Type;
+        public readonly AttributeType Kind;
 
-        public I3dfAttribute(AttributeType type)
+        public I3dfAttribute(AttributeType kind)
         {
-            Type = type;
+            Kind = kind;
         }
 
         public enum AttributeType
