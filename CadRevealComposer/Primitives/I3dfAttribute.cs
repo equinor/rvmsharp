@@ -1,6 +1,9 @@
 ﻿namespace CadRevealComposer.Primitives
 {
-    [System.AttributeUsage(System.AttributeTargets.Field | System.AttributeTargets.Property)]
+    [System.AttributeUsage(
+        validOn: System.AttributeTargets.Field | System.AttributeTargets.Property,
+        AllowMultiple = false,
+        Inherited = true)]
     public class I3dfAttribute : System.Attribute
     {
         public readonly AttributeType Type;
@@ -9,7 +12,7 @@
         {
             Type = type;
         }
-        
+
         public enum AttributeType
         {
             Null,
