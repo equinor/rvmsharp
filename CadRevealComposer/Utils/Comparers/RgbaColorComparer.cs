@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Utils
+﻿namespace CadRevealComposer.Utils.Comparers
 {
     using System.Collections.Generic;
     using System.Drawing;
