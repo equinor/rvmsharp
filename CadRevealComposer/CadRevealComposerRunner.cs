@@ -3,6 +3,7 @@ namespace CadRevealComposer
     using IdProviders;
     using Newtonsoft.Json;
     using Primitives;
+    using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Exporters;
     using RvmSharp.Primitives;
@@ -14,7 +15,6 @@ namespace CadRevealComposer
     using System.IO;
     using System.Linq;
     using System.Numerics;
-    using System.Reflection;
     using System.Threading.Tasks;
     using Utils;
     using Utils.Comparers;
@@ -38,7 +38,9 @@ namespace CadRevealComposer
 
         // ReSharper disable once UnusedParameter.Local
         // ReSharper disable once CognitiveComplexity
-        public static void Process(DirectoryInfo inputRvmFolderPath, DirectoryInfo outputDirectory,
+        public static void Process(
+            DirectoryInfo inputRvmFolderPath,
+            DirectoryInfo outputDirectory,
             Parameters parameters)
         {
             var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
@@ -133,24 +135,7 @@ namespace CadRevealComposer
             var groupAttributesTimer = Stopwatch.StartNew();
             Console.WriteLine("Start Group Attributes and create i3d file structure");
 
-            var attributeGrouping = Array.Empty<APrimitive>()
-                .SelectMany(g => g.GetType().GetProperties().Select(p => (g, p)))
-                .Where(gp => gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().Any())
-                .Select(gp => (gp.g, gp.p, gp.p.GetCustomAttributes(true).OfType<I3dfAttribute>().First()))
-                .GroupBy(gpa => gpa.Item3.Type).ToArray();
-
             var attributesTimer = Stopwatch.StartNew();
-            var attributeLookup = typeof(APrimitive)
-                .Assembly.GetTypes()
-                .Where(t => t.IsSubclassOf(typeof(APrimitive)) && !t.IsAbstract)
-                .Distinct()
-                .SelectMany(pt => pt.GetProperties().Select(p => (pt, p)))
-                .Select(p => (p.pt, p.p, p.p.GetCustomAttributes(true).OfType<I3dfAttribute>().FirstOrDefault()))
-                .Where(p => p.Item3 != null)
-                .GroupBy(ptp => ptp.pt)
-                .ToDictionary(
-                    x => x.Key,
-                    x => x.GroupBy(x => x.Item3!.Type).ToDictionary(x => x.Key, y => y.Select(x => x.p)));
 
             Console.WriteLine("Attribute Grouping: " + attributesTimer.Elapsed);
 
@@ -174,69 +159,69 @@ namespace CadRevealComposer
             Texture[] textures = Array.Empty<Texture>();
 
             var getAttributeValuesTimer = Stopwatch.StartNew();
-            foreach (var attributeType in (I3dfAttribute.AttributeType[])Enum.GetValues(typeof(I3dfAttribute.AttributeType)))
+            foreach (var attributeKind in (I3dfAttribute.AttributeType[])Enum.GetValues(typeof(I3dfAttribute.AttributeType)))
             {
-                switch (attributeType)
+                switch (attributeKind)
                 {
                     case I3dfAttribute.AttributeType.Null:
                         // Intentionally ignored
                         break;
                     case I3dfAttribute.AttributeType.Color:
-                        colors = GetDistinctValuesOfAllPropertiesMatchingKind<Color>(geometries, attributeType, attributeLookup, new RgbaColorComparer());
+                        colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(geometries, attributeKind, new RgbaColorComparer());
                         break;
                     case I3dfAttribute.AttributeType.Diagonal:
-                        diagonals = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        diagonals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterX:
-                        centerX = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        centerX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterY:
-                        centerY = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        centerY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterZ:
-                        centerZ = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        centerZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Normal:
-                        normals = GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(geometries, attributeType, attributeLookup, new XyzVector3Comparer());
+                        normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(geometries, attributeKind, new XyzVector3Comparer());
                         break;
                     case I3dfAttribute.AttributeType.Delta:
-                        deltas = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        deltas = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Height:
-                        heights = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        heights = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Radius:
-                        radii = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Angle:
-                        angles = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationX:
-                        translationsX = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        translationsX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationY:
-                        translationsY = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        translationsY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationZ:
-                        translationsZ = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        translationsZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleX:
-                        scalesX = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        scalesX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleY:
-                        scalesY = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        scalesY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleZ:
-                        scalesZ = GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeType, attributeLookup);
+                        scalesZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.FileId:
-                        fileIds = GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeType, attributeLookup).ToArray();
+                        fileIds = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeKind).ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Texture:
                         textures = Array.Empty<Texture>();
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(attributeType), attributeType, "Unexpected i3df attribute.");
+                        throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind, "Unexpected i3df attribute.");
                 }
             }
 
@@ -358,29 +343,6 @@ namespace CadRevealComposer
                     $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         }
 
-
-        private static ImmutableSortedSet<T> GetDistinctValuesOfAllPropertiesMatchingKind<T>(IEnumerable<APrimitive> x, I3dfAttribute.AttributeType kind,
-            Dictionary<Type, Dictionary<I3dfAttribute.AttributeType, IEnumerable<PropertyInfo>>> attributeLookupDict, IComparer<T>? comparer = null)
-        {
-            var data = x
-                .AsParallel()
-                .SelectMany(y => GetAllValuesOfAttributeKind<T>(y, kind, attributeLookupDict))
-                .ToImmutableSortedSet(comparer);
-
-            return data;
-        }
-
-        private static IEnumerable<T> GetAllValuesOfAttributeKind<T>(APrimitive x, I3dfAttribute.AttributeType attributeKind, Dictionary<Type, Dictionary<I3dfAttribute.AttributeType, IEnumerable<PropertyInfo>>> attributeLookup)
-        {
-            var type = x.GetType();
-            if (!attributeLookup[type].TryGetValue(attributeKind, out var propertyInfos))
-            {
-                return ArraySegment<T>.Empty;
-            }
-            IEnumerable<T> i3dfAttributes = propertyInfos!.Select(pi => (T)(pi.GetValue(x) ?? throw new InvalidOperationException()));
-
-            return i3dfAttributes;
-        }
 
         private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<TriangleMesh> meshGeometries)
         {
