@@ -2,26 +2,30 @@
 {
     using CadRevealComposer.Primitives;
     using CadRevealComposer.Primitives.Converters;
+    using CadRevealComposer.Utils;
     using NUnit.Framework;
+    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
+    using RvmSharp.Tessellation;
     using System.Numerics;
 
     [TestFixture]
     public class RvmPyramidConverterTests
     {
-        private RvmPyramid _rvmPyramid;
+        internal RvmPyramid RvmPyramidTestInstance;
+        protected RvmBoundingBox ThrowawayBoundingBox = new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
 
-        private RvmNode _rvmNode;
+        internal RvmNode RvmNodeTestInstance;
 
-        const ulong NodeId = 675;
-        const int TreeIndex = 1337;
-        private CadRevealNode _revealNode;
+        internal const ulong NodeId = 675;
+        internal const int TreeIndex = 1337;
+        internal CadRevealNode RevealNode;
 
 
         [SetUp]
         public void Setup()
         {
-            _rvmPyramid = new RvmPyramid(
+            RvmPyramidTestInstance = new RvmPyramid(
                 Version: 2,
                 Matrix: Matrix4x4.Identity,
                 BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
@@ -33,8 +37,8 @@
                 OffsetY: 0,
                 Height: 25
             );
-            _rvmNode = new RvmNode(2, "BoxNode", new Vector3(1, 2, 3), 2);
-            _revealNode = new CadRevealNode() { NodeId = NodeId, TreeIndex = TreeIndex };
+            RvmNodeTestInstance = new RvmNode(2, "BoxNode", new Vector3(1, 2, 3), 2);
+            RevealNode = new CadRevealNode() { NodeId = NodeId, TreeIndex = TreeIndex };
         }
 
 
@@ -63,6 +67,114 @@
             Assert.That(box.TreeIndex, Is.EqualTo(TreeIndex));
             Assert.That(box.Normal, Is.EqualTo(Vector3.UnitZ));
             Assert.That(box.RotationAngle, Is.EqualTo(0));
+        }
+
+        [TestFixture]
+        internal class PyramidTemplater : RvmPyramidConverterTests
+        {
+            private const int UnusedTolerance = -1;
+
+            [Test]
+            [DefaultFloatingPointTolerance(0.001)]
+            public void ConvertToUnitSizeInXyz()
+            {
+                const float bottomX = 2.0f;
+                const float bottomY = 3.0f;
+                const float topX = 4f;
+                const float topY = 1f;
+                const float offsetX = 2f;
+                const float offsetY = 3f;
+                const float height = 4f;
+                var pyramidA = new RvmPyramid(2, Matrix4x4.Identity, ThrowawayBoundingBox, bottomX, bottomY, topX, topY,
+                    offsetX, offsetY, height);
+
+                (Vector3 scales, RvmPyramid pyramid) =
+                    PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(pyramidA);
+
+                Assert.That(pyramid.BottomX, Is.EqualTo(1));
+                Assert.That(pyramid.TopX, Is.EqualTo(2));
+                Assert.That(pyramid.OffsetX, Is.EqualTo(1f));
+
+                // Check Y sides
+                Assert.That(pyramid.BottomY, Is.EqualTo(1f));
+                Assert.That(pyramid.TopY, Is.EqualTo(topY / bottomY));
+                Assert.That(pyramid.OffsetY, Is.EqualTo(offsetY / bottomY));
+                // Check height
+                Assert.That(pyramid.Height, Is.EqualTo(1));
+
+                Assert.That(scales, Is.EqualTo(new Vector3(1 / bottomX, 1 / bottomY, 1 / height)));
+            }
+
+
+            [Test]
+            public void TwoPyramidsWithSimilarProportionsAreTheSame()
+            {
+                var p1 = new RvmPyramid(Version: 2,
+                    Matrix: Matrix4x4.Identity,
+                    BoundingBoxLocal: ThrowawayBoundingBox,
+                    BottomX: 2,
+                    BottomY: 4,
+                    TopX: 6,
+                    TopY: 1,
+                    OffsetX: 2,
+                    OffsetY: 3,
+                    Height: 1);
+
+                var temp = p1;
+
+                // var p2 = new RvmPyramid(Version: 2,
+                //     Matrix: Matrix4x4.Identity,
+                //     BoundingBoxLocal: ThrowawayBoundingBox,
+                //     BottomX: 1,
+                //     2,
+                //     3,
+                //     0.5f,
+                //     1,
+                //     1.5f,
+                //     2f);
+
+
+                // var meshP2 = TessellatorBridge.Tessellate(p2, UnusedTolerance);
+
+                // var p3 = p1 with { TopX = p1.TopX + 1 }; // Change proportions of a dimension (Should not match)
+
+                // Assert.That(p1, Is.Not.EqualTo(p2));
+
+                (Vector3 scales1, RvmPyramid pyramid1) =
+                    PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p1);
+                // (Vector3 scales2, RvmPyramid pyramid2) =
+                //     PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p2);
+                // (Vector3 scales3, RvmPyramid pyramid3) =
+                //     PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p3);
+
+                // var equalMeshPossible12 = PyramidConversionUtils.CanBeRepresentedByEqualMesh(pyramid1, pyramid2);
+                // Assert.True(equalMeshPossible12, $"Expected {nameof(pyramid1)} to have same mesh representation as {pyramid2}");
+                //
+                // var equalMeshPossible13 = PyramidConversionUtils.CanBeRepresentedByEqualMesh(pyramid1, pyramid3);
+                // Assert.False(equalMeshPossible13, $"Expected {nameof(pyramid1)} to NOT have same mesh representation as {pyramid3}");
+
+                var srcMesh = TessellatorBridge.Tessellate(p1, 1, UnusedTolerance);
+
+                var scaledUnitMesh = TessellatorBridge.Tessellate(pyramid1, 1, UnusedTolerance);
+
+                var unitMesh = TessellatorBridge.Tessellate(pyramid1, 1, UnusedTolerance);
+                srcMesh!.Apply(p1.Matrix);
+                scaledUnitMesh!.Apply(pyramid1.Matrix);
+
+                using var objExporter = new ObjExporter("meshP1");
+                objExporter.StartGroup(nameof(srcMesh));
+                objExporter.WriteMesh(srcMesh);
+                objExporter.StartGroup(nameof(scaledUnitMesh));
+                objExporter.WriteMesh(scaledUnitMesh);
+                objExporter.StartGroup(nameof(unitMesh));
+                objExporter.WriteMesh(unitMesh);
+
+                // meshPyramid1!.Apply(Matrix4x4.CreateScale(scales1));
+                // Assert.That(meshP1, Is.Not.EqualTo(meshP2))
+                Assert.That(srcMesh.Vertices, Is.EqualTo(scaledUnitMesh.Vertices));
+                Assert.That(srcMesh.Normals, Is.EqualTo(scaledUnitMesh.Normals));
+                Assert.That(srcMesh, Is.EqualTo(scaledUnitMesh));
+            }
         }
     }
 }
