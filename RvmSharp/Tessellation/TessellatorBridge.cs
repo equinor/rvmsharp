@@ -883,7 +883,7 @@ namespace RvmSharp.Tessellation
             var l = 0;
             var ox = 0.5f * snout.OffsetX;
             var oy = 0.5f * snout.OffsetY;
-            float[] mb = { (float)Math.Tan(snout.BottomShearX), (float)Math.Tan(snout.BottomShearX) };
+            float[] mb = { (float)Math.Tan(snout.BottomShearX), (float)Math.Tan(snout.BottomShearY) };
             float[] mt = { (float)Math.Tan(snout.TopShearX), (float)Math.Tan(snout.TopShearY) };
 
             var vertices_n = (shell ? 2 * samples : 0) + (cap[0] ? samples : 0) + (cap[1] ? samples : 0);
