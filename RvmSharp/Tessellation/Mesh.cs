@@ -51,10 +51,12 @@
 
         public void Apply(Matrix4x4 matrix)
         {
+            // Transforming mesh normals requires some extra calculations.
             // https://web.archive.org/web/20210628111622/https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
             if (!Matrix4x4.Invert(matrix, out var matrixInverted))
                 throw new ArgumentException($"Could not invert matrix {matrix}");
             var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
+
             for (var i = 0; i < _vertices.Length; i++)
             {
                 _vertices[i] = Vector3.Transform(_vertices[i], matrix);
