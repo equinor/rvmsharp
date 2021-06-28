@@ -154,20 +154,9 @@
                 // Assert.False(equalMeshPossible13, $"Expected {nameof(pyramid1)} to NOT have same mesh representation as {pyramid3}");
 
                 var srcMesh = TessellatorBridge.Tessellate(p1, 1, UnusedTolerance);
-
                 var scaledUnitMesh = TessellatorBridge.Tessellate(pyramid1, 1, UnusedTolerance);
-
-                var unitMesh = TessellatorBridge.Tessellate(pyramid1, 1, UnusedTolerance);
                 srcMesh!.Apply(p1.Matrix);
                 scaledUnitMesh!.Apply(pyramid1.Matrix);
-
-                using var objExporter = new ObjExporter("meshP1");
-                objExporter.StartGroup(nameof(srcMesh));
-                objExporter.WriteMesh(srcMesh);
-                objExporter.StartGroup(nameof(scaledUnitMesh));
-                objExporter.WriteMesh(scaledUnitMesh);
-                objExporter.StartGroup(nameof(unitMesh));
-                objExporter.WriteMesh(unitMesh);
 
                 // meshPyramid1!.Apply(Matrix4x4.CreateScale(scales1));
                 // Assert.That(meshP1, Is.Not.EqualTo(meshP2))
