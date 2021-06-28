@@ -72,8 +72,10 @@
             return new Mesh(vertices, normals, triangles, error);
         }
 
+        #region Equality Comparers
+
         /// <summary>
-        /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc)
+        /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc. Has a float tolerance, so there might be issues with  tiny meshes.
         /// </summary>
         public bool Equals(Mesh? other)
         {
@@ -87,8 +89,10 @@
                 return true;
             }
 
-            return Error.Equals(other.Error) && Vertices.SequenceEqual(other.Vertices) &&
-                   Normals.SequenceEqual(other.Normals) && Triangles.SequenceEqual(other.Triangles);
+            return Error.Equals(other.Error)
+                   && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(0.001f))
+                   && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
+                   && Triangles.SequenceEqual(other.Triangles);
         }
 
         public override bool Equals(object? obj)
@@ -124,5 +128,36 @@
                 return ((IStructuralEquatable)input).GetHashCode(EqualityComparer<T>.Default);
             }
         }
+
+        private class ToleranceVector3EqualityComparer : IEqualityComparer<Vector3>
+        {
+            private readonly float _tolerance;
+
+            public ToleranceVector3EqualityComparer(float tolerance = 0.001f)
+            {
+                _tolerance = tolerance;
+            }
+
+            public bool Equals(Vector3 x, Vector3 y)
+            {
+                return Math.Abs(x.X - y.X) < _tolerance
+                       && Math.Abs(x.Y - y.Y) < _tolerance
+                       && Math.Abs(x.Z - y.Z) < _tolerance;
+            }
+
+            public int GetHashCode(Vector3 obj)
+            {
+                unchecked
+                {
+                    int hash = 17;
+                    hash = hash * 31 + obj.X.GetHashCode();
+                    hash = hash * 31 + obj.Y.GetHashCode();
+                    hash = hash * 31 + obj.Z.GetHashCode();
+                    return hash;
+                }
+            }
+        }
+
+        #endregion
     }
 }
