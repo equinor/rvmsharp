@@ -114,19 +114,19 @@
         /// <returns></returns>
         public static bool CanBeRepresentedByEqualMesh(RvmPyramid a, RvmPyramid b)
         {
-            Debug.Assert(a.BottomX.NearlyEquals(1));
-            Debug.Assert(a.BottomY.NearlyEquals(1));
-            Debug.Assert(a.Height.NearlyEquals(1));
+            Debug.Assert(a.BottomX.ApproximatelyEquals(1));
+            Debug.Assert(a.BottomY.ApproximatelyEquals(1));
+            Debug.Assert(a.Height.ApproximatelyEquals(1));
 
-            // TODO: Rotations and stuff.
+            // TODO: Rotations and stuff
 
-            return (a.BottomX.NearlyEquals(b.BottomX)
-                    && a.BottomY.NearlyEquals(b.BottomY))
-                   && a.OffsetX.NearlyEquals(b.OffsetX)
-                   && a.OffsetY.NearlyEquals(b.OffsetY)
-                   && a.TopX.NearlyEquals(b.TopX)
-                   && a.TopY.NearlyEquals(b.TopY)
-                   && a.Height.NearlyEquals(b.Height);
+            return (a.BottomX.ApproximatelyEquals(b.BottomX)
+                    && a.BottomY.ApproximatelyEquals(b.BottomY))
+                   && a.OffsetX.ApproximatelyEquals(b.OffsetX)
+                   && a.OffsetY.ApproximatelyEquals(b.OffsetY)
+                   && a.TopX.ApproximatelyEquals(b.TopX)
+                   && a.TopY.ApproximatelyEquals(b.TopY)
+                   && a.Height.ApproximatelyEquals(b.Height);
         }
     }
 }

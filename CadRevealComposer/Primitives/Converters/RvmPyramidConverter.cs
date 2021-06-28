@@ -48,13 +48,13 @@
             const double tolerance = 0.01; // Arbitrary picked value
 
             // If it has no height, it cannot "Taper", and can be rendered as a box (or Plane, but we do not have a plane primitive).
-            if (rvmPyramid.Height.NearlyEquals(0))
+            if (rvmPyramid.Height.ApproximatelyEquals(0))
                 return true;
 
-            return rvmPyramid.BottomX.NearlyEquals(rvmPyramid.TopX, tolerance)
-                   && rvmPyramid.TopY.NearlyEquals(rvmPyramid.BottomY, tolerance)
-                   && rvmPyramid.OffsetX.NearlyEquals(rvmPyramid.OffsetY, tolerance)
-                   && rvmPyramid.OffsetX.NearlyEquals(0, tolerance);
+            return rvmPyramid.BottomX.ApproximatelyEquals(rvmPyramid.TopX, tolerance)
+                   && rvmPyramid.TopY.ApproximatelyEquals(rvmPyramid.BottomY, tolerance)
+                   && rvmPyramid.OffsetX.ApproximatelyEquals(rvmPyramid.OffsetY, tolerance)
+                   && rvmPyramid.OffsetX.ApproximatelyEquals(0, tolerance);
         }
     }
 }

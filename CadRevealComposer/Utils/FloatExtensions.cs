@@ -14,9 +14,9 @@
         /// </summary>
         /// <param name="self"></param>
         /// <param name="other"></param>
-        /// <param name="tolerance">The tolerance. Defaults to <see cref="NearlyEqualsDefaultTolerance"/></param>
+        /// <param name="acceptableDifference">The tolerance. Defaults to <see cref="NearlyEqualsDefaultTolerance"/></param>
         /// <returns>True if nearly equal.</returns>
-        public static bool NearlyEquals(this float self, float other, double tolerance = (double)NearlyEqualsDefaultTolerance)
-            => Math.Abs(self - other) < tolerance;
+        public static bool ApproximatelyEquals(this float self, float other, double acceptableDifference = (double)NearlyEqualsDefaultTolerance)
+            => Math.Abs(self - other) < acceptableDifference;
     }
 }
