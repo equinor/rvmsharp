@@ -77,9 +77,11 @@
                 {
                     yield return tValue;
                 }
-
-                throw new Exception(
-                    $"Unexpected non {typeof(T)} value (was {value}) matching attributeKind {attributeKind} on property {propertyInfo.Name} of primitive: {primitive}");
+                else
+                {
+                    throw new Exception(
+                        $"Unexpected non {typeof(T)} value (was {value}) matching attributeKind {attributeKind} on property {propertyInfo.Name} of primitive: {primitive}");
+                }
             }
         }
     }
