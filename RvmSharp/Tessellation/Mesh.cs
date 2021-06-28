@@ -51,7 +51,7 @@
 
         public void Apply(Matrix4x4 matrix)
         {
-            // https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
+            // https://web.archive.org/web/20210628111622/https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
             if (!Matrix4x4.Invert(matrix, out var matrixInverted))
                 throw new ArgumentException($"Could not invert matrix {matrix}");
             var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
