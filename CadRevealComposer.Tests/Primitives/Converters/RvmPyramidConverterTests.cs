@@ -4,7 +4,6 @@
     using CadRevealComposer.Primitives.Converters;
     using CadRevealComposer.Utils;
     using NUnit.Framework;
-    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System.Numerics;
@@ -88,7 +87,7 @@
                 var pyramidA = new RvmPyramid(2, Matrix4x4.Identity, ThrowawayBoundingBox, bottomX, bottomY, topX, topY,
                     offsetX, offsetY, height);
 
-                (Vector3 scales, RvmPyramid pyramid) =
+                RvmPyramid pyramid =
                     PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(pyramidA);
 
                 Assert.That(pyramid.BottomX, Is.EqualTo(1));
@@ -101,8 +100,6 @@
                 Assert.That(pyramid.OffsetY, Is.EqualTo(offsetY / bottomY));
                 // Check height
                 Assert.That(pyramid.Height, Is.EqualTo(1));
-
-                Assert.That(scales, Is.EqualTo(new Vector3(1 / bottomX, 1 / bottomY, 1 / height)));
             }
 
 
@@ -120,38 +117,37 @@
                     OffsetY: 3,
                     Height: 1);
 
-                var temp = p1;
 
-                // var p2 = new RvmPyramid(Version: 2,
-                //     Matrix: Matrix4x4.Identity,
-                //     BoundingBoxLocal: ThrowawayBoundingBox,
-                //     BottomX: 1,
-                //     2,
-                //     3,
-                //     0.5f,
-                //     1,
-                //     1.5f,
-                //     2f);
+                var p2 = new RvmPyramid(Version: 2,
+                    Matrix: Matrix4x4.Identity,
+                    BoundingBoxLocal: ThrowawayBoundingBox,
+                    BottomX: 1,
+                    2,
+                    3,
+                    0.5f,
+                    1,
+                    1.5f,
+                    2f);
 
 
-                // var meshP2 = TessellatorBridge.Tessellate(p2, UnusedTolerance);
+                var meshP2 = TessellatorBridge.Tessellate(p2, UnusedTolerance);
 
-                // var p3 = p1 with { TopX = p1.TopX + 1 }; // Change proportions of a dimension (Should not match)
+                var p3 = p1 with { TopX = p1.TopX + 1 }; // Change proportions of a dimension (Should not match)
 
-                // Assert.That(p1, Is.Not.EqualTo(p2));
+                Assert.That(p1, Is.Not.EqualTo(p2));
 
-                (Vector3 scales1, RvmPyramid pyramid1) =
-                    PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p1);
-                // (Vector3 scales2, RvmPyramid pyramid2) =
-                //     PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p2);
-                // (Vector3 scales3, RvmPyramid pyramid3) =
-                //     PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p3);
+                RvmPyramid pyramid1 =
+                   PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p1);
+                RvmPyramid pyramid2 =
+                    PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p2);
+                RvmPyramid pyramid3 =
+                    PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(p3);
 
-                // var equalMeshPossible12 = PyramidConversionUtils.CanBeRepresentedByEqualMesh(pyramid1, pyramid2);
-                // Assert.True(equalMeshPossible12, $"Expected {nameof(pyramid1)} to have same mesh representation as {pyramid2}");
-                //
-                // var equalMeshPossible13 = PyramidConversionUtils.CanBeRepresentedByEqualMesh(pyramid1, pyramid3);
-                // Assert.False(equalMeshPossible13, $"Expected {nameof(pyramid1)} to NOT have same mesh representation as {pyramid3}");
+                var equalMeshPossible12 = PyramidConversionUtils.CanBeRepresentedByEqualMesh(pyramid1, pyramid2);
+                Assert.True(equalMeshPossible12, $"Expected {nameof(pyramid1)} to have same mesh representation as {pyramid2}");
+
+                var equalMeshPossible13 = PyramidConversionUtils.CanBeRepresentedByEqualMesh(pyramid1, pyramid3);
+                Assert.False(equalMeshPossible13, $"Expected {nameof(pyramid1)} to NOT have same mesh representation as {pyramid3}");
 
                 var srcMesh = TessellatorBridge.Tessellate(p1, 1, UnusedTolerance);
                 var scaledUnitMesh = TessellatorBridge.Tessellate(pyramid1, 1, UnusedTolerance);

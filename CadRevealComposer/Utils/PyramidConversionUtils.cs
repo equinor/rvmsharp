@@ -31,10 +31,9 @@
 
             var uniquePyramids = new Dictionary<RvmPyramid, int>();
             var processedPyramids = new List<RvmPyramid>();
-            foreach (var scaleAndRvmPyramid in rvmNodes.SelectMany(x => x.Children.OfType<RvmPyramid>())
+            foreach (var rvmPyramid in rvmNodes.SelectMany(x => x.Children.OfType<RvmPyramid>())
                 .Select(CreatePyramidWithUnitSizeInAllDimension))
             {
-                var rvmPyramid = scaleAndRvmPyramid.Pyramid;
                 var foundEqual = false;
                 foreach (var kvp in uniquePyramids)
                 {
@@ -67,13 +66,7 @@
             Console.WriteLine("Pyramids");
         }
 
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static (Vector3 Scales, RvmPyramid Pyramid) CreatePyramidWithUnitSizeInAllDimension(RvmPyramid input)
+        public static RvmPyramid CreatePyramidWithUnitSizeInAllDimension(RvmPyramid input)
         {
             if (input.BottomX < float.Epsilon || input.BottomY < float.Epsilon)
             {
@@ -103,7 +96,7 @@
             };
 
 
-            return (scales, scaledPyramid);
+            return scaledPyramid;
         }
 
         /// <summary>
