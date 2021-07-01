@@ -10,9 +10,15 @@
     {
         private static Color GetColor(RvmNode container)
         {
-
-            // TODO: Fallback color is arbitrarily chosen, it should probably be handled differently
-            return PdmsColors.GetColorAsColorByCode(container.MaterialId < 50 ? container.MaterialId : 1);
+            try
+            {
+                return PdmsColors.GetColorByCode(container.MaterialId);
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                // TODO: Fallback color is arbitrarily chosen. It seems we have some issue with the material mapping table, and should have had more colors.
+                return Color.Magenta;
+            }
         }
 
         /// <summary>
