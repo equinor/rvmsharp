@@ -8,6 +8,18 @@
 
     public static class RvmSnoutConverter
     {
+        private static (float slope, float zangle) TranslateShearToSlope((float shearX, float shearY) input)
+        {
+            var rotationAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -input.shearX);
+            var rotationAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, input.shearY);
+            var rotationTotal = rotationAroundX * rotationAroundY;
+            var capNormal = Vector3.Transform(Vector3.UnitZ, rotationTotal);
+            var angleAroundZ = MathF.Atan2(capNormal.Y, capNormal.X);
+            var slope = MathF.PI / 2 - MathF.Atan2(capNormal.Z, MathF.Sqrt(capNormal.X * capNormal.X + capNormal.Y * capNormal.Y));
+
+            return (slope, angleAroundZ);
+        }
+
         public static APrimitive? ConvertToRevealPrimitive(this RvmSnout rvmSnout, CadRevealNode revealNode,
             RvmNode container)
         {
@@ -29,15 +41,74 @@
                 }
                 else
                 {
-                    // TODO: general cylinder if radius A == radius B
-                    /*if (IsOpen(rvmSnout))
+                    (float slopeA, float zangleA) = TranslateShearToSlope((rvmSnout.TopShearX, rvmSnout.TopShearY));
+                    (float slopeB, float zangleB) = TranslateShearToSlope((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
+                    if (rvmSnout.RadiusTop == rvmSnout.RadiusBottom)
                     {
-                        return OpenGeneralCone();
+                        // General cylinder
+                        if (IsOpen(rvmSnout))
+                        {
+                            return new OpenGeneralCylinder(
+                                commons,
+                                CenterAxis: commons.RotationDecomposed.Normal,
+                                Height: height,
+                                Radius: radiusA,
+                                RotationAngle: commons.RotationDecomposed.RotationAngle,
+                                ArcAngle: 2*MathF.PI,
+                                SlopeA: slopeA,
+                                SlopeB: slopeB,
+                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
+                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
+                            );
+
+                        } else {
+                            return new ClosedGeneralCylinder(
+                                commons,
+                                CenterAxis: commons.RotationDecomposed.Normal,
+                                Height: height,
+                                Radius: radiusA,
+                                RotationAngle: commons.RotationDecomposed.RotationAngle,
+                                ArcAngle: 2*MathF.PI,
+                                SlopeA: slopeA,
+                                SlopeB: slopeB,
+                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
+                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
+                            );
+                        }
+                    } else {
+                        // General cone
+                        if (IsOpen(rvmSnout))
+                        {
+                            return new OpenGeneralCone(
+                                commons,
+                                CenterAxis: commons.RotationDecomposed.Normal,
+                                Height: height,
+                                RadiusA: radiusA,
+                                RadiusB: radiusB,
+                                RotationAngle: commons.RotationDecomposed.RotationAngle,
+                                ArcAngle: 2*MathF.PI,
+                                SlopeA: slopeA,
+                                SlopeB: slopeB,
+                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
+                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
+                            );
+
+                        } else {
+                            return new ClosedGeneralCone(
+                                commons,
+                                CenterAxis: commons.RotationDecomposed.Normal,
+                                Height: height,
+                                RadiusA: radiusA,
+                                RadiusB: radiusB,
+                                RotationAngle: commons.RotationDecomposed.RotationAngle,
+                                ArcAngle: 2*MathF.PI,
+                                SlopeA: slopeA,
+                                SlopeB: slopeB,
+                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
+                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
+                            );
+                        }
                     }
-                    else
-                    {
-                        return ClosedGeneralCone();
-                    }*/
                 }
             }
             else
@@ -89,7 +160,6 @@
                     }
                 }
             }
-            return null;
         }
 
         private static bool IsEccentric(RvmSnout rvmSnout)

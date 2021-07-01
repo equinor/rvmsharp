@@ -16,11 +16,11 @@
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
          float ArcAngle,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-         float SlopeA,
+         float SlopeA, // Angle of the slope around Y
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
          float SlopeB,
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
-         float ZangleA,
+         float ZangleA, // Rotation of the slope around Z
         [property: I3df(I3dfAttribute.AttributeType.Angle)]
          float ZangleB
     ) : APrimitive(CommonPrimitiveProperties);

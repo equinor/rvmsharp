@@ -5,6 +5,7 @@ namespace CadRevealComposer
     using Primitives;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
+    using RvmSharp.Containers;
     using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using System;
@@ -15,6 +16,7 @@ namespace CadRevealComposer
     using System.IO;
     using System.Linq;
     using System.Numerics;
+    using System.Reflection.Metadata;
     using System.Threading.Tasks;
     using Utils;
     using Utils.Comparers;
@@ -54,6 +56,11 @@ namespace CadRevealComposer
             });
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
             Console.WriteLine("Read RvmData in " + rvmTimer.Elapsed);
+            Process(rvmStore, outputDirectory, parameters);
+        }
+
+        public static void Process(RvmStore rvmStore, DirectoryInfo outputDirectory, Parameters parameters)
+        {
 
             Console.WriteLine("Generating i3d");
             // Project name og project parameters tull from Cad Control Center
