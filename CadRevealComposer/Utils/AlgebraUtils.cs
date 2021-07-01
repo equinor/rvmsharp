@@ -8,7 +8,7 @@ namespace CadRevealComposer.Utils
         public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
         {
             var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
-                        
+
             var axes = Vector3.Cross(Vector3.UnitZ, normal);
             // 0.001f should account for less than a 0.1 degree error
             if (axes.Length() < 0.001f) // Cross product of parallel vectors is 0-vector
@@ -39,6 +39,35 @@ namespace CadRevealComposer.Utils
                 var rotationAngle = MathF.Atan2(x1.Y, x1.X);
                 return (normal, rotationAngle);
             }
+        }
+
+        /// <summary>
+        /// Returns roll, pitch, yaw angle rotations in radians
+        /// Roll - around X axis
+        /// Pitch - around Y axis
+        /// Yaw - around Z axis
+        /// Must be applied in the same order
+        /// Source https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+        /// </summary>
+        /// <param name="q"></param>
+        /// <returns></returns>
+        public static (float rollX, float pitchY, float yawZ) ToEulerAngles(this Quaternion q)
+        {
+            // roll (x-axis rotation)
+            var sinRollCosPitch = 2 * (q.W * q.X + q.Y * q.Z);
+            var cosRollCosPitch = 1 - 2 * (q.X * q.X + q.Y * q.Y);
+            var roll = MathF.Atan2(sinRollCosPitch, cosRollCosPitch);
+
+            // pitch (y-axis rotation)
+            var sinPitch = 2 * (q.W * q.Y - q.Z * q.X);
+            var pitch = MathF.Abs(sinPitch) >= 1 ? MathF.CopySign(MathF.PI / 2, sinPitch) : MathF.Asin(sinPitch);
+
+            // yaw (z-axis rotation)
+            var sinYawCosPitch = 2 * (q.W * q.Z + q.X * q.Y);
+            var cosYawCosPitch = 1 - 2 * (q.Y * q.Y + q.Z * q.Z);
+            var yaw = MathF.Atan2(sinYawCosPitch, cosYawCosPitch);
+
+            return (roll, pitch, yaw);
         }
     }
 }
