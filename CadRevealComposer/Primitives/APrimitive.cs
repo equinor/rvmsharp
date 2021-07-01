@@ -186,7 +186,6 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmSnout rvmSnout:
                     {
-                        PrimitiveCounter.snout++;
                         return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
                     }
                 case RvmRectangularTorus rvmRectangularTorus:
