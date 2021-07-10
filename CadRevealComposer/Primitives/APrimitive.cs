@@ -74,9 +74,7 @@ namespace CadRevealComposer.Primitives
             switch (rvmPrimitive)
             {
                 case RvmBox rvmBox:
-                    {
-                        return rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
-                    }
+                    return rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
                 case RvmCylinder rvmCylinder:
                     {
                         var height = rvmCylinder.Height * scale.Z;
@@ -149,11 +147,9 @@ namespace CadRevealComposer.Primitives
                     PrimitiveCounter.line++;
                     return null;
                 case RvmPyramid rvmPyramid:
-                    return rvmPyramid.ConvertToRevealPrimitive(tempHackMeshFileId, revealNode, rvmNode);
+                    return rvmPyramid.ConvertToRevealPrimitive(tempHackMeshFileId, revealNode, rvmNode, pyramidInstancingHelper);
                 case RvmCircularTorus circularTorus:
-                    {
-                        return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
-                    }
+                    return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
                 case RvmSphere rvmSphere:
                     {
                         AssertUniformScale(scale);
@@ -185,9 +181,7 @@ namespace CadRevealComposer.Primitives
                         }
                     }
                 case RvmSnout rvmSnout:
-                    {
-                        return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
-                    }
+                    return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
                 case RvmRectangularTorus rvmRectangularTorus:
                     AssertUniformScale(scale);
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)
