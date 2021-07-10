@@ -10,7 +10,6 @@
     {
         private const int Success = 0;
 
-        // ReSharper disable once UnusedParameter.Local
         static void Main(string[] args)
         {
             var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
@@ -38,7 +37,7 @@
 
             CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters);
 
-            Console.WriteLine("Export completed. Total runtime: " + timer.Elapsed);
+            Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
             return Success;
         }
     }
