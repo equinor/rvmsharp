@@ -22,20 +22,22 @@
         )
         : APrimitive(CommonPrimitiveProperties)
     {
+        private const string ObsoleteMessage =
+            "Property is never used in the current i3df format.";
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture DiffuseTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture SpecularTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture AmbientTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture NormalTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture BumpTexture { get; init; } = new Texture();
     };
 }
