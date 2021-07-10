@@ -761,13 +761,13 @@ namespace CadRevealComposer.Writers
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetUint64Index(geometry.FileId, headerAttributes.FileId));
-#pragma warning disable 612 // Texture Properties are Obsolete to avoid use outside of this code segment.
+#pragma warning disable 618 // Texture Properties are Obsolete to avoid use outside of this code segment.
                     indices.Add(GetTextureIndex(geometry.DiffuseTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.SpecularTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.AmbientTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.NormalTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.BumpTexture, headerAttributes.Texture));
-#pragma warning restore 612
+#pragma warning restore 618
                     indices.Add(geometry.TriangleCount);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
                     indices.Add(GetFloatIndex(geometry.Diagonal, headerAttributes.Diagonal));
@@ -785,13 +785,13 @@ namespace CadRevealComposer.Writers
                 {
                     indices.Add(geometry.TreeIndex);
                     indices.Add(GetUint64Index(geometry.FileId, headerAttributes.FileId));
-#pragma warning disable 612 // Texture Properties are Obsolete to avoid use outside of this code segment.
+#pragma warning disable 618 // Texture Properties are Obsolete to avoid use outside of this code segment.
                     indices.Add(GetTextureIndex(geometry.DiffuseTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.SpecularTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.AmbientTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.NormalTexture, headerAttributes.Texture));
                     indices.Add(GetTextureIndex(geometry.BumpTexture, headerAttributes.Texture));
-#pragma warning restore 612
+#pragma warning restore 618
                     indices.Add(geometry.TriangleOffset);
                     indices.Add(geometry.TriangleCount);
                     indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
