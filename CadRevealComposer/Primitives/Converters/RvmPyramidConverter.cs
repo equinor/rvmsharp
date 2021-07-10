@@ -11,7 +11,7 @@
         public static APrimitive ConvertToRevealPrimitive(this RvmPyramid rvmPyramid,
             ulong meshFileId,
             CadRevealNode revealNode,
-            RvmNode container)
+            RvmNode container, PyramidInstancingHelper? pyramidInstancingHelper = null)
         {
             var commonProps = rvmPyramid.GetCommonProps(container, revealNode);
 
@@ -27,7 +27,30 @@
             }
             else
             {
-                // TODO: Pyramids are a good candidate for instancing. Investigate how to best apply it.
+                Mesh? instancedMesh = pyramidInstancingHelper?.TryGetInstancedMesh(rvmPyramid);
+                if (instancedMesh != null)
+                {
+                    var unitPyramid = PyramidConversionUtils.CreatePyramidWithUnitSizeInAllDimension(rvmPyramid);
+                    var unitProps = unitPyramid.GetCommonProps(container, revealNode);
+                    var eulerAngles = unitProps.Rotation.ToEulerAngles();
+                    PrimitiveCounter.pyramidInstanced++;
+                    return new InstancedMesh(unitProps,
+                        1,
+                        0,
+                        (ulong)(instancedMesh.Triangles.Count / 3),
+                        unitProps.Position.X,
+                        unitProps.Position.Y,
+                        unitProps.Position.Z,
+                        eulerAngles.rollX,
+                        eulerAngles.pitchY,
+                        eulerAngles.yawZ,
+                        unitProps.Scale.X,
+                        unitProps.Scale.Y,
+                        unitProps.Scale.Z
+                    )
+                    { TempTessellatedMesh = instancedMesh };
+                }
+
                 var pyramidMesh = TessellatorBridge.Tessellate(rvmPyramid, tolerance: -1 /* Unused for pyramids */);
 
                 PrimitiveCounter.pyramid++;

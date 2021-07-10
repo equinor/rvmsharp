@@ -3,6 +3,7 @@ namespace CadRevealComposer
     using IdProviders;
     using Newtonsoft.Json;
     using Primitives;
+    using Primitives.Converters;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
@@ -86,18 +87,41 @@ namespace CadRevealComposer
             Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
                 "Root node has no bounding box. Are there any meshes in the input?");
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
-
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
+
+            var pyramidInstancingTimer = Stopwatch.StartNew();
+            PyramidInstancingHelper pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
+            Console.WriteLine($"Prepared Pyramids in {pyramidInstancingTimer.Elapsed}");
 
             var geometryConversionTimer = Stopwatch.StartNew();
             // AsOrdered is important. And I dont like it...
             //  - Its important  of the "TriangleMesh TriangleCount" is "sequential-additive".
             // So the position offset in the mesh is determined on the TriangleCount of all items in the Sequence "12"+"16"+"10", and needs the identical order.
-            var geometries = allNodes.AsParallel().AsOrdered().SelectMany(x => x.RvmGeometries.Select(primitive =>
+            var geometries = allNodes
+                .AsParallel()
+                .AsOrdered()
+                .SelectMany(x => x.RvmGeometries.Select(primitive =>
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
-                        primitive)))
-                .WhereNotNull().ToArray();
-            Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
+                        primitive, pyramidInstancingHelper)))
+                .WhereNotNull().ToList();
+
+            var exportInstancedMeshes = Stopwatch.StartNew();
+            var instancedMeshesFileId = MeshIdGenerator.GetNextId();
+
+            // The following code should be refactored, i'm just not sure how
+            // We need to remove all instancedMeshes, and the re-add them.
+            //  The reason for this is that they are immutable, and we actually add new copies with altered data.
+            var notYetExportedInstancedMeshes = geometries.OfType<InstancedMesh>().ToArray();
+
+            geometries = geometries.Except(notYetExportedInstancedMeshes).ToList();
+
+            var exportedInstancedMeshes =
+                ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, notYetExportedInstancedMeshes);
+            geometries.AddRange(exportedInstancedMeshes);
+
+            Console.WriteLine("Exported instances in " + exportInstancedMeshes.Elapsed);
+
+            Console.WriteLine("Finished Geometry Conversion in: " + geometryConversionTimer.Elapsed);
 
             var exportObjTask = Task.Run(() =>
             {
@@ -109,33 +133,7 @@ namespace CadRevealComposer
             var infoNodesTask = Task.Run(() =>
             {
                 var infoNodesTimer = Stopwatch.StartNew();
-                var infoNodes = allNodes
-                    .Where(n => n.Group is RvmNode).Select(n =>
-                {
-                    var rvmNode = (RvmNode)n.Group!;
-                    return new CadInfoNode
-                    {
-                        TreeIndex = n.TreeIndex,
-                        Name = rvmNode.Name,
-                        Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
-                        {
-                            Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
-
-                            return new CadGeometry
-                            {
-                                TypeName = g.GetType().ToString(),
-                                Scale = scale,
-                                Location = transform,
-                                Rotation = rotation,
-                                Properties = g.GetType().GetProperties()
-                                    .ToDictionary(f => f.Name, f => f.GetValue(g)?.ToString())
-                            };
-                        }).ToList()
-                    };
-                }).ToArray();
-
-                var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
-                JsonSerializeToFile(infoNodes, outputFileName2);
+                ExportInfoNodes(outputDirectory, allNodes);
                 Console.WriteLine("Serialized infonodes (On background thread) in " + infoNodesTimer.Elapsed);
             });
 
@@ -166,7 +164,8 @@ namespace CadRevealComposer
             Texture[] textures = Array.Empty<Texture>();
 
             var getAttributeValuesTimer = Stopwatch.StartNew();
-            foreach (var attributeKind in (I3dfAttribute.AttributeType[])Enum.GetValues(typeof(I3dfAttribute.AttributeType)))
+            foreach (var attributeKind in (I3dfAttribute.AttributeType[])Enum.GetValues(
+                typeof(I3dfAttribute.AttributeType)))
             {
                 switch (attributeKind)
                 {
@@ -175,62 +174,91 @@ namespace CadRevealComposer
                         break;
                     case I3dfAttribute.AttributeType.Color:
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
-                        colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(geometries, attributeKind, new RgbaColorComparer());
+                        colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(
+                            geometries, attributeKind, new RgbaColorComparer());
                         break;
                     case I3dfAttribute.AttributeType.Diagonal:
-                        diagonals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        diagonals =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterX:
-                        centerX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        centerX =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterY:
-                        centerY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        centerY =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterZ:
-                        centerZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        centerZ =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Normal:
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
-                        normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(geometries, attributeKind, new XyzVector3Comparer());
+                        normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(
+                            geometries, attributeKind, new XyzVector3Comparer());
                         break;
                     case I3dfAttribute.AttributeType.Delta:
-                        deltas = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        deltas = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                            geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Height:
-                        heights = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        heights =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Radius:
-                        radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                            geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Angle:
-                        angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                            geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationX:
-                        translationsX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        translationsX =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationY:
-                        translationsY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        translationsY =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationZ:
-                        translationsZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        translationsZ =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleX:
-                        scalesX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        scalesX =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleY:
-                        scalesY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        scalesY =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleZ:
-                        scalesZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        scalesZ =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.FileId:
-                        fileIds = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeKind).ToArray();
+                        fileIds = APrimitiveReflectionHelpers
+                            .GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeKind).ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Texture:
                         textures = Array.Empty<Texture>();
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind, "Unexpected i3df attribute.");
+                        throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind,
+                            "Unexpected i3df attribute.");
                 }
             }
 
@@ -328,7 +356,7 @@ namespace CadRevealComposer
                         IndexFile = new IndexFile(
                             FileName: "sector_" + sectorFileHeader.SectorId + ".i3d",
                             DownloadSize: 500001, // TODO: Find a real download size
-                            PeripheralFiles: new[] {$"mesh_{meshId}.ctm"}),
+                            PeripheralFiles: new[] {$"mesh_{meshId}.ctm", $"mesh_{instancedMeshesFileId}.ctm"}),
                         FacesFile = null, // Not implemented
                         EstimatedTriangleCount =
                             geometries.OfType<TriangleMesh>()
@@ -349,11 +377,88 @@ namespace CadRevealComposer
             Task.WaitAll(exportObjTask, infoNodesTask);
 
             Console.WriteLine(
-                    $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+                $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        }
+
+        private static void ExportInfoNodes(DirectoryInfo outputDirectory, CadRevealNode[] allNodes)
+        {
+            var infoNodes = allNodes
+                .Where(n => n.Group is RvmNode).Select(n =>
+                {
+                    var rvmNode = (RvmNode)n.Group!;
+                    return new CadInfoNode
+                    {
+                        TreeIndex = n.TreeIndex,
+                        Name = rvmNode.Name,
+                        Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
+                        {
+                            Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
+
+                            return new CadGeometry
+                            {
+                                TypeName = g.GetType().ToString(),
+                                Scale = scale,
+                                Location = transform,
+                                Rotation = rotation,
+                                Properties = g.GetType().GetProperties()
+                                    .ToDictionary(f => f.Name, f => f.GetValue(g)?.ToString())
+                            };
+                        }).ToList()
+                    };
+                }).ToArray();
+
+            var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
+            JsonSerializeToFile(infoNodes, outputFileName2);
         }
 
 
-        private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<TriangleMesh> meshGeometries)
+        private static List<InstancedMesh> ExportInstancedMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshFileId,
+            IReadOnlyList<InstancedMesh> meshGeometries)
+        {
+            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshFileId}.obj"));
+            objExporter.StartObject("root");
+            var exportedInstancedMeshes = new List<InstancedMesh>();
+            uint triangleOffset = 0;
+
+            var counter = 0;
+            foreach (var instancedMeshesGroupedByMesh in meshGeometries.GroupBy(x => x.TempTessellatedMesh))
+            {
+                counter++;
+                var mesh = instancedMeshesGroupedByMesh.Key;
+
+                if (mesh == null)
+                    throw new ArgumentException(
+                        $"Expected meshGeometries to not have \"null\" meshes, was null on {instancedMeshesGroupedByMesh}",
+                        nameof(meshGeometries));
+                uint triangleCount = (uint)mesh.Triangles.Count / 3;
+
+                objExporter.WriteMesh(mesh);
+
+                // Create new InstancedMesh for all the InstancedMesh that were exported here.
+                // This makes it possible to set the TriangleOffset
+                IEnumerable<InstancedMesh> adjustedInstancedMeshes = instancedMeshesGroupedByMesh
+                    .Select(instancedMesh => instancedMesh with
+                    {
+                        FileId = meshFileId,
+                        TriangleOffset = triangleOffset,
+                        TriangleCount = triangleCount,
+                        TempTessellatedMesh = null // Remove this, no longer used.
+                    })
+                    .ToArray();
+
+                exportedInstancedMeshes.AddRange(
+                    adjustedInstancedMeshes);
+
+                triangleOffset += triangleCount;
+            }
+
+            Console.WriteLine($"{counter} distinct instanced meshes exported to MeshFile{meshFileId}");
+
+            return exportedInstancedMeshes;
+        }
+
+        private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId,
+            IReadOnlyList<TriangleMesh> meshGeometries)
         {
             using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
             objExporter.StartObject($"root"); // Keep a single object in each file
