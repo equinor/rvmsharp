@@ -6,6 +6,7 @@ namespace CadRevealComposer
     using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Primitives;
+    using Primitives.Converters;
     using Primitives.Instancing;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
@@ -89,8 +90,11 @@ namespace CadRevealComposer
             Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
                 "Root node has no bounding box. Are there any meshes in the input?");
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
-
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
+
+            var pyramidInstancingTimer = Stopwatch.StartNew();
+            PyramidInstancingHelper pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
+            Console.WriteLine($"Prepared Pyramids in {pyramidInstancingTimer.Elapsed}");
 
             var geometryConversionTimer = Stopwatch.StartNew();
             // AsOrdered is important. And I dont like it...
@@ -100,15 +104,31 @@ namespace CadRevealComposer
                 .AsParallel()
                 .AsOrdered()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
-                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
-                .WhereNotNull()
-                .ToArray();
+                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
+                        primitive, pyramidInstancingHelper)))
+                .WhereNotNull().ToList();
+
+            var exportInstancedMeshes = Stopwatch.StartNew();
+            var instancedMeshesFileId = MeshIdGenerator.GetNextId();
+
+            // The following code should be refactored, i'm just not sure how
+            // We need to remove all instancedMeshes, and the re-add them.
+            //  The reason for this is that they are immutable, and we actually add new copies with altered data.
+            var notYetExportedInstancedMeshes = geometries.OfType<InstancedMesh>().ToArray();
+
+            geometries = geometries.Except(notYetExportedInstancedMeshes).ToList();
 
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
             var meshInstanceDictionary = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
             geometries = geometries.Where(g => g is not ProtoMesh).ToArray();
 
-            Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
+            var exportedInstancedMeshes =
+                ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, notYetExportedInstancedMeshes);
+            geometries.AddRange(exportedInstancedMeshes);
+
+            Console.WriteLine("Exported instances in " + exportInstancedMeshes.Elapsed);
+
+            Console.WriteLine("Finished Geometry Conversion in: " + geometryConversionTimer.Elapsed);
 
             var exportObjTask = Task.Run(() =>
             {
@@ -252,6 +272,7 @@ namespace CadRevealComposer
                         textures = Array.Empty<Texture>();
                         break;
                     case I3dfAttribute.AttributeType.Ignore:
+                        // AttributeType.Ignore are intentionally ignored, and not exported.
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind,
@@ -266,7 +287,7 @@ namespace CadRevealComposer
             {
                 var elementType = geometriesByType.Key;
                 if (elementType == typeof(ProtoMesh))
-                    continue;
+                    continue; // ProtoMesh is a temporary primitive, and should not be exported.
                 var elements = geometriesByType.ToArray();
                 var fieldInfo = primitiveCollections.GetType().GetFields()
                     .First(pc => pc.FieldType.GetElementType() == elementType);
@@ -355,7 +376,7 @@ namespace CadRevealComposer
                         IndexFile = new IndexFile(
                             FileName: "sector_" + sectorFileHeader.SectorId + ".i3d",
                             DownloadSize: 500001, // TODO: Find a real download size
-                            PeripheralFiles: new[] { $"mesh_{meshId}.ctm" }),
+                            PeripheralFiles: new[] {$"mesh_{meshId}.ctm", $"mesh_{instancedMeshesFileId}.ctm"}),
                         FacesFile = null, // Not implemented
                         EstimatedTriangleCount =
                             geometries.OfType<TriangleMesh>()
@@ -379,6 +400,50 @@ namespace CadRevealComposer
                 $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         }
 
+        static List<InstancedMesh> ExportInstancedMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshFileId,
+            IReadOnlyList<InstancedMesh> meshGeometries)
+        {
+            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshFileId}.obj"));
+            objExporter.StartObject("root");
+            var exportedInstancedMeshes = new List<InstancedMesh>();
+            uint triangleOffset = 0;
+
+            var counter = 0;
+            foreach (var instancedMeshesGroupedByMesh in meshGeometries.GroupBy(x => x.TempTessellatedMesh))
+            {
+                counter++;
+                var mesh = instancedMeshesGroupedByMesh.Key;
+
+                if (mesh == null)
+                    throw new ArgumentException(
+                        $"Expected meshGeometries to not have \"null\" meshes, was null on {instancedMeshesGroupedByMesh}",
+                        nameof(meshGeometries));
+                uint triangleCount = (uint)mesh.Triangles.Count / 3;
+
+                objExporter.WriteMesh(mesh);
+
+                // Create new InstancedMesh for all the InstancedMesh that were exported here.
+                // This makes it possible to set the TriangleOffset
+                IEnumerable<InstancedMesh> adjustedInstancedMeshes = instancedMeshesGroupedByMesh
+                    .Select(instancedMesh => instancedMesh with
+                    {
+                        FileId = meshFileId,
+                        TriangleOffset = triangleOffset,
+                        TriangleCount = triangleCount,
+                        TempTessellatedMesh = null // Remove this, no longer used.
+                    })
+                    .ToArray();
+
+                exportedInstancedMeshes.AddRange(
+                    adjustedInstancedMeshes);
+
+                triangleOffset += triangleCount;
+            }
+
+            Console.WriteLine($"{counter} distinct instanced meshes exported to MeshFile{meshFileId}");
+
+            return exportedInstancedMeshes;
+        }
 
         private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId,
             IReadOnlyList<TriangleMesh> meshGeometries)
