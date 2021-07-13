@@ -50,7 +50,7 @@
                 .ToDictionary(x => x.rvmPyramid, x =>
                 {
                     const float unused = -1;
-                    return TessellatorBridge.Tessellate(x.Key, unused, unused);
+                    return TessellatorBridge.TessellateWithoutApplyingMatrix(x.Key, unused, unused);
                 });
         }
 
