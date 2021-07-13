@@ -39,13 +39,13 @@ namespace RvmSharp.Tessellation
             }
 
             var scaleScalar = Math.Max(scale.X, Math.Max(scale.Y, scale.Z));
-            var mesh = Tessellate(primitive, scaleScalar, tolerance);
+            var mesh = TessellateWithoutApplyingMatrix(primitive, scaleScalar, tolerance);
             mesh?.Apply(primitive.Matrix);
 
             return mesh;
         }
 
-        public static Mesh? Tessellate(RvmPrimitive primitive, float scale, float tolerance)
+        public static Mesh? TessellateWithoutApplyingMatrix(RvmPrimitive primitive, float scale, float tolerance)
         {
             switch (primitive)
             {

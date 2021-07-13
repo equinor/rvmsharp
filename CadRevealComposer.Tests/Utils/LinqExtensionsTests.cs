@@ -9,7 +9,7 @@
     [TestFixture]
     public class LinqExtensionsTests
     {
-        class TestDataClass
+        private class TestDataClass
         {
         }
 
