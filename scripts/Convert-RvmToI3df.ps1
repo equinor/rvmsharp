@@ -24,6 +24,11 @@ end {
     [Console]::ResetColor()
     $ErrorActionPreference = 'Stop'
     $scriptTimer = [system.diagnostics.stopwatch]::StartNew()
+    if ($IsLinux) {
+        # Known Linux compability issues: We do not yet have a binary for the CTMConv for Linux.
+        # Ctmconv for linux can be built and added, but has not yet been prioritized. See the readme in the ctmconv directory.
+        Write-Error "This script is not yet tested for Linux. If you want to try running it, please remove this line and beware of dragons!"
+    }
     #endregion PsSetup
 
 
@@ -36,6 +41,10 @@ end {
         Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
     }
 
+    if (-not (Get-Item -Path $ArtifactDirectory)) {
+        Write-Error "Could not find the ArtifactDirectory at `"$ArtifactDirectory`". Please check that the directory exists."
+    }
+
     Remove-Item -Path $WorkDirectory -Recurse -Force -ErrorAction Ignore
     New-Item -Path $WorkDirectory -ItemType Directory -Force | Out-Null
 
@@ -44,7 +53,7 @@ end {
 
     #region Reveal Composer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
-    & dotnet.exe run --configuration Release --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $WorkDirectory --ProjectId $ProjectId --ModelId $ModelId --RevisionId $RevisionId
+    & dotnet run --configuration Release --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $WorkDirectory --ProjectId $ProjectId --ModelId $ModelId --RevisionId $RevisionId
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
@@ -53,7 +62,8 @@ end {
 
     #region ctm-converter
 
-    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.exe"
+    $CtmConverterType = if ($IsMacOS) { "osx" } elseif ($IsWindows) { "exe" } else { Write-Error "Unexpected OS" }
+    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.$CtmConverterType"
     Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
         Write-Output ("Converting " + $_.Name + " (" + ("{0:n2} MB" -f ($_.Length / 1MB) + ") to CTM"))
         $ctmInputPath = $_.FullName
