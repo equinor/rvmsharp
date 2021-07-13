@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="TestSamples\TestData.json">
+      <None Update="TestSamples\RotationTestsTestData.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>

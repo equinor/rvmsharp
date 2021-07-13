@@ -12,7 +12,7 @@ namespace CadRevealComposer.Tests
     public class RotationTests
     {
         private static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
-        
+
         [Serializable]
         public class RotationTestCase
         {
@@ -38,7 +38,7 @@ namespace CadRevealComposer.Tests
 
         private static TestCaseData[] ReadTestCases()
         {
-            var tests = JsonConvert.DeserializeObject<RotationTestCase[]>(File.ReadAllText(Path.Combine(TestSamplesDirectory, "TestData.json")));
+            var tests = JsonConvert.DeserializeObject<RotationTestCase[]>(File.ReadAllText(Path.Combine(TestSamplesDirectory, "RotationTestsTestData.json")));
             return tests?.Select(x => new TestCaseData(x).SetName(x.Name)).ToArray();
         }
 
