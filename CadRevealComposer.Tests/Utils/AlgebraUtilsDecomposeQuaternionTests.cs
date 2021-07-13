@@ -11,34 +11,29 @@ namespace CadRevealComposer.Tests.Utils
     [TestFixture]
     public class AlgebraUtilsDecomposeQuaternionTests
     {
-        private static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
+        private static readonly string TestSamplesDirectory =
+            Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
 
         [Serializable]
         public class RotationTestCase
         {
-            [JsonProperty("name")]
-            public string Name;
-            [JsonProperty("quaternionIn")]
-            public QuaternionSerializable QuaternionIn;
-            [JsonProperty("rotationAngleOut")]
-            public float RotationAngleOut;
+            [JsonProperty("name")] public string Name;
+            [JsonProperty("quaternionIn")] public QuaternionSerializable QuaternionIn;
+            [JsonProperty("rotationAngleOut")] public float RotationAngleOut;
 
             public class QuaternionSerializable
             {
-                [JsonProperty("x")]
-                public float X;
-                [JsonProperty("y")]
-                public float Y;
-                [JsonProperty("z")]
-                public float Z;
-                [JsonProperty("w")]
-                public float W;
+                [JsonProperty("x")] public float X;
+                [JsonProperty("y")] public float Y;
+                [JsonProperty("z")] public float Z;
+                [JsonProperty("w")] public float W;
             }
         }
 
         private static TestCaseData[] ReadTestCases()
         {
-            var tests = JsonConvert.DeserializeObject<RotationTestCase[]>(File.ReadAllText(Path.Combine(TestSamplesDirectory, "RotationTestsTestData.json")));
+            var tests = JsonConvert.DeserializeObject<RotationTestCase[]>(
+                File.ReadAllText(Path.Combine(TestSamplesDirectory, "RotationTestsTestData.json")));
             return tests?.Select(x => new TestCaseData(x).SetName(x.Name)).ToArray();
         }
 
@@ -48,7 +43,7 @@ namespace CadRevealComposer.Tests.Utils
         [TestCaseSource(nameof(DivideCases))]
         public void TestQuaternionDecomposition(RotationTestCase test)
         {
-            var q = new Quaternion(test.QuaternionIn.X,test.QuaternionIn.Y,test.QuaternionIn.Z,test.QuaternionIn.W);
+            var q = new Quaternion(test.QuaternionIn.X, test.QuaternionIn.Y, test.QuaternionIn.Z, test.QuaternionIn.W);
             var components = q.DecomposeQuaternion();
             Assert.AreEqual(components.rotationAngle, test.RotationAngleOut, 0.01f);
         }
