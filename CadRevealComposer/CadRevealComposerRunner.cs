@@ -17,7 +17,6 @@ namespace CadRevealComposer
     using System.IO;
     using System.Linq;
     using System.Numerics;
-    using System.Reflection.Metadata;
     using System.Threading.Tasks;
     using Utils;
     using Utils.Comparers;
@@ -39,7 +38,6 @@ namespace CadRevealComposer
 
         public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
 
-        // ReSharper disable once UnusedParameter.Local
         // ReSharper disable once CognitiveComplexity
         public static void Process(
             DirectoryInfo inputRvmFolderPath,
@@ -47,7 +45,6 @@ namespace CadRevealComposer
             Parameters parameters)
         {
             var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
-
 
             Console.WriteLine("Reading RvmData");
             var rvmTimer = Stopwatch.StartNew();
@@ -62,9 +59,8 @@ namespace CadRevealComposer
 
         public static void Process(RvmStore rvmStore, DirectoryInfo outputDirectory, Parameters parameters)
         {
-
             Console.WriteLine("Generating i3d");
-            // Project name og project parameters tull from Cad Control Center
+
             var rootNode =
                 new CadRevealNode
                 {
@@ -134,7 +130,7 @@ namespace CadRevealComposer
             {
                 var infoNodesTimer = Stopwatch.StartNew();
                 ExportInfoNodes(outputDirectory, allNodes);
-                Console.WriteLine("Serialized infonodes (On background thread) in " + infoNodesTimer.Elapsed);
+                Console.WriteLine("Serialized info-nodes (On background thread) in " + infoNodesTimer.Elapsed);
             });
 
             var groupAttributesTimer = Stopwatch.StartNew();
