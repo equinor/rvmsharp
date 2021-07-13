@@ -11,8 +11,8 @@
     [TestFixture]
     public class RvmPyramidConverterTests
     {
-        internal RvmPyramid RvmPyramidTestInstance;
-        protected RvmBoundingBox ThrowawayBoundingBox = new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
+        private RvmPyramid RvmPyramidTestInstance;
+        private readonly RvmBoundingBox _throwawayBoundingBox = new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
 
         internal RvmNode RvmNodeTestInstance;
 
@@ -27,7 +27,7 @@
             RvmPyramidTestInstance = new RvmPyramid(
                 Version: 2,
                 Matrix: Matrix4x4.Identity,
-                BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+                BoundingBoxLocal: _throwawayBoundingBox,
                 BottomX: 100,
                 BottomY: 50,
                 TopX: 50,
@@ -84,7 +84,7 @@
                 const float offsetX = 2f;
                 const float offsetY = 3f;
                 const float height = 4f;
-                var pyramidA = new RvmPyramid(2, Matrix4x4.Identity, ThrowawayBoundingBox, bottomX, bottomY, topX, topY,
+                var pyramidA = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, bottomX, bottomY, topX, topY,
                     offsetX, offsetY, height);
 
                 RvmPyramid pyramid =
@@ -108,7 +108,7 @@
             {
                 var p1 = new RvmPyramid(Version: 2,
                     Matrix: Matrix4x4.Identity,
-                    BoundingBoxLocal: ThrowawayBoundingBox,
+                    BoundingBoxLocal: _throwawayBoundingBox,
                     BottomX: 2,
                     BottomY: 4,
                     TopX: 6,
@@ -120,7 +120,7 @@
 
                 var p2 = new RvmPyramid(Version: 2,
                     Matrix: Matrix4x4.Identity,
-                    BoundingBoxLocal: ThrowawayBoundingBox,
+                    BoundingBoxLocal: _throwawayBoundingBox,
                     BottomX: 1,
                     2,
                     3,
