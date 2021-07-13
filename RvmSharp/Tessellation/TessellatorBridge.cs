@@ -45,6 +45,14 @@ namespace RvmSharp.Tessellation
             return mesh;
         }
 
+        /// <summary>
+        /// Tessellate a RvmPrimitive into a Mesh representation.
+        /// </summary>
+        /// <param name="primitive">The primitive to tessellate</param>
+        /// <param name="scale">The scale is used in combination with tolerance for meshes that will be scaled large. If you dont care just use 1 as the value.</param>
+        /// <param name="tolerance">The accepted tolerance. Used in combination with scale for some primitives.</param>
+        /// <returns>Tessellated Mesh (Or null, if we cannot tessellate it.)</returns>
+        /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static Mesh? TessellateWithoutApplyingMatrix(RvmPrimitive primitive, float scale, float tolerance)
         {
             switch (primitive)
@@ -227,6 +235,7 @@ namespace RvmSharp.Tessellation
 
             var error = TessellationHelpers.SagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter,
                 scale, segments);
+            Debug.Assert(error <= tolerance);
 
             bool shell = true;
             bool[] cap = { true, true };
@@ -397,6 +406,7 @@ namespace RvmSharp.Tessellation
                 TessellationHelpers.SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
                     scale, segments_l),
                 TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
+            Debug.Assert(error <= tolerance);
 
             var samples_l = segments_l + 1; // Assumed to be open, add extra sample
             var samples_s = segments_s; // Assumed to be closed
