@@ -2,7 +2,7 @@ namespace RvmSharp.Primitives
 {
     using System.Numerics;
 
-    public record RvmBoundingBox (Vector3 Min, Vector3 Max)
+    public record RvmBoundingBox(Vector3 Min, Vector3 Max)
     {
         /// <summary>
         /// Generate all 8 corners of the bounding box.
@@ -12,7 +12,7 @@ namespace RvmSharp.Primitives
         {
             var cube = new[]
             {
-                Max, 
+                Max,
                 Min,
                 new Vector3(Min.X, Min.Y, Max.Z),
                 new Vector3(Min.X, Max.Y, Min.Z),
@@ -29,5 +29,17 @@ namespace RvmSharp.Primitives
         /// Calculate the diagonal size (distance between "min" and "max")
         /// </summary>
         public float Diagonal => Vector3.Distance(Min, Max);
+
+        /// <summary>
+        /// Helper method to calculate the Center of the bounding box.
+        /// Can be used together with <see cref="Extents"/>
+        /// </summary>
+        public Vector3 Center => (Max + Min) / 2;
+
+        /// <summary>
+        /// Helper method to calculate the Extent of the bounding box.
+        /// Can be used together with <see cref="Center"/>
+        /// </summary>
+        public Vector3 Extents => (Max - Min);
     };
 }
