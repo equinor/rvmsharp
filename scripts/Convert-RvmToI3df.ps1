@@ -1,13 +1,13 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $InputDirectory = "/Users/GUSH/projects/rvmsharp/testdata/asp/PRO",
-    [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
-    [Parameter(Mandatory = $false)][long] $ProjectId = 10000,
-    [Parameter(Mandatory = $false)][long] $ModelId = 1,
-    [Parameter(Mandatory = $false)][long] $RevisionId = 0,
-    [string] $ArtifactDirectory = "/Users/GUSH/projects/echo/echo-web/Echo3DWeb-master/EchoReflectApi/EchoReflect.Api/AppData/demomodel",
-    [switch] $Force = $true,
+    [Parameter(Mandatory = $true)][string] $InputDirectory, #Example "../TestData/HDA_RVM"),
+    [Parameter(Mandatory = $false)][string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
+    [Parameter(Mandatory = $true)][long] $ProjectId, #Example value:  1,
+    [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
+    [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
+    [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
+    [switch] $Force = $false,
     [switch] $UploadToDev = $false
 )
 
@@ -43,8 +43,20 @@ end {
 
 
     #region Reveal Composer
+
+    # Note: The line containing only " -- " separates the arguments to the dotnet compiler and the arguments to CadRevealComposer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
-    & dotnet run --configuration Release --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $WorkDirectory --ProjectId $ProjectId --ModelId $ModelId --RevisionId $RevisionId
+    & dotnet run `
+        --configuration Release `
+        --project $cadRevealComposerPath `
+        -- `
+        --InputDirectory $InputDirectory `
+        --OutputDirectory $WorkDirectory `
+        --ProjectId $ProjectId `
+        --ModelId $ModelId `
+        --RevisionId $RevisionId
+
+
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
@@ -83,7 +95,7 @@ end {
 
     $artifactStagingGlobs = @(
         "scene.json"
-        "cadnodeinfo.json"
+        "*.db"
         "*.i3d"
         "*.f3d"
         "*.ctm"
@@ -94,6 +106,10 @@ end {
     }
 
     #endregion Artifact Staging
+
+    if (-not (Test-Path -Path $ArtifactDirectory -PathType Container )) {
+        New-Item -Path $ArtifactDirectory -ItemType Container
+    }
 
     Copy-Item -Path (Join-Path $artifactStagingDirectory "*") -Destination $ArtifactDirectory
 

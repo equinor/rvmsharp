@@ -1,6 +1,9 @@
 namespace CadRevealComposer
 {
+    using HierarchyComposer.Functions;
     using IdProviders;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Primitives;
     using Primitives.Reflection;
@@ -16,12 +19,10 @@ namespace CadRevealComposer
     using System.IO;
     using System.Linq;
     using System.Numerics;
-    using System.Reflection.Metadata;
     using System.Threading.Tasks;
     using Utils;
     using Utils.Comparers;
     using Writers;
-
 
     public record ProjectId(long Value);
 
@@ -59,9 +60,10 @@ namespace CadRevealComposer
             Process(rvmStore, outputDirectory, parameters);
         }
 
+        // ReSharper disable once MemberCanBePrivate.Global
+        // ReSharper disable once CognitiveComplexity
         public static void Process(RvmStore rvmStore, DirectoryInfo outputDirectory, Parameters parameters)
         {
-
             Console.WriteLine("Generating i3d");
             // Project name og project parameters tull from Cad Control Center
             var rootNode =
@@ -106,37 +108,19 @@ namespace CadRevealComposer
                 Console.WriteLine("Mesh .obj file exported (On background thread) in " + objExportTimer.Elapsed);
             });
 
-            var infoNodesTask = Task.Run(() =>
+            var exportHierarchyTask = Task.Run(() =>
             {
-                var infoNodesTimer = Stopwatch.StartNew();
-                var infoNodes = allNodes
-                    .Where(n => n.Group is RvmNode).Select(n =>
-                {
-                    var rvmNode = (RvmNode)n.Group!;
-                    return new CadInfoNode
-                    {
-                        TreeIndex = n.TreeIndex,
-                        Name = rvmNode.Name,
-                        Geometries = rvmNode.Children.OfType<RvmPrimitive>().Select(g =>
-                        {
-                            Matrix4x4.Decompose(g.Matrix, out var scale, out var rotation, out var transform);
+                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, $"hierarchy.db"));
 
-                            return new CadGeometry
-                            {
-                                TypeName = g.GetType().ToString(),
-                                Scale = scale,
-                                Location = transform,
-                                Rotation = rotation,
-                                Properties = g.GetType().GetProperties()
-                                    .ToDictionary(f => f.Name, f => f.GetValue(g)?.ToString())
-                            };
-                        }).ToList()
-                    };
-                }).ToArray();
+                var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 
-                var outputFileName2 = Path.Combine(outputDirectory.FullName, "cadnodeinfo.json");
-                JsonSerializeToFile(infoNodes, outputFileName2);
-                Console.WriteLine("Serialized infonodes (On background thread) in " + infoNodesTimer.Elapsed);
+                ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
+                var exporter = new HierarchyComposer.Functions.DatabaseComposer(databaseLogger);
+                exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
+
+
+                // TODO: Export DatabaseId to some metadata available to the Model Service.
+                Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
             });
 
             var groupAttributesTimer = Stopwatch.StartNew();
@@ -166,7 +150,8 @@ namespace CadRevealComposer
             Texture[] textures = Array.Empty<Texture>();
 
             var getAttributeValuesTimer = Stopwatch.StartNew();
-            foreach (var attributeKind in (I3dfAttribute.AttributeType[])Enum.GetValues(typeof(I3dfAttribute.AttributeType)))
+            foreach (var attributeKind in (I3dfAttribute.AttributeType[])Enum.GetValues(
+                typeof(I3dfAttribute.AttributeType)))
             {
                 switch (attributeKind)
                 {
@@ -175,62 +160,91 @@ namespace CadRevealComposer
                         break;
                     case I3dfAttribute.AttributeType.Color:
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
-                        colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(geometries, attributeKind, new RgbaColorComparer());
+                        colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(
+                            geometries, attributeKind, new RgbaColorComparer());
                         break;
                     case I3dfAttribute.AttributeType.Diagonal:
-                        diagonals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        diagonals =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterX:
-                        centerX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        centerX =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterY:
-                        centerY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        centerY =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterZ:
-                        centerZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        centerZ =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Normal:
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
-                        normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(geometries, attributeKind, new XyzVector3Comparer());
+                        normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(
+                            geometries, attributeKind, new XyzVector3Comparer());
                         break;
                     case I3dfAttribute.AttributeType.Delta:
-                        deltas = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        deltas = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                            geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Height:
-                        heights = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        heights =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Radius:
-                        radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                            geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Angle:
-                        angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                            geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationX:
-                        translationsX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        translationsX =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationY:
-                        translationsY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        translationsY =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationZ:
-                        translationsZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        translationsZ =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleX:
-                        scalesX = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        scalesX =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleY:
-                        scalesY = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        scalesY =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleZ:
-                        scalesZ = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries, attributeKind);
+                        scalesZ =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
+                                attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.FileId:
-                        fileIds = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeKind).ToArray();
+                        fileIds = APrimitiveReflectionHelpers
+                            .GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeKind).ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Texture:
                         textures = Array.Empty<Texture>();
                         break;
                     default:
-                        throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind, "Unexpected i3df attribute.");
+                        throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind,
+                            "Unexpected i3df attribute.");
                 }
             }
 
@@ -328,7 +342,7 @@ namespace CadRevealComposer
                         IndexFile = new IndexFile(
                             FileName: "sector_" + sectorFileHeader.SectorId + ".i3d",
                             DownloadSize: 500001, // TODO: Find a real download size
-                            PeripheralFiles: new[] {$"mesh_{meshId}.ctm"}),
+                            PeripheralFiles: new[] { $"mesh_{meshId}.ctm" }),
                         FacesFile = null, // Not implemented
                         EstimatedTriangleCount =
                             geometries.OfType<TriangleMesh>()
@@ -345,15 +359,16 @@ namespace CadRevealComposer
             Console.WriteLine($"Total primitives {geometries.Count()}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
-            // Wait until obj export is done (Its probably finished ages ago)
-            Task.WaitAll(exportObjTask, infoNodesTask);
+            // Wait until obj and hierarchy export is done
+            Task.WaitAll(exportObjTask, exportHierarchyTask);
 
             Console.WriteLine(
-                    $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+                $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         }
 
 
-        private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<TriangleMesh> meshGeometries)
+        private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId,
+            IReadOnlyList<TriangleMesh> meshGeometries)
         {
             using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
             objExporter.StartObject($"root"); // Keep a single object in each file

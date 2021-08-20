@@ -1,4 +1,7 @@
-﻿// ReSharper disable UnusedAutoPropertyAccessor.Global
+﻿// ReSharper disable UnusedAutoPropertyAccessor.Global -- Unsure if CommandLineOptions handles this
+// ReSharper disable MemberCanBePrivate.Global -- Unsure if CommandLineOptions handles this
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global  -- Unsure if CommandLineOptions handles this
+
 namespace CadRevealComposer.Exe
 {
     using CommandLine;
@@ -36,12 +39,12 @@ namespace CadRevealComposer.Exe
          Range(minimum: 0, Double.PositiveInfinity),
         ]
         public long RevisionId { get; init; }
-        
+
         public static void AssertValidOptions(CommandLineOptions options)
         {
             // Validate DataAttributes
             Validator.ValidateObject(options, new ValidationContext(options), true);
-            
+
             if (!options.InputDirectory.Exists)
             {
                 throw new DirectoryNotFoundException(
@@ -58,7 +61,7 @@ namespace CadRevealComposer.Exe
                 else
                 {
                     throw new DirectoryNotFoundException(
-                        $"{nameof(options.InputDirectory)}: Could not find the output directory OR its parent. Is the path {options.OutputDirectory} correct?");
+                        $"{nameof(options.InputDirectory)}: Could not find the output directory OR its parent. Is the path \"{options.OutputDirectory}\" correct?");
                 }
             }
         }
