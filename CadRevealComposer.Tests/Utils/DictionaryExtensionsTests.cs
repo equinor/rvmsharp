@@ -7,21 +7,21 @@
     public class DictionaryExtensionsTests
     {
         [Test]
-        public void GetMaybeValue_WhenKeyDoesNotExist_ReturnsDefault()
+        public void GetValueOrNull_WhenKeyDoesNotExist_ReturnsNull()
         {
             var emptyDict = new Dictionary<string, object>();
-            var result = emptyDict.GetMaybeValue("UnusedKey");
+            var result = emptyDict.GetValueOrNull("UnusedKey");
             Assert.That(result, Is.Null);
         }
 
         [Test]
-        public void GetMaybeValue_WhenKeyExist_ReturnsValue()
+        public void GetValueOrNull_WhenKeyExist_ReturnsValue()
         {
             var emptyDict = new Dictionary<string, object>();
             var myTestObject = new object();
             string myKey = "MyKey";
             emptyDict[myKey] = myTestObject;
-            var result = emptyDict.GetMaybeValue(myKey);
+            var result = emptyDict.GetValueOrNull(myKey);
             Assert.That(result, Is.Not.Null);
             Assert.That(result, Is.EqualTo(myTestObject));
         }
