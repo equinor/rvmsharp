@@ -1,20 +1,20 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Mop.Hierarchy.Model;
-
-namespace Mop.Hierarchy
+﻿namespace HierarchyComposer
 {
+    using Microsoft.EntityFrameworkCore;
+    using Model;
+
     public class HierarchyContext : DbContext
     {
-        public DbSet<Node> Nodes { get; set; }
-        public DbSet<PDMSEntry> PDMSEntries { get; set; }
-        public DbSet<AABB> AABBs { get; set; }
-        public DbSet<NodePDMSEntry> NodeToPDMSEntry { get; set; }
+        public DbSet<Node> Nodes => Set<Node>();
+        public DbSet<PDMSEntry> PdmsEntries => Set<PDMSEntry>();
+        public DbSet<AABB> Aabbs => Set<AABB>();
+        public DbSet<NodePDMSEntry> NodeToPDMSEntry => Set<NodePDMSEntry>();
 
         // This connection string is only used during manual migration from command line, use HierarchyContext(DbContextOptions)
         // constructor runtime.
         private const string DefaultMigrationConnectionString = @"Data Source = D:\tmp\Hierarchy.db;";
 
-        public HierarchyContext() : base()
+        public HierarchyContext()
         {
         }
 
@@ -33,7 +33,7 @@ namespace Mop.Hierarchy
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
+
             modelBuilder.Entity<PDMSEntry>().ToTable("PDMSEntries");
             modelBuilder.Entity<AABB>().ToTable("AABBs");
             modelBuilder.Entity<NodePDMSEntry>().HasKey(e => new { e.NodeId, e.PDMSEntryId });

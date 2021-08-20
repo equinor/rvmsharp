@@ -1,30 +1,18 @@
-﻿using System;
-using System.Data.SQLite;
-using System.Diagnostics.CodeAnalysis;
-
-namespace Mop.Hierarchy.Model
+﻿namespace HierarchyComposer.Model
 {
+    using System;
+    using System.Data.SQLite;
+    using System.Numerics;
+
     public class AABB : IEquatable<AABB>
     {
-        public int Id { get; set; }
-        public Vector3f min { get; set; }
-        public Vector3f max { get; set; }
+        public int Id { get; init; }
+        public Vector3EfSerializable min { get; init; } = new Vector3EfSerializable(Vector3.Zero);
+        public Vector3EfSerializable max { get; init; } = new Vector3EfSerializable(Vector3.Zero);
 
-        public bool Equals([AllowNull] AABB other)
+        public AABB CopyWithNewId(int id)
         {
-            //Check whether the compared object is null. 
-            if (Object.ReferenceEquals(other, null)) return false;
-
-            //Check whether the compared object references the same data. 
-            if (Object.ReferenceEquals(this, other)) return true;
-
-            //Check whether the products' properties are equal. 
-            return Id == other.Id && min.Equals(other.min) && max.Equals(other.max);
-        }
-
-        public override int GetHashCode()
-        {
-            return Id.GetHashCode() ^ min.GetHashCode() ^ max.GetHashCode();
+            return new AABB() { Id = id, min = this.min, max = this.max };
         }
 
         public void RawInsert(SQLiteCommand command)
@@ -40,6 +28,46 @@ namespace Mop.Hierarchy.Model
                     new SQLiteParameter("@max_z", max.z)
                     });
             command.ExecuteNonQuery();
+        }
+
+        public bool Equals(AABB? other)
+        {
+            if (ReferenceEquals(null, other))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other))
+            {
+                return true;
+            }
+
+            return Equals(min, other.min) && Equals(max, other.max);
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(null, obj))
+            {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj))
+            {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType())
+            {
+                return false;
+            }
+
+            return Equals((AABB)obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(min, max);
         }
     }
 }

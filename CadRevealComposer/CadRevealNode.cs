@@ -28,6 +28,11 @@ namespace CadRevealComposer
         public RvmBoundingBox? BoundingBoxAxisAligned;
         // Depth
         // Subtree size
+
+        /// <summary>
+        /// This optional value is exported to the Hierarchy database and can be used for any debug info for the 3D model.
+        /// </summary>
+        public string? OptionalDiagnosticInfo { get; init; }
     }
 
 

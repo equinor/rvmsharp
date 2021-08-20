@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\HierarchyComposer\HierarchyComposer.csproj" />
       <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
     </ItemGroup>
 
