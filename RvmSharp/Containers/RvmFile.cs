@@ -6,7 +6,7 @@
 
     // Public Api
     public class RvmFile
-    {    
+    {
         // Public Api
         public record RvmHeader(uint Version, string Info, string Note, string Date, string User, string Encoding);
 
@@ -36,11 +36,9 @@
             {
                 if (rvmNodeNameLookup.TryGetValue(attributeNode.Name, out var rvmNode))
                 {
-                    // todo attr
                     foreach (var kvp in attributeNode.MetadataDict)
                         rvmNode.Attributes.Add(kvp.Key, kvp.Value);
                     AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
-                    break;
                 }
             }
         }
