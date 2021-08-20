@@ -1,15 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.SQLite;
-
-namespace Mop.Hierarchy.Model
+﻿namespace HierarchyComposer.Model
 {
+    using System.Data.SQLite;
+
     public class NodePDMSEntry
     {
         public uint NodeId { get; set; }
-        public Node Node { get; set; }
+        public Node Node { get; set; } = null!;
 
         public long PDMSEntryId { get; set; }
-        public PDMSEntry PDMSEntry { get; set; }
+        public PDMSEntry PDMSEntry { get; set; } = null!;
 
         public void RawInsert(SQLiteCommand command)
         {

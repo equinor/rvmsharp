@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Exe", "CadRevealComposer.Exe\CadRevealComposer.Exe.csproj", "{82622167-F4E4-4224-AC14-E54E8EE8E2D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyComposer", "HierarchyComposer\HierarchyComposer.csproj", "{7B4152D6-FCBF-421C-94D3-04EB448C57BF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyComposer.Tests", "HierarchyComposer.Tests\HierarchyComposer.Tests.csproj", "{61B80921-B758-4AC8-AE87-215818E5F903}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +49,14 @@ Global
 		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82622167-F4E4-4224-AC14-E54E8EE8E2D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B4152D6-FCBF-421C-94D3-04EB448C57BF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B4152D6-FCBF-421C-94D3-04EB448C57BF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B4152D6-FCBF-421C-94D3-04EB448C57BF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B4152D6-FCBF-421C-94D3-04EB448C57BF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{61B80921-B758-4AC8-AE87-215818E5F903}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61B80921-B758-4AC8-AE87-215818E5F903}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61B80921-B758-4AC8-AE87-215818E5F903}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61B80921-B758-4AC8-AE87-215818E5F903}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

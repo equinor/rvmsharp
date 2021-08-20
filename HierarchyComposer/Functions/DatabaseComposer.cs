@@ -1,80 +1,96 @@
-﻿using Equinor.MeshOptimizationPipeline;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Mop.Hierarchy.Extensions;
-using Mop.Hierarchy.Model;
-using Newtonsoft.Json;
-using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.IO;
-using System.Linq;
-
-namespace Mop.Hierarchy.Functions
+﻿namespace HierarchyComposer.Functions
 {
+    using Extensions;
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Logging.Abstractions;
+    using Model;
+    using System;
+    using System.Collections.Generic;
+    using System.Data.SQLite;
+    using System.IO;
+    using System.Linq;
+
     public class DatabaseComposer
     {
-        private readonly ILogger Logger;
+        private readonly ILogger _logger;
 
-        public DatabaseComposer(ILoggerFactory loggerFactory)
+        public DatabaseComposer(ILogger<DatabaseComposer>? logger = null)
         {
-            Logger = loggerFactory.CreateLogger<DatabaseComposer>();
+            _logger = logger ?? NullLogger<DatabaseComposer>.Instance;
         }
 
-        public void ComposeDatabase(string inputPath, string outputDatabase)
+        // ReSharper disable once CognitiveComplexity
+        public void ComposeDatabase(IReadOnlyList<HierarchyNode> inputNodes, string outputDatabaseFullPath)
         {
+            if (File.Exists(outputDatabaseFullPath))
+                File.Delete(outputDatabaseFullPath);
+
             var optionsBuilder = new DbContextOptionsBuilder<HierarchyContext>();
-            optionsBuilder.UseSqlite($"Data Source={outputDatabase};");
+            optionsBuilder.UseSqlite($"Data Source={outputDatabaseFullPath};");
             CreateEmptyDatabase(optionsBuilder.Options);
 
-            var jsons = Directory.GetFiles(inputPath, "*.json");
-            var jsonNodes = MOPTimer.RunAndMeasure("Loading hierarchy", Logger,
-                () => jsons.SelectMany(j => DeserializeJsonFromFileAsStream<HierarchyNode[]>(j)).Where(j => j.NodeId != 0).ToArray());
-            var jsonNodesWithoutPDMS = jsonNodes.Where(n => n.PDMSData == null || n.PDMSData.Count == 0).ToArray();
-            foreach (var jsonNode in jsonNodesWithoutPDMS)
+            var jsonNodesWithoutPdms = inputNodes.Where(n => !n.PDMSData.Any()).ToArray();
+            foreach (var jsonNode in jsonNodesWithoutPdms)
             {
                 // Adding information node to reduce query complexity on the hierarchy service, so that every node has at least one PDMS value
-                jsonNode.PDMSData = new Dictionary<string, string> { { "Info:", $"No E3D data available for selected part." } };
+                jsonNode.PDMSData["Info:"] = "No E3D data available for selected part.";
             }
-            var jsonPdmsKeyValuePairs = MOPTimer.RunAndMeasure("Collecting PDMS data", Logger,
-                () => jsonNodes.Where(n => n.PDMSData != null).SelectMany(n => n.PDMSData).ToArray());
-            var jsonAabbs = jsonNodes.Where(jn => jn.AABB != null).Select(jn => jn.AABB);
 
-            Logger.LogInformation("Creating database model entries");
+            var jsonPdmsKeyValuePairs = MopTimer.RunAndMeasure("Collecting PDMS data", _logger,
+                () => inputNodes.SelectMany(n => n.PDMSData).ToArray());
+            var jsonAabbs = inputNodes.Where(jn => jn.AABB != null).Select(jn => jn.AABB!);
+
+            _logger.LogInformation("Creating database model entries");
             long pdmsEntryIdCounter = 0;
-            var pdmsEntries = jsonPdmsKeyValuePairs.GroupBy(kvp => kvp.GetKey()).ToDictionary(g => g.Key, g => new PDMSEntry { Id = ++pdmsEntryIdCounter, Key = g.First().Key, Value = g.First().Value });
-            var aabbIdCounter = 0;
-            var aabbs = jsonAabbs.GroupBy(b => b.GetKey()).ToDictionary(g => g.Key, g => g.First().ToAABB(++aabbIdCounter));
-            
-            var nodes = jsonNodes.Select(jn => new Node
-                {
-                    Id = jn.NodeId,
-                    RefNoDb = jn.RefNoDb,
-                    RefNoSequence = jn.RefNoSequence,
-                    Name = jn.Name,
-                    HasMesh = jn.MeshGhost != null,
-                    NodePDMSEntry = jn.PDMSData == null ? null : jn.PDMSData.Select(kvp => new NodePDMSEntry { NodeId = jn.NodeId, PDMSEntryId = pdmsEntries[kvp.GetKey()].Id }).ToList(),
-                    AABB = jn.AABB == null ? null : aabbs[jn.AABB.GetKey()]
-                }).ToDictionary(n => n.Id, n => n);
 
-            foreach (var jsonNode in jsonNodes)
+            var pdmsEntries = jsonPdmsKeyValuePairs
+                .GroupBy(kvp => kvp.GetGroupKey())
+                .ToDictionary(
+                    keySelector: g => g.Key,
+                    elementSelector: g =>
+                        new PDMSEntry() { Id = ++pdmsEntryIdCounter, Key = g.First().Key, Value = g.First().Value });
+
+            var aabbIdCounter = 0;
+            var aabbs = jsonAabbs
+                .GroupBy(b => b.GetGroupKey())
+                .ToDictionary(
+                    keySelector: g => g.Key,
+                    elementSelector: g => g.First().CopyWithNewId(++aabbIdCounter));
+
+            var nodes = inputNodes.Select(inputNode => new Node
+            {
+                Id = inputNode.NodeId,
+                RefNoDb = inputNode.RefNoDb,
+                RefNoSequence = inputNode.RefNoSequence,
+                Name = inputNode.Name,
+                HasMesh = inputNode.HasMesh,
+                NodePDMSEntry =
+                    inputNode.PDMSData.Select(kvp =>
+                            new NodePDMSEntry { NodeId = inputNode.NodeId, PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id })
+                        .ToList(),
+                AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+                DiagnosticInfo = inputNode.OptionalDiagnosticInfo
+            }).ToDictionary(n => n.Id, n => n);
+
+            foreach (var jsonNode in inputNodes)
             {
                 nodes[jsonNode.NodeId].TopNode = nodes[jsonNode.TopNodeId];
-                if (jsonNode.ParentId.HasValue == false)
+                if (!jsonNode.ParentId.HasValue)
                     continue;
                 nodes[jsonNode.NodeId].Parent = nodes[jsonNode.ParentId.Value];
             }
 
-            var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry);
+            var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
 
-            var sqliteComposeTimer = MOPTimer.Create("Populating database and building index", Logger);
+            var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
-            using var connection = new SQLiteConnection($"Data Source={outputDatabase}");
+            using var connection = new SQLiteConnection($"Data Source={outputDatabaseFullPath}");
             connection.Open();
             using var cmd = new SQLiteCommand(connection);
 
-            MOPTimer.RunAndMeasure("Insert PDMSEntries", Logger, () =>
+            // ReSharper disable AccessToDisposedClosure
+            MopTimer.RunAndMeasure("Insert PDMSEntries", _logger, () =>
             {
                 using var transaction = connection.BeginTransaction();
                 foreach (var pdmsEntry in pdmsEntries.Values)
@@ -83,7 +99,7 @@ namespace Mop.Hierarchy.Functions
                 transaction.Commit();
             });
 
-            MOPTimer.RunAndMeasure("Insert NodePDMSEntries", Logger, () =>
+            MopTimer.RunAndMeasure("Insert NodePDMSEntries", _logger, () =>
             {
                 using var transaction = connection.BeginTransaction();
                 foreach (var nodePdmsEntry in nodePdmsEntries)
@@ -92,7 +108,7 @@ namespace Mop.Hierarchy.Functions
                 transaction.Commit();
             });
 
-            MOPTimer.RunAndMeasure("Insert AABBs", Logger, () =>
+            MopTimer.RunAndMeasure("Insert AABBs", _logger, () =>
             {
                 using var transaction = connection.BeginTransaction();
                 foreach (var aabb in aabbs.Values)
@@ -102,7 +118,7 @@ namespace Mop.Hierarchy.Functions
             });
 
 
-            MOPTimer.RunAndMeasure("Insert Nodes", Logger, () =>
+            MopTimer.RunAndMeasure("Insert Nodes", _logger, () =>
             {
                 using var transaction = connection.BeginTransaction();
                 foreach (var node in nodes.Values)
@@ -111,23 +127,25 @@ namespace Mop.Hierarchy.Functions
                 transaction.Commit();
             });
 
-            MOPTimer.RunAndMeasure("Creating indexes", Logger, () =>
-                {
-                    using var transaction = connection.BeginTransaction();
-                    cmd.CommandText = "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
-                    cmd.ExecuteNonQuery();
-                    cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
-                    cmd.ExecuteNonQuery();
-                    cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
-                    cmd.ExecuteNonQuery();
-                    cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
-                    cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoDb, RefNoSequence)";
-                    cmd.ExecuteNonQuery();
+            MopTimer.RunAndMeasure("Creating indexes", _logger, () =>
+            {
+                using var transaction = connection.BeginTransaction();
+                cmd.CommandText =
+                    "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
+                cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoDb, RefNoSequence)";
+                cmd.ExecuteNonQuery();
 
-                    transaction.Commit();
-                });
+                transaction.Commit();
+            });
 
-            sqliteComposeTimer.LogCompleteion();
+            // ReSharper restore AccessToDisposedClosure
+            sqliteComposeTimer.LogCompletion();
         }
 
         private static void CreateEmptyDatabase(DbContextOptions options)
@@ -135,15 +153,6 @@ namespace Mop.Hierarchy.Functions
             using var context = new HierarchyContext(options);
             if (!context.Database.EnsureCreated())
                 throw new Exception($"Could not create database");
-        }
-
-        private T DeserializeJsonFromFileAsStream<T>(string path)
-        {
-            Logger.LogInformation("Reading " + path);
-            var serializer = new JsonSerializer();
-            using var streamReader = new StreamReader(File.OpenRead(path));
-            using var jsonReader = new JsonTextReader(streamReader);
-            return serializer.Deserialize<T>(jsonReader);
         }
     }
 }

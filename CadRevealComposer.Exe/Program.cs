@@ -32,7 +32,7 @@
 
             var parameters =
                 new CadRevealComposerRunner.Parameters(
-                    new ProjectId(options.ProjectId), 
+                    new ProjectId(options.ProjectId),
                     new ModelId(options.ModelId),
                     new RevisionId(options.RevisionId));
 

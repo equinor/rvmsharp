@@ -1,33 +1,35 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.SQLite;
-
-namespace Mop.Hierarchy.Model
+﻿namespace HierarchyComposer.Model
 {
+    using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations.Schema;
+    using System.Data.SQLite;
+
     public class Node
     {
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public uint Id { get; set; }
+        public uint Id { get; init; }
 
-        public int? RefNoDb { get; set; }
-        public int? RefNoSequence { get; set; }
+        public int? RefNoDb { get; init; }
+        public int? RefNoSequence { get; init; }
 
-        public string Name { get; set; }
-        public bool HasMesh { get; set; }
+        public string? Name { get; init; }
+        public bool HasMesh { get; init; }
 
         [ForeignKey("ParentId")]
-        public virtual Node Parent { get; set; }
+        public virtual Node? Parent { get; set; }
 
         [ForeignKey("TopNodeId")]
-        public virtual Node TopNode { get; set; }
+        public virtual Node? TopNode { get; set; }
 
-        public ICollection<NodePDMSEntry> NodePDMSEntry { get; set; }
+        public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
 
-        public AABB AABB { get; set; }
+        public AABB? AABB { get; init; }
+
+        public string? DiagnosticInfo { get; init; }
 
         public void RawInsert(SQLiteCommand command)
         {
-            command.CommandText = "INSERT INTO Nodes (Id, RefNoDb, RefNoSequence,  Name, HasMesh, ParentId, TopNodeId, AABBId) VALUES (@Id, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId);";
+            command.CommandText = "INSERT INTO Nodes (Id, RefNoDb, RefNoSequence,  Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES (@Id, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId, @DiagnosticInfo);";
             command.Parameters.AddRange(new[] {
                     new SQLiteParameter("@Id", Id),
                     new SQLiteParameter("@RefNoDb", RefNoDb),
@@ -37,6 +39,7 @@ namespace Mop.Hierarchy.Model
                     new SQLiteParameter("@ParentId", Parent?.Id ?? 0),
                     new SQLiteParameter("@TopNodeId", TopNode?.Id ?? 0),
                     new SQLiteParameter("@AABBId", AABB?.Id ?? 0),
+                    new SQLiteParameter("@DiagnosticInfo", DiagnosticInfo)
                     });
             command.ExecuteNonQuery();
         }
