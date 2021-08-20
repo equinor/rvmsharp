@@ -95,13 +95,21 @@ namespace RvmSharp.Tests.Primitives
         [TestCaseSource(nameof(_boundingBoxTestCases))]
         public void GetAxisAlignedBoundingBox_WithUnitBox(BoundingBoxTestCaseDescription testCaseDescription)
         {
-            var primitive = CreateUnitBoxWithMatrix(testCaseDescription.Transform) ;
+            var primitive = CreateUnitBoxWithMatrix(testCaseDescription.Transform);
             RvmBoundingBox bb = primitive.CalculateAxisAlignedBoundingBox();
             var diagonal = bb.Diagonal;
 
             Assert.That(bb.Min, Is.EqualTo(testCaseDescription.ExpectedMin));
             Assert.That(bb.Max, Is.EqualTo(testCaseDescription.ExpectedMax));
             Assert.That(diagonal, Is.EqualTo(testCaseDescription.ExpectedDiagonal));
+        }
+
+        [Test]
+        public void AxisAlignedBoundingBox_Center_IsCenterOfMinAndMax()
+        {
+            var rvmBoundingBox = new RvmBoundingBox(Min: new Vector3(-1, -2, -3), Max: new Vector3(1, 4, 3));
+            Assert.That(rvmBoundingBox.Center, Is.EqualTo(new Vector3(0, 1, 0)));
+            Assert.That(rvmBoundingBox.Extents, Is.EqualTo(new Vector3(2, 6, 6)));
         }
 
         [Test]
@@ -116,7 +124,7 @@ namespace RvmSharp.Tests.Primitives
 
             box.Connections[1] = new RvmConnection(box, box, 0, 0, Vector3.Zero, Vector3.UnitZ,
                 RvmConnection.ConnectionType.HasRectangularSide);
-            
+
             Assert.That(box, Is.Not.EqualTo(newIdenticalBox));
         }
     }
