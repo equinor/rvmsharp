@@ -1,12 +1,12 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
+    [string] $InputDirectory = "/Users/GUSH/projects/rvmsharp/testdata/asp/PRO",
     [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
     [Parameter(Mandatory = $false)][long] $ProjectId = 10000,
     [Parameter(Mandatory = $false)][long] $ModelId = 1,
     [Parameter(Mandatory = $false)][long] $RevisionId = 0,
-    [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\Echo3DWeb\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
+    [string] $ArtifactDirectory = "/Users/GUSH/projects/echo/echo-web/Echo3DWeb-master/EchoReflectApi/EchoReflect.Api/AppData/demomodel",
     [switch] $Force = $true,
     [switch] $UploadToDev = $false
 )
@@ -44,7 +44,7 @@ end {
 
     #region Reveal Composer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
-    & dotnet.exe run --configuration Release --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $WorkDirectory --ProjectId $ProjectId --ModelId $ModelId --RevisionId $RevisionId
+    & dotnet run --configuration Release --project $cadRevealComposerPath -- --InputDirectory $InputDirectory --OutputDirectory $WorkDirectory --ProjectId $ProjectId --ModelId $ModelId --RevisionId $RevisionId
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
@@ -52,8 +52,12 @@ end {
     #endregion Reveal Composer
 
     #region ctm-converter
+    $mesh2ctm = "mesh2ctm.exe"
+    if ($IsMacOS) {
+        $mesh2ctm = "mesh2ctm.osx"
+    }
 
-    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.exe"
+    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" $mesh2ctm
     Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
         Write-Output ("Converting " + $_.Name + " (" + ("{0:n2} MB" -f ($_.Length / 1MB) + ") to CTM"))
         $ctmInputPath = $_.FullName
