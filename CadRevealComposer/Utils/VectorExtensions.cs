@@ -45,5 +45,13 @@
         {
             return Math.Abs(vector.X - vector.Y) < tolerance && Math.Abs(vector.X - vector.Z) < tolerance;
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool ApproximatelyEquals(this Vector3 vector, Vector3 other, float tolerance = 0.00001f)
+        {
+            return Math.Abs(vector.X - other.X) < tolerance
+                && Math.Abs(vector.Y - other.Y) < tolerance
+                && Math.Abs(vector.Z - other.Z) < tolerance;
+        }
     }
 }
