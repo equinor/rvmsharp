@@ -69,5 +69,27 @@ namespace CadRevealComposer.Utils
 
             return (roll, pitch, yaw);
         }
+        
+        public static float AngleTo(this Vector3 from, Vector3 to)
+        {
+            return MathF.Acos(Vector3.Dot(from, to) / (from.Length() * to.Length()));
+        }
+
+
+        public static Quaternion FromToRotation(this Vector3 from, Vector3 to)
+        {
+            var cross = Vector3.Cross(from, to);
+            if (cross.LengthSquared().ApproximatelyEquals(0f, 0.001))
+            {
+                var dot = Vector3.Dot(from, to);
+                if (dot < 0)
+                {
+                    throw new NotImplementedException("Implement rotation for inverted vector.");
+                }
+                return new Quaternion(0, 0, 0, 1);
+            }
+
+            return Quaternion.CreateFromAxisAngle(Vector3.Normalize(cross), from.AngleTo(to));
+        }
     }
 }
