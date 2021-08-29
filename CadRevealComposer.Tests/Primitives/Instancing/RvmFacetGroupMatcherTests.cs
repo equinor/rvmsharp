@@ -6,6 +6,7 @@
     using System;
     using System.Linq;
     using System.Numerics;
+    using System.Reflection.Metadata.Ecma335;
 
     // TODO: test for vectors in same and opposite direction
 
@@ -80,37 +81,105 @@
         [Test]
         public void MatchRotation()
         {
-            var meshA = new RvmFacetGroup(0, Matrix4x4.Identity, new RvmBoundingBox(Vector3.One, Vector3.One),
-                new[]
-                {
-                    new RvmFacetGroup.RvmPolygon(new []
+            var r = new Random();
+            for (int i = 0; i < 1000; i++)
+            {
+                var meshA = new RvmFacetGroup(0, Matrix4x4.Identity, new RvmBoundingBox(Vector3.One, Vector3.One),
+                    new[]
                     {
-                        new RvmFacetGroup.RvmContour(new []
+                        new RvmFacetGroup.RvmPolygon(new[]
                         {
-                            (new Vector3(1, 1, 1), Vector3.One),
-                            (new Vector3(0, 2, 1), Vector3.One),
-                            (new Vector3(3, 2.5f, 1.5f), Vector3.One),
-                        }),
-                        new RvmFacetGroup.RvmContour(new []
+                            new RvmFacetGroup.RvmContour(new[]
+                            {
+                                (new Vector3(1, 1, 1), Vector3.One),
+                                (new Vector3(0, 2, 1), Vector3.One),
+                                (new Vector3(3, 2.5f, 1.5f), Vector3.One),
+                            }),
+                            new RvmFacetGroup.RvmContour(new[]
+                            {
+                                (new Vector3(1, 1, 1), Vector3.One),
+                                (new Vector3(0, 2, 1), Vector3.One),
+                                (new Vector3(3, 3, 3), Vector3.One),
+                            }),
+                        })
+                    });
+
+                var eulers = RandomVector(r, 0, MathF.PI);
+                var scale = RandomVector(r, 0.1f, 5.1f);
+
+                var position = new Vector3(0, 0, 0);
+                RvmFacetGroupMatcher.StoreEulers = eulers;
+                RvmFacetGroupMatcher.StoreScale = scale;
+                var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
+                //var q = Quaternion.Identity;
+
+                var Mr = Matrix4x4.CreateFromQuaternion(q);
+                var Ms = Matrix4x4.CreateScale(scale);
+                var Mt = Matrix4x4.CreateTranslation(position);
+                var Ma = Ms * Mr * Mt;
+
+                var meshB = TransformFacetGroup(meshA, Ma);
+
+                var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
+
+                Assert.IsTrue(isMatch, "Could not match.");
+            }
+        }
+
+        [Test]
+        public void FailingTest()
+        {
+            var r = new Random(12345);
+            for (int i = 0; i < 1000; i++)
+            {
+                var meshA = new RvmFacetGroup(0, Matrix4x4.Identity, new RvmBoundingBox(Vector3.One, Vector3.One),
+                    new[]
+                    {
+                        new RvmFacetGroup.RvmPolygon(new[]
                         {
-                            (new Vector3(1, 1, 1), Vector3.One),
-                            (new Vector3(0, 2, 1), Vector3.One),
-                            (new Vector3(3, 3, 3), Vector3.One),
-                        }),
-                    })
-                });
+                            new RvmFacetGroup.RvmContour(new[]
+                            {
+                                (new Vector3(1, 1, 1), Vector3.One),
+                                (new Vector3(0, 2, 1), Vector3.One),
+                                (new Vector3(3, 2.5f, 1.5f), Vector3.One),
+                            }),
+                            new RvmFacetGroup.RvmContour(new[]
+                            {
+                                (new Vector3(1, 1, 1), Vector3.One),
+                                (new Vector3(0, 2, 1), Vector3.One),
+                                (new Vector3(3, 3, 3), Vector3.One),
+                            }),
+                        })
+                    });
 
-            var q = Quaternion.CreateFromYawPitchRoll(14, 123, 43);
-            var Mr = Matrix4x4.CreateFromQuaternion(q);
-            var Ms = Matrix4x4.CreateScale(new Vector3(1, 4, 5));
-            var Mt = Matrix4x4.CreateTranslation(new Vector3(2, 3, 4));
-            var Ma = Ms * Mr * Mt;
+                //var eulers = RandomVector(r, 0, MathF.PI);
+                //var scale = RandomVector(r, 0.1f, 5.1f);
+                var eulers = new Vector3(3.044467f, 2.8217556f, 1.6506897f);
+                var scale = new Vector3(2.1362286f, 4.620028f, 3.2072587f);
 
-            var meshB = TransformFacetGroup(meshA, Ma);
+                var position = new Vector3(0, 0, 0);
+                RvmFacetGroupMatcher.StoreEulers = eulers;
+                RvmFacetGroupMatcher.StoreScale = scale;
+                var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
+                //var q = Quaternion.Identity;
 
-            var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
+                var Mr = Matrix4x4.CreateFromQuaternion(q);
+                var Ms = Matrix4x4.CreateScale(scale);
+                var Mt = Matrix4x4.CreateTranslation(position);
+                var Ma = Ms * Mr * Mt;
 
-            Assert.IsTrue(isMatch, "Could not match.");
+                var meshB = TransformFacetGroup(meshA, Ma);
+
+                var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
+
+                Assert.IsTrue(isMatch, "Could not match.");
+            }
+        }
+
+        private static Vector3 RandomVector(Random r, float minComponentValue, float maxComponentValue)
+        {
+            Func<float,float,float> rf = (min, max) =>  (float)r.NextDouble() * (max - min) + min;
+            return new Vector3(rf(minComponentValue, maxComponentValue), rf(minComponentValue, maxComponentValue), rf(minComponentValue, maxComponentValue));
         }
 
         private static RvmFacetGroup CreateRvmFacetGroup(params Vector3[] vertices)
