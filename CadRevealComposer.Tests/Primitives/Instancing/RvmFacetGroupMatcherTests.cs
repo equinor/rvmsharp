@@ -6,7 +6,6 @@
     using System;
     using System.Linq;
     using System.Numerics;
-    using System.Reflection.Metadata.Ecma335;
 
     // TODO: test for vectors in same and opposite direction
 
@@ -24,17 +23,19 @@
         [Test]
         public void GetTransform()
         {
-            //var isMatch = RvmFacetGroupMatcher.TryCalculateTransform(
-            //    Vector3.UnitX,
-            //    Vector3.UnitY,
-            //    Vector3.UnitZ,
-            //    Vector3.UnitX,
-            //    Vector3.UnitY,
-            //    Vector3.UnitZ,
-            //    out var transform);
-            //
-            //Assert.IsTrue(isMatch, "Could not match.");
-            //Assert.AreEqual(Matrix4x4.Identity, transform.Value);
+            var isMatch = RvmFacetGroupMatcher.TryCalculateTransform(
+                Vector3.UnitX,
+                Vector3.UnitY,
+                Vector3.UnitZ,
+                Vector3.One, 
+                Vector3.UnitX,
+                Vector3.UnitY,
+                Vector3.UnitZ,
+                Vector3.One,
+                out var transform);
+            
+            Assert.IsTrue(isMatch, "Could not match.");
+            Assert.AreEqual(Matrix4x4.Identity, transform.Value);
         }
 
         [Test]
@@ -93,25 +94,21 @@
                             {
                                 (new Vector3(1, 1, 1), Vector3.One),
                                 (new Vector3(0, 2, 1), Vector3.One),
-                                (new Vector3(3, 2.5f, 1.5f), Vector3.One),
+                                (new Vector3(3, 2.5f, 1.5f), Vector3.One)
                             }),
                             new RvmFacetGroup.RvmContour(new[]
                             {
                                 (new Vector3(1, 1, 1), Vector3.One),
                                 (new Vector3(0, 2, 1), Vector3.One),
-                                (new Vector3(3, 3, 3), Vector3.One),
-                            }),
+                                (new Vector3(3, 3, 3), Vector3.One)
+                            })
                         })
                     });
 
                 var eulers = RandomVector(r, 0, MathF.PI);
                 var scale = RandomVector(r, 0.1f, 5.1f);
-
                 var position = new Vector3(0, 0, 0);
-                RvmFacetGroupMatcher.StoreEulers = eulers;
-                RvmFacetGroupMatcher.StoreScale = scale;
                 var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
-                //var q = Quaternion.Identity;
 
                 var Mr = Matrix4x4.CreateFromQuaternion(q);
                 var Ms = Matrix4x4.CreateScale(scale);
@@ -121,6 +118,13 @@
                 var meshB = TransformFacetGroup(meshA, Ma);
 
                 var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
+
+
+                Matrix4x4.Decompose(Ma, out var s1, out var r1, out var t1);
+                Matrix4x4.Decompose(transform.Value, out var s2, out var r2, out var t2);
+                var ds = s1 - s2;
+                var dr = r1 - r2;
+                var dt = t1 - t2;
 
                 Assert.IsTrue(isMatch, "Could not match.");
             }
@@ -152,16 +156,11 @@
                         })
                     });
 
-                //var eulers = RandomVector(r, 0, MathF.PI);
-                //var scale = RandomVector(r, 0.1f, 5.1f);
                 var eulers = new Vector3(3.044467f, 2.8217556f, 1.6506897f);
                 var scale = new Vector3(2.1362286f, 4.620028f, 3.2072587f);
 
                 var position = new Vector3(0, 0, 0);
-                RvmFacetGroupMatcher.StoreEulers = eulers;
-                RvmFacetGroupMatcher.StoreScale = scale;
                 var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
-                //var q = Quaternion.Identity;
 
                 var Mr = Matrix4x4.CreateFromQuaternion(q);
                 var Ms = Matrix4x4.CreateScale(scale);
@@ -171,6 +170,12 @@
                 var meshB = TransformFacetGroup(meshA, Ma);
 
                 var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
+
+                Matrix4x4.Decompose(Ma, out var s1, out var r1, out var t1);
+                Matrix4x4.Decompose(transform.Value, out var s2, out var r2, out var t2);
+                var ds = s1 - s2;
+                var dr = r1 - r2;
+                var dt = t1 - t2;
 
                 Assert.IsTrue(isMatch, "Could not match.");
             }
