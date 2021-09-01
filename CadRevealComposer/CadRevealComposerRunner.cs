@@ -6,6 +6,7 @@ namespace CadRevealComposer
     using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Primitives;
+    using Primitives.Instancing;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
@@ -90,15 +91,19 @@ namespace CadRevealComposer
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
+            var rvmFacetGroupMatcher = RvmFacetGroupMatcher.Create(allNodes);
 
             var geometryConversionTimer = Stopwatch.StartNew();
             // AsOrdered is important. And I dont like it...
             //  - Its important  of the "TriangleMesh TriangleCount" is "sequential-additive".
             // So the position offset in the mesh is determined on the TriangleCount of all items in the Sequence "12"+"16"+"10", and needs the identical order.
-            var geometries = allNodes.AsParallel().AsOrdered().SelectMany(x => x.RvmGeometries.Select(primitive =>
-                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
-                        primitive)))
-                .WhereNotNull().ToArray();
+            var geometries = allNodes
+                .AsParallel()
+                .AsOrdered()
+                .SelectMany(x => x.RvmGeometries.Select(primitive =>
+                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive, rvmFacetGroupMatcher)))
+                .WhereNotNull()
+                .ToArray();
             Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
 
             var exportObjTask = Task.Run(() =>
