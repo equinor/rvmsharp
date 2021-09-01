@@ -4,6 +4,7 @@
 namespace CadRevealComposer.Primitives
 {
     using Converters;
+    using Instancing;
     using Newtonsoft.Json;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
@@ -60,8 +61,11 @@ namespace CadRevealComposer.Primitives
         {
         }
 
-        public static APrimitive? FromRvmPrimitive(CadRevealNode revealNode, RvmNode rvmNode,
-            RvmPrimitive rvmPrimitive)
+        public static APrimitive? FromRvmPrimitive(
+            CadRevealNode revealNode,
+            RvmNode rvmNode,
+            RvmPrimitive rvmPrimitive,
+            RvmFacetGroupMatcher rvmFacetGroupMatcher)
         {
             PrimitiveCounter.pc++;
             var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
@@ -131,6 +135,20 @@ namespace CadRevealComposer.Primitives
                         }
                     }
                 case RvmFacetGroup facetGroup:
+
+                    if (rvmFacetGroupMatcher.Match(facetGroup, out var instancedMesh, out var transform))
+                    {
+                        if (!Matrix4x4.Decompose(transform.Value, out var s, out var r, out var t))
+                        {
+                            throw new InvalidOperationException();
+                        }
+                        // TODO: rotation Euler?
+                        return new InstancedMesh(commonPrimitiveProperties, 0, 0, 0, t.X, t.Y, t.Z, r.X, r.Y, r.Z, s.X, s.Y, s.Z)
+                        {
+                            Mesh = instancedMesh
+                        };
+                    }
+
                     const float minBoundsToExport = -1; // Temp: Adjust to create simpler models
                     if (commonPrimitiveProperties.AxisAlignedDiagonal < minBoundsToExport)
                     {
