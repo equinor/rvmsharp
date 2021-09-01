@@ -1,21 +1,67 @@
 namespace CadRevealComposer.Primitives.Instancing
 {
-    using Newtonsoft.Json;
-    using RvmSharp.Operations;
     using RvmSharp.Primitives;
+    using RvmSharp.Tessellation;
     using System;
+    using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Diagnostics.CodeAnalysis;
-    using System.Drawing;
-    using System.IO;
     using System.Linq;
     using System.Numerics;
     using System.Runtime.CompilerServices;
     using Utils;
 
-
     // https://github.com/equinor/ModelOptimizationPipeline/blob/fed1215dfa26372ff0d0cb26e959cd1e8e8e85c8/tools/mop/Mop/ModelExtensions/MOPQuaternion.cs#L150
-    public static class RvmFacetGroupMatcher
+
+    public class RvmFacetGroupMatcher
     {
+        private readonly ImmutableArray<RvmFacetGroup> _allFacetGroups;
+        private readonly Dictionary<RvmFacetGroup, Mesh> _previousMatches = new();
+
+        /// <summary>
+        /// Use static Create()
+        /// </summary>
+        private RvmFacetGroupMatcher(ImmutableArray<RvmFacetGroup> allFacetGroups)
+        {
+            _allFacetGroups = allFacetGroups;
+        }
+
+        public bool Match(RvmFacetGroup a, [NotNullWhen(true)] out Mesh? instancedMesh, [NotNullWhen(true)]  out Matrix4x4? transform)
+        {
+            foreach (var b in _allFacetGroups)
+            {
+                if (ReferenceEquals(a, b))
+                {
+                    continue;
+                }
+
+                if (Match(a, b, out var ta))
+                {
+                    if (!_previousMatches.TryGetValue(b, out var mesh))
+                    {
+                        mesh = TessellatorBridge.Tessellate(b, tolerance: 5f);
+                        _previousMatches.Add(b, mesh);
+                    }
+
+                    instancedMesh = mesh;
+                    transform = ta;
+                    return true;
+                }
+            }
+
+            instancedMesh = default;
+            transform = default;
+            return false;
+        }
+
+        public static RvmFacetGroupMatcher Create(CadRevealNode[] cadRevealNodes)
+        {
+            var allFacetGroups = cadRevealNodes
+                .SelectMany(x => x.RvmGeometries.OfType<RvmFacetGroup>())
+                .ToImmutableArray();
+            return new RvmFacetGroupMatcher(allFacetGroups);
+        }
+
         /// <summary>
         /// Matches a to b and returns true if meshes are alike and sets transform so that a * transform = b.
         /// </summary>
@@ -70,7 +116,7 @@ namespace CadRevealComposer.Primitives.Instancing
                     {
                         if (!MatchVertexApproximately(aContour.Vertices[k].Vertex, bContour.Vertices[k].Vertex, transform.Value))
                         {
-                            outputTransform = default;
+                            outputTransform = transform.Value;
                             return false;
                         }
                     }
@@ -153,17 +199,6 @@ namespace CadRevealComposer.Primitives.Instancing
             return false;
         }
 
-        public static float Determinant(Vector3 a, Vector3 b, Vector3 c)
-        {
-            return
-                a.X * b.Y * c.Z +
-                b.X * c.Y * a.Z +
-                c.X * a.Y * b.Z -
-                c.X * b.Y * a.Z -
-                b.X * a.Y * c.Z -
-                a.X * c.Y * b.Z;
-        }
-
         public static bool TryCalculateTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2, Vector3 pb3, Vector3 pb4, [NotNullWhen(true)] out Matrix4x4? transform)
         {
             var va12 = pa2 - pa1;
@@ -199,32 +234,11 @@ namespace CadRevealComposer.Primitives.Instancing
 
             // 3 axis rotation: axis=vb2-vb1 va'3-va'1
             var va12r1 = Vector3.Transform(va12, rot1);
-            var va13r1 = Vector3.Transform(va13, rot1);
             var angle2 = va12r1.AngleTo(vb12);
             var rotationNormal = Vector3.Normalize(Vector3.Cross(Vector3.Normalize(va12r1), Vector3.Normalize(vb12)));
             var rot2 = Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
 
             var rotation = rot2 * rot1;
-
-            // scale
-            var va12rt = Vector3.Transform(va12, rotation);
-            var va13rt = Vector3.Transform(va13, rotation);
-
-            var data = new VisData();
-            data.Arrows = new[]
-            {
-                new VisData.Arrow(Color.Red, pa1, va12),
-                new VisData.Arrow(Color.Red, pa1, va13),
-                new VisData.Arrow(Color.Blue, pb1, vb12),
-                new VisData.Arrow(Color.Blue, pb1, vb13),
-                new VisData.Arrow(Color.Pink, pa1, va12r1),
-                new VisData.Arrow(Color.Pink, pa1, va13r1),
-                new VisData.Arrow(Color.Green, pa1, va12rt),
-                new VisData.Arrow(Color.Green, pa1, va13rt),
-                //new VisData.Arrow(Color.Aqua, pb1, vbNormal)
-            };
-            File.WriteAllText("/Users/GUSH/projects/rvmsharp-vis/src/data.json", JsonConvert.SerializeObject(data, Formatting.Indented));
-
 
             // translation
             var translation = pb1 - Vector3.Transform(pa1 * scale, rotation);
@@ -236,16 +250,25 @@ namespace CadRevealComposer.Primitives.Instancing
             return true;
         }
 
-        public static Vector3 StoreEulers;
-        public static Vector3 StoreScale;
-
         /// <summary>
         /// Match a * transform = b
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool MatchVertexApproximately(Vector3 a, Vector3 b, Matrix4x4 transform)
         {
-            return Vector3.Transform(a, transform).ApproximatelyEquals(b, tolerance: 0.01f); // TODO: ok tolerance?
+            return Vector3.Transform(a, transform).ApproximatelyEquals(b, tolerance: 0.00001f); // TODO: ok tolerance?
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float Determinant(Vector3 a, Vector3 b, Vector3 c)
+        {
+            return
+                a.X * b.Y * c.Z +
+                b.X * c.Y * a.Z +
+                c.X * a.Y * b.Z -
+                c.X * b.Y * a.Z -
+                b.X * a.Y * c.Z -
+                a.X * c.Y * b.Z;
         }
     }
 }

@@ -75,11 +75,10 @@ namespace CadRevealComposer.Utils
             return MathF.Acos(Vector3.Dot(from, to) / (from.Length() * to.Length()));
         }
 
-
         public static Quaternion FromToRotation(this Vector3 from, Vector3 to)
         {
             var cross = Vector3.Cross(from, to);
-            if (cross.LengthSquared().ApproximatelyEquals(0f, 0.001))
+            if (cross.LengthSquared().ApproximatelyEquals(0f, 0.00001))
             {
                 var dot = Vector3.Dot(from, to);
                 if (dot < 0)
