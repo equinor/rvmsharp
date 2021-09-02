@@ -3,6 +3,7 @@ namespace CadRevealComposer.Primitives.Instancing
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
+    using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics.CodeAnalysis;
@@ -16,7 +17,7 @@ namespace CadRevealComposer.Primitives.Instancing
     public class RvmFacetGroupMatcher
     {
         private readonly ImmutableArray<RvmFacetGroup> _allFacetGroups;
-        private readonly Dictionary<RvmFacetGroup, Mesh> _previousMatches = new();
+        private readonly ConcurrentDictionary<RvmFacetGroup, Mesh> _previousMatches = new();
 
         /// <summary>
         /// Use static Create()
@@ -40,7 +41,7 @@ namespace CadRevealComposer.Primitives.Instancing
                     if (!_previousMatches.TryGetValue(b, out var mesh))
                     {
                         mesh = TessellatorBridge.Tessellate(b, tolerance: 5f);
-                        _previousMatches.Add(b, mesh);
+                        if (!_previousMatches.TryAdd(b, mesh)) throw new Exception("aaaa");
                     }
 
                     instancedMesh = mesh;
@@ -129,6 +130,12 @@ namespace CadRevealComposer.Primitives.Instancing
 
         public static bool TryGetTransform(RvmFacetGroup a, RvmFacetGroup b, [NotNullWhen(true)] out Matrix4x4? transform)
         {
+            transform = default;
+            if (a.Polygons.Length != b.Polygons.Length)
+            {
+                return false;
+            }
+
             for (var i = 0; i < a.Polygons.Length; i++)
             {
                 var aPolygon = a.Polygons[i];
@@ -136,7 +143,6 @@ namespace CadRevealComposer.Primitives.Instancing
 
                 if (aPolygon.Contours.Length != bPolygon.Contours.Length)
                 {
-                    transform = default;
                     return false;
                 }
 
@@ -147,51 +153,62 @@ namespace CadRevealComposer.Primitives.Instancing
 
                     if (aContour.Vertices.Length != bContour.Vertices.Length)
                     {
-                        transform = default;
                         return false;
                     }
+                }
+            }
 
-                    if (aContour.Vertices.Length < 3)
+            using var aVertices = a.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex).GetEnumerator();
+            using var bVertices = b.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex).GetEnumerator();
+
+            var testVertices = new List<(Vector3, Vector3)>(4);
+            while (aVertices.MoveNext() && bVertices.MoveNext())
+            {
+                var ca = aVertices.Current;
+                var cb = bVertices.Current;
+
+                var alreadyHave = testVertices.Any(vv => vv.Item1 == ca);
+
+                if (!alreadyHave)
+                {
+                    if (testVertices.Count == 3)
                     {
-                        continue; // need at least 3 vertexes to calculate transform
+                        var va12 = testVertices[1].Item1 - testVertices[0].Item1;
+                        var va13 = testVertices[2].Item1 - testVertices[0].Item1;
+                        var va14 = ca - testVertices[0].Item1;
+                        if (!Determinant(va12, va13, va14).ApproximatelyEquals(0.001f))
+                        {
+                            return TryCalculateTransform(
+                                testVertices[0].Item1,
+                                testVertices[1].Item1,
+                                testVertices[2].Item1,
+                                ca,
+                                testVertices[0].Item2,
+                                testVertices[1].Item2,
+                                testVertices[2].Item2,
+                                cb,
+                                out transform
+                            );
+
+                        }
                     }
-
-                    // TODO: special case if only one contour
-                    // TODO: assumption: all vertices of a contour are in the same plane
-
-                    // find a fourth vertex not in the same plane as the 3 first
-                    var pa1 = aContour.Vertices[0].Vertex;
-                    var va12 = aContour.Vertices[1].Vertex - aContour.Vertices[0].Vertex;
-                    var va13 = aContour.Vertices[2].Vertex - aContour.Vertices[0].Vertex;
-
-                    var fourthVertex = a.Polygons
-                        .Select((p, index) => (Polygon: p, PolygonIndex: index))
-                        .SelectMany(
-                            x => x.Polygon.Contours.Select((c, i) => (Contour: c, CountourIndex: i)),
-                            (x, c) => (x.Polygon, x.PolygonIndex, c.Contour, c.CountourIndex))
-                        .SelectMany(
-                            x => x.Contour.Vertices.Select((c, i) => (Vertex: c, VertexIndex: i)),
-                            (x, v) => (x.Polygon, x.PolygonIndex, x.Contour, x.CountourIndex, v.Vertex.Vertex, v.VertexIndex))
-                        .FirstOrDefault(x => !Determinant(va12, va13, x.Vertex - pa1).ApproximatelyEquals(0f, 0.001f));
-
-                    if (fourthVertex == default)
+                    else
                     {
-                        transform = default;
-                        return false;
-                    }
+                        if (testVertices.Count == 2)
+                        {
+                            var va12 = testVertices[1].Item1 - testVertices[0].Item1;
+                            var va13 = ca - testVertices[0].Item1;
+                            if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f, 0.00001))
+                            {
+                                testVertices.Add((ca, cb));
+                            }
+                        }
+                        else
+                        {
+                            testVertices.Add((ca, cb));
+                        }
 
-                    // calculate transform from first 3 vertices
-                    return TryCalculateTransform(
-                        aContour.Vertices[0].Vertex,
-                        aContour.Vertices[1].Vertex,
-                        aContour.Vertices[2].Vertex,
-                        a.Polygons[fourthVertex.PolygonIndex].Contours[fourthVertex.CountourIndex].Vertices[fourthVertex.VertexIndex].Vertex,
-                        bContour.Vertices[0].Vertex,
-                        bContour.Vertices[1].Vertex,
-                        bContour.Vertices[2].Vertex,
-                        b.Polygons[fourthVertex.PolygonIndex].Contours[fourthVertex.CountourIndex].Vertices[fourthVertex.VertexIndex].Vertex,
-                        out transform
-                    );
+                    }
                 }
             }
 
@@ -217,6 +234,8 @@ namespace CadRevealComposer.Primitives.Instancing
             var squaredBLengths = new Vector3(vb12.Length() * vb12.Length(), vb13.Length() * vb13.Length(), vb14.Length() * vb14.Length());
             if (!Matrix4x4.Invert(vaMatrix, out var vaMatrixInverse))
             {
+                transform = default;
+                return false;
                 throw new Exception("Could not invert matrix for scale");
             }
             var scale = new Vector3(
