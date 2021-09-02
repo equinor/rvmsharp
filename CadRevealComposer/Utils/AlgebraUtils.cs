@@ -69,7 +69,7 @@ namespace CadRevealComposer.Utils
 
             return (roll, pitch, yaw);
         }
-        
+
         public static float AngleTo(this Vector3 from, Vector3 to)
         {
             return MathF.Acos(Vector3.Dot(from, to) / (from.Length() * to.Length()));
@@ -83,7 +83,23 @@ namespace CadRevealComposer.Utils
                 var dot = Vector3.Dot(from, to);
                 if (dot < 0)
                 {
-                    throw new NotImplementedException("Implement rotation for inverted vector.");
+                    var xZero = to.X.ApproximatelyEquals(0, 0.00001);
+                    var yZero = to.X.ApproximatelyEquals(0, 0.00001);
+                    var zZero = to.X.ApproximatelyEquals(0, 0.00001);
+                    Vector3 axes;
+                    if (xZero && yZero)
+                        axes = new Vector3(to.Z, 0, 0);
+                    else if (xZero && zZero)
+                        axes = new Vector3(to.Y, 0, 0);
+                    else if (yZero && zZero)
+                        axes = new Vector3(0, to.X, 0);
+                    else if (xZero)
+                        axes = new Vector3(0, -to.Z, -to.Y);
+                    else if (yZero)
+                        axes = new Vector3(-to.Z, 0, -to.X);
+                    else
+                        axes = new Vector3(-to.Y, -to.Z, 0);
+                    return Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes), MathF.PI * 2);
                 }
                 return new Quaternion(0, 0, 0, 1);
             }
