@@ -84,8 +84,8 @@ namespace CadRevealComposer.Utils
                 if (dot < 0)
                 {
                     var xZero = to.X.ApproximatelyEquals(0, 0.00001);
-                    var yZero = to.X.ApproximatelyEquals(0, 0.00001);
-                    var zZero = to.X.ApproximatelyEquals(0, 0.00001);
+                    var yZero = to.Y.ApproximatelyEquals(0, 0.00001);
+                    var zZero = to.Z.ApproximatelyEquals(0, 0.00001);
                     Vector3 axes;
                     if (xZero && yZero)
                         axes = new Vector3(to.Z, 0, 0);
