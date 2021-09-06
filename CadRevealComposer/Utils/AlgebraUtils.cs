@@ -78,14 +78,14 @@ namespace CadRevealComposer.Utils
         public static Quaternion FromToRotation(this Vector3 from, Vector3 to)
         {
             var cross = Vector3.Cross(from, to);
-            if (cross.LengthSquared().ApproximatelyEquals(0f, 0.00001))
+            if (cross.LengthSquared().ApproximatelyEquals(0f))
             {
                 var dot = Vector3.Dot(from, to);
                 if (dot < 0)
                 {
-                    var xZero = to.X.ApproximatelyEquals(0, 0.00001);
-                    var yZero = to.Y.ApproximatelyEquals(0, 0.00001);
-                    var zZero = to.Z.ApproximatelyEquals(0, 0.00001);
+                    var xZero = to.X.ApproximatelyEquals(0);
+                    var yZero = to.Y.ApproximatelyEquals(0);
+                    var zZero = to.Z.ApproximatelyEquals(0);
                     Vector3 axes;
                     if (xZero && yZero)
                         axes = new Vector3(to.Z, 0, 0);
