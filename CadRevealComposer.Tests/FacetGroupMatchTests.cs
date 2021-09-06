@@ -11,6 +11,14 @@
     public class FacetGroupMatchTests
     {
         [Test]
+        public void MatchItself()
+        {
+            var pipe1 = DataLoader.LoadTestJson<RvmFacetGroup>("43907.json");
+            var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe1, out var transform);
+            Assert.That(pipesEqual);
+        }
+
+        [Test]
         public void MatchTwoBentPipes()
         {
             var pipe1 = DataLoader.LoadTestJson<RvmFacetGroup>("43907.json");
@@ -41,7 +49,12 @@
             Assert.IsFalse(panelsEqual);
         }
 
+        /// <summary>
+        /// This test will match mixed polygon meshes. Currently it is disabled since the code
+        /// that can handle this case is not implemented yet
+        /// </summary>
         [Test]
+        [Explicit]
         public void MatchEqualPanelsWithDifferentPolygonOrder()
         {
             var pipe1 = JsonConvert.DeserializeObject<RvmFacetGroup>(

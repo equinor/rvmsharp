@@ -9,6 +9,7 @@
 
     // TODO: test for vectors in same and opposite direction
 
+    [TestFixture]
     public class RvmFacetGroupMatcherTests
     {
         [Test]
@@ -27,41 +28,15 @@
                 Vector3.UnitX,
                 Vector3.UnitY,
                 Vector3.UnitZ,
-                Vector3.One, 
+                Vector3.One,
                 Vector3.UnitX,
                 Vector3.UnitY,
                 Vector3.UnitZ,
                 Vector3.One,
                 out var transform);
-            
+
             Assert.IsTrue(isMatch, "Could not match.");
             Assert.AreEqual(Matrix4x4.Identity, transform.Value);
-        }
-
-        [Test]
-        public void MatchWithSelf()
-        {
-            var facetGroup = CreateRvmFacetGroup(Vector3.One, Vector3.One, Vector3.One);
-            var isMatch = RvmFacetGroupMatcher.Match(facetGroup, facetGroup, out var transform);
-
-            Assert.IsTrue(isMatch, "Could not match with self.");
-            Assert.IsTrue(transform.Value.IsIdentity, "Matching with self should return identity transform.");
-        }
-
-        [Test]
-        public void MatchScale()
-        {
-            var a = CreateRvmFacetGroup(
-                Vector3.Transform(Vector3.One, Matrix4x4.CreateRotationX(MathF.PI / 2f)),
-                Vector3.Transform(Vector3.One, Matrix4x4.CreateRotationY(MathF.PI / 2f)),
-                Vector3.Transform(Vector3.One, Matrix4x4.CreateRotationZ(MathF.PI / 2f)));
-            var b = CreateRvmFacetGroup(
-                Vector3.Transform(Vector3.One, Matrix4x4.CreateRotationX(MathF.PI / 2f) * 2),
-                Vector3.Transform(Vector3.One, Matrix4x4.CreateRotationY(MathF.PI / 2f) * 2),
-                Vector3.Transform(Vector3.One, Matrix4x4.CreateRotationZ(MathF.PI / 2f) * 2));
-            var isMatch = RvmFacetGroupMatcher.Match(a, b, out _);
-
-            Assert.IsTrue(isMatch, "Could not match.");
         }
 
         public RvmFacetGroup TransformFacetGroup(RvmFacetGroup group, Matrix4x4 matrix)
