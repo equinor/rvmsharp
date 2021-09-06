@@ -112,7 +112,7 @@ namespace CadRevealComposer.Primitives.Instancing
                     {
                         var va = Vector3.Transform(aContour.Vertices[k].Vertex, transform.Value);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!va.ApproximatelyEquals(vb))
+                        if (!va.ApproximatelyEquals(vb, 0.001f))
                         {
                             outputTransform = transform.Value;
                             return false;
