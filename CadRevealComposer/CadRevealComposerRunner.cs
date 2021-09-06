@@ -91,7 +91,7 @@ namespace CadRevealComposer
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
-            var rvmFacetGroupMatcher = RvmFacetGroupMatcher.Create(allNodes);
+            var rvmFacetGroupMatcher = new RvmFacetGroupMatcher();
 
             var geometryConversionTimer = Stopwatch.StartNew();
             // AsOrdered is important. And I dont like it...
@@ -104,6 +104,10 @@ namespace CadRevealComposer
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive, rvmFacetGroupMatcher)))
                 .WhereNotNull()
                 .ToArray();
+
+            var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
+            var r = rvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
+
             Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
 
             var exportObjTask = Task.Run(() =>
@@ -259,6 +263,8 @@ namespace CadRevealComposer
             foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
             {
                 var elementType = geometriesByType.Key;
+                if (elementType == typeof(ProtoMesh))
+                    continue;
                 var elements = geometriesByType.ToArray();
                 var fieldInfo = primitiveCollections.GetType().GetFields()
                     .First(pc => pc.FieldType.GetElementType() == elementType);

@@ -1,12 +1,13 @@
 namespace CadRevealComposer.Primitives.Instancing
 {
+    using Newtonsoft.Json;
+    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.Diagnostics.CodeAnalysis;
+    using System.IO;
     using System.Linq;
     using System.Numerics;
     using System.Runtime.CompilerServices;
@@ -16,51 +17,66 @@ namespace CadRevealComposer.Primitives.Instancing
 
     public class RvmFacetGroupMatcher
     {
-        private readonly ImmutableArray<RvmFacetGroup> _allFacetGroups;
-        private readonly ConcurrentDictionary<RvmFacetGroup, Mesh> _previousMatches = new();
-
-        /// <summary>
-        /// Use static Create()
-        /// </summary>
-        private RvmFacetGroupMatcher(ImmutableArray<RvmFacetGroup> allFacetGroups)
+        public Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> MatchAll(RvmFacetGroup[] groups)
         {
-            _allFacetGroups = allFacetGroups;
+            return groups
+                .GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).AsParallel()
+                .Select(DoMatch).SelectMany(d => d)
+                .ToDictionary(r => r.Key, r => r.Value);
         }
 
-        public bool Match(RvmFacetGroup a, [NotNullWhen(true)] out Mesh? instancedMesh, [NotNullWhen(true)]  out Matrix4x4? transform)
+        public Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> DoMatch((long groupId, RvmFacetGroup[] groups) groups)
         {
-            foreach (var b in _allFacetGroups)
+            // id -> facetgroup, transform
+            // templates -> facetgroup, count
+            var templates = new Dictionary<RvmFacetGroup, int>();
+            var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
+
+            foreach (var e in groups.groups)
             {
-                if (ReferenceEquals(a, b))
+                bool found = false;
+
+                foreach (var x in templates)
                 {
-                    continue;
+                    if (ReferenceEquals(x.Key, e))
+                        continue;
+                    if (!Match(x.Key, e, out var transform))
+                        continue;
+
+                    templates[x.Key] += 1;
+                    result.Add(e, (x.Key, transform.Value));
+                    found = true;
+                    break;
                 }
 
-                if (Match(a, b, out var ta))
+                if (!found)
                 {
-                    if (!_previousMatches.TryGetValue(b, out var mesh))
-                    {
-                        mesh = TessellatorBridge.Tessellate(b, tolerance: 5f);
-                        if (!_previousMatches.TryAdd(b, mesh)) throw new Exception("aaaa");
-                    }
-
-                    instancedMesh = mesh;
-                    transform = ta;
-                    return true;
+                    templates.Add(e, 1);
+                    result.Add(e, (e, Matrix4x4.Identity));
                 }
             }
 
-            instancedMesh = default;
-            transform = default;
-            return false;
+            Console.WriteLine($"Group completed, remaining {templates.Count} of {result.Count}");
+            var i = 0;
+            foreach (var t in templates)
+            {
+                var m = TessellatorBridge.Tessellate(t.Key, 5.0f);
+                Directory.CreateDirectory($"D:\\tmp\\{groups.groupId}");
+                using var objExporter = new ObjExporter($"D:\\tmp\\{groups.groupId}\\{i}.obj");
+                objExporter.StartGroup(i.ToString());
+                objExporter.WriteMesh(m);
+                objExporter.Dispose();
+                File.WriteAllText($"D:\\tmp\\{groups.groupId}\\{i}.json", JsonConvert.SerializeObject(t.Key));
+                i++;
+            }
+            return result;
         }
 
-        public static RvmFacetGroupMatcher Create(CadRevealNode[] cadRevealNodes)
+        public static long CalculateKey(RvmFacetGroup facetGroup)
         {
-            var allFacetGroups = cadRevealNodes
-                .SelectMany(x => x.RvmGeometries.OfType<RvmFacetGroup>())
-                .ToImmutableArray();
-            return new RvmFacetGroupMatcher(allFacetGroups);
+            return facetGroup.Polygons.Length * 1000000000L
+                   + facetGroup.Polygons.Sum(p => p.Contours.Length) * 1000000L
+                   + facetGroup.Polygons.SelectMany(p => p.Contours).Sum(c => c.Vertices.Length);
         }
 
         /// <summary>
@@ -72,16 +88,7 @@ namespace CadRevealComposer.Primitives.Instancing
         /// <returns></returns>
         public static bool Match(RvmFacetGroup a, RvmFacetGroup b, [NotNullWhen(true)] out Matrix4x4? outputTransform)
         {
-            // probably a bad assumption: polygons are ordered, contours are ordered, vertexes are ordered
-
-            // TODO: order polygons by contour count, order subtractive contours by vertex count
-            // TODO: contour count and vertex count are not unique, must be handled properly
-
-            if (a.Polygons.Length != b.Polygons.Length)
-            {
-                outputTransform = default;
-                return false;
-            }
+            // TODO: bad assumption: polygons are ordered, contours are ordered, vertexes are ordered
 
             // create transform matrix
             if (!TryGetTransform(a, b, out var transform))
@@ -96,26 +103,16 @@ namespace CadRevealComposer.Primitives.Instancing
                 var aPolygon = a.Polygons[i];
                 var bPolygon = b.Polygons[i];
 
-                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
-                {
-                    outputTransform = default;
-                    return false;
-                }
-
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
                     var aContour = aPolygon.Contours[j];
                     var bContour = bPolygon.Contours[j];
 
-                    if (aContour.Vertices.Length != bContour.Vertices.Length)
-                    {
-                        outputTransform = default;
-                        return false;
-                    }
-
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
-                        if (!MatchVertexApproximately(aContour.Vertices[k].Vertex, bContour.Vertices[k].Vertex, transform.Value))
+                        var va = Vector3.Transform(aContour.Vertices[k].Vertex, transform.Value);
+                        var vb = bContour.Vertices[k].Vertex;
+                        if (!va.ApproximatelyEquals(vb))
                         {
                             outputTransform = transform.Value;
                             return false;
@@ -136,83 +133,82 @@ namespace CadRevealComposer.Primitives.Instancing
                 return false;
             }
 
+            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in  any particular order
             for (var i = 0; i < a.Polygons.Length; i++)
             {
                 var aPolygon = a.Polygons[i];
                 var bPolygon = b.Polygons[i];
-
                 if (aPolygon.Contours.Length != bPolygon.Contours.Length)
-                {
                     return false;
-                }
-
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
                     var aContour = aPolygon.Contours[j];
                     var bContour = bPolygon.Contours[j];
-
                     if (aContour.Vertices.Length != bContour.Vertices.Length)
-                    {
                         return false;
-                    }
                 }
             }
 
-            using var aVertices = a.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex).GetEnumerator();
-            using var bVertices = b.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex).GetEnumerator();
+            var aVertices = a.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex);
+            var bVertices = b.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex);
 
-            var testVertices = new List<(Vector3, Vector3)>(4);
-            while (aVertices.MoveNext() && bVertices.MoveNext())
+            var vertices = aVertices.Zip(bVertices);
+            var testVertices = new List<(Vector3 vertexA, Vector3 vertexB)>(4);
+            foreach ((Vector3 candidateVertexA, Vector3 candidateVertexB) in vertices)
             {
-                var ca = aVertices.Current;
-                var cb = bVertices.Current;
-
-                var alreadyHave = testVertices.Any(vv => vv.Item1 == ca);
-
-                if (!alreadyHave)
+                if (testVertices.Any(vv => vv.vertexA.ApproximatelyEquals(candidateVertexA)))
                 {
-                    if (testVertices.Count == 3)
-                    {
-                        var va12 = testVertices[1].Item1 - testVertices[0].Item1;
-                        var va13 = testVertices[2].Item1 - testVertices[0].Item1;
-                        var va14 = ca - testVertices[0].Item1;
-                        if (!Determinant(va12, va13, va14).ApproximatelyEquals(0.001f))
-                        {
-                            return TryCalculateTransform(
-                                testVertices[0].Item1,
-                                testVertices[1].Item1,
-                                testVertices[2].Item1,
-                                ca,
-                                testVertices[0].Item2,
-                                testVertices[1].Item2,
-                                testVertices[2].Item2,
-                                cb,
-                                out transform
-                            );
+                    // skip any duplicate vertices
+                    continue;
+                }
 
-                        }
-                    }
-                    else
-                    {
-                        if (testVertices.Count == 2)
+                switch (testVertices.Count)
+                {
+                    case 3:
                         {
-                            var va12 = testVertices[1].Item1 - testVertices[0].Item1;
-                            var va13 = ca - testVertices[0].Item1;
+                            var ma = new Matrix4x4(
+                                testVertices[0].vertexA.X, testVertices[1].vertexA.X, testVertices[2].vertexA.X,
+                                candidateVertexA.X,
+                                testVertices[0].vertexA.Y, testVertices[1].vertexA.Y, testVertices[2].vertexA.Y,
+                                candidateVertexA.Y,
+                                testVertices[0].vertexA.Z, testVertices[1].vertexA.Z, testVertices[2].vertexA.Z,
+                                candidateVertexA.Z,
+                                1, 1, 1, 1);
+                            var det = ma.GetDeterminant();
+                            if (!det.ApproximatelyEquals(0))
+                            {
+                                return TryCalculateTransform(
+                                    testVertices[0].vertexA,
+                                    testVertices[1].vertexA,
+                                    testVertices[2].vertexA,
+                                    candidateVertexA,
+                                    testVertices[0].vertexB,
+                                    testVertices[1].vertexB,
+                                    testVertices[2].vertexB,
+                                    candidateVertexB,
+                                    out transform
+                                );
+                            }
+
+                            break;
+                        }
+                    case 2:
+                        {
+                            var va12 = testVertices[1].vertexA - testVertices[0].vertexA;
+                            var va13 = candidateVertexA - testVertices[0].vertexA;
                             if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f, 0.00001))
                             {
-                                testVertices.Add((ca, cb));
+                                testVertices.Add((candidateVertexA, candidateVertexB));
                             }
-                        }
-                        else
-                        {
-                            testVertices.Add((ca, cb));
-                        }
 
-                    }
+                            break;
+                        }
+                    default:
+                        testVertices.Add((candidateVertexA, candidateVertexB));
+                        break;
                 }
             }
-
-            transform = default;
+            // TODO: 2d figure
             return false;
         }
 
@@ -225,37 +221,42 @@ namespace CadRevealComposer.Primitives.Instancing
             var vb13 = pb3 - pb1;
             var vb14 = pb4 - pb1;
 
-            var vaMatrix = new Matrix4x4(
-                va12.X * va12.X,va12.Y * va12.Y,va12.Z * va12.Z, 0,
-                va13.X * va13.X,va13.Y * va13.Y,va13.Z * va13.Z, 0,
-                va14.X * va14.X,va14.Y * va14.Y,va14.Z * va14.Z, 0,
-                0, 0, 0, 1);
-
-            var squaredBLengths = new Vector3(vb12.Length() * vb12.Length(), vb13.Length() * vb13.Length(), vb14.Length() * vb14.Length());
-            if (!Matrix4x4.Invert(vaMatrix, out var vaMatrixInverse))
+            var squaredBLengths = new Vector3(vb12.LengthSquared(), vb13.LengthSquared(), vb14.LengthSquared());
+            var squaredALengths = new Vector3(va12.LengthSquared(), va13.LengthSquared(), va14.LengthSquared());
+            var dist = (squaredALengths - squaredBLengths).Length();
+            var scale = Vector3.One;
+            if (!dist.ApproximatelyEquals(0))
             {
-                transform = default;
-                return false;
-                throw new Exception("Could not invert matrix for scale");
-            }
-            var scale = new Vector3(
-                MathF.Sqrt(vaMatrixInverse.M11 * squaredBLengths.X + vaMatrixInverse.M12 * squaredBLengths.Y + vaMatrixInverse.M13 * squaredBLengths.Z),
-                MathF.Sqrt(vaMatrixInverse.M21 * squaredBLengths.X + vaMatrixInverse.M22 * squaredBLengths.Y + vaMatrixInverse.M23 * squaredBLengths.Z),
-                MathF.Sqrt(vaMatrixInverse.M31 * squaredBLengths.X + vaMatrixInverse.M32 * squaredBLengths.Y + vaMatrixInverse.M33 * squaredBLengths.Z));
+                var vaMatrix = new Matrix4x4(
+                    va12.X * va12.X,va12.Y * va12.Y,va12.Z * va12.Z, 0,
+                    va13.X * va13.X,va13.Y * va13.Y,va13.Z * va13.Z, 0,
+                    va14.X * va14.X,va14.Y * va14.Y,va14.Z * va14.Z, 0,
+                    0, 0, 0, 1);
+                if (!Matrix4x4.Invert(vaMatrix, out var vaMatrixInverse))
+                {
+                    transform = default;
+                    return false;
+                }
 
-            va12 = va12 * scale;
-            va13 = va13 * scale;
+                var scaleSquared = Vector3.Transform(squaredBLengths, Matrix4x4.Transpose(vaMatrixInverse));
+                scale = new Vector3(MathF.Sqrt(scaleSquared.X), MathF.Sqrt(scaleSquared.Y), MathF.Sqrt(scaleSquared.Z));
+                va12 = va12 * scale;
+                va13 = va13 * scale;
+            }
 
             // 2 rotation va'1,va'2 -> vb1,vb2
-            var vaNormal = Vector3.Normalize(Vector3.Cross(Vector3.Normalize(va12), Vector3.Normalize(va13)));
-            var vbNormal = Vector3.Normalize(Vector3.Cross(Vector3.Normalize(vb12), Vector3.Normalize(vb13)));
+            var vaNormal = Vector3.Normalize(Vector3.Cross(va12, va13));
+            var vbNormal = Vector3.Normalize(Vector3.Cross(vb12, vb13));
             var rot1 = vaNormal.FromToRotation(vbNormal);
 
             // 3 axis rotation: axis=vb2-vb1 va'3-va'1
             var va12r1 = Vector3.Transform(va12, rot1);
             var angle2 = va12r1.AngleTo(vb12);
-            var rotationNormal = Vector3.Normalize(Vector3.Cross(Vector3.Normalize(va12r1), Vector3.Normalize(vb12)));
-            var rot2 = Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
+
+            var va12r1vb12cross = Vector3.Cross(va12r1, vb12);
+            var rotationNormal = Vector3.Normalize(Vector3.Cross(va12r1, vb12));
+            var rot2 = va12r1vb12cross.LengthSquared().ApproximatelyEquals(0) ? Quaternion.Identity :
+                Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
 
             var rotation = rot2 * rot1;
 
@@ -276,18 +277,6 @@ namespace CadRevealComposer.Primitives.Instancing
         public static bool MatchVertexApproximately(Vector3 a, Vector3 b, Matrix4x4 transform)
         {
             return Vector3.Transform(a, transform).ApproximatelyEquals(b, tolerance: 0.00001f); // TODO: ok tolerance?
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Determinant(Vector3 a, Vector3 b, Vector3 c)
-        {
-            return
-                a.X * b.Y * c.Z +
-                b.X * c.Y * a.Z +
-                c.X * a.Y * b.Z -
-                c.X * b.Y * a.Z -
-                b.X * a.Y * c.Z -
-                a.X * c.Y * b.Z;
         }
     }
 }
