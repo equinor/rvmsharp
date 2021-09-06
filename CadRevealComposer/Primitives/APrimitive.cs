@@ -135,8 +135,13 @@ namespace CadRevealComposer.Primitives
                         }
                     }
                 case RvmFacetGroup facetGroup:
-
-                    if (rvmFacetGroupMatcher.Match(facetGroup, out var instancedMesh, out var transform))
+                    return new ProtoMesh(commonPrimitiveProperties, facetGroup);
+                    // There are two problems with the old approach
+                    // 1. it is dead slow due to inability to group meshes by attributes
+                    //    in advance
+                    // 2. We need to split model into sectors, which is impossible until
+                    //    the modell is processed
+                    /*if (rvmFacetGroupMatcher.Match(facetGroup, out var instancedMesh, out var transform))
                     {
                         if (!Matrix4x4.Decompose(transform.Value, out var s, out var r, out var t))
                         {
@@ -162,7 +167,7 @@ namespace CadRevealComposer.Primitives
                             $"Expected a {nameof(RvmFacetGroup)} to always tessellate. Was {facetGroupMesh}.");
                     return new TriangleMesh(
                         commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Count / 3,
-                        facetGroupMesh);
+                        facetGroupMesh);*/
                 case RvmLine:
                     PrimitiveCounter.line++;
                     return null;
