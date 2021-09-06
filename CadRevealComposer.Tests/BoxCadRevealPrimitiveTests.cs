@@ -31,7 +31,7 @@
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
-            var facetGroupMatcher = RvmFacetGroupMatcher.Create(Array.Empty<CadRevealNode>());
+            var facetGroupMatcher = new RvmFacetGroupMatcher();
             var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox, facetGroupMatcher) as Box;
 
             Assert.That(box, Is.Not.Null);
