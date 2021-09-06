@@ -21,7 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="TestSamples\TestData.json">
+      <None Update="TestSamples\QuaternionDecomposition.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
       <None Update="TestSamples\43908.json">
@@ -48,6 +48,10 @@
       <None Update="TestSamples\6.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="TestSamples\FacetGroups" />
     </ItemGroup>
 
 </Project>
