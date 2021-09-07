@@ -106,7 +106,8 @@ namespace CadRevealComposer
                 .ToArray();
 
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
-            var r = rvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
+            var meshInstanceDictionary = rvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
+            geometries = geometries.Where(g => g is not ProtoMesh).ToArray();
 
             Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
 
@@ -250,6 +251,8 @@ namespace CadRevealComposer
                         break;
                     case I3dfAttribute.AttributeType.Texture:
                         textures = Array.Empty<Texture>();
+                        break;
+                    case I3dfAttribute.AttributeType.Ignore:
                         break;
                     default:
                         throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind,

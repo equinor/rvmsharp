@@ -26,7 +26,7 @@
                 out var transform);
 
             Assert.IsTrue(isMatch, "Could not match.");
-            Assert.AreEqual(Matrix4x4.Identity, transform.Value);
+            Assert.AreEqual(Matrix4x4.Identity, transform);
         }
 
         private static RvmFacetGroup TransformFacetGroup(RvmFacetGroup group, Matrix4x4 matrix)

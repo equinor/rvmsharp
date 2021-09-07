@@ -10,10 +10,7 @@ namespace CadRevealComposer.Primitives.Instancing
     using System.IO;
     using System.Linq;
     using System.Numerics;
-    using System.Runtime.CompilerServices;
     using Utils;
-
-    // https://github.com/equinor/ModelOptimizationPipeline/blob/fed1215dfa26372ff0d0cb26e959cd1e8e8e85c8/tools/mop/Mop/ModelExtensions/MOPQuaternion.cs#L150
 
     public class RvmFacetGroupMatcher
     {
@@ -56,19 +53,24 @@ namespace CadRevealComposer.Primitives.Instancing
                 }
             }
 
-            Console.WriteLine($"Group completed, remaining {templates.Count} of {result.Count}");
-            var i = 0;
-            foreach (var t in templates)
+            if (groups.groups.Length > 1)
             {
-                var m = TessellatorBridge.Tessellate(t.Key, 5.0f);
-                Directory.CreateDirectory($"D:\\tmp\\{groups.groupId}");
-                using var objExporter = new ObjExporter($"D:\\tmp\\{groups.groupId}\\{i}.obj");
-                objExporter.StartGroup(i.ToString());
-                objExporter.WriteMesh(m);
-                objExporter.Dispose();
-                File.WriteAllText($"D:\\tmp\\{groups.groupId}\\{i}.json", JsonConvert.SerializeObject(t.Key));
-                i++;
+                Console.WriteLine($"Group completed, remaining {templates.Count} of {result.Count}");
+                var i = 0;
+                foreach (var t in templates)
+                {
+                    var m = TessellatorBridge.Tessellate(t.Key, 5.0f);
+                    var directory = $"D:\\tmp\\x\\{groups.groupId}";
+                    Directory.CreateDirectory(directory);
+                    using var objExporter = new ObjExporter($"{directory}\\{i}.obj");
+                    objExporter.StartGroup(i.ToString());
+                    objExporter.WriteMesh(m);
+                    objExporter.Dispose();
+                    File.WriteAllText($"{directory}\\{i}.json", JsonConvert.SerializeObject(t.Key));
+                    i++;
+                }
             }
+
             return result;
         }
 
@@ -110,11 +112,11 @@ namespace CadRevealComposer.Primitives.Instancing
 
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
-                        var va = Vector3.Transform(aContour.Vertices[k].Vertex, transform.Value);
+                        var va = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                         var vb = bContour.Vertices[k].Vertex;
                         if (!va.ApproximatelyEquals(vb, 0.001f))
                         {
-                            outputTransform = transform.Value;
+                            outputTransform = transform;
                             return false;
                         }
                     }
@@ -125,7 +127,7 @@ namespace CadRevealComposer.Primitives.Instancing
             return true;
         }
 
-        public static bool TryGetTransform(RvmFacetGroup a, RvmFacetGroup b, [NotNullWhen(true)] out Matrix4x4? transform)
+        public static bool TryGetTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
         {
             transform = default;
             if (a.Polygons.Length != b.Polygons.Length)
@@ -196,7 +198,7 @@ namespace CadRevealComposer.Primitives.Instancing
                         {
                             var va12 = testVertices[1].vertexA - testVertices[0].vertexA;
                             var va13 = candidateVertexA - testVertices[0].vertexA;
-                            if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f, 0.00001))
+                            if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f))
                             {
                                 testVertices.Add((candidateVertexA, candidateVertexB));
                             }
@@ -212,7 +214,7 @@ namespace CadRevealComposer.Primitives.Instancing
             return false;
         }
 
-        public static bool TryCalculateTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2, Vector3 pb3, Vector3 pb4, [NotNullWhen(true)] out Matrix4x4? transform)
+        public static bool TryCalculateTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2, Vector3 pb3, Vector3 pb4, out Matrix4x4 transform)
         {
             var va12 = pa2 - pa1;
             var va13 = pa3 - pa1;
