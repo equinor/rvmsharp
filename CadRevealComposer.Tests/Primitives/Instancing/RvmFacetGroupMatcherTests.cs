@@ -2,9 +2,9 @@
 {
     using CadRevealComposer.Primitives.Instancing;
     using NUnit.Framework;
+    using RvmSharp.Operations;
     using RvmSharp.Primitives;
     using System;
-    using System.Linq;
     using System.Numerics;
     using Utils;
 
@@ -29,27 +29,6 @@
             Assert.AreEqual(Matrix4x4.Identity, transform);
         }
 
-        private static RvmFacetGroup TransformFacetGroup(RvmFacetGroup group, Matrix4x4 matrix)
-        {
-            if (!Matrix4x4.Invert(matrix, out var matrixInvertedTransposed))
-            {
-                throw new ArgumentException("Matrix cannot be inverted");
-            }
-            return group with
-            {
-                Polygons = group.Polygons.Select(a => a with
-                {
-                    Contours = a.Contours.Select(c => c with
-                    {
-                        Vertices = c.Vertices.Select(v => (
-                            Vector3.Transform(v.Vertex, matrix),
-                            Vector3.Normalize(Vector3.TransformNormal(v.Normal, matrixInvertedTransposed)))).ToArray()
-                    }).ToArray()
-                }
-                ).ToArray()
-            };
-        }
-
         [Test]
         public void MatchRotation()
         {
@@ -68,17 +47,9 @@
                 var Mt = Matrix4x4.CreateTranslation(position);
                 var Ma = Ms * Mr * Mt;
 
-                var meshB = TransformFacetGroup(meshA, Ma);
+                var meshB = meshA.TransformVertexData(Ma);
 
-                var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
-
-
-                Matrix4x4.Decompose(Ma, out var s1, out var r1, out var t1);
-                Matrix4x4.Decompose(transform.Value, out var s2, out var r2, out var t2);
-                var ds = s1 - s2;
-                var dr = r1 - r2;
-                var dt = t1 - t2;
-
+                var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
                 Assert.IsTrue(isMatch, "Could not match.");
             }
         }
@@ -100,20 +71,16 @@
             var Mt = Matrix4x4.CreateTranslation(position);
             var Ma = Ms * Mr * Mt;
 
-            var meshB = TransformFacetGroup(meshA, Ma);
+            var meshB = meshA.TransformVertexData(Ma);
 
-            var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out var transform);
-
-            Matrix4x4.Decompose(Ma, out var s1, out var r1, out var t1);
-            Matrix4x4.Decompose(transform.Value, out var s2, out var r2, out var t2);
-
+            var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
             Assert.IsTrue(isMatch, "Could not match.");
         }
 
         private static Vector3 RandomVector(Random r, float minComponentValue, float maxComponentValue)
         {
-            Func<float,float,float> rf = (min, max) =>  (float)r.NextDouble() * (max - min) + min;
-            return new Vector3(rf(minComponentValue, maxComponentValue), rf(minComponentValue, maxComponentValue), rf(minComponentValue, maxComponentValue));
+            float Rf() => (float)r.NextDouble() * (maxComponentValue - minComponentValue) + minComponentValue;
+            return new Vector3(Rf(), Rf(), Rf());
         }
     }
 }

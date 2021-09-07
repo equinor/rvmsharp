@@ -6,7 +6,6 @@ namespace CadRevealComposer.Primitives.Instancing
     using RvmSharp.Tessellation;
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
     using System.Numerics;
@@ -41,7 +40,7 @@ namespace CadRevealComposer.Primitives.Instancing
                         continue;
 
                     templates[x.Key] += 1;
-                    result.Add(e, (x.Key, transform.Value));
+                    result.Add(e, (x.Key, transform));
                     found = true;
                     break;
                 }
@@ -96,7 +95,7 @@ namespace CadRevealComposer.Primitives.Instancing
         /// <param name="b"></param>
         /// <param name="outputTransform"></param>
         /// <returns></returns>
-        public static bool Match(RvmFacetGroup a, RvmFacetGroup b, [NotNullWhen(true)] out Matrix4x4? outputTransform)
+        public static bool Match(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 outputTransform)
         {
             // TODO: bad assumption: polygons are ordered, contours are ordered, vertexes are ordered
 
