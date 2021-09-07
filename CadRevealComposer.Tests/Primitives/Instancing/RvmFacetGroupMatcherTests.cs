@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Instancing
 {
     using CadRevealComposer.Primitives.Instancing;
+    using CadRevealComposer.Utils;
     using NUnit.Framework;
     using RvmSharp.Operations;
     using RvmSharp.Primitives;
@@ -14,7 +15,7 @@
         [Test]
         public void GetTransform()
         {
-            var isMatch = RvmFacetGroupMatcher.TryCalculateTransform(
+            var isMatch = AlgebraUtils.GetTransform(
                 Vector3.UnitX,
                 Vector3.UnitY,
                 Vector3.UnitZ,
@@ -32,7 +33,7 @@
         [Test]
         public void MatchRotation()
         {
-            var r = new Random();
+            var r = new Random(0);
             for (int i = 0; i < 1000; i++)
             {
                 var meshA = TestSampleLoader.LoadTestJson<RvmFacetGroup>("simple_group.json");
