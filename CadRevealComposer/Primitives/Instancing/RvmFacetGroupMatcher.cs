@@ -269,14 +269,5 @@ namespace CadRevealComposer.Primitives.Instancing
                 * Matrix4x4.CreateTranslation(translation);
             return true;
         }
-
-        /// <summary>
-        /// Match a * transform = b
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool MatchVertexApproximately(Vector3 a, Vector3 b, Matrix4x4 transform)
-        {
-            return Vector3.Transform(a, transform).ApproximatelyEquals(b, tolerance: 0.00001f); // TODO: ok tolerance?
-        }
     }
 }
