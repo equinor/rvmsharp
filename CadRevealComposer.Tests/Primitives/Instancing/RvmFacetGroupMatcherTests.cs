@@ -35,7 +35,7 @@
             var r = new Random();
             for (int i = 0; i < 1000; i++)
             {
-                var meshA = DataLoader.LoadTestJson<RvmFacetGroup>("simple_group.json");
+                var meshA = TestSampleLoader.LoadTestJson<RvmFacetGroup>("simple_group.json");
 
                 var eulers = RandomVector(r, 0, MathF.PI);
                 var scale = RandomVector(r, 0.1f, 5.1f);
@@ -57,7 +57,7 @@
         [Test]
         public void RotationPrecisionTest()
         {
-            var meshA = DataLoader.LoadTestJson<RvmFacetGroup>("simple_group.json");
+            var meshA = TestSampleLoader.LoadTestJson<RvmFacetGroup>("simple_group.json");
 
             // these parameters fail on low precision in dot product on from-to rotation
             var eulers = new Vector3(3.044467f, 2.8217556f, 1.6506897f);
