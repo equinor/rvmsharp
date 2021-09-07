@@ -91,7 +91,6 @@ namespace CadRevealComposer
             var boundingBox = rootNode.BoundingBoxAxisAligned!;
 
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
-            var rvmFacetGroupMatcher = new RvmFacetGroupMatcher();
 
             var geometryConversionTimer = Stopwatch.StartNew();
             // AsOrdered is important. And I dont like it...
@@ -101,12 +100,12 @@ namespace CadRevealComposer
                 .AsParallel()
                 .AsOrdered()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
-                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive, rvmFacetGroupMatcher)))
+                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
                 .WhereNotNull()
                 .ToArray();
 
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
-            var meshInstanceDictionary = rvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
+            var meshInstanceDictionary = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
             geometries = geometries.Where(g => g is not ProtoMesh).ToArray();
 
             Console.WriteLine("Geometry Conversion: " + geometryConversionTimer.Elapsed);
@@ -125,7 +124,7 @@ namespace CadRevealComposer
                 var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 
                 ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
-                var exporter = new HierarchyComposer.Functions.DatabaseComposer(databaseLogger);
+                var exporter = new DatabaseComposer(databaseLogger);
                 exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
 
 
