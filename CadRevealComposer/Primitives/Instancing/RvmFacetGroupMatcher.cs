@@ -14,7 +14,7 @@ namespace CadRevealComposer.Primitives.Instancing
 
     public class RvmFacetGroupMatcher
     {
-        public Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> MatchAll(RvmFacetGroup[] groups)
+        public Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
         {
             return groups
                 .GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).AsParallel()
@@ -74,10 +74,18 @@ namespace CadRevealComposer.Primitives.Instancing
             return result;
         }
 
+        /// <summary>
+        /// to compose a unique key for a facet group we use polygon count in billions, total contour count in millions
+        /// and vertex count added together. This will give us keys with very few collision where counts are different
+        /// the key is used to create compare buckets of facet groups. There is no point to compare facet groups with
+        /// different keys, since they will always be different
+        /// </summary>
+        /// <param name="facetGroup">facet group to calculate a key for</param>
+        /// <returns>a key reflection information amount in facet group</returns>
         public static long CalculateKey(RvmFacetGroup facetGroup)
         {
-            return facetGroup.Polygons.Length * 1000000000L
-                   + facetGroup.Polygons.Sum(p => p.Contours.Length) * 1000000L
+            return facetGroup.Polygons.Length * 1000_000_000L
+                   + facetGroup.Polygons.Sum(p => p.Contours.Length) * 1000_000L
                    + facetGroup.Polygons.SelectMany(p => p.Contours).Sum(c => c.Vertices.Length);
         }
 
