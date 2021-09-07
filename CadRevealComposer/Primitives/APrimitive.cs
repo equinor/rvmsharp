@@ -4,10 +4,8 @@
 namespace CadRevealComposer.Primitives
 {
     using Converters;
-    using Instancing;
     using Newtonsoft.Json;
     using RvmSharp.Primitives;
-    using RvmSharp.Tessellation;
     using System;
     using System.Diagnostics;
     using System.Drawing;
@@ -64,8 +62,7 @@ namespace CadRevealComposer.Primitives
         public static APrimitive? FromRvmPrimitive(
             CadRevealNode revealNode,
             RvmNode rvmNode,
-            RvmPrimitive rvmPrimitive,
-            RvmFacetGroupMatcher rvmFacetGroupMatcher)
+            RvmPrimitive rvmPrimitive)
         {
             PrimitiveCounter.pc++;
             var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
