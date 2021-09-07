@@ -33,7 +33,8 @@
             ScaleY,
             ScaleZ,
             FileId,
-            Texture
+            Texture,
+            Ignore
         }
     }
 }

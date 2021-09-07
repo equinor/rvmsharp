@@ -1,6 +1,5 @@
 ﻿namespace CadRevealComposer.Primitives
 {
-    using RvmSharp.Tessellation;
     using System;
 
     public record InstancedMesh(
@@ -47,7 +46,5 @@
 
         [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture BumpTexture { get; init; } = new Texture();
-
-        public Mesh Mesh { get; init; }
     }
 }
