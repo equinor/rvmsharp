@@ -28,7 +28,7 @@
             Directory.CreateDirectory(ExportPath);
             foreach (var facetGroupJson in FacetGroupJsons)
             {
-                var facetGroup = DataLoader.LoadTestJson<RvmFacetGroup>(facetGroupJson);
+                var facetGroup = TestSampleLoader.LoadTestJson<RvmFacetGroup>(facetGroupJson);
                 var name = facetGroupJson.Replace(".json", "");
                 using var objExporter = new ObjExporter(Path.Combine(ExportPath, $"{name}.obj"));
                 objExporter.StartGroup(name);
@@ -43,7 +43,7 @@
             Directory.CreateDirectory(ExportPath);
             foreach (var facetGroupJson in FacetGroupJsons)
             {
-                var facetGroup = DataLoader.LoadTestJson<RvmFacetGroup>(facetGroupJson);
+                var facetGroup = TestSampleLoader.LoadTestJson<RvmFacetGroup>(facetGroupJson);
                 var name = facetGroupJson.Replace(".json", "");
                 using var objExporter = new ObjExporter(Path.Combine(ExportPath, $"{name}_polys.obj"));
                 objExporter.StartGroup(name);

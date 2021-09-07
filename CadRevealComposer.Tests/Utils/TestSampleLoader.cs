@@ -4,7 +4,7 @@
     using NUnit.Framework;
     using System.IO;
 
-    public static class DataLoader
+    public static class TestSampleLoader
     {
         public static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
 
