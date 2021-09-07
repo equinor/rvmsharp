@@ -9,8 +9,7 @@
     /// <param name="CommonPrimitiveProperties"></param>
     /// <param name="SourceMesh">Facet group the mesh is based on</param>
     public record ProtoMesh(CommonPrimitiveProperties CommonPrimitiveProperties,
+        [property: I3df(I3dfAttribute.AttributeType.Ignore)]
         RvmFacetGroup SourceMesh
-        ) : APrimitive(CommonPrimitiveProperties)
-    {
-    }
+        ) : APrimitive(CommonPrimitiveProperties);
 }

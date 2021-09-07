@@ -70,19 +70,35 @@ namespace CadRevealComposer.Utils
             return (roll, pitch, yaw);
         }
 
+        /// <summary>
+        /// Returns angle in radians between two vectors or NaN if length of any vector is zero
+        /// </summary>
+        /// <param name="from">From vector</param>
+        /// <param name="to">To vector</param>
+        /// <returns>Angle in radians</returns>
         public static float AngleTo(this Vector3 from, Vector3 to)
         {
             return MathF.Acos(Vector3.Dot(from, to) / (from.Length() * to.Length()));
         }
 
+        /// <summary>
+        /// Returns quaternion that specifies a rotation from "from" vector to "to" vector
+        /// </summary>
+        /// <param name="from">from vector</param>
+        /// <param name="to">to vector</param>
+        /// <returns></returns>
         public static Quaternion FromToRotation(this Vector3 from, Vector3 to)
         {
             var cross = Vector3.Cross(from, to);
-            if (cross.LengthSquared().ApproximatelyEquals(0f))
+            if (cross.LengthSquared().ApproximatelyEquals(0f)) // true if vectors are parallel
             {
                 var dot = Vector3.Dot(from, to);
-                if (dot < 0)
+                if (dot < 0) // Vectors point in opposite directions
                 {
+                    // We need to find an orthogonal to (to), non-zero vector (v)
+                    // such as dot product of (v) and (to) is 0
+                    // or satisfies following equation: to.x * v.x + to.y * v.y + to.z + v.z = 0
+                    // below some variants depending on which components of (to) is 0
                     var xZero = to.X.ApproximatelyEquals(0);
                     var yZero = to.Y.ApproximatelyEquals(0);
                     var zZero = to.Z.ApproximatelyEquals(0);
