@@ -38,7 +38,7 @@ namespace CadRevealComposer.Tests
 
         private static TestCaseData[] ReadTestCases()
         {
-            var tests = DataLoader.LoadTestJson<RotationTestCase[]>("QuaternionDecomposition.json");
+            var tests = TestSampleLoader.LoadTestJson<RotationTestCase[]>("QuaternionDecomposition.json");
             return tests?.Select(x => new TestCaseData(x).SetName(x.Name)).ToArray();
         }
 
