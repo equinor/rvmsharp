@@ -1,11 +1,9 @@
 ﻿namespace CadRevealComposer.Tests
 {
     using CadRevealComposer.Primitives;
-    using CadRevealComposer.Primitives.Instancing;
     using NUnit.Framework;
     using RvmSharp.Operations;
     using RvmSharp.Primitives;
-    using System;
     using System.Numerics;
 
     [TestFixture]
@@ -31,8 +29,7 @@
 
             RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
-            var facetGroupMatcher = new RvmFacetGroupMatcher();
-            var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox, facetGroupMatcher) as Box;
+            var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox) as Box;
 
             Assert.That(box, Is.Not.Null);
             Assert.That(box.CenterX, Is.EqualTo(10));

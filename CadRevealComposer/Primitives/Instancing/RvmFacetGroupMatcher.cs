@@ -11,9 +11,9 @@ namespace CadRevealComposer.Primitives.Instancing
     using System.Numerics;
     using Utils;
 
-    public class RvmFacetGroupMatcher
+    public static class RvmFacetGroupMatcher
     {
-        public Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
+        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
         {
             return groups
                 .GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).AsParallel()
@@ -21,7 +21,7 @@ namespace CadRevealComposer.Primitives.Instancing
                 .ToDictionary(r => r.Key, r => r.Value);
         }
 
-        public Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> DoMatch((long groupId, RvmFacetGroup[] groups) groups)
+        private static Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> DoMatch((long groupId, RvmFacetGroup[] groups) groups)
         {
             // id -> facetgroup, transform
             // templates -> facetgroup, count
@@ -98,14 +98,18 @@ namespace CadRevealComposer.Primitives.Instancing
         public static bool Match(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 outputTransform)
         {
             // TODO: bad assumption: polygons are ordered, contours are ordered, vertexes are ordered
-
             // create transform matrix
-            if (!TryGetTransform(a, b, out var transform))
+            if (TryGetTransform(a, b, out var transform))
             {
-                outputTransform = default;
-                return false;
+                return VerifyTransform(a, b, out outputTransform, transform);
             }
 
+            outputTransform = default;
+            return false;
+        }
+
+        private static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 outputTransform, Matrix4x4 transform)
+        {
             // check all polygons with transform
             for (var i = 0; i < a.Polygons.Length; i++)
             {
@@ -134,28 +138,11 @@ namespace CadRevealComposer.Primitives.Instancing
             return true;
         }
 
-        public static bool TryGetTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
+        private static bool TryGetTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
         {
-            transform = default;
-            if (a.Polygons.Length != b.Polygons.Length)
+            if (!EnsurePolygonContoursAndVertexCountsMatch(a, b, out transform))
             {
                 return false;
-            }
-
-            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in  any particular order
-            for (var i = 0; i < a.Polygons.Length; i++)
-            {
-                var aPolygon = a.Polygons[i];
-                var bPolygon = b.Polygons[i];
-                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
-                    return false;
-                for (var j = 0; j < aPolygon.Contours.Length; j++)
-                {
-                    var aContour = aPolygon.Contours[j];
-                    var bContour = bPolygon.Contours[j];
-                    if (aContour.Vertices.Length != bContour.Vertices.Length)
-                        return false;
-                }
             }
 
             var aVertices = a.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex);
@@ -219,6 +206,33 @@ namespace CadRevealComposer.Primitives.Instancing
             }
             // TODO: 2d figure
             return false;
+        }
+
+        private static bool EnsurePolygonContoursAndVertexCountsMatch(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
+        {
+            transform = default;
+            if (a.Polygons.Length != b.Polygons.Length)
+            {
+                return false;
+            }
+
+            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in  any particular order
+            for (var i = 0; i < a.Polygons.Length; i++)
+            {
+                var aPolygon = a.Polygons[i];
+                var bPolygon = b.Polygons[i];
+                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
+                    return false;
+                for (var j = 0; j < aPolygon.Contours.Length; j++)
+                {
+                    var aContour = aPolygon.Contours[j];
+                    var bContour = bPolygon.Contours[j];
+                    if (aContour.Vertices.Length != bContour.Vertices.Length)
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         public static bool TryCalculateTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2, Vector3 pb3, Vector3 pb4, out Matrix4x4 transform)
