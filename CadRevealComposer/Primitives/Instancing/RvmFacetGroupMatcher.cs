@@ -76,7 +76,7 @@ namespace CadRevealComposer.Primitives.Instancing
         {
             // TODO: bad assumption: polygons are ordered, contours are ordered, vertexes are ordered
             // create transform matrix
-            if (TryGetTransform(a, b, out outputTransform))
+            if (GetPossibleAtoBTransform(a, b, out outputTransform))
             {
                 return VerifyTransform(a, b, outputTransform);
             }
@@ -113,7 +113,7 @@ namespace CadRevealComposer.Primitives.Instancing
             return true;
         }
 
-        private static bool TryGetTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
+        private static bool GetPossibleAtoBTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
         {
             if (!EnsurePolygonContoursAndVertexCountsMatch(a, b, out transform))
             {
