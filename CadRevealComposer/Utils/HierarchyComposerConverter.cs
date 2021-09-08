@@ -5,7 +5,6 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics.Contracts;
     using System.Linq;
 
     public static class HierarchyComposerConverter
@@ -84,7 +83,6 @@
         /// </summary>
         /// <param name="inputPdmsAttributes">Original Pdms Attributes</param>
         /// <returns>New Dict without the given keys</returns>
-        [Pure]
         private static Dictionary<string, string> FilterRedundantPdmsAttributes(IDictionary<string, string> inputPdmsAttributes)
         {
             string[] excludedKeysIgnoreCase = new[]
