@@ -5,6 +5,7 @@
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
+    using System.Diagnostics.Contracts;
     using System.Linq;
 
     public static class HierarchyComposerConverter
@@ -70,11 +71,32 @@
                 ParentId = maybeParent != null
                     ? ConvertUlongToUintOrThrowIfTooLarge(maybeParent.TreeIndex)
                     : null,
-                PDMSData = rvmNode.Attributes,
+                PDMSData = FilterRedundantPdmsAttributes(rvmNode.Attributes),
                 HasMesh = hasMesh,
                 AABB = aabb,
                 OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo
             };
+        }
+
+        /// <summary>
+        /// Filter the attributes by excluding some keys that are essentially duplicated.
+        /// This saves space in the database.
+        /// </summary>
+        /// <param name="inputPdmsAttributes">Original Pdms Attributes</param>
+        /// <returns>New Dict without the given keys</returns>
+        [Pure]
+        private static Dictionary<string, string> FilterRedundantPdmsAttributes(IDictionary<string, string> inputPdmsAttributes)
+        {
+            string[] excludedKeysIgnoreCase = new[]
+            {
+                "Name",
+                "RefNo",
+                "Position"
+            };
+
+            return inputPdmsAttributes
+                .Where(kvp => !excludedKeysIgnoreCase.Any(ex => string.Equals(ex, kvp.Key, StringComparison.OrdinalIgnoreCase)))
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 
         /// <summary>
@@ -84,7 +106,7 @@
         /// </summary>
         /// <param name="input">Input number</param>
         /// <returns>An uint IF its below or equal to <see cref="uint.MaxValue"/></returns>
-        /// <exception cref="ArgumentOutOfRangeException">If input is above <see cref="UInt32.MaxValue"/></exception>
+        /// <exception cref="ArgumentOutOfRangeException">If <see cref="input"/> is above <see cref="UInt32.MaxValue"/></exception>
         private static uint ConvertUlongToUintOrThrowIfTooLarge(ulong input)
         {
             if (input > uint.MaxValue)
