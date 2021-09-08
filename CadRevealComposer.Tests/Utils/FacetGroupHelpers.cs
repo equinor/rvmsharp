@@ -18,7 +18,10 @@
     [TestFixture]
     public class FacetGroupHelpers
     {
+        private const float UnusedTolerance = -1.0f;
         private const string ExportPath = "D:\\tmp";
+        private const string ExplicitReason = "Development helpers, not real tests.";
+
         private static readonly string[] FacetGroupJsons = new[]
         {
             "m1.json",
@@ -27,7 +30,7 @@
             "6.json"
         };
 
-        [Explicit]
+        [Explicit(ExplicitReason)]
         [Test]
         public void ExportAsObj()
         {
@@ -38,11 +41,11 @@
                 var name = facetGroupJson.Replace(".json", "");
                 using var objExporter = new ObjExporter(Path.Combine(ExportPath, $"{name}.obj"));
                 objExporter.StartGroup(name);
-                objExporter.WriteMesh(TessellatorBridge.Tessellate(facetGroup, 5.0f));
+                objExporter.WriteMesh(TessellatorBridge.Tessellate(facetGroup, 5.0f)!);
             }
         }
 
-        [Explicit]
+        [Explicit(ExplicitReason)]
         [Test]
         public void ExportPolygonsAsObj()
         {
@@ -59,16 +62,17 @@
                     var p = facetGroup.Polygons[i];
                     var m1 = facetGroup with { Polygons = new[] { p } };
                     objExporter.StartGroup($"{name}_p{i}");
-                    objExporter.WriteMesh(TessellatorBridge.Tessellate(m1, 5.0f));
+                    objExporter.WriteMesh(TessellatorBridge.Tessellate(m1, UnusedTolerance)!);
                 }
             }
         }
 
-        [Explicit]
+
+
+        [Explicit(ExplicitReason)]
         [Test]
         public void ExportAllUnmatchedFacetGroupsAsObjs()
         {
-            const string exportFolder = "D:/tmp/y";
             var workload = Workload.CollectWorkload(new[] { @"d:\Models\hda\rvm20210126" });
             var rvmStore = Workload.ReadRvmData(workload);
             var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
@@ -88,28 +92,28 @@
                     continue;
                 var totalMatches = templates.Select(t => templateToMatchCount[t]).Sum();
                 Console.WriteLine($"For group {key} templating count is remaining {templateCountForKey} of {totalMatches} ({(100.0 * (totalMatches - templateCountForKey) / totalMatches):F}%)");
-                foreach (var template in templatesByKey)
-                {
-                    var matchCount = templateToMatchCount[template];
-
-                }
+                // foreach (var template in templatesByKey)
+                // {
+                //     var matchCount = templateToMatchCount[template];
+                // }
 
                 var i = 0;
                 foreach (var t in templates)
                 {
                     var m = TessellatorBridge.Tessellate(t, 5.0f);
-                    var directory = $"{exportFolder}/{key}";
+                    var directory = $"{ExportPath}/{key}";
                     Directory.CreateDirectory(directory);
                     using var objExporter = new ObjExporter($"{directory}/{i}.obj");
                     objExporter.StartGroup(i.ToString());
-                    objExporter.WriteMesh(m);
+                    objExporter.WriteMesh(m!);
+
                     File.WriteAllText($"{directory}/{i}.json", JsonConvert.SerializeObject(t));
                     i++;
                 }
             }
         }
 
-        public static IEnumerable<RvmFacetGroup> GetAllFacetGroups(RvmNode root)
+        private static IEnumerable<RvmFacetGroup> GetAllFacetGroups(RvmNode root)
         {
             foreach (var child in root.Children)
             {
