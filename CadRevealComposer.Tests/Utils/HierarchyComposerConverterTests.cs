@@ -61,6 +61,7 @@
             Assert.That(firstNode.RefNoDb, Is.EqualTo(123));
             Assert.That(firstNode.RefNoSequence, Is.EqualTo(321));
             Assert.That(firstNode.PDMSData, Contains.Key("Tag").WithValue("23L0001"));
+            Assert.That(firstNode.PDMSData, Does.Not.ContainKey("RefNo"), "Expecting RefNo to be filtered out of the PDMS data as it is redundant");
             Assert.That(firstNode.OptionalDiagnosticInfo, Is.EqualTo(arrangedJson));
         }
 
