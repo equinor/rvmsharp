@@ -118,7 +118,7 @@ namespace CadRevealComposer
 
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
             var meshInstanceDictionary = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
-            geometries = geometries.Where(g => g is not ProtoMesh).ToArray();
+            geometries = geometries.Where(g => g is not ProtoMesh).ToList();
 
             var exportedInstancedMeshes =
                 ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, notYetExportedInstancedMeshes);
