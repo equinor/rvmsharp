@@ -1,12 +1,7 @@
 namespace CadRevealComposer.Primitives.Instancing
 {
-    using Newtonsoft.Json;
-    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
-    using RvmSharp.Tessellation;
-    using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
     using System.Numerics;
     using Utils;
@@ -49,24 +44,6 @@ namespace CadRevealComposer.Primitives.Instancing
                 {
                     templates.Add(e, 1);
                     result.Add(e, (e, Matrix4x4.Identity));
-                }
-            }
-
-            if (groups.groups.Length > 1)
-            {
-                Console.WriteLine($"Group completed, remaining {templates.Count} of {result.Count}");
-                var i = 0;
-                foreach (var t in templates)
-                {
-                    var m = TessellatorBridge.Tessellate(t.Key, 5.0f);
-                    var directory = $"D:\\tmp\\x\\{groups.groupId}";
-                    Directory.CreateDirectory(directory);
-                    using var objExporter = new ObjExporter($"{directory}\\{i}.obj");
-                    objExporter.StartGroup(i.ToString());
-                    objExporter.WriteMesh(m);
-                    objExporter.Dispose();
-                    File.WriteAllText($"{directory}\\{i}.json", JsonConvert.SerializeObject(t.Key));
-                    i++;
                 }
             }
 
