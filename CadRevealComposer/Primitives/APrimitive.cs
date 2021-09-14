@@ -39,7 +39,7 @@ namespace CadRevealComposer.Primitives
         float CenterZ,
         [property: JsonIgnore,
                    Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true),
-                   I3df(I3dfAttribute.AttributeType.Null)]
+                   I3df(I3dfAttribute.AttributeType.Ignore)]
         CommonPrimitiveProperties? CommonPrimitiveProperties =
             null! // The hack: Add JsonIgnore here, but in all inheritors use the simplified constructor.
     )
