@@ -29,11 +29,8 @@
                 return input;
             }
 
-            var transform = input.Matrix.TryDecomposeToTransform();
-            if (transform == null)
+            if (!Matrix4x4.Decompose(input.Matrix, out var scale, out var rotation, out var translation))
                 return input;
-
-            (Vector3 scale, Quaternion rotation, Vector3 translation) = transform;
 
             var scaledPyramid = input with
             {

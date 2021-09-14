@@ -6,28 +6,6 @@ namespace CadRevealComposer.Utils
 
     public static class AlgebraUtils
     {
-        // Consider moving this to a separate construct outside of algebra utils.
-        public record Transform(Vector3 Scale, Quaternion Rotation, Vector3 Translation);
-
-        /// <summary>
-        /// Decompose a Matrix into Scale Rotation and Translation tuple if possible. Else returns `null`.'
-        /// Alternative to <see cref="Matrix4x4.Decompose"/>, which uses `out` variables instead of tuple result.
-        /// </summary>
-        /// <param name="matrix">Transform Matrix</param>
-        /// <returns>(Scale Rotation Translation) tuple OR null</returns>
-        [Pure]
-        public static Transform? TryDecomposeToTransform(
-            this Matrix4x4 matrix)
-        {
-            // ReSharper disable once ConvertIfStatementToReturnStatement
-            if (Matrix4x4.Decompose(matrix, out var scale, out var rotation, out var translation))
-            {
-                return new Transform(Scale: scale, Rotation: rotation, Translation: translation);
-            }
-
-            return null;
-        }
-
         public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
         {
             var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
