@@ -79,10 +79,17 @@
             var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 
             var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups);
-            var templateToMatchCount = groupToTemplateWithTransform.Select(kvp => (kvp.Value.template, kvp.Key)).GroupBy(p => p.template)
+            var templateToMatchCount = groupToTemplateWithTransform
+                .Select(kvp => (kvp.Value.template, kvp.Key))
+                .GroupBy(p => p.template)
                 .ToDictionary(p => p.Key, p => p.Count());
-            var templateToFacetGroup = groupToTemplateWithTransform.Select(kvp => kvp.Value.template).GroupBy(RvmFacetGroupMatcher.CalculateKey);
+            var templateToFacetGroup = groupToTemplateWithTransform
+                .Select(kvp => kvp.Value.template)
+                .Distinct()
+                .GroupBy(RvmFacetGroupMatcher.CalculateKey)
+                .ToArray();
 
+            var totalCount = 0;
             foreach (var templatesByKey in templateToFacetGroup)
             {
                 var templates = templatesByKey.ToArray();
@@ -110,7 +117,11 @@
                     File.WriteAllText($"{directory}/{i}.json", JsonConvert.SerializeObject(t));
                     i++;
                 }
+
+                totalCount += totalMatches;
             }
+
+            Assert.AreEqual(groupToTemplateWithTransform.Count, totalCount);
         }
 
         private static IEnumerable<RvmFacetGroup> GetAllFacetGroups(RvmNode root)
