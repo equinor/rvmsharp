@@ -38,7 +38,8 @@ namespace CadRevealComposer.Primitives
         [property: I3df(I3dfAttribute.AttributeType.CenterZ)]
         float CenterZ,
         [property: JsonIgnore,
-                   Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true)]
+                   Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true),
+                   I3df(I3dfAttribute.AttributeType.Ignore)]
         CommonPrimitiveProperties? CommonPrimitiveProperties =
             null! // The hack: Add JsonIgnore here, but in all inheritors use the simplified constructor.
     )
@@ -62,7 +63,8 @@ namespace CadRevealComposer.Primitives
         public static APrimitive? FromRvmPrimitive(
             CadRevealNode revealNode,
             RvmNode rvmNode,
-            RvmPrimitive rvmPrimitive)
+            RvmPrimitive rvmPrimitive,
+            PyramidInstancingHelper? pyramidInstancingHelper = null)
         {
             PrimitiveCounter.pc++;
             var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
@@ -75,15 +77,13 @@ namespace CadRevealComposer.Primitives
             switch (rvmPrimitive)
             {
                 case RvmBox rvmBox:
-                    {
-                        return rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
-                    }
+                    return rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
                 case RvmCylinder rvmCylinder:
                     {
                         var height = rvmCylinder.Height * scale.Z;
                         // TODO: if scale is not uniform on X,Y, we should create something else
                         var radius = rvmCylinder.Radius * scale.X;
-                        if (Math.Abs(scale.X - scale.Y) > 0.001)
+                        if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
                         {
                             //throw new Exception("Not implemented!");
                         }
@@ -167,13 +167,12 @@ namespace CadRevealComposer.Primitives
                         facetGroupMesh);*/
                 case RvmLine:
                     PrimitiveCounter.line++;
+                    // Intentionally ignored.
                     return null;
                 case RvmPyramid rvmPyramid:
-                    return rvmPyramid.ConvertToRevealPrimitive(tempHackMeshFileId, revealNode, rvmNode);
+                    return rvmPyramid.ConvertToRevealPrimitive(tempHackMeshFileId, revealNode, rvmNode, pyramidInstancingHelper);
                 case RvmCircularTorus circularTorus:
-                    {
-                        return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
-                    }
+                    return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
                 case RvmSphere rvmSphere:
                     {
                         AssertUniformScale(scale);
@@ -205,9 +204,7 @@ namespace CadRevealComposer.Primitives
                         }
                     }
                 case RvmSnout rvmSnout:
-                    {
-                        return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
-                    }
+                    return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
                 case RvmRectangularTorus rvmRectangularTorus:
                     AssertUniformScale(scale);
                     if (rvmRectangularTorus.Angle >= MathF.PI * 2)

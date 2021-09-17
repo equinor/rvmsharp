@@ -1,11 +1,13 @@
 ﻿namespace CadRevealComposer.Utils.Comparers
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Drawing;
 
     /// <summary>
     /// Lets you sort colors repeatable.
     /// Compares by R, then G, B, A.
+    /// The intended usage is to be able to use Vector3 in a <see cref="ImmutableSortedSet{T}"/>
     /// </summary>
     public class RgbaColorComparer : IComparer<Color>
     {

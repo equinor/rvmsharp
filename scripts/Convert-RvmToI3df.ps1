@@ -24,6 +24,11 @@ end {
     [Console]::ResetColor()
     $ErrorActionPreference = 'Stop'
     $scriptTimer = [system.diagnostics.stopwatch]::StartNew()
+    if ($IsLinux) {
+        # Known Linux compability issues: We do not yet have a binary for the CTMConv for Linux.
+        # Ctmconv for linux can be built and added, but has not yet been prioritized. See the readme in the ctmconv directory.
+        Write-Error "This script is not yet tested for Linux. If you want to try running it, please remove this line and beware of dragons!"
+    }
     #endregion PsSetup
 
 
@@ -64,12 +69,9 @@ end {
     #endregion Reveal Composer
 
     #region ctm-converter
-    $mesh2ctm = "mesh2ctm.exe"
-    if ($IsMacOS) {
-        $mesh2ctm = "mesh2ctm.osx"
-    }
 
-    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" $mesh2ctm
+    $CtmConverterType = if ($IsMacOS) { "osx" } elseif ($IsWindows) { "exe" } else { Write-Error "Unexpected OS" }
+    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.$CtmConverterType"
     Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
         Write-Output ("Converting " + $_.Name + " (" + ("{0:n2} MB" -f ($_.Length / 1MB) + ") to CTM"))
         $ctmInputPath = $_.FullName
