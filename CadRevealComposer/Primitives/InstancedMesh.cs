@@ -1,7 +1,24 @@
 ﻿namespace CadRevealComposer.Primitives
 {
+    using RvmSharp.Tessellation;
     using System;
 
+    /// <summary>
+    /// Create an instanced mesh.
+    /// </summary>
+    /// <param name="CommonPrimitiveProperties"></param>
+    /// <param name="FileId"></param>
+    /// <param name="TriangleOffset"></param>
+    /// <param name="TriangleCount"></param>
+    /// <param name="TranslationX"></param>
+    /// <param name="TranslationY"></param>
+    /// <param name="TranslationZ"></param>
+    /// <param name="RotationX">RollX</param>
+    /// <param name="RotationY">PitchY</param>
+    /// <param name="RotationZ">YawZ</param>
+    /// <param name="ScaleX"></param>
+    /// <param name="ScaleY"></param>
+    /// <param name="ScaleZ"></param>
     public record InstancedMesh(
             CommonPrimitiveProperties CommonPrimitiveProperties,
             [property: I3df(I3dfAttribute.AttributeType.FileId)]
@@ -32,19 +49,28 @@
         // TODO remove some common properties
         : APrimitive(CommonPrimitiveProperties)
     {
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        private const string ObsoleteMessage =
+            "Property is never used in the current i3df format, but needs to be present.";
+
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture DiffuseTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture SpecularTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture AmbientTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture NormalTexture { get; init; } = new Texture();
 
-        [Obsolete,  I3df(I3dfAttribute.AttributeType.Texture)]
+        [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture BumpTexture { get; init; } = new Texture();
+
+        /// <summary>
+        /// Temporary reference to this Instances mesh. Will not be serialized in the i3df export.
+        /// </summary>
+        [I3df(I3dfAttribute.AttributeType.Ignore)]
+        public Mesh? TempTessellatedMesh { get; init; }
     }
 }

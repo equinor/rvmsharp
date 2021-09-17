@@ -2,7 +2,6 @@
 {
     using CadRevealComposer.Primitives;
     using CadRevealComposer.Primitives.Converters;
-    using CadRevealComposer.Utils;
     using NUnit.Framework;
     using RvmSharp.Primitives;
     using System.Numerics;

@@ -1,11 +1,13 @@
 ﻿namespace CadRevealComposer.Utils.Comparers
 {
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.Numerics;
 
     /// <summary>
-    /// Used to have a repeatable comparison between two Vector3 when sorting.
+    /// Used to have a repeatable comparison between Vector3s when sorting.
     /// Compares on X, then Y, then Z.
+    /// The intended usage is to be able to use Vector3 in a <see cref="ImmutableSortedSet{T}"/>
     /// </summary>
     public class XyzVector3Comparer : IComparer<Vector3>
     {

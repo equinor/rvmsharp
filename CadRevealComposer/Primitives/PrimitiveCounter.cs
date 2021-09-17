@@ -15,10 +15,11 @@ namespace CadRevealComposer.Primitives
         public static int sphere = 0;
         public static int sDish = 0;
         public static int pyramidAsBox = 0;
+        public static int pyramidInstanced = 0;
 
         public static new string ToString()
         {
-            return $"{nameof(pc)}: {pc}, {nameof(boxCounter)}: {boxCounter}, {nameof(cTorus)}: {cTorus}, {nameof(cylinder)}: {cylinder}, {nameof(eDish)}: {eDish}, {nameof(mesh)}: {mesh}, {nameof(line)}: {line}, {nameof(pyramid)}: {pyramid}, {nameof(rTorus)}: {rTorus}, {nameof(snout)}: {snout}, {nameof(sphere)}: {sphere}, {nameof(sDish)}: {sDish}, {nameof(pyramidAsBox)}: {pyramidAsBox}";
+            return $"{nameof(pc)}: {pc}, {nameof(boxCounter)}: {boxCounter}, {nameof(cTorus)}: {cTorus}, {nameof(cylinder)}: {cylinder}, {nameof(eDish)}: {eDish}, {nameof(mesh)}: {mesh}, {nameof(line)}: {line}, {nameof(pyramid)}: {pyramid}, {nameof(rTorus)}: {rTorus}, {nameof(snout)}: {snout}, {nameof(sphere)}: {sphere}, {nameof(sDish)}: {sDish}, {nameof(pyramidAsBox)}: {pyramidAsBox}, {nameof(pyramidInstanced)}: {pyramidInstanced}";
         }
     }
 }
