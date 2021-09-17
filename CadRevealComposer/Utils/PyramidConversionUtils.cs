@@ -1,79 +1,15 @@
 ﻿namespace CadRevealComposer.Utils
 {
+    using RvmSharp.Operations;
     using RvmSharp.Primitives;
-    using RvmSharp.Tessellation;
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
 
-    public class PyramidConversionUtils
+    public static class PyramidConversionUtils
     {
-        private static void TessellatePyramids(IReadOnlyCollection<RvmNode> rvmNodes)
-        {
-            var pyramidsWithMeshes = rvmNodes
-                .AsParallel()
-                .Select(x =>
-                {
-                    const float tolerance = 0.01f; // Tolerance is ignored at the time of writing.
-                    var pyramidMeshes = x.Children.OfType<RvmPyramid>().Select(pyramid =>
-                        (RvmPyramid: pyramid, Mesh: TessellatorBridge.Tessellate(pyramid, tolerance)));
-
-                    return pyramidMeshes;
-                });
-
-
-            bool almostEqual(float f1, float f2)
-            {
-                return MathF.Abs(f1 - f2) < 0.01;
-            }
-
-            var uniquePyramids = new Dictionary<RvmPyramid, int>();
-            var processedPyramids = new List<RvmPyramid>();
-            foreach (var scaleAndRvmPyramid in rvmNodes.SelectMany(x => x.Children.OfType<RvmPyramid>())
-                .Select(CreatePyramidWithUnitSizeInAllDimension))
-            {
-                var rvmPyramid = scaleAndRvmPyramid.Pyramid;
-                var foundEqual = false;
-                foreach (var kvp in uniquePyramids)
-                {
-                    var uniquePyramid = kvp.Key;
-
-                    if ( /* almostEqual(rvmPyramid.Height, uniquePyramid.Height) */
-                        // We can scale for height, assuming the top is in same position
-                        (almostEqual(rvmPyramid.BottomX,
-                             uniquePyramid.BottomX) // BottomX should be equal for all, since they are scaled equal
-                         && almostEqual(rvmPyramid.BottomY, uniquePyramid.BottomY))
-                        && almostEqual(rvmPyramid.OffsetX, uniquePyramid.OffsetX)
-                        && almostEqual(rvmPyramid.OffsetY, uniquePyramid.OffsetY)
-                        && almostEqual(rvmPyramid.TopX, uniquePyramid.TopX)
-                        && almostEqual(rvmPyramid.TopY, uniquePyramid.TopY)
-                    )
-                    {
-                        uniquePyramids[uniquePyramid] = uniquePyramids[uniquePyramid] + 1;
-                        foundEqual = true;
-                        break;
-                    }
-                }
-
-                if (!foundEqual)
-                    uniquePyramids.Add(rvmPyramid, 0);
-
-
-                processedPyramids.Add(rvmPyramid);
-            }
-
-            Console.WriteLine("Pyramids");
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="input"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
-        public static (Vector3 Scales, RvmPyramid Pyramid) CreatePyramidWithUnitSizeInAllDimension(RvmPyramid input)
+        public static RvmPyramid CreatePyramidWithUnitSizeInAllDimension(RvmPyramid input)
         {
             if (input.BottomX < float.Epsilon || input.BottomY < float.Epsilon)
             {
@@ -88,11 +24,17 @@
             var inverseScale = new Vector3(input.BottomX / 1f, input.BottomY / 1f, input.Height / 1f);
 
             if (!scales.AsEnumerable().All(RvmSharp.Operations.FloatExtensions.IsFinite))
-                throw new Exception($"Unexpected non-finite scaling. Was {scales}");
+            {
+                // throw new Exception($"Unexpected non-finite scaling. Was {scales}");
+                return input;
+            }
+
+            if (!Matrix4x4.Decompose(input.Matrix, out var scale, out var rotation, out var translation))
+                return input;
 
             var scaledPyramid = input with
             {
-                Matrix = Matrix4x4.Multiply(input.Matrix, Matrix4x4.CreateScale(inverseScale)),
+                Matrix = Matrix4x4Helpers.CalculateTransformMatrix(translation, rotation, scale * inverseScale),
                 Height = input.Height * unitScaleZModifier,
                 BottomX = input.BottomX * unitScaleXModifier,
                 BottomY = input.BottomY * unitScaleYModifier,
@@ -103,7 +45,7 @@
             };
 
 
-            return (scales, scaledPyramid);
+            return scaledPyramid;
         }
 
         /// <summary>

@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Utils
 {
     using System;
+    using System.Diagnostics.Contracts;
     using System.Numerics;
 
     public static class AlgebraUtils
@@ -20,9 +21,11 @@ namespace CadRevealComposer.Utils
                 var x2 = Vector3.Transform(Vector3.UnitX, rot);
                 var a = MathF.Atan2(x2.Y, x2.X);
                 var sameDirection = Vector3.Distance(Vector3.UnitZ, normal) < 0.1f;
-                var rotationAngle = sameDirection ? a: -a;
+                var rotationAngle = sameDirection ? a : -a;
                 return (normal, rotationAngle);
-            } else {
+            }
+            else
+            {
                 // rot - combined rotation
                 // rot1 - yaw rotation
                 // rot2 - normal rotation
@@ -32,7 +35,8 @@ namespace CadRevealComposer.Utils
                 // 3. axes.x * rot1 = x vector without yaw rotation
                 // 4. find vector between axes.x*rot and axes.x*rot1 to find yaw rotation
                 var rot2 = Quaternion.Normalize(
-                Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes), MathF.Acos(Vector3.Dot(Vector3.UnitZ, normal))));
+                    Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes),
+                        MathF.Acos(Vector3.Dot(Vector3.UnitZ, normal))));
                 var rot1 = Quaternion.Normalize(Quaternion.Inverse(rot2) * rot);
                 var x1 = Vector3.Transform(Vector3.UnitX, rot1);
 
@@ -49,10 +53,9 @@ namespace CadRevealComposer.Utils
         /// Must be applied in the same order
         /// Source https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
         /// </summary>
-        /// <param name="q"></param>
-        /// <returns></returns>
-        public static (float rollX, float pitchY, float yawZ) ToEulerAngles(this Quaternion q)
+        public static (float rollX, float pitchY, float yawZ) ToEulerAngles(this Quaternion quaternion)
         {
+            var q = quaternion; // shorter name for readability
             // roll (x-axis rotation)
             var sinRollCosPitch = 2 * (q.W * q.X + q.Y * q.Z);
             var cosRollCosPitch = 1 - 2 * (q.X * q.X + q.Y * q.Y);

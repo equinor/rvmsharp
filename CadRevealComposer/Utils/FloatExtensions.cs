@@ -11,6 +11,7 @@
 
         /// <summary>
         /// Check if the floats are equal within tolerance.
+        /// Shorthand for "Math.Abs(self - other) &lt; acceptableDifference"
         /// </summary>
         /// <param name="self"></param>
         /// <param name="other"></param>

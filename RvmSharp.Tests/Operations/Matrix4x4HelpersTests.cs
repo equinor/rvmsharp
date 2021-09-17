@@ -21,7 +21,16 @@
                 rot,
                 scale);
 
+            Matrix4x4.Decompose(helperMatrix, out var outScale, out var outRot, out var outPos);
+
             Assert.That(helperMatrix, Is.EqualTo(definitiveMatrix));
+            Assert.That(outScale, Is.EqualTo(scale));
+            const float tolerance = 0.0000001f;
+            Assert.That(outRot.X, Is.EqualTo(rot.X).Within(tolerance));
+            Assert.That(outRot.Y, Is.EqualTo(rot.Y).Within(tolerance));
+            Assert.That(outRot.Z, Is.EqualTo(rot.Z).Within(tolerance));
+            Assert.That(outRot.W, Is.EqualTo(rot.W).Within(tolerance));
+            Assert.That(outPos, Is.EqualTo(pos));
         }
     }
 }

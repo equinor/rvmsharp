@@ -23,7 +23,7 @@
                     1);
 
                 var randomToleranceValue = 0.1f;
-                var box = TessellatorBridge.Tessellate(unitBox, 1, randomToleranceValue);
+                var box = TessellatorBridge.TessellateWithoutApplyingMatrix(unitBox, 1, randomToleranceValue);
                 Assert.That(box, Is.Not.Null);
                 Assert.That(box.Vertices, Has.Exactly(24).Items);
             }
@@ -38,7 +38,7 @@
                 var unitPyramid = new RvmPyramid(1, Matrix4x4.Identity, ArbitraryBoundingBox, 1, 1, 0, 1, 0, 0, 1);
 
                 var randomToleranceValue = 0.1f;
-                var pyramid = TessellatorBridge.Tessellate(unitPyramid, 1, randomToleranceValue);
+                var pyramid = TessellatorBridge.TessellateWithoutApplyingMatrix(unitPyramid, 1, randomToleranceValue);
                 Assert.That(pyramid, Is.Not.Null);
             }
 
@@ -65,7 +65,7 @@
                 var unitCylinder = new RvmCylinder(1, Matrix4x4.Identity, ArbitraryBoundingBox, 1, 1);
 
                 var randomToleranceValue = 0.1f;
-                var cylinder = TessellatorBridge.Tessellate(unitCylinder, 1, randomToleranceValue);
+                var cylinder = TessellatorBridge.TessellateWithoutApplyingMatrix(unitCylinder, 1, randomToleranceValue);
 
                 Assert.That(cylinder, Is.Not.Null);
                 Assert.That(cylinder.Triangles, Has.Exactly(156).Items);
@@ -82,7 +82,7 @@
                 var rvmLine = new RvmLine(1, Matrix4x4.Identity, ArbitraryBoundingBox, 1, 3);
 
                 var randomToleranceValue = 0.1f;
-                var line = TessellatorBridge.Tessellate(rvmLine, 1, randomToleranceValue);
+                var line = TessellatorBridge.TessellateWithoutApplyingMatrix(rvmLine, 1, randomToleranceValue);
 
                 Assert.That(line, Is.Null);
             }
