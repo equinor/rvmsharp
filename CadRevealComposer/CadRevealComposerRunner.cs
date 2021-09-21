@@ -13,6 +13,7 @@ namespace CadRevealComposer
     using RvmSharp.Containers;
     using RvmSharp.Exporters;
     using RvmSharp.Primitives;
+    using RvmSharp.Tessellation;
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
@@ -34,10 +35,25 @@ namespace CadRevealComposer
 
     public static class CadRevealComposerRunner
     {
+        private record SectorInfo(
+            uint SectorId,
+            uint? ParentSectorId,
+            long Depth,
+            string Path,
+            string Filename,
+            string[] PeripheralFiles,
+            long EstimatedTriangleCount,
+            long EstimatedDrawCallCount,
+            ulong MeshId,
+            IReadOnlyList<APrimitive> Geometries,
+            RvmBoundingBox BoundingBox
+        );
+
         private const int I3DFMagicBytes = 1178874697; // I3DF chars as bytes.
         private static readonly TreeIndexGenerator TreeIndexGenerator = new();
         private static readonly NodeIdProvider NodeIdGenerator = new();
         private static readonly SequentialIdGenerator MeshIdGenerator = new SequentialIdGenerator();
+        private static readonly SequentialIdGenerator SectorIdGenerator = new SequentialIdGenerator();
 
         public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
 
@@ -50,7 +66,7 @@ namespace CadRevealComposer
 
             Console.WriteLine("Reading RvmData");
             var rvmTimer = Stopwatch.StartNew();
-            var progressReport = new Progress<(string fileName, int progress, int total)>((x) =>
+            var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
             {
                 Console.WriteLine($"{x.fileName} ({x.progress}/{x.total})");
             });
@@ -109,82 +125,235 @@ namespace CadRevealComposer
 
 
 
+
+            var exportHierarchyDatabaseTask = Task.Run(() =>
+            {
+                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+                ExportHierarchyDatabase(databasePath, allNodes);
+                Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
+            });
+
             var exportInstancedMeshes = Stopwatch.StartNew();
             var instancedMeshesFileId = MeshIdGenerator.GetNextId();
 
             // The following code should be refactored, i'm just not sure how
             // We need to remove all instancedMeshes, and the re-add them.
             //  The reason for this is that they are immutable, and we actually add new copies with altered data.
-            var notYetExportedInstancedMeshes = geometries.OfType<InstancedMesh>().ToArray();
-
-            geometries = geometries.Except(notYetExportedInstancedMeshes).ToList();
-
+            var instancedMeshes = geometries.OfType<InstancedMesh>().ToArray();
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
-            var meshInstanceDictionary = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(p => p.SourceMesh).ToArray());
-            geometries = geometries.Where(g => g is not ProtoMesh).ToList();
 
-            var exportedInstancedMeshes = ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, notYetExportedInstancedMeshes);
-            geometries.AddRange(exportedInstancedMeshes);
+            static IEnumerable<InstancedMesh> ToInstanceMesh(IGrouping<RvmFacetGroup, KeyValuePair<ProtoMesh, (RvmFacetGroup template, Matrix4x4 transform)>> group)
+            {
+                var template = group.Key;
+                var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
+                foreach (var primitive in group)
+                {
+                    Matrix4x4.Decompose(primitive.Value.transform, out var scale, out var rotation, out var translation);
+                    var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
+                    yield return new InstancedMesh(
+                        new CommonPrimitiveProperties(primitive.Key.NodeId, primitive.Key.TreeIndex, translation, rotation, scale, primitive.Key.Diagonal, primitive.Key.AxisAlignedBoundingBox, primitive.Key.Color, (Vector3.One, 0f)), // TODO: fix
+                        0, 0, 0,
+                        translation.X, translation.Y, translation.Z,
+                        rollX, pitchY, yawZ,
+                        scale.X, scale.Y, scale.Z)
+                    {
+                        TempTessellatedMesh = mesh
+                    };
+                }
+            }
+
+            var instancedMeshesFromProtoMeshes = RvmFacetGroupMatcher.MatchAll(protoMeshes)
+                .GroupBy(x => x.Value.template)
+                .SelectMany(ToInstanceMesh)
+                .ToImmutableList();
+            
+            var allInstancedMeshes = instancedMeshes.Concat(instancedMeshesFromProtoMeshes).ToList();
+            var exportedInstancedMeshes = ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
+
+            geometries = geometries
+                .Except(instancedMeshes)
+                .Except(protoMeshes)
+                .Concat(exportedInstancedMeshes)
+                .ToList();
 
             Console.WriteLine($"Exported instances in {exportInstancedMeshes.Elapsed}");
 
             Console.WriteLine($"Finished Geometry Conversion in: {geometryConversionTimer.Elapsed}");
 
+            var sectors = SplitIntoSectors(geometries, instancedMeshesFileId, (uint)SectorIdGenerator.GetNextId(), 0, "0", null)
+                .OrderBy(x => x.SectorId)
+                .ToImmutableArray();
+            foreach (var sector in sectors)
+            {
+                ExportSector(sector, outputDirectory);
+            }
+            WriteSceneFile(sectors, parameters, outputDirectory);
 
-
-
-
-
-
-            var sectors = SplitIntoSectors(geometries, allNodes, rootNode.BoundingBoxAxisAligned!);
-            var sectorFiles = sectors
-                    .Select(s => ExportSector(outputDirectory, MeshIdGenerator.GetNextId(), s.Geometries, s.Nodes, s.BoundingBox))
-                    .ToArray();
-            WriteSceneFile(sectorFiles, parameters, outputDirectory);
+            Task.WaitAll(exportHierarchyDatabaseTask);
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         }
 
-        private static IEnumerable<(List<APrimitive> Geometries, CadRevealNode[] Nodes, RvmBoundingBox BoundingBox)> SplitIntoSectors(List<APrimitive> allGeometries, CadRevealNode[] allNodes, RvmBoundingBox boundingBox)
+        private static void ExportHierarchyDatabase(string databasePath, CadRevealNode[] allNodes)
         {
-            // TODO: sort by size
-            // TODO: add to sector based until limits on triangle/draw count
-            // TODO: 8 sub sectors
-            // TODO: group by NodeId?z
+            var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 
-            yield return (allGeometries, allNodes, boundingBox);
+            ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
+            var exporter = new DatabaseComposer(databaseLogger);
+            exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
+
+            // TODO: Export DatabaseId to some metadata available to the Model Service.
         }
 
-        private static void WriteSceneFile(IEnumerable<FileI3D> file, Parameters parameters, DirectoryInfo outputDirectory)
+        private static IEnumerable<SectorInfo> SplitIntoSectors(List<APrimitive> allGeometries, ulong instancedMeshesFileId, uint sectorId, int depth, string path, uint? parentSectorId)
         {
-            static Sector FromFileSector(FileSector fileSector)
+            static int CalculateVoxelKey(RvmBoundingBox boundingBox, float midX, float midY, float midZ)
             {
-                var sectorFileHeader = fileSector.Header;
-                return new Sector()
+                if (boundingBox.Min.X < midX && boundingBox.Max.X > midX ||
+                    boundingBox.Min.Y < midY && boundingBox.Max.Y > midY ||
+                    boundingBox.Min.Z < midZ && boundingBox.Max.Z > midZ )
                 {
-                    Id = sectorFileHeader.SectorId,
-                    ParentId = sectorFileHeader.ParentSectorId ?? -1,
-                    BoundingBox =
-                        new BoundingBox(
-                            Min: new BbVector3(sectorFileHeader.BboxMin.X, sectorFileHeader.BboxMin.Y,
-                                sectorFileHeader.BboxMin.Z),
-                            Max: new BbVector3(sectorFileHeader.BboxMax.X, sectorFileHeader.BboxMax.Y,
-                                sectorFileHeader.BboxMax.Z)
-                        ),
-                    Depth = sectorFileHeader.ParentSectorId == null ? 1 : throw new NotImplementedException(),
-                    Path = sectorFileHeader.SectorId == 0 ? "0/" : throw new NotImplementedException(),
-                    IndexFile = new IndexFile(
-                        FileName: $"sector_{sectorFileHeader.SectorId}.i3d",
-                        DownloadSize: 500001, // TODO: Find a real download size
-                        PeripheralFiles: new[] { $"mesh_{meshId}.ctm", $"mesh_{instancedMeshesFileId}.ctm" }),
-                    FacesFile = null, // Not implemented
-                    EstimatedTriangleCount = fileSector.PrimitiveCollections.TriangleMeshCollection
-                            .Sum(x => Convert.ToInt64(x.TriangleCount)), // This is a guesstimate, not sure how to calculate non-mesh triangle count,
-                    EstimatedDrawCallCount = 1337 // Not calculated
+                    return 0; // crosses the mid boundary in either X,Y,Z
+                }
+
+                // categorize which of the 8 sub sectors it belongs to
+                return (boundingBox.Min.X < midX, boundingBox.Min.Y < midY, boundingBox.Min.Z < midZ) switch
+                {
+                    (false, false, false) => 1,
+                    (false, false, true) => 2,
+                    (false, true, false) => 3,
+                    (false, true, true) => 4,
+                    (true, false, false) => 5,
+                    (true, false, true) => 6,
+                    (true, true, false) => 7,
+                    (true, true, true) => 8
                 };
             }
 
-            var scene = new Scene()
+            var minX = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.X);
+            var minY = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.Y);
+            var minZ = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.Z);
+            var maxX = allGeometries.Max(x => x.AxisAlignedBoundingBox.Max.X);
+            var maxY = allGeometries.Max(x => x.AxisAlignedBoundingBox.Max.Y);
+            var maxZ = allGeometries.Max(x => x.AxisAlignedBoundingBox.Max.Z);
+
+            var midX = minX + ((maxX - minX) / 2);
+            var midY = minY + ((maxY - minY) / 2);
+            var midZ = minZ + ((maxZ - minZ) / 2);
+
+            var grouped = allGeometries
+                .GroupBy(x => CalculateVoxelKey(x.AxisAlignedBoundingBox, midX, midY, midZ))
+                .OrderBy(x => x.Key)
+                .ToImmutableList();
+
+            var isRoot = sectorId == 0;
+            var isLeaf = depth > 5 || allGeometries.Count < 5000 || grouped.Count == 1;
+
+            if (isLeaf)
+            {
+                var meshId = MeshIdGenerator.GetNextId();
+                yield return new SectorInfo(
+                    sectorId,
+                    parentSectorId,
+                    depth,
+                    path,
+                    $"sector_{sectorId}.i3d",
+                    new[] { $"mesh_{meshId}.ctm" },
+                    1234, // TODO: calculate
+                    1, // TODO: calculate
+                    meshId,
+                    allGeometries,
+                    new RvmBoundingBox(
+                        new Vector3(minX, minY, minZ),
+                        new Vector3(maxX, maxY, maxZ)
+                    ));
+            }
+            else
+            {
+                var hasRootVoxel = grouped.Any(x => x.Key == 0); // TODO: fix this one, ERL
+                foreach (IGrouping<int, APrimitive> group in grouped)
+                {
+                    if (!hasRootVoxel)
+                    {
+                        var meshId = MeshIdGenerator.GetNextId();
+                        yield return new SectorInfo(
+                            sectorId,
+                            parentSectorId,
+                            depth,
+                            path,
+                            $"sector_{sectorId}.i3d",
+                            Array.Empty<string>(),
+                            0,
+                            0,
+                            meshId,
+                            Array.Empty<APrimitive>(),
+                            new RvmBoundingBox(
+                                new Vector3(minX, minY, minZ),
+                                new Vector3(maxX, maxY, maxZ)
+                            ));
+                    }
+                    if (group.Key == 0)
+                    {
+                        var meshId = MeshIdGenerator.GetNextId();
+                        yield return new SectorInfo(
+                            sectorId,
+                            parentSectorId,
+                            depth,
+                            path,
+                            $"sector_{sectorId}.i3d",
+                            isRoot
+                                ? new[] { $"mesh_{instancedMeshesFileId}.ctm", $"mesh_{meshId}.ctm" }
+                                : new[] { $"mesh_{meshId}.ctm" },
+                            1234, // TODO: calculate
+                            1, // TODO: calculate
+                            meshId,
+                            group.ToList(),
+                            new RvmBoundingBox(
+                                new Vector3(minX, minY, minZ),
+                                new Vector3(maxX, maxY, maxZ)
+                            ));
+                    }
+                    else
+                    {
+                        var id = SectorIdGenerator.GetNextId();
+                        var sectors = SplitIntoSectors(group.ToList(), instancedMeshesFileId, (uint)id, depth + 1, $"{path}/{id}", sectorId);
+                        foreach (var sector in sectors)
+                        {
+                            yield return sector;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void WriteSceneFile(ImmutableArray<SectorInfo> sectors, Parameters parameters, DirectoryInfo outputDirectory)
+        {
+            static Sector FromSector(SectorInfo sector)
+            {
+                return new Sector
+                {
+                    Id = sector.SectorId,
+                    ParentId = sector.ParentSectorId.HasValue
+                        ? sector.ParentSectorId.Value
+                        : -1,
+                    BoundingBox =
+                        new BoundingBox(
+                            Min: new BbVector3(sector.BoundingBox.Min.X, sector.BoundingBox.Min.Y, sector.BoundingBox.Min.Z),
+                            Max: new BbVector3(sector.BoundingBox.Max.X, sector.BoundingBox.Max.Y, sector.BoundingBox.Max.Z)
+                        ),
+                    Depth = sector.Depth,
+                    Path = sector.Path,
+                    IndexFile = new IndexFile(
+                        FileName: sector.Filename,
+                        DownloadSize: 0, // TODO: update scene file after generating ctm files
+                        PeripheralFiles: sector.PeripheralFiles),
+                    FacesFile = null, // Not implemented
+                    EstimatedTriangleCount = sector.EstimatedTriangleCount,
+                    EstimatedDrawCallCount = sector.EstimatedDrawCallCount
+                };
+            }
+
+            var scene = new Scene
             {
                 Version = 8,
                 ProjectId = parameters.ProjectId,
@@ -193,39 +362,20 @@ namespace CadRevealComposer
                 SubRevisionId = -1,
                 MaxTreeIndex = TreeIndexGenerator.CurrentMaxGeneratedIndex,
                 Unit = "Meters",
-                Sectors = file.Select(x => FromFileSector(x.FileSector)).ToArray()
+                Sectors = sectors.Select(FromSector).ToArray()
             };
 
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
             JsonSerializeToFile(scene, scenePath, Formatting.Indented);
         }
 
-        private static FileI3D ExportSector(
-            DirectoryInfo outputDirectory,
-            ulong meshId,
-            List<APrimitive> geometries,
-            CadRevealNode[] allNodes,
-            RvmBoundingBox boundingBox)
+        private static void ExportSector(SectorInfo sector, DirectoryInfo outputDirectory)
         {
             var exportObjTask = Task.Run(() =>
             {
                 var objExportTimer = Stopwatch.StartNew();
-                ExportMeshesToObjFile(outputDirectory, meshId, geometries.OfType<TriangleMesh>().ToArray());
+                ExportMeshesToObjFile(outputDirectory, sector.MeshId, sector.Geometries.OfType<TriangleMesh>().ToArray());
                 Console.WriteLine($"Mesh .obj file exported (On background thread) in {objExportTimer.Elapsed}");
-            });
-
-            var exportHierarchyTask = Task.Run(() =>
-            {
-                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-
-                var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
-
-                ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
-                var exporter = new DatabaseComposer(databaseLogger);
-                exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
-
-                // TODO: Export DatabaseId to some metadata available to the Model Service.
-                Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
             });
 
             var groupAttributesTimer = Stopwatch.StartNew();
@@ -264,83 +414,86 @@ namespace CadRevealComposer
                     case I3dfAttribute.AttributeType.Color:
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
                         colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(
-                            geometries, attributeKind, new RgbaColorComparer());
+                            sector.Geometries, attributeKind, new RgbaColorComparer());
                         break;
                     case I3dfAttribute.AttributeType.Diagonal:
                         diagonals =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterX:
                         centerX =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterY:
                         centerY =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.CenterZ:
                         centerZ =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Normal:
                         // ReSharper disable once RedundantTypeArgumentsOfMethod
-                        normals = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(
-                            geometries, attributeKind, new XyzVector3Comparer());
+                        normals =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(
+                                sector.Geometries, attributeKind, new XyzVector3Comparer());
                         break;
                     case I3dfAttribute.AttributeType.Delta:
-                        deltas = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
+                        deltas =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Height:
                         heights =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Radius:
                         radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
+                            sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.Angle:
                         angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
+                            sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationX:
                         translationsX =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationY:
                         translationsY =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.TranslationZ:
                         translationsZ =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleX:
                         scalesX =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleY:
                         scalesY =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.ScaleZ:
                         scalesZ =
-                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(geometries,
-                                attributeKind);
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
+                                sector.Geometries, attributeKind);
                         break;
                     case I3dfAttribute.AttributeType.FileId:
-                        fileIds = APrimitiveReflectionHelpers
-                            .GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, attributeKind).ToArray();
+                        fileIds =
+                            APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(
+                                sector.Geometries, attributeKind).ToArray();
                         break;
                     case I3dfAttribute.AttributeType.Texture:
                         textures = Array.Empty<Texture>();
@@ -356,7 +509,7 @@ namespace CadRevealComposer
             Console.WriteLine($"Retrieved all distinct attributes in: {getAttributeValuesTimer.Elapsed}");
 
             var primitiveCollections = new PrimitiveCollections();
-            foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
+            foreach (var geometriesByType in sector.Geometries.GroupBy(g => g.GetType()))
             {
                 var elementType = geometriesByType.Key;
                 if (elementType == typeof(ProtoMesh))
@@ -369,11 +522,11 @@ namespace CadRevealComposer
                 fieldInfo.SetValue(primitiveCollections, typedArray);
             }
 
-            var file = new FileI3D()
+            var file = new FileI3D
             {
                 FileSector = new FileSector
                 {
-                    Header = new Header()
+                    Header = new Header
                     {
                         // Constants
                         MagicBytes = I3DFMagicBytes,
@@ -381,11 +534,11 @@ namespace CadRevealComposer
                         OptimizerVersion = 1,
 
                         // Arbitrary selected numbers
-                        SectorId = 0,
-                        ParentSectorId = null,
-                        BboxMax = boundingBox.Max,
-                        BboxMin = boundingBox.Min,
-                        Attributes = new Attributes()
+                        SectorId = sector.SectorId,
+                        ParentSectorId = sector.ParentSectorId,
+                        BboxMax = sector.BoundingBox.Max,
+                        BboxMin = sector.BoundingBox.Min,
+                        Attributes = new Attributes
                         {
                             Angle = angles,
                             CenterX = centerX,
@@ -418,18 +571,16 @@ namespace CadRevealComposer
             I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
             Console.WriteLine($"Finished writing i3d Sectors in {i3dTimer.Elapsed}");
 
-            Console.WriteLine($"Total primitives {geometries.Count}/{PrimitiveCounter.pc}");
+            Console.WriteLine($"Total primitives {sector.Geometries.Count}/{PrimitiveCounter.pc}");
             Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
 
             // Wait until obj and hierarchy export is done
-            Task.WaitAll(exportObjTask, exportHierarchyTask);
-
-            return file;
+            Task.WaitAll(exportObjTask);
         }
 
-        private static List<InstancedMesh> ExportInstancedMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshFileId, IReadOnlyList<InstancedMesh> meshGeometries)
+        private static List<InstancedMesh> ExportInstancedMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<InstancedMesh> meshGeometries)
         {
-            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshFileId}.obj"));
+            using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
             objExporter.StartObject("root");
             var exportedInstancedMeshes = new List<InstancedMesh>();
             uint triangleOffset = 0;
@@ -453,7 +604,7 @@ namespace CadRevealComposer
                 IEnumerable<InstancedMesh> adjustedInstancedMeshes = instancedMeshesGroupedByMesh
                     .Select(instancedMesh => instancedMesh with
                     {
-                        FileId = meshFileId,
+                        FileId = meshId,
                         TriangleOffset = triangleOffset,
                         TriangleCount = triangleCount,
                         TempTessellatedMesh = null // Remove this, no longer used.
@@ -466,7 +617,7 @@ namespace CadRevealComposer
                 triangleOffset += triangleCount;
             }
 
-            Console.WriteLine($"{counter} distinct instanced meshes exported to MeshFile{meshFileId}");
+            Console.WriteLine($"{counter} distinct instanced meshes exported to MeshFile{meshId}");
 
             return exportedInstancedMeshes;
         }
@@ -474,7 +625,7 @@ namespace CadRevealComposer
         private static void ExportMeshesToObjFile(DirectoryInfo outputDirectory, ulong meshId, IReadOnlyList<TriangleMesh> meshGeometries)
         {
             using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshId}.obj"));
-            objExporter.StartObject($"root"); // Keep a single object in each file
+            objExporter.StartObject("root"); // Keep a single object in each file
 
             // Export Meshes
             foreach (var triangleMesh in meshGeometries)
