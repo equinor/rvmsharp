@@ -2,6 +2,7 @@
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics.CodeAnalysis;
     using System.Drawing;
     using System.Linq;
 
@@ -80,14 +81,17 @@
         /// <param name="code">RVM Color value</param>
         /// <returns>Color</returns>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
-        public static Color GetColorByCode(uint code)
+        public static bool TryGetColorByCode(uint code, out Color color)
         {
             if (code < 1 || code > PdmsColorsList.Count)
-                throw new ArgumentOutOfRangeException(
-                    $"Color code must be between 1 and {PdmsColorsList.Count} inclusive, got: {code}");
+            {
+                color = default;
+                return false;
+            }
 
             var index = (int)code - 1;
-            return PdmsColorsList[index].Color;
+            color = PdmsColorsList[index].Color;
+            return true;
         }
 
         /// <summary>
