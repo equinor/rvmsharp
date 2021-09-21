@@ -10,15 +10,13 @@
     {
         private static Color GetColor(RvmNode container)
         {
-            try
+            if (PdmsColors.TryGetColorByCode(container.MaterialId, out var color))
             {
-                return PdmsColors.GetColorByCode(container.MaterialId);
+                return color;
             }
-            catch (ArgumentOutOfRangeException)
-            {
-                // TODO: Fallback color is arbitrarily chosen. It seems we have some issue with the material mapping table, and should have had more colors.
-                return Color.Magenta;
-            }
+
+            // TODO: Fallback color is arbitrarily chosen. It seems we have some issue with the material mapping table, and should have had more colors.
+            return Color.Magenta;
         }
 
         /// <summary>
@@ -32,7 +30,7 @@
                 throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPrimitive.Matrix);
             }
 
-            var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
+            var axisAlignedBoundingBox = rvmPrimitive.CalculateAxisAlignedBoundingBox();
 
             var colors = GetColor(container);
 
@@ -42,7 +40,8 @@
                 pos,
                 rot,
                 scale,
-                axisAlignedDiagonal,
+                axisAlignedBoundingBox.Diagonal,
+                axisAlignedBoundingBox,
                 colors,
                 RotationDecomposed: rot.DecomposeQuaternion());
         }

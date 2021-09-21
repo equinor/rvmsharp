@@ -19,6 +19,7 @@ namespace CadRevealComposer.Primitives
         Quaternion Rotation,
         Vector3 Scale,
         float AxisAlignedDiagonal,
+        RvmBoundingBox AxisAlignedBoundingBox,
         Color Color,
         (Vector3 Normal, float RotationAngle) RotationDecomposed);
 
@@ -37,6 +38,8 @@ namespace CadRevealComposer.Primitives
         float CenterY,
         [property: I3df(I3dfAttribute.AttributeType.CenterZ)]
         float CenterZ,
+        [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
+        RvmBoundingBox AxisAlignedBoundingBox,
         [property: JsonIgnore,
                    Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true),
                    I3df(I3dfAttribute.AttributeType.Ignore)]
@@ -56,7 +59,8 @@ namespace CadRevealComposer.Primitives
                 commonPrimitiveProperties.AxisAlignedDiagonal,
                 commonPrimitiveProperties.Position.X,
                 commonPrimitiveProperties.Position.Y,
-                commonPrimitiveProperties.Position.Z)
+                commonPrimitiveProperties.Position.Z,
+                commonPrimitiveProperties.AxisAlignedBoundingBox)
         {
         }
 
@@ -68,8 +72,7 @@ namespace CadRevealComposer.Primitives
         {
             PrimitiveCounter.pc++;
             var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
-            (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _,
-                _,
+            (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
                 (Vector3 normal, float rotationAngle)) = commonPrimitiveProperties;
 
             const uint tempHackMeshFileId = 0; // TODO: Unhardcode
