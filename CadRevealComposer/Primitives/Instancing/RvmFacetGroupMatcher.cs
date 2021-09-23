@@ -8,46 +8,42 @@ namespace CadRevealComposer.Primitives.Instancing
 
     public static class RvmFacetGroupMatcher
     {
-        public static Dictionary<ProtoMesh, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(ProtoMesh[] protoMeshes)
+        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
         {
-            return protoMeshes
-                .GroupBy(CalculateKey)
-                .Select(g => (g.Key, g.ToArray()))
-                .AsParallel()
-                .Select(DoMatch)
-                .SelectMany(d => d)
+            return groups
+                .GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).AsParallel()
+                .Select(DoMatch).SelectMany(d => d)
                 .ToDictionary(r => r.Key, r => r.Value);
         }
 
-        private static Dictionary<ProtoMesh, (RvmFacetGroup, Matrix4x4)> DoMatch((long groupId, ProtoMesh[] protoMeshes) groups)
+        private static Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> DoMatch((long groupId, RvmFacetGroup[] groups) groups)
         {
             // id -> facetgroup, transform
             // templates -> facetgroup, count
             var templates = new Dictionary<RvmFacetGroup, int>();
-            var result = new Dictionary<ProtoMesh, (RvmFacetGroup, Matrix4x4)>();
+            var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
 
-            foreach (var protoMesh in groups.protoMeshes)
+            foreach (var e in groups.groups)
             {
-                var facetGroup = protoMesh.SourceMesh;
                 bool found = false;
 
                 foreach (var x in templates)
                 {
-                    if (ReferenceEquals(x.Key, facetGroup))
+                    if (ReferenceEquals(x.Key, e))
                         continue;
-                    if (!Match(x.Key, facetGroup, out var transform))
+                    if (!Match(x.Key, e, out var transform))
                         continue;
 
                     templates[x.Key] += 1;
-                    result.Add(protoMesh, (x.Key, transform));
+                    result.Add(e, (x.Key, transform));
                     found = true;
                     break;
                 }
 
                 if (!found)
                 {
-                    templates.Add(facetGroup, 1);
-                    result.Add(protoMesh, (facetGroup, Matrix4x4.Identity));
+                    templates.Add(e, 1);
+                    result.Add(e, (e, Matrix4x4.Identity));
                 }
             }
 
@@ -60,11 +56,10 @@ namespace CadRevealComposer.Primitives.Instancing
         /// the key is used to create compare buckets of facet groups. There is no point to compare facet groups with
         /// different keys, since they will always be different
         /// </summary>
-        /// <param name="protoMesh">proto mesh to calculate a key for</param>
+        /// <param name="facetGroup">facet group to calculate a key for</param>
         /// <returns>a key reflection information amount in facet group</returns>
-        public static long CalculateKey(ProtoMesh protoMesh)
+        public static long CalculateKey(RvmFacetGroup facetGroup)
         {
-            var facetGroup = protoMesh.SourceMesh;
             return facetGroup.Polygons.Length * 1000_000_000L
                    + facetGroup.Polygons.Sum(p => p.Contours.Length) * 1000_000L
                    + facetGroup.Polygons.SelectMany(p => p.Contours).Sum(c => c.Vertices.Length);
