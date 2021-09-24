@@ -63,25 +63,53 @@ namespace CadRevealComposer
         {
             static int CalculateVoxelKey(RvmBoundingBox boundingBox, float midX, float midY, float midZ)
             {
+                const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
+
                 if (boundingBox.Min.X < midX && boundingBox.Max.X > midX ||
                     boundingBox.Min.Y < midY && boundingBox.Max.Y > midY ||
                     boundingBox.Min.Z < midZ && boundingBox.Max.Z > midZ)
                 {
-                    return 0; // crosses the mid boundary in either X,Y,Z
+                    return MainVoxel; // crosses the mid boundary in either X,Y,Z
                 }
 
-                // categorize which of the 8 sub sectors it belongs to
+                // at this point we know the primitive does not cross mid boundary in X,Y,Z - meaning it can be placed in one of the eight sub quadrants
                 return (boundingBox.Min.X < midX, boundingBox.Min.Y < midY, boundingBox.Min.Z < midZ) switch
                 {
-                    (false, false, false) => 1,
-                    (false, false, true) => 2,
-                    (false, true, false) => 3,
-                    (false, true, true) => 4,
-                    (true, false, false) => 5,
-                    (true, false, true) => 6,
-                    (true, true, false) => 7,
-                    (true, true, true) => 8
+                    (false, false, false) => SubVoxelA,
+                    (false, false, true) => SubVoxelB,
+                    (false, true, false) => SubVoxelC,
+                    (false, true, true) => SubVoxelD,
+                    (true, false, false) => SubVoxelE,
+                    (true, false, true) => SubVoxelF,
+                    (true, true, false) => SubVoxelG,
+                    (true, true, true) => SubVoxelH
                 };
+            }
+
+            static int CalculateVoxelKeyForNodeGroup(IEnumerable<APrimitive> nodeGroupPrimitives, float midX, float midY, float midZ)
+            {
+                const int MainVoxel = 0;
+
+                // all primitives with the same NodeId shall be placed in the same voxel
+                var lastVoxelKey = int.MinValue;
+                foreach (var primitive in nodeGroupPrimitives)
+                {
+                    var voxelKey = CalculateVoxelKey(primitive.AxisAlignedBoundingBox, midX, midY, midZ);
+                    if (voxelKey == MainVoxel)
+                    {
+                        return MainVoxel;
+                    }
+                    var differentVoxelKeyDetected = lastVoxelKey != int.MinValue && lastVoxelKey != voxelKey;
+                    if (differentVoxelKeyDetected)
+                    {
+                        return MainVoxel;
+                    }
+
+                    lastVoxelKey = voxelKey;
+                }
+
+                // at this point all primitives hashes to the same sub voxel
+                return lastVoxelKey;
             }
 
             var minX = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.X);
@@ -96,7 +124,8 @@ namespace CadRevealComposer
             var midZ = minZ + ((maxZ - minZ) / 2);
 
             var grouped = allGeometries
-                .GroupBy(x => CalculateVoxelKey(x.AxisAlignedBoundingBox, midX, midY, midZ))
+                .GroupBy(x => x.NodeId)
+                .GroupBy(x => CalculateVoxelKeyForNodeGroup(x, midX, midY, midZ))
                 .OrderBy(x => x.Key)
                 .ToImmutableList();
 
@@ -125,7 +154,7 @@ namespace CadRevealComposer
             else
             {
                 var hasRootVoxel = grouped.Any(x => x.Key == 0); // TODO: fix this one, ERL
-                foreach (IGrouping<int, APrimitive> group in grouped)
+                foreach (var group in grouped)
                 {
                     if (!hasRootVoxel)
                     {
@@ -161,7 +190,7 @@ namespace CadRevealComposer
                             1234, // TODO: calculate
                             1, // TODO: calculate
                             meshId,
-                            group.ToList(),
+                            group.SelectMany(x => x).ToList(),
                             new RvmBoundingBox(
                                 new Vector3(minX, minY, minZ),
                                 new Vector3(maxX, maxY, maxZ)
@@ -170,7 +199,7 @@ namespace CadRevealComposer
                     else
                     {
                         var id = sectorIdGenerator.GetNextId();
-                        var sectors = SplitIntoSectors(group.ToList(), instancedMeshesFileId, (uint)id, depth + 1, $"{path}/{id}", sectorId, meshIdGenerator, sectorIdGenerator);
+                        var sectors = SplitIntoSectors(group.SelectMany(x => x).ToList(), instancedMeshesFileId, (uint)id, depth + 1, $"{path}/{id}", sectorId, meshIdGenerator, sectorIdGenerator);
                         foreach (var sector in sectors)
                         {
                             yield return sector;
