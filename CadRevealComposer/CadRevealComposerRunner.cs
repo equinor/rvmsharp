@@ -61,10 +61,14 @@ namespace CadRevealComposer
                 foreach (var primitive in group)
                 {
                     var protoMesh = protoMeshesMap[primitive.Key];
-                    Matrix4x4.Decompose(primitive.Value.transform, out var scale, out var rotation, out var translation);
+                    if (!Matrix4x4.Decompose(primitive.Value.transform, out var scale, out var rotation, out var translation))
+                    {
+                        throw new Exception("Could not decompose transformation matrix.");
+                    }
                     var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
+                    var rotationDecomposed = rotation.DecomposeQuaternion();
                     yield return new InstancedMesh(
-                        new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, translation, rotation, scale, protoMesh.Diagonal, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.One, 0f)), // TODO: fix
+                        new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, translation, rotation, scale, protoMesh.Diagonal, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, rotationDecomposed),
                         0, 0, 0,
                         translation.X, translation.Y, translation.Z,
                         rollX, pitchY, yawZ,
