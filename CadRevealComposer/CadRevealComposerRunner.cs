@@ -152,7 +152,7 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Finished Geometry Conversion in: {geometryConversionTimer.Elapsed}");
 
-            var sectors = SceneCreator.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, (uint)SectorIdGenerator.GetNextId(), 0, "0", null, MeshIdGenerator, SectorIdGenerator)
+            var sectors = SceneCreator.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshIdGenerator, SectorIdGenerator)
                 .OrderBy(x => x.SectorId)
                 .ToImmutableArray();
             foreach (var sector in sectors)
