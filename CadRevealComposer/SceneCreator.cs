@@ -35,7 +35,7 @@ namespace CadRevealComposer
             string[] PeripheralFiles,
             long EstimatedTriangleCount,
             long EstimatedDrawCallCount,
-            ulong MeshId,
+            ulong? MeshId,
             IReadOnlyList<APrimitive> Geometries,
             RvmBoundingBox BoundingBox
         );
@@ -129,15 +129,18 @@ namespace CadRevealComposer
 
             if (isLeaf)
             {
-                var meshId = meshIdGenerator.GetNextId();
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
+                var hasMeshes = allGeometries.OfType<TriangleMesh>().Any();
+                var meshId = hasMeshes ? meshIdGenerator.GetNextId() : (ulong?)null;
                 yield return new SectorInfo(
                     sectorId,
                     parentSectorId,
                     recursiveDepth,
                     $"{parentPath}/{sectorId}",
                     $"sector_{sectorId}.i3d",
-                    new[] { $"mesh_{meshId}.ctm" },
+                    hasMeshes
+                        ? new[] { $"mesh_{meshId}.ctm" }
+                        : Array.Empty<string>(),
                     1234, // TODO: calculate
                     1, // TODO: calculate
                     meshId,
@@ -161,7 +164,9 @@ namespace CadRevealComposer
                 {
                     if (group.Key == MainVoxel)
                     {
-                        var meshId = meshIdGenerator.GetNextId();
+                        var geometries = group.SelectMany(x => x).ToList();
+                        var hasMeshes = geometries.OfType<TriangleMesh>().Any();
+                        var meshId = hasMeshes ? meshIdGenerator.GetNextId() : (ulong?)null;
                         var sectorId = (uint)sectorIdGenerator.GetNextId();
                         var path = isRoot
                             ? $"{sectorId}"
@@ -176,13 +181,17 @@ namespace CadRevealComposer
                             recursiveDepth,
                             path,
                             $"sector_{sectorId}.i3d",
-                            isRoot
-                                ? new[] { $"mesh_{instancedMeshesFileId}.ctm", $"mesh_{meshId}.ctm" }
-                                : new[] { $"mesh_{meshId}.ctm" },
+                            (isRoot, hasMeshes) switch
+                            {
+                                (true, true) => new[] { $"mesh_{instancedMeshesFileId}.ctm", $"mesh_{meshId}.ctm" },
+                                (true, false) => new[] { $"mesh_{instancedMeshesFileId}.ctm"},
+                                (false, true) => new[] { $"mesh_{meshId}.ctm" },
+                                (false, false) => Array.Empty<string>()
+                            },
                             1234, // TODO: calculate
                             1, // TODO: calculate
                             meshId,
-                            group.SelectMany(x => x).ToList(),
+                            geometries,
                             new RvmBoundingBox(
                                 new Vector3(minX, minY, minZ),
                                 new Vector3(maxX, maxY, maxZ)
@@ -252,12 +261,15 @@ namespace CadRevealComposer
 
         public static void ExportSector(SectorInfo sector, DirectoryInfo outputDirectory)
         {
-            var exportObjTask = Task.Run(() =>
-            {
-                var objExportTimer = Stopwatch.StartNew();
-                ExportMeshesToObjFile(outputDirectory, sector.MeshId, sector.Geometries.OfType<TriangleMesh>().ToArray());
-                Console.WriteLine($"Mesh .obj file exported (On background thread) in {objExportTimer.Elapsed}");
-            });
+            var exportObjTask = sector.MeshId.HasValue
+                ? Task.Run(() =>
+                    {
+                        var objExportTimer = Stopwatch.StartNew();
+                        ExportMeshesToObjFile(outputDirectory, sector.MeshId.Value, sector.Geometries.OfType<TriangleMesh>().ToArray());
+                        Console.WriteLine($"Mesh .obj file exported (On background thread) in {objExportTimer.Elapsed}");
+                    })
+                : Task.CompletedTask;
+
 
             var groupAttributesTimer = Stopwatch.StartNew();
             Console.WriteLine("Start Group Attributes and create i3d file structure");
