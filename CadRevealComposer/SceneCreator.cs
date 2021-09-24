@@ -38,7 +38,10 @@ namespace CadRevealComposer
             ulong? MeshId,
             IReadOnlyList<APrimitive> Geometries,
             RvmBoundingBox BoundingBox
-        );
+        )
+        {
+            public long DownloadSize { get; init; }
+        };
 
         public static void ExportHierarchyDatabase(string databasePath, CadRevealNode[] allNodes)
         {
@@ -235,7 +238,7 @@ namespace CadRevealComposer
                     Path = sector.Path,
                     IndexFile = new IndexFile(
                         FileName: sector.Filename,
-                        DownloadSize: 0, // TODO: update scene file after generating ctm files
+                        DownloadSize: sector.DownloadSize,
                         PeripheralFiles: sector.PeripheralFiles),
                     FacesFile = null, // Not implemented
                     EstimatedTriangleCount = sector.EstimatedTriangleCount,

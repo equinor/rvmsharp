@@ -35,7 +35,14 @@
                     new ModelId(options.ModelId),
                     new RevisionId(options.RevisionId));
 
-            CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters);
+            var toolsParameters = new CadRevealComposerRunner.ToolsParameters(
+                @"C:\Appl\Source\rvmsharp\tools\OpenCTM\mesh2ctm.exe",
+                @"C:\Appl\Source\rvmsharp\tools\i3df-dump.exe",
+                false);
+
+            // TODO: find tools automatically
+
+            CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
 
             Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
             return Success;
