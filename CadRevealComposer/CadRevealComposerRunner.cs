@@ -33,10 +33,13 @@ namespace CadRevealComposer
 
         public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
 
+        public record ToolsParameters(string Mesh2CtmToolPath, string I3dfDumpToolPath, bool GenerateSectorDumpFiles);
+
         public static void Process(
             DirectoryInfo inputRvmFolderPath,
             DirectoryInfo outputDirectory,
-            Parameters parameters)
+            Parameters parameters,
+            ToolsParameters toolsParameters)
         {
             var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
 
@@ -49,10 +52,14 @@ namespace CadRevealComposer
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
             Console.WriteLine($"Read RvmData in {rvmTimer.Elapsed}");
 
-            ProcessRvmStore(rvmStore, outputDirectory, parameters);
+            ProcessRvmStore(rvmStore, outputDirectory, parameters, toolsParameters);
         }
 
-        private static void ProcessRvmStore(RvmStore rvmStore, DirectoryInfo outputDirectory, Parameters parameters)
+        private static void ProcessRvmStore(
+            RvmStore rvmStore,
+            DirectoryInfo outputDirectory,
+            Parameters parameters,
+            ToolsParameters toolsParameters)
         {
             static IEnumerable<InstancedMesh> ToInstanceMesh(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
             {
@@ -162,12 +169,49 @@ namespace CadRevealComposer
             foreach (var sector in sectors)
             {
                 SceneCreator.ExportSector(sector, outputDirectory);
+
+                if (sector.MeshId.HasValue)
+                {
+                    foreach (var sectorPeripheralFile in sector.PeripheralFiles)
+                    {
+                        var inputFilename = $"{Path.GetFileNameWithoutExtension(sectorPeripheralFile)}.obj";
+                        var inputPath = Path.Combine(outputDirectory.FullName, inputFilename);
+                        var outputPath = Path.Combine(outputDirectory.FullName, sectorPeripheralFile);
+                        System.Diagnostics.Process.Start(toolsParameters.Mesh2CtmToolPath, $"\"{inputPath}\" \"{outputPath}\" --comment \"RvmSharp\" --method MG1 --level 4 --no-texcoords --no-colors --upaxis Y")
+                            .WaitForExit();
+                    }
+                }
+
+                if (toolsParameters.GenerateSectorDumpFiles)
+                {
+                    // TODO: fix arguments
+
+                    System.Diagnostics.Process.Start(toolsParameters.I3dfDumpToolPath, $"")
+                        .WaitForExit();
+                }
             }
-            SceneCreator.WriteSceneFile(sectors, parameters, outputDirectory, TreeIndexGenerator.CurrentMaxGeneratedIndex);
+
+            var sectorsWithDownloadSize = CalculateDownloadSizes(sectors, outputDirectory).ToImmutableArray();
+            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, parameters, outputDirectory, TreeIndexGenerator.CurrentMaxGeneratedIndex);
 
             Task.WaitAll(exportHierarchyDatabaseTask);
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        }
+
+        private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
+        {
+            foreach (var sector in sectors)
+            {
+                var downloadSize = sector.PeripheralFiles.Concat(new[] { sector.Filename })
+                    .Select(filename => Path.Combine(outputDirectory.FullName, filename))
+                    .Select(filepath => new FileInfo(filepath).Length)
+                    .Sum();
+                yield return sector with
+                {
+                    DownloadSize = downloadSize
+                };
+            }
         }
 
         private static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
