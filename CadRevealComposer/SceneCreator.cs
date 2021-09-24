@@ -47,24 +47,21 @@ namespace CadRevealComposer
             ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
             var exporter = new DatabaseComposer(databaseLogger);
             exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
-
-            // TODO: Export DatabaseId to some metadata available to the Model Service.
         }
 
         public static IEnumerable<SectorInfo> SplitIntoSectors(
             List<APrimitive> allGeometries,
             ulong instancedMeshesFileId,
-            uint sectorId,
-            int depth,
-            string path,
+            int recursiveDepth,
+            string? parentPath,
             uint? parentSectorId,
             SequentialIdGenerator meshIdGenerator,
             SequentialIdGenerator sectorIdGenerator)
         {
+            const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
+
             static int CalculateVoxelKey(RvmBoundingBox boundingBox, float midX, float midY, float midZ)
             {
-                const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
-
                 if (boundingBox.Min.X < midX && boundingBox.Max.X > midX ||
                     boundingBox.Min.Y < midY && boundingBox.Max.Y > midY ||
                     boundingBox.Min.Z < midZ && boundingBox.Max.Z > midZ)
@@ -88,8 +85,6 @@ namespace CadRevealComposer
 
             static int CalculateVoxelKeyForNodeGroup(IEnumerable<APrimitive> nodeGroupPrimitives, float midX, float midY, float midZ)
             {
-                const int MainVoxel = 0;
-
                 // all primitives with the same NodeId shall be placed in the same voxel
                 var lastVoxelKey = int.MinValue;
                 foreach (var primitive in nodeGroupPrimitives)
@@ -129,17 +124,18 @@ namespace CadRevealComposer
                 .OrderBy(x => x.Key)
                 .ToImmutableList();
 
-            var isRoot = sectorId == 0;
-            var isLeaf = depth > 5 || allGeometries.Count < 10000 || grouped.Count == 1;
+            var isRoot = recursiveDepth == 0;
+            var isLeaf = recursiveDepth > 5 || allGeometries.Count < 10000 || grouped.Count == 1;
 
             if (isLeaf)
             {
                 var meshId = meshIdGenerator.GetNextId();
+                var sectorId = (uint)sectorIdGenerator.GetNextId();
                 yield return new SectorInfo(
                     sectorId,
                     parentSectorId,
-                    depth,
-                    path,
+                    recursiveDepth,
+                    $"{parentPath}/{sectorId}",
                     $"sector_{sectorId}.i3d",
                     new[] { $"mesh_{meshId}.ctm" },
                     1234, // TODO: calculate
@@ -153,35 +149,31 @@ namespace CadRevealComposer
             }
             else
             {
-                var hasRootVoxel = grouped.Any(x => x.Key == 0); // TODO: fix this one, ERL
+                if (isRoot && grouped.First().Key != MainVoxel)
+                {
+                    throw new InvalidOperationException("if MainVoxel is not amongst groups in the first function call the root will not be created");
+                }
+
+                var parentPathForChildren = parentPath;
+                var parentSectorIdForChildren = parentSectorId;
+
                 foreach (var group in grouped)
                 {
-                    if (!hasRootVoxel)
+                    if (group.Key == MainVoxel)
                     {
                         var meshId = meshIdGenerator.GetNextId();
+                        var sectorId = (uint)sectorIdGenerator.GetNextId();
+                        var path = isRoot
+                            ? $"{sectorId}"
+                            : $"{parentPath}/{sectorId}";
+
+                        parentPathForChildren = path;
+                        parentSectorIdForChildren = sectorId;
+
                         yield return new SectorInfo(
                             sectorId,
                             parentSectorId,
-                            depth,
-                            path,
-                            $"sector_{sectorId}.i3d",
-                            Array.Empty<string>(),
-                            0,
-                            0,
-                            meshId,
-                            Array.Empty<APrimitive>(),
-                            new RvmBoundingBox(
-                                new Vector3(minX, minY, minZ),
-                                new Vector3(maxX, maxY, maxZ)
-                            ));
-                    }
-                    if (group.Key == 0)
-                    {
-                        var meshId = meshIdGenerator.GetNextId();
-                        yield return new SectorInfo(
-                            sectorId,
-                            parentSectorId,
-                            depth,
+                            recursiveDepth,
                             path,
                             $"sector_{sectorId}.i3d",
                             isRoot
@@ -198,8 +190,14 @@ namespace CadRevealComposer
                     }
                     else
                     {
-                        var id = sectorIdGenerator.GetNextId();
-                        var sectors = SplitIntoSectors(group.SelectMany(x => x).ToList(), instancedMeshesFileId, (uint)id, depth + 1, $"{path}/{id}", sectorId, meshIdGenerator, sectorIdGenerator);
+                        var sectors = SplitIntoSectors(
+                            group.SelectMany(x => x).ToList(),
+                            instancedMeshesFileId,
+                            recursiveDepth + 1,
+                            parentPathForChildren,
+                            parentSectorIdForChildren,
+                            meshIdGenerator,
+                            sectorIdGenerator);
                         foreach (var sector in sectors)
                         {
                             yield return sector;
