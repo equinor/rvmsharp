@@ -7,10 +7,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+      <None Include="..\tools\I3DF-dump\i3df-dump.exe" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+      <None Include="..\tools\OpenCTM\mesh2ctm.exe" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+      <None Include="..\tools\OpenCTM\mesh2ctm.osx" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+    </ItemGroup>
+
+	<ItemGroup>
       <PackageReference Include="CommandLineParser" Version="2.8.0" />
     </ItemGroup>
 

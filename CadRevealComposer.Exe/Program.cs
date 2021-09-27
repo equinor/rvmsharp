@@ -4,6 +4,7 @@
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
     using System.Linq;
 
     public static class Program
@@ -35,12 +36,15 @@
                     new ModelId(options.ModelId),
                     new RevisionId(options.RevisionId));
 
+            var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
+            var toolsPath = Path.Combine(programPath, "tools");
             var toolsParameters = new CadRevealComposerRunner.ToolsParameters(
-                @"C:\Appl\Source\rvmsharp\tools\OpenCTM\mesh2ctm.exe",
-                @"C:\Appl\Source\rvmsharp\tools\i3df-dump.exe",
+                Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.exe" : "mesh2ctm.osx"),
+                Path.Combine(toolsPath, "i3df-dump.exe"), // TODO: support OSX
                 false);
 
-            // TODO: find tools automatically
+            Debug.Assert(File.Exists(toolsParameters.I3dfDumpToolPath));
+            Debug.Assert(File.Exists(toolsParameters.Mesh2CtmToolPath));
 
             CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
 
