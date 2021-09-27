@@ -40,6 +40,9 @@ namespace CadRevealComposer.Exe
         ]
         public long RevisionId { get; init; }
 
+        [Option(longName: "GenerateSectorDumpFiles", Required = false, HelpText = "Generate text dump for I3DF files / sector files.")]
+        public bool GenerateSectorDumpFiles { get; init; }
+
         public static void AssertValidOptions(CommandLineOptions options)
         {
             // Validate DataAttributes
