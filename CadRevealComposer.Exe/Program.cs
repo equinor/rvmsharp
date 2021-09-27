@@ -40,11 +40,20 @@
             var toolsPath = Path.Combine(programPath, "tools");
             var toolsParameters = new CadRevealComposerRunner.ToolsParameters(
                 Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
-                Path.Combine(toolsPath, "i3df-dump.exe"), // TODO: support OSX
+                Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "i3df-dump.osx" : "i3df-dump.exe"),
                 options.GenerateSectorDumpFiles);
 
-            Debug.Assert(File.Exists(toolsParameters.I3dfDumpToolPath));
-            Debug.Assert(File.Exists(toolsParameters.Mesh2CtmToolPath));
+            if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
+            {
+                Console.WriteLine($"Not found: {toolsParameters.Mesh2CtmToolPath}");
+                return 1;
+            }
+
+            if (options.GenerateSectorDumpFiles && !File.Exists(toolsParameters.I3dfDumpToolPath))
+            {
+                Console.WriteLine($"Not found: {toolsParameters.I3dfDumpToolPath}");
+                return 1;
+            }
 
             CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
 

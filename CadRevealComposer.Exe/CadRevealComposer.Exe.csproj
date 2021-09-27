@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -7,8 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <None Include="..\tools\I3DF-dump\i3df-dump.exe" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-      <None Include="..\tools\OpenCTM\mesh2ctm.exe" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+	    <None Include="..\tools\OpenCTM\mesh2ctm.exe" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
       <None Include="..\tools\OpenCTM\mesh2ctm.osx" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
 
