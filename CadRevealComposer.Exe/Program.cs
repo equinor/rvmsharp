@@ -39,9 +39,9 @@
             var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
             var toolsPath = Path.Combine(programPath, "tools");
             var toolsParameters = new CadRevealComposerRunner.ToolsParameters(
-                Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.exe" : "mesh2ctm.osx"),
+                Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
                 Path.Combine(toolsPath, "i3df-dump.exe"), // TODO: support OSX
-                false);
+                options.GenerateSectorDumpFiles);
 
             Debug.Assert(File.Exists(toolsParameters.I3dfDumpToolPath));
             Debug.Assert(File.Exists(toolsParameters.Mesh2CtmToolPath));

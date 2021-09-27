@@ -177,17 +177,46 @@ namespace CadRevealComposer
                         var inputFilename = $"{Path.GetFileNameWithoutExtension(sectorPeripheralFile)}.obj";
                         var inputPath = Path.Combine(outputDirectory.FullName, inputFilename);
                         var outputPath = Path.Combine(outputDirectory.FullName, sectorPeripheralFile);
+                        var sw = Stopwatch.StartNew();
                         System.Diagnostics.Process.Start(toolsParameters.Mesh2CtmToolPath, $"\"{inputPath}\" \"{outputPath}\" --comment \"RvmSharp\" --method MG1 --level 4 --no-texcoords --no-colors --upaxis Y")
                             .WaitForExit();
+                        sw.Stop();
+
+                        Console.WriteLine($"Saving {outputPath}... {sw.ElapsedMilliseconds} ms");
                     }
                 }
 
                 if (toolsParameters.GenerateSectorDumpFiles)
                 {
-                    // TODO: fix arguments
+                    var inputPath = Path.Combine(outputDirectory.FullName, sector.Filename);
+                    var outputPath = Path.Combine(outputDirectory.FullName, $"{sector.Filename}.dump");
 
-                    System.Diagnostics.Process.Start(toolsParameters.I3dfDumpToolPath, $"")
-                        .WaitForExit();
+                    var process = new Process
+                    {
+                        StartInfo = new ProcessStartInfo
+                        {
+                            FileName = toolsParameters.I3dfDumpToolPath,
+                            Arguments = $"\"{inputPath}\"",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            CreateNoWindow = true
+                        }
+                    };
+
+                    var sw = Stopwatch.StartNew();
+                    process.Start();
+                    using var streamWriter = File.CreateText(outputPath);
+                    using var streamReader = process.StandardOutput;
+                    string? line;
+                    while ((line = streamReader.ReadLine()) != null)
+                    {
+                        streamWriter.WriteLine(line);
+                    }
+                    streamWriter.Flush();
+                    process.WaitForExit();
+                    sw.Stop();
+
+                    Console.WriteLine($"Saving {outputPath}... {sw.ElapsedMilliseconds} ms");
                 }
             }
 
