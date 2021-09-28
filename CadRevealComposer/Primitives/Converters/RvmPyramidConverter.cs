@@ -8,10 +8,11 @@
 
     public static class RvmPyramidConverter
     {
-        public static APrimitive ConvertToRevealPrimitive(this RvmPyramid rvmPyramid,
-            ulong meshFileId,
+        public static APrimitive ConvertToRevealPrimitive(
+            this RvmPyramid rvmPyramid,
             CadRevealNode revealNode,
-            RvmNode container, PyramidInstancingHelper? pyramidInstancingHelper = null)
+            RvmNode container,
+            PyramidInstancingHelper? pyramidInstancingHelper)
         {
             var commonProps = rvmPyramid.GetCommonProps(container, revealNode);
 
@@ -58,7 +59,7 @@
                     throw new Exception($"Expected a pyramid to always tessellate. Was {pyramidMesh}");
 
                 return new TriangleMesh(
-                    commonProps, meshFileId, (uint)pyramidMesh.Triangles.Count / 3, pyramidMesh);
+                    commonProps, ulong.MaxValue, (uint)pyramidMesh.Triangles.Count / 3, pyramidMesh);
             }
         }
 

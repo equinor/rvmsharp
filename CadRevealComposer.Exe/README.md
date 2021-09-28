@@ -4,4 +4,4 @@
 
 Source code: https://github.com/cognitedata/reveal
 
-Install rustup tools, go to 'i3df' directory and compile using 'cargo build --features dump'.
+Install rustup tools, go to `i3df` directory and compile using `cargo build --features dump`.

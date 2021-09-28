@@ -226,7 +226,6 @@ namespace RvmSharp.Tessellation
             return new Mesh(vertices, normals, indices, error);
         }
 
-
         private static Mesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
         {
             var segments = TessellationHelpers.SagittaBasedSegmentCount(rectangularTorus.Angle,
@@ -390,7 +389,6 @@ namespace RvmSharp.Tessellation
 
             return new Mesh(vertices, normals, indices, error);
         }
-
 
         private static Mesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
         {
@@ -565,7 +563,6 @@ namespace RvmSharp.Tessellation
             return new Mesh(vertices, normals, indices, error);
         }
 
-
         private static Mesh Tessellate(RvmBox box)
         {
             var xp = 0.5f * box.LengthX;
@@ -710,7 +707,6 @@ namespace RvmSharp.Tessellation
 
             return new Mesh(vertices.ToArray(), normals.ToArray(), indices.ToArray(), 0);
         }
-
 
         private static Mesh TessellateCylinder(RvmCylinder cylinder, float scale, float tolerance)
         {
@@ -1136,7 +1132,7 @@ namespace RvmSharp.Tessellation
             return new Mesh(vertices, normals, indices.ToArray(), error);
         }
 
-        static int TessellateCircle(int[] indices, int l, int[] t, int[] src, int N)
+        private static int TessellateCircle(int[] indices, int l, int[] t, int[] src, int N)
         {
             while (3 <= N)
             {
@@ -1169,7 +1165,7 @@ namespace RvmSharp.Tessellation
         /// Copy of std::swap(t, src);
         /// Not sure if this is needed in dotnet.
         /// </summary>
-        static void Swap<T>(ref T lhs, ref T rhs)
+        private static void Swap<T>(ref T lhs, ref T rhs)
         {
             // ReSharper disable once JoinDeclarationAndInitializer
             T temp;

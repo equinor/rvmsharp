@@ -28,7 +28,7 @@ namespace CadRevealComposer
     {
         private static readonly TreeIndexGenerator TreeIndexGenerator = new();
         private static readonly NodeIdProvider NodeIdGenerator = new();
-        private static readonly SequentialIdGenerator MeshIdGenerator = new ();
+        private static readonly SequentialIdGenerator MeshFileIdGenerator = new ();
         private static readonly SequentialIdGenerator SectorIdGenerator = new ();
 
         public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
@@ -61,22 +61,29 @@ namespace CadRevealComposer
             Parameters parameters,
             ToolsParameters toolsParameters)
         {
-            static IEnumerable<InstancedMesh> ToInstanceMesh(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
+            static IEnumerable<InstancedMesh> ToInstanceMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
             {
-                var template = group.Key;
-                var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
-                foreach (var primitive in group)
+                var template = group.Key with
                 {
-                    var protoMesh = protoMeshesMap[primitive.Key];
-                    if (!Matrix4x4.Decompose(primitive.Value.transform, out var scale, out var rotation, out var translation))
+                    Matrix = Matrix4x4.Identity
+                };
+                
+                var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
+                foreach (var facetGroup in group)
+                {
+                    var transform = facetGroup.Value.transform * facetGroup.Key.Matrix;
+                    if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
                     {
                         throw new Exception("Could not decompose transformation matrix.");
                     }
+
                     var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
                     var rotationDecomposed = rotation.DecomposeQuaternion();
+
+
                     yield return new InstancedMesh(
-                        new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, translation, rotation, scale, protoMesh.Diagonal, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, rotationDecomposed),
-                        0, 0, 0,
+                        new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, rotationDecomposed),
+                        ulong.MaxValue, ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset, TriangleCount will be set later on
                         translation.X, translation.Y, translation.Z,
                         rollX, pitchY, yawZ,
                         scale.X, scale.Y, scale.Z)
@@ -112,7 +119,7 @@ namespace CadRevealComposer
             var allNodes = GetAllNodesFlat(rootNode).ToArray();
 
             var pyramidInstancingTimer = Stopwatch.StartNew();
-            PyramidInstancingHelper pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
+            var pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
             Console.WriteLine($"Prepared Pyramids in {pyramidInstancingTimer.Elapsed}");
 
             var geometryConversionTimer = Stopwatch.StartNew();
@@ -136,7 +143,7 @@ namespace CadRevealComposer
             });
 
             var exportInstancedMeshes = Stopwatch.StartNew();
-            var instancedMeshesFileId = MeshIdGenerator.GetNextId();
+            var instancedMeshesFileId = MeshFileIdGenerator.GetNextId();
 
             // The following code should be refactored, i'm just not sure how
             // We need to remove all instancedMeshes, and the re-add them.
@@ -147,7 +154,7 @@ namespace CadRevealComposer
 
             var instancedMeshesFromProtoMeshes = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray())
                 .GroupBy(x => x.Value.template)
-                .SelectMany(x => ToInstanceMesh(x, protoMeshesMap))
+                .SelectMany(x => ToInstanceMeshes(x, protoMeshesMap))
                 .ToImmutableList();
             
             var allInstancedMeshes = instancedMeshes.Concat(instancedMeshesFromProtoMeshes).ToList();
@@ -166,13 +173,15 @@ namespace CadRevealComposer
             var sectors = SceneCreator.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshIdGenerator, SectorIdGenerator)
                 .OrderBy(x => x.SectorId)
                 .ToImmutableArray();
+
+            var convertedObjFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var sector in sectors)
             {
                 SceneCreator.ExportSector(sector, outputDirectory);
 
-                if (sector.MeshId.HasValue)
+                if (sector.MeshFileId.HasValue)
                 {
-                    foreach (var sectorPeripheralFile in sector.PeripheralFiles)
+                    foreach (var sectorPeripheralFile in sector.PeripheralFiles.Where(filename => !convertedObjFiles.Contains(filename)))
                     {
                         var inputFilename = $"{Path.GetFileNameWithoutExtension(sectorPeripheralFile)}.obj";
                         var inputPath = Path.Combine(outputDirectory.FullName, inputFilename);
@@ -183,6 +192,8 @@ namespace CadRevealComposer
                         sw.Stop();
 
                         Console.WriteLine($"Saving {outputPath}... {sw.ElapsedMilliseconds} ms");
+
+                        convertedObjFiles.Add(sectorPeripheralFile);
                     }
                 }
 
