@@ -41,5 +41,15 @@ namespace RvmSharp.Primitives
         /// Can be used together with <see cref="Center"/>
         /// </summary>
         public Vector3 Extents => (Max - Min);
+
+        /// <summary>
+        /// Combine two bounds
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
+        public RvmBoundingBox Encapsulate(RvmBoundingBox other)
+        {
+            return new RvmBoundingBox(Vector3.Min(Min, other.Min), Vector3.Max(Max, other.Max));
+        }
     };
 }

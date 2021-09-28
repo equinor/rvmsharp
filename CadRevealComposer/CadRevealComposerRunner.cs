@@ -1,6 +1,7 @@
 namespace CadRevealComposer
 {
     using IdProviders;
+    using Operations;
     using Primitives;
     using Primitives.Converters;
     using Primitives.Instancing;
@@ -67,7 +68,7 @@ namespace CadRevealComposer
                 {
                     Matrix = Matrix4x4.Identity
                 };
-                
+
                 var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
                 foreach (var facetGroup in group)
                 {
@@ -80,6 +81,7 @@ namespace CadRevealComposer
                     var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
                     var rotationDecomposed = rotation.DecomposeQuaternion();
 
+                    var protoMesh = protoMeshesMap[];
 
                     yield return new InstancedMesh(
                         new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, rotationDecomposed),
@@ -106,13 +108,13 @@ namespace CadRevealComposer
 
             rootNode.Children = rvmStore.RvmFiles
                 .SelectMany(f => f.Model.Children)
-                .Select(root => CollectGeometryNodesRecursive(root, rootNode))
+                .Select(root => RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root, rootNode, NodeIdGenerator, TreeIndexGenerator))
                 .ToArray();
 
-            rootNode.BoundingBoxAxisAligned = BoundingBoxEncapsulate(rootNode.Children
+            rootNode.BoundingBoxAxisAligned = rootNode.Children
                 .Select(x => x.BoundingBoxAxisAligned)
                 .WhereNotNull()
-                .ToArray());
+                .ToArray().Aggregate((a, b) => a.Encapsulate(b));
 
             Debug.Assert(rootNode.BoundingBoxAxisAligned != null, "Root node has no bounding box. Are there any meshes in the input?");
 
@@ -156,9 +158,9 @@ namespace CadRevealComposer
                 .GroupBy(x => x.Value.template)
                 .SelectMany(x => ToInstanceMeshes(x, protoMeshesMap))
                 .ToImmutableList();
-            
+
             var allInstancedMeshes = instancedMeshes.Concat(instancedMeshesFromProtoMeshes).ToList();
-            var exportedInstancedMeshes = SceneCreator.ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
+            var exportedInstancedMeshes = InstancedMeshFileExporter.ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
 
             var geometriesToExport = geometries
                 .Except(instancedMeshes)
@@ -275,73 +277,6 @@ namespace CadRevealComposer
                     }
                 }
             }
-        }
-
-        public static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode parent)
-        {
-            var newNode = new CadRevealNode
-            {
-                NodeId = NodeIdGenerator.GetNodeId(null),
-                TreeIndex = TreeIndexGenerator.GetNextId(),
-                Group = root,
-                Parent = parent,
-                Children = null
-            };
-
-            CadRevealNode[] childrenCadNodes;
-            RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
-
-
-            if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
-            {
-                childrenCadNodes = root.Children.Select(child =>
-                {
-                    switch (child)
-                    {
-                        case RvmPrimitive rvmPrimitive:
-                            return CollectGeometryNodesRecursive(
-                                new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
-                                {
-                                    Children = { rvmPrimitive }
-                                }, newNode);
-                        case RvmNode rvmNode:
-                            return CollectGeometryNodesRecursive(rvmNode, newNode);
-                        default:
-                            throw new Exception();
-                    }
-                }).ToArray();
-            }
-            else
-            {
-                childrenCadNodes = root.Children.OfType<RvmNode>()
-                    .Select(n => CollectGeometryNodesRecursive(n, newNode))
-                    .ToArray();
-                rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
-            }
-
-            newNode.RvmGeometries = rvmGeometries;
-            newNode.Children = childrenCadNodes;
-
-            var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
-                .Select(x => x.CalculateAxisAlignedBoundingBox()).ToArray();
-            var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned)
-                .WhereNotNull();
-
-            var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
-            newNode.BoundingBoxAxisAligned = BoundingBoxEncapsulate(primitiveAndChildrenBoundingBoxes);
-
-            return newNode;
-        }
-
-        private static RvmBoundingBox? BoundingBoxEncapsulate(RvmBoundingBox[] boundingBoxes)
-        {
-            if (!boundingBoxes.Any())
-                return null;
-
-            // Find the min and max values for each of x,y, and z dimensions.
-            var min = boundingBoxes.Select(x => x.Min).Aggregate(Vector3.Min);
-            var max = boundingBoxes.Select(x => x.Max).Aggregate(Vector3.Max);
-            return new RvmBoundingBox(Min: min, Max: max);
         }
     }
 }
