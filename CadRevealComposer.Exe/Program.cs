@@ -37,7 +37,7 @@
                     new RevisionId(options.RevisionId));
 
             var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
-            var toolsPath = Path.Combine(programPath, "tools");
+            var toolsPath = Path.Combine(programPath!, "tools");
             var toolsParameters = new CadRevealComposerRunner.ToolsParameters(
                 Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
                 Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "i3df-dump.osx" : "i3df-dump.exe"),
@@ -52,6 +52,7 @@
             if (options.GenerateSectorDumpFiles && !File.Exists(toolsParameters.I3dfDumpToolPath))
             {
                 Console.WriteLine($"Not found: {toolsParameters.I3dfDumpToolPath}");
+                Console.WriteLine("i3df-dump has to be compiled manually and be placed in the tools folder. See README.md");
                 return 1;
             }
 
