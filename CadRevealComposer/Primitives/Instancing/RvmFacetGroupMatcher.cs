@@ -11,39 +11,40 @@ namespace CadRevealComposer.Primitives.Instancing
         public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
         {
             return groups
-                .GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).AsParallel()
-                .Select(DoMatch).SelectMany(d => d)
+                .GroupBy(CalculateKey)
+                .Select(g => (g.Key, g.ToArray()))
+                .AsParallel()
+                .Select(MatchGroups)
+                .SelectMany(d => d)
                 .ToDictionary(r => r.Key, r => r.Value);
         }
 
-        private static Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)> DoMatch((long groupId, RvmFacetGroup[] groups) groups)
+        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups((long groupId, RvmFacetGroup[] facetGroups) group)
         {
-            // id -> facetgroup, transform
-            // templates -> facetgroup, count
-            var templates = new Dictionary<RvmFacetGroup, int>();
+            var templates = new List<RvmFacetGroup>();
             var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
 
-            foreach (var e in groups.groups)
+            foreach (var rvmFacetGroup in group.facetGroups)
             {
                 bool found = false;
 
-                foreach (var x in templates)
+                foreach (var template in templates)
                 {
-                    if (ReferenceEquals(x.Key, e))
-                        continue;
-                    if (!Match(x.Key, e, out var transform))
+                    if (ReferenceEquals(template, rvmFacetGroup))
                         continue;
 
-                    templates[x.Key] += 1;
-                    result.Add(e, (x.Key, transform));
+                    if (!Match(template, rvmFacetGroup, out var transform))
+                        continue;
+
+                    result.Add(rvmFacetGroup, (template, transform));
                     found = true;
                     break;
                 }
 
                 if (!found)
                 {
-                    templates.Add(e, 1);
-                    result.Add(e, (e, Matrix4x4.Identity));
+                    templates.Add(rvmFacetGroup);
+                    result.Add(rvmFacetGroup, (rvmFacetGroup, Matrix4x4.Identity));
                 }
             }
 
@@ -85,7 +86,7 @@ namespace CadRevealComposer.Primitives.Instancing
             return false;
         }
 
-        private static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, Matrix4x4 transform)
+        public static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, Matrix4x4 transform)
         {
             // check all polygons with transform
             for (var i = 0; i < a.Polygons.Length; i++)
@@ -115,8 +116,9 @@ namespace CadRevealComposer.Primitives.Instancing
 
         private static bool GetPossibleAtoBTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
         {
-            if (!EnsurePolygonContoursAndVertexCountsMatch(a, b, out transform))
+            if (!EnsurePolygonContoursAndVertexCountsMatch(a, b))
             {
+                transform = default;
                 return false;
             }
 
@@ -180,12 +182,12 @@ namespace CadRevealComposer.Primitives.Instancing
                 }
             }
             // TODO: 2d figure
+            transform = default;
             return false;
         }
 
-        private static bool EnsurePolygonContoursAndVertexCountsMatch(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
+        private static bool EnsurePolygonContoursAndVertexCountsMatch(RvmFacetGroup a, RvmFacetGroup b)
         {
-            transform = default;
             if (a.Polygons.Length != b.Polygons.Length)
             {
                 return false;
