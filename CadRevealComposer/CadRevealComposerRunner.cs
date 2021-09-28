@@ -170,9 +170,16 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Finished Geometry Conversion in: {geometryConversionTimer.Elapsed}");
 
-            var sectors = SceneCreator.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshIdGenerator, SectorIdGenerator)
-                .OrderBy(x => x.SectorId)
-                .ToImmutableArray();
+            //var sectors = SceneCreator.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshFileIdGenerator, SectorIdGenerator)
+            //    .OrderBy(x => x.SectorId)
+            //    .ToImmutableArray();
+
+            var sectors = new[]
+            {
+                new SceneCreator.SectorInfo(0, null, 0, "0", "sector_0.i3d", new[] {"mesh_0.ctm", "mesh_1.ctm"}, 1234,
+                    1, 1, geometriesToExport,
+                    new RvmBoundingBox(new Vector3(-1, -1, -125), new Vector3(292, 337, 84)))
+            };
 
             var convertedObjFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var sector in sectors)
