@@ -75,8 +75,6 @@ namespace CadRevealComposer.Primitives
             (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
                 (Vector3 normal, float rotationAngle)) = commonPrimitiveProperties;
 
-            const uint tempHackMeshFileId = 0; // TODO: Unhardcode
-
             switch (rvmPrimitive)
             {
                 case RvmBox rvmBox:
@@ -136,38 +134,6 @@ namespace CadRevealComposer.Primitives
                     }
                 case RvmFacetGroup facetGroup:
                     return new ProtoMesh(commonPrimitiveProperties, facetGroup);
-                    // There are two problems with the old approach
-                    // 1. it is dead slow due to inability to group meshes by attributes
-                    //    in advance
-                    // 2. We need to split model into sectors, which is impossible until
-                    //    the modell is processed
-                    /*if (rvmFacetGroupMatcher.Match(facetGroup, out var instancedMesh, out var transform))
-                    {
-                        if (!Matrix4x4.Decompose(transform.Value, out var s, out var r, out var t))
-                        {
-                            throw new InvalidOperationException();
-                        }
-                        // TODO: rotation Euler?
-                        return new InstancedMesh(commonPrimitiveProperties, 0, 0, 0, t.X, t.Y, t.Z, r.X, r.Y, r.Z, s.X, s.Y, s.Z)
-                        {
-                            Mesh = instancedMesh
-                        };
-                    }
-
-                    const float minBoundsToExport = -1; // Temp: Adjust to create simpler models
-                    if (commonPrimitiveProperties.AxisAlignedDiagonal < minBoundsToExport)
-                    {
-                        return null;
-                    }
-
-                    const float unusedTolerance = 5f; // Tolerance is currently unused for FacetGroups
-                    var facetGroupMesh = TessellatorBridge.Tessellate(facetGroup, tolerance: unusedTolerance);
-                    if (facetGroupMesh == null)
-                        throw new Exception(
-                            $"Expected a {nameof(RvmFacetGroup)} to always tessellate. Was {facetGroupMesh}.");
-                    return new TriangleMesh(
-                        commonPrimitiveProperties, tempHackMeshFileId, (uint)facetGroupMesh.Triangles.Count / 3,
-                        facetGroupMesh);*/
                 case RvmLine:
                     PrimitiveCounter.line++;
                     // Intentionally ignored.
