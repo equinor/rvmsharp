@@ -62,36 +62,58 @@ namespace CadRevealComposer
             Parameters parameters,
             ToolsParameters toolsParameters)
         {
-            static IEnumerable<InstancedMesh> ToInstanceMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
+            static IEnumerable<APrimitive> ToMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
             {
-                var template = group.Key with
+                var isGroupWithSingleItem = group.Count() == 1;
+                if (isGroupWithSingleItem)
                 {
-                    Matrix = Matrix4x4.Identity
-                };
-
-                var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
-                foreach (var facetGroup in group)
-                {
-                    var transform = facetGroup.Value.transform * facetGroup.Key.Matrix;
-                    if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
+                    foreach (var facetGroup in group)
                     {
-                        throw new Exception("Could not decompose transformation matrix.");
+                        var transform = facetGroup.Value.transform * facetGroup.Key.Matrix;
+                        var template = group.Key with
+                        {
+                            Matrix = transform
+                        };
+                        var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
+                        
+                        var protoMesh = protoMeshesMap[facetGroup.Key];
+
+                        yield return new TriangleMesh(
+                            new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.One, 0f)),
+                            ulong.MaxValue,// NOTE: FileId
+                            (ulong)mesh.Triangles.Count / 3,
+                            mesh);
                     }
-
-                    var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
-                    var rotationDecomposed = rotation.DecomposeQuaternion();
-
-                    var protoMesh = protoMeshesMap[];
-
-                    yield return new InstancedMesh(
-                        new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, rotationDecomposed),
-                        ulong.MaxValue, ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset, TriangleCount will be set later on
-                        translation.X, translation.Y, translation.Z,
-                        rollX, pitchY, yawZ,
-                        scale.X, scale.Y, scale.Z)
+                }
+                else
+                {
+                    var template = group.Key with
                     {
-                        TempTessellatedMesh = mesh
+                        Matrix = Matrix4x4.Identity
                     };
+                    var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
+
+                    foreach (var facetGroup in group)
+                    {
+                        var transform = facetGroup.Value.transform * facetGroup.Key.Matrix;
+                        if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
+                        {
+                            throw new Exception("Could not decompose transformation matrix.");
+                        }
+                        var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
+
+                        var protoMesh = protoMeshesMap[facetGroup.Key];
+
+                        yield return new InstancedMesh(
+                            new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.One, 0f)),
+                            ulong.MaxValue, ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset, TriangleCount will be set later on
+                            translation.X, translation.Y, translation.Z,
+                            rollX, pitchY, yawZ,
+                            scale.X, scale.Y, scale.Z)
+                        {
+                            TempTessellatedMesh = mesh
+                        };
+                    }
                 }
             }
 
@@ -154,18 +176,19 @@ namespace CadRevealComposer
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
             var protoMeshesMap = protoMeshes.ToDictionary(x => x.SourceMesh);
 
-            var instancedMeshesFromProtoMeshes = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray())
+            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray())
                 .GroupBy(x => x.Value.template)
-                .SelectMany(x => ToInstanceMeshes(x, protoMeshesMap))
+                .SelectMany(x => ToMeshes(x, protoMeshesMap))
                 .ToImmutableList();
 
-            var allInstancedMeshes = instancedMeshes.Concat(instancedMeshesFromProtoMeshes).ToList();
+            var allInstancedMeshes = instancedMeshes.Concat(rvmFacetGroupResults.OfType<InstancedMesh>()).ToList();
             var exportedInstancedMeshes = InstancedMeshFileExporter.ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
 
             var geometriesToExport = geometries
                 .Except(instancedMeshes)
                 .Except(protoMeshes)
                 .Concat(exportedInstancedMeshes)
+                .Concat(rvmFacetGroupResults.OfType<TriangleMesh>())
                 .ToList();
 
             Console.WriteLine($"Exported instances in {exportInstancedMeshes.Elapsed}");
