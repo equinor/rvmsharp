@@ -139,7 +139,7 @@ namespace CadRevealComposer.Primitives
                     // Intentionally ignored.
                     return null;
                 case RvmPyramid rvmPyramid:
-                    return rvmPyramid.ConvertToRevealPrimitive(tempHackMeshFileId, revealNode, rvmNode, pyramidInstancingHelper);
+                    return rvmPyramid.ConvertToRevealPrimitive(revealNode, rvmNode, pyramidInstancingHelper);
                 case RvmCircularTorus circularTorus:
                     return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
                 case RvmSphere rvmSphere:
