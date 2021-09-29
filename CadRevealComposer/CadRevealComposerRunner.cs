@@ -80,7 +80,7 @@ namespace CadRevealComposer
 
                         yield return new TriangleMesh(
                             new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.One, 0f)),
-                            ulong.MaxValue,// NOTE: FileId
+                            ulong.MaxValue, // NOTE: FileId will be set later on
                             (ulong)mesh.Triangles.Count / 3,
                             mesh);
                     }
@@ -100,13 +100,14 @@ namespace CadRevealComposer
                         {
                             throw new Exception("Could not decompose transformation matrix.");
                         }
-                        var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
+                        var (rollX, pitchY, yawZ) = Quaternion.Normalize(rotation).ToEulerAngles();
 
                         var protoMesh = protoMeshesMap[facetGroup.Key];
 
                         yield return new InstancedMesh(
-                            new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.One, 0f)),
-                            ulong.MaxValue, ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset, TriangleCount will be set later on
+                            new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, protoMesh.AxisAlignedBoundingBox.Diagonal, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.Zero, 0f)),
+                            ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset will be set later on
+                            (ulong)(mesh.Triangles.Count / 3),
                             translation.X, translation.Y, translation.Z,
                             rollX, pitchY, yawZ,
                             scale.X, scale.Y, scale.Z)

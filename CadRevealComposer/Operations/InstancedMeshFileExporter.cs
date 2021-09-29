@@ -26,8 +26,6 @@ namespace CadRevealComposer.Operations
                     throw new ArgumentException(
                         $"Expected meshGeometries to not have \"null\" meshes, was null on {instancedMeshesGroupedByMesh}",
                         nameof(meshGeometries));
-                uint triangleCount = (uint)mesh.Triangles.Count / 3;
-
                 objExporter.WriteMesh(mesh);
 
                 // Create new InstancedMesh for all the InstancedMesh that were exported here.
@@ -36,15 +34,14 @@ namespace CadRevealComposer.Operations
                     .Select(instancedMesh => instancedMesh with
                     {
                         FileId = meshFileId,
-                        TriangleOffset = triangleOffset,
-                        TriangleCount = triangleCount
+                        TriangleOffset = triangleOffset
                     })
                     .ToArray();
 
                 exportedInstancedMeshes.AddRange(
                     adjustedInstancedMeshes);
 
-                triangleOffset += triangleCount;
+                triangleOffset += (uint)mesh.Triangles.Count / 3;
             }
 
             Console.WriteLine($"{counter} distinct instanced meshes exported to MeshFile{meshFileId}");
