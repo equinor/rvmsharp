@@ -35,6 +35,55 @@
             var axisAlignedDiagonal = rvmPrimitive.CalculateAxisAlignedBoundingBox().Diagonal;
 
             var colors = GetColor(container);
+            if (container.Attributes.ContainsKey("Discipline"))
+            {
+
+                switch (container.Attributes["Discipline"])
+                {
+                    case "ARCH":
+                        colors = Color.FromArgb(85, 85, 85);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "ELEC":
+                        colors = Color.FromArgb(0, 142, 142);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "HVAC":
+                        colors = Color.FromArgb(149, 76, 67);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "INST":
+                        colors = Color.FromArgb(133, 0, 133);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "MECH":
+                        colors = Color.FromArgb(0, 122, 0);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "PIPE":
+                        colors = Color.FromArgb(192, 192, 192);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "PSUP":
+                        colors = Color.FromArgb(114, 114, 114);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "SAFE":
+                        colors = Color.FromArgb(122, 0, 0);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "STRU":
+                        colors = Color.FromArgb(182, 129, 76);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                    case "TELE":
+                        colors = Color.FromArgb(122, 26, 26);
+                        Console.WriteLine("Overwrite color to " + colors);
+                        break;
+                }
+            }
+
+
 
             return new CommonPrimitiveProperties(
                 cadNode.NodeId,

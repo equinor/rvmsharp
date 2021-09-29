@@ -1,12 +1,12 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [string] $InputDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite"),
+    [string] $InputDirectory = "d:\Models\hda\rvm20210126",
     [string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
     [Parameter(Mandatory = $false)][long] $ProjectId = 10000,
     [Parameter(Mandatory = $false)][long] $ModelId = 1,
     [Parameter(Mandatory = $false)][long] $RevisionId = 0,
-    [string] $ArtifactDirectory = "C:\Users\nhals\GitRepos\Echo3DWeb\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
+    [string] $ArtifactDirectory = "E:\gush\projects\echo\Echo3DWeb\EchoReflectApi\EchoReflect.Api\AppData\demomodel",
     [switch] $Force = $true,
     [switch] $UploadToDev = $false
 )

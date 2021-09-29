@@ -92,10 +92,10 @@ namespace CadRevealComposer.Writers
 
             foreach (var c in values)
             {
-                stream.WriteByte(c.R);
-                stream.WriteByte(c.G);
-                stream.WriteByte(c.B);
-                stream.WriteByte(c.A);
+                stream.WriteByte((byte)(255 - c.R));
+                stream.WriteByte((byte)(255 - c.G));
+                stream.WriteByte((byte)(255 - c.B));
+                stream.WriteByte((byte)(255 - c.A));
             }
         }
 
