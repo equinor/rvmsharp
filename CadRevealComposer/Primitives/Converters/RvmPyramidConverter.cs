@@ -36,8 +36,7 @@
                     var eulerAngles = unitProps.Rotation.ToEulerAngles();
                     PrimitiveCounter.pyramidInstanced++;
                     return new InstancedMesh(unitProps,
-                        1,
-                        0,
+                        ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset will be set later on
                         (ulong)(instancedMesh.Triangles.Count / 3),
                         unitProps.Position.X,
                         unitProps.Position.Y,
@@ -59,7 +58,10 @@
                     throw new Exception($"Expected a pyramid to always tessellate. Was {pyramidMesh}");
 
                 return new TriangleMesh(
-                    commonProps, ulong.MaxValue, (uint)pyramidMesh.Triangles.Count / 3, pyramidMesh);
+                    commonProps,
+                    ulong.MaxValue, // NOTE: FileId will be set later on
+                    (uint)pyramidMesh.Triangles.Count / 3,
+                    pyramidMesh);
             }
         }
 

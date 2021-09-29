@@ -56,6 +56,7 @@ namespace CadRevealComposer.Utils
         public static (float rollX, float pitchY, float yawZ) ToEulerAngles(this Quaternion quaternion)
         {
             var q = quaternion; // shorter name for readability
+
             // roll (x-axis rotation)
             var sinRollCosPitch = 2 * (q.W * q.X + q.Y * q.Z);
             var cosRollCosPitch = 1 - 2 * (q.X * q.X + q.Y * q.Y);
@@ -63,7 +64,9 @@ namespace CadRevealComposer.Utils
 
             // pitch (y-axis rotation)
             var sinPitch = 2 * (q.W * q.Y - q.Z * q.X);
-            var pitch = MathF.Abs(sinPitch) >= 1 ? MathF.CopySign(MathF.PI / 2, sinPitch) : MathF.Asin(sinPitch);
+            var pitch = MathF.Abs(sinPitch) >= 1f
+                ? MathF.CopySign(MathF.PI / 2, sinPitch)
+                : MathF.Asin(sinPitch);
 
             // yaw (z-axis rotation)
             var sinYawCosPitch = 2 * (q.W * q.Z + q.X * q.Y);
