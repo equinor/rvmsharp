@@ -34,7 +34,10 @@
                 new CadRevealComposerRunner.Parameters(
                     new ProjectId(options.ProjectId),
                     new ModelId(options.ModelId),
-                    new RevisionId(options.RevisionId));
+                    new RevisionId(options.RevisionId),
+                    options.NoInstancing,
+                    options.CreateSingleSector,
+                    options.DeterministicOutput);
 
             var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
             var toolsPath = Path.Combine(programPath!, "tools");

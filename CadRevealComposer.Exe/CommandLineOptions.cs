@@ -43,6 +43,15 @@ namespace CadRevealComposer.Exe
         [Option(longName: "GenerateSectorDumpFiles", Required = false, HelpText = "Generate text dump for I3DF files / sector files.")]
         public bool GenerateSectorDumpFiles { get; init; }
 
+        [Option(longName: "NoInstancing", Required = false, HelpText = "Create triangle meshes instead of instance meshes.")]
+        public bool NoInstancing { get; init; }
+
+        [Option(longName: "CreateSingleSector", Required = false, HelpText = "Create a single sector.")]
+        public bool CreateSingleSector { get; init; }
+
+        [Option(longName: "DeterministicOutput", Required = false, HelpText = "Disables parallel processing in order to create a deterministic ordering.")]
+        public bool DeterministicOutput { get; init; }
+
         public static void AssertValidOptions(CommandLineOptions options)
         {
             // Validate DataAttributes
