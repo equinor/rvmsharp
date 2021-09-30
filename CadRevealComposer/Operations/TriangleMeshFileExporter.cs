@@ -14,7 +14,7 @@ namespace CadRevealComposer.Operations
             objExporter.StartObject("root"); // Keep a single object in each file
 
             var result = new List<TriangleMesh>(meshGeometries.Count);
-            // Export Meshes
+
             foreach (var triangleMesh in meshGeometries)
             {
                 if (triangleMesh.TempTessellatedMesh == null)
@@ -23,7 +23,10 @@ namespace CadRevealComposer.Operations
 
                 objExporter.WriteMesh(triangleMesh.TempTessellatedMesh);
 
-                result.Add(triangleMesh with { FileId = meshFileId });
+                result.Add(triangleMesh with
+                {
+                    FileId = meshFileId
+                });
             }
 
             return result;
