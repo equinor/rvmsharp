@@ -29,10 +29,10 @@ namespace CadRevealComposer
     {
         private static readonly TreeIndexGenerator TreeIndexGenerator = new();
         private static readonly NodeIdProvider NodeIdGenerator = new();
-        private static readonly SequentialIdGenerator MeshFileIdGenerator = new ();
-        private static readonly SequentialIdGenerator SectorIdGenerator = new ();
+        private static readonly SequentialIdGenerator MeshFileIdGenerator = new();
+        private static readonly SequentialIdGenerator SectorIdGenerator = new();
 
-        public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId);
+        public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId, bool NoInstancing, bool CreateSingleSector, bool DeterministicOutput);
 
         public record ToolsParameters(string Mesh2CtmToolPath, string I3dfDumpToolPath, bool GenerateSectorDumpFiles);
 
@@ -62,10 +62,10 @@ namespace CadRevealComposer
             Parameters parameters,
             ToolsParameters toolsParameters)
         {
-            static IEnumerable<APrimitive> ToMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
+            IEnumerable<APrimitive> ToMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
             {
                 var isGroupWithSingleItem = group.Count() == 1;
-                if (isGroupWithSingleItem)
+                if (isGroupWithSingleItem || parameters.NoInstancing)
                 {
                     foreach (var facetGroup in group)
                     {
@@ -75,7 +75,7 @@ namespace CadRevealComposer
                             Matrix = transform
                         };
                         var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
-                        
+
                         var protoMesh = protoMeshesMap[facetGroup.Key];
 
                         yield return new TriangleMesh(
@@ -87,7 +87,7 @@ namespace CadRevealComposer
                 }
                 else
                 {
-                    var mesh = TessellatorBridge.TessellateWithoutApplyingMatrix(group.Key, 1.0f, -1f); // tolerance unused for RvmFacetGroup
+                    var templateMesh = TessellatorBridge.TessellateWithoutApplyingMatrix(group.Key, 1.0f, -1f); // tolerance unused for RvmFacetGroup
 
                     foreach (var facetGroup in group)
                     {
@@ -103,12 +103,12 @@ namespace CadRevealComposer
                         yield return new InstancedMesh(
                             new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, protoMesh.AxisAlignedBoundingBox.Diagonal, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.Zero, 0f)),
                             ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset will be set later on
-                            (ulong)(mesh.Triangles.Count / 3),
+                            (ulong)(templateMesh.Triangles.Count / 3),
                             translation.X, translation.Y, translation.Z,
                             rollX, pitchY, yawZ,
                             scale.X, scale.Y, scale.Z)
                         {
-                            TempTessellatedMesh = mesh
+                            TempTessellatedMesh = templateMesh
                         };
                     }
                 }
@@ -173,7 +173,7 @@ namespace CadRevealComposer
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
             var protoMeshesMap = protoMeshes.ToDictionary(x => x.SourceMesh);
 
-            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray())
+            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray(), parameters.DeterministicOutput)
                 .GroupBy(x => x.Value.template)
                 .SelectMany(x => ToMeshes(x, protoMeshesMap))
                 .ToImmutableList();
@@ -192,16 +192,12 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Finished Geometry Conversion in: {geometryConversionTimer.Elapsed}");
 
-            //var sectors = SceneCreator.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshFileIdGenerator, SectorIdGenerator)
-            //    .OrderBy(x => x.SectorId)
-            //    .ToImmutableArray();
-
-            var sectors = new[]
-            {
-                new SceneCreator.SectorInfo(0, null, 0, "0", "sector_0.i3d", new[] {"mesh_0.ctm", "mesh_1.ctm"}, 1234,
-                    1, 1, geometriesToExport,
-                    new RvmBoundingBox(new Vector3(-1, -1, -125), new Vector3(292, 337, 84)))
-            };
+            var maxDepth = parameters.CreateSingleSector
+                ? 0U
+                : 5U;
+            var sectors = SectorSplitter.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshFileIdGenerator, SectorIdGenerator, maxDepth)
+                .OrderBy(x => x.SectorId)
+                .ToImmutableArray();
 
             var convertedObjFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var sector in sectors)

@@ -18,7 +18,8 @@ namespace CadRevealComposer.Operations
             string? parentPath,
             uint? parentSectorId,
             SequentialIdGenerator meshFileIdGenerator,
-            SequentialIdGenerator sectorIdGenerator)
+            SequentialIdGenerator sectorIdGenerator,
+            uint maxDepth)
         {
             const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
 
@@ -87,19 +88,24 @@ namespace CadRevealComposer.Operations
                 .ToImmutableList();
 
             var isRoot = recursiveDepth == 0;
-            var isLeaf = recursiveDepth > 5 || allGeometries.Count < 10000 || grouped.Count == 1;
+            var isLeaf = recursiveDepth >= maxDepth || allGeometries.Count < 10000 || grouped.Count == 1;
 
             if (isLeaf)
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var hasInstanceMeshes = allGeometries.OfType<InstancedMesh>().Any();
                 var hasTriangleMeshes = allGeometries.OfType<TriangleMesh>().Any();
-                var meshId = hasTriangleMeshes ? meshFileIdGenerator.GetNextId() : (ulong?)null;
+                var meshId = hasTriangleMeshes
+                    ? meshFileIdGenerator.GetNextId()
+                    : (ulong?)null;
+                var path = isRoot
+                    ? $"{sectorId}"
+                    : $"{parentPath}/{sectorId}";
                 yield return new SceneCreator.SectorInfo(
                     sectorId,
                     parentSectorId,
                     recursiveDepth,
-                    $"{parentPath}/{sectorId}",
+                    path,
                     $"sector_{sectorId}.i3d",
                     (hasInstanceMeshes, hasTriangleMeshes) switch
                     {
@@ -129,13 +135,15 @@ namespace CadRevealComposer.Operations
 
                 foreach (var group in grouped)
                 {
-                    if (@group.Key == MainVoxel)
+                    if (group.Key == MainVoxel)
                     {
-                        var geometries = @group.SelectMany(x => x).ToList();
+                        var sectorId = (uint)sectorIdGenerator.GetNextId();
+                        var geometries = group.SelectMany(x => x).ToList();
                         var hasInstanceMeshes = geometries.OfType<InstancedMesh>().Any();
                         var hasTriangleMeshes = geometries.OfType<TriangleMesh>().Any();
-                        var meshId = hasTriangleMeshes ? meshFileIdGenerator.GetNextId() : (ulong?)null;
-                        var sectorId = (uint)sectorIdGenerator.GetNextId();
+                        var meshId = hasTriangleMeshes
+                            ? meshFileIdGenerator.GetNextId()
+                            : (ulong?)null;
                         var path = isRoot
                             ? $"{sectorId}"
                             : $"{parentPath}/{sectorId}";
@@ -174,7 +182,8 @@ namespace CadRevealComposer.Operations
                             parentPathForChildren,
                             parentSectorIdForChildren,
                             meshFileIdGenerator,
-                            sectorIdGenerator);
+                            sectorIdGenerator,
+                            maxDepth);
                         foreach (var sector in sectors)
                         {
                             yield return sector;
