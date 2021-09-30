@@ -87,11 +87,7 @@ namespace CadRevealComposer
                 }
                 else
                 {
-                    var template = group.Key with
-                    {
-                        Matrix = Matrix4x4.Identity
-                    };
-                    var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
+                    var mesh = TessellatorBridge.TessellateWithoutApplyingMatrix(group.Key, 1.0f, -1f); // tolerance unused for RvmFacetGroup
 
                     foreach (var facetGroup in group)
                     {
@@ -100,7 +96,7 @@ namespace CadRevealComposer
                         {
                             throw new Exception("Could not decompose transformation matrix.");
                         }
-                        var (rollX, pitchY, yawZ) = Quaternion.Normalize(rotation).ToEulerAngles();
+                        var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
 
                         var protoMesh = protoMeshesMap[facetGroup.Key];
 
