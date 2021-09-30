@@ -8,15 +8,27 @@ namespace CadRevealComposer.Primitives.Instancing
 
     public static class RvmFacetGroupMatcher
     {
-        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
+        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups, bool deterministicOutput)
         {
-            return groups
+            var enumerable = groups
                 .GroupBy(CalculateKey)
-                .Select(g => (g.Key, g.ToArray()))
+                .Select(g => (g.Key, g.ToArray()));
+
+            if (deterministicOutput)
+            {
+                return enumerable
+                    .Select(MatchGroups)
+                    .SelectMany(d => d)
+                    .ToDictionary(r => r.Key, r => r.Value);
+            }
+
+            return enumerable
                 .AsParallel()
                 .Select(MatchGroups)
                 .SelectMany(d => d)
                 .ToDictionary(r => r.Key, r => r.Value);
+
+
         }
 
         private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups((long groupId, RvmFacetGroup[] facetGroups) group)
