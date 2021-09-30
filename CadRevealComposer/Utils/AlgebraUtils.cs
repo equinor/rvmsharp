@@ -123,7 +123,7 @@ namespace CadRevealComposer.Utils
                         axes = new Vector3(-to.Y, -to.Z, 0);
                     return Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes), MathF.PI * 2);
                 }
-                return new Quaternion(0, 0, 0, 1);
+                return Quaternion.Identity;
             }
 
             return Quaternion.CreateFromAxisAngle(Vector3.Normalize(cross), from.AngleTo(to));
@@ -187,10 +187,11 @@ namespace CadRevealComposer.Utils
 
             var va12r1vb12cross = Vector3.Cross(va12r1, vb12);
             var rotationNormal = Vector3.Normalize(Vector3.Cross(va12r1, vb12));
-            var rot2 = va12r1vb12cross.LengthSquared().ApproximatelyEquals(0) ? Quaternion.Identity :
-                Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
+            var rot2 = va12r1vb12cross.LengthSquared().ApproximatelyEquals(0)
+                ? Quaternion.Identity
+                : Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
 
-            var rotation = rot2 * rot1;
+            var rotation = Quaternion.Normalize(rot2 * rot1);
 
             // translation
             var translation = pb1 - Vector3.Transform(pa1 * scale, rotation);
@@ -200,10 +201,10 @@ namespace CadRevealComposer.Utils
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(translation);
 
-            return (pb1.ApproximatelyEquals(Vector3.Transform(pa1, transform), 0.001f) &&
-                    pb2.ApproximatelyEquals(Vector3.Transform(pa2, transform), 0.001f) &&
-                    pb3.ApproximatelyEquals(Vector3.Transform(pa3, transform), 0.001f) &&
-                    pb4.ApproximatelyEquals(Vector3.Transform(pa4, transform), 0.001f));
+            return pb1.ApproximatelyEquals(Vector3.Transform(pa1, transform), 0.001f) &&
+                   pb2.ApproximatelyEquals(Vector3.Transform(pa2, transform), 0.001f) &&
+                   pb3.ApproximatelyEquals(Vector3.Transform(pa3, transform), 0.001f) &&
+                   pb4.ApproximatelyEquals(Vector3.Transform(pa4, transform), 0.001f);
         }
     }
 }
