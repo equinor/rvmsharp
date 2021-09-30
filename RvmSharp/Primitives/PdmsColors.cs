@@ -7,7 +7,125 @@
 
     public static class PdmsColors
     {
-        private static readonly IReadOnlyList<(string Name, Color Color)> PdmsColorsList =
+        private static readonly Dictionary<uint, string> PdmsIdToColorNameMap = new()
+        {
+            { 1, "Black" },
+            { 2, "Red" },
+            { 3, "Orange" },
+            { 4, "Yellow" },
+            { 5, "Green" },
+            { 6, "Cyan" },
+            { 7, "Blue" },
+            { 8, "Magenta" },
+            { 9, "Brown" },
+            { 10, "White" },
+            { 11, "Salmon" },
+            { 12, "LightGrey" },
+            { 13, "Grey" },
+            { 14, "Plum" },
+            { 15, "WhiteSmoke" },
+            { 16, "Maroon" },
+            { 17, "SpringGreen" },
+            { 18, "Wheat" },
+            { 19, "Gold" },
+            { 20, "RoyalBlue" },
+            { 21, "LightGold" },
+            { 22, "DeepPink" },
+            { 23, "ForestGreen" },
+            { 24, "BrightOrange" },
+            { 25, "Ivory" },
+            { 26, "Chocolate" },
+            { 27, "SteelBlue" },
+            { 28, "White" },
+            { 29, "Midnight" },
+            { 30, "NavyBlue" },
+            { 31, "Pink" },
+            { 32, "CoralRed" },
+            { 33, "Black" },
+            { 34, "Red" },
+            { 35, "Orange" },
+            { 36, "Yellow" },
+            { 37, "Green" },
+            { 38, "Cyan" },
+            { 39, "Blue" },
+            { 40, "Magenta" },
+            { 41, "Brown" },
+            { 42, "White" },
+            { 43, "Salmon" },
+            { 44, "LightGrey" },
+            { 45, "Grey" },
+            { 46, "Plum" },
+            { 47, "WhiteSmoke" },
+            { 48, "Maroon" },
+            { 49, "SpringGreen" },
+            { 50, "Wheat" },
+            { 51, "Gold" },
+            { 52, "RoyalBlue" },
+            { 53, "LightGold" },
+            { 54, "DeepPink" },
+            { 55, "ForestGreen" },
+            { 56, "BrightOrange" },
+            { 57, "Ivory" },
+            { 58, "Chocolate" },
+            { 59, "SteelBlue" },
+            { 60, "White" },
+            { 61, "Midnight" },
+            { 62, "NavyBlue" },
+            { 63, "Pink" },
+            { 64, "CoralRed" },
+            { 206, "Black" },
+            { 207, "White" },
+            { 208, "WhiteSmoke" },
+            { 209, "Ivory" },
+            { 210, "Grey" },
+            { 211, "LightGrey" },
+            { 212, "DarkGrey" },
+            { 213, "DarkSlate" },
+            { 214, "Red" },
+            { 215, "BrightRed" },
+            { 216, "CoralRed" },
+            { 217, "Tomato" },
+            { 218, "Plum" },
+            { 219, "DeepPink" },
+            { 220, "Pink" },
+            { 221, "Salmon" },
+            { 222, "Orange" },
+            { 223, "BrightOrange" },
+            { 224, "OrangeRed" },
+            { 225, "Maroon" },
+            { 226, "Yellow" },
+            { 227, "Gold" },
+            { 228, "LightYellow" },
+            { 229, "LightGold" },
+            { 230, "YellowGreen" },
+            { 231, "SpringGreen" },
+            { 232, "Green" },
+            { 233, "ForestGreen" },
+            { 234, "DarkGreen" },
+            { 235, "Cyan" },
+            { 236, "Turquoise" },
+            { 237, "Aquamarine" },
+            { 238, "Blue" },
+            { 239, "RoyalBlue" },
+            { 240, "NavyBlue" },
+            { 241, "PowderBlue" },
+            { 242, "Midnight" },
+            { 243, "SteelBlue" },
+            { 244, "Indigo" },
+            { 245, "Mauve" },
+            { 246, "Violet" },
+            { 247, "Magenta" },
+            { 248, "Beige" },
+            { 249, "Wheat" },
+            { 250, "Tan" },
+            { 251, "SandyBrown" },
+            { 252, "Brown" },
+            { 253, "Khaki" },
+            { 254, "Chocolate" },
+            { 255, "DarkBrown" }
+        };
+
+        private static readonly Dictionary<string, Color> PdmsColorNameToColorMap =
             new List<(string Name, (float R, float G, float B) color)>
             {
                 ("Black", (0 / 100.0f, 0 / 100.0f, 0 / 100.0f)),
@@ -69,7 +187,10 @@
                         red: (byte)(r * 255f),
                         green: (byte)(g * 255f),
                         blue: (byte)(b * 255f)));
-            }).ToList();
+            }).ToDictionary(x => x.name, x => x.Color);
+
+        private static readonly Dictionary<uint, Color> PdmsIdToColorMap =
+            PdmsIdToColorNameMap.ToDictionary(x => x.Key, x => PdmsColorNameToColorMap[x.Value]);
 
         /// <summary>
         /// Get a Color from the Color Table based on a "Code" from RVM data.
@@ -81,14 +202,13 @@
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static bool TryGetColorByCode(uint code, out Color color)
         {
-            if (code < 1 || code > PdmsColorsList.Count)
+            if (!PdmsIdToColorMap.TryGetValue(code, out var c))
             {
                 color = default;
                 return false;
             }
 
-            var index = (int)code - 1;
-            color = PdmsColorsList[index].Color;
+            color = c;
             return true;
         }
 
@@ -101,12 +221,12 @@
         // ReSharper disable once UnusedMember.Global
         public static Color GetColorByName(string name)
         {
-            var match = PdmsColorsList.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (PdmsColorNameToColorMap.TryGetValue(name, out var color))
+            {
+                return color;
+            }
 
-            if (match == default)
-                throw new KeyNotFoundException($"There is no color named {name}");
-
-            return match.Color;
+            throw new KeyNotFoundException($"There is no color named {name}");
         }
     }
 }
