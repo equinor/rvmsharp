@@ -16,7 +16,7 @@
             }
 
             // TODO: Fallback color is arbitrarily chosen. It seems we have some issue with the material mapping table, and should have had more colors.
-            return Color.LightGray;
+            return Color.Magenta;
         }
 
         /// <summary>
