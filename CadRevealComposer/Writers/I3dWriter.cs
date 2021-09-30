@@ -40,7 +40,7 @@ namespace CadRevealComposer.Writers
                     foreach (var box in boxCollection)
                     {
                         indices.Add(box.TreeIndex);
-                        indices.Add(GetIndex(box.Color, headerAttributes.Color));
+                        indices.Add(GetColorIndex(box.Color, headerAttributes.Color));
                         indices.Add(GetFloatIndex(box.Diagonal, headerAttributes.Diagonal));
                         indices.Add(GetFloatIndex(box.CenterX, headerAttributes.CenterX));
                         indices.Add(GetFloatIndex(box.CenterY, headerAttributes.CenterY));
@@ -65,7 +65,7 @@ namespace CadRevealComposer.Writers
                     foreach (var circle in circleCollection)
                     {
                         indices.Add(circle.TreeIndex);
-                        indices.Add(GetIndex(circle.Color, headerAttributes.Color));
+                        indices.Add(GetColorIndex(circle.Color, headerAttributes.Color));
                         indices.Add(GetFloatIndex(circle.Diagonal, headerAttributes.Diagonal));
                         indices.Add(GetFloatIndex(circle.CenterX, headerAttributes.CenterX));
                         indices.Add(GetFloatIndex(circle.CenterY, headerAttributes.CenterY));
@@ -87,7 +87,7 @@ namespace CadRevealComposer.Writers
                     foreach (var geometry in closedConeCollection)
                     {
                         indices.Add(geometry.TreeIndex);
-                        indices.Add(GetIndex(geometry.Color, headerAttributes.Color));
+                        indices.Add(GetColorIndex(geometry.Color, headerAttributes.Color));
                         indices.Add(GetFloatIndex(geometry.Diagonal, headerAttributes.Diagonal));
                         indices.Add(GetFloatIndex(geometry.CenterX, headerAttributes.CenterX));
                         indices.Add(GetFloatIndex(geometry.CenterY, headerAttributes.CenterY));
@@ -814,7 +814,8 @@ namespace CadRevealComposer.Writers
 
         private static ulong GetColorIndex(Color targetColor, ImmutableSortedSet<Color> colorAttributeArray)
         {
-            return GetIndex(targetColor, colorAttributeArray);
+            // zero means no color
+            return GetIndex(targetColor, colorAttributeArray) + 1;
         }
 
         private static ulong GetTextureIndex(Texture targetTexture,
