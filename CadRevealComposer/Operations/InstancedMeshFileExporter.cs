@@ -14,8 +14,8 @@ namespace CadRevealComposer.Operations
             using var objExporter = new ObjExporter(Path.Combine(outputDirectory.FullName, $"mesh_{meshFileId}.obj"));
             objExporter.StartObject("root");
             var exportedInstancedMeshes = new List<InstancedMesh>();
-            uint triangleOffset = 0;
 
+            ulong triangleOffset = 0;
             var counter = 0;
             foreach (var instancedMeshesGroupedByMesh in meshGeometries.GroupBy(x => x.TempTessellatedMesh))
             {
@@ -38,10 +38,9 @@ namespace CadRevealComposer.Operations
                     })
                     .ToArray();
 
-                exportedInstancedMeshes.AddRange(
-                    adjustedInstancedMeshes);
+                exportedInstancedMeshes.AddRange(adjustedInstancedMeshes);
 
-                triangleOffset += (uint)mesh.Triangles.Count / 3;
+                triangleOffset += (ulong)mesh.Triangles.Count / 3;
             }
 
             Console.WriteLine($"{counter} distinct instanced meshes exported to MeshFile{meshFileId}");
