@@ -2,14 +2,13 @@
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Drawing;
     using System.Linq;
 
     public static class PdmsColors
     {
         private static readonly IReadOnlyList<(string Name, Color Color)> PdmsColorsList =
-            new List<(string Name, (float R, float G, float B) color)>()
+            new List<(string Name, (float R, float G, float B) color)>
             {
                 ("Black", (0 / 100.0f, 0 / 100.0f, 0 / 100.0f)),
                 ("White", (100 / 100.0f, 100 / 100.0f, 100 / 100.0f)),
@@ -63,14 +62,13 @@
                 ("DarkBrown", (55 / 100.0f, 27 / 100.0f, 8 / 100.0f))
             }.Select(x =>
             {
-                const byte alpha = byte.MaxValue;
-                (var name, (float r, float g, float b)) = x;
+                var (name, (r, g, b)) = x;
                 return (name,
                     Color: Color.FromArgb(
-                        alpha: alpha,
-                        red: (byte)r * 255,
-                        green: (byte)g * 255,
-                        blue: (byte)b * 255));
+                        alpha: byte.MaxValue,
+                        red: (byte)(r * 255f),
+                        green: (byte)(g * 255f),
+                        blue: (byte)(b * 255f)));
             }).ToList();
 
         /// <summary>
