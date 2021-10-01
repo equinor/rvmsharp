@@ -59,7 +59,9 @@ namespace CadRevealComposer.Operations
                 .WhereNotNull();
 
             var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
-            newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Aggregate((a,b) => a.Encapsulate(b));
+            newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
+                ? primitiveAndChildrenBoundingBoxes.Aggregate((a,b) => a.Encapsulate(b))
+                : null;
 
             return newNode;
         }
