@@ -57,20 +57,35 @@ namespace CadRevealComposer.Utils
         {
             var q = quaternion; // shorter name for readability
 
+            var test = q.W * q.Y - q.Z * q.X;
+            var test2 = q.W < 0.7f;
+            if (test > 0.499f && test2)
+            { // singularity at north pole
+                var heading = 2f * MathF.Atan2(q.Y, q.X);
+                var attitude = MathF.PI / 2f;
+                return (heading, attitude, 0f);
+            }
+            if (test < -0.499f && test2)
+            { // singularity at south pole
+                var heading = -2f * MathF.Atan2(q.Y, q.X);
+                var attitude = -MathF.PI / 2f;
+                return (heading, attitude, 0f);
+            }
+
             // roll (x-axis rotation)
-            var sinRollCosPitch = 2 * (q.W * q.X + q.Y * q.Z);
-            var cosRollCosPitch = 1 - 2 * (q.X * q.X + q.Y * q.Y);
+            var sinRollCosPitch = 2f * (q.W * q.X + q.Y * q.Z);
+            var cosRollCosPitch = 1f - 2f * (q.X * q.X + q.Y * q.Y);
             var roll = MathF.Atan2(sinRollCosPitch, cosRollCosPitch);
 
             // pitch (y-axis rotation)
             var sinPitch = 2 * (q.W * q.Y - q.Z * q.X);
-            var pitch = MathF.Abs(sinPitch) >= 1f
-                ? MathF.CopySign(MathF.PI / 2, sinPitch)
+            var pitch = MathF.Abs(sinPitch) >= 0.999f
+                ? MathF.CopySign(MathF.PI / 2f, sinPitch)
                 : MathF.Asin(sinPitch);
 
             // yaw (z-axis rotation)
-            var sinYawCosPitch = 2 * (q.W * q.Z + q.X * q.Y);
-            var cosYawCosPitch = 1 - 2 * (q.Y * q.Y + q.Z * q.Z);
+            var sinYawCosPitch = 2f * (q.W * q.Z + q.X * q.Y);
+            var cosYawCosPitch = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
             var yaw = MathF.Atan2(sinYawCosPitch, cosYawCosPitch);
 
             return (roll, pitch, yaw);
@@ -160,9 +175,9 @@ namespace CadRevealComposer.Utils
             if (!dist.ApproximatelyEquals(0))
             {
                 var vaMatrix = new Matrix4x4(
-                    va12.X * va12.X,va12.Y * va12.Y,va12.Z * va12.Z, 0,
-                    va13.X * va13.X,va13.Y * va13.Y,va13.Z * va13.Z, 0,
-                    va14.X * va14.X,va14.Y * va14.Y,va14.Z * va14.Z, 0,
+                    va12.X * va12.X, va12.Y * va12.Y, va12.Z * va12.Z, 0,
+                    va13.X * va13.X, va13.Y * va13.Y, va13.Z * va13.Z, 0,
+                    va14.X * va14.X, va14.Y * va14.Y, va14.Z * va14.Z, 0,
                     0, 0, 0, 1);
                 if (!Matrix4x4.Invert(vaMatrix, out var vaMatrixInverse))
                 {
