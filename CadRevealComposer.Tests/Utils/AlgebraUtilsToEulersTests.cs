@@ -26,6 +26,8 @@
         [TestCase(-0.5f, -0.5f, -0.5f, 0.5f)]
         [TestCase(-0.5f, -0.5f, -0.5f, -0.5f)]
         [TestCase(0f, -0.7071068f, 0f, 0.7071068f)]
+        [TestCase(0.7071068f, 0f, -0.7071068f, 0f)]
+        [TestCase(0.6123848f, 0.353532f, -0.6123848f, 0.353531957f)]
         public void SimpleTest(float x, float y, float z, float w)
         {
             var q = new Quaternion(x, y, z, w);
@@ -56,7 +58,7 @@
         [TestCase(0, 90, 0)]
         [TestCase(0, 0, 90)]
         [TestCase(90, 90, 90)]
-        public void SimpleTest(float yawDeg, float pitchDeg, float rollDeg)
+        public void SimpleTest2(float yawDeg, float pitchDeg, float rollDeg)
         {
             var yawR = yawDeg * MathF.PI / 180;
             var pitchR = pitchDeg * MathF.PI / 180;
