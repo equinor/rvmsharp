@@ -58,7 +58,7 @@ namespace CadRevealComposer.Utils
             var q = quaternion; // shorter name for readability
 
             var test = q.W * q.Y - q.Z * q.X;
-            var test2 = q.W < 0.7f;
+            var test2 = q.W < 0.7f; // ERL: dirty fix
             if (test > 0.499f && test2)
             { // singularity at north pole
                 var heading = 2f * MathF.Atan2(q.Y, q.X);
