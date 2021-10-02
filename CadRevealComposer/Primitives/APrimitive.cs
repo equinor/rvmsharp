@@ -64,6 +64,7 @@ namespace CadRevealComposer.Primitives
         {
         }
 
+        // TODO: this code must be refactored, it does not belong in this namespace
         public static APrimitive? FromRvmPrimitive(
             CadRevealNode revealNode,
             RvmNode rvmNode,

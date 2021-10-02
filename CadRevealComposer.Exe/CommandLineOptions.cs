@@ -40,9 +40,6 @@ namespace CadRevealComposer.Exe
         ]
         public long RevisionId { get; init; }
 
-        [Option(longName: "GenerateSectorDumpFiles", Required = false, HelpText = "Generate text dump for I3DF files / sector files.")]
-        public bool GenerateSectorDumpFiles { get; init; }
-
         [Option(longName: "NoInstancing", Required = false, HelpText = "Create triangle meshes instead of instance meshes.")]
         public bool NoInstancing { get; init; }
 

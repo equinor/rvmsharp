@@ -1,9 +1,10 @@
 ﻿namespace RvmSharp.Containers
 {
     using Primitives;
+    using System;
     using System.Collections.Generic;
 
-    public class RvmModel
+    public record RvmModel
     {
         public uint Version { get; }
         public string Project  { get; }
@@ -15,11 +16,17 @@
         private readonly List<RvmPrimitive> _primitives = new List<RvmPrimitive>();
         private readonly List<RvmColor> _colors = new List<RvmColor>();
 
-        public RvmModel(uint version, string project, string name)
+        public RvmModel(uint version, string project, string name,
+            IEnumerable<RvmNode> children,
+            IEnumerable<RvmPrimitive> primitives,
+            IEnumerable<RvmColor> colors)
         {
             Version = version;
             Project = project;
             Name = name;
+            _children.AddRange(children);
+            _primitives.AddRange(primitives);
+            _colors.AddRange(colors);
         }
 
         internal void AddChild(RvmNode rvmNode)
