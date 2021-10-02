@@ -3,6 +3,7 @@
     using Containers;
     using Primitives;
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Numerics;
     using System.Text;
@@ -73,12 +74,12 @@
             return builder.ToString();
         }
 
-        private static RvmModel ReadModel(Stream stream)
+        private static (uint version, string project, string name) ReadModelParameters(Stream stream)
         {
             var version = ReadUint(stream);
             var project = ReadString(stream);
             var name = ReadString(stream);
-            return new RvmModel(version, project, name);
+            return (version, project, name);
         }
 
         private static RvmPrimitive ReadPrimitive(Stream stream)
@@ -297,7 +298,10 @@
             var modl = ReadChunkHeader(stream, out len, out dunno);
             if (modl != "MODL")
                 throw new IOException($"Expected MODL, found {modl}");
-            var model = ReadModel(stream);
+            var modelParameters = ReadModelParameters(stream);
+            var modelChildren = new List<RvmNode>();
+            var modelPrimitives = new List<RvmPrimitive>();
+            var modelColors = new List<RvmColor>();
 
             var chunk = ReadChunkHeader(stream, out len, out dunno);
             while (chunk != "END:")
@@ -305,13 +309,13 @@
                 switch (chunk)
                 {
                     case "CNTB":
-                        model.AddChild(ReadCntb(stream));
+                        modelChildren.Add(ReadCntb(stream));
                         break;
                     case "PRIM":
-                        model.AddPrimitive(ReadPrimitive(stream));
+                        modelPrimitives.Add(ReadPrimitive(stream));
                         break;
                     case "COLR":
-                        model.AddColor(ReadColor(stream));
+                        modelColors.Add(ReadColor(stream));
                         break;
                     default:
                         throw new NotImplementedException($"Unknown chunk: {chunk}");
@@ -320,7 +324,9 @@
                 chunk = ReadChunkHeader(stream, out len, out dunno);
             }
 
-            return new RvmFile(header, model);
+            return new RvmFile(header,
+                new RvmModel(modelParameters.version, modelParameters.project, modelParameters.name,
+                    modelChildren, modelPrimitives, modelColors));
         }
     }
 }

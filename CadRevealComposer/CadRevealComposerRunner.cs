@@ -1,5 +1,6 @@
 namespace CadRevealComposer
 {
+    using Configuration;
     using IdProviders;
     using Operations;
     using Primitives;
@@ -19,28 +20,13 @@ namespace CadRevealComposer
     using System.Threading.Tasks;
     using Utils;
 
-    public record ProjectId(long Value);
-
-    public record ModelId(long Value);
-
-    public record RevisionId(long Value);
-
     public static class CadRevealComposerRunner
     {
-        private static readonly TreeIndexGenerator TreeIndexGenerator = new();
-        private static readonly NodeIdProvider NodeIdGenerator = new();
-        private static readonly SequentialIdGenerator MeshFileIdGenerator = new();
-        private static readonly SequentialIdGenerator SectorIdGenerator = new();
-
-        public record Parameters(ProjectId ProjectId, ModelId ModelId, RevisionId RevisionId, bool NoInstancing, bool CreateSingleSector, bool DeterministicOutput);
-
-        public record ToolsParameters(string Mesh2CtmToolPath, string I3dfDumpToolPath, bool GenerateSectorDumpFiles);
-
         public static void Process(
             DirectoryInfo inputRvmFolderPath,
             DirectoryInfo outputDirectory,
-            Parameters parameters,
-            ToolsParameters toolsParameters)
+            ModelParameters modelParameters,
+            ComposerParameters composerParameters)
         {
             var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
 
@@ -53,19 +39,25 @@ namespace CadRevealComposer
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
             Console.WriteLine($"Read RvmData in {rvmTimer.Elapsed}");
 
-            ProcessRvmStore(rvmStore, outputDirectory, parameters, toolsParameters);
+            ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
         }
 
-        private static void ProcessRvmStore(
+        public static void ProcessRvmStore(
             RvmStore rvmStore,
             DirectoryInfo outputDirectory,
-            Parameters parameters,
-            ToolsParameters toolsParameters)
+            ModelParameters modelParameters,
+            ComposerParameters composerParameters)
         {
+            TreeIndexGenerator treeIndexGenerator = new();
+            NodeIdProvider nodeIdGenerator = new();
+            SequentialIdGenerator meshFileIdGenerator = new();
+            SequentialIdGenerator sectorIdGenerator = new();
+
+            /*
             IEnumerable<APrimitive> ToMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
             {
                 var isGroupWithSingleItem = group.Count() == 1;
-                if (isGroupWithSingleItem || parameters.NoInstancing)
+                if (isGroupWithSingleItem || composerParameters.NoInstancing)
                 {
                     foreach (var facetGroup in group)
                     {
@@ -112,33 +104,13 @@ namespace CadRevealComposer
                         };
                     }
                 }
-            }
+            }*/
 
             Console.WriteLine("Generating i3d");
 
-            var rootNode = new CadRevealNode
-            {
-                NodeId = NodeIdGenerator.GetNodeId(null),
-                TreeIndex = TreeIndexGenerator.GetNextId(),
-                Parent = null,
-                Group = null,
-                Children = null
-            };
+            var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
 
-            rootNode.Children = rvmStore.RvmFiles
-                .SelectMany(f => f.Model.Children)
-                .Select(root => RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root, rootNode, NodeIdGenerator, TreeIndexGenerator))
-                .ToArray();
-
-            rootNode.BoundingBoxAxisAligned = rootNode.Children
-                .Select(x => x.BoundingBoxAxisAligned)
-                .WhereNotNull()
-                .ToArray().Aggregate((a, b) => a.Encapsulate(b));
-
-            Debug.Assert(rootNode.BoundingBoxAxisAligned != null, "Root node has no bounding box. Are there any meshes in the input?");
-
-            var allNodes = GetAllNodesFlat(rootNode).ToArray();
-
+            // TODO: move to ProtoMesh
             var pyramidInstancingTimer = Stopwatch.StartNew();
             var pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
             Console.WriteLine($"Prepared Pyramids in {pyramidInstancingTimer.Elapsed}");
@@ -156,6 +128,8 @@ namespace CadRevealComposer
                 .WhereNotNull()
                 .ToList();
 
+
+
             var exportHierarchyDatabaseTask = Task.Run(() =>
             {
                 var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
@@ -164,7 +138,7 @@ namespace CadRevealComposer
             });
 
             var exportInstancedMeshes = Stopwatch.StartNew();
-            var instancedMeshesFileId = MeshFileIdGenerator.GetNextId();
+            var instancedMeshesFileId = meshFileIdGenerator.GetNextId();
 
             // The following code should be refactored, i'm just not sure how
             // We need to remove all instancedMeshes, and the re-add them.
@@ -173,13 +147,13 @@ namespace CadRevealComposer
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
             var protoMeshesMap = protoMeshes.ToDictionary(x => x.SourceMesh);
 
-            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray(), parameters.DeterministicOutput)
+            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray(), composerParameters.DeterministicOutput)
                 .GroupBy(x => x.Value.template)
                 .SelectMany(x => ToMeshes(x, protoMeshesMap))
                 .ToImmutableList();
 
             var allInstancedMeshes = instancedMeshes.Concat(rvmFacetGroupResults.OfType<InstancedMesh>()).ToList();
-            var exportedInstancedMeshes = InstancedMeshFileExporter.ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
+            var exportedInstancedMeshes = PeripheralFileExporter.ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
 
             var geometriesToExport = geometries
                 .Except(instancedMeshes)
@@ -192,72 +166,15 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Finished Geometry Conversion in: {geometryConversionTimer.Elapsed}");
 
-            var maxDepth = parameters.CreateSingleSector
+            var maxDepth = composerParameters.CreateSingleSector
                 ? 0U
                 : 5U;
-            var sectors = SectorSplitter.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, MeshFileIdGenerator, SectorIdGenerator, maxDepth)
+            var sectors = SectorSplitter.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, meshFileIdGenerator, sectorIdGenerator, maxDepth)
                 .OrderBy(x => x.SectorId)
                 .ToImmutableArray();
 
-            var convertedObjFiles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var sector in sectors)
-            {
-                SceneCreator.ExportSector(sector, outputDirectory);
-
-                if (sector.MeshFileId.HasValue)
-                {
-                    foreach (var sectorPeripheralFile in sector.PeripheralFiles.Where(filename => !convertedObjFiles.Contains(filename)))
-                    {
-                        var inputFilename = $"{Path.GetFileNameWithoutExtension(sectorPeripheralFile)}.obj";
-                        var inputPath = Path.Combine(outputDirectory.FullName, inputFilename);
-                        var outputPath = Path.Combine(outputDirectory.FullName, sectorPeripheralFile);
-                        var sw = Stopwatch.StartNew();
-                        System.Diagnostics.Process.Start(toolsParameters.Mesh2CtmToolPath, $"\"{inputPath}\" \"{outputPath}\" --comment \"RvmSharp\" --method MG1 --level 4 --no-texcoords --no-colors --upaxis Y")
-                            .WaitForExit();
-                        sw.Stop();
-
-                        Console.WriteLine($"Saving {outputPath}... {sw.ElapsedMilliseconds} ms");
-
-                        convertedObjFiles.Add(sectorPeripheralFile);
-                    }
-                }
-
-                if (toolsParameters.GenerateSectorDumpFiles)
-                {
-                    var inputPath = Path.Combine(outputDirectory.FullName, sector.Filename);
-                    var outputPath = Path.Combine(outputDirectory.FullName, $"{sector.Filename}.dump");
-
-                    var process = new Process
-                    {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = toolsParameters.I3dfDumpToolPath,
-                            Arguments = $"\"{inputPath}\"",
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true,
-                            CreateNoWindow = true
-                        }
-                    };
-
-                    var sw = Stopwatch.StartNew();
-                    process.Start();
-                    using var streamWriter = File.CreateText(outputPath);
-                    using var streamReader = process.StandardOutput;
-                    string? line;
-                    while ((line = streamReader.ReadLine()) != null)
-                    {
-                        streamWriter.WriteLine(line);
-                    }
-                    streamWriter.Flush();
-                    process.WaitForExit();
-                    sw.Stop();
-
-                    Console.WriteLine($"Saving {outputPath}... {sw.ElapsedMilliseconds} ms");
-                }
-            }
-
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectors, outputDirectory).ToImmutableArray();
-            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, parameters, outputDirectory, TreeIndexGenerator.CurrentMaxGeneratedIndex);
+            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
 
             Task.WaitAll(exportHierarchyDatabaseTask);
 
@@ -276,22 +193,6 @@ namespace CadRevealComposer
                 {
                     DownloadSize = downloadSize
                 };
-            }
-        }
-
-        private static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
-        {
-            yield return root;
-
-            if (root.Children != null)
-            {
-                foreach (CadRevealNode cadRevealNode in root.Children)
-                {
-                    foreach (CadRevealNode revealNode in GetAllNodesFlat(cadRevealNode))
-                    {
-                        yield return revealNode;
-                    }
-                }
             }
         }
     }
