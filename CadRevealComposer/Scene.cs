@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer
 {
+    using Configuration;
     using Newtonsoft.Json;
     using System;
 

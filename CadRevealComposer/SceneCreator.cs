@@ -1,5 +1,6 @@
 namespace CadRevealComposer
 {
+    using Configuration;
     using HierarchyComposer.Functions;
     using IdProviders;
     using Microsoft.Extensions.Logging;
@@ -53,7 +54,7 @@ namespace CadRevealComposer
             exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
         }
 
-        public static void WriteSceneFile(ImmutableArray<SectorInfo> sectors, CadRevealComposerRunner.Parameters parameters, DirectoryInfo outputDirectory, ulong maxTreeIndex)
+        public static void WriteSceneFile(ImmutableArray<SectorInfo> sectors, ModelParameters parameters, DirectoryInfo outputDirectory, ulong maxTreeIndex)
         {
             static Sector FromSector(SectorInfo sector)
             {
