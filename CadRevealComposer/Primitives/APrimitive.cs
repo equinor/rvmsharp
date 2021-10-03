@@ -3,8 +3,8 @@
 
 namespace CadRevealComposer.Primitives
 {
-    using Converters;
     using Newtonsoft.Json;
+    using Operations.Converters;
     using RvmSharp.Primitives;
     using System;
     using System.Diagnostics;

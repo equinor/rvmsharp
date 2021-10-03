@@ -1,7 +1,6 @@
 namespace CadRevealComposer.Utils
 {
     using System;
-    using System.Diagnostics.Contracts;
     using System.Numerics;
 
     public static class AlgebraUtils
