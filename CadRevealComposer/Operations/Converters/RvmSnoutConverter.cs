@@ -1,5 +1,6 @@
-﻿namespace CadRevealComposer.Primitives.Converters
+﻿namespace CadRevealComposer.Operations.Converters
 {
+    using Primitives;
     using RvmSharp.Primitives;
     using System;
     using System.Diagnostics;
@@ -20,7 +21,7 @@
             return (slope, angleAroundZ);
         }
 
-        public static APrimitive? ConvertToRevealPrimitive(this RvmSnout rvmSnout, CadRevealNode revealNode,
+        public static APrimitive ConvertToRevealPrimitive(this RvmSnout rvmSnout, CadRevealNode revealNode,
             RvmNode container)
         {
             var commons = rvmSnout.GetCommonProps(container, revealNode);
@@ -43,7 +44,7 @@
                 {
                     (float slopeA, float zangleA) = TranslateShearToSlope((rvmSnout.TopShearX, rvmSnout.TopShearY));
                     (float slopeB, float zangleB) = TranslateShearToSlope((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
-                    if (rvmSnout.RadiusTop == rvmSnout.RadiusBottom)
+                    if (rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom))
                     {
                         // General cylinder
                         if (IsOpen(rvmSnout))

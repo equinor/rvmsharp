@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Primitives.Converters
+﻿namespace CadRevealComposer.Operations.Converters
 {
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;

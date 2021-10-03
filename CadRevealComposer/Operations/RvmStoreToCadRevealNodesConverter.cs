@@ -1,7 +1,6 @@
-namespace CadRevealComposer
+namespace CadRevealComposer.Operations
 {
     using IdProviders;
-    using Operations;
     using RvmSharp.Containers;
     using System.Collections.Generic;
     using System.Diagnostics;

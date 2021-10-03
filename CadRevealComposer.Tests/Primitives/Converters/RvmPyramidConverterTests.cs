@@ -1,9 +1,9 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Converters
 {
     using CadRevealComposer.Primitives;
-    using CadRevealComposer.Primitives.Converters;
     using CadRevealComposer.Utils;
     using NUnit.Framework;
+    using Operations.Converters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System.Numerics;
@@ -11,7 +11,6 @@
     [TestFixture]
     public class RvmPyramidConverterTests
     {
-        private RvmPyramid RvmPyramidTestInstance;
         private readonly RvmBoundingBox _throwawayBoundingBox = new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
 
         internal RvmNode RvmNodeTestInstance;
@@ -24,18 +23,6 @@
         [SetUp]
         public void Setup()
         {
-            RvmPyramidTestInstance = new RvmPyramid(
-                Version: 2,
-                Matrix: Matrix4x4.Identity,
-                BoundingBoxLocal: _throwawayBoundingBox,
-                BottomX: 100,
-                BottomY: 50,
-                TopX: 50,
-                TopY: 25,
-                OffsetX: 0,
-                OffsetY: 0,
-                Height: 25
-            );
             RvmNodeTestInstance = new RvmNode(2, "BoxNode", new Vector3(1, 2, 3), 2);
             RevealNode = new CadRevealNode() { NodeId = NodeId, TreeIndex = TreeIndex };
         }
