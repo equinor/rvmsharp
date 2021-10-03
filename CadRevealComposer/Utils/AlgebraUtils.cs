@@ -172,7 +172,7 @@ namespace CadRevealComposer.Utils
             var squaredALengths = new Vector3(va12.LengthSquared(), va13.LengthSquared(), va14.LengthSquared());
             var dist = (squaredALengths - squaredBLengths).Length();
             var scale = Vector3.One;
-            if (!dist.ApproximatelyEquals(0))
+            if (!dist.ApproximatelyEquals(0, 0.001f))
             {
                 var vaMatrix = new Matrix4x4(
                     va12.X * va12.X, va12.Y * va12.Y, va12.Z * va12.Z, 0,

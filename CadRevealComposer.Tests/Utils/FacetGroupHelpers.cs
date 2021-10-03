@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Utils
 {
-    using CadRevealComposer.Primitives.Instancing;
     using Newtonsoft.Json;
     using NUnit.Framework;
+    using Operations;
     using RvmSharp.BatchUtils;
     using RvmSharp.Exporters;
     using RvmSharp.Primitives;
@@ -78,7 +78,7 @@
             var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
             var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 
-            var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups, deterministicOutput: false);
+            var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups);
             var templateToMatchCount = groupToTemplateWithTransform
                 .Select(kvp => (kvp.Value.template, kvp.Key))
                 .GroupBy(p => p.template)
