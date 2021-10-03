@@ -7,26 +7,27 @@
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
+    using System.Threading.Tasks;
 
     public static class Program
     {
         private const int Success = 0;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
+            var result = await Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
             Environment.Exit(result);
         }
 
-        private static int HandleParseError(IEnumerable<Error> arg)
+        private static Task<int> HandleParseError(IEnumerable<Error> arg)
         {
             // TODO: Handle errors?
             Console.WriteLine(arg.First());
-            return -1;
+            return Task.FromResult(-1);
         }
 
-        private static int RunOptionsAndReturnExitCode(CommandLineOptions options)
+        private static async Task<int> RunOptionsAndReturnExitCode(CommandLineOptions options)
         {
             var timer = Stopwatch.StartNew();
             CommandLineOptions.AssertValidOptions(options);
@@ -42,8 +43,7 @@
             var toolsParameters = new ComposerParameters(
                 Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
                 options.NoInstancing,
-                options.CreateSingleSector,
-                options.DeterministicOutput);
+                options.SingleSector);
 
             if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
             {
@@ -51,7 +51,7 @@
                 return 1;
             }
 
-            CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
+            await CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
 
             Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
             return Success;

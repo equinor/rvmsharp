@@ -2,14 +2,12 @@ namespace CadRevealComposer
 {
     using Configuration;
     using HierarchyComposer.Functions;
-    using IdProviders;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Operations;
     using Primitives;
     using Primitives.Reflection;
-    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using System;
     using System.Collections.Generic;
@@ -19,7 +17,6 @@ namespace CadRevealComposer
     using System.IO;
     using System.Linq;
     using System.Numerics;
-    using System.Threading.Tasks;
     using Utils;
     using Utils.Comparers;
     using Writers;
@@ -37,7 +34,6 @@ namespace CadRevealComposer
             string[] PeripheralFiles,
             long EstimatedTriangleCount,
             long EstimatedDrawCallCount,
-            ulong? MeshFileId,
             IReadOnlyList<APrimitive> Geometries,
             RvmBoundingBox BoundingBox
         )
@@ -97,26 +93,9 @@ namespace CadRevealComposer
             JsonUtils.JsonSerializeToFile(scene, scenePath, Formatting.Indented);
         }
 
-        public static void ExportSector(SectorInfo sector, DirectoryInfo outputDirectory)
+        public static void ExportSector(SectorInfo sector, string outputDirectory)
         {
             var geometries = sector.Geometries;
-            TriangleMesh[] exported = Array.Empty<TriangleMesh>();
-
-            if (sector.MeshFileId.HasValue)
-            {
-                var objExportTimer = Stopwatch.StartNew();
-                var triangleMeshes = sector.Geometries.OfType<TriangleMesh>().ToArray();
-                exported = TriangleMeshFileExporter.ExportMeshesToObjFile(outputDirectory, sector.MeshFileId.Value, triangleMeshes).ToArray();
-                objExportTimer.Stop();
-                Console.WriteLine($"Mesh .obj file exported (On background thread) in {objExportTimer.Elapsed}");
-
-                geometries = geometries
-                    .Except(triangleMeshes)
-                    .Concat(exported)
-                    .ToImmutableList();
-            }
-
-
             var groupAttributesTimer = Stopwatch.StartNew();
             Console.WriteLine("Start Group Attributes and create i3d file structure");
 
@@ -254,9 +233,6 @@ namespace CadRevealComposer
                 if (elementType == typeof(ProtoMesh))
                     continue; // ProtoMesh is a temporary primitive, and should not be exported.
                 var elements = geometriesByType.ToArray();
-                if (elementType == typeof(TriangleMesh))
-                    if (!Enumerable.SequenceEqual(exported, elements))
-                        throw new Exception("Triangle mesh sequences are not equal");
 
                 var fieldInfo = primitiveCollections.GetType().GetFields()
                     .First(pc => pc.FieldType.GetElementType() == elementType);
@@ -309,7 +285,7 @@ namespace CadRevealComposer
             Console.WriteLine($"Group Attributes and create i3d file structure: {groupAttributesTimer.Elapsed}");
 
             var i3dTimer = Stopwatch.StartNew();
-            var filepath = Path.Join(outputDirectory.FullName, $"sector_{file.FileSector.Header.SectorId}.i3d");
+            var filepath = Path.Join(outputDirectory, $"sector_{file.FileSector.Header.SectorId}.i3d");
             using var i3dSectorFile = File.Create(filepath);
             I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
             Console.WriteLine($"Finished writing i3d Sectors in {i3dTimer.Elapsed}");

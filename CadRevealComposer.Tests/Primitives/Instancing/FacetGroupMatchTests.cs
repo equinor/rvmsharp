@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests
 {
-    using CadRevealComposer.Primitives.Instancing;
     using Newtonsoft.Json;
     using NUnit.Framework;
+    using Operations;
     using RvmSharp.Primitives;
     using System.IO;
     using Utils;
