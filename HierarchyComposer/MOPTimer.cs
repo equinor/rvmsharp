@@ -14,7 +14,7 @@
         {
             this._operation = operation;
             this._logger = logger;
-            logger.LogInformation($"Starting {operation}");
+            logger.LogInformation("Starting {Operation}", operation);
             _stopwatch = Stopwatch.StartNew();
         }
 
@@ -26,7 +26,7 @@
         public void LogCompletion()
         {
             _stopwatch.Stop();
-            _logger.LogInformation($"{_operation} completed in {_stopwatch.Elapsed}");
+            _logger.LogInformation("{Operation} completed in {Elapsed}", _operation, _stopwatch.Elapsed);
         }
 
         public static void RunAndMeasure(string operation, ILogger logger, Action action)

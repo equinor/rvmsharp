@@ -3,8 +3,8 @@ namespace CadRevealComposer
     using Configuration;
     using IdProviders;
     using Operations;
+    using Operations.Converters;
     using Primitives;
-    using Primitives.Converters;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;

@@ -8,9 +8,8 @@ namespace CadRevealComposer.Operations
     using System.Collections.Immutable;
     using System.Linq;
     using System.Numerics;
-    using System.Threading.Tasks;
 
-    public class SectorSplitter
+    public static class SectorSplitter
     {
         const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
 

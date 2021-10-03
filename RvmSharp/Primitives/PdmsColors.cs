@@ -198,7 +198,8 @@
         /// Not all RVM colors are mapped, and this will throw if the color is not found.
         /// </summary>
         /// <param name="code">RVM Color value</param>
-        /// <returns>Color</returns>
+        /// <param name="color"></param>
+        /// <returns>bool</returns>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         public static bool TryGetColorByCode(uint code, out Color color)
         {
