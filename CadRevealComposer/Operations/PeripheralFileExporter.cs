@@ -21,7 +21,7 @@ namespace CadRevealComposer.Operations
             _idGenerator = new SequentialIdGenerator();
         }
 
-        public async Task<(ulong fileId, Dictionary<Mesh, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IReadOnlyList<Mesh> meshGeometries)
+        public async Task<(ulong fileId, Dictionary<Mesh, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IEnumerable<Mesh?> meshGeometries)
         {
             var meshFileId = _idGenerator.GetNextId();
             var objFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.obj");
@@ -33,8 +33,8 @@ namespace CadRevealComposer.Operations
             var result = new Dictionary<Mesh, (long triangleOffset, long triangleCount)>();
             foreach (var mesh in meshGeometries)
             {
-                objExporter.WriteMesh(mesh);
-                var triangleCount = mesh.Triangles.Count / 3;
+                objExporter.WriteMesh(mesh!);
+                var triangleCount = mesh!.Triangles.Count / 3;
                 result.Add(mesh, (triangleOffset, triangleCount));
                 triangleOffset += triangleCount;
             }

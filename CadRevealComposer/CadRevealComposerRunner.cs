@@ -5,7 +5,7 @@ namespace CadRevealComposer
     using Operations;
     using Primitives;
     using Primitives.Converters;
-    using Primitives.Instancing;
+    using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
     using RvmSharp.Primitives;
@@ -22,7 +22,7 @@ namespace CadRevealComposer
 
     public static class CadRevealComposerRunner
     {
-        public static void Process(
+        public static async Task Process(
             DirectoryInfo inputRvmFolderPath,
             DirectoryInfo outputDirectory,
             ModelParameters modelParameters,
@@ -39,10 +39,10 @@ namespace CadRevealComposer
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
             Console.WriteLine($"Read RvmData in {rvmTimer.Elapsed}");
 
-            ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
+            await ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
         }
 
-        public static void ProcessRvmStore(
+        public static async Task ProcessRvmStore(
             RvmStore rvmStore,
             DirectoryInfo outputDirectory,
             ModelParameters modelParameters,
@@ -50,61 +50,7 @@ namespace CadRevealComposer
         {
             TreeIndexGenerator treeIndexGenerator = new();
             NodeIdProvider nodeIdGenerator = new();
-            SequentialIdGenerator meshFileIdGenerator = new();
             SequentialIdGenerator sectorIdGenerator = new();
-
-            /*
-            IEnumerable<APrimitive> ToMeshes(IGrouping<RvmFacetGroup, KeyValuePair<RvmFacetGroup, (RvmFacetGroup _, Matrix4x4 transform)>> group, Dictionary<RvmFacetGroup, ProtoMesh> protoMeshesMap)
-            {
-                var isGroupWithSingleItem = group.Count() == 1;
-                if (isGroupWithSingleItem || composerParameters.NoInstancing)
-                {
-                    foreach (var facetGroup in group)
-                    {
-                        var transform = facetGroup.Value.transform * facetGroup.Key.Matrix;
-                        var template = group.Key with
-                        {
-                            Matrix = transform
-                        };
-                        var mesh = TessellatorBridge.Tessellate(template, -1f); // tolerance unused for RvmFacetGroup
-
-                        var protoMesh = protoMeshesMap[facetGroup.Key];
-
-                        yield return new TriangleMesh(
-                            new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, 0, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.One, 0f)),
-                            ulong.MaxValue, // NOTE: FileId will be set later on
-                            (ulong)mesh.Triangles.Count / 3,
-                            mesh);
-                    }
-                }
-                else
-                {
-                    var templateMesh = TessellatorBridge.TessellateWithoutApplyingMatrix(group.Key, 1.0f, -1f); // tolerance unused for RvmFacetGroup
-
-                    foreach (var facetGroup in group)
-                    {
-                        var transform = facetGroup.Value.transform * facetGroup.Key.Matrix;
-                        if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
-                        {
-                            throw new Exception("Could not decompose transformation matrix.");
-                        }
-                        var (rollX, pitchY, yawZ) = rotation.ToEulerAngles();
-
-                        var protoMesh = protoMeshesMap[facetGroup.Key];
-
-                        yield return new InstancedMesh(
-                            new CommonPrimitiveProperties(protoMesh.NodeId, protoMesh.TreeIndex, Vector3.Zero, Quaternion.Identity, Vector3.Zero, protoMesh.AxisAlignedBoundingBox.Diagonal, protoMesh.AxisAlignedBoundingBox, protoMesh.Color, (Vector3.Zero, 0f)),
-                            ulong.MaxValue, ulong.MaxValue, // NOTE: FileId, TriangleOffset will be set later on
-                            (ulong)(templateMesh.Triangles.Count / 3),
-                            translation.X, translation.Y, translation.Z,
-                            rollX, pitchY, yawZ,
-                            scale.X, scale.Y, scale.Z)
-                        {
-                            TempTessellatedMesh = templateMesh
-                        };
-                    }
-                }
-            }*/
 
             Console.WriteLine("Generating i3d");
 
@@ -115,20 +61,14 @@ namespace CadRevealComposer
             var pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
             Console.WriteLine($"Prepared Pyramids in {pyramidInstancingTimer.Elapsed}");
 
-            var geometryConversionTimer = Stopwatch.StartNew();
-            // AsOrdered is important. And I dont like it...
-            //  - Its important  of the "TriangleMesh TriangleCount" is "sequential-additive".
-            // So the position offset in the mesh is determined on the TriangleCount of all items in the Sequence "12"+"16"+"10", and needs the identical order.
             var geometries = allNodes
                 .AsParallel()
                 .AsOrdered()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
-                        primitive, pyramidInstancingHelper)))
+                        primitive)))
                 .WhereNotNull()
-                .ToList();
-
-
+                .ToArray();
 
             var exportHierarchyDatabaseTask = Task.Run(() =>
             {
@@ -137,48 +77,120 @@ namespace CadRevealComposer
                 Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
             });
 
-            var exportInstancedMeshes = Stopwatch.StartNew();
-            var instancedMeshesFileId = meshFileIdGenerator.GetNextId();
-
-            // The following code should be refactored, i'm just not sure how
-            // We need to remove all instancedMeshes, and the re-add them.
-            //  The reason for this is that they are immutable, and we actually add new copies with altered data.
-            var instancedMeshes = geometries.OfType<InstancedMesh>().ToArray();
             var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
-            var protoMeshesMap = protoMeshes.ToDictionary(x => x.SourceMesh);
 
-            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray(), composerParameters.DeterministicOutput)
-                .GroupBy(x => x.Value.template)
-                .SelectMany(x => ToMeshes(x, protoMeshesMap))
-                .ToImmutableList();
+            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
 
-            var allInstancedMeshes = instancedMeshes.Concat(rvmFacetGroupResults.OfType<InstancedMesh>()).ToList();
-            var exportedInstancedMeshes = PeripheralFileExporter.ExportInstancedMeshesToObjFile(outputDirectory, instancedMeshesFileId, allInstancedMeshes);
 
-            var geometriesToExport = geometries
-                .Except(instancedMeshes)
-                .Except(protoMeshes)
-                .Concat(exportedInstancedMeshes)
-                .Concat(rvmFacetGroupResults.OfType<TriangleMesh>())
-                .ToList();
+            var instancedMeshes = rvmFacetGroupResults.Where(g => g.Count() > 1).ToArray();
+            var instancedTemplateAndTransformByOriginalFacetGroup = instancedMeshes
+                .SelectMany(g => g)
+                .ToDictionary(g => g.Key, g => g.Value);
 
-            Console.WriteLine($"Exported instances in {exportInstancedMeshes.Elapsed}");
+            const float unusedTesValue = 0;
+            var meshByInstance = instancedMeshes.ToDictionary(g => g.Key, g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
+            var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
+            var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportInstancedMeshesToObjFile(meshByInstance.Select(im => im.Value).ToArray());
+            var offsetByTemplate = meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[g.Value!]);
 
-            Console.WriteLine($"Finished Geometry Conversion in: {geometryConversionTimer.Elapsed}");
 
-            var maxDepth = composerParameters.CreateSingleSector
+            var iMeshes = protoMeshes.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+                .Select(p =>
+                {
+                    var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceMesh];
+                    var (triangleOffset, triangleCount) = offsetByTemplate[template];
+                    if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
+                    {
+                        throw new Exception("Could not decompose");
+                    }
+
+                    (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
+                    return new InstancedMesh(
+                        new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
+                            Vector3.One,
+                            p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                            (Vector3.UnitZ, 0)),
+                        instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
+                        translation.Y, translation.Z,
+                        rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
+                }).ToArray();
+            var tMeshes = protoMeshes
+                .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+                .Select(p =>
+                    {
+                        var mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue);
+                        if (mesh.Vertices.Count == 0)
+                        {
+                            Console.WriteLine("WARNING: Could not tesselate facet group!");
+                        }
+                        var triangleCount = mesh.Triangles.Count / 3;
+                        return new TriangleMesh(
+                            new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
+                                Vector3.One,
+                                p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                                (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                    }
+                ).Where(t => t.TempTessellatedMesh.Vertices.Count > 0).ToArray();
+
+            geometries = geometries.Where(g => g is not ProtoMesh).Concat(iMeshes).Concat(tMeshes).ToArray();
+
+            var maxDepth = composerParameters.SingleSector
                 ? 0U
                 : 5U;
-            var sectors = SectorSplitter.SplitIntoSectors(geometriesToExport, instancedMeshesFileId, 0, null, null, meshFileIdGenerator, sectorIdGenerator, maxDepth)
-                .OrderBy(x => x.SectorId)
-                .ToImmutableArray();
+            var sectors = SectorSplitter.SplitIntoSectors(
+                    geometries,
+                    0,
+                    null,
+                    null,
+                    sectorIdGenerator,
+                    maxDepth)
+                .OrderBy(x => x.SectorId).ToArray();
+            var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
+            var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
-            var sectorsWithDownloadSize = CalculateDownloadSizes(sectors, outputDirectory).ToImmutableArray();
+            var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
             SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
 
             Task.WaitAll(exportHierarchyDatabaseTask);
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        }
+
+        private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
+        {
+            var sectorFileName = $"sector_{p.SectorId}.i3d";
+            var meshes = p.Geometries.OfType<TriangleMesh>().Select(t => t.TempTessellatedMesh).ToArray();
+            var geometries = p.Geometries;
+            if (meshes.Length > 0)
+            {
+                var (triangleMeshFileId, _) = await exporter.ExportInstancedMeshesToObjFile(meshes);
+                geometries = p.Geometries.Select(g =>
+                {
+                    switch (g)
+                    {
+                        case TriangleMesh t:
+                            return t with { FileId = triangleMeshFileId };
+                        default:
+                            return g;
+                    }
+                }).ToArray();
+            }
+
+            // DEBUG: uncomment to disable triangle meshes
+            //geometries = geometries.Where(g => g is not TriangleMesh).ToArray();
+            // DEBUG: uncomment to disable instanced meshes
+            //geometries = geometries.Where(g => g is not InstancedMesh).ToArray();
+            // DEBUG: uncomment to show only instanced meshes
+            //geometries = geometries.Where(g => g is InstancedMesh).ToArray();
+
+            var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(geometries);
+
+            var peripheralFiles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(
+                geometries, I3dfAttribute.AttributeType.FileId).Distinct().Select(id => $"mesh_{id}.ctm").ToArray();
+            var sectorInfo = new SceneCreator.SectorInfo(p.SectorId, p.ParentSectorId, p.Depth, p.Path, sectorFileName, peripheralFiles,
+                estimatedTriangleCount, estimatedDrawCallCount, geometries, p.BoundingBox);
+            SceneCreator.ExportSector(sectorInfo, outputDirectory);
+            return sectorInfo;
         }
 
         private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)

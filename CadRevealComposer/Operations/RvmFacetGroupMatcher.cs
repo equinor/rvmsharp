@@ -1,6 +1,7 @@
-namespace CadRevealComposer.Primitives.Instancing
+namespace CadRevealComposer.Operations
 {
     using RvmSharp.Primitives;
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
@@ -8,56 +9,97 @@ namespace CadRevealComposer.Primitives.Instancing
 
     public static class RvmFacetGroupMatcher
     {
-        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups, bool deterministicOutput)
+        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup input, bool centerMesh, out Matrix4x4 translationMatrix)
         {
-            var enumerable = groups
-                .GroupBy(CalculateKey)
-                .Select(g => (g.Key, g.ToArray()));
+            var originalMatrix = input.Matrix;
 
-            if (deterministicOutput)
+            // Calculate bounds for new bounding box
+            var minBounds = new Vector3(float.MaxValue);
+            var maxBounds = new Vector3(float.MinValue);
+            foreach (var v in input.Polygons
+                .SelectMany(p => p.Contours)
+                .SelectMany(c => c.Vertices)
+                .Select(vn => vn.Vertex))
             {
-                return enumerable
-                    .Select(MatchGroups)
-                    .SelectMany(d => d)
-                    .ToDictionary(r => r.Key, r => r.Value);
+                var vt = Vector3.Transform(v, originalMatrix);
+                minBounds = Vector3.Min(vt, minBounds);
+                maxBounds = Vector3.Max(vt, maxBounds);
             }
 
-            return enumerable
-                .AsParallel()
-                .Select(MatchGroups)
-                .SelectMany(d => d)
-                .ToDictionary(r => r.Key, r => r.Value);
+            var extents = (maxBounds - minBounds) / 2;
 
+            var finalMatrix = originalMatrix;
+            translationMatrix = Matrix4x4.Identity;
+            if (centerMesh)
+            {
+                var groupCenter = minBounds + extents;
+                var centerOffsetMatrix = Matrix4x4.CreateTranslation(-groupCenter);
+                translationMatrix = Matrix4x4.CreateTranslation(groupCenter);
 
+                minBounds = -extents;
+                maxBounds = extents;
+
+                finalMatrix = originalMatrix * centerOffsetMatrix;
+            }
+
+            // Transforming mesh normals requires some extra calculations.
+            // https://web.archive.org/web/20210628111622/https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
+            if (!Matrix4x4.Invert(finalMatrix, out var matrixInverted))
+                throw new ArgumentException($"Could not invert matrix {finalMatrix}");
+            var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
+
+            var polygons = input.Polygons.Select(p => p with
+            {
+                Contours = p.Contours
+                    .Select(c => new RvmFacetGroup.RvmContour(c.Vertices.Select(vn =>
+                        (Vector3.Transform(vn.Vertex, finalMatrix), Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed))
+                        ).ToArray())).ToArray()
+            }).ToArray();
+
+            return input with
+            {
+                Polygons = polygons,
+                BoundingBoxLocal = new RvmBoundingBox(minBounds, maxBounds),
+                Matrix = Matrix4x4.Identity
+            };
         }
 
-        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups((long groupId, RvmFacetGroup[] facetGroups) group)
+
+        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
         {
-            var templates = new List<RvmFacetGroup>();
+
+            var groupedGroups = groups.AsParallel().AsOrdered().GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).ToArray();
+
+            var result = groupedGroups.AsParallel().AsOrdered().Select(
+                    g => MatchGroups2(g.Item2)).SelectMany(d => d)
+                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            return result;
+        }
+
+        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups2(
+            RvmFacetGroup[] inputFacetGroups)
+        {
             var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
-
-            foreach (var rvmFacetGroup in group.facetGroups)
+            var templates = new List<RvmFacetGroup>();
+            foreach (var facetGroup in inputFacetGroups)
             {
-                bool found = false;
-
-                foreach (var template in templates)
+                var matchFound = false;
+                var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
+                foreach (var templateCandidate in templates)
                 {
-                    if (ReferenceEquals(template, rvmFacetGroup))
+                    if (!Match(templateCandidate, bakedFacetGroup, out var transform))
                         continue;
-
-                    if (!Match(template, rvmFacetGroup, out var transform))
-                        continue;
-
-                    result.Add(rvmFacetGroup, (template, transform));
-                    found = true;
+                    matchFound = true;
+                    result.Add(facetGroup, (templateCandidate, transform));
                     break;
                 }
 
-                if (!found)
-                {
-                    templates.Add(rvmFacetGroup);
-                    result.Add(rvmFacetGroup, (rvmFacetGroup, Matrix4x4.Identity));
-                }
+                if (matchFound)
+                    continue;
+
+                var newTemplate = BakeTransformAndCenter(facetGroup, true, out var templateToFacetGroupTransform);
+                templates.Add(newTemplate);
+                result.Add(facetGroup, (newTemplate, templateToFacetGroupTransform));
             }
 
             return result;
@@ -139,9 +181,10 @@ namespace CadRevealComposer.Primitives.Instancing
 
             var vertices = aVertices.Zip(bVertices);
             var testVertices = new List<(Vector3 vertexA, Vector3 vertexB)>(4);
+            var maxDet = 0f;
             foreach ((Vector3 candidateVertexA, Vector3 candidateVertexB) in vertices)
             {
-                if (testVertices.Any(vv => vv.vertexA.ApproximatelyEquals(candidateVertexA)))
+                if (testVertices.Any(vv => vv.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f)))
                 {
                     // skip any duplicate vertices
                     continue;
@@ -160,7 +203,8 @@ namespace CadRevealComposer.Primitives.Instancing
                                 candidateVertexA.Z,
                                 1, 1, 1, 1);
                             var det = ma.GetDeterminant();
-                            if (!det.ApproximatelyEquals(0))
+                            maxDet = MathF.Max(MathF.Abs(det), maxDet);
+                            if (!det.ApproximatelyEquals(0, 0.00000001f))
                             {
                                 return AlgebraUtils.GetTransform(
                                     testVertices[0].vertexA,
@@ -179,8 +223,8 @@ namespace CadRevealComposer.Primitives.Instancing
                         }
                     case 2:
                         {
-                            var va12 = testVertices[1].vertexA - testVertices[0].vertexA;
-                            var va13 = candidateVertexA - testVertices[0].vertexA;
+                            var va12 = Vector3.Normalize(testVertices[1].vertexA - testVertices[0].vertexA);
+                            var va13 = Vector3.Normalize(candidateVertexA - testVertices[0].vertexA);
                             if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f))
                             {
                                 testVertices.Add((candidateVertexA, candidateVertexB));
