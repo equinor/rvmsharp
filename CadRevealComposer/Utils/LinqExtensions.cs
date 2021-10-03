@@ -33,7 +33,7 @@
         [Pure]
         public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable) where T : struct
         {
-            return enumerable.Where(e => e != null).Select(e => e!.Value)!;
+            return enumerable.Where(e => e != null).Select(e => e!.Value);
         }
 
         /// <summary>
@@ -42,7 +42,7 @@
         [Pure]
         public static ParallelQuery<T> WhereNotNull<T>(this ParallelQuery<T?> parallelQuery) where T : struct
         {
-            return parallelQuery.Where(e => e != null).Select(e => e!.Value)!;
+            return parallelQuery.Where(e => e != null).Select(e => e!.Value);
         }
 
 

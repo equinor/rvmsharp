@@ -37,12 +37,10 @@
             var qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, eulerAngles.yawZ);
             var qc = qz * qy * qx;
 
-            var a = Vector3.Transform(Vector3.One, q);
             var xa = Vector3.Transform(Vector3.UnitX, q);
             var ya = Vector3.Transform(Vector3.UnitY, q);
             var za = Vector3.Transform(Vector3.UnitZ, q);
 
-            var b = Vector3.Transform(Vector3.One, qc);
             var xb = Vector3.Transform(Vector3.UnitX, qc);
             var yb = Vector3.Transform(Vector3.UnitY, qc);
             var zb = Vector3.Transform(Vector3.UnitZ, qc);

@@ -1,10 +1,11 @@
-﻿namespace CadRevealComposer.Tests
+﻿namespace CadRevealComposer.Tests.Primitives.Instancing
 {
     using Newtonsoft.Json;
     using NUnit.Framework;
     using Operations;
     using RvmSharp.Primitives;
     using System.IO;
+    using System.Numerics;
     using Utils;
 
     [TestFixture]
@@ -14,7 +15,7 @@
         public void MatchItself()
         {
             var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");
-            var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe1, out var transform);
+            var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe1, out Matrix4x4 _);
             Assert.That(pipesEqual);
         }
 
@@ -23,7 +24,7 @@
         {
             var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");
             var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43908.json");
-            var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out var transform);
+            var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out Matrix4x4 _);
             Assert.That(pipesEqual);
         }
 
@@ -34,7 +35,7 @@
                 File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "m1.json")));
             var hinges2 = JsonConvert.DeserializeObject<RvmFacetGroup>(
                 File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "m2.json")));
-            var hingesEqual = RvmFacetGroupMatcher.Match(hinges1, hinges2, out var transform);
+            var hingesEqual = RvmFacetGroupMatcher.Match(hinges1, hinges2, out Matrix4x4 _);
             Assert.IsFalse(hingesEqual);
         }
 
@@ -45,7 +46,7 @@
                 File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "0.json")));
             var panel2 = JsonConvert.DeserializeObject<RvmFacetGroup>(
                 File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "2.json")));
-            var panelsEqual = RvmFacetGroupMatcher.Match(panel1, panel2, out var transform);
+            var panelsEqual = RvmFacetGroupMatcher.Match(panel1, panel2, out Matrix4x4 _);
             Assert.IsFalse(panelsEqual);
         }
 
@@ -61,7 +62,7 @@
                 File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "5.json")));
             var pipe2 = JsonConvert.DeserializeObject<RvmFacetGroup>(
                 File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "6.json")));
-            var facetGroupsEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out var transform);
+            var facetGroupsEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out Matrix4x4 _);
             Assert.That(facetGroupsEqual);
         }
     }

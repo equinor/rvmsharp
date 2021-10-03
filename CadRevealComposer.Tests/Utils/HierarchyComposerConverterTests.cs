@@ -1,6 +1,5 @@
 ﻿namespace CadRevealComposer.Tests.Utils
 {
-    using CadRevealComposer.Utils;
     using NUnit.Framework;
     using Operations;
     using RvmSharp.Primitives;

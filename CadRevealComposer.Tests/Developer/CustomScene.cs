@@ -5,8 +5,8 @@ namespace CadRevealComposer.Tests.Developer
     [TestFixture]
     public class CustomScene
     {
-        private const string ExportPath = "/Users/GUSH/projects/echo/echo-web/Echo3DWeb-master/EchoReflectApi/EchoReflect.Api/AppData/demomodel";
-        private const string Mesh2CtmPath = "/Users/GUSH/projects/rvmsharp/rvmsharp/tools/OpenCTM/mesh2ctm.osx";
+        //private const string ExportPath = "/Users/GUSH/projects/echo/echo-web/Echo3DWeb-master/EchoReflectApi/EchoReflect.Api/AppData/demomodel";
+        //private const string Mesh2CtmPath = "/Users/GUSH/projects/rvmsharp/rvmsharp/tools/OpenCTM/mesh2ctm.osx";
 
         [Test]
         public void ExportSingleFacetGroup()

@@ -4,10 +4,8 @@ namespace CadRevealComposer.Tests.Utils
     using Newtonsoft.Json;
     using NUnit.Framework;
     using System;
-    using System.IO;
     using System.Linq;
     using System.Numerics;
-    using Utils;
 
     [TestFixture]
     public class AlgebraUtilsDecomposeQuaternionTests
