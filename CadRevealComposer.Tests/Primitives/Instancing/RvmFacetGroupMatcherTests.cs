@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Instancing
 {
-    using CadRevealComposer.Primitives.Instancing;
     using CadRevealComposer.Utils;
     using NUnit.Framework;
+    using Operations;
     using RvmSharp.Operations;
     using RvmSharp.Primitives;
     using System;

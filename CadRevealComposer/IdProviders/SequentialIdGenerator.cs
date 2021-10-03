@@ -7,8 +7,7 @@
     {
         public const ulong MaxSafeInteger = (1L << 53) - 1;
 
-        // ReSharper disable once RedundantDefaultMemberInitializer
-        private ulong _internalIdCounter = 0;
+        private ulong _internalIdCounter = ulong.MaxValue;
 
         public ulong GetNextId()
         {

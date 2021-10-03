@@ -1,16 +1,6 @@
 namespace CadRevealComposer.Tests.Developer
 {
-    using CadRevealComposer.Primitives;
     using NUnit.Framework;
-    using Operations;
-    using RvmSharp.Containers;
-    using RvmSharp.Primitives;
-    using System;
-    using System.Collections.Immutable;
-    using System.Drawing;
-    using System.IO;
-    using System.Numerics;
-    using Utils;
 
     [TestFixture]
     public class CustomScene
