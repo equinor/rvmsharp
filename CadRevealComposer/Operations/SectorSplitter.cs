@@ -30,6 +30,11 @@ namespace CadRevealComposer.Operations
             SequentialIdGenerator sectorIdGenerator,
             uint maxDepth)
         {
+            /* Recursively divides space into eight voxels of equal size (each dimension X,Y,Z is divided in half).
+             * A geometry is placed in a voxel only if it fully encloses the geometry.
+             * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
+             */
+
             var minX = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.X);
             var minY = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.Y);
             var minZ = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.Z);
