@@ -105,6 +105,17 @@ namespace CadRevealComposer
                     }
 
                     (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
+
+                    // Assert that converting to euler angels and back gives the same transformation (but not necessarily the same quaternion)
+                    var qx = Quaternion.CreateFromAxisAngle(Vector3.UnitX, rollX);
+                    var qy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, pitchY);
+                    var qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, yawZ);
+                    var qc = qz * qy * qx;
+                    var v1 = Vector3.Transform(Vector3.One, rotation);
+                    var v2 = Vector3.Transform(Vector3.One, qc);
+                    Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
+                    Debug.Assert(v1.ApproximatelyEquals(v2, 0.001f));
+
                     return new InstancedMesh(
                         new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                             Vector3.One,
