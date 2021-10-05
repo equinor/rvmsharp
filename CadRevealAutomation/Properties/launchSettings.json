@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "RvmAutomation": {
+      "commandName": "Executable",
+      "executablePath": "pwsh",
+      "commandLineArgs": "-NoExit -Command \"Import-Module '$(TargetPath)'\""
+    }
+  }
+}

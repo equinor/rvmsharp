@@ -1,23 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30907.101
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RvmSharp", "RvmSharp\RvmSharp.csproj", "{BF0ECF01-2077-480F-844C-693B179728CD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RvmSharp.Exe", "RvmSharp.Exe\RvmSharp.Exe.csproj", "{601615C3-1DD2-4F1F-906D-9DEFDA760211}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RvmSharp.Tests", "RvmSharp.Tests\RvmSharp.Tests.csproj", "{9A8F74BD-4842-4907-A393-76F0A9D599E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RvmSharp.Tests", "RvmSharp.Tests\RvmSharp.Tests.csproj", "{9A8F74BD-4842-4907-A393-76F0A9D599E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer", "CadRevealComposer\CadRevealComposer.csproj", "{8FA839BD-1FC8-4AFE-9DB6-E2B7FA59BF93}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadRevealComposer", "CadRevealComposer\CadRevealComposer.csproj", "{8FA839BD-1FC8-4AFE-9DB6-E2B7FA59BF93}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Tests", "CadRevealComposer.Tests\CadRevealComposer.Tests.csproj", "{10E0729E-2D44-4865-A417-018D30CB8F20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadRevealComposer.Tests", "CadRevealComposer.Tests\CadRevealComposer.Tests.csproj", "{10E0729E-2D44-4865-A417-018D30CB8F20}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Exe", "CadRevealComposer.Exe\CadRevealComposer.Exe.csproj", "{82622167-F4E4-4224-AC14-E54E8EE8E2D7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadRevealComposer.Exe", "CadRevealComposer.Exe\CadRevealComposer.Exe.csproj", "{82622167-F4E4-4224-AC14-E54E8EE8E2D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyComposer", "HierarchyComposer\HierarchyComposer.csproj", "{7B4152D6-FCBF-421C-94D3-04EB448C57BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyComposer", "HierarchyComposer\HierarchyComposer.csproj", "{7B4152D6-FCBF-421C-94D3-04EB448C57BF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HierarchyComposer.Tests", "HierarchyComposer.Tests\HierarchyComposer.Tests.csproj", "{61B80921-B758-4AC8-AE87-215818E5F903}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HierarchyComposer.Tests", "HierarchyComposer.Tests\HierarchyComposer.Tests.csproj", "{61B80921-B758-4AC8-AE87-215818E5F903}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadRevealAutomation", "CadRevealAutomation\CadRevealAutomation.csproj", "{E988C1DB-5CBC-442E-A2A5-B4DCFFD842A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{61B80921-B758-4AC8-AE87-215818E5F903}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61B80921-B758-4AC8-AE87-215818E5F903}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61B80921-B758-4AC8-AE87-215818E5F903}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E988C1DB-5CBC-442E-A2A5-B4DCFFD842A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E988C1DB-5CBC-442E-A2A5-B4DCFFD842A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E988C1DB-5CBC-442E-A2A5-B4DCFFD842A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E988C1DB-5CBC-442E-A2A5-B4DCFFD842A8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
