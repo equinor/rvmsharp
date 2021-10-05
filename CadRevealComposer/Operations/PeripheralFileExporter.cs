@@ -7,6 +7,7 @@ namespace CadRevealComposer.Operations
     using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
+    using Utils;
 
     public class PeripheralFileExporter
     {
@@ -21,7 +22,7 @@ namespace CadRevealComposer.Operations
             _idGenerator = new SequentialIdGenerator();
         }
 
-        public async Task<(ulong fileId, Dictionary<Mesh, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IEnumerable<Mesh?> meshGeometries)
+        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IEnumerable<Mesh?> meshGeometries)
         {
             var meshFileId = _idGenerator.GetNextId();
             var objFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.obj");
@@ -30,12 +31,12 @@ namespace CadRevealComposer.Operations
             objExporter.StartObject("root");
 
             var triangleOffset = 0L;
-            var result = new Dictionary<Mesh, (long triangleOffset, long triangleCount)>();
+            var result = new Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>();
             foreach (var mesh in meshGeometries)
             {
                 objExporter.WriteMesh(mesh!);
                 var triangleCount = mesh!.Triangles.Count / 3;
-                result.Add(mesh, (triangleOffset, triangleCount));
+                result.Add(new RefLookup<Mesh>(mesh), (triangleOffset, triangleCount));
                 triangleOffset += triangleCount;
             }
 

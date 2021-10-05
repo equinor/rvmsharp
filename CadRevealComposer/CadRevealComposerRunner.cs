@@ -2,12 +2,14 @@ namespace CadRevealComposer
 {
     using Configuration;
     using IdProviders;
+    using Newtonsoft.Json;
     using Operations;
     using Operations.Converters;
     using Primitives;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
+    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
@@ -94,7 +96,7 @@ namespace CadRevealComposer
             var meshByInstance = instancedMeshes.ToDictionary(g => g.Key, g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
             var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
             var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportInstancedMeshesToObjFile(meshByInstance.Select(im => im.Value).ToArray());
-            var offsetByTemplate = meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[g.Value!]);
+            var offsetByTemplate = meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
 
             var iMeshes = protoMeshes.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
@@ -119,8 +121,6 @@ namespace CadRevealComposer
                         translation.Y, translation.Z,
                         rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
                 }).ToArray();
-
-
 
             var tMeshes = protoMeshes
                 .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
@@ -170,22 +170,13 @@ namespace CadRevealComposer
                 var (triangleMeshFileId, _) = await exporter.ExportInstancedMeshesToObjFile(meshes);
                 geometries = p.Geometries.Select(g =>
                 {
-                    switch (g)
+                    return g switch
                     {
-                        case TriangleMesh t:
-                            return t with { FileId = triangleMeshFileId };
-                        default:
-                            return g;
-                    }
+                        TriangleMesh t => t with { FileId = triangleMeshFileId },
+                        _ => g
+                    };
                 }).ToArray();
             }
-
-            // DEBUG: uncomment to disable triangle meshes
-            //geometries = geometries.Where(g => g is not TriangleMesh).ToArray();
-            // DEBUG: uncomment to disable instanced meshes
-            //geometries = geometries.Where(g => g is not InstancedMesh).ToArray();
-            // DEBUG: uncomment to show only instanced meshes
-            //geometries = geometries.Where(g => g is InstancedMesh).ToArray();
 
             var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(geometries);
 
