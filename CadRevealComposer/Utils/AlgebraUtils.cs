@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Utils
 {
     using System;
+    using System.Diagnostics;
     using System.Numerics;
 
     public static class AlgebraUtils
@@ -45,49 +46,67 @@ namespace CadRevealComposer.Utils
         }
 
         /// <summary>
+        /// Euler Angle (1,2,3) sequence
         /// Returns roll, pitch, yaw angle rotations in radians
         /// Roll - around X axis
         /// Pitch - around Y axis
         /// Yaw - around Z axis
         /// Must be applied in the same order
-        /// Source https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+        /// Based on (quaternion to rotation matrix decomposition, and Euler angle sequence)
+        /// https://www.astro.rug.nl/software/kapteyn-beta/_downloads/attitude.pdf
+        /// and (singularity solution)
+        /// https://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.371.6578
         /// </summary>
-        public static (float rollX, float pitchY, float yawZ) ToEulerAngles(this Quaternion quaternion)
+        public static (float rollX, float pitchY, float yawZ) ToEulerAngles(this Quaternion q)
         {
-            var q = quaternion; // shorter name for readability
+            // this value should give under 1 mm error per 1 m on all rotations in HDA
+            // maybe we should consider using decimals
+            const double gimbalLockLimit = 0.999_999_9;
+            var q0 = (double)q.W;
+            var q1 = (double)q.X;
+            var q2 = (double)q.Y;
+            var q3 = (double)q.Z;
 
-            var test = q.W * q.Y - q.Z * q.X;
-            var test2 = q.W < 0.7f; // ERL: dirty fix
-            if (test > 0.499f && test2)
-            { // singularity at north pole
-                var heading = 2f * MathF.Atan2(q.Y, q.X);
-                var attitude = MathF.PI / 2f;
-                return (heading, attitude, 0f);
+            // Rotation matrix components
+            var r11 = q0 * q0 + q1 * q1 - q2 * q2 - q3 * q3; // cos(pitchY) * cos(yawZ)
+            var r12 = 2 * q1 * q2 - 2 * q0 * q3; // sin(rollX) * sin(pitchY) * cos(yawZ) - cos(rollX) * sin(yawZ)
+            var r13 = 2 * q1 * q3 + 2 * q0 * q2; // cos(rollX) * sin(pitchY) * cos(yawZ) + sin(rollX) * sin(yawZ)
+            var r21 = 2 * q1 * q2 + 2 * q0 * q3; // cos(pitchY) * sin(yawZ)
+            var r31 = 2 * q1 * q3 - 2 * q0 * q2; // - sin(pitchY)
+            var r32 = 2 * q2 * q3 + 2 * q0 * q1; // sin(rollX) * cos(pitchY)
+            var r33 = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3; // cos(rollX) * cos(pitchY)
+
+
+            if (Math.Abs(r31) < gimbalLockLimit) { // Gimbal lock/singularity check
+                var pitchY = -Math.Asin(r31);
+                var rollX = Math.Atan2(r32 / Math.Cos(pitchY), r33 / Math.Cos(pitchY));
+                var yawZ = Math.Atan2(r21 / Math.Cos(pitchY), r11 / Math.Cos(pitchY));
+                return ((float)rollX, (float)pitchY, (float)yawZ);
             }
-            if (test < -0.499f && test2)
-            { // singularity at south pole
-                var heading = -2f * MathF.Atan2(q.Y, q.X);
-                var attitude = -MathF.PI / 2f;
-                return (heading, attitude, 0f);
+
+            // Lock detected
+            if (r31 < 0)
+            {
+                return ((float)Math.Atan2(r12, r13), MathF.PI / 2, 0);
             }
+            else
+            {
+                return ((float)Math.Atan2(-r12, -r13), -MathF.PI / 2, 0);
+            }
+        }
 
-            // roll (x-axis rotation)
-            var sinRollCosPitch = 2f * (q.W * q.X + q.Y * q.Z);
-            var cosRollCosPitch = 1f - 2f * (q.X * q.X + q.Y * q.Y);
-            var roll = MathF.Atan2(sinRollCosPitch, cosRollCosPitch);
-
-            // pitch (y-axis rotation)
-            var sinPitch = 2 * (q.W * q.Y - q.Z * q.X);
-            var pitch = MathF.Abs(sinPitch) >= 0.999f
-                ? MathF.CopySign(MathF.PI / 2f, sinPitch)
-                : MathF.Asin(sinPitch);
-
-            // yaw (z-axis rotation)
-            var sinYawCosPitch = 2f * (q.W * q.Z + q.X * q.Y);
-            var cosYawCosPitch = 1f - 2f * (q.Y * q.Y + q.Z * q.Z);
-            var yaw = MathF.Atan2(sinYawCosPitch, cosYawCosPitch);
-
-            return (roll, pitch, yaw);
+        public static void AssertEulerAnglesCorrect((float rollX, float pitchY, float yawZ) eulerAngles, Quaternion rotation, float threshold = 0.001f)
+        {
+            (float rollX, float pitchY, float yawZ) = eulerAngles;
+            // Assert that converting to euler angels and back gives the same transformation (but not necessarily the same quaternion)
+            var qx = Quaternion.CreateFromAxisAngle(Vector3.UnitX, rollX);
+            var qy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, pitchY);
+            var qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, yawZ);
+            var qc = qz * qy * qx;
+            var v1 = Vector3.Transform(Vector3.One, rotation);
+            var v2 = Vector3.Transform(Vector3.One, qc);
+            Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
+            Debug.Assert(v1.ApproximatelyEquals(v2, 0.001f));
         }
 
         /// <summary>

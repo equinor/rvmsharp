@@ -13,6 +13,8 @@ namespace CadRevealComposer.Operations
     {
         const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
 
+        public const int StartDepth = 1;
+
         public record ProtoSector(
             uint SectorId,
             uint? ParentSectorId,
@@ -23,6 +25,18 @@ namespace CadRevealComposer.Operations
         );
 
         public static IEnumerable<ProtoSector> SplitIntoSectors(
+            APrimitive[] allGeometries,
+            SequentialIdGenerator sectorIdGenerator,
+            uint maxDepth)
+        {
+            var enumerator = SplitIntoSectors(allGeometries, StartDepth, null, null, sectorIdGenerator, maxDepth);
+            foreach (var bSector in enumerator)
+            {
+                yield return bSector;
+            }
+        }
+
+        private static IEnumerable<ProtoSector> SplitIntoSectors(
             APrimitive[] allGeometries,
             int recursiveDepth,
             string? parentPath,
@@ -52,7 +66,7 @@ namespace CadRevealComposer.Operations
                 .OrderBy(x => x.Key)
                 .ToImmutableList();
 
-            var isRoot = recursiveDepth == 0;
+            var isRoot = recursiveDepth == StartDepth;
             var isLeaf = recursiveDepth >= maxDepth || allGeometries.Length < 10000 || grouped.Count == 1;
 
             if (isLeaf)
