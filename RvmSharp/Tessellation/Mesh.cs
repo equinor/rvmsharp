@@ -91,11 +91,6 @@
                 return true;
             }
 
-            return false;
-            // FIXME: the code below introduces errors to facet matching code on mesh lookup (use mesh as a key) when:
-            // A) there are several meshes with 0 vertices
-            // B) two identically tesselated meshes are not matched by facet group matcher
-            // For A we just skip for now. For B we should fix matching and re-enable code below
             return Error.Equals(other.Error)
                    && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(0.001f))
                    && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
