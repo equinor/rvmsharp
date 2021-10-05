@@ -28,6 +28,11 @@
         [TestCase(0f, -0.7071068f, 0f, 0.7071068f)]
         [TestCase(0.7071068f, 0f, -0.7071068f, 0f)]
         [TestCase(0.6123848f, 0.353532f, -0.6123848f, 0.353531957f)]
+        [TestCase(-0.49999994f, 0.50000006f, -0.49999994f, -0.49999994f)]
+        [TestCase(-0.47758815f, 0.52144945f, 0.47758815f, 0.52144945f)]
+        [TestCase(0.6957228f, 0.12681098f, -0.6956885f, 0.12612033f)]
+        [TestCase(-0.26970974f, 0.6510748f, 0.27152732f, 0.6554625f)]
+        [TestCase(0.4993437f, 0.5006555f, 0.50065535f, -0.49934372f)]
         public void SimpleTest(float x, float y, float z, float w)
         {
             var q = new Quaternion(x, y, z, w);
@@ -40,14 +45,21 @@
             var xa = Vector3.Transform(Vector3.UnitX, q);
             var ya = Vector3.Transform(Vector3.UnitY, q);
             var za = Vector3.Transform(Vector3.UnitZ, q);
+            var oa = Vector3.Transform(Vector3.One, q);
 
             var xb = Vector3.Transform(Vector3.UnitX, qc);
             var yb = Vector3.Transform(Vector3.UnitY, qc);
             var zb = Vector3.Transform(Vector3.UnitZ, qc);
+            var ob = Vector3.Transform(Vector3.One, qc);
 
-            Assert.That(xa.ApproximatelyEquals(xb));
-            Assert.That(ya.ApproximatelyEquals(yb));
-            Assert.That(za.ApproximatelyEquals(zb));
+            Console.WriteLine(xa.ToString("0.0000") + " = " + xb.ToString("0.0000"));
+            Console.WriteLine(ya.ToString("0.0000") + " = "  + yb.ToString("0.0000"));
+            Console.WriteLine(za.ToString("0.0000") + " = " + zb.ToString("0.0000"));
+            Console.WriteLine(oa.ToString("0.0000") + " = " + ob.ToString("0.0000"));
+            Assert.That(xa.ApproximatelyEquals(xb, 0.001f));
+            Assert.That(ya.ApproximatelyEquals(yb, 0.001f));
+            Assert.That(za.ApproximatelyEquals(zb, 0.001f));
+            Assert.That(oa.ApproximatelyEquals(ob, 0.001f));
         }
 
         [Test]
