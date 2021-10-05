@@ -73,7 +73,7 @@ namespace CadRevealComposer.Writers
 
             if (sector.SectorContents is null)
             {
-                stream.WriteUint32(0);
+                stream.WriteUint32(0); // node count
             }
             else
             {
@@ -118,6 +118,11 @@ namespace CadRevealComposer.Writers
 
         private static void WriteFace(Face face, Stream stream, bool hasColorOnEachCell, bool indexAsUInt64)
         {
+            if (!indexAsUInt64 && face.Index > int.MaxValue)
+            {
+                throw new InvalidOperationException($"Face.Index is set to UInt32 and the value is outside bounds. Value is {face.Index}");
+            }
+
             var multiple = face.FaceFlags.HasFlag(FaceFlags.Multiple);
 
             if (indexAsUInt64)
