@@ -2,14 +2,11 @@ namespace CadRevealComposer
 {
     using Configuration;
     using IdProviders;
-    using Newtonsoft.Json;
     using Operations;
-    using Operations.Converters;
     using Primitives;
     using Primitives.Reflection;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
-    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
@@ -58,17 +55,12 @@ namespace CadRevealComposer
 
             var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
 
-            // TODO: move to ProtoMesh
-            var pyramidInstancingTimer = Stopwatch.StartNew();
-            var pyramidInstancingHelper = new PyramidInstancingHelper(allNodes);
-            Console.WriteLine($"Prepared Pyramids in {pyramidInstancingTimer.Elapsed}");
-
             var geometries = allNodes
                 .AsParallel()
                 .AsOrdered()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
-                        primitive, pyramidInstancingHelper)))
+                        primitive)))
                 .WhereNotNull()
                 .ToArray();
 
@@ -79,27 +71,39 @@ namespace CadRevealComposer
                 Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
             });
 
-            var protoMeshes = geometries.OfType<ProtoMesh>().ToArray();
+            var protoMeshesFromFacetGroups = geometries.OfType<ProtoMeshFromFacetGroup>().ToArray();
+            var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
 
-            var rvmFacetGroupResults = RvmFacetGroupMatcher.MatchAll(protoMeshes.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
+            var facetGroupInstancingResult = RvmFacetGroupMatcher
+                .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
+            var pyramidInstancingResult = RvmPyramidInstancer.Process(protoMeshesFromPyramids).GroupBy(x => x.Value.template);
 
-            //var instancedPyramids = geometries.OfType<TriangleMesh>().ToArray();
-            //geometries = geometries.Where(g => g is not TriangleMesh).ToArray(); // Strip pyramid instancing
+            const int lowerInstancingLimit = 2; // should have at least so many matches to care about instancing
+            var instancedMeshesFromFacetGroups = facetGroupInstancingResult.Where(g => g.Count() >= lowerInstancingLimit).ToArray();
+            var instancedMeshesFromPyramids = pyramidInstancingResult.Where(g => g.Count() >= lowerInstancingLimit).ToArray();
 
-
-            var instancedMeshes = rvmFacetGroupResults.Where(g => g.Count() > 1).ToArray();
-            var instancedTemplateAndTransformByOriginalFacetGroup = instancedMeshes
+            var instancedTemplateAndTransformByOriginalFacetGroup = instancedMeshesFromFacetGroups
+                .SelectMany(g => g)
+                .ToDictionary(g => g.Key, g => g.Value);
+            var instancedTemplateAndTranformByOriginalPyramid = instancedMeshesFromPyramids
                 .SelectMany(g => g)
                 .ToDictionary(g => g.Key, g => g.Value);
 
             const float unusedTesValue = 0;
-            var meshByInstance = instancedMeshes.ToDictionary(g => g.Key, g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
+            var meshByInstance = instancedMeshesFromFacetGroups.ToDictionary(g => g.Key,
+                g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
+            var meshByPyramidInstance = instancedMeshesFromPyramids.ToDictionary(g => g.Key,
+                g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
+
             var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
-            var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportInstancedMeshesToObjFile(meshByInstance.Select(im => im.Value).ToArray());
+            var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportInstancedMeshesToObjFile(meshByInstance.Select(im => im.Value).Concat(meshByPyramidInstance.Select(im => im.Value))
+                .ToArray());
             var offsetByTemplate = meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
+            var offsetByTemplate2 =
+                meshByPyramidInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
 
-            var iMeshes = protoMeshes.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+            var iMeshes = protoMeshesFromFacetGroups.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
                 {
                     var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceMesh];
@@ -120,14 +124,36 @@ namespace CadRevealComposer
                         instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
                         translation.Y, translation.Z,
                         rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
-                }).ToArray();
+                }).Concat(protoMeshesFromPyramids.Where(p => instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
+                    .Select(p =>
+                    {
+                        var (template, transform) = instancedTemplateAndTranformByOriginalPyramid[p];
+                        var (triangleOffset, triangleCount) = offsetByTemplate2[template];
+                        if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
+                        {
+                            throw new Exception("Could not decompose");
+                        }
 
-            var tMeshes = protoMeshes
+                        (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
+                        AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
+
+                        return new InstancedMesh(
+                            new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
+                                Vector3.One,
+                                p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                                (Vector3.UnitZ, 0)),
+                            instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
+                            translation.Y, translation.Z,
+                            rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
+                    }))
+                .ToArray();
+
+            var tMeshes = protoMeshesFromFacetGroups
                 .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
                     {
                         var mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue);
-                        if (mesh.Vertices.Count == 0)
+                        if (mesh!.Vertices.Count == 0)
                         {
                             Console.WriteLine("WARNING: Could not tesselate facet group!");
                         }
@@ -138,7 +164,22 @@ namespace CadRevealComposer
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
                                 (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
                     }
-                ).Where(t => t.TempTessellatedMesh.Vertices.Count > 0).ToArray();
+                ).Concat(protoMeshesFromPyramids
+                    .Where(p => !instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
+                    .Select(p =>
+                    {
+                        var mesh = TessellatorBridge.Tessellate(p.SourcePyramid, unusedTesValue);
+                        if (mesh!.Vertices.Count == 0)
+                        {
+                            Console.WriteLine("WARNING: Could not tessellate facet group!");
+                        }
+                        var triangleCount = mesh.Triangles.Count / 3;
+                        return new TriangleMesh(
+                            new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
+                                Vector3.One,
+                                p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                                (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                    })).Where(t => t.TempTessellatedMesh!.Vertices.Count > 0).ToArray();
 
             geometries = geometries.Where(g => g is not ProtoMesh).Concat(iMeshes).Concat(tMeshes).ToArray();
 

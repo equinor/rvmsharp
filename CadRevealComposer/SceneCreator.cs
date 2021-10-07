@@ -230,7 +230,7 @@ namespace CadRevealComposer
             foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
             {
                 var elementType = geometriesByType.Key;
-                if (elementType == typeof(ProtoMesh))
+                if (elementType == typeof(ProtoMesh) || elementType  == typeof(ProtoMeshFromFacetGroup)  || elementType == typeof(ProtoMeshFromPyramid))
                     continue; // ProtoMesh is a temporary primitive, and should not be exported.
                 var elements = geometriesByType.ToArray();
 

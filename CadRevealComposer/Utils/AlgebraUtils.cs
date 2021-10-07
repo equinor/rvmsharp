@@ -95,7 +95,7 @@ namespace CadRevealComposer.Utils
             }
         }
 
-        public static void AssertEulerAnglesCorrect((float rollX, float pitchY, float yawZ) eulerAngles, Quaternion rotation, float threshold = 0.001f)
+        public static void AssertEulerAnglesCorrect((float rollX, float pitchY, float yawZ) eulerAngles, Quaternion rotation)
         {
             (float rollX, float pitchY, float yawZ) = eulerAngles;
             // Assert that converting to euler angels and back gives the same transformation (but not necessarily the same quaternion)

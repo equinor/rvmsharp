@@ -33,9 +33,10 @@
         [TestCase(0.6957228f, 0.12681098f, -0.6956885f, 0.12612033f)]
         [TestCase(-0.26970974f, 0.6510748f, 0.27152732f, 0.6554625f)]
         [TestCase(0.4993437f, 0.5006555f, 0.50065535f, -0.49934372f)]
+        [TestCase(0.6611338f, -0.28299555f, 0.6289412f, -0.2508029f)]
         public void SimpleTest(float x, float y, float z, float w)
         {
-            var q = new Quaternion(x, y, z, w);
+            var q = Quaternion.Normalize(new Quaternion(x, y, z, w));
             var eulerAngles = q.ToEulerAngles();
             var qx = Quaternion.CreateFromAxisAngle(Vector3.UnitX, eulerAngles.rollX);
             var qy = Quaternion.CreateFromAxisAngle(Vector3.UnitY, eulerAngles.pitchY);
