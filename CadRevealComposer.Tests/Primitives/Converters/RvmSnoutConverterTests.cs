@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Converters
 {
+    using CadRevealComposer.Operations.Converters;
     using CadRevealComposer.Primitives;
     using NUnit.Framework;
-    using Operations.Converters;
     using RvmSharp.Primitives;
     using System.Numerics;
 
@@ -29,9 +29,9 @@
                 BottomShearY: 0,
                 TopShearX: 0,
                 TopShearY: 0);
-            
+
             _rvmNode = new RvmNode(2, "SnoutParent", Vector3.One, 2);
-            
+
             _revealNode = new CadRevealNode() {NodeId = 456, TreeIndex = 1337};
         }
 

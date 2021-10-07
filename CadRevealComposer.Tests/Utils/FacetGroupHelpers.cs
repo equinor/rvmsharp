@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Utils
 {
+    using CadRevealComposer.Operations;
     using Newtonsoft.Json;
     using NUnit.Framework;
-    using Operations;
     using RvmSharp.BatchUtils;
     using RvmSharp.Exporters;
     using RvmSharp.Primitives;
