@@ -68,8 +68,7 @@ namespace CadRevealComposer.Primitives
         public static APrimitive? FromRvmPrimitive(
             CadRevealNode revealNode,
             RvmNode rvmNode,
-            RvmPrimitive rvmPrimitive,
-            PyramidInstancingHelper pyramidInstancingHelper)
+            RvmPrimitive rvmPrimitive)
         {
             PrimitiveCounter.pc++;
             var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
@@ -134,15 +133,13 @@ namespace CadRevealComposer.Primitives
                         }
                     }
                 case RvmFacetGroup facetGroup:
-                    return new ProtoMesh(commonPrimitiveProperties, facetGroup);
+                    return new ProtoMeshFromFacetGroup(commonPrimitiveProperties, facetGroup);
                 case RvmLine:
                     PrimitiveCounter.line++;
                     // Intentionally ignored.
                     return null;
                 case RvmPyramid rvmPyramid:
-                    // TODO: either convert to FacetGroup or use Pyramid instancing in ProtoMesh (need to expand protoMesh)
-                    return null;
-                    //return rvmPyramid.ConvertToRevealPrimitive(revealNode, rvmNode, pyramidInstancingHelper);;
+                    return rvmPyramid.ConvertToRevealPrimitive(commonPrimitiveProperties);
                 case RvmCircularTorus circularTorus:
                     return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
                 case RvmSphere rvmSphere:

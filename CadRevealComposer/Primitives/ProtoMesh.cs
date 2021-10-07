@@ -7,9 +7,13 @@
     /// like use count, position and sector allocation
     /// </summary>
     /// <param name="CommonPrimitiveProperties"></param>
-    /// <param name="SourceMesh">Facet group the mesh is based on</param>
-    public record ProtoMesh(CommonPrimitiveProperties CommonPrimitiveProperties,
+    public abstract record ProtoMesh(CommonPrimitiveProperties CommonPrimitiveProperties) : APrimitive(CommonPrimitiveProperties);
+
+    public record ProtoMeshFromFacetGroup(CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Ignore)]
-        RvmFacetGroup SourceMesh
-        ) : APrimitive(CommonPrimitiveProperties);
+        RvmFacetGroup SourceMesh) : APrimitive(CommonPrimitiveProperties);
+
+    public record ProtoMeshFromPyramid(CommonPrimitiveProperties CommonPrimitiveProperties,
+        [property: I3df(I3dfAttribute.AttributeType.Ignore)]
+        RvmPyramid SourcePyramid) : APrimitive(CommonPrimitiveProperties);
 }

@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Converters
 {
+    using CadRevealComposer.Operations.Converters;
     using CadRevealComposer.Primitives;
     using NUnit.Framework;
-    using Operations.Converters;
     using RvmSharp.Primitives;
     using System.Numerics;
 
