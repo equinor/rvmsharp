@@ -12,7 +12,6 @@ namespace CadRevealComposer
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Diagnostics;
     using System.Drawing;
     using System.IO;
     using System.Linq;
@@ -96,11 +95,6 @@ namespace CadRevealComposer
         public static void ExportSector(SectorInfo sector, string outputDirectory)
         {
             var geometries = sector.Geometries;
-            var groupAttributesTimer = Stopwatch.StartNew();
-            Console.WriteLine("Start Group Attributes and create i3d file structure");
-
-            var attributesTimer = Stopwatch.StartNew();
-            Console.WriteLine($"Attribute Grouping: {attributesTimer.Elapsed}");
 
             var colors = ImmutableSortedSet<Color>.Empty;
             var diagonals = ImmutableSortedSet<float>.Empty;
@@ -121,7 +115,6 @@ namespace CadRevealComposer
             var fileIds = Array.Empty<ulong>();
             var textures = Array.Empty<Texture>();
 
-            var getAttributeValuesTimer = Stopwatch.StartNew();
             foreach (var attributeKind in Enum.GetValues<I3dfAttribute.AttributeType>())
             {
                 switch (attributeKind)
@@ -224,8 +217,6 @@ namespace CadRevealComposer
                 }
             }
 
-            Console.WriteLine($"Retrieved all distinct attributes in: {getAttributeValuesTimer.Elapsed}");
-
             var primitiveCollections = new PrimitiveCollections();
             foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
             {
@@ -282,16 +273,9 @@ namespace CadRevealComposer
                     PrimitiveCollections = primitiveCollections
                 }
             };
-            Console.WriteLine($"Group Attributes and create i3d file structure: {groupAttributesTimer.Elapsed}");
-
-            var i3dTimer = Stopwatch.StartNew();
             var filepath = Path.Join(outputDirectory, $"sector_{file.FileSector.Header.SectorId}.i3d");
             using var i3dSectorFile = File.Create(filepath);
             I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
-            Console.WriteLine($"Finished writing i3d Sectors in {i3dTimer.Elapsed}");
-
-            Console.WriteLine($"Total primitives {geometries.Count}/{PrimitiveCounter.pc}");
-            Console.WriteLine($"Missing: {PrimitiveCounter.ToString()}");
         }
     }
 }
