@@ -68,10 +68,10 @@ namespace CadRevealComposer.Operations
         public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
         {
 
-            var groupedGroups = groups.AsParallel().AsOrdered().GroupBy(CalculateKey).Select(g => (g.Key, g.ToArray())).ToArray();
+            var groupedGroups = groups.AsParallel().GroupBy(CalculateKey).Select(g => (g.Key, facetGroups: g.ToArray())).ToArray();
 
-            var result = groupedGroups.AsParallel().AsOrdered().Select(
-                    g => MatchGroups2(g.Item2)).SelectMany(d => d)
+            var result = groupedGroups.AsParallel().Select(
+                    g => MatchGroups2(g.facetGroups)).SelectMany(d => d)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
             return result;
         }

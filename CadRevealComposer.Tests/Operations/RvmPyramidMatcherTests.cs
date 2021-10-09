@@ -38,6 +38,7 @@
             {
                 if (Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
                 {
+                    rotation = Quaternion.Normalize(rotation);
                     (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
                     Console.WriteLine("Transform:");
                     Console.WriteLine("scale: " + scale.ToString("0.00"));
