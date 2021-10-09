@@ -30,6 +30,7 @@
             {
                 throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPrimitive.Matrix);
             }
+            rot = Quaternion.Normalize(rot);
 
             var axisAlignedBoundingBox = rvmPrimitive.CalculateAxisAlignedBoundingBox();
 
