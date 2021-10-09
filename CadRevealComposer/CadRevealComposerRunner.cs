@@ -55,7 +55,11 @@ namespace CadRevealComposer
 
             Console.WriteLine("Generating i3d");
 
+            var total = Stopwatch.StartNew();
+            var stopwatch = Stopwatch.StartNew();
             var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
+            Console.WriteLine("Converted to reveal nodes in " + stopwatch.Elapsed);
+            stopwatch.Restart();
 
             var geometries = allNodes
                 .AsParallel()
@@ -65,6 +69,9 @@ namespace CadRevealComposer
                         primitive)))
                 .WhereNotNull()
                 .ToArray();
+
+            Console.WriteLine("Primitives converted in " + stopwatch.Elapsed);
+            stopwatch.Restart();
 
             var exportHierarchyDatabaseTask = Task.Run(() =>
             {
@@ -78,8 +85,14 @@ namespace CadRevealComposer
 
             var facetGroupInstancingResult = RvmFacetGroupMatcher
                 .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
+
+            Console.WriteLine("Facet groups matched in " + stopwatch.Elapsed);
+            stopwatch.Restart();
+
             var pyramidInstancingResult = RvmPyramidInstancer.Process(protoMeshesFromPyramids).GroupBy(x => x.Value.template);
 
+            Console.WriteLine("Pyramids matched in " + stopwatch.Elapsed);
+            stopwatch.Restart();
 
             const uint defaultInstancingThreshold = 300; // We should consider making this threshold dynamic. Value of 300 is picked arbitrary.
             uint instanceCandidateThreshold = modelParameters.InstancingThresholdOverride?.Value ?? defaultInstancingThreshold; // should have at least this many matches to care about instancing
@@ -106,6 +119,8 @@ namespace CadRevealComposer
             var offsetByTemplate2 =
                 meshByPyramidInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
+            Console.WriteLine("Composed instance dictionaries in " + stopwatch.Elapsed);
+            stopwatch.Restart();
 
             var iMeshes = protoMeshesFromFacetGroups.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
@@ -117,6 +132,7 @@ namespace CadRevealComposer
                         throw new Exception("Could not decompose");
                     }
 
+                    rotation = Quaternion.Normalize(rotation);
                     (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
                     AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
 
@@ -138,6 +154,7 @@ namespace CadRevealComposer
                             throw new Exception("Could not decompose");
                         }
 
+                        rotation = Quaternion.Normalize(rotation);
                         (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
                         AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
 
@@ -187,6 +204,9 @@ namespace CadRevealComposer
 
             geometries = geometries.Where(g => g is not ProtoMesh).Concat(iMeshes).Concat(tMeshes).ToArray();
 
+            Console.WriteLine("Tessellated geometries in " + stopwatch.Elapsed);
+            stopwatch.Restart();
+
             var maxDepth = composerParameters.SingleSector
                 ? SectorSplitter.StartDepth : 5U;
             var sectors = SectorSplitter.SplitIntoSectors(
@@ -194,15 +214,26 @@ namespace CadRevealComposer
                     sectorIdGenerator,
                     maxDepth)
                 .OrderBy(x => x.SectorId).ToArray();
+
+            Console.WriteLine("Split into sectors in " + stopwatch.Elapsed);
+            stopwatch.Restart();
+
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
+
+            Console.WriteLine("Serialized sectors in " + stopwatch.Elapsed);
+            stopwatch.Restart();
 
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
             SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
 
+            Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
+            stopwatch.Restart();
+
             Task.WaitAll(exportHierarchyDatabaseTask);
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+            Console.WriteLine("Convert completed in " + total.Elapsed);
         }
 
         private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
