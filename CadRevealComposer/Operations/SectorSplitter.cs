@@ -60,9 +60,12 @@ namespace CadRevealComposer.Operations
             var midY = minY + ((maxY - minY) / 2);
             var midZ = minZ + ((maxZ - minZ) / 2);
 
+            var midPoint = new Vector3(midX, midY, midZ);
+            var volume = new Vector3(maxX, maxY, maxZ) - new Vector3(minX, minY, minZ);
+
             var grouped = allGeometries
                 .GroupBy(x => x.NodeId)
-                .GroupBy(x => CalculateVoxelKeyForNodeGroup(x, midX, midY, midZ))
+                .GroupBy(x => CalculateVoxelKeyForNodeGroup(x, midPoint, volume))
                 .OrderBy(x => x.Key)
                 .ToImmutableList();
 
@@ -138,17 +141,34 @@ namespace CadRevealComposer.Operations
             }
         }
 
-        private static int CalculateVoxelKey(RvmBoundingBox boundingBox, float midX, float midY, float midZ)
+        private static int CalculateVoxelKey(RvmBoundingBox primitiveBoundingBox, Vector3 mainVoxelMidPoint, Vector3 mainVoxelVolume)
         {
-            if (boundingBox.Min.X < midX && boundingBox.Max.X > midX ||
-                boundingBox.Min.Y < midY && boundingBox.Max.Y > midY ||
-                boundingBox.Min.Z < midZ && boundingBox.Max.Z > midZ)
+            // TODO: prioritize discipline: safety
+
+            // optimization heuristic: if the object's 2D surfaces are big then place it in main voxel (2D surface based on axis aligned bounding box)
+            const float thresholdFactor = 0.001f;
+            if (primitiveBoundingBox.Extents.X * primitiveBoundingBox.Extents.Y > thresholdFactor * mainVoxelVolume.X * mainVoxelVolume.Y) // XY
+            {
+                return MainVoxel;
+            }
+            if (primitiveBoundingBox.Extents.X * primitiveBoundingBox.Extents.Z > thresholdFactor * mainVoxelVolume.X * mainVoxelVolume.Z) // XZ
+            {
+                return MainVoxel;
+            }
+            if (primitiveBoundingBox.Extents.Y * primitiveBoundingBox.Extents.Z > thresholdFactor * mainVoxelVolume.Y * mainVoxelVolume.Z) // YZ
+            {
+                return MainVoxel;
+            }
+
+            if (primitiveBoundingBox.Min.X < mainVoxelMidPoint.X && primitiveBoundingBox.Max.X > mainVoxelMidPoint.X ||
+                primitiveBoundingBox.Min.Y < mainVoxelMidPoint.Y && primitiveBoundingBox.Max.Y > mainVoxelMidPoint.Y ||
+                primitiveBoundingBox.Min.Z < mainVoxelMidPoint.Z && primitiveBoundingBox.Max.Z > mainVoxelMidPoint.Z)
             {
                 return MainVoxel; // crosses the mid boundary in either X,Y,Z
             }
 
             // at this point we know the primitive does not cross mid boundary in X,Y,Z - meaning it can be placed in one of the eight sub quadrants
-            return (boundingBox.Min.X < midX, boundingBox.Min.Y < midY, boundingBox.Min.Z < midZ) switch
+            return (primitiveBoundingBox.Min.X < mainVoxelMidPoint.X, primitiveBoundingBox.Min.Y < mainVoxelMidPoint.Y, primitiveBoundingBox.Min.Z < mainVoxelMidPoint.Z) switch
             {
                 (false, false, false) => SubVoxelA,
                 (false, false, true) => SubVoxelB,
@@ -161,13 +181,13 @@ namespace CadRevealComposer.Operations
             };
         }
 
-        private static int CalculateVoxelKeyForNodeGroup(IEnumerable<APrimitive> nodeGroupPrimitives, float midX, float midY, float midZ)
+        private static int CalculateVoxelKeyForNodeGroup(IEnumerable<APrimitive> nodeGroupPrimitives, Vector3 mainVoxelMidPoint, Vector3 mainVoxelVolume)
         {
             // all primitives with the same NodeId shall be placed in the same voxel
             var lastVoxelKey = int.MinValue;
             foreach (var primitive in nodeGroupPrimitives)
             {
-                var voxelKey = CalculateVoxelKey(primitive.AxisAlignedBoundingBox, midX, midY, midZ);
+                var voxelKey = CalculateVoxelKey(primitive.AxisAlignedBoundingBox, mainVoxelMidPoint, mainVoxelVolume);
                 if (voxelKey == MainVoxel)
                 {
                     return MainVoxel;
