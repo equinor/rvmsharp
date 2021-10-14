@@ -22,7 +22,6 @@
 
         public static bool Match(RvmPyramid pyramidA, RvmPyramid pyramidB, out Matrix4x4 transform)
         {
-            transform = Matrix4x4.Identity;
             foreach (var variation in Enum.GetValues<PyramidVariation>())
             {
                 var rotatedPyramidB = RotatePyramid(pyramidB, variation);
@@ -33,6 +32,7 @@
                 return true;
             }
 
+            transform = Matrix4x4.Identity;
             return false;
         }
 
