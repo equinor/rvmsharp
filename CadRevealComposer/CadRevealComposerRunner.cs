@@ -127,12 +127,11 @@ namespace CadRevealComposer
                 {
                     var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceMesh];
                     var (triangleOffset, triangleCount) = offsetByTemplate[template];
-                    if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
+                    if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
                     {
                         throw new Exception("Could not decompose");
                     }
 
-                    rotation = Quaternion.Normalize(rotation);
                     (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
                     AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
 
