@@ -94,8 +94,8 @@ namespace CadRevealComposer.Operations
                 .Select(tm => (long)tm.TempTessellatedMesh!.Triangles.Count / 3).Sum();
             var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0 ? 1 : 0;
 
-            var instancedMeshes = geometry.OfType<InstancedMesh>().Select(im => im.TempTessellatedMesh).ToArray();
-            var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im!.Triangles.Count / 3).Sum();
+            var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
+            var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TriangleCount).Sum();
             var estimatedInstancedMeshDrawCallCount = instancedMeshes.Distinct().Count();
 
             var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +

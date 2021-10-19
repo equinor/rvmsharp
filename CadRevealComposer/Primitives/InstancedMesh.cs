@@ -66,11 +66,5 @@
 
         [Obsolete(ObsoleteMessage), I3df(I3dfAttribute.AttributeType.Texture)]
         public Texture BumpTexture { get; init; } = new Texture();
-
-        /// <summary>
-        /// Temporary reference to this Instances mesh. Will not be serialized in the i3df export.
-        /// </summary>
-        [I3df(I3dfAttribute.AttributeType.Ignore)]
-        public Mesh? TempTessellatedMesh { get; init; }
     }
 }
