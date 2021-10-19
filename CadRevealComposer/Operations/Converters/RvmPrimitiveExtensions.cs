@@ -26,11 +26,10 @@
         /// </summary>
         internal static CommonPrimitiveProperties GetCommonProps(this RvmPrimitive rvmPrimitive, RvmNode container, CadRevealNode cadNode)
         {
-            if (!Matrix4x4.Decompose(rvmPrimitive.Matrix, out var scale, out var rot, out var pos))
+            if (!rvmPrimitive.Matrix.DecomposeAndNormalize(out var scale, out var rot, out var pos))
             {
                 throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPrimitive.Matrix);
             }
-            rot = Quaternion.Normalize(rot);
 
             var axisAlignedBoundingBox = rvmPrimitive.CalculateAxisAlignedBoundingBox();
 
