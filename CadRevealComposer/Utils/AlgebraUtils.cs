@@ -163,6 +163,29 @@ namespace CadRevealComposer.Utils
         }
 
         /// <summary>
+        /// Decompose transformation matrix in scale, rotation and translation. The difference between this
+        /// and inbuilt Decompose method is that this one will normalize rotation. Default decompose method
+        /// reconstructs rotation from matrix elements and may introduce imprecision in quaternion. This will
+        /// have a negative effect on Euler angle decomposition
+        /// </summary>
+        /// <param name="transform">Transform to decompose</param>
+        /// <param name="scale">Output scale vector</param>
+        /// <param name="rotation">Normalized rotation quaternion</param>
+        /// <param name="translation">Vector translation</param>
+        /// <returns>True if transform can be decomposed</returns>
+        public static bool DecomposeAndNormalize(this Matrix4x4 transform, out Vector3 scale, out Quaternion rotation,
+            out Vector3 translation)
+        {
+            if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
+            {
+                rotation = Quaternion.Normalize(rotation);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// This method will extract transformation matrix such as
         /// (PAi) * Mt = (PBi)
         /// The extracted matrix will de decomposable into scale, rotation and translation matrices
