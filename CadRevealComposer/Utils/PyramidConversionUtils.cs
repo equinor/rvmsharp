@@ -29,10 +29,9 @@
                 return input;
             }
 
-            if (!Matrix4x4.Decompose(input.Matrix, out var scale, out var rotation, out var translation))
+            if (!input.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
                 return input;
 
-            rotation = Quaternion.Normalize(rotation);
             var scaledPyramid = input with
             {
                 Matrix = Matrix4x4Helpers.CalculateTransformMatrix(translation, rotation, scale * inverseScale),
