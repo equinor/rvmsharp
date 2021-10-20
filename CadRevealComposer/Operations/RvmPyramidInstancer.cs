@@ -41,8 +41,17 @@
                 if (matchFound)
                     continue;
 
+                // We have models where multiple Primitives on the same "part" are completely identical.
+                // This checks if this exact primitive is already used as a key. If it is we just count and ignore it.
+                if (protoPyramidToTemplateAndTransform.ContainsKey(protoPyramid))
+                {
+                    debugDuplicatePyramidsIgnoredCount++;
+                    continue;
+                }
+
                 var newTemplate = rvmPyramid with { Matrix = Matrix4x4.Identity };
                 templateLibrary.Add(newTemplate);
+
                 protoPyramidToTemplateAndTransform.Add(protoPyramid, (newTemplate, rvmPyramid.Matrix));
             }
 
