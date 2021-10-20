@@ -33,10 +33,12 @@ namespace CadRevealComposer
             var rvmTimer = Stopwatch.StartNew();
             var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
             {
-                Console.WriteLine($"{x.fileName} ({x.progress}/{x.total})");
+                Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
             });
             var rvmStore = Workload.ReadRvmData(workload, progressReport);
-            Console.WriteLine($"Read RvmData in {rvmTimer.Elapsed}");
+            var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
+            Console.WriteLine(
+                $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
 
             await ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
         }
@@ -155,7 +157,7 @@ namespace CadRevealComposer
                         var mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue);
                         if (mesh!.Vertices.Count == 0)
                         {
-                            Console.WriteLine("WARNING: Could not tesselate facet group!");
+                            Console.WriteLine("WARNING: Could not tessellate facet group!");
                         }
                         var triangleCount = mesh.Triangles.Count / 3;
                         return new TriangleMesh(
