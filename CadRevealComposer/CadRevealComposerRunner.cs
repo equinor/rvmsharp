@@ -61,6 +61,16 @@ namespace CadRevealComposer
             Console.WriteLine("Converted to reveal nodes in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
+            var exportHierarchyDatabaseTask = Task.Run(() =>
+            {
+                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+                var sw = Stopwatch.StartNew();
+                SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
+                sw.Stop();
+                Console.WriteLine($"Exported hierarchy database in {sw.Elapsed} to path \"{databasePath}\"");
+            });
+
+            var sw = Stopwatch.StartNew();
             var geometries = allNodes
                 .AsParallel()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
@@ -70,10 +80,8 @@ namespace CadRevealComposer
                 .Distinct()
                 .ToArray();
 
-            Console.WriteLine("Primitives converted in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+            Console.WriteLine($"Converted {geometries.Length} primitives in {sw.GetElapsedAndRestart()}");
 
-            var exportHierarchyDatabaseTask = Task.Run(() =>
             if (geometries.Length != geometries.Distinct().Count())
             {
                 var duplicateGroups = geometries
