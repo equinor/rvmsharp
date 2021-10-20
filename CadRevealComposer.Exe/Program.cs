@@ -36,7 +36,9 @@
                 new ModelParameters(
                     new ProjectId(options.ProjectId),
                     new ModelId(options.ModelId),
-                    new RevisionId(options.RevisionId));
+                    new RevisionId(options.RevisionId),
+                    options.InstancingThreshold.HasValue ? new InstancingThresholdOverride(options.InstancingThreshold.Value) : null
+                    );
 
             var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
             var toolsPath = Path.Combine(programPath!, "tools");

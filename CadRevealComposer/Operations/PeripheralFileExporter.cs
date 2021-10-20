@@ -6,6 +6,7 @@ namespace CadRevealComposer.Operations
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Threading.Tasks;
     using Utils;
 
@@ -22,8 +23,11 @@ namespace CadRevealComposer.Operations
             _idGenerator = new SequentialIdGenerator();
         }
 
-        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IEnumerable<Mesh?> meshGeometries)
+        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IReadOnlyCollection<Mesh?> meshGeometries)
         {
+            if(!meshGeometries.Any())
+                await Console.Error.WriteLineAsync("WARNING: Trying to export InstancedMeshes but the argument has no items. The InstancingThreshold is maybe too high?");
+
             var meshFileId = _idGenerator.GetNextId();
             var objFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.obj");
             var ctmFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.ctm");

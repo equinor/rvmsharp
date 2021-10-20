@@ -78,9 +78,11 @@ namespace CadRevealComposer
                 .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
             var pyramidInstancingResult = RvmPyramidInstancer.Process(protoMeshesFromPyramids).GroupBy(x => x.Value.template);
 
-            const int lowerInstancingLimit = 2; // should have at least so many matches to care about instancing
-            var instancedMeshesFromFacetGroups = facetGroupInstancingResult.Where(g => g.Count() >= lowerInstancingLimit).ToArray();
-            var instancedMeshesFromPyramids = pyramidInstancingResult.Where(g => g.Count() >= lowerInstancingLimit).ToArray();
+
+            const uint defaultInstancingThreshold = 300; // We should consider making this threshold dynamic. Value of 300 is picked arbitrary.
+            uint instanceCandidateThreshold = modelParameters.InstancingThresholdOverride?.Value ?? defaultInstancingThreshold; // should have at least this many matches to care about instancing
+            var instancedMeshesFromFacetGroups = facetGroupInstancingResult.Where(g => g.Count() >= instanceCandidateThreshold).ToArray();
+            var instancedMeshesFromPyramids = pyramidInstancingResult.Where(g => g.Count() >= instanceCandidateThreshold).ToArray();
 
             var instancedTemplateAndTransformByOriginalFacetGroup = instancedMeshesFromFacetGroups
                 .SelectMany(g => g)
