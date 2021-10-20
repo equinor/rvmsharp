@@ -63,22 +63,25 @@ namespace CadRevealComposer
 
             var geometries = allNodes
                 .AsParallel()
-                .AsOrdered()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
                         primitive)))
                 .WhereNotNull()
+                .Distinct()
                 .ToArray();
 
             Console.WriteLine("Primitives converted in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
             var exportHierarchyDatabaseTask = Task.Run(() =>
+            if (geometries.Length != geometries.Distinct().Count())
             {
-                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-                SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
-                Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
-            });
+                var duplicateGroups = geometries
+                    .GroupBy(x => x)
+                    .Where(g => g.Count() > 1)
+                    .ToImmutableArray();
+                throw new Exception($"Duplicates among geometry objects. Number of duplicate groups are: {duplicateGroups.Length}");
+            }
 
             var protoMeshesFromFacetGroups = geometries.OfType<ProtoMeshFromFacetGroup>().ToArray();
             var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
