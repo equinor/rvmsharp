@@ -2,6 +2,7 @@ namespace CadRevealComposer.Operations
 {
     using RvmSharp.Primitives;
     using System;
+    using System.CodeDom;
     using System.Collections.Generic;
     using System.Linq;
     using System.Numerics;
@@ -170,7 +171,7 @@ namespace CadRevealComposer.Operations
 
         private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
         {
-            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in any particular order
+            // TODO: This method cannot match facet groups that have random order on polygons/contours/vertices
 
             if (!EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
             {
@@ -181,7 +182,6 @@ namespace CadRevealComposer.Operations
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex3 = (Vector3.Zero, Vector3.Zero, false);
-            var maxDeterminant = 0f;
             for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
             {
                 var aPolygon = aFacetGroup.Polygons[i];
@@ -195,9 +195,10 @@ namespace CadRevealComposer.Operations
                         var candidateVertexA = aContour.Vertices[k].Vertex;
                         var candidateVertexB = bContour.Vertices[k].Vertex;
 
-                        var isDuplicateVertex = testVertex1.isSet && testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f) ||
-                                                testVertex2.isSet && testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f) ||
-                                                testVertex3.isSet && testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f);
+                        const float tolerance = 0.005f;
+                        var isDuplicateVertex = testVertex1.isSet && testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex2.isSet && testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex3.isSet && testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, tolerance);
                         if (isDuplicateVertex)
                         {
                             // ignore duplicate vertex
@@ -242,8 +243,6 @@ namespace CadRevealComposer.Operations
                                     out transform
                                 );
                             }
-
-                            maxDeterminant = MathF.Max(MathF.Abs(determinant), maxDeterminant);
                         }
                     }
                 }
