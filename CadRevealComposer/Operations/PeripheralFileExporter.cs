@@ -5,6 +5,7 @@ namespace CadRevealComposer.Operations
     using RvmSharp.Tessellation;
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
@@ -23,10 +24,12 @@ namespace CadRevealComposer.Operations
             _idGenerator = new SequentialIdGenerator();
         }
 
-        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)> ExportInstancedMeshesToObjFile(IReadOnlyCollection<Mesh?> meshGeometries)
+        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)>
+            ExportMeshesToObjAndCtmFile(IReadOnlyCollection<Mesh?> meshGeometries)
         {
-            if(!meshGeometries.Any())
-                await Console.Error.WriteLineAsync("WARNING: Trying to export InstancedMeshes but the argument has no items. The InstancingThreshold is maybe too high?");
+            if (!meshGeometries.Any())
+                await Console.Error.WriteLineAsync(
+                    "WARNING: Trying to export InstancedMeshes but the argument has no items. The InstancingThreshold is maybe too high?");
 
             var meshFileId = _idGenerator.GetNextId();
             var objFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.obj");
@@ -50,27 +53,61 @@ namespace CadRevealComposer.Operations
             return (meshFileId, result);
         }
 
-        private async Task Convert(string inputObjFilePath, string outputCtmFilePath)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="inputObjFilePath"></param>
+        /// <param name="outputCtmFilePath"></param>
+        /// <param name="verbose">Should the output be Written to console?</param>
+        /// <exception cref="Exception">When exit code is non-zero</exception>
+        private async Task Convert(string inputObjFilePath, string outputCtmFilePath, bool verbose = false)
         {
-            var process = System.Diagnostics.Process.Start(_meshToCtmExePath, new[]
+            var processStartInfo = new ProcessStartInfo(_meshToCtmExePath)
             {
-                inputObjFilePath,
-                outputCtmFilePath,
-                "--comment",
-                "RvmSharp",
-                "--method",
-                "MG1",
-                "--level",
-                "4",
-                "--no-texcoords",
-                "--no-colors",
-                "--upaxis",
-                "Y"
-            });
-            await process.WaitForExitAsync();
-            if (process.ExitCode != 0)
+                ArgumentList =
+                {
+                    inputObjFilePath,
+                    outputCtmFilePath,
+                    "--comment",
+                    "RvmSharp",
+                    "--method",
+                    "MG1",
+                    "--level",
+                    "4",
+                    "--no-texcoords",
+                    "--no-colors",
+                    "--upaxis",
+                    "Y"
+                },
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            var ctmConvProcess = Process.Start(processStartInfo)!;
+            await ctmConvProcess.WaitForExitAsync();
+
+
+            async Task PrintOutputToConsoleHelper(Process process)
             {
-                throw new Exception($"CTM conversion process failed for {inputObjFilePath}");
+                Console.WriteLine(await process.StandardOutput.ReadToEndAsync());
+                var error = await process.StandardError.ReadToEndAsync();
+                if (!string.IsNullOrEmpty(error))
+                {
+                    await Console.Error.WriteLineAsync(error);
+                }
+            }
+
+            if (verbose)
+            {
+                await PrintOutputToConsoleHelper(ctmConvProcess);
+            }
+
+            if (ctmConvProcess.ExitCode != 0)
+            {
+                if (!verbose) { await PrintOutputToConsoleHelper(ctmConvProcess); } // Already logged above if verbose.
+
+                throw new Exception($"CTM conversion process failed for {inputObjFilePath} with exit code " + ctmConvProcess.ExitCode);
             }
         }
     }
