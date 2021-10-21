@@ -57,7 +57,9 @@ namespace CadRevealComposer
 
             var total = Stopwatch.StartNew();
             var stopwatch = Stopwatch.StartNew();
-            var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
+            var allNodes =
+                RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator,
+                    treeIndexGenerator);
             Console.WriteLine("Converted to reveal nodes in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
@@ -83,21 +85,30 @@ namespace CadRevealComposer
             var protoMeshesFromFacetGroups = geometries.OfType<ProtoMeshFromFacetGroup>().ToArray();
             var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
 
+            const uint
+                defaultInstancingThreshold =
+                    300; // We should consider making this threshold dynamic. Value of 300 is picked arbitrary.
+            uint instanceCandidateThreshold =
+                modelParameters.InstancingThresholdOverride?.Value ??
+                defaultInstancingThreshold; // should have at least this many matches to care about instancing
+
             var facetGroupInstancingResult = RvmFacetGroupMatcher
-                .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
+                .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray(), instanceCandidateThreshold)
+                .GroupBy(x => x.Value.template);
 
             Console.WriteLine("Facet groups matched in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var pyramidInstancingResult = RvmPyramidInstancer.Process(protoMeshesFromPyramids).GroupBy(x => x.Value.template);
+            var pyramidInstancingResult =
+                RvmPyramidInstancer.Process(protoMeshesFromPyramids).GroupBy(x => x.Value.template);
 
             Console.WriteLine("Pyramids matched in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            const uint defaultInstancingThreshold = 300; // We should consider making this threshold dynamic. Value of 300 is picked arbitrary.
-            uint instanceCandidateThreshold = modelParameters.InstancingThresholdOverride?.Value ?? defaultInstancingThreshold; // should have at least this many matches to care about instancing
-            var instancedMeshesFromFacetGroups = facetGroupInstancingResult.Where(g => g.Count() >= instanceCandidateThreshold).ToArray();
-            var instancedMeshesFromPyramids = pyramidInstancingResult.Where(g => g.Count() >= instanceCandidateThreshold).ToArray();
+            var instancedMeshesFromFacetGroups = facetGroupInstancingResult
+                .Where(g => g.Count() >= instanceCandidateThreshold).ToArray();
+            var instancedMeshesFromPyramids =
+                pyramidInstancingResult.Where(g => g.Count() >= instanceCandidateThreshold).ToArray();
 
             var instancedTemplateAndTransformByOriginalFacetGroup = instancedMeshesFromFacetGroups
                 .SelectMany(g => g)
@@ -113,16 +124,22 @@ namespace CadRevealComposer
                 g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
 
             var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
-            var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportInstancedMeshesToObjFile(meshByInstance.Select(im => im.Value).Concat(meshByPyramidInstance.Select(im => im.Value))
+            var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportMeshesToObjAndCtmFile(meshByInstance
+                .Select(im => im.Value).Concat(meshByPyramidInstance.Select(im => im.Value))
                 .ToArray());
-            var offsetByTemplate = meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
+            var offsetByTemplate =
+                meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
             var offsetByTemplate2 =
                 meshByPyramidInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
             Console.WriteLine("Composed instance dictionaries in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var iMeshes = protoMeshesFromFacetGroups.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+            Console.WriteLine("Start Tessellate");
+
+            var iMeshesTimer = Stopwatch.StartNew();
+            var iMeshes = protoMeshesFromFacetGroups
+                .Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
                 {
                     var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceMesh];
@@ -143,7 +160,8 @@ namespace CadRevealComposer
                         instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
                         translation.Y, translation.Z,
                         rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
-                }).Concat(protoMeshesFromPyramids.Where(p => instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
+                }).Concat(protoMeshesFromPyramids
+                    .Where(p => instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
                     .Select(p =>
                     {
                         var (template, transform) = instancedTemplateAndTranformByOriginalPyramid[p];
@@ -168,6 +186,8 @@ namespace CadRevealComposer
                     }))
                 .ToArray();
 
+            Console.WriteLine($"\tTessellated {iMeshes.Length} Instanced Meshes in " + iMeshesTimer.Elapsed);
+            var tMeshesTimer = Stopwatch.StartNew();
             var tMeshes = protoMeshesFromFacetGroups
                 .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
@@ -175,8 +195,9 @@ namespace CadRevealComposer
                         var mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue);
                         if (mesh!.Vertices.Count == 0)
                         {
-                            Console.WriteLine("WARNING: Could not tessellate facet group!");
+                            Console.WriteLine("WARNING: Could not tessellate facet group! " + p.SourceMesh.Polygons.Length);
                         }
+
                         var triangleCount = mesh.Triangles.Count / 3;
                         return new TriangleMesh(
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
@@ -193,6 +214,7 @@ namespace CadRevealComposer
                         {
                             Console.WriteLine("WARNING: Could not tessellate facet group!");
                         }
+
                         var triangleCount = mesh.Triangles.Count / 3;
                         return new TriangleMesh(
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
@@ -201,48 +223,54 @@ namespace CadRevealComposer
                                 (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
                     })).Where(t => t.TempTessellatedMesh!.Vertices.Count > 0).ToArray();
 
+            Console.WriteLine($"\tTessellated {tMeshes.Length} Triangle Meshes in " + tMeshesTimer.Elapsed);
+
             geometries = geometries.Where(g => g is not ProtoMesh).Concat(iMeshes).Concat(tMeshes).ToArray();
 
-            Console.WriteLine("Tessellated geometries in " + stopwatch.Elapsed);
+            Console.WriteLine($"Tessellated all geometries in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
             var maxDepth = composerParameters.SingleSector
-                ? SectorSplitter.StartDepth : 5U;
+                ? SectorSplitter.StartDepth
+                : 5U;
             var sectors = SectorSplitter.SplitIntoSectors(
                     geometries,
                     sectorIdGenerator,
                     maxDepth)
                 .OrderBy(x => x.SectorId).ToArray();
 
-            Console.WriteLine("Split into sectors in " + stopwatch.Elapsed);
+            Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
-            Console.WriteLine("Serialized sectors in " + stopwatch.Elapsed);
+            Console.WriteLine($"Serialized {sectorInfos.Length} sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
+            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory,
+                treeIndexGenerator.CurrentMaxGeneratedIndex);
 
             Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
             Task.WaitAll(exportHierarchyDatabaseTask);
 
-            Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+            Console.WriteLine(
+                $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
             Console.WriteLine("Convert completed in " + total.Elapsed);
         }
 
-        private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
+        private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p,
+            string outputDirectory, PeripheralFileExporter exporter)
         {
             var sectorFileName = $"sector_{p.SectorId}.i3d";
             var meshes = p.Geometries.OfType<TriangleMesh>().Select(t => t.TempTessellatedMesh).ToArray();
             var geometries = p.Geometries;
             if (meshes.Length > 0)
             {
-                var (triangleMeshFileId, _) = await exporter.ExportInstancedMeshesToObjFile(meshes);
+                var (triangleMeshFileId, _) = await exporter.ExportMeshesToObjAndCtmFile(meshes);
                 geometries = p.Geometries.Select(g =>
                 {
                     return g switch
@@ -257,13 +285,16 @@ namespace CadRevealComposer
 
             var peripheralFiles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(
                 geometries, I3dfAttribute.AttributeType.FileId).Distinct().Select(id => $"mesh_{id}.ctm").ToArray();
-            var sectorInfo = new SceneCreator.SectorInfo(p.SectorId, p.ParentSectorId, p.Depth, p.Path, sectorFileName, peripheralFiles,
+            var sectorInfo = new SceneCreator.SectorInfo(p.SectorId, p.ParentSectorId, p.Depth, p.Path, sectorFileName,
+                peripheralFiles,
                 estimatedTriangleCount, estimatedDrawCallCount, geometries, p.BoundingBox);
             SceneCreator.ExportSector(sectorInfo, outputDirectory);
+
             return sectorInfo;
         }
 
-        private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
+        private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
+            IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
         {
             foreach (var sector in sectors)
             {
@@ -271,10 +302,7 @@ namespace CadRevealComposer
                     .Select(filename => Path.Combine(outputDirectory.FullName, filename))
                     .Select(filepath => new FileInfo(filepath).Length)
                     .Sum();
-                yield return sector with
-                {
-                    DownloadSize = downloadSize
-                };
+                yield return sector with { DownloadSize = downloadSize };
             }
         }
     }

@@ -13,7 +13,7 @@ namespace CadRevealComposer.Tests.Developer
         {
             /*var facetGroup = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json");
             var adjustedFacetGroup = facetGroup; // TODO:
-            PeripheralFileExporter.ExportInstancedMeshesToObjFile(new DirectoryInfo(ExportPath), 0, new []{})
+            PeripheralFileExporter.ExportMeshesToObjAndCtmFile(new DirectoryInfo(ExportPath), 0, new []{})
             var node = new RvmNode(1, "testGroup", Vector3.Zero, 0);
             node.Children.Add(facetGroup);
             var rvmModel = new RvmModel(1, "test project", "test model",

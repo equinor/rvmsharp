@@ -2,15 +2,17 @@ namespace CadRevealComposer.Operations
 {
     using RvmSharp.Primitives;
     using System;
-    using System.CodeDom;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
+    using System.Runtime.CompilerServices;
     using Utils;
 
     public static class RvmFacetGroupMatcher
     {
-        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup input, bool centerMesh, out Matrix4x4 translationMatrix)
+        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup input, bool centerMesh,
+            out Matrix4x4 translationMatrix)
         {
             var originalMatrix = input.Matrix;
 
@@ -53,8 +55,9 @@ namespace CadRevealComposer.Operations
             {
                 Contours = p.Contours
                     .Select(c => new RvmFacetGroup.RvmContour(c.Vertices.Select(vn =>
-                        (Vector3.Transform(vn.Vertex, finalMatrix), Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed))
-                        ).ToArray())).ToArray()
+                        (Vector3.Transform(vn.Vertex, finalMatrix),
+                            Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed))
+                    ).ToArray())).ToArray()
             }).ToArray();
 
             return input with
@@ -66,14 +69,32 @@ namespace CadRevealComposer.Operations
         }
 
 
-        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
+        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(
+            RvmFacetGroup[] facetGroups, uint instancingThreshold)
         {
+            var groupingTimer = Stopwatch.StartNew();
+            var groupedFacetGroups =
+                facetGroups
+                    .AsParallel()
+                    .GroupBy(CalculateKey)
+                    .Where(x => x.Count() >=
+                                instancingThreshold) // We can ignore all groups of less items than the threshold.
+                    .Select(g => (g.Key, facetGroups: g.ToArray())).ToArray();
 
-            var groupedGroups = groups.AsParallel().GroupBy(CalculateKey).Select(g => (g.Key, facetGroups: g.ToArray())).ToArray();
+            Console.WriteLine(
+                $"Found {groupedFacetGroups.Length} groups for {facetGroups.Length} in {groupingTimer.Elapsed}");
 
-            var result = groupedGroups.AsParallel().Select(
-                    g => MatchGroups2(g.facetGroups)).SelectMany(d => d)
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var matchingTimer = Stopwatch.StartNew();
+            var result =
+                groupedFacetGroups
+                    .OrderBy(x => x)
+                    .AsParallel()
+                    .Select(
+                        g => MatchGroups2(g.facetGroups)).SelectMany(d => d)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            Console.WriteLine(
+                $"Found {result.DistinctBy(x => x.Value.template).Count()} unique from a total of {facetGroups.Length}. Time: {matchingTimer.Elapsed}");
             return result;
         }
 
@@ -82,15 +103,29 @@ namespace CadRevealComposer.Operations
         {
             var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
             var templates = new List<RvmFacetGroup>();
+            var templateMatchCount = new Dictionary<RvmFacetGroup, int>();
+
+            var timer = Stopwatch.StartNew();
             foreach (var facetGroup in inputFacetGroups)
             {
                 var matchFound = false;
                 var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
-                foreach (var templateCandidate in templates)
+
+                for (var i = 0; i < templates.Count; i++)
                 {
+                    var templateCandidate = templates[i];
                     if (!Match(templateCandidate, bakedFacetGroup, out var transform))
                         continue;
+
                     matchFound = true;
+                    var matches = templateMatchCount[templateCandidate]++;
+                    if (matches > 10 && i > 10) // Arbitrary values
+                    {
+                        // Promote to top to be first candidate for a match again! Match.com has nothing on this matching algorithm :).
+                        templates.Remove(templateCandidate);
+                        templates.Insert(0, templateCandidate);
+                    }
+
                     result.Add(facetGroup, (templateCandidate, transform));
                     break;
                 }
@@ -99,10 +134,17 @@ namespace CadRevealComposer.Operations
                     continue;
 
                 var newTemplate = BakeTransformAndCenter(facetGroup, true, out var templateToFacetGroupTransform);
-                templates.Add(newTemplate);
+                templates.Insert(0, newTemplate);
+                templateMatchCount.Add(newTemplate, 0);
                 result.Add(facetGroup, (newTemplate, templateToFacetGroupTransform));
             }
 
+            timer.Stop();
+            float inputCount = inputFacetGroups.Length;
+            var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
+            Console.WriteLine(
+                $"Found {templateCount} for {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
+                $"Vertex count was {inputFacetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
             return result;
         }
 
@@ -116,9 +158,13 @@ namespace CadRevealComposer.Operations
         /// <returns>a key reflection information amount in facet group</returns>
         public static long CalculateKey(RvmFacetGroup facetGroup)
         {
-            return facetGroup.Polygons.Length * 1000_000_000L
-                   + facetGroup.Polygons.Sum(p => p.Contours.Length) * 1000_000L
-                   + facetGroup.Polygons.SelectMany(p => p.Contours).Sum(c => c.Vertices.Length);
+            long polyThumbprint = facetGroup.Polygons.Length;
+            var step = 1;
+            long verticeThumbprint = facetGroup.Polygons
+                .SelectMany(x => x.Contours)
+                .Aggregate(0, (i, contour) => i + contour.Vertices.Length * (step *= 10));
+
+            return polyThumbprint * 1000_000 + verticeThumbprint;
         }
 
         /// <summary>
@@ -141,8 +187,17 @@ namespace CadRevealComposer.Operations
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+        static void TransformVertexRef(Vector3 position, Matrix4x4 matrix, ref Vector3 toModify)
+        {
+            toModify.X = position.X * matrix.M11 + position.Y * matrix.M21 + position.Z * matrix.M31 + matrix.M41;
+            toModify.Y = position.X * matrix.M12 + position.Y * matrix.M22 + position.Z * matrix.M32 + matrix.M42;
+            toModify.Z = position.X * matrix.M13 + position.Y * matrix.M23 + position.Z * matrix.M33 + matrix.M43;
+        }
+
         private static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, Matrix4x4 transform)
         {
+            var vecRef = new Vector3();
             // check all polygons with transform
             for (var i = 0; i < a.Polygons.Length; i++)
             {
@@ -156,9 +211,9 @@ namespace CadRevealComposer.Operations
 
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
-                        var va = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
+                        TransformVertexRef(aContour.Vertices[k].Vertex, transform, ref vecRef);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!va.ApproximatelyEquals(vb, 0.001f))
+                        if (!vecRef.ApproximatelyEquals(vb, 0.001f))
                         {
                             return false;
                         }
@@ -169,15 +224,21 @@ namespace CadRevealComposer.Operations
             return true;
         }
 
-        private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup,
+            out Matrix4x4 transform)
         {
             // TODO: This method cannot match facet groups that have random order on polygons/contours/vertices
 
-            if (!EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
+
+            // This check should not be needed and is quite expensive. Limiting it to debug only.
+            if (Debugger.IsAttached && !EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
             {
+                Console.WriteLine("Vert count did not match!");
                 transform = default;
                 return false;
             }
+
 
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
@@ -196,9 +257,12 @@ namespace CadRevealComposer.Operations
                         var candidateVertexB = bContour.Vertices[k].Vertex;
 
                         const float tolerance = 0.005f;
-                        var isDuplicateVertex = testVertex1.isSet && testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
-                                                testVertex2.isSet && testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
-                                                testVertex3.isSet && testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, tolerance);
+                        var isDuplicateVertex = testVertex1.isSet &&
+                                                testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex2.isSet &&
+                                                testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex3.isSet &&
+                                                testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, tolerance);
                         if (isDuplicateVertex)
                         {
                             // ignore duplicate vertex
@@ -267,6 +331,7 @@ namespace CadRevealComposer.Operations
                 var bPolygon = b.Polygons[i];
                 if (aPolygon.Contours.Length != bPolygon.Contours.Length)
                     return false;
+
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
                     var aContour = aPolygon.Contours[j];
