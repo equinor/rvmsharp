@@ -202,15 +202,21 @@ namespace CadRevealComposer.Operations
         {
             var vecRef = new Vector3();
             // check all polygons with transform
+
             for (var i = 0; i < a.Polygons.Length; i++)
             {
                 var aPolygon = a.Polygons[i];
                 var bPolygon = b.Polygons[i];
+                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
+                    return false;
 
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
                     var aContour = aPolygon.Contours[j];
                     var bContour = bPolygon.Contours[j];
+
+                    if (aContour.Vertices.Length != bContour.Vertices.Length)
+                        return false;
 
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
