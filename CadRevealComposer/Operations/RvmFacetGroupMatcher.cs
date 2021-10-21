@@ -76,6 +76,7 @@ namespace CadRevealComposer.Operations
             var groupedFacetGroups =
                 facetGroups
                     .AsParallel()
+                    .Where(f => f.Polygons.Sum(x => x.Contours.Sum(x=>x.Vertices.Length)) > 18) // TODO: Do not filter out 18 vertice items.
                     .GroupBy(CalculateKey)
                     .Where(x => x.Count() >=
                                 instancingThreshold) // We can ignore all groups of less items than the threshold.
