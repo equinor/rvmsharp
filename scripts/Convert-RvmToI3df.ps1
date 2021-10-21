@@ -52,7 +52,6 @@ end {
 
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
 
-    # Note: The arg containing only " -- " separates the args to the dotnet compiler and the args to CadRevealComposer
     $composerArgs = @()
     $composerArgs += "--InputDirectory"
     $composerArgs += $InputDirectory
@@ -69,7 +68,12 @@ end {
         $composerArgs += $InstancingThreshold
     }
 
-    &dotnet run --configuration Release --project $cadRevealComposerPath --  $composerArgs
+    # Note: The arg containing only " -- " separates the args to the dotnet compiler and the args to CadRevealComposer
+    &dotnet run `
+        --configuration Release `
+        --project $cadRevealComposerPath `
+        -- `
+        $composerArgs
 
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
