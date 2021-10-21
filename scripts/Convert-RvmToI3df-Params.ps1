@@ -5,14 +5,15 @@ $ErrorActionPreference = 'Stop'
 # Avoid committing changes in this file if they are not new required parameters.
 
 $Arguments = @{
-    InputDirectory    = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite/" -Resolve)
-    WorkDirectory     = $(Join-Path "$PSScriptRoot" "./work_temp/" -Resolve)
-    ProjectId         = 10000 #Unused
-    ModelId           = 1
-    RevisionId        = 2
-    ArtifactDirectory = $(Join-Path "$PSScriptRoot" ".." "TestData" "RunArtifact/" -Resolve )
-    Force             = $true
-    UploadToDev       = $false
+    InputDirectory      = $(Join-Path "$PSScriptRoot" ".." "TestData" "HDA_RVM_lite/" -Resolve)
+    WorkDirectory       = $(Join-Path "$PSScriptRoot" "./work_temp/" -Resolve)
+    ProjectId           = 10000 #Unused
+    ModelId             = 1
+    RevisionId          = 2
+    InstancingThreshold = $null
+    ArtifactDirectory   = $(Join-Path "$PSScriptRoot" ".." "TestData" "RunArtifact/" -Resolve )
+    Force               = $true
+    UploadToDev         = $false
 }
 
 Write-Host "Run Parameters"
