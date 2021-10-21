@@ -140,7 +140,7 @@ namespace CadRevealComposer.Operations
             return false;
         }
 
-        public static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, Matrix4x4 transform)
+        private static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, Matrix4x4 transform)
         {
             // check all polygons with transform
             for (var i = 0; i < a.Polygons.Length; i++)
@@ -168,75 +168,87 @@ namespace CadRevealComposer.Operations
             return true;
         }
 
-        private static bool GetPossibleAtoBTransform(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 transform)
+        private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
         {
-            if (!EnsurePolygonContoursAndVertexCountsMatch(a, b))
+            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in any particular order
+
+            if (!EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
             {
                 transform = default;
                 return false;
             }
 
-            var aVertices = a.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex);
-            var bVertices = b.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select((vn) => vn.Vertex);
-
-            var vertices = aVertices.Zip(bVertices);
-            var testVertices = new List<(Vector3 vertexA, Vector3 vertexB)>(4);
-            var maxDet = 0f;
-            foreach ((Vector3 candidateVertexA, Vector3 candidateVertexB) in vertices)
+            (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
+            (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
+            (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex3 = (Vector3.Zero, Vector3.Zero, false);
+            var maxDeterminant = 0f;
+            for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
             {
-                if (testVertices.Any(vv => vv.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f)))
+                var aPolygon = aFacetGroup.Polygons[i];
+                var bPolygon = bFacetGroup.Polygons[i];
+                for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
-                    // skip any duplicate vertices
-                    continue;
-                }
+                    var aContour = aPolygon.Contours[j];
+                    var bContour = bPolygon.Contours[j];
+                    for (var k = 0; k < aContour.Vertices.Length; k++)
+                    {
+                        var candidateVertexA = aContour.Vertices[k].Vertex;
+                        var candidateVertexB = bContour.Vertices[k].Vertex;
 
-                switch (testVertices.Count)
-                {
-                    case 3:
+                        var isDuplicateVertex = testVertex1.isSet && testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f) ||
+                                                testVertex2.isSet && testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f) ||
+                                                testVertex3.isSet && testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, 0.005f);
+                        if (isDuplicateVertex)
                         {
+                            // ignore duplicate vertex
+                        }
+                        else if (!testVertex1.isSet)
+                        {
+                            testVertex1 = (candidateVertexA, candidateVertexB, true);
+                        }
+                        else if (!testVertex2.isSet)
+                        {
+                            testVertex2 = (candidateVertexA, candidateVertexB, true);
+                        }
+                        else if (!testVertex3.isSet)
+                        {
+                            var va12 = Vector3.Normalize(testVertex2.vertexA - testVertex1.vertexA);
+                            var va13 = Vector3.Normalize(candidateVertexA - testVertex1.vertexA);
+                            if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f))
+                            {
+                                testVertex3 = (candidateVertexA, candidateVertexB, true);
+                            }
+                        }
+                        else
+                        {
+                            // at this point all three test vertices are set
                             var ma = new Matrix4x4(
-                                testVertices[0].vertexA.X, testVertices[1].vertexA.X, testVertices[2].vertexA.X,
-                                candidateVertexA.X,
-                                testVertices[0].vertexA.Y, testVertices[1].vertexA.Y, testVertices[2].vertexA.Y,
-                                candidateVertexA.Y,
-                                testVertices[0].vertexA.Z, testVertices[1].vertexA.Z, testVertices[2].vertexA.Z,
-                                candidateVertexA.Z,
+                                testVertex1.vertexA.X, testVertex2.vertexA.X, testVertex3.vertexA.X, candidateVertexA.X,
+                                testVertex1.vertexA.Y, testVertex2.vertexA.Y, testVertex3.vertexA.Y, candidateVertexA.Y,
+                                testVertex1.vertexA.Z, testVertex2.vertexA.Z, testVertex3.vertexA.Z, candidateVertexA.Z,
                                 1, 1, 1, 1);
-                            var det = ma.GetDeterminant();
-                            maxDet = MathF.Max(MathF.Abs(det), maxDet);
-                            if (!det.ApproximatelyEquals(0, 0.00000001f))
+                            var determinant = ma.GetDeterminant();
+                            if (!determinant.ApproximatelyEquals(0, 0.00000001f))
                             {
                                 return AlgebraUtils.GetTransform(
-                                    testVertices[0].vertexA,
-                                    testVertices[1].vertexA,
-                                    testVertices[2].vertexA,
+                                    testVertex1.vertexA,
+                                    testVertex2.vertexA,
+                                    testVertex3.vertexA,
                                     candidateVertexA,
-                                    testVertices[0].vertexB,
-                                    testVertices[1].vertexB,
-                                    testVertices[2].vertexB,
+                                    testVertex1.vertexB,
+                                    testVertex2.vertexB,
+                                    testVertex3.vertexB,
                                     candidateVertexB,
                                     out transform
                                 );
                             }
 
-                            break;
+                            maxDeterminant = MathF.Max(MathF.Abs(determinant), maxDeterminant);
                         }
-                    case 2:
-                        {
-                            var va12 = Vector3.Normalize(testVertices[1].vertexA - testVertices[0].vertexA);
-                            var va13 = Vector3.Normalize(candidateVertexA - testVertices[0].vertexA);
-                            if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f))
-                            {
-                                testVertices.Add((candidateVertexA, candidateVertexB));
-                            }
-
-                            break;
-                        }
-                    default:
-                        testVertices.Add((candidateVertexA, candidateVertexB));
-                        break;
+                    }
                 }
             }
+
             // TODO: 2d figure
             transform = default;
             return false;
