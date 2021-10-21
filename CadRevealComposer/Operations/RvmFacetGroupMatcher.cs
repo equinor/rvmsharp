@@ -159,11 +159,13 @@ namespace CadRevealComposer.Operations
         /// <returns>a key reflection information amount in facet group</returns>
         public static long CalculateKey(RvmFacetGroup facetGroup)
         {
+
+
             long polyThumbprint = facetGroup.Polygons.Length;
-            var step = 1;
+            var step = 2;
             long verticeThumbprint = facetGroup.Polygons
                 .SelectMany(x => x.Contours)
-                .Aggregate(0, (i, contour) => i + contour.Vertices.Length * (step *= 10));
+                .Aggregate(0L, (i, contour) => i + ((long)Math.Pow(contour.Vertices.Length, step++)));
 
             return polyThumbprint * 1000_000 + verticeThumbprint;
         }
