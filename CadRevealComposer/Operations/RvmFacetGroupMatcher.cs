@@ -82,7 +82,7 @@ namespace CadRevealComposer.Operations
                     .Select(g => (g.Key, facetGroups: g.ToArray())).ToArray();
 
             Console.WriteLine(
-                $"Found {groupedFacetGroups.Length} groups for {facetGroups.Length} in {groupingTimer.Elapsed}");
+                $"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items in {facetGroups.Length} FacetGroups in {groupingTimer.Elapsed}");
 
             var matchingTimer = Stopwatch.StartNew();
             var result =
@@ -143,7 +143,7 @@ namespace CadRevealComposer.Operations
             float inputCount = inputFacetGroups.Length;
             var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
             Console.WriteLine(
-                $"Found {templateCount} for {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
+                $"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
                 $"Vertex count was {inputFacetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
             return result;
         }
