@@ -252,14 +252,26 @@ namespace CadRevealComposer.Operations
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex3 = (Vector3.Zero, Vector3.Zero, false);
+
             for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
             {
                 var aPolygon = aFacetGroup.Polygons[i];
                 var bPolygon = bFacetGroup.Polygons[i];
+                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
+                {
+                    transform = default;
+                    return false;
+                }
+
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
                     var aContour = aPolygon.Contours[j];
                     var bContour = bPolygon.Contours[j];
+                    if (aContour.Vertices.Length != bContour.Vertices.Length)
+                    {
+                        transform = default;
+                        return false;
+                    }
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
                         var candidateVertexA = aContour.Vertices[k].Vertex;
