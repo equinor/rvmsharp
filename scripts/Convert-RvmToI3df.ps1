@@ -6,6 +6,7 @@ param (
     [Parameter(Mandatory = $true)][long] $ProjectId, #Example value:  1,
     [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
+    [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Int32]] $InstancingThreshold = $null, # Optional. Must be > 0 if defined.
     [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
     [switch] $Force = $false,
     [switch] $UploadToDev = $false
@@ -49,44 +50,36 @@ end {
 
     #region Reveal Composer
 
-    # Note: The line containing only " -- " separates the arguments to the dotnet compiler and the arguments to CadRevealComposer
     $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
-    & dotnet run `
+
+    $composerArgs = @()
+    $composerArgs += "--InputDirectory"
+    $composerArgs += $InputDirectory
+    $composerArgs += "--OutputDirectory"
+    $composerArgs += $WorkDirectory
+    $composerArgs += "--ProjectId"
+    $composerArgs += $ProjectId
+    $composerArgs += "--ModelId"
+    $composerArgs += $ModelId
+    $composerArgs += "--RevisionId"
+    $composerArgs += $RevisionId
+    if ($InstancingThreshold) {
+        $composerArgs += "--InstancingThreshold"
+        $composerArgs += $InstancingThreshold
+    }
+
+    # Note: The arg containing only " -- " separates the args to the dotnet compiler and the args to CadRevealComposer
+    &dotnet run `
         --configuration Release `
         --project $cadRevealComposerPath `
         -- `
-        --InputDirectory $InputDirectory `
-        --OutputDirectory $WorkDirectory `
-        --ProjectId $ProjectId `
-        --ModelId $ModelId `
-        --RevisionId $RevisionId
-
+        $composerArgs
 
     if ($LASTEXITCODE) {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
 
     #endregion Reveal Composer
-
-    #region ctm-converter
-
-    $CtmConverterType = if ($IsMacOS) { "osx" } elseif ($IsWindows) { "exe" } else { Write-Error "Unexpected OS" }
-    $CtmConverterPath = Join-Path $PSScriptRoot ".." "tools" "OpenCTM" "mesh2ctm.$CtmConverterType"
-    Get-ChildItem -Path "$WorkDirectory/*" -Filter "*.obj" | ForEach-Object {
-        Write-Output ("Converting " + $_.Name + " (" + ("{0:n2} MB" -f ($_.Length / 1MB) + ") to CTM"))
-        $ctmInputPath = $_.FullName
-
-        $ctmFileName = $_.BaseName + ".ctm"
-        $ctmOutputPath = Join-Path $WorkDirectory $ctmFileName
-
-        $compressionLevel = 4
-        & $CtmConverterPath $ctmInputPath $ctmOutputPath --comment "RvmSharp" --method MG1 --level $compressionLevel --no-texcoords --no-colors --upaxis Y
-        if ($LASTEXITCODE) {
-            Write-Error "ctmconv failed." -ErrorAction Stop
-        }
-    }
-
-    #endregion ctm-converter
 
     #region Artifact Staging
 
