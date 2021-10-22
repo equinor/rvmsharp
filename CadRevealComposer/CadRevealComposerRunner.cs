@@ -193,20 +193,37 @@ namespace CadRevealComposer
                 .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
                     {
-                        var mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue);
-                        if (mesh!.Vertices.Count == 0)
+                        Mesh? mesh;
+                        try
                         {
-                            Console.WriteLine("WARNING: Could not tessellate facet group! " + p.SourceMesh.Polygons.Length);
+                            mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue)!;
+                        }
+                        catch (Exception e)
+                        {
+                            Console.Error.WriteLine(e);
+                            Console.WriteLine("Error caused by tessellating: " + p.SourceMesh);
+                            var fileName = $"treeIndex_{p.TreeIndex}.json";
+
+                            Console.WriteLine($"Writing Bad mesh to to file {fileName}");
+                            JsonUtils.JsonSerializeToFile(p.SourceMesh.Polygons,
+                                Path.Join(outputDirectory.FullName, "Failed", fileName));
+                            mesh = new Mesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
                         }
 
+                        if(mesh.Vertices.Count == 0)
+                        {
+                            Console.WriteLine("WARNING: Could not tessellate facet group! " +
+                                              p.SourceMesh.Polygons.Length);
+                        }
                         var triangleCount = mesh.Triangles.Count / 3;
                         return new TriangleMesh(
-                            new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
-                                Vector3.One,
-                                p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                                new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
+                                    Vector3.One,
+                                    p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                                    (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
                     }
-                ).Concat(protoMeshesFromPyramids
+                )
+                .Concat(protoMeshesFromPyramids
                     .AsParallel()
                     .Where(p => !instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
                     .Select(p =>
