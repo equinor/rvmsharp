@@ -203,6 +203,9 @@ namespace CadRevealComposer
                             Console.Error.WriteLine(e);
                             Console.WriteLine("Error caused by tessellating: " + p.SourceMesh);
                             var fileName = $"treeIndex_{p.TreeIndex}.json";
+                            var diagnosticsOutputDir = Path.Join(outputDirectory.FullName, "Failed");
+                            // Ensure output folder exists.
+                            Directory.CreateDirectory(diagnosticsOutputDir);
 
                             Console.WriteLine($"Writing Bad mesh to to file {fileName}");
                             JsonUtils.JsonSerializeToFile(p.SourceMesh.Polygons,
