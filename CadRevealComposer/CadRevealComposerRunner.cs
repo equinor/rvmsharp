@@ -189,6 +189,7 @@ namespace CadRevealComposer
             Console.WriteLine($"\tTessellated {iMeshes.Length} Instanced Meshes in " + iMeshesTimer.Elapsed);
             var tMeshesTimer = Stopwatch.StartNew();
             var tMeshes = protoMeshesFromFacetGroups
+                .AsParallel()
                 .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
                 .Select(p =>
                     {
@@ -206,6 +207,7 @@ namespace CadRevealComposer
                                 (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
                     }
                 ).Concat(protoMeshesFromPyramids
+                    .AsParallel()
                     .Where(p => !instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
                     .Select(p =>
                     {
@@ -221,7 +223,7 @@ namespace CadRevealComposer
                                 Vector3.One,
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
                                 (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
-                    })).Where(t => t.TempTessellatedMesh!.Vertices.Count > 0).ToArray();
+                    })).Where(t => t.TempTessellatedMesh!.Vertices.Count > 0).AsParallel().ToArray();
 
             Console.WriteLine($"\tTessellated {tMeshes.Length} Triangle Meshes in " + tMeshesTimer.Elapsed);
 
