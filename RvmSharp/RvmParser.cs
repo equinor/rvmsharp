@@ -6,10 +6,14 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Numerics;
+    using System.Runtime.CompilerServices;
     using System.Text;
 
     public static class RvmParser
     {
+#if NETSTANDARD2_0
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ReadUint(Stream stream)
         {
             var bytes = new byte[4];
@@ -20,6 +24,7 @@
             return BitConverter.ToUInt32(bytes, 0);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float ReadFloat(Stream stream)
         {
             var bytes = new byte[4];
@@ -29,6 +34,73 @@
                 Array.Reverse(bytes);
             return BitConverter.ToSingle(bytes, 0);
         }
+
+        private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
+        {
+            var builder = new StringBuilder();
+            var bytes = new byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                var read = stream.Read(bytes, 0, bytes.Length);
+                if (read < bytes.Length)
+                    throw new IOException("Unexpected end of stream");
+                if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
+                    throw new IOException("Unexpected data in header");
+                builder.Append((char)bytes[3]);
+            }
+
+            nextHeaderOffset = ReadUint(stream);
+            dunno = ReadUint(stream);
+            return builder.ToString();
+        }
+
+#endif
+
+// improved performance using stackalloc/span for .NET 5 and later
+#if !NETSTANDARD2_0
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static uint ReadUint(Stream stream)
+        {
+            Span<byte> bytes = stackalloc byte[4];
+            if (stream.Read(bytes) != bytes.Length)
+                throw new IOException("Unexpected end of stream");
+            if (BitConverter.IsLittleEndian)
+                bytes.Reverse();
+            return BitConverter.ToUInt32(bytes);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float ReadFloat(Stream stream)
+        {
+            Span<byte> bytes = stackalloc byte[4];
+            if (stream.Read(bytes) != bytes.Length)
+                throw new IOException("Unexpected end of stream");
+            if (BitConverter.IsLittleEndian)
+                bytes.Reverse();
+            return BitConverter.ToSingle(bytes);
+        }
+
+        private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
+        {
+            var builder = new StringBuilder();
+            Span<byte> bytes = stackalloc byte[4];
+            for (int i = 0; i < 4; i++)
+            {
+                var read = stream.Read(bytes);
+                if (read < bytes.Length)
+                    throw new IOException("Unexpected end of stream");
+                if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
+                    throw new IOException("Unexpected data in header");
+                builder.Append((char)bytes[3]);
+            }
+
+            nextHeaderOffset = ReadUint(stream);
+            dunno = ReadUint(stream);
+            return builder.ToString();
+        }
+
+#endif
 
         private static Vector3 ReadVector3(Stream stream)
         {
@@ -53,25 +125,6 @@
             }
 
             return Encoding.UTF8.GetString(bytes, 0, end);
-        }
-
-        private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
-        {
-            var builder = new StringBuilder();
-            var bytes = new byte[4];
-            for (int i = 0; i < 4; i++)
-            {
-                var read = stream.Read(bytes, 0, bytes.Length);
-                if (read < bytes.Length)
-                    throw new IOException("Unexpected end of stream");
-                if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
-                    throw new IOException("Unexpected data in header");
-                builder.Append((char)bytes[3]);
-            }
-
-            nextHeaderOffset = ReadUint(stream);
-            dunno = ReadUint(stream);
-            return builder.ToString();
         }
 
         private static (uint version, string project, string name) ReadModelParameters(Stream stream)
