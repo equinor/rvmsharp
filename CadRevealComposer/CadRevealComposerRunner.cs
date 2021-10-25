@@ -58,19 +58,16 @@ namespace CadRevealComposer
             var total = Stopwatch.StartNew();
             var stopwatch = Stopwatch.StartNew();
             var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
-            Console.WriteLine("Converted to reveal nodes in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+            Console.WriteLine($"Converted to reveal nodes in {stopwatch.GetElapsedAndRestart()}");
 
             var exportHierarchyDatabaseTask = Task.Run(() =>
             {
                 var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-                var sw = Stopwatch.StartNew();
+                var hierarchyExportTimer = Stopwatch.StartNew();
                 SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
-                sw.Stop();
-                Console.WriteLine($"Exported hierarchy database in {sw.Elapsed} to path \"{databasePath}\"");
+                Console.WriteLine($"Exported hierarchy database in {hierarchyExportTimer.Elapsed} to path \"{databasePath}\"");
             });
 
-            var sw = Stopwatch.StartNew();
             var geometries = allNodes
                 .AsParallel()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
@@ -80,7 +77,7 @@ namespace CadRevealComposer
                 .Distinct()
                 .ToArray();
 
-            Console.WriteLine($"Converted {geometries.Length} primitives in {sw.GetElapsedAndRestart()}");
+            Console.WriteLine($"Converted {geometries.Length} primitives in {stopwatch.GetElapsedAndRestart()}");
 
             if (geometries.Length != geometries.Distinct().Count())
             {
@@ -138,8 +135,7 @@ namespace CadRevealComposer
             var offsetByTemplate2 =
                 meshByPyramidInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
-            Console.WriteLine("Composed instance dictionaries in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+            Console.WriteLine("$Composed instance dictionaries in {stopwatch.GetElapsedAndRestart()}");
 
             Console.WriteLine("Start Tessellate");
 
@@ -286,13 +282,12 @@ namespace CadRevealComposer
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
             SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
 
-            Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+            Console.WriteLine($"Wrote scene file in {stopwatch.GetElapsedAndRestart()}");
 
             Task.WaitAll(exportHierarchyDatabaseTask);
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-            Console.WriteLine("Convert completed in " + total.Elapsed);
+            Console.WriteLine($"Convert completed in {total.Elapsed}");
         }
 
         private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
