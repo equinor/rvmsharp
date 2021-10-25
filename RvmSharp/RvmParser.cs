@@ -12,6 +12,8 @@
     public static class RvmParser
     {
 #if NETSTANDARD2_0
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ReadUint(Stream stream)
         {
             var bytes = new byte[4];
@@ -22,7 +24,7 @@
             return BitConverter.ToUInt32(bytes, 0);
         }
 
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float ReadFloat(Stream stream)
         {
             var bytes = new byte[4];
@@ -51,6 +53,7 @@
             dunno = ReadUint(stream);
             return builder.ToString();
         }
+
 #endif
 
 // improved performance using stackalloc/span for .NET 5 and later
@@ -285,10 +288,7 @@
 
             var group = new RvmNode(version, name, translation, materialId);
 
-            uint unusedNextHeaderOffset;
-            uint dontKnowWhatThisValueDoes;
-
-            var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+            var id = ReadChunkHeader(stream, out _, out _);
             while (id != "CNTE")
             {
                 switch (id)
@@ -303,7 +303,7 @@
                         throw new NotImplementedException($"Unknown chunk: {id}");
                 }
 
-                id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+                id = ReadChunkHeader(stream, out _, out _);
             }
 
             if (id == "CNTE")
@@ -339,13 +339,11 @@
 
         public static RvmFile ReadRvm(Stream stream)
         {
-            uint len, dunno;
-
-            var head = ReadChunkHeader(stream, out len, out dunno);
+            var head = ReadChunkHeader(stream, out _, out _);
             if (head != "HEAD")
                 throw new IOException($"Expected HEAD, found {head}");
             var header = ReadHead(stream);
-            var modl = ReadChunkHeader(stream, out len, out dunno);
+            var modl = ReadChunkHeader(stream, out _, out _);
             if (modl != "MODL")
                 throw new IOException($"Expected MODL, found {modl}");
             var modelParameters = ReadModelParameters(stream);
@@ -353,7 +351,7 @@
             var modelPrimitives = new List<RvmPrimitive>();
             var modelColors = new List<RvmColor>();
 
-            var chunk = ReadChunkHeader(stream, out len, out dunno);
+            var chunk = ReadChunkHeader(stream, out _, out _);
             while (chunk != "END:")
             {
                 switch (chunk)
@@ -371,7 +369,7 @@
                         throw new NotImplementedException($"Unknown chunk: {chunk}");
                 }
 
-                chunk = ReadChunkHeader(stream, out len, out dunno);
+                chunk = ReadChunkHeader(stream, out _, out _);
             }
 
             return new RvmFile(header,
