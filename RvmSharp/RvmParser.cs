@@ -288,7 +288,10 @@
 
             var group = new RvmNode(version, name, translation, materialId);
 
-            var id = ReadChunkHeader(stream, out _, out _);
+            uint unusedNextHeaderOffset;
+            uint dontKnowWhatThisValueDoes;
+
+            var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
             while (id != "CNTE")
             {
                 switch (id)
@@ -303,7 +306,7 @@
                         throw new NotImplementedException($"Unknown chunk: {id}");
                 }
 
-                id = ReadChunkHeader(stream, out _, out _);
+                id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
             }
 
             if (id == "CNTE")
@@ -339,11 +342,13 @@
 
         public static RvmFile ReadRvm(Stream stream)
         {
-            var head = ReadChunkHeader(stream, out _, out _);
+            uint len, dunno;
+
+            var head = ReadChunkHeader(stream, out len, out dunno);
             if (head != "HEAD")
                 throw new IOException($"Expected HEAD, found {head}");
             var header = ReadHead(stream);
-            var modl = ReadChunkHeader(stream, out _, out _);
+            var modl = ReadChunkHeader(stream, out len, out dunno);
             if (modl != "MODL")
                 throw new IOException($"Expected MODL, found {modl}");
             var modelParameters = ReadModelParameters(stream);
@@ -351,7 +356,7 @@
             var modelPrimitives = new List<RvmPrimitive>();
             var modelColors = new List<RvmColor>();
 
-            var chunk = ReadChunkHeader(stream, out _, out _);
+            var chunk = ReadChunkHeader(stream, out len, out dunno);
             while (chunk != "END:")
             {
                 switch (chunk)
@@ -369,7 +374,7 @@
                         throw new NotImplementedException($"Unknown chunk: {chunk}");
                 }
 
-                chunk = ReadChunkHeader(stream, out _, out _);
+                chunk = ReadChunkHeader(stream, out len, out dunno);
             }
 
             return new RvmFile(header,
