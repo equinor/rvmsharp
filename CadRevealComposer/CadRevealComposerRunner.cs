@@ -85,7 +85,7 @@ namespace CadRevealComposer
                     .GroupBy(x => x)
                     .Where(g => g.Count() > 1)
                     .ToImmutableArray();
-                throw new Exception($"Duplicates among geometry objects. Number of duplicate groups are: {duplicateGroups.Length}");
+                Console.WriteLine($"Duplicates among primitives. Number of duplicate groups are: {duplicateGroups.Length}");
             }
 
             var protoMeshesFromFacetGroups = geometries.OfType<ProtoMeshFromFacetGroup>().ToArray();
