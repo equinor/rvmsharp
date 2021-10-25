@@ -53,7 +53,8 @@
         }
 #endif
 
-#if NETCOREAPP
+// improved performance using stackalloc/span for .NET 5 and later
+#if !NETSTANDARD2_0
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ReadUint(Stream stream)
