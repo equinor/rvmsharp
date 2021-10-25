@@ -75,7 +75,7 @@
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string FastToString(float number)
+        private static string FastToString(float number)
         {
             if (!number.IsFinite())
             {

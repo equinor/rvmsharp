@@ -7,8 +7,6 @@
 
     public static class PdmsTextParser
     {
-        private static readonly char[] Quotes = { '\'', '"' };
-
         public record PdmsNode(
             string Name, 
             Dictionary<string, string> MetadataDict,
@@ -39,27 +37,29 @@
                 PdmsNode? currentPdmsNode = null;
 
                 var headerInfo = ParseHeader(reader);
-                string newItemSeparator = headerInfo.StartSeparator;
+                var newItemSeparator = headerInfo.StartSeparator.AsSpan();
                 int newItemSeparatorLength = newItemSeparator.Length;
-                string endItemSeparator = headerInfo.EndSeparator;
+                var endItemSeparator = headerInfo.EndSeparator.AsSpan();
                 while (!reader.EndOfStream)
                 {
                     var line = reader.ReadLine();
                     if (line == null)
                         throw new NullReferenceException( $"Unexpected null in {nameof(line)}");
+
+                    var lineSpan = line.AsSpan();
                     
-                    var trimmedLine = line.Trim();
-                    if (trimmedLine.StartsWith(newItemSeparator))
+                    var trimmedLine = lineSpan.Trim();
+                    if (trimmedLine.StartsWith(newItemSeparator, StringComparison.Ordinal))
                     {
                         var pdmsNode = new PdmsNode
                         (
-                            Name: trimmedLine.Substring(newItemSeparatorLength).Trim(),
+                            Name: trimmedLine[newItemSeparatorLength..].Trim().ToString(),
                             MetadataDict: new Dictionary<string, string>(),
                             Parent: currentPdmsNode,
                             Children: new List<PdmsNode>()
                         );
 
-                        indentationStack.Push(line.Substring(0, line.IndexOf(newItemSeparator[0])).Length);
+                        indentationStack.Push(lineSpan[..lineSpan.IndexOf(newItemSeparator[0])].Length);
 
                         if (currentPdmsNode == null)
                             pdmsNodes.Add(pdmsNode);
@@ -72,7 +72,7 @@
                     {
                         if (trimmedLine.Equals(endItemSeparator, StringComparison.Ordinal))
                         {
-                            var indentation = line.Substring(0, line.IndexOf(endItemSeparator[0])).Length;
+                            var indentation = lineSpan[..lineSpan.IndexOf(endItemSeparator[0])].Length;
                             if (indentation != indentationStack.Peek())
                             {
                                 Console.Error.WriteLine($"Invalid END at line number: {reader.LineNumber}");
@@ -85,7 +85,7 @@
                         }
                         else
                         {
-                            var (key, value) = SplitKeyValue(trimmedLine, headerInfo.NameEnd);
+                            var (key, value) = SplitKeyValue(trimmedLine, headerInfo.NameEnd.AsSpan());
                             currentPdmsNode!.MetadataDict[key] = StripQuotes(value);
                         }
                     }
@@ -148,7 +148,7 @@
                         var lineSegments = currentLine.Split(new[] {header.Sep}, StringSplitOptions.RemoveEmptyEntries);
                         foreach (string keyValueSegment in lineSegments)
                         {
-                            var (key, value) = SplitKeyValue(keyValueSegment, header.NameEnd);
+                            var (key, value) = SplitKeyValue(keyValueSegment.AsSpan(), header.NameEnd.AsSpan());
                             header.HeaderMetadata[key] = value;
                         }
                     }
@@ -158,21 +158,22 @@
             return header;
         }
 
-        private static (string key, string value) SplitKeyValue(string keyValueSegment, string nameEnd)
+        private static (string key, string value) SplitKeyValue(ReadOnlySpan<char> keyValueSegment, ReadOnlySpan<char> nameEnd)
         {
             var nameSeparatorIndex = keyValueSegment.IndexOf(nameEnd, StringComparison.InvariantCulture);
-            var key = keyValueSegment.Substring(0, nameSeparatorIndex).Trim();
-            var value = keyValueSegment.Substring(nameSeparatorIndex + nameEnd.Length).Trim();
+            var key = keyValueSegment[..nameSeparatorIndex]
+                .Trim().ToString();
+            var value = keyValueSegment[(nameSeparatorIndex + nameEnd.Length)..]
+                .Trim().ToString();
             return (key, value);
         }
-        
 
         private static string StripQuotes(string input)
         {
             if (string.IsNullOrEmpty(input) || input.Length < 2)
                 return input;
-            
-            if (input.First() == input.Last() && Quotes.Any(q => q == input.First()))
+
+            if (input[0] == input[^1] && (input[0] == '\'' || input[0] == '"'))
                 return input.Substring(1, input.Length - 2);
             
             return input;
