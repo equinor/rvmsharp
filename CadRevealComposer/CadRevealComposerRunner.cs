@@ -135,7 +135,7 @@ namespace CadRevealComposer
             var offsetByTemplate2 =
                 meshByPyramidInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
-            Console.WriteLine("$Composed instance dictionaries in {stopwatch.GetElapsedAndRestart()}");
+            Console.WriteLine($"Composed instance dictionaries in {stopwatch.GetElapsedAndRestart()}");
 
             Console.WriteLine("Start Tessellate");
 
