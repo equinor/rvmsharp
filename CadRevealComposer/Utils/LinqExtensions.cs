@@ -62,26 +62,5 @@
 
             return builder.ToImmutable();
         }
-
-        public static IEnumerable<TInput> DistinctBy<TInput, TEquatable>(this IEnumerable<TInput> enumerable,
-            Func<TInput, TEquatable> valueSelector) where TEquatable : IEquatable<TEquatable>
-        {
-            return enumerable.DistinctBy(valueSelector, EqualityComparer<TEquatable>.Default);
-        }
-
-        public static IEnumerable<TInput> DistinctBy<TInput, TEquatable>(this IEnumerable<TInput> enumerable, Func<TInput, TEquatable> valueSelector, IEqualityComparer<TEquatable> comparer)
-        {
-            var distinct = new HashSet<TEquatable>(comparer);
-            foreach (TInput value in enumerable)
-            {
-                var key = valueSelector(value);
-                if (distinct.Add(key))
-                {
-                    yield return value;
-                }
-                // Else we already had a matching key.
-            }
-        }
-
     }
 }
