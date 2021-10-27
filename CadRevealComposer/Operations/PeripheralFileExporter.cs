@@ -24,8 +24,7 @@ namespace CadRevealComposer.Operations
             _idGenerator = new SequentialIdGenerator();
         }
 
-        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)>
-            ExportMeshesToObjAndCtmFile(IReadOnlyCollection<Mesh?> meshGeometries)
+        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)> ExportMeshesToObjAndCtmFile(IReadOnlyCollection<Mesh?> meshGeometries)
         {
             if (!meshGeometries.Any())
                 await Console.Error.WriteLineAsync(

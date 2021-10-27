@@ -11,8 +11,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="JetBrains.Profiler.Api" Version="1.1.8" />
-      <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+	    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 
 </Project>
