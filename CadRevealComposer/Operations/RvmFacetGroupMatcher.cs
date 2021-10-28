@@ -149,7 +149,7 @@ namespace CadRevealComposer.Operations
                 result.Add(facetGroup, (newTemplate, newTransform));
             }
 
-            var inputCount = facetGroups.Length;
+            var inputCount = (float)facetGroups.Length;
             var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
             Console.WriteLine(
                 $"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
