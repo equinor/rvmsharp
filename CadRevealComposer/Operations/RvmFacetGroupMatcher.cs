@@ -11,14 +11,20 @@ namespace CadRevealComposer.Operations
 
     public static class RvmFacetGroupMatcher
     {
-        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup input, bool centerMesh, out Matrix4x4 translationMatrix)
+        private record TemplateItem(RvmFacetGroup Template)
         {
-            var originalMatrix = input.Matrix;
+            public int MatchCount { get; set; }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup facetGroup, bool centerMesh, out Matrix4x4 translationMatrix)
+        {
+            var originalMatrix = facetGroup.Matrix;
 
             // Calculate bounds for new bounding box
             var minBounds = new Vector3(float.MaxValue);
             var maxBounds = new Vector3(float.MinValue);
-            foreach (var v in input.Polygons
+            foreach (var v in facetGroup.Polygons
                 .SelectMany(p => p.Contours)
                 .SelectMany(c => c.Vertices)
                 .Select(vn => vn.Vertex))
@@ -50,7 +56,7 @@ namespace CadRevealComposer.Operations
                 throw new ArgumentException($"Could not invert matrix {finalMatrix}");
             var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
 
-            var polygons = input.Polygons.Select(p => p with
+            var polygons = facetGroup.Polygons.Select(p => p with
             {
                 Contours = p.Contours
                     .Select(c => new RvmFacetGroup.RvmContour(
@@ -60,14 +66,13 @@ namespace CadRevealComposer.Operations
                     .ToArray()
             }).ToArray();
 
-            return input with
+            return facetGroup with
             {
                 Polygons = polygons,
                 BoundingBoxLocal = new RvmBoundingBox(minBounds, maxBounds),
                 Matrix = Matrix4x4.Identity
             };
         }
-
 
         public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] facetGroups, uint instancingThreshold)
         {
@@ -87,7 +92,7 @@ namespace CadRevealComposer.Operations
                 groupedFacetGroups
                     .OrderBy(x => x)
                     .AsParallel()
-                    .Select(g => MatchGroups2(g.facetGroups))
+                    .Select(g => MatchGroups(g.facetGroups))
                     .SelectMany(d => d)
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
@@ -95,52 +100,60 @@ namespace CadRevealComposer.Operations
             return result;
         }
 
-        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups2(RvmFacetGroup[] inputFacetGroups)
+        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups(RvmFacetGroup[] facetGroups)
         {
             var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
-            var templates = new List<RvmFacetGroup>();
-            var templateMatchCount = new Dictionary<RvmFacetGroup, int>();
+            var templates = new List<TemplateItem>(); // sorted high to low by explicit call
 
             var timer = Stopwatch.StartNew();
-            foreach (var facetGroup in inputFacetGroups)
+            foreach (var facetGroup in facetGroups)
             {
-                var matchFound = false;
+                var matchFoundFromPreviousTemplates = false;
                 var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
 
                 for (var i = 0; i < templates.Count; i++)
                 {
-                    var templateCandidate = templates[i];
-                    if (!Match(templateCandidate, bakedFacetGroup, out var transform))
-                        continue;
-
-                    matchFound = true;
-                    var matches = templateMatchCount[templateCandidate]++;
-                    if (matches > 10 && i > 10) // Arbitrary values
+                    var item = templates[i];
+                    if (!Match(item.Template, bakedFacetGroup, out var transform))
                     {
-                        // Promote to top to be first candidate for a match again! Match.com has nothing on this matching algorithm :).
-                        templates.Remove(templateCandidate);
-                        templates.Insert(0, templateCandidate);
+                        continue;
                     }
 
-                    result.Add(facetGroup, (templateCandidate, transform));
+                    result.Add(facetGroup, (item.Template, transform));
+                    item.MatchCount++;
+
+                    // sort template list descending by match count
+                    var matchCount = item.MatchCount;
+                    var j = i;
+                    while (j - 1 >= 0 && matchCount > templates[j - 1].MatchCount)
+                    {
+                        j--;
+                    }
+                    if (j != i)
+                    {
+                        templates.RemoveAt(i);
+                        templates.Insert(j, item);
+                    }
+
+                    matchFoundFromPreviousTemplates = true;
                     break;
                 }
 
-                if (matchFound)
+                if (matchFoundFromPreviousTemplates)
+                {
                     continue;
+                }
 
-                var newTemplate = BakeTransformAndCenter(facetGroup, true, out var templateToFacetGroupTransform);
-                templates.Insert(0, newTemplate);
-                templateMatchCount.Add(newTemplate, 0);
-                result.Add(facetGroup, (newTemplate, templateToFacetGroupTransform));
+                var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
+                templates.Add(new TemplateItem(newTemplate));
+                result.Add(facetGroup, (newTemplate, newTransform));
             }
 
-            timer.Stop();
-            float inputCount = inputFacetGroups.Length;
+            var inputCount = facetGroups.Length;
             var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
             Console.WriteLine(
-                @$"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
-                $"Vertex count was {inputFacetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
+                $"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
+                $"Vertex count was {facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
             return result;
         }
 
