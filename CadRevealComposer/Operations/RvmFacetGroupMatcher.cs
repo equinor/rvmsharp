@@ -11,8 +11,16 @@ namespace CadRevealComposer.Operations
 
     public static class RvmFacetGroupMatcher
     {
-        private record TemplateItem
+        /// <summary>
+        /// Mutable to allow fast sorting of templates by swapping properties.
+        /// </summary>
+        private class TemplateItem
         {
+            public TemplateItem(RvmFacetGroup template)
+            {
+                Template = template;
+            }
+
             public RvmFacetGroup Template { get; set; }
             public int MatchCount { get; set; }
         }
@@ -103,6 +111,16 @@ namespace CadRevealComposer.Operations
 
         private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups(RvmFacetGroup[] facetGroups)
         {
+            static void SwapItemData(TemplateItem a, TemplateItem b)
+            {
+                var aTemplate = a.Template;
+                var aMatchCount = a.MatchCount;
+                a.Template = b.Template;
+                a.MatchCount = b.MatchCount;
+                b.Template = aTemplate;
+                b.MatchCount = aMatchCount;
+            }
+
             var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
             var templates = new List<TemplateItem>(); // sorted high to low by explicit call
 
@@ -132,13 +150,7 @@ namespace CadRevealComposer.Operations
                     }
                     if (j != i) // swap items
                     {
-                        var otherItem = templates[j];
-                        var itemTemplate = item.Template;
-                        var itemMatchCount = item.MatchCount;
-                        item.Template = otherItem.Template;
-                        item.MatchCount = otherItem.MatchCount;
-                        otherItem.Template = itemTemplate;
-                        otherItem.MatchCount = itemMatchCount;
+                        SwapItemData(item, templates[j]);
                     }
 
                     matchFoundFromPreviousTemplates = true;
@@ -151,7 +163,7 @@ namespace CadRevealComposer.Operations
                 }
 
                 var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
-                templates.Add(new TemplateItem { Template = newTemplate });
+                templates.Add(new TemplateItem(newTemplate));
                 result.Add(facetGroup, (newTemplate, newTransform));
             }
 
@@ -173,6 +185,7 @@ namespace CadRevealComposer.Operations
         /// <returns>a key reflection information amount in facet group</returns>
         public static long CalculateKey(RvmFacetGroup facetGroup)
         {
+            // NOTE: This key scheme has room for improvement. For Johan Castberg it groups objects which doesn't belong to the same group.
             var stepContour = 1;
             var stepVertex = 1;
             return 1000_000_000L * facetGroup.Polygons.Length
@@ -237,12 +250,6 @@ namespace CadRevealComposer.Operations
         private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
         {
             // TODO: This method cannot match facet groups that have random order on polygons
-
-            if (!EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
-            {
-                transform = default;
-                return false;
-            }
 
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
