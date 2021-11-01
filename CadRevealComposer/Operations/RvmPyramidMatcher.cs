@@ -36,26 +36,36 @@
             return false;
         }
 
+        // Avoid calculating new each time we need one of these.
+        private static readonly Quaternion Original = Quaternion.Identity;
+        private static readonly Quaternion RotatedZ90 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2);
+        private static readonly Quaternion RotatedZ180 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI);
+        private static readonly Quaternion RotatedZ270 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2);
+        private static readonly Quaternion RotatedX180 = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+        private static readonly Quaternion RotatedX180Z90 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+        private static readonly Quaternion RotatedX180Z180 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+        private static readonly Quaternion RotatedX180Z270 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+
         private static Quaternion GetRotation(PyramidVariation pyramidVariation)
         {
             switch (pyramidVariation)
             {
                 case PyramidVariation.Original:
-                    return Quaternion.Identity;
+                    return Original;
                 case PyramidVariation.RotatedZ90:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2);
+                    return RotatedZ90;
                 case PyramidVariation.RotatedZ180:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI);
+                    return RotatedZ180;
                 case PyramidVariation.RotatedZ270:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2);
+                    return RotatedZ270;
                 case PyramidVariation.RotatedX180:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+                    return RotatedX180;
                 case PyramidVariation.RotatedX180Z90:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+                    return RotatedX180Z90;
                 case PyramidVariation.RotatedX180Z180:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+                    return RotatedX180Z180;
                 case PyramidVariation.RotatedX180Z270:
-                    return Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+                    return RotatedX180Z270;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(pyramidVariation), pyramidVariation, null);
             }
