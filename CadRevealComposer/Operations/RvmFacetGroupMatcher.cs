@@ -186,11 +186,14 @@ namespace CadRevealComposer.Operations
         public static long CalculateKey(RvmFacetGroup facetGroup)
         {
             // NOTE: This key scheme has room for improvement. For Johan Castberg it groups objects which doesn't belong to the same group.
-            var stepContour = 1;
-            var stepVertex = 1;
-            return 1000_000_000L * facetGroup.Polygons.Length
-                   + 1000_000L * facetGroup.Polygons.Aggregate(0L, (counter, polygon) => counter + ((long)Math.Pow(polygon.Contours.Length, stepContour++)))
-                   + facetGroup.Polygons.SelectMany(p => p.Contours).Aggregate(0L, (counter, contour) => counter + ((long)Math.Pow(contour.Vertices.Length, stepVertex++)));
+            return HashCode.Combine(
+                facetGroup.Polygons.Length.GetHashCode(),
+                facetGroup.Polygons.Aggregate(0L, (counter, polygon) =>
+                    HashCode.Combine(counter,
+                        HashCode.Combine(polygon.Contours.Length.GetHashCode(),
+                            facetGroup.Polygons.SelectMany(p => p.Contours)
+                                .Aggregate(0L, (contourHash, contour) =>
+                                    HashCode.Combine(contourHash, contour.Vertices.Length.GetHashCode()))))));
         }
 
         /// <summary>
