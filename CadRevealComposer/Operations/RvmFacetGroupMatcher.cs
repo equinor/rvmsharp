@@ -2,22 +2,38 @@ namespace CadRevealComposer.Operations
 {
     using RvmSharp.Primitives;
     using System;
-    using System.CodeDom;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Numerics;
+    using System.Runtime.CompilerServices;
     using Utils;
 
     public static class RvmFacetGroupMatcher
     {
-        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup input, bool centerMesh, out Matrix4x4 translationMatrix)
+        /// <summary>
+        /// Mutable to allow fast sorting of templates by swapping properties.
+        /// </summary>
+        private class TemplateItem
         {
-            var originalMatrix = input.Matrix;
+            public TemplateItem(RvmFacetGroup template)
+            {
+                Template = template;
+            }
+
+            public RvmFacetGroup Template { get; set; }
+            public int MatchCount { get; set; }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup facetGroup, bool centerMesh, out Matrix4x4 translationMatrix)
+        {
+            var originalMatrix = facetGroup.Matrix;
 
             // Calculate bounds for new bounding box
             var minBounds = new Vector3(float.MaxValue);
             var maxBounds = new Vector3(float.MinValue);
-            foreach (var v in input.Polygons
+            foreach (var v in facetGroup.Polygons
                 .SelectMany(p => p.Contours)
                 .SelectMany(c => c.Vertices)
                 .Select(vn => vn.Vertex))
@@ -49,15 +65,17 @@ namespace CadRevealComposer.Operations
                 throw new ArgumentException($"Could not invert matrix {finalMatrix}");
             var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
 
-            var polygons = input.Polygons.Select(p => p with
+            var polygons = facetGroup.Polygons.Select(p => p with
             {
                 Contours = p.Contours
-                    .Select(c => new RvmFacetGroup.RvmContour(c.Vertices.Select(vn =>
-                        (Vector3.Transform(vn.Vertex, finalMatrix), Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed))
-                        ).ToArray())).ToArray()
+                    .Select(c => new RvmFacetGroup.RvmContour(
+                        c.Vertices
+                        .Select(vn => (Vector3.Transform(vn.Vertex, finalMatrix), Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed)))
+                        .ToArray()))
+                    .ToArray()
             }).ToArray();
 
-            return input with
+            return facetGroup with
             {
                 Polygons = polygons,
                 BoundingBoxLocal = new RvmBoundingBox(minBounds, maxBounds),
@@ -65,44 +83,95 @@ namespace CadRevealComposer.Operations
             };
         }
 
-
-        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] groups)
+        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] facetGroups, uint instancingThreshold)
         {
+            var groupingTimer = Stopwatch.StartNew();
+            var groupedFacetGroups =
+                facetGroups
+                    .AsParallel()
+                    .GroupBy(CalculateKey)
+                    .Where(x => x.Count() >= instancingThreshold) // We can ignore all groups of less items than the threshold.
+                    .Select(g => (g.Key, facetGroups: g.ToArray()))
+                    .ToArray();
 
-            var groupedGroups = groups.AsParallel().GroupBy(CalculateKey).Select(g => (g.Key, facetGroups: g.ToArray())).ToArray();
+            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items in {facetGroups.Length} FacetGroups in {groupingTimer.Elapsed}");
 
-            var result = groupedGroups.AsParallel().Select(
-                    g => MatchGroups2(g.facetGroups)).SelectMany(d => d)
-                .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+            var matchingTimer = Stopwatch.StartNew();
+            var result =
+                groupedFacetGroups
+                    .OrderBy(x => x)
+                    .AsParallel()
+                    .Select(g => MatchGroups(g.facetGroups))
+                    .SelectMany(d => d)
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+            Console.WriteLine($"Found {result.DistinctBy(x => x.Value.template).Count()} unique from a total of {facetGroups.Length}. Time: {matchingTimer.Elapsed}");
             return result;
         }
 
-        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups2(
-            RvmFacetGroup[] inputFacetGroups)
+        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups(RvmFacetGroup[] facetGroups)
         {
-            var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
-            var templates = new List<RvmFacetGroup>();
-            foreach (var facetGroup in inputFacetGroups)
+            static void SwapItemData(TemplateItem a, TemplateItem b)
             {
-                var matchFound = false;
+                var aTemplate = a.Template;
+                var aMatchCount = a.MatchCount;
+                a.Template = b.Template;
+                a.MatchCount = b.MatchCount;
+                b.Template = aTemplate;
+                b.MatchCount = aMatchCount;
+            }
+
+            var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
+            var templates = new List<TemplateItem>(); // sorted high to low by explicit call
+
+            var timer = Stopwatch.StartNew();
+            foreach (var facetGroup in facetGroups)
+            {
+                var matchFoundFromPreviousTemplates = false;
                 var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
-                foreach (var templateCandidate in templates)
+
+                for (var i = 0; i < templates.Count; i++)
                 {
-                    if (!Match(templateCandidate, bakedFacetGroup, out var transform))
+                    var item = templates[i];
+                    if (!Match(item.Template, bakedFacetGroup, out var transform))
+                    {
                         continue;
-                    matchFound = true;
-                    result.Add(facetGroup, (templateCandidate, transform));
+                    }
+
+                    result.Add(facetGroup, (item.Template, transform));
+                    item.MatchCount++;
+
+                    // sort template list descending by match count
+                    var matchCount = item.MatchCount;
+                    var j = i;
+                    while (j - 1 >= 0 && matchCount > templates[j - 1].MatchCount)
+                    {
+                        j--;
+                    }
+                    if (j != i) // swap items
+                    {
+                        SwapItemData(item, templates[j]);
+                    }
+
+                    matchFoundFromPreviousTemplates = true;
                     break;
                 }
 
-                if (matchFound)
+                if (matchFoundFromPreviousTemplates)
+                {
                     continue;
+                }
 
-                var newTemplate = BakeTransformAndCenter(facetGroup, true, out var templateToFacetGroupTransform);
-                templates.Add(newTemplate);
-                result.Add(facetGroup, (newTemplate, templateToFacetGroupTransform));
+                var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
+                templates.Add(new TemplateItem(newTemplate));
+                result.Add(facetGroup, (newTemplate, newTransform));
             }
 
+            var inputCount = (float)facetGroups.Length;
+            var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
+            Console.WriteLine(
+                $"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
+                $"Vertex count was {facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
             return result;
         }
 
@@ -116,38 +185,46 @@ namespace CadRevealComposer.Operations
         /// <returns>a key reflection information amount in facet group</returns>
         public static long CalculateKey(RvmFacetGroup facetGroup)
         {
-            return facetGroup.Polygons.Length * 1000_000_000L
-                   + facetGroup.Polygons.Sum(p => p.Contours.Length) * 1000_000L
-                   + facetGroup.Polygons.SelectMany(p => p.Contours).Sum(c => c.Vertices.Length);
+            // NOTE: This key scheme has room for improvement. For Johan Castberg it groups objects which doesn't belong to the same group.
+            var stepContour = 1;
+            var stepVertex = 1;
+            return 1000_000_000L * facetGroup.Polygons.Length
+                   + 1000_000L * facetGroup.Polygons.Aggregate(0L, (counter, polygon) => counter + ((long)Math.Pow(polygon.Contours.Length, stepContour++)))
+                   + facetGroup.Polygons.SelectMany(p => p.Contours).Aggregate(0L, (counter, contour) => counter + ((long)Math.Pow(contour.Vertices.Length, stepVertex++)));
         }
 
         /// <summary>
         /// Matches a to b and returns true if meshes are alike and sets transform so that a * transform = b.
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
+        /// <param name="aFacetGroup"></param>
+        /// <param name="bFacetGroup"></param>
         /// <param name="outputTransform"></param>
         /// <returns></returns>
-        public static bool Match(RvmFacetGroup a, RvmFacetGroup b, out Matrix4x4 outputTransform)
+        public static bool Match(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 outputTransform)
         {
-            // TODO: bad assumption: polygons are ordered, contours are ordered, vertexes are ordered
-            // create transform matrix
-            if (GetPossibleAtoBTransform(a, b, out outputTransform))
+            if (GetPossibleAtoBTransform(aFacetGroup, bFacetGroup, out outputTransform))
             {
-                return VerifyTransform(a, b, outputTransform);
+                return VerifyTransform(aFacetGroup, bFacetGroup, outputTransform);
             }
 
             outputTransform = default;
             return false;
         }
 
-        private static bool VerifyTransform(RvmFacetGroup a, RvmFacetGroup b, Matrix4x4 transform)
+        /// <summary>
+        /// For each vertex verify that a * transform = b.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+        private static bool VerifyTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, in Matrix4x4 transform)
         {
-            // check all polygons with transform
-            for (var i = 0; i < a.Polygons.Length; i++)
+            // NOTE: comparing polygons/contours/vertices count matches A/B is expensive - but we know it to be true due to check in GetPossibleAtoBTransform
+
+            // TODO: This method cannot verify facet groups that have random order on polygons
+
+            for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
             {
-                var aPolygon = a.Polygons[i];
-                var bPolygon = b.Polygons[i];
+                var aPolygon = aFacetGroup.Polygons[i];
+                var bPolygon = bFacetGroup.Polygons[i];
 
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
@@ -156,9 +233,9 @@ namespace CadRevealComposer.Operations
 
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
-                        var va = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
+                        var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!va.ApproximatelyEquals(vb, 0.001f))
+                        if (!transformedVector.ApproximatelyEquals(vb, 0.001f))
                         {
                             return false;
                         }
@@ -169,36 +246,37 @@ namespace CadRevealComposer.Operations
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
         {
-            // TODO: This method cannot match facet groups that have random order on polygons/contours/vertices
-
-            if (!EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
-            {
-                transform = default;
-                return false;
-            }
+            // TODO: This method cannot match facet groups that have random order on polygons
 
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex3 = (Vector3.Zero, Vector3.Zero, false);
+
             for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
             {
                 var aPolygon = aFacetGroup.Polygons[i];
                 var bPolygon = bFacetGroup.Polygons[i];
+
                 for (var j = 0; j < aPolygon.Contours.Length; j++)
                 {
                     var aContour = aPolygon.Contours[j];
                     var bContour = bPolygon.Contours[j];
+
                     for (var k = 0; k < aContour.Vertices.Length; k++)
                     {
                         var candidateVertexA = aContour.Vertices[k].Vertex;
                         var candidateVertexB = bContour.Vertices[k].Vertex;
 
                         const float tolerance = 0.005f;
-                        var isDuplicateVertex = testVertex1.isSet && testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
-                                                testVertex2.isSet && testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
-                                                testVertex3.isSet && testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, tolerance);
+                        var isDuplicateVertex = testVertex1.isSet &&
+                                                testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex2.isSet &&
+                                                testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex3.isSet &&
+                                                testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, tolerance);
                         if (isDuplicateVertex)
                         {
                             // ignore duplicate vertex

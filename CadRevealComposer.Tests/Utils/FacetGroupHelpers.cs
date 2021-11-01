@@ -78,7 +78,7 @@
             var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
             var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 
-            var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups);
+            var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups,0);
             var templateToMatchCount = groupToTemplateWithTransform
                 .Select(kvp => (kvp.Value.template, kvp.Key))
                 .GroupBy(p => p.template)
