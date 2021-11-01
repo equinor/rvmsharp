@@ -11,8 +11,9 @@ namespace CadRevealComposer.Operations
 
     public static class RvmFacetGroupMatcher
     {
-        private record TemplateItem(RvmFacetGroup Template)
+        private record TemplateItem
         {
+            public RvmFacetGroup Template { get; set; }
             public int MatchCount { get; set; }
         }
 
@@ -129,10 +130,15 @@ namespace CadRevealComposer.Operations
                     {
                         j--;
                     }
-                    if (j != i)
+                    if (j != i) // swap items
                     {
-                        templates.RemoveAt(i);
-                        templates.Insert(j, item);
+                        var otherItem = templates[j];
+                        var itemTemplate = item.Template;
+                        var itemMatchCount = item.MatchCount;
+                        item.Template = otherItem.Template;
+                        item.MatchCount = otherItem.MatchCount;
+                        otherItem.Template = itemTemplate;
+                        otherItem.MatchCount = itemMatchCount;
                     }
 
                     matchFoundFromPreviousTemplates = true;
@@ -145,7 +151,7 @@ namespace CadRevealComposer.Operations
                 }
 
                 var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
-                templates.Add(new TemplateItem(newTemplate));
+                templates.Add(new TemplateItem { Template = newTemplate });
                 result.Add(facetGroup, (newTemplate, newTransform));
             }
 
