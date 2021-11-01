@@ -198,7 +198,7 @@ namespace CadRevealComposer.Operations
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private static bool VerifyTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, in Matrix4x4 transform)
         {
-            // NOTE: comparing polygons/contours/vertices count matches A/B is expensive - but we know it to be true due to to grouping
+            // NOTE: comparing polygons/contours/vertices count matches A/B is expensive - but we know it to be true due to check in GetPossibleAtoBTransform
 
             // TODO: This method cannot verify facet groups that have random order on polygons
 
@@ -230,9 +230,13 @@ namespace CadRevealComposer.Operations
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
         {
-            // NOTE: comparing polygons/contours/vertices count matches A/B is expensive - but we know it to be true due to to grouping
-
             // TODO: This method cannot match facet groups that have random order on polygons
+
+            if (!EnsurePolygonContoursAndVertexCountsMatch(aFacetGroup, bFacetGroup))
+            {
+                transform = default;
+                return false;
+            }
 
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
@@ -312,6 +316,32 @@ namespace CadRevealComposer.Operations
             // TODO: 2d figure
             transform = default;
             return false;
+        }
+
+        private static bool EnsurePolygonContoursAndVertexCountsMatch(RvmFacetGroup a, RvmFacetGroup b)
+        {
+            if (a.Polygons.Length != b.Polygons.Length)
+            {
+                return false;
+            }
+
+            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in  any particular order
+            for (var i = 0; i < a.Polygons.Length; i++)
+            {
+                var aPolygon = a.Polygons[i];
+                var bPolygon = b.Polygons[i];
+                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
+                    return false;
+                for (var j = 0; j < aPolygon.Contours.Length; j++)
+                {
+                    var aContour = aPolygon.Contours[j];
+                    var bContour = bPolygon.Contours[j];
+                    if (aContour.Vertices.Length != bContour.Vertices.Length)
+                        return false;
+                }
+            }
+
+            return true;
         }
     }
 }
