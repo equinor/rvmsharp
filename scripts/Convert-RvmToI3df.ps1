@@ -8,8 +8,7 @@ param (
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
     [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Int32]] $InstancingThreshold = $null, # Optional. Must be > 0 if defined.
     [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
-    [switch] $Force = $false,
-    [switch] $UploadToDev = $false
+    [switch] $Force = $false
 )
 
 begin {
@@ -39,7 +38,7 @@ end {
     }
 
     if (-not $Force -and (Get-ChildItem $WorkDirectory)) {
-        Write-Error "The output directory is not empty. Consider using the ""-Force"" argument if this is expected."
+        Write-Error "The working directory is not empty. Consider using the ""-Force"" argument if this is expected. All files will be deleted."
     }
 
     Remove-Item -Path $WorkDirectory -Recurse -Force -ErrorAction Ignore
@@ -107,20 +106,6 @@ end {
     }
 
     Copy-Item -Path (Join-Path $artifactStagingDirectory "*") -Destination $ArtifactDirectory
-
-    if ($UploadToDev) {
-        if (-not (Get-Command "az" -ErrorAction 'SilentlyContinue')) {
-            Write-Error "Could not find az. Do you have Azure Cli installed?"
-        }
-
-        $destination = "hda/demomodel/reveal/"
-
-        az storage azcopy blob upload `
-            --container 'models' `
-            --account-name 'stechoreflectapidev' `
-            --source "$artifactStagingDirectory/*" `
-            --destination $destination
-    }
 
     Write-Host "Success. Output copied to ""$ArtifactDirectory"". Total time: $($scriptTimer.Elapsed)"
 }

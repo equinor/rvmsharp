@@ -13,7 +13,6 @@ $Arguments = @{
     InstancingThreshold = $null
     ArtifactDirectory   = $(Join-Path "$PSScriptRoot" ".." "TestData" "RunArtifact/" -Resolve )
     Force               = $true
-    UploadToDev         = $false
 }
 
 Write-Host "Run Parameters"
