@@ -1,7 +1,5 @@
 # Cad Reveal Composer
 
-## Compile i3df-dump
+See main readme for more information for now.
 
-Source code: https://github.com/cognitedata/reveal
-
-Install rustup tools, go to `i3df` directory and compile using `cargo build --features dump`.
+If there are any questions about this, please create an issue and we will update this readme later.
