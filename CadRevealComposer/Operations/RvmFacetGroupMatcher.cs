@@ -195,19 +195,18 @@ namespace CadRevealComposer.Operations
         {
             unchecked
             {
-                // NOTE: This key scheme has room for improvement. For Johan Castberg it groups objects which doesn't belong to the same group.
-                long hash = 17;
                 // Based on https://stackoverflow.com/a/263416
-                const long hashMulti = 486187739;
-                hash = hash * hashMulti + facetGroup.Polygons.Length;
+                long hash = 17;
+                const long hashMultiplier = 486187739;
+                hash = hash * hashMultiplier + facetGroup.Polygons.LongLength;
 
                 for (var i = 0; i < facetGroup.Polygons.LongLength; i++)
                 {
                     var contours = facetGroup.Polygons[i].Contours;
-                    hash = hash * hashMulti + contours.LongLength;
-                    for (var j = 0; j < contours.Length; j++)
+                    hash = hash * hashMultiplier + contours.LongLength;
+                    for (var j = 0; j < contours.LongLength; j++)
                     {
-                        hash = hash * hashMulti + contours[j].Vertices.LongLength;
+                        hash = hash * hashMultiplier + contours[j].Vertices.LongLength;
                     }
                 }
 
