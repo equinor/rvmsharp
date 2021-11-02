@@ -1,0 +1,11 @@
+# Normalize line endings for the current OS
+# Set the default behavior, in case people don't have core.autocrlf set.
+# * text=auto == Checkout OS-style, commit Unix-style
+* text=auto 
+
+# Force .sh files eol, as bash scripts need lf
+*.sh text eol=lf
+# Force .sln files eol, as this might cause issues if its not crlf
+*.sln text eol=crlf
+
+# Other
