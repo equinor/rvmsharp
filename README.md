@@ -56,8 +56,20 @@ It can be invoked using the script below:
 .\scripts\Convert-RvmToI3df.ps1 -InputDirectory $AFolderWithRvmAndTxtFiles -ProjectId 1 -ModelId 2 -RevisionId 1 -ArtifactDirectory $OutputDirectory 
 ```
 
+## Example Data
+
+Equinor has published the Huldra dataset, including RVM files to the public.
+
+<https://data.equinor.com/dataset/Huldra>
+
+Visit this link and create a user to download a complete source dataset of an oil platform, including RVM files that can be used with `rvmsharp`.
+
 ## Contribution
+
+If you find some nice optimizations or tricks, do not hesitate to create an issue discussing if it should be contributed to the `rvmsharp` project.
+
+While any contributions are appreciated please make an issue to discuss the approach before coding a major change. This helps both us and you set expectations :)
 
 ## Credits
 
-This project is based on [rvmparser](https://github.com/cdyk/rvmparser)
+This project is based on [rvmparser](https://github.com/cdyk/rvmparser) by @cdyk
