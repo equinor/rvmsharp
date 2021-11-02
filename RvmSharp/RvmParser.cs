@@ -59,35 +59,33 @@
 // improved performance using stackalloc/span for .NET 5 and later
 #if !NETSTANDARD2_0
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ReadUint(Stream stream)
         {
-            Span<byte> bytes = stackalloc byte[4];
-            if (stream.Read(bytes) != bytes.Length)
+            var bytes = new byte[4];
+            if (stream.Read(bytes, 0, bytes.Length) != bytes.Length)
                 throw new IOException("Unexpected end of stream");
             if (BitConverter.IsLittleEndian)
-                bytes.Reverse();
-            return BitConverter.ToUInt32(bytes);
+                Array.Reverse(bytes);
+            return BitConverter.ToUInt32(bytes, 0);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static float ReadFloat(Stream stream)
         {
-            Span<byte> bytes = stackalloc byte[4];
-            if (stream.Read(bytes) != bytes.Length)
+            var bytes = new byte[4];
+            if (stream.Read(bytes, 0, bytes.Length) != bytes.Length)
                 throw new IOException("Unexpected end of stream");
             if (BitConverter.IsLittleEndian)
-                bytes.Reverse();
-            return BitConverter.ToSingle(bytes);
+                Array.Reverse(bytes);
+            return BitConverter.ToSingle(bytes, 0);
         }
 
         private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
         {
             var builder = new StringBuilder();
-            Span<byte> bytes = stackalloc byte[4];
+            var bytes = new byte[4];
             for (int i = 0; i < 4; i++)
             {
-                var read = stream.Read(bytes);
+                var read = stream.Read(bytes, 0, bytes.Length);
                 if (read < bytes.Length)
                     throw new IOException("Unexpected end of stream");
                 if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
