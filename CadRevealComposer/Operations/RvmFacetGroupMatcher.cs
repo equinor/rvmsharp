@@ -94,7 +94,8 @@ namespace CadRevealComposer.Operations
                     .Select(g => (g.Key, facetGroups: g.ToArray()))
                     .ToArray();
 
-            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items in {facetGroups.Length} FacetGroups in {groupingTimer.Elapsed}");
+            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.facetGroups.Length);
+            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items for a count of {facetGroupForMatchingCount} facet groups of total {facetGroups.Length} in {groupingTimer.Elapsed}");
 
             var matchingTimer = Stopwatch.StartNew();
             var result =
@@ -105,7 +106,9 @@ namespace CadRevealComposer.Operations
                     .SelectMany(d => d)
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            Console.WriteLine($"Found {result.DistinctBy(x => x.Value.template).Count()} unique from a total of {facetGroups.Length}. Time: {matchingTimer.Elapsed}");
+            var uniqueTemplateCount = result.DistinctBy(x => x.Value.template).Count();
+            var fraction = (float)uniqueTemplateCount / facetGroupForMatchingCount;
+            Console.WriteLine($"Found {uniqueTemplateCount} unique from a total of {facetGroupForMatchingCount} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
             return result;
         }
 
@@ -169,9 +172,11 @@ namespace CadRevealComposer.Operations
 
             var inputCount = (float)facetGroups.Length;
             var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
+            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+            var fraction = 1.0 - (templateCount / inputCount);
             Console.WriteLine(
-                $"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
-                $"Vertex count was {facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
+                $"\tFound {templateCount,5:N0} templates in {inputCount,6:N0} items ({fraction,6:P1}). " +
+                $"Vertex count was {vertexCount,5:N0} in {timer.Elapsed.TotalSeconds,6:N} s");
             return result;
         }
 

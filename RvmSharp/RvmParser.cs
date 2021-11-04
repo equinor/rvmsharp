@@ -5,6 +5,7 @@
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Numerics;
     using System.Runtime.CompilerServices;
     using System.Text;
@@ -208,7 +209,12 @@
                         polygons[i] = new RvmFacetGroup.RvmPolygon(contours);
                     }
 
-                    primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygons);
+                    // order the polygons to later on improve facet group matching
+                    var polygonsOrdered = polygons
+                        .OrderBy(p => p.Contours.Length) // OrderBy uses a stable sorting algorithm which is key
+                        .ThenBy(p => p.Contours.Sum(c => c.Vertices.Length))
+                        .ToArray();
+                    primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygonsOrdered);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unexpected Kind");
