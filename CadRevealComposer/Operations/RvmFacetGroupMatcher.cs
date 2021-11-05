@@ -107,7 +107,7 @@ namespace CadRevealComposer.Operations
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
             var uniqueTemplateCount = result.DistinctBy(x => x.Value.template).Count();
-            var fraction = (float)uniqueTemplateCount / facetGroupForMatchingCount;
+            var fraction = 1.0 - (uniqueTemplateCount / (float)facetGroupForMatchingCount);
             Console.WriteLine($"Found {uniqueTemplateCount} unique from a total of {facetGroupForMatchingCount} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
             return result;
         }
@@ -170,12 +170,11 @@ namespace CadRevealComposer.Operations
                 result.Add(facetGroup, (newTemplate, newTransform));
             }
 
-            var inputCount = (float)facetGroups.Length;
             var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
             var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
-            var fraction = 1.0 - (templateCount / inputCount);
+            var fraction = 1.0 - (templateCount / (float)facetGroups.Length);
             Console.WriteLine(
-                $"\tFound {templateCount,5:N0} templates in {inputCount,6:N0} items ({fraction,6:P1}). " +
+                $"\tFound {templateCount,5:N0} templates in {facetGroups.Length,6:N0} items ({fraction,6:P1}). " +
                 $"Vertex count was {vertexCount,5:N0} in {timer.Elapsed.TotalSeconds,6:N} s");
             return result;
         }
