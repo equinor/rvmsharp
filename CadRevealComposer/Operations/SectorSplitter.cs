@@ -178,33 +178,34 @@ namespace CadRevealComposer.Operations
         {
             var platformVolume = platformMax - platformMin;
 
-            bool FilterPrimitive(APrimitive primitive)
+            bool FilterNodeGroupedPrimitives(IGrouping<ulong, APrimitive> grouping)
             {
-                var primitiveBoundingBox = primitive.AxisAlignedBoundingBox;
+                var nodeBoundingBoxMin = grouping.Select(p => p.AxisAlignedBoundingBox.Min).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
+                var nodeBoundingBoxMax = grouping.Select(p => p.AxisAlignedBoundingBox.Max).Aggregate(new Vector3(float.MinValue), Vector3.Max);
 
                 // all geometries outside the main platform belongs to the root sector
-                if (primitiveBoundingBox.Min.X < platformMin.X ||
-                    primitiveBoundingBox.Min.Y < platformMin.Y ||
-                    primitiveBoundingBox.Min.Z < platformMin.Z ||
-                    primitiveBoundingBox.Max.X > platformMax.X ||
-                    primitiveBoundingBox.Max.Y > platformMax.Y ||
-                    primitiveBoundingBox.Max.Z > platformMax.Z)
+                if (nodeBoundingBoxMin.X < platformMin.X ||
+                    nodeBoundingBoxMin.Y < platformMin.Y ||
+                    nodeBoundingBoxMin.Z < platformMin.Z ||
+                    nodeBoundingBoxMax.X > platformMax.X ||
+                    nodeBoundingBoxMax.Y > platformMax.Y ||
+                    nodeBoundingBoxMax.Z > platformMax.Z)
                 {
                     return true;
                 }
 
                 // optimization heuristic: if the object's 2D surfaces are big then place it in the root (2D surface based on axis aligned bounding box)
-                const float thresholdFactor = 0.01f * 0.01f; // 1% of 2D plane
-                var primitiveVolume = primitiveBoundingBox.Extents;
-                if (primitiveVolume.X * primitiveVolume.Y > thresholdFactor * platformVolume.X * platformVolume.Y) // XY
+                const float thresholdFactor = 0.05f * 0.05f; // 5% of 2D plane
+                var nodeVolume = nodeBoundingBoxMax - nodeBoundingBoxMin;
+                if (nodeVolume.X * nodeVolume.Y > thresholdFactor * platformVolume.X * platformVolume.Y) // XY
                 {
                     return true;
                 }
-                if (primitiveVolume.X * primitiveVolume.Z > thresholdFactor * platformVolume.X * platformVolume.Z) // XZ
+                if (nodeVolume.X * nodeVolume.Z > thresholdFactor * platformVolume.X * platformVolume.Z) // XZ
                 {
                     return true;
                 }
-                if (primitiveVolume.Y * primitiveVolume.Z > thresholdFactor * platformVolume.Y * platformVolume.Z) // YZ
+                if (nodeVolume.Y * nodeVolume.Z > thresholdFactor * platformVolume.Y * platformVolume.Z) // YZ
                 {
                     return true;
                 }
@@ -212,7 +213,11 @@ namespace CadRevealComposer.Operations
                 return false;
             }
 
-            return allPrimitives.Where(FilterPrimitive).ToArray();
+            return allPrimitives
+                .GroupBy(p => p.NodeId)
+                .Where(FilterNodeGroupedPrimitives)
+                .SelectMany(g => g)
+                .ToArray();
         }
 
         private static int CalculateVoxelKey(RvmBoundingBox primitiveBoundingBox, Vector3 mainVoxelMidPoint, Vector3 mainVoxelVolume)
