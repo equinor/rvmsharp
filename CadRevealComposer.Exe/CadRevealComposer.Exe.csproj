@@ -4,7 +4,10 @@
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net5.0</TargetFramework>
 		<Nullable>enable</Nullable>
+
+		<!-- use server GC mode for improved GC performance - tested to work well with this workload -->
 		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<!-- all pipeline processing is culture invariant so disable globalization for improved performance and less surface area -->
 		<InvariantGlobalization>true</InvariantGlobalization>
 	</PropertyGroup>
 
