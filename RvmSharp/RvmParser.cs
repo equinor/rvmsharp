@@ -209,9 +209,10 @@
                         polygons[i] = new RvmFacetGroup.RvmPolygon(contours);
                     }
 
-                    // order the polygons to later on improve facet group matching
+                    // We order the polygons here so that we can have a better match rate when doing facet group matching.
+                    // This simple change can improve facet matching depending on 3D model (~10% for Huldra), while the output is visually equal.
                     var polygonsOrdered = polygons
-                        .OrderBy(p => p.Contours.Length) // OrderBy uses a stable sorting algorithm which is key
+                        .OrderBy(p => p.Contours.Length) // OrderBy uses a stable sorting algorithm which preserves original ordering upon ordering equals
                         .ThenBy(p => p.Contours.Sum(c => c.Vertices.Length))
                         .ToArray();
                     primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygonsOrdered);
