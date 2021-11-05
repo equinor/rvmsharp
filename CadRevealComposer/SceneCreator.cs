@@ -8,7 +8,6 @@ namespace CadRevealComposer
     using Operations;
     using Primitives;
     using Primitives.Reflection;
-    using RvmSharp.Primitives;
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
@@ -34,7 +33,8 @@ namespace CadRevealComposer
             long EstimatedTriangleCount,
             long EstimatedDrawCallCount,
             IReadOnlyList<APrimitive> Geometries,
-            RvmBoundingBox BoundingBox
+            Vector3 BoundingBoxMin,
+            Vector3 BoundingBoxMax
         )
         {
             public long DownloadSize { get; init; }
@@ -61,8 +61,8 @@ namespace CadRevealComposer
                         : -1,
                     BoundingBox =
                         new BoundingBox(
-                            Min: new BbVector3(sector.BoundingBox.Min.X, sector.BoundingBox.Min.Y, sector.BoundingBox.Min.Z),
-                            Max: new BbVector3(sector.BoundingBox.Max.X, sector.BoundingBox.Max.Y, sector.BoundingBox.Max.Z)
+                            Min: new BbVector3(sector.BoundingBoxMin.X, sector.BoundingBoxMin.Y, sector.BoundingBoxMin.Z),
+                            Max: new BbVector3(sector.BoundingBoxMax.X, sector.BoundingBoxMax.Y, sector.BoundingBoxMax.Z)
                         ),
                     Depth = sector.Depth,
                     Path = sector.Path,
@@ -246,8 +246,8 @@ namespace CadRevealComposer
                         // Arbitrary selected numbers
                         SectorId = sector.SectorId,
                         ParentSectorId = sector.ParentSectorId,
-                        BboxMax = sector.BoundingBox.Max,
-                        BboxMin = sector.BoundingBox.Min,
+                        BboxMax = sector.BoundingBoxMax,
+                        BboxMin = sector.BoundingBoxMin,
                         Attributes = new Attributes
                         {
                             Angle = angles,

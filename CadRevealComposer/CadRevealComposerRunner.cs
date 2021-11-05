@@ -310,7 +310,7 @@ namespace CadRevealComposer
                 .Select(id => $"mesh_{id}.ctm")
                 .ToArray();
             var sectorInfo = new SceneCreator.SectorInfo(p.SectorId, p.ParentSectorId, p.Depth, p.Path, sectorFileName,
-                peripheralFiles, estimatedTriangleCount, estimatedDrawCallCount, geometries, p.BoundingBox);
+                peripheralFiles, estimatedTriangleCount, estimatedDrawCallCount, geometries, p.BoundingBoxMin, p.BoundingBoxMax);
             SceneCreator.ExportSector(sectorInfo, outputDirectory);
 
             return sectorInfo;

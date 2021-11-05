@@ -20,7 +20,8 @@ namespace CadRevealComposer.Operations
             int Depth,
             string Path,
             APrimitive[] Geometries,
-            RvmBoundingBox BoundingBox // TODO: probably should not be RVM type
+            Vector3 BoundingBoxMin,
+            Vector3 BoundingBoxMax
         );
 
         public static IEnumerable<ProtoSector> SplitIntoSectors(
@@ -90,10 +91,9 @@ namespace CadRevealComposer.Operations
                     recursiveDepth,
                     path,
                     allGeometries,
-                    new RvmBoundingBox(
-                        new Vector3(minX, minY, minZ),
-                        new Vector3(maxX, maxY, maxZ)
-                    ));
+                    new Vector3(minX, minY, minZ),
+                    new Vector3(maxX, maxY, maxZ)
+                    );
             }
             else
             {
@@ -117,10 +117,9 @@ namespace CadRevealComposer.Operations
                             recursiveDepth,
                             path,
                             geometries,
-                            new RvmBoundingBox(
-                                new Vector3(minX, minY, minZ),
-                                new Vector3(maxX, maxY, maxZ)
-                            ));
+                            new Vector3(minX, minY, minZ),
+                            new Vector3(maxX, maxY, maxZ)
+                            );
                     }
                     else
                     {
@@ -170,10 +169,9 @@ namespace CadRevealComposer.Operations
                 StartDepth,
                 $"{sectorId}",
                 rootPrimitives,
-                new RvmBoundingBox(
-                    new Vector3(minX, minY, minZ),
-                    new Vector3(maxX, maxY, maxZ)
-                ));
+                new Vector3(minX, minY, minZ),
+                new Vector3(maxX, maxY, maxZ)
+                );
         }
 
         private static APrimitive[] GetRootPrimitives(APrimitive[] allPrimitives, Vector3 platformMin, Vector3 platformMax)
