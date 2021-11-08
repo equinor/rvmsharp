@@ -11,54 +11,6 @@
 
     public static class RvmParser
     {
-#if NETSTANDARD2_0
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static uint ReadUint(Stream stream)
-        {
-            var bytes = new byte[4];
-            if (stream.Read(bytes, 0, bytes.Length) != bytes.Length)
-                throw new IOException("Unexpected end of stream");
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(bytes);
-            return BitConverter.ToUInt32(bytes, 0);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float ReadFloat(Stream stream)
-        {
-            var bytes = new byte[4];
-            if (stream.Read(bytes, 0, bytes.Length) != bytes.Length)
-                throw new IOException("Unexpected end of stream");
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(bytes);
-            return BitConverter.ToSingle(bytes, 0);
-        }
-
-        private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
-        {
-            var builder = new StringBuilder();
-            var bytes = new byte[4];
-            for (int i = 0; i < 4; i++)
-            {
-                var read = stream.Read(bytes, 0, bytes.Length);
-                if (read < bytes.Length)
-                    throw new IOException("Unexpected end of stream");
-                if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
-                    throw new IOException("Unexpected data in header");
-                builder.Append((char)bytes[3]);
-            }
-
-            nextHeaderOffset = ReadUint(stream);
-            dunno = ReadUint(stream);
-            return builder.ToString();
-        }
-
-#endif
-
-// improved performance using stackalloc/span for .NET 5 and later
-#if !NETSTANDARD2_0
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static uint ReadUint(Stream stream)
         {
@@ -99,8 +51,6 @@
             dunno = ReadUint(stream);
             return builder.ToString();
         }
-
-#endif
 
         private static Vector3 ReadVector3(Stream stream)
         {
