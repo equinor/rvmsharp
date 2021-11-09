@@ -106,7 +106,7 @@ namespace CadRevealComposer.Utils
             var v1 = Vector3.Transform(Vector3.One, rotation);
             var v2 = Vector3.Transform(Vector3.One, qc);
             Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
-            Debug.Assert(v1.ApproximatelyEquals(v2, 0.001f));
+            Debug.Assert(v1.EqualsWithinPercentage(v2, 0.1f));
         }
 
         /// <summary>
@@ -257,10 +257,11 @@ namespace CadRevealComposer.Utils
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(translation);
 
-            return pb1.ApproximatelyEquals(Vector3.Transform(pa1, transform), 0.001f) &&
-                   pb2.ApproximatelyEquals(Vector3.Transform(pa2, transform), 0.001f) &&
-                   pb3.ApproximatelyEquals(Vector3.Transform(pa3, transform), 0.001f) &&
-                   pb4.ApproximatelyEquals(Vector3.Transform(pa4, transform), 0.001f);
+            const float percentage = 0.1f;
+            return pb1.EqualsWithinPercentage(Vector3.Transform(pa1, transform), percentage) &&
+                   pb2.EqualsWithinPercentage(Vector3.Transform(pa2, transform), percentage) &&
+                   pb3.EqualsWithinPercentage(Vector3.Transform(pa3, transform), percentage) &&
+                   pb4.EqualsWithinPercentage(Vector3.Transform(pa4, transform), percentage);
         }
     }
 }

@@ -8,6 +8,8 @@ namespace CadRevealComposer.AlgebraExtensions
     {
         public bool Trace(Triangle triangle, out Vector3 intersectionPoint, out bool isFrontFace)
         {
+            const float tolerance = 0.00001f;
+
             intersectionPoint = Vector3.Zero;
             isFrontFace = false;
             var v1v2 = triangle.V2 - triangle.V1;
@@ -41,8 +43,8 @@ namespace CadRevealComposer.AlgebraExtensions
             var v2pi = intersectionPoint - triangle.V2;
             var v3pi = intersectionPoint - triangle.V3;
             // Check if intersection point is on any corner
-            if (v1pi.ApproximatelyEquals(Vector3.Zero) || v2pi.ApproximatelyEquals(Vector3.Zero) ||
-                v3pi.ApproximatelyEquals(Vector3.Zero))
+            if (v1pi.EqualsWithinTolerance(Vector3.Zero, tolerance) || v2pi.EqualsWithinTolerance(Vector3.Zero, tolerance) ||
+                v3pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
                 return true;
 
             // Check if intersection point is on any side
@@ -51,19 +53,19 @@ namespace CadRevealComposer.AlgebraExtensions
             var v3v1Crossv3pi = Vector3.Cross(v3v1, v3pi);
 
             // Check if intersection point is on any of the sides
-            if (v1v2Crossv1pi.ApproximatelyEquals(Vector3.Zero))
+            if (v1v2Crossv1pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
             {
                 if ((triangle.V2 - intersectionPoint).AngleTo(v1v2).ApproximatelyEquals(0) &&
                     v1pi.AngleTo(v1v2).ApproximatelyEquals(0))
                     return true;
             }
-            if (v2v3Crossv2pi.ApproximatelyEquals(Vector3.Zero))
+            if (v2v3Crossv2pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
             {
                 if ((triangle.V3 - intersectionPoint).AngleTo(v2v3).ApproximatelyEquals(0) &&
                     v2pi.AngleTo(v2v3).ApproximatelyEquals(0))
                     return true;
             }
-            if (v3v1Crossv3pi.ApproximatelyEquals(Vector3.Zero))
+            if (v3v1Crossv3pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
             {
                 if ((triangle.V1 - intersectionPoint).AngleTo(v3v1).ApproximatelyEquals(0) &&
                     v3pi.AngleTo(v3v1).ApproximatelyEquals(0))

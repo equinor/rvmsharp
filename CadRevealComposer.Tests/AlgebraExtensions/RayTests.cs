@@ -24,7 +24,7 @@ namespace CadRevealComposer.Tests.Utils
             var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
-            Assert.True(intersectionPoint.ApproximatelyEquals(new Vector3(0,0,2)));
+            Assert.True(intersectionPoint.EqualsWithinTolerance(new Vector3(0,0,2), 0.00001f));
             Assert.That(hitResult);
             Assert.True(!isFrontFace);
         }
@@ -44,7 +44,7 @@ namespace CadRevealComposer.Tests.Utils
             var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
-            Assert.True(intersectionPoint.ApproximatelyEquals(new Vector3(0,0,2)));
+            Assert.True(intersectionPoint.EqualsWithinTolerance(new Vector3(0,0,2), 0.00001f));
             Assert.That(hitResult);
             Assert.True(isFrontFace);
         }
@@ -82,7 +82,7 @@ namespace CadRevealComposer.Tests.Utils
             var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
-            Assert.True(intersectionPoint.ApproximatelyEquals(new Vector3(0,0,0)));
+            Assert.True(intersectionPoint.EqualsWithinTolerance(new Vector3(0,0,0), 0.00001f));
             Assert.That(hitResult);
             Assert.That(isFrontFace);
         }

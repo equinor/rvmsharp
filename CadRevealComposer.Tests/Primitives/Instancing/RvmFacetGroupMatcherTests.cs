@@ -40,12 +40,11 @@
 
                 var eulers = RandomVector(r, 0, MathF.PI);
                 var scale = RandomVector(r, 0.1f, 5.1f);
-                var position = new Vector3(0, 0, 0);
                 var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
 
                 var Mr = Matrix4x4.CreateFromQuaternion(q);
                 var Ms = Matrix4x4.CreateScale(scale);
-                var Mt = Matrix4x4.CreateTranslation(position);
+                var Mt = Matrix4x4.CreateTranslation(new Vector3(10));
                 var Ma = Ms * Mr * Mt;
 
                 var meshB = meshA.TransformVertexData(Ma);
@@ -80,7 +79,7 @@
 
         private static Vector3 RandomVector(Random r, float minComponentValue, float maxComponentValue)
         {
-            float Rf() => (float)r.NextDouble() * (maxComponentValue - minComponentValue) + minComponentValue;
+            float Rf() => r.NextSingle() * (maxComponentValue - minComponentValue) + minComponentValue;
             return new Vector3(Rf(), Rf(), Rf());
         }
     }
