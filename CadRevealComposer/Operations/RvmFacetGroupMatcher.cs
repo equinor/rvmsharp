@@ -94,7 +94,8 @@ namespace CadRevealComposer.Operations
                     .Select(g => (g.Key, facetGroups: g.ToArray()))
                     .ToArray();
 
-            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items in {facetGroups.Length} FacetGroups in {groupingTimer.Elapsed}");
+            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.facetGroups.Length);
+            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items for a count of {facetGroupForMatchingCount} facet groups of total {facetGroups.Length} in {groupingTimer.Elapsed}");
 
             var matchingTimer = Stopwatch.StartNew();
             var result =
@@ -105,7 +106,9 @@ namespace CadRevealComposer.Operations
                     .SelectMany(d => d)
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
-            Console.WriteLine($"Found {result.DistinctBy(x => x.Value.template).Count()} unique from a total of {facetGroups.Length}. Time: {matchingTimer.Elapsed}");
+            var uniqueTemplateCount = result.DistinctBy(x => x.Value.template).Count();
+            var fraction = 1.0 - (uniqueTemplateCount / (float)facetGroupForMatchingCount);
+            Console.WriteLine($"Found {uniqueTemplateCount} unique from a total of {facetGroupForMatchingCount} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
             return result;
         }
 
@@ -167,11 +170,12 @@ namespace CadRevealComposer.Operations
                 result.Add(facetGroup, (newTemplate, newTransform));
             }
 
-            var inputCount = (float)facetGroups.Length;
             var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
+            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+            var fraction = 1.0 - (templateCount / (float)facetGroups.Length);
             Console.WriteLine(
-                $"\tFound {templateCount} templates in {inputCount} items ({1 - (templateCount / inputCount):P1}). " +
-                $"Vertex count was {facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count()))} in {timer.Elapsed}");
+                $"\tFound {templateCount,5:N0} templates in {facetGroups.Length,6:N0} items ({fraction,6:P1}). " +
+                $"Vertex count was {vertexCount,5:N0} in {timer.Elapsed.TotalSeconds,6:N} s");
             return result;
         }
 
@@ -230,9 +234,7 @@ namespace CadRevealComposer.Operations
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private static bool VerifyTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, in Matrix4x4 transform)
         {
-            // NOTE: comparing polygons/contours/vertices count matches A/B is expensive - but we know it to be true due to check in GetPossibleAtoBTransform
-
-            // TODO: This method cannot verify facet groups that have random order on polygons
+            // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
 
             for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
             {
@@ -262,7 +264,9 @@ namespace CadRevealComposer.Operations
         [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
         {
-            // TODO: This method cannot match facet groups that have random order on polygons
+            // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
+
+            // REMARK: it is assumed that polygons are ordered to improve matching - see RvmParser
 
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
             (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
@@ -342,32 +346,6 @@ namespace CadRevealComposer.Operations
             // TODO: 2d figure
             transform = default;
             return false;
-        }
-
-        private static bool EnsurePolygonContoursAndVertexCountsMatch(RvmFacetGroup a, RvmFacetGroup b)
-        {
-            if (a.Polygons.Length != b.Polygons.Length)
-            {
-                return false;
-            }
-
-            // TODO: the method below is not really correct. It is confirmed that the polygons are not sorted in  any particular order
-            for (var i = 0; i < a.Polygons.Length; i++)
-            {
-                var aPolygon = a.Polygons[i];
-                var bPolygon = b.Polygons[i];
-                if (aPolygon.Contours.Length != bPolygon.Contours.Length)
-                    return false;
-                for (var j = 0; j < aPolygon.Contours.Length; j++)
-                {
-                    var aContour = aPolygon.Contours[j];
-                    var bContour = bPolygon.Contours[j];
-                    if (aContour.Vertices.Length != bContour.Vertices.Length)
-                        return false;
-                }
-            }
-
-            return true;
         }
     }
 }
