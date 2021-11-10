@@ -3,6 +3,7 @@
     using Ben.Collections.Specialized;
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
     using System.Runtime.CompilerServices;
@@ -29,9 +30,21 @@
             }
         }
 
-        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IInternPool stringInternPool)
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath)
         {
-            List<PdmsNode> pdmsNodes = new List<PdmsNode>();
+            return GetAllPdmsNodesInFile(pdmsTxtFilePath, ImmutableArray<string>.Empty, InternPool.Shared);
+        }
+
+        /// <summary>
+        /// Performance oriented version of GetAllPdmsNodesInFile which may reduce memory allocations, memory usage and CPU processing time.
+        /// </summary>
+        /// <param name="pdmsTxtFilePath">File path RVM TEXT</param>
+        /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
+        /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, IInternPool stringInternPool)
+        {
+            
+            var pdmsNodes = new List<PdmsNode>();
 
             using (var reader = new StatefulReader(pdmsTxtFilePath))
             {
@@ -89,16 +102,34 @@
                         {
                             var nameSeparatorIndex = trimmedLine.IndexOf(headerInfo.NameEnd, StringComparison.InvariantCulture);
                             var key = GetKey(trimmedLine, nameSeparatorIndex);
-                            var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
-                            var keyInterned = stringInternPool.Intern(key);
-                            var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                            currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+
+                            if (!IsExcludedAttribute(key, attributesToExclude))
+                            {
+                                var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
+                                var keyInterned = stringInternPool.Intern(key);
+                                var valueInterned = stringInternPool.Intern(StripQuotes(value));
+                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+                            }
                         }
                     }
                 }
             }
 
             return pdmsNodes;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsExcludedAttribute(ReadOnlySpan<char> attributeName, IReadOnlyList<string> attributesToExclude)
+        {
+            for (var i = 0; i < attributesToExclude.Count; i++)
+            {
+                if (attributeName.SequenceEqual(attributesToExclude[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private class PdmsFileHeader

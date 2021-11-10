@@ -4,6 +4,7 @@
     using Containers;
     using System;
     using System.Collections.Generic;
+    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -54,6 +55,9 @@
         {
             var progress = 0;
             var stringInternPool = new SharedInternPool();
+            var redundantPdmsAttributesToExclude = ImmutableList<string>.Empty
+                .Add("Name")
+                .Add("Position");
 
             RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
             {
@@ -62,7 +66,7 @@
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-                    rvmFile.AttachAttributes(txtFilename!, stringInternPool);
+                    rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
                 }
 
                 progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));

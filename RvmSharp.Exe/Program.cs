@@ -12,6 +12,7 @@
     using Exporters;
     using Operations;
     using Primitives;
+    using System.Collections.Immutable;
     using System.Text.RegularExpressions;
 
     static class Program
@@ -121,7 +122,7 @@
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-                    rvmFile.AttachAttributes(txtFilename, stringInternPool);
+                    rvmFile.AttachAttributes(txtFilename, ImmutableList<string>.Empty, stringInternPool);
                 }
 
                 progressBar.Tick();
