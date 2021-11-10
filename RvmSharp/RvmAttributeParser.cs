@@ -86,7 +86,9 @@
                         else
                         {
                             var (key, value) = SplitKeyValue(trimmedLine, headerInfo.NameEnd.AsSpan());
-                            currentPdmsNode!.MetadataDict[key] = StripQuotes(value);
+                            var keyInterned = string.Intern(key);
+                            var valueInterned = string.Intern(StripQuotes(value));
+                            currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
                         }
                     }
                 }
