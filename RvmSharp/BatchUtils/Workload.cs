@@ -74,6 +74,9 @@
                 .AsOrdered()
                 .Select(ParseRvmFile)
                 .ToArray();
+
+            Console.WriteLine($"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
             return rvmStore;
