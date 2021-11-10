@@ -3,11 +3,11 @@ namespace CadRevealComposer.Operations
     using IdProviders;
     using Primitives;
     using RvmSharp.Primitives;
-    using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Linq;
     using System.Numerics;
+    using Utils;
 
     public static class SectorSplitter
     {
@@ -15,13 +15,20 @@ namespace CadRevealComposer.Operations
 
         public const int StartDepth = 1;
 
+        /// <summary>
+        /// Optimization that prioritizes a node to be in a sector if either XY/XZ/YZ plane is bigger than X percent of the corresponding plane of the sector bounding box. Regardless if the node could be placed in a sub voxel.
+        /// REMARK: Same logic is used to prioritize which objects go into the root sector.
+        /// </summary>
+        public const float Node2DPlanePrioritizationThreshold = 0.01f; // percent of plane
+
         public record ProtoSector(
             uint SectorId,
             uint? ParentSectorId,
             int Depth,
             string Path,
             APrimitive[] Geometries,
-            RvmBoundingBox BoundingBox // TODO: probably should not be RVM type
+            Vector3 BoundingBoxMin,
+            Vector3 BoundingBoxMax
         );
 
         public static IEnumerable<ProtoSector> SplitIntoSectors(
@@ -29,18 +36,30 @@ namespace CadRevealComposer.Operations
             SequentialIdGenerator sectorIdGenerator,
             uint maxDepth)
         {
-            var enumerator = SplitIntoSectors(allGeometries, StartDepth, null, null, sectorIdGenerator, maxDepth);
-            foreach (var bSector in enumerator)
+            var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+            var rootSector = GetRootSector(rootSectorId, allGeometries);
+
+            var restGeometries = allGeometries.Except(rootSector.Geometries).ToArray();
+            var sectors = SplitIntoSectors(
+                restGeometries,
+                StartDepth + 1,
+                $"{rootSectorId}",
+                rootSectorId,
+                sectorIdGenerator,
+                maxDepth);
+
+            yield return rootSector;
+            foreach (var sector in sectors)
             {
-                yield return bSector;
+                yield return sector;
             }
         }
 
         private static IEnumerable<ProtoSector> SplitIntoSectors(
             APrimitive[] allGeometries,
             int recursiveDepth,
-            string? parentPath,
-            uint? parentSectorId,
+            string parentPath,
+            uint parentSectorId,
             SequentialIdGenerator sectorIdGenerator,
             uint maxDepth)
         {
@@ -49,53 +68,39 @@ namespace CadRevealComposer.Operations
              * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
              */
 
-            var minX = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.X);
-            var minY = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.Y);
-            var minZ = allGeometries.Min(x => x.AxisAlignedBoundingBox.Min.Z);
-            var maxX = allGeometries.Max(x => x.AxisAlignedBoundingBox.Max.X);
-            var maxY = allGeometries.Max(x => x.AxisAlignedBoundingBox.Max.Y);
-            var maxZ = allGeometries.Max(x => x.AxisAlignedBoundingBox.Max.Z);
+            if (allGeometries.Length == 0)
+            {
+                yield break;
+            }
 
-            var midX = minX + ((maxX - minX) / 2);
-            var midY = minY + ((maxY - minY) / 2);
-            var midZ = minZ + ((maxZ - minZ) / 2);
-
-            var midPoint = new Vector3(midX, midY, midZ);
-            var volume = new Vector3(maxX, maxY, maxZ) - new Vector3(minX, minY, minZ);
+            var bbMin = allGeometries.GetBoundingBoxMin();
+            var bbMax = allGeometries.GetBoundingBoxMax();
+            var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
+            var bbVolume = bbMax - bbMin;
 
             var grouped = allGeometries
                 .GroupBy(x => x.NodeId)
-                .GroupBy(x => CalculateVoxelKeyForNodeGroup(x, midPoint, volume))
+                .GroupBy(x => CalculateVoxelKeyForNodeGroup(x.ToArray(), bbMidPoint, bbVolume))
                 .OrderBy(x => x.Key)
                 .ToImmutableList();
 
-            var isRoot = recursiveDepth == StartDepth;
             var isLeaf = recursiveDepth >= maxDepth || allGeometries.Length < 10000 || grouped.Count == 1;
-
             if (isLeaf)
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
-                var path = isRoot
-                    ? $"{sectorId}"
-                    : $"{parentPath}/{sectorId}";
+                var path = $"{parentPath}/{sectorId}";
                 yield return new ProtoSector(
                     sectorId,
                     parentSectorId,
                     recursiveDepth,
                     path,
                     allGeometries,
-                    new RvmBoundingBox(
-                        new Vector3(minX, minY, minZ),
-                        new Vector3(maxX, maxY, maxZ)
-                    ));
+                    bbMin,
+                    bbMax
+                    );
             }
             else
             {
-                if (isRoot && grouped.First().Key != MainVoxel)
-                {
-                    throw new InvalidOperationException("if MainVoxel is not amongst groups in the first function call the root will not be created");
-                }
-
                 var parentPathForChildren = parentPath;
                 var parentSectorIdForChildren = parentSectorId;
 
@@ -105,9 +110,7 @@ namespace CadRevealComposer.Operations
                     {
                         var sectorId = (uint)sectorIdGenerator.GetNextId();
                         var geometries = group.SelectMany(x => x).ToArray();
-                        var path = isRoot
-                            ? $"{sectorId}"
-                            : $"{parentPath}/{sectorId}";
+                        var path = $"{parentPath}/{sectorId}";
 
                         parentPathForChildren = path;
                         parentSectorIdForChildren = sectorId;
@@ -118,15 +121,14 @@ namespace CadRevealComposer.Operations
                             recursiveDepth,
                             path,
                             geometries,
-                            new RvmBoundingBox(
-                                new Vector3(minX, minY, minZ),
-                                new Vector3(maxX, maxY, maxZ)
-                            ));
+                            bbMin,
+                            bbMax
+                            );
                     }
                     else
                     {
                         var sectors = SplitIntoSectors(
-                            @group.SelectMany(x => x).ToArray(),
+                            group.SelectMany(x => x).ToArray(),
                             recursiveDepth + 1,
                             parentPathForChildren,
                             parentSectorIdForChildren,
@@ -141,34 +143,91 @@ namespace CadRevealComposer.Operations
             }
         }
 
-        private static int CalculateVoxelKey(RvmBoundingBox primitiveBoundingBox, Vector3 mainVoxelMidPoint, Vector3 mainVoxelVolume)
+        private static ProtoSector GetRootSector(uint sectorId, APrimitive[] allGeometries)
         {
-            // TODO: prioritize discipline: safety
+            var rootPrimitives = GetRootPrimitives(allGeometries);
+            var bbMin = allGeometries.GetBoundingBoxMin();
+            var bbMax = allGeometries.GetBoundingBoxMax();
+            return new ProtoSector(
+                sectorId,
+                ParentSectorId: null,
+                StartDepth,
+                $"{sectorId}",
+                rootPrimitives,
+                bbMin,
+                bbMax
+                );
+        }
 
-            // optimization heuristic: if the object's 2D surfaces are big then place it in main voxel (2D surface based on axis aligned bounding box)
-            const float thresholdFactor = 0.001f;
-            if (primitiveBoundingBox.Extents.X * primitiveBoundingBox.Extents.Y > thresholdFactor * mainVoxelVolume.X * mainVoxelVolume.Y) // XY
+        private static APrimitive[] GetRootPrimitives(APrimitive[] allGeometries)
+        {
+            // get bounding box for platform using approximation (95 percentile)
+            var platformMinX = allGeometries.Select(x => x.AxisAlignedBoundingBox.Min.X).OrderBy(x => x).Skip((int)(0.05 * allGeometries.Length)).First();
+            var platformMinY = allGeometries.Select(x => x.AxisAlignedBoundingBox.Min.Y).OrderBy(x => x).Skip((int)(0.05 * allGeometries.Length)).First();
+            var platformMinZ = allGeometries.Select(x => x.AxisAlignedBoundingBox.Min.Z).OrderBy(x => x).Skip((int)(0.05 * allGeometries.Length)).First();
+            var platformMaxX = allGeometries.Select(x => x.AxisAlignedBoundingBox.Max.X).OrderByDescending(x => x).Skip((int)(0.05 * allGeometries.Length)).First();
+            var platformMaxY = allGeometries.Select(x => x.AxisAlignedBoundingBox.Max.Y).OrderByDescending(x => x).Skip((int)(0.05 * allGeometries.Length)).First();
+            var platformMaxZ = allGeometries.Select(x => x.AxisAlignedBoundingBox.Max.Z).OrderByDescending(x => x).Skip((int)(0.05 * allGeometries.Length)).First();
+
+            // pad the 95 percentile bounding box, the idea is that objects near the edge of the platform should stay inside the bounding box
+            const int platformPadding = 5; // meters
+            var bbMin = new Vector3(platformMinX - platformPadding, platformMinY - platformPadding, platformMinZ - platformPadding);
+            var bbMax = new Vector3(platformMaxX + platformPadding, platformMaxY + platformPadding, platformMaxZ + platformPadding);
+            var bbVolume = bbMax - bbMin;
+
+            bool FilterNodeGroupedPrimitives(IGrouping<ulong, APrimitive> grouping)
             {
-                return MainVoxel;
-            }
-            if (primitiveBoundingBox.Extents.X * primitiveBoundingBox.Extents.Z > thresholdFactor * mainVoxelVolume.X * mainVoxelVolume.Z) // XZ
-            {
-                return MainVoxel;
-            }
-            if (primitiveBoundingBox.Extents.Y * primitiveBoundingBox.Extents.Z > thresholdFactor * mainVoxelVolume.Y * mainVoxelVolume.Z) // YZ
-            {
-                return MainVoxel;
+                var nodeBoundingBoxMin = grouping.GetBoundingBoxMin();
+                var nodeBoundingBoxMax = grouping.GetBoundingBoxMax();
+
+                // all geometries outside the main platform belongs to the root sector
+                if (nodeBoundingBoxMin.X < bbMin.X ||
+                    nodeBoundingBoxMin.Y < bbMin.Y ||
+                    nodeBoundingBoxMin.Z < bbMin.Z ||
+                    nodeBoundingBoxMax.X > bbMax.X ||
+                    nodeBoundingBoxMax.Y > bbMax.Y ||
+                    nodeBoundingBoxMax.Z > bbMax.Z)
+                {
+                    return true;
+                }
+
+                // optimization heuristic: if the object's 2D surfaces are big then place it in the root (2D surface based on axis aligned bounding box)
+                const float thresholdFactor = Node2DPlanePrioritizationThreshold * Node2DPlanePrioritizationThreshold; // percent of 2D plane
+                var nodeVolume = nodeBoundingBoxMax - nodeBoundingBoxMin;
+                if (nodeVolume.X * nodeVolume.Y > thresholdFactor * bbVolume.X * bbVolume.Y) // XY plane
+                {
+                    return true;
+                }
+                if (nodeVolume.X * nodeVolume.Z > thresholdFactor * bbVolume.X * bbVolume.Z) // XZ plane
+                {
+                    return true;
+                }
+                if (nodeVolume.Y * nodeVolume.Z > thresholdFactor * bbVolume.Y * bbVolume.Z) // YZ plane
+                {
+                    return true;
+                }
+
+                return false;
             }
 
-            if (primitiveBoundingBox.Min.X < mainVoxelMidPoint.X && primitiveBoundingBox.Max.X > mainVoxelMidPoint.X ||
-                primitiveBoundingBox.Min.Y < mainVoxelMidPoint.Y && primitiveBoundingBox.Max.Y > mainVoxelMidPoint.Y ||
-                primitiveBoundingBox.Min.Z < mainVoxelMidPoint.Z && primitiveBoundingBox.Max.Z > mainVoxelMidPoint.Z)
+            return allGeometries
+                .GroupBy(p => p.NodeId)
+                .Where(FilterNodeGroupedPrimitives)
+                .SelectMany(g => g)
+                .ToArray();
+        }
+
+        private static int CalculateVoxelKeyForPrimitive(RvmBoundingBox primitiveBoundingBox, Vector3 bbMidPoint)
+        {
+            if (primitiveBoundingBox.Min.X < bbMidPoint.X && primitiveBoundingBox.Max.X > bbMidPoint.X ||
+                primitiveBoundingBox.Min.Y < bbMidPoint.Y && primitiveBoundingBox.Max.Y > bbMidPoint.Y ||
+                primitiveBoundingBox.Min.Z < bbMidPoint.Z && primitiveBoundingBox.Max.Z > bbMidPoint.Z)
             {
                 return MainVoxel; // crosses the mid boundary in either X,Y,Z
             }
 
-            // at this point we know the primitive does not cross mid boundary in X,Y,Z - meaning it can be placed in one of the eight sub quadrants
-            return (primitiveBoundingBox.Min.X < mainVoxelMidPoint.X, primitiveBoundingBox.Min.Y < mainVoxelMidPoint.Y, primitiveBoundingBox.Min.Z < mainVoxelMidPoint.Z) switch
+            // at this point we know the primitive does not cross mid boundary in X,Y,Z - meaning it can be placed in one of the eight sub voxels
+            return (primitiveBoundingBox.Min.X < bbMidPoint.X, primitiveBoundingBox.Min.Y < bbMidPoint.Y, primitiveBoundingBox.Min.Z < bbMidPoint.Z) switch
             {
                 (false, false, false) => SubVoxelA,
                 (false, false, true) => SubVoxelB,
@@ -181,13 +240,31 @@ namespace CadRevealComposer.Operations
             };
         }
 
-        private static int CalculateVoxelKeyForNodeGroup(IEnumerable<APrimitive> nodeGroupPrimitives, Vector3 mainVoxelMidPoint, Vector3 mainVoxelVolume)
+        private static int CalculateVoxelKeyForNodeGroup(APrimitive[] nodeGroupPrimitives, Vector3 bbMidPoint, Vector3 bbVolume)
         {
+            // optimization heuristic: if the object's 2D surfaces are big then place it in main voxel (2D surface based on axis aligned bounding box)
+            var nodeBoundingBoxMin = nodeGroupPrimitives.GetBoundingBoxMin();
+            var nodeBoundingBoxMax = nodeGroupPrimitives.GetBoundingBoxMax();
+            var nodeBoundingBoxVolume = nodeBoundingBoxMax - nodeBoundingBoxMin;
+            const float thresholdFactor = Node2DPlanePrioritizationThreshold * Node2DPlanePrioritizationThreshold; // percent of 2D plane
+            if (nodeBoundingBoxVolume.X * nodeBoundingBoxVolume.Y > thresholdFactor * bbVolume.X * bbVolume.Y) // XY plane
+            {
+                return MainVoxel;
+            }
+            if (nodeBoundingBoxVolume.X * nodeBoundingBoxVolume.Z > thresholdFactor * bbVolume.X * bbVolume.Z) // XZ plane
+            {
+                return MainVoxel;
+            }
+            if (nodeBoundingBoxVolume.Y * nodeBoundingBoxVolume.Z > thresholdFactor * bbVolume.Y * bbVolume.Z) // YZ plane
+            {
+                return MainVoxel;
+            }
+
             // all primitives with the same NodeId shall be placed in the same voxel
             var lastVoxelKey = int.MinValue;
             foreach (var primitive in nodeGroupPrimitives)
             {
-                var voxelKey = CalculateVoxelKey(primitive.AxisAlignedBoundingBox, mainVoxelMidPoint, mainVoxelVolume);
+                var voxelKey = CalculateVoxelKeyForPrimitive(primitive.AxisAlignedBoundingBox, bbMidPoint);
                 if (voxelKey == MainVoxel)
                 {
                     return MainVoxel;
