@@ -156,20 +156,28 @@ namespace CadRevealComposer.Primitives
                     {
                         AssertUniformScale(scale);
                         var height = rvmSphericalDish.Height * scale.X;
-                        var radius = rvmSphericalDish.BaseRadius * scale.X;
+                        var baseRadius = rvmSphericalDish.BaseRadius * scale.X;
+                        // radius R = h / 2 + c^2 / (8 * h), where c is the cord length or 2 * baseRadius
+                        var sphereRadius = height / 2 + baseRadius * baseRadius / (2 * height);
+                        var d = sphereRadius - height;
+                        var upVector = Vector3.Transform(Vector3.UnitZ,
+                            Matrix4x4.CreateFromQuaternion(commonPrimitiveProperties.Rotation));
+                        var position = commonPrimitiveProperties.Position - upVector * d;
+                        commonPrimitiveProperties = commonPrimitiveProperties with { Position = position };
+
                         if (rvmSphericalDish.Connections[0] != null)
                         {
                             return new ClosedSphericalSegment(commonPrimitiveProperties,
                                 Normal: normal,
                                 Height: height,
-                                Radius: radius);
+                                Radius: sphereRadius);
                         }
                         else
                         {
                             return new ClosedSphericalSegment(commonPrimitiveProperties,
                                 Normal: normal,
                                 Height: height,
-                                Radius: radius);
+                                Radius: sphereRadius);
                         }
                     }
                 case RvmSnout rvmSnout:
