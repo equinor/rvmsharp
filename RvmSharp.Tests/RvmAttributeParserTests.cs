@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace RvmSharp.Tests
 {
+    using Ben.Collections.Specialized;
+
     [TestFixture]
     public class RvmAttributeParserTests
     {
@@ -11,7 +13,7 @@ namespace RvmSharp.Tests
         [Explicit("Need to verify that we can push the test-files")]
         public void ParsesValidAttributeFile()
         {
-            var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(TestFileHelpers.BasicTxtAttTestFile);
+            var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(TestFileHelpers.BasicTxtAttTestFile, new InternPool());
 
             var expectedMetadata = new Dictionary<string, string>()
             {

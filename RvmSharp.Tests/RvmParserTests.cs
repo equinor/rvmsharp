@@ -2,6 +2,8 @@
 
 namespace RvmSharp.Tests
 {
+    using Ben.Collections.Specialized;
+
     [TestFixture]
     public class RvmParserTests
     {
@@ -22,7 +24,7 @@ namespace RvmSharp.Tests
             Assert.That(rvm.Header.Version, Is.EqualTo(2));
             
             
-            rvm.AttachAttributes(TestFileHelpers.BasicTxtAttTestFile);
+            rvm.AttachAttributes(TestFileHelpers.BasicTxtAttTestFile, new InternPool());
         }
     }
 }

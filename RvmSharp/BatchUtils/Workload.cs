@@ -1,5 +1,6 @@
 ﻿namespace RvmSharp.BatchUtils
 {
+    using Ben.Collections.Specialized;
     using Containers;
     using System;
     using System.Collections.Generic;
@@ -52,19 +53,27 @@
         public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null)
         {
             var progress = 0;
-            var rvmFiles = workload.AsParallel().AsOrdered().Select(filePair =>
+            var stringInternPool = new SharedInternPool();
+
+            RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
             {
                 (string rvmFilename, string? txtFilename) = filePair;
                 using var stream = File.OpenRead(rvmFilename);
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-                    rvmFile.AttachAttributes(txtFilename!);
+                    rvmFile.AttachAttributes(txtFilename!, stringInternPool);
                 }
 
                 progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
                 return rvmFile;
-            }).ToArray();
+            }
+
+            var rvmFiles = workload
+                .AsParallel()
+                .AsOrdered()
+                .Select(ParseRvmFile)
+                .ToArray();
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
             return rvmStore;

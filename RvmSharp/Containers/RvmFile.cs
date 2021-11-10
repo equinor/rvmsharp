@@ -1,5 +1,6 @@
 ﻿namespace RvmSharp.Containers
 {
+    using Ben.Collections.Specialized;
     using Primitives;
     using System.Collections.Generic;
     using System.Linq;
@@ -19,9 +20,9 @@
             Model = model;
         }
 
-        public void AttachAttributes(string txtFilename)
+        public void AttachAttributes(string txtFilename, IInternPool stringInternPool)
         {
-            var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename);
+            var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename, stringInternPool);
             AssignRecursive(pdms, Model.Children);
         }
 

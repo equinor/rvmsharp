@@ -1,9 +1,11 @@
 ﻿namespace RvmSharp
 {
+    using Ben.Collections.Specialized;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Runtime.CompilerServices;
 
     public static class PdmsTextParser
     {
@@ -27,7 +29,7 @@
             }
         }
 
-        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath)
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IInternPool stringInternPool)
         {
             List<PdmsNode> pdmsNodes = new List<PdmsNode>();
 
@@ -85,9 +87,11 @@
                         }
                         else
                         {
-                            var (key, value) = SplitKeyValue(trimmedLine, headerInfo.NameEnd.AsSpan());
-                            var keyInterned = string.Intern(key);
-                            var valueInterned = string.Intern(StripQuotes(value));
+                            var nameSeparatorIndex = trimmedLine.IndexOf(headerInfo.NameEnd, StringComparison.InvariantCulture);
+                            var key = GetKey(trimmedLine, nameSeparatorIndex);
+                            var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
+                            var keyInterned = stringInternPool.Intern(key);
+                            var valueInterned = stringInternPool.Intern(StripQuotes(value));
                             currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
                         }
                     }
@@ -150,7 +154,9 @@
                         var lineSegments = currentLine.Split(new[] {header.Sep}, StringSplitOptions.RemoveEmptyEntries);
                         foreach (string keyValueSegment in lineSegments)
                         {
-                            var (key, value) = SplitKeyValue(keyValueSegment.AsSpan(), header.NameEnd.AsSpan());
+                            var nameSeparatorIndex = keyValueSegment.IndexOf(header.NameEnd, StringComparison.InvariantCulture);
+                            var key = GetKey(keyValueSegment, nameSeparatorIndex).ToString();
+                            var value = GetValue(keyValueSegment, nameSeparatorIndex + header.NameEnd.Length).ToString();
                             header.HeaderMetadata[key] = value;
                         }
                     }
@@ -160,23 +166,26 @@
             return header;
         }
 
-        private static (string key, string value) SplitKeyValue(ReadOnlySpan<char> keyValueSegment, ReadOnlySpan<char> nameEnd)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ReadOnlySpan<char> GetKey(ReadOnlySpan<char> keyValueSegment, int nameSeparatorIndex)
         {
-            var nameSeparatorIndex = keyValueSegment.IndexOf(nameEnd, StringComparison.InvariantCulture);
-            var key = keyValueSegment[..nameSeparatorIndex]
-                .Trim().ToString();
-            var value = keyValueSegment[(nameSeparatorIndex + nameEnd.Length)..]
-                .Trim().ToString();
-            return (key, value);
+            return keyValueSegment[..nameSeparatorIndex].Trim();
         }
 
-        private static string StripQuotes(string input)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ReadOnlySpan<char> GetValue(ReadOnlySpan<char> keyValueSegment, int nameSeparatorIndex)
         {
-            if (string.IsNullOrEmpty(input) || input.Length < 2)
+            return keyValueSegment[(nameSeparatorIndex)..].Trim();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static ReadOnlySpan<char> StripQuotes(ReadOnlySpan<char> input)
+        {
+            if (input.IsWhiteSpace() || input.Length < 2)
                 return input;
 
             if (input[0] == input[^1] && (input[0] == '\'' || input[0] == '"'))
-                return input.Substring(1, input.Length - 2);
+                return input.Slice(1, input.Length - 2);
             
             return input;
         }
