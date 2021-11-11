@@ -254,13 +254,10 @@ namespace CadRevealComposer
             Console.WriteLine($"Tessellated all geometries in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var maxDepth = composerParameters.SingleSector
-                ? SectorSplitter.StartDepth
-                : 5U;
             var sectors = SectorSplitter.SplitIntoSectors(
                     geometries,
                     sectorIdGenerator,
-                    maxDepth)
+                    composerParameters.SingleSector)
                 .OrderBy(x => x.SectorId).ToArray();
 
             Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);

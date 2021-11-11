@@ -105,5 +105,33 @@ namespace CadRevealComposer.Operations
 
             return (estimatedTriangleCount, estimatedDrawCallCount);
         }
+
+        public static (long EstimatedTriangleCount, int EstimatedDrawCalls) Estimate(APrimitive geometry)
+        {
+            var renderPrimitives = geometry.GetRenderPrimitives();
+            var estimatedPrimitiveDrawCallCount = renderPrimitives.Length;
+            var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();
+
+            var estimatedTriangleMeshTriangleCount = geometry is TriangleMesh triangleMesh
+                ? (long)triangleMesh.TempTessellatedMesh!.Triangles.Count / 3
+                : 0;
+            var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0
+                ? 1
+                : 0;
+
+            var estimatedInstancedMeshTriangleCount = geometry is InstancedMesh instancedMesh
+                ? (long)instancedMesh.TriangleCount
+                : 0;
+            var estimatedInstancedMeshDrawCallCount = geometry is InstancedMesh
+                ? 1
+                : 0;
+
+            var estimatedTriangleCount =
+                estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount + estimatedInstancedMeshTriangleCount;
+            var estimatedDrawCallCount =
+                estimatedPrimitiveDrawCallCount + estimatedTriangleMeshDrawCallCount + estimatedInstancedMeshDrawCallCount;
+
+            return (estimatedTriangleCount, estimatedDrawCallCount);
+        }
     }
 }
