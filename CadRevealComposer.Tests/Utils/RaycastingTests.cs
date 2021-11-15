@@ -13,20 +13,42 @@ namespace CadRevealComposer.Tests.Utils
         {
             var rayOrigin = new Vector3(0, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
-            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-
             var triangle = new Raycasting.Triangle(
                 new Vector3(-5, -5, 2),
                 new Vector3(5, 0, 2),
                 new Vector3(0, 5, 2)
             );
 
-            var result = Raycasting.Raycast(ray, triangle, out var intersectionPoint);
+            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
+            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint);
+            LogResult(hitResult, intersectionPoint);
 
-            Console.WriteLine($"Intersection: {result}");
-            if (result)
-                Console.WriteLine($"Intersection point: {intersectionPoint.ToString("G4")}");
+            Assert.That(hitResult);
+        }
 
+        [Test]
+        public void SimpleRayCast2()
+        {
+            var rayOrigin = new Vector3(10, 0, 0);
+            var rayDirection = new Vector3(0, 0, 1);
+            var triangle = new Raycasting.Triangle(
+                new Vector3(-5, -5, 2),
+                new Vector3(5, 0, 2),
+                new Vector3(0, 5, 2)
+            );
+
+            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
+            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint);
+            LogResult(hitResult, intersectionPoint);
+
+            Assert.That(!hitResult);
+        }
+
+        private static void LogResult(bool isHit, Vector3 hitPosition)
+        {
+            Console.Write(isHit ? "Hit! " : "Miss! ");
+            if (isHit)
+                Console.WriteLine($"Hit position: {hitPosition.ToString("G4")}");
         }
     }
 }
