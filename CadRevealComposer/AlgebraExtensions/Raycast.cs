@@ -9,6 +9,8 @@ namespace CadRevealComposer.AlgebraExtensions
 
         public record Triangle(Vector3 V1, Vector3 V2, Vector3 V3);
 
+        public record Bounds(Vector3 Min, Vector3 Max);
+
         public static bool Raycast(Ray ray, Triangle triangle, out Vector3 intersectionPoint)
         {
             intersectionPoint = Vector3.Zero;
@@ -37,7 +39,6 @@ namespace CadRevealComposer.AlgebraExtensions
 
             intersectionPoint = ray.Origin + ray.Direction * t;
 
-
             // Triangle test
             var v1pi = intersectionPoint - triangle.V1;
             var v2pi = intersectionPoint - triangle.V2;
@@ -46,10 +47,7 @@ namespace CadRevealComposer.AlgebraExtensions
             var aboveV2V3 = (Vector3.Dot(Vector3.Normalize(Vector3.Cross(v2v3, v2pi)), planeNormal) >= 0.0);
             var aboveV3V1 = (Vector3.Dot(Vector3.Normalize(Vector3.Cross(v3v1, v3pi)), planeNormal) >= 0.0);
 
-            if (aboveV1V2 && aboveV2V3 && aboveV3V1)
-                return true;
-
-            return false;
+            return aboveV1V2 && aboveV2V3 && aboveV3V1;
         }
     }
 }
