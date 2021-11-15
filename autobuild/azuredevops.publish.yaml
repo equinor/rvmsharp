@@ -1,0 +1,38 @@
+pool: DockerPool
+trigger:
+- master
+name: $(Version.MajorMinor).$(Version.Revision)$(Version.Suffix)
+variables:
+  ImageName: rvmsharp-ci-publish
+  ImageTag: $(Build.BuildId)
+  ContainerName: rvmsharp-ci-publish-$(Build.BuildId)
+  Dockerfile: ./docker/ci.publish.Dockerfile
+  DockerServiceConnection: 'DockerHub'
+steps:
+- checkout: self
+  clean: true
+  submodules: recursive
+- task: Docker@2
+  displayName: Login to Docker Hub
+  inputs:
+    command: login
+    containerRegistry: $(DockerServiceConnection)
+- task: Docker@2
+  displayName: Build using Docker
+  inputs:
+    command: build
+    Dockerfile: $(Dockerfile)
+    buildContext: ./
+    repository: $(ImageName)
+    tags: $(ImageTag)
+    arguments: '--pull
+                --build-arg Version="$(Build.BuildNumber)"
+                --build-arg InformationalVersion="$(Build.BuildNumber);$(Build.SourceBranch);$(Build.SourceVersion)"'
+- task: Bash@3
+  displayName: Copy Octopus packages from Docker container
+  inputs:
+    targetType: 'inline'
+    script: |
+      docker run --name $(ContainerName) $(ImageName):$(ImageTag)
+      docker cp $(ContainerName):/publish/. $(Build.StagingDirectory)/publish/
+      docker stop $(ContainerName)
