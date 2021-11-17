@@ -61,7 +61,6 @@
             };
 
             Assert.That(pdmsNodesInFile.First().MetadataDict, Is.EquivalentTo(expectedMetadata));
-            Assert.That(pdmsNodesInFile, Is.Not.Null);
         }
 
         [DotMemoryUnit(CollectAllocations = true)]
