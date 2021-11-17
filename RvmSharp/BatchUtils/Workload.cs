@@ -2,6 +2,7 @@
 {
     using Ben.Collections.Specialized;
     using Containers;
+    using RvmSharp.Operations;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -79,6 +80,11 @@
 
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
+            progressReport?.Report(("Connecting geometry", 0, 2));
+            RvmConnect.Connect(rvmStore);
+            progressReport?.Report(("Aligning geometry", 1, 2));
+            RvmAlign.Align(rvmStore);
+            progressReport?.Report(("Import finished", 2, 2));
             return rvmStore;
         }
     }
