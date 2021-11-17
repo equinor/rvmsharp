@@ -119,7 +119,7 @@
         {
             public bool Contains(string item) => throw new NotImplementedException();
             public string Intern(ReadOnlySpan<char> value) => value.ToString();
-            public string? Intern(string? value) => throw new NotImplementedException();
+            public string Intern(string value) => throw new NotImplementedException();
             public string InternAscii(ReadOnlySpan<byte> asciiValue) => throw new NotImplementedException();
             public string InternUtf8(ReadOnlySpan<byte> utf8Value) => throw new NotImplementedException();
             public string Intern(char[] value) => throw new NotImplementedException();
