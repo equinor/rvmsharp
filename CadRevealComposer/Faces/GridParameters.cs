@@ -31,7 +31,7 @@
         /// <summary>
         /// Center of the first voxel
         /// </summary>
-        public Vector3 GridOrigin { get; }
+        public Vector3 GridOrigin { get; init; }
 
         /// <summary>
         /// Distance between two voxel centers in one of the axis
