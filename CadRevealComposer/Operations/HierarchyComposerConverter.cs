@@ -86,15 +86,11 @@
         /// <returns>New Dict without the given keys</returns>
         private static Dictionary<string, string> FilterRedundantPdmsAttributes(IDictionary<string, string> inputPdmsAttributes)
         {
-            string[] excludedKeysIgnoreCase = new[]
-            {
-                "Name",
-                "RefNo",
-                "Position"
-            };
-
             return inputPdmsAttributes
-                .Where(kvp => !excludedKeysIgnoreCase.Any(ex => string.Equals(ex, kvp.Key, StringComparison.OrdinalIgnoreCase)))
+                .Where(kvp =>
+                    !string.Equals("Name", kvp.Key, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals("Position", kvp.Key, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals("RefNo", kvp.Key, StringComparison.OrdinalIgnoreCase))
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         }
 

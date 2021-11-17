@@ -1,6 +1,5 @@
 ﻿namespace RvmSharp.Tests
 {
-    using Ben.Collections.Specialized;
     using NUnit.Framework;
 
     [TestFixture]
@@ -21,8 +20,7 @@
             Assert.That(rvm.Header.User, Is.EqualTo("f_pdmsbatch@WS3208"));
             Assert.That(rvm.Header.Version, Is.EqualTo(2));
 
-
-            rvm.AttachAttributes(TestFileHelpers.BasicTxtAttTestFile, new InternPool());
+            rvm.AttachAttributes(TestFileHelpers.BasicTxtAttTestFile);
         }
     }
 }
