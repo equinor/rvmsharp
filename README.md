@@ -73,3 +73,5 @@ While any contributions are appreciated please make an issue to discuss the appr
 ## Credits
 
 This project is based on [rvmparser](https://github.com/cdyk/rvmparser) by @cdyk
+
+This project contains data from the Equinor ASA - Huldra Dataset <https://data.equinor.com/dataset/Huldra>. A copy of the license can be found [here](./RvmSharp.Tests/TestSamples/Huldra/Equinor_open_data_sharing_license_-_Huldra.pdf).
