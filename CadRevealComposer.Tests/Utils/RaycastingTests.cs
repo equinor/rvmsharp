@@ -9,7 +9,7 @@ namespace CadRevealComposer.Tests.Utils
     public class RaycastingTests
     {
         [Test]
-        public void SimpleRayCast()
+        public void RaycastInZHitFrontFace()
         {
             var rayOrigin = new Vector3(0, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
@@ -20,14 +20,34 @@ namespace CadRevealComposer.Tests.Utils
             );
 
             var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint);
-            LogResult(hitResult, intersectionPoint);
+            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);
+            Assert.True(isFrontFace);
         }
 
         [Test]
-        public void SimpleRayCast2()
+        public void RaycastInZHitBackFace()
+        {
+            var rayOrigin = new Vector3(0, 0, 0);
+            var rayDirection = new Vector3(0, 0, 1);
+            var triangle = new Raycasting.Triangle(
+                new Vector3(0, 5, 2),
+                new Vector3(5, 0, 2),
+                new Vector3(-5, -5, 2)
+            );
+
+            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
+            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            LogResult(hitResult, intersectionPoint, isFrontFace);
+
+            Assert.That(hitResult);
+            Assert.False(isFrontFace);
+        }
+
+        [Test]
+        public void RaycastInZMiss()
         {
             var rayOrigin = new Vector3(10, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
@@ -38,17 +58,18 @@ namespace CadRevealComposer.Tests.Utils
             );
 
             var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint);
-            LogResult(hitResult, intersectionPoint);
+            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(!hitResult);
         }
 
-        private static void LogResult(bool isHit, Vector3 hitPosition)
+        private static void LogResult(bool isHit, Vector3 hitPosition, bool isFrontFace)
         {
             Console.Write(isHit ? "Hit! " : "Miss! ");
             if (isHit)
-                Console.WriteLine($"Hit position: {hitPosition.ToString("G4")}");
+                Console.Write($"Hit position: {hitPosition.ToString("G4")} " + (isFrontFace ? "front face" : "back face"));
+            Console.WriteLine();
         }
     }
 }
