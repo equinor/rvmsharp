@@ -4,7 +4,7 @@ namespace CadRevealComposer.AlgebraExtensions
     using System.Numerics;
 
     // ReSharper disable once InconsistentNaming
-    public struct Vector3i
+    public struct Vector3i : IEquatable<Vector3i>
     {
         public int X;
         public int Y;
@@ -56,6 +56,35 @@ namespace CadRevealComposer.AlgebraExtensions
                         throw new IndexOutOfRangeException();
                 }
             }
+        }
+
+        public override bool Equals(object? obj)
+        {
+            return obj switch
+            {
+                Vector3i a => Equals(a),
+                _ => false
+            };
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y, Z);
+        }
+
+        public bool Equals(Vector3i other)
+        {
+            return X == other.X && Y == other.Y && Z == other.Z;
+        }
+
+        public static bool operator ==(Vector3i left, Vector3i right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Vector3i left, Vector3i right)
+        {
+            return !(left == right);
         }
     }
 }

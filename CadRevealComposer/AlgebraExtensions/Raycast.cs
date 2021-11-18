@@ -40,7 +40,7 @@ namespace CadRevealComposer.AlgebraExtensions
                 return false;
 
             intersectionPoint = ray.Origin + ray.Direction * t;
-            isFrontFace = planeNormal.AngleTo(ray.Direction) < Math.PI;
+            isFrontFace = planeNormal.AngleTo(ray.Direction) > Math.PI;
 
             // Triangle test
             var v1pi = intersectionPoint - triangle.V1;
