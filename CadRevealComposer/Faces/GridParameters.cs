@@ -36,6 +36,6 @@
         /// <summary>
         /// Distance between two voxel centers in one of the axis
         /// </summary>
-        public float GridIncrement { get; }
+        public float GridIncrement { get; init; }
     }
 }

@@ -6,6 +6,7 @@
     [Flags]
     public enum FaceFlags : byte
     {
+        None = 0, // DO NOT USE this one
         PositiveXVisible = 0b0000_0001,
         PositiveYVisible = 0b0000_0010,
         PositiveZVisible = 0b0000_0100,

@@ -32,7 +32,7 @@
         {
             var triangleCount = inputMesh.Triangles.Count / 3;
             var faces = new Dictionary<Vector3i, FaceDirection>();
-            for (var i = triangleCount; i < triangleCount; i++)
+            for (var i = 0; i < triangleCount; i++)
             {
                 var v1 = inputMesh.Vertices[inputMesh.Triangles[i * 3]];
                 var v2 = inputMesh.Vertices[inputMesh.Triangles[i * 3 + 1]];
@@ -40,38 +40,63 @@
                 var triangle = new Raycasting.Triangle(v1, v2, v3);
                 var bounds = GetBounds(triangle);
                 var (start, end) = GetPotentialGridPositions(bounds, gridParameters);
+
+                // X cast
+                for (var y = start.Y; y <= end.Y; y++)
+                {
+                    for (var z = start.Z; z <= end.Z; z++)
+                    {
+                        var (xRay, yRay, zRay) = GetRay(new Vector3i(0, y, z), gridParameters);
+                        var xResult = Raycasting.Raycast(xRay, triangle, out var xHitPosition,
+                            out var xFrontFace);
+                        if (xResult)
+                        {
+                            (var cell, FaceDirection direction) = HitResultToFaceIn(xHitPosition, xFrontFace,
+                                gridParameters, Axis.X);
+                            faces[cell] = (faces.ContainsKey(cell)
+                                ? faces[cell]
+                                : FaceDirection.None) | direction;
+                        }
+                    }
+                }
+
+                // Y cast
+                for (var x = start.X; x <= end.X; x++)
+                {
+                    for (var z = start.Z; z <= end.Z; z++)
+                    {
+                        var (xRay, yRay, zRay) = GetRay(new Vector3i(x, 0, z), gridParameters);
+                        var yResult = Raycasting.Raycast(yRay, triangle, out var yHitPosition,
+                            out var yFrontFace);
+                        // if y hit - get face position
+                        if (yResult)
+                        {
+                            (var cell, FaceDirection direction) = HitResultToFaceIn(yHitPosition, yFrontFace,
+                                gridParameters, Axis.Y);
+                            faces[cell] = (faces.ContainsKey(cell)
+                                ? faces[cell]
+                                : FaceDirection.None) | direction;
+                        }
+                    }
+                }
+
+                // z cast
                 for (var x = start.X; x <= end.X; x++)
                 {
                     for (var y = start.Y; y <= end.Y; y++)
                     {
-                        for (var z = start.Z; z <= end.Z; z++)
+                        var (xRay, yRay, zRay) = GetRay(new Vector3i(x, y, 0), gridParameters);
+                        var zResult = Raycasting.Raycast(zRay, triangle, out var zHitPosition, out var zFrontFace);
+                        if (zResult)
                         {
-                            var (xRay, yRay, zRay) = GetRay(new Vector3i(x, y, z), gridParameters);
-                            var xResult = Raycasting.Raycast(xRay, triangle, out var xHitPosition, out var xFrontFace);
-                            var yResult = Raycasting.Raycast(yRay, triangle, out var yHitPosition, out var yFrontFace);
-                            var zResult = Raycasting.Raycast(zRay, triangle, out var zHitPosition, out var zFrontFace);
-                            // if x hit - get face position
-                            if (xResult)
-                            {
-                                (var cell, FaceDirection direction) = HitResultToFaceIn(xHitPosition, xFrontFace, gridParameters, Axis.X);
-                                faces[cell] = faces.ContainsKey(cell) ? faces[cell] : FaceDirection.None | direction;
-                            }
-                            // if y hit - get face position
-                            if (yResult)
-                            {
-                                (var cell, FaceDirection direction) = HitResultToFaceIn(yHitPosition, yFrontFace, gridParameters, Axis.Y);
-                                faces[cell] = faces.ContainsKey(cell) ? faces[cell] : FaceDirection.None | direction;
-                            }
-                            // if z hit - get face position
-                            if (zResult)
-                            {
-                                (var cell, FaceDirection direction) = HitResultToFaceIn(zHitPosition, zFrontFace, gridParameters, Axis.Z);
-                                faces[cell] = faces.ContainsKey(cell) ? faces[cell] : FaceDirection.None | direction;
-                            }
+                            (var cell, FaceDirection direction) =
+                                HitResultToFaceIn(zHitPosition, zFrontFace, gridParameters, Axis.Z);
+                            faces[cell] = (faces.ContainsKey(cell) ? faces[cell] : FaceDirection.None) | direction;
                         }
                     }
                 }
             }
+
             return new ProtoGrid(gridParameters, faces);
         }
 

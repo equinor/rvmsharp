@@ -6,6 +6,7 @@
     [Flags]
     public enum CompressFlags : byte
     {
+        None = 0,
         PositiveXRepeatZ = 0b0000_0001,
         PositiveYRepeatZ = 0b0000_0010,
         PositiveZRepeatY = 0b0000_0100,
