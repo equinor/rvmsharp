@@ -10,16 +10,11 @@ namespace CadRevealComposer.Operations
     using System.Numerics;
     using Utils;
 
-    // TODO: facet group matching prioritize by cost instead of group of 300
-    // TODO: use RVM file bounding box as sector
-    // TODO: prioritize by discipline
-    // TODO: pad sector bounding boxes to control sector loading
-
     public static class SectorSplitter
     {
         private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
         private const int StartDepth = 1;
-        private const int SectorDrawCallBudget = 1000;
+        private const long SectorEstimatedByteSizeBudget = 3_000_000; // bytes
 
         public record ProtoSector(
             uint SectorId,
@@ -34,9 +29,10 @@ namespace CadRevealComposer.Operations
         private record Node(
             ulong NodeId,
             APrimitive[] Geometries,
-            int EstimatedDrawCalls,
+            long EstimatedByteSize,
             Vector3 BoundingBoxMin,
-            Vector3 BoundingBoxMax);
+            Vector3 BoundingBoxMax,
+            float Diagonal);
 
         public static IEnumerable<ProtoSector> SplitIntoSectors(
             APrimitive[] allGeometries,
@@ -56,12 +52,15 @@ namespace CadRevealComposer.Operations
                 .Select(g =>
                 {
                     var geometries = g.ToArray();
+                    var boundingBoxMin = geometries.GetBoundingBoxMin();
+                    var boundingBoxMax = geometries.GetBoundingBoxMax();
                     return new Node(
                         g.Key,
                         geometries,
-                        DrawCallEstimator.Estimate(geometries).EstimatedDrawCalls,
-                        geometries.GetBoundingBoxMin(),
-                        geometries.GetBoundingBoxMax());
+                        geometries.Sum(DrawCallEstimator.EstimateByteSize),
+                        boundingBoxMin,
+                        boundingBoxMax,
+                        Vector3.Distance(boundingBoxMin, boundingBoxMax));
                 })
                 .ToArray();
 
@@ -112,12 +111,13 @@ namespace CadRevealComposer.Operations
                 .Except(mainVoxelNodes)
                 .ToArray();
 
-            var drawCalls = mainVoxelNodes.Sum(node => node.EstimatedDrawCalls);
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, SectorDrawCallBudget - drawCalls).ToArray();
+            // fill main voxel according to budget
+            var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
+            var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, SectorEstimatedByteSizeBudget - estimatedByteSize).ToArray();
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = subVoxelNodes.Except(additionalMainVoxelNodesByBudget).ToArray();
 
-            var isLeaf = subVoxelNodes.Length == 0 || nodes.Sum(n => n.EstimatedDrawCalls) <= SectorDrawCallBudget;
+            var isLeaf = subVoxelNodes.Length == 0 || nodes.Sum(n => n.EstimatedByteSize) <= SectorEstimatedByteSizeBudget;
             if (isLeaf)
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
@@ -214,7 +214,7 @@ namespace CadRevealComposer.Operations
             var platformMaxY = nodes.Select(node => node.BoundingBoxMax.Y).OrderByDescending(x => x).Skip((int)(percentile * nodes.Length)).First();
             var platformMaxZ = nodes.Select(node => node.BoundingBoxMax.Z).OrderByDescending(x => x).Skip((int)(percentile * nodes.Length)).First();
 
-            // pad the 95 percentile bounding box, the idea is that objects near the edge of the platform should stay inside the bounding box
+            // pad the 99th percentile bounding box, the idea is that objects near the edge of the platform should stay inside the bounding box
             const int platformPadding = 5; // meters
             var bbMin = new Vector3(platformMinX - platformPadding, platformMinY - platformPadding, platformMinZ - platformPadding);
             var bbMax = new Vector3(platformMaxX + platformPadding, platformMaxY + platformPadding, platformMaxZ + platformPadding);
@@ -235,30 +235,21 @@ namespace CadRevealComposer.Operations
                 .ToArray();
         }
 
-        private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, int budget)
+        private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, long budget)
         {
             var nodesInPrioritizedOrder = nodes
-                .Select(node => new
-                {
-                    Node = node,
-                    node.EstimatedDrawCalls,
-                    Diagonal = Vector3.Distance(node.BoundingBoxMin, node.BoundingBoxMax)
-                })
                 .OrderByDescending(x => x.Diagonal);
 
             var budgetLeft = budget;
-            foreach (var item in nodesInPrioritizedOrder)
+            foreach (var node in nodesInPrioritizedOrder)
             {
-                if (budgetLeft < 1)
+                if (budgetLeft - node.EstimatedByteSize < 0)
                 {
                     yield break;
                 }
 
-                if (budgetLeft - item.EstimatedDrawCalls >= 0)
-                {
-                    budgetLeft -= item.EstimatedDrawCalls;
-                    yield return item.Node;
-                }
+                budgetLeft -= node.EstimatedByteSize;
+                yield return node;
             }
         }
 
