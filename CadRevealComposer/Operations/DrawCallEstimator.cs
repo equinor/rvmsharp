@@ -111,7 +111,7 @@ namespace CadRevealComposer.Operations
         /// </summary>
         /// <param name="primitive"></param>
         /// <returns></returns>
-        public static long GetByteSize(APrimitive primitive)
+        public static long EstimateByteSize(APrimitive primitive)
         {
             return primitive switch
             {
