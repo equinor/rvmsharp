@@ -21,7 +21,7 @@ namespace CadRevealComposer.AlgebraExtensions
             var v2v3 = triangle.V3 - triangle.V2;
             var v3v1 = triangle.V1 - triangle.V3;
             var planeNormal = Vector3.Cross(v1v2, v1v3);
-            if (planeNormal.LengthSquared() < 0.00001f) // TODO: arbitrary value
+            if (planeNormal.LengthSquared() < 0.0000000001f) // TODO: arbitrary value
                 return false; // Triangle is too small for raycast
             planeNormal = Vector3.Normalize(planeNormal);
 
@@ -40,17 +40,45 @@ namespace CadRevealComposer.AlgebraExtensions
                 return false;
 
             intersectionPoint = ray.Origin + ray.Direction * t;
-            isFrontFace = planeNormal.AngleTo(ray.Direction) > Math.PI;
+            isFrontFace = planeNormal.AngleTo(ray.Direction) > Math.PI / 2;
 
             // Triangle test
             var v1pi = intersectionPoint - triangle.V1;
             var v2pi = intersectionPoint - triangle.V2;
             var v3pi = intersectionPoint - triangle.V3;
-            var aboveV1V2 = (Vector3.Dot(Vector3.Normalize(Vector3.Cross(v1v2, v1pi)), planeNormal) >= 0.0);
-            var aboveV2V3 = (Vector3.Dot(Vector3.Normalize(Vector3.Cross(v2v3, v2pi)), planeNormal) >= 0.0);
-            var aboveV3V1 = (Vector3.Dot(Vector3.Normalize(Vector3.Cross(v3v1, v3pi)), planeNormal) >= 0.0);
+            // Check if intersection point is on any corner
+            if (v1pi.ApproximatelyEquals(Vector3.Zero) || v2pi.ApproximatelyEquals(Vector3.Zero) ||
+                v3pi.ApproximatelyEquals(Vector3.Zero))
+                return true;
 
+            // Check if intersection point is on any side
+            var v1v2Crossv1pi = Vector3.Cross(v1v2, v1pi);
+            var v2v3Crossv2pi = Vector3.Cross(v2v3, v2pi);
+            var v3v1Crossv3pi = Vector3.Cross(v3v1, v3pi);
 
+            // Check if intersection point is on any of the sides
+            if (v1v2Crossv1pi.ApproximatelyEquals(Vector3.Zero))
+            {
+                if ((triangle.V2 - intersectionPoint).AngleTo(v1v2).ApproximatelyEquals(0) &&
+                    v1pi.AngleTo(v1v2).ApproximatelyEquals(0))
+                    return true;
+            }
+            if (v2v3Crossv2pi.ApproximatelyEquals(Vector3.Zero))
+            {
+                if ((triangle.V3 - intersectionPoint).AngleTo(v2v3).ApproximatelyEquals(0) &&
+                    v2pi.AngleTo(v2v3).ApproximatelyEquals(0))
+                    return true;
+            }
+            if (v3v1Crossv3pi.ApproximatelyEquals(Vector3.Zero))
+            {
+                if ((triangle.V1 - intersectionPoint).AngleTo(v3v1).ApproximatelyEquals(0) &&
+                    v3pi.AngleTo(v3v1).ApproximatelyEquals(0))
+                    return true;
+            }
+
+            var aboveV1V2 = (Vector3.Dot(Vector3.Normalize(v1v2Crossv1pi), planeNormal) >= 0.0);
+            var aboveV2V3 = (Vector3.Dot(Vector3.Normalize(v2v3Crossv2pi), planeNormal) >= 0.0);
+            var aboveV3V1 = (Vector3.Dot(Vector3.Normalize(v3v1Crossv3pi), planeNormal) >= 0.0);
 
             return aboveV1V2 && aboveV2V3 && aboveV3V1;
         }

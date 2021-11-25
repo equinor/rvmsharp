@@ -64,6 +64,27 @@ namespace CadRevealComposer.Tests.Utils
             Assert.That(!hitResult);
         }
 
+        [Test]
+        public void RaycastInXFrontFace()
+        {
+            var rayOrigin = new Vector3(-10, 0, 0);
+            var rayDirection = new Vector3(1, 0, 0);
+            var triangle = new Raycasting.Triangle(
+                new Vector3(0, -5, -2),
+                new Vector3(0, 0, 2),
+                new Vector3(0, 5, -2)
+            );
+
+            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
+            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            LogResult(hitResult, intersectionPoint, isFrontFace);
+
+            Assert.That(hitResult);
+            Assert.That(isFrontFace);
+        }
+
+
+
         private static void LogResult(bool isHit, Vector3 hitPosition, bool isFrontFace)
         {
             Console.Write(isHit ? "Hit! " : "Miss! ");
