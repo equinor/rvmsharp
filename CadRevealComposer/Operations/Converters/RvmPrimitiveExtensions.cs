@@ -44,7 +44,8 @@
                 axisAlignedBoundingBox.Diagonal,
                 axisAlignedBoundingBox,
                 colors,
-                RotationDecomposed: rot.DecomposeQuaternion());
+                RotationDecomposed: rot.DecomposeQuaternion(),
+                rvmPrimitive);
         }
     }
 }

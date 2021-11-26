@@ -14,17 +14,23 @@
         public void SimpleCube()
         {
             var f3d = new SectorFaces(0, null, Vector3.Zero, Vector3.One * 30,
-                new FacesGrid(new GridParameters(2, 2, 2, Vector3.Zero, 5f),
+                new FacesGrid(new GridParameters(3, 3, 3, Vector3.Zero, 5f),
                     new []
                     {
-                        new Node(CompressFlags.HasColorOnEachCell, 1, 1, null,
+                        new Node(CompressFlags.None, 1, 1, Color.Red,
                             new []
                             {
-                                new Face(FaceFlags.PositiveXVisible | FaceFlags.PositiveYVisible,
-                                    0, 0, Color.Blue)
+                                new Face(FaceFlags.PositiveXVisible | FaceFlags.NegativeXVisible |
+                                         FaceFlags.PositiveYVisible | FaceFlags.NegativeYVisible |
+                                         FaceFlags.PositiveZVisible | FaceFlags.NegativeZVisible,
+                                    0, 0, Color.Blue),
+                                new Face(FaceFlags.PositiveXVisible | FaceFlags.NegativeXVisible |
+                                         FaceFlags.PositiveYVisible | FaceFlags.NegativeYVisible |
+                                         FaceFlags.PositiveZVisible | FaceFlags.NegativeZVisible,
+                                    0, 1, Color.Green)
                             })
                     }));
-            using var outputStream = File.Create(@"E:\gush\projects\echo\echo-web\reveal-master\examples\public\primitives\sector_0.f3d");
+            using var outputStream = File.Create(@"E:\gush\projects\cognite\reveal-master\examples\public\primitives\sector_0.f3d");
             F3dWriter.WriteSector(f3d, outputStream);
         }
 
