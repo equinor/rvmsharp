@@ -1,6 +1,7 @@
 namespace CadRevealComposer
 {
     using Configuration;
+    using Faces;
     using HierarchyComposer.Functions;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Abstractions;
@@ -49,10 +50,28 @@ namespace CadRevealComposer
             exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
         }
 
-        public static void WriteSceneFile(ImmutableArray<SectorInfo> sectors, ModelParameters parameters, DirectoryInfo outputDirectory, ulong maxTreeIndex)
+        public static void WriteSceneFile(ImmutableArray<SectorInfo> sectors, ModelParameters parameters,
+            DirectoryInfo outputDirectory, ulong maxTreeIndex, SectorFaces[] sectorFacesArray)
         {
-            static Sector FromSector(SectorInfo sector)
+            var dict = sectorFacesArray.ToDictionary(kvp => kvp.SectorId, kvp => kvp);
+            static Sector FromSector(SectorInfo sector, Dictionary<ulong, SectorFaces> dict, DirectoryInfo outputDirectory)
             {
+                FacesFile facesFile = null;
+                if (dict.TryGetValue(sector.SectorId, out var sectorFaces))
+                {
+                    facesFile = new FacesFile { QuadSize = sectorFaces.SectorContents.GridParameters.GridIncrement,
+                        FacesCount = sectorFaces.SectorContents.Nodes.Select(n => (long)n.Faces.Length).Sum(),
+                        FileName = $"sector_{sector.SectorId}.f3d",
+                        DownloadSize = new FileInfo(outputDirectory.FullName + $"/sector_{sector.SectorId}.f3d").Length,
+                        CoverageFactors = new CoverageFactors
+                        {
+                            Xy = 0.1f, // TODO
+                            Yz = 0.1f,
+                            Xz = 0.1f
+                        }
+                        };
+                }
+
                 return new Sector
                 {
                     Id = sector.SectorId,
@@ -70,7 +89,7 @@ namespace CadRevealComposer
                         FileName: sector.Filename,
                         DownloadSize: sector.DownloadSize,
                         PeripheralFiles: sector.PeripheralFiles),
-                    FacesFile = null, // Not implemented
+                    FacesFile = facesFile,
                     EstimatedTriangleCount = sector.EstimatedTriangleCount,
                     EstimatedDrawCallCount = sector.EstimatedDrawCallCount
                 };
@@ -85,7 +104,7 @@ namespace CadRevealComposer
                 SubRevisionId = -1,
                 MaxTreeIndex = maxTreeIndex,
                 Unit = "Meters",
-                Sectors = sectors.Select(FromSector).ToArray()
+                Sectors = sectors.Select(s => FromSector(s, dict, outputDirectory)).ToArray()
             };
 
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
