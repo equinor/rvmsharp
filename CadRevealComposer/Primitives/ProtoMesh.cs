@@ -11,7 +11,7 @@
 
     public record ProtoMeshFromFacetGroup(CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Ignore)]
-        RvmFacetGroup SourceMesh) : APrimitive(CommonPrimitiveProperties);
+        RvmFacetGroup SourceFacetGroup) : APrimitive(CommonPrimitiveProperties);
 
     public record ProtoMeshFromPyramid(CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Ignore)]

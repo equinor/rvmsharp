@@ -86,7 +86,7 @@ namespace CadRevealComposer
             const uint defaultInstancingThreshold = 300; // We should consider making this threshold dynamic. Value of 300 is picked arbitrary.
             uint instanceCandidateThreshold = modelParameters.InstancingThresholdOverride?.Value ?? defaultInstancingThreshold;
 
-            var sourceMeshes = protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray();
+            var sourceMeshes = protoMeshesFromFacetGroups.Select(x => x.SourceFacetGroup).ToArray();
             var facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(sourceMeshes, instanceCandidateThreshold)
                 .GroupBy(x => x.Value.template);
 
@@ -134,10 +134,10 @@ namespace CadRevealComposer
 
             var iMeshesTimer = Stopwatch.StartNew();
             var iMeshes = protoMeshesFromFacetGroups
-                .Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+                .Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceFacetGroup))
                 .Select(p =>
                 {
-                    var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceMesh];
+                    var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceFacetGroup];
                     var (triangleOffset, triangleCount) = offsetByTemplate[template];
                     if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
                     {
@@ -151,7 +151,7 @@ namespace CadRevealComposer
                         new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                             Vector3.One,
                             p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                            (Vector3.UnitZ, 0)),
+                            (Vector3.UnitZ, 0), p.SourcePrimitive),
                         instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
                         translation.Y, translation.Z,
                         rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
@@ -174,7 +174,7 @@ namespace CadRevealComposer
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                                 Vector3.One,
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0)),
+                                (Vector3.UnitZ, 0), p.SourcePrimitive),
                             instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
                             translation.Y, translation.Z,
                             rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
@@ -185,25 +185,25 @@ namespace CadRevealComposer
             var tMeshesTimer = Stopwatch.StartNew();
             var tMeshes = protoMeshesFromFacetGroups
                 .AsParallel()
-                .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+                .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceFacetGroup))
                 .Select(p =>
                     {
                         Mesh? mesh;
                         try
                         {
-                            mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue)!;
+                            mesh = TessellatorBridge.Tessellate(p.SourceFacetGroup, unusedTesValue)!;
                         }
                         catch (Exception e)
                         {
                             Console.Error.WriteLine(e);
-                            Console.WriteLine("Error caused by tessellating: " + p.SourceMesh);
+                            Console.WriteLine("Error caused by tessellating: " + p.SourceFacetGroup);
                             var fileName = $"treeIndex_{p.TreeIndex}.json";
                             var diagnosticsOutputDir = Path.Join(outputDirectory.FullName, "Failed");
                             // Ensure output folder exists.
                             Directory.CreateDirectory(diagnosticsOutputDir);
 
                             Console.WriteLine($"Writing Bad mesh to to file {fileName}");
-                            JsonUtils.JsonSerializeToFile(p.SourceMesh.Polygons,
+                            JsonUtils.JsonSerializeToFile(p.SourceFacetGroup.Polygons,
                                 Path.Join(outputDirectory.FullName, "Failed", fileName));
                             mesh = new Mesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
                         }
@@ -211,14 +211,14 @@ namespace CadRevealComposer
                         if (mesh.Vertices.Count == 0)
                         {
                             Console.WriteLine("WARNING: Could not tessellate facet group! " +
-                                              p.SourceMesh.Polygons.Length);
+                                              p.SourceFacetGroup.Polygons.Length);
                         }
                         var triangleCount = mesh.Triangles.Count / 3;
                         return new TriangleMesh(
                                 new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
                                     Vector3.Zero, Quaternion.Identity, Vector3.One,
                                     p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                    (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                                    (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
                     }
                 )
                 .Concat(protoMeshesFromPyramids
@@ -237,7 +237,7 @@ namespace CadRevealComposer
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
                                 Vector3.Zero, Quaternion.Identity, Vector3.One,
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                                (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
                     }))
                 .Where(t => t.TempTessellatedMesh!.Vertices.Count > 0)
                 .AsParallel()
@@ -266,6 +266,10 @@ namespace CadRevealComposer
             Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
+            var faceSectors = sectors.AsParallel().Select(s => FacesConverter.ConvertSector(s, outputDirectory.FullName)).ToArray();
+            Console.WriteLine("Converted into sectors in " + stopwatch.Elapsed);
+            stopwatch.Restart();
+
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
@@ -273,7 +277,7 @@ namespace CadRevealComposer
             stopwatch.Restart();
 
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
+            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex, faceSectors);
 
             Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
             stopwatch.Restart();

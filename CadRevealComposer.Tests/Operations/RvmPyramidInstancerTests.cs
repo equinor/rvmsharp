@@ -26,7 +26,7 @@
 
             var props = new CommonPrimitiveProperties(
                 1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 0, new RvmBoundingBox(Vector3.One, Vector3.One),
-                Color.Aqua, (Vector3.One, 0));
+                Color.Aqua, (Vector3.One, 0), null!);
 
             // Mark: These two input pyramids will be identical as they are Records with identical values.
             ProtoMeshFromPyramid[] protoPyramids = new[]
@@ -75,7 +75,7 @@
                 }; // Change proportions of a dimension (Should not match)
             var arbitraryProps = new CommonPrimitiveProperties(0, 1, Vector3.Zero, Quaternion.Identity, Vector3.One,
                 1,
-                _throwawayBoundingBox, Color.Aqua, (Vector3.One, 0));
+                _throwawayBoundingBox, Color.Aqua, (Vector3.One, 0), null!);
             var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }.Select(rvmPyramid =>
                 new ProtoMeshFromPyramid(arbitraryProps, rvmPyramid)).ToArray();
 

@@ -21,7 +21,8 @@ namespace CadRevealComposer.Primitives
         float AxisAlignedDiagonal,
         RvmBoundingBox AxisAlignedBoundingBox,
         Color Color,
-        (Vector3 Normal, float RotationAngle) RotationDecomposed);
+        (Vector3 Normal, float RotationAngle) RotationDecomposed,
+        RvmPrimitive SourcePrimitive);
 
     public abstract record APrimitive(
         [property: I3df(I3dfAttribute.AttributeType.Null)]
@@ -40,6 +41,8 @@ namespace CadRevealComposer.Primitives
         float CenterZ,
         [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
         RvmBoundingBox AxisAlignedBoundingBox,
+        [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
+        RvmPrimitive SourcePrimitive,
         [property: JsonIgnore,
                    Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true),
                    I3df(I3dfAttribute.AttributeType.Ignore)]
@@ -60,7 +63,8 @@ namespace CadRevealComposer.Primitives
                 commonPrimitiveProperties.Position.X,
                 commonPrimitiveProperties.Position.Y,
                 commonPrimitiveProperties.Position.Z,
-                commonPrimitiveProperties.AxisAlignedBoundingBox)
+                commonPrimitiveProperties.AxisAlignedBoundingBox,
+                commonPrimitiveProperties.SourcePrimitive)
         {
         }
 
@@ -73,7 +77,7 @@ namespace CadRevealComposer.Primitives
             PrimitiveCounter.pc++;
             var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
             (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
-                (Vector3 normal, float rotationAngle)) = commonPrimitiveProperties;
+                (Vector3 normal, float rotationAngle), RvmPrimitive _) = commonPrimitiveProperties;
 
             switch (rvmPrimitive)
             {

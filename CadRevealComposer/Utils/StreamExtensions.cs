@@ -8,7 +8,7 @@ namespace CadRevealComposer.Writers
     using System.Numerics;
     using System.Runtime.CompilerServices;
 
-    public static class ByteWriterUtils
+    public static class StreamExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void WriteUint16(this Stream stream, ushort value)
@@ -97,6 +97,22 @@ namespace CadRevealComposer.Writers
                 stream.WriteByte(c.B);
                 stream.WriteByte(c.A);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteVector3(this Stream stream, Vector3 value)
+        {
+            stream.WriteFloat(value.X);
+            stream.WriteFloat(value.Y);
+            stream.WriteFloat(value.Z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void WriteColorRgb(this Stream stream, Color color)
+        {
+            stream.WriteByte(color.R);
+            stream.WriteByte(color.G);
+            stream.WriteByte(color.B);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
