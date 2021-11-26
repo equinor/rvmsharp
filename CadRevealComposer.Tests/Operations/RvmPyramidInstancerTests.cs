@@ -19,7 +19,7 @@
 
             var props = new CommonPrimitiveProperties(
                 1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 0, new RvmBoundingBox(Vector3.One, Vector3.One),
-                Color.Aqua, (Vector3.One, 0));
+                Color.Aqua, (Vector3.One, 0), null!);
 
             // Mark: These two input pyramids will be identical as they are Records with identical values.
             ProtoMeshFromPyramid[] protoPyramids = new []{new ProtoMeshFromPyramid(props, rvmPyramid), new ProtoMeshFromPyramid(props, rvmPyramid)};

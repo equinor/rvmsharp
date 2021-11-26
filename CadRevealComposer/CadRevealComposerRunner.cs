@@ -66,8 +66,7 @@ namespace CadRevealComposer
                 .AsOrdered()
                 .SelectMany(x => x.RvmGeometries.Select(primitive =>
                     APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
-                        primitive)))
-                .WhereNotNull()
+                        primitive))).WhereNotNull()
                 .ToArray();
 
             Console.WriteLine("Primitives converted in " + stopwatch.Elapsed);
@@ -84,7 +83,7 @@ namespace CadRevealComposer
             var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
 
             var facetGroupInstancingResult = RvmFacetGroupMatcher
-                .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceMesh).ToArray()).GroupBy(x => x.Value.template);
+                .MatchAll(protoMeshesFromFacetGroups.Select(x => x.SourceFacetGroup).ToArray()).GroupBy(x => x.Value.template);
 
             Console.WriteLine("Facet groups matched in " + stopwatch.Elapsed);
             stopwatch.Restart();
@@ -122,10 +121,10 @@ namespace CadRevealComposer
             Console.WriteLine("Composed instance dictionaries in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var iMeshes = protoMeshesFromFacetGroups.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+            var iMeshes = protoMeshesFromFacetGroups.Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceFacetGroup))
                 .Select(p =>
                 {
-                    var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceMesh];
+                    var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceFacetGroup];
                     var (triangleOffset, triangleCount) = offsetByTemplate[template];
                     if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
                     {
@@ -139,7 +138,7 @@ namespace CadRevealComposer
                         new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                             Vector3.One,
                             p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                            (Vector3.UnitZ, 0)),
+                            (Vector3.UnitZ, 0), p.SourcePrimitive),
                         instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
                         translation.Y, translation.Z,
                         rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
@@ -161,7 +160,7 @@ namespace CadRevealComposer
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                                 Vector3.One,
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0)),
+                                (Vector3.UnitZ, 0), p.SourcePrimitive),
                             instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
                             translation.Y, translation.Z,
                             rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
@@ -169,10 +168,10 @@ namespace CadRevealComposer
                 .ToArray();
 
             var tMeshes = protoMeshesFromFacetGroups
-                .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceMesh))
+                .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceFacetGroup))
                 .Select(p =>
                     {
-                        var mesh = TessellatorBridge.Tessellate(p.SourceMesh, unusedTesValue);
+                        var mesh = TessellatorBridge.Tessellate(p.SourceFacetGroup, unusedTesValue);
                         if (mesh!.Vertices.Count == 0)
                         {
                             Console.WriteLine("WARNING: Could not tessellate facet group!");
@@ -182,7 +181,7 @@ namespace CadRevealComposer
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                                 Vector3.One,
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                                (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
                     }
                 ).Concat(protoMeshesFromPyramids
                     .Where(p => !instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
@@ -198,7 +197,7 @@ namespace CadRevealComposer
                             new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                                 Vector3.One,
                                 p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0)), 0, (ulong)triangleCount, mesh);
+                                (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
                     })).Where(t => t.TempTessellatedMesh!.Vertices.Count > 0).ToArray();
 
             geometries = geometries.Where(g => g is not ProtoMesh).Concat(iMeshes).Concat(tMeshes).ToArray();
@@ -217,6 +216,8 @@ namespace CadRevealComposer
             Console.WriteLine("Split into sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
+            var faceSectors = sectors.AsParallel().Select(s => FacesConverter.ConvertSector(s, outputDirectory.FullName)).ToArray();
+            Console.WriteLine("Converted into sectors in " + stopwatch.Elapsed);
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
@@ -224,7 +225,7 @@ namespace CadRevealComposer
             stopwatch.Restart();
 
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex);
+            SceneCreator.WriteSceneFile(sectorsWithDownloadSize, modelParameters, outputDirectory, treeIndexGenerator.CurrentMaxGeneratedIndex, faceSectors);
 
             Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
             stopwatch.Restart();

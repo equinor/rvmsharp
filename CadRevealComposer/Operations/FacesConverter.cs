@@ -10,13 +10,15 @@
     using System.IO;
     using System.Linq;
     using System.Numerics;
+    using Utils;
+    using Writers;
 
     public static class FacesConverter
     {
 
         public record ProtoGrid(GridParameters GridParameters, IReadOnlyDictionary<Vector3i, FaceDirection> Faces);
 
-        public record ProtoFace(FaceDirection FaceDirection, Color FaceColor);
+        public record ProtoFaceNode(ulong TreeIndex, ulong NodeId, Color Color, ProtoGrid Faces);
 
         [Flags]
         public enum FaceDirection
@@ -80,7 +82,7 @@
             }
         }
 
-        public record HitSave(Vector3i Cell, FaceDirection Direction, FaceHitGrade Area, Vector3 HitPosition, bool Front);
+        public record HitSave(int triangle, Axis Axis, Vector3i Cell, FaceDirection Direction, FaceHitGrade Area, Vector3 HitPosition, bool Front);
 
         public static Raycasting.Triangle[] CollectTriangles(Mesh mesh)
         {
@@ -97,10 +99,15 @@
             return result;
         }
 
+#if DUMP_FACES
+        private static List<HitSave> Hits = new();
+        private static List<LabeledRay> Rays = new();
+        private record LabeledRay(Axis Axis, Vector3i Cell, FaceHitGrade Grade, Raycasting.Ray Ray);
+#endif
+
 
         public static ProtoGrid Convert(Raycasting.Triangle[] triangles, GridParameters gridParameters)
         {
-            File.WriteAllText(@"E:\gush\projects\FacesFiles\Assets\StreamingAssets\gridParameters.json", JsonConvert.SerializeObject(gridParameters, Formatting.Indented));
             var triangleCount = triangles.Length;
             var faces = new Dictionary<Vector3i, Dictionary<FaceDirection, FaceHitGrade>>();
             var hitCount = 0;
@@ -167,7 +174,12 @@
                     return (kvp.Key, result);
                 }).Where(kvp => kvp.result != FaceDirection.None)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.result);
+#if DUMP_FACES
             File.WriteAllText("E://gush//projects//FacesFiles//Assets//StreamingAssets//protogrid.json", JsonConvert.SerializeObject(newFaces));
+            File.WriteAllText("E://gush//projects//FacesFiles//Assets//StreamingAssets//hits.json", JsonConvert.SerializeObject(Hits));
+            File.WriteAllText(@"E:\gush\projects\FacesFiles\Assets\StreamingAssets\gridParameters.json", JsonConvert.SerializeObject(gridParameters, Formatting.Indented));
+            JsonUtils.JsonSerializeToFile(Rays, "E://gush//projects//FacesFiles//Assets//StreamingAssets//rays.json");
+#endif
             return new ProtoGrid(gridParameters, newFaces);
         }
 
@@ -178,8 +190,6 @@
             {
                 var hitGrade = (FaceHitGrade)(1 << k);
                 var adjustedRay = GetAdjustedRay(ray, hitGrade, gridParameters, axis);
-                //File.WriteAllText($"E://gush//projects//FacesFiles//Assets//StreamingAssets//ray_{axis}_{x}_{y}_{z}_{hitGrade}.json",
-                    //JsonConvert.SerializeObject(adjustedRay));
                 var hitResult = Raycasting.Raycast(adjustedRay, triangle, out var hitPosition,
                     out var frontFace);
                 if (hitResult)
@@ -199,10 +209,10 @@
                     }
 
                     face[direction] = oldHitGrade | hitGrade;
-
-                    /*File.WriteAllText(
-                        $"E://gush//projects//FacesFiles//Assets//StreamingAssets//hit_{i}_{axis}_{y}_{z}_{hitGrade}.json",
-                        JsonConvert.SerializeObject(new HitSave(cell, direction, hitGrade, hitPosition, frontFace)));*/
+#if DUMP_FACES
+                    Rays.Add(new LabeledRay(axis, new Vector3i(x, y, z), hitGrade, adjustedRay));
+                    Hits.Add(new HitSave(i, axis, cell, direction, hitGrade, hitPosition, frontFace));
+#endif
                 }
             }
 
@@ -219,7 +229,7 @@
         private static (Vector3i cell, FaceDirection direction) HitResultToFaceIn(Vector3 hitPosition, bool isFrontFace, GridParameters grid, Axis axis)
         {
             var cell = PositionToCell(hitPosition, grid);
-            var center = grid.GridOrigin + cell * grid.GridIncrement;
+            var center = grid.GridOrigin + (cell + Vector3i.One) * grid.GridIncrement;
             var isHigh = new[]{center.X < hitPosition.X,center.Y < hitPosition.Y,center.Z < hitPosition.Z};
             var lowFaces = new[] { FaceDirection.Xm, FaceDirection.Ym, FaceDirection.Zm };
             var highFaces = new[] { FaceDirection.Xp, FaceDirection.Yp, FaceDirection.Zp };
@@ -241,8 +251,8 @@
 
         private static (Raycasting.Ray xRay, Raycasting.Ray yRay, Raycasting.Ray zRay) GetRay(Vector3i target, GridParameters grid)
         {
-            var newTarget = grid.GridOrigin + Vector3.One * new Vector3(target.X, target.Y, target.Z) * grid.GridIncrement;
-            var newOrigin = grid.GridOrigin - grid.GridIncrement * Vector3.One;
+            var newTarget = grid.GridOrigin + (Vector3.One + new Vector3(target.X, target.Y, target.Z)) * grid.GridIncrement;
+            var newOrigin = grid.GridOrigin;
             var xRay = new Raycasting.Ray(new Vector3(newOrigin.X, newTarget.Y, newTarget.Z), Vector3.UnitX);
             var yRay = new Raycasting.Ray(new Vector3(newTarget.X, newOrigin.Y, newTarget.Z), Vector3.UnitY);
             var zRay = new Raycasting.Ray(new Vector3(newTarget.X, newTarget.Y, newOrigin.Z), Vector3.UnitZ);
@@ -258,7 +268,7 @@
 
         private static Vector3i PositionToCell(Vector3 position, GridParameters grid)
         {
-            var startF = (position - (grid.GridOrigin - Vector3.One * grid.GridIncrement / 2)) /
+            var startF = (position - (grid.GridOrigin + Vector3.One * grid.GridIncrement / 2)) /
                          grid.GridIncrement;
             return new Vector3i((int)MathF.Floor(startF.X), (int)MathF.Floor(startF.Y), (int)MathF.Floor(startF.Z));
         }
@@ -268,6 +278,73 @@
             var min = Vector3.Min(triangle.V1, Vector3.Min(triangle.V2, triangle.V3));
             var max = Vector3.Max(triangle.V1, Vector3.Max(triangle.V2, triangle.V3));
             return new Raycasting.Bounds(min, max);
+        }
+
+        public static SectorFaces ConvertSector(SectorSplitter.ProtoSector protoSector, string outputDirectoryFullName)
+        {
+            var groupedGeometry = protoSector.Geometries.GroupBy(g => g.TreeIndex);
+            var protoNodes = new List<ProtoFaceNode>();
+            var bounds = new Raycasting.Bounds(protoSector.BoundingBox.Min, protoSector.BoundingBox.Max);
+            var size = bounds.Size;
+            var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
+            var increment = minDim / 50;
+            var gridSizeX = (uint)(Math.Ceiling(size.X / increment) + 1);
+            var gridSizeY = (uint)(Math.Ceiling(size.Y / increment) + 1);
+            var gridSizeZ = (uint)(Math.Ceiling(size.Z / increment) + 1);
+            var gridOrigin = bounds.Min - Vector3.One * increment / 2;
+            var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
+            foreach (var group in groupedGeometry)
+            {
+                var geometries = group.ToArray();
+                var treeIndex = group.Key;
+                var nodeId = geometries.First().NodeId;
+                var meshesWithColors = geometries.Select(g => (g.SourcePrimitive, g.Color)).Select(mc => (TessellatorBridge.Tessellate(mc.SourcePrimitive, 0.01f), mc.Color)).ToArray();
+                var singleColor = meshesWithColors.Select(mc => mc.Color).Distinct().Count() == 1;
+                // TODO: support for multiple colors
+                var color = meshesWithColors.Select(mc => mc.Color).First();
+                var triangles = meshesWithColors.Select(mc => mc.Item1).WhereNotNull().SelectMany(FacesConverter.CollectTriangles).ToArray();
+                var protoGrid = FacesConverter.Convert(triangles, grid);
+                protoNodes.Add(new ProtoFaceNode(treeIndex, nodeId, color, protoGrid));
+            }
+
+            return ExportFaceSector(protoSector, protoNodes, grid, outputDirectoryFullName + $"/sector_{protoSector.SectorId}.f3d");
+        }
+
+        private static SectorFaces ExportFaceSector(SectorSplitter.ProtoSector protoSector, List<ProtoFaceNode> protoNodes, GridParameters grid, string outputFilename)
+        {
+            var sector = new SectorFaces(protoSector.SectorId, protoSector.ParentSectorId, protoSector.BoundingBox.Min,
+                protoSector.BoundingBox.Max,
+
+                new FacesGrid(
+                    grid,
+                    protoNodes.Select(pn =>
+                        new Node(CompressFlags.IndexIsLong, pn.NodeId, pn.TreeIndex, pn.Color,
+                            pn.Faces.Faces.Select(f =>
+                                new Face(ConvertFaceFlags(f.Value), 0, VectorToIndex(f.Key, grid),
+                                    null)).ToArray())
+                    ).ToArray()));
+            using var output = File.OpenWrite(outputFilename);
+            F3dWriter.WriteSector(sector, output);
+            return sector;
+        }
+
+        public static FaceFlags ConvertFaceFlags(FacesConverter.FaceDirection direction)
+        {
+            if (direction == FacesConverter.FaceDirection.None)
+                throw new ArgumentException("Must contain at least one face");
+            var result = FaceFlags.None;
+            if (direction.HasFlag(FacesConverter.FaceDirection.Xp)) result |= FaceFlags.PositiveXVisible;
+            if (direction.HasFlag(FacesConverter.FaceDirection.Yp)) result |= FaceFlags.PositiveYVisible;
+            if (direction.HasFlag(FacesConverter.FaceDirection.Zp)) result |= FaceFlags.PositiveZVisible;
+            if (direction.HasFlag(FacesConverter.FaceDirection.Xm)) result |= FaceFlags.NegativeXVisible;
+            if (direction.HasFlag(FacesConverter.FaceDirection.Ym)) result |= FaceFlags.NegativeYVisible;
+            if (direction.HasFlag(FacesConverter.FaceDirection.Zm)) result |= FaceFlags.NegativeZVisible;
+            return result;
+        }
+
+        public static ulong VectorToIndex(Vector3i v, GridParameters gridParameters)
+        {
+            return (ulong)(v.X + (gridParameters.GridSizeX - 1) * v.Y + (gridParameters.GridSizeX - 1) * (gridParameters.GridSizeY - 1) * v.Z);
         }
     }
 }

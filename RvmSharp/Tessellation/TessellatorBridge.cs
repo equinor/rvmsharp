@@ -404,7 +404,7 @@ namespace RvmSharp.Tessellation
                 TessellationHelpers.SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
                     scale, segments_l),
                 TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
-            Debug.Assert(error <= tolerance);
+            //Debug.Assert(error <= tolerance);
 
             var samples_l = segments_l + 1; // Assumed to be open, add extra sample
             var samples_s = segments_s; // Assumed to be closed

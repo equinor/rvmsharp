@@ -10,7 +10,10 @@ namespace CadRevealComposer.AlgebraExtensions
 
         public record Triangle(Vector3 V1, Vector3 V2, Vector3 V3);
 
-        public record Bounds(Vector3 Min, Vector3 Max);
+        public record Bounds(Vector3 Min, Vector3 Max)
+        {
+            public Vector3 Size => Max - Min;
+        }
 
         public static bool Raycast(Ray ray, Triangle triangle, out Vector3 intersectionPoint, out bool isFrontFace)
         {

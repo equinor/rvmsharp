@@ -6,6 +6,8 @@ namespace CadRevealComposer.AlgebraExtensions
     // ReSharper disable once InconsistentNaming
     public struct Vector3i : IEquatable<Vector3i>
     {
+        public static Vector3i One => new(1, 1, 1);
+
         public int X;
         public int Y;
         public int Z;
