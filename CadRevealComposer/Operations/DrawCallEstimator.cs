@@ -105,5 +105,53 @@ namespace CadRevealComposer.Operations
 
             return (estimatedTriangleCount, estimatedDrawCallCount);
         }
+
+        /// <summary>
+        /// Based on the knowledge of I3dWriter and ObjExporter.
+        /// </summary>
+        /// <param name="primitive"></param>
+        /// <returns></returns>
+        public static long EstimateByteSize(APrimitive primitive)
+        {
+            return primitive switch
+            {
+                Box => 11 * sizeof(ulong),
+                Circle => 8 * sizeof(ulong),
+                ClosedCone => 10 * sizeof(ulong),
+                ClosedCylinder => 9 * sizeof(ulong),
+                ClosedEccentricCone => 11 * sizeof(ulong),
+                ClosedEllipsoidSegment => 10 * sizeof(ulong),
+                ClosedExtrudedRingSegment => 12 * sizeof(ulong),
+                ClosedGeneralCone => 16 * sizeof(ulong),
+                ClosedGeneralCylinder => 15 * sizeof(ulong),
+                ClosedSphericalSegment => 9 * sizeof(ulong),
+                ClosedTorusSegment => 11 * sizeof(ulong),
+                Ellipsoid => 9 * sizeof(ulong),
+                ExtrudedRing => 10 * sizeof(ulong),
+                Nut => 10 * sizeof(ulong),
+                OpenCone => 10 * sizeof(ulong),
+                OpenCylinder => 9 * sizeof(ulong),
+                OpenEccentricCone => 11 * sizeof(ulong),
+                OpenEllipsoidSegment => 10 * sizeof(ulong),
+                OpenExtrudedRingSegment => 12 * sizeof(ulong),
+                OpenGeneralCone => 16 * sizeof(ulong),
+                OpenGeneralCylinder => 15 * sizeof(ulong),
+                OpenSphericalSegment => 9 * sizeof(ulong),
+                OpenTorusSegment => 11 * sizeof(ulong),
+                Ring => 9 * sizeof(ulong),
+                SolidClosedGeneralCone => 16 * sizeof(ulong),
+                SolidClosedGeneralCylinder => 15 * sizeof(ulong),
+                SolidOpenGeneralCone => 16 * sizeof(ulong),
+                SolidOpenGeneralCylinder => 15 * sizeof(ulong),
+                Sphere => 7 * sizeof(ulong),
+                Torus => 9 * sizeof(ulong),
+                InstancedMesh => 20 * sizeof(ulong),
+                TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.TriangleCount * 6 * sizeof(float),
+                ProtoMesh => 0,
+                ProtoMeshFromFacetGroup => 0,
+                ProtoMeshFromPyramid => 0,
+                _ => throw new NotImplementedException()
+            };
+        }
     }
 }
