@@ -13,14 +13,14 @@ namespace CadRevealComposer.Tests.Utils
         {
             var rayOrigin = new Vector3(0, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
-            var triangle = new Raycasting.Triangle(
+            var triangle = new Triangle(
                 new Vector3(-5, -5, 2),
                 new Vector3(5, 0, 2),
                 new Vector3(0, 5, 2)
             );
 
-            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            var ray = new Ray(rayOrigin, rayDirection);
+            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);
@@ -32,14 +32,14 @@ namespace CadRevealComposer.Tests.Utils
         {
             var rayOrigin = new Vector3(0, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
-            var triangle = new Raycasting.Triangle(
+            var triangle = new Triangle(
                 new Vector3(0, 5, 2),
                 new Vector3(5, 0, 2),
                 new Vector3(-5, -5, 2)
             );
 
-            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            var ray = new Ray(rayOrigin, rayDirection);
+            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);
@@ -51,14 +51,14 @@ namespace CadRevealComposer.Tests.Utils
         {
             var rayOrigin = new Vector3(10, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
-            var triangle = new Raycasting.Triangle(
+            var triangle = new Triangle(
                 new Vector3(-5, -5, 2),
                 new Vector3(5, 0, 2),
                 new Vector3(0, 5, 2)
             );
 
-            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            var ray = new Ray(rayOrigin, rayDirection);
+            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(!hitResult);
@@ -69,14 +69,14 @@ namespace CadRevealComposer.Tests.Utils
         {
             var rayOrigin = new Vector3(-10, 0, 0);
             var rayDirection = new Vector3(1, 0, 0);
-            var triangle = new Raycasting.Triangle(
+            var triangle = new Triangle(
                 new Vector3(0, -5, -2),
                 new Vector3(0, 0, 2),
                 new Vector3(0, 5, -2)
             );
 
-            var ray = new Raycasting.Ray(rayOrigin, rayDirection);
-            var hitResult = Raycasting.Raycast(ray, triangle, out var intersectionPoint, out var isFrontFace);
+            var ray = new Ray(rayOrigin, rayDirection);
+            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);

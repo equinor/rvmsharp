@@ -55,7 +55,7 @@
             Center = 1 << 8,
         }
 
-        private static Raycasting.Ray GetAdjustedRay(Raycasting.Ray rayIn, FaceHitLocation location, GridParameters gridParameters, Axis direction)
+        private static Ray GetAdjustedRay(Ray rayIn, FaceHitLocation location, GridParameters gridParameters, Axis direction)
         {
             var (north, east) = direction switch
             {
@@ -65,49 +65,37 @@
                 _ => throw new ArgumentException()
             };
             var multiplier = gridParameters.GridIncrement / 3;
-            switch (location)
+            return location switch
             {
-                case FaceHitLocation.North:
-                    return rayIn with { Origin = rayIn.Origin + north * multiplier};
-                case FaceHitLocation.NorthEast:
-                    return rayIn with { Origin = rayIn.Origin + (north + east) * multiplier};
-                case FaceHitLocation.East:
-                    return rayIn with { Origin = rayIn.Origin + east * multiplier};
-                case FaceHitLocation.SouthEast:
-                    return rayIn with { Origin = rayIn.Origin + (-north + east) * multiplier};
-                case FaceHitLocation.South:
-                    return rayIn with { Origin = rayIn.Origin - north * multiplier};
-                case FaceHitLocation.SouthWest:
-                    return rayIn with { Origin = rayIn.Origin - (north + east) * multiplier};
-                case FaceHitLocation.West:
-                    return rayIn with { Origin = rayIn.Origin - east * multiplier};
-                case FaceHitLocation.NorthWest:
-                    return rayIn with { Origin = rayIn.Origin + (north - east) * multiplier};
-                case FaceHitLocation.Center:
-                    return rayIn;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(location), location, null);
-            }
+                FaceHitLocation.North => rayIn with { Origin = rayIn.Origin + north * multiplier },
+                FaceHitLocation.NorthEast => rayIn with { Origin = rayIn.Origin + (north + east) * multiplier },
+                FaceHitLocation.East => rayIn with { Origin = rayIn.Origin + east * multiplier },
+                FaceHitLocation.SouthEast => rayIn with { Origin = rayIn.Origin + (-north + east) * multiplier },
+                FaceHitLocation.South => rayIn with { Origin = rayIn.Origin - north * multiplier },
+                FaceHitLocation.SouthWest => rayIn with { Origin = rayIn.Origin - (north + east) * multiplier },
+                FaceHitLocation.West => rayIn with { Origin = rayIn.Origin - east * multiplier },
+                FaceHitLocation.NorthWest => rayIn with { Origin = rayIn.Origin + (north - east) * multiplier },
+                FaceHitLocation.Center => rayIn,
+                _ => throw new ArgumentOutOfRangeException(nameof(location), location, null)
+            };
         }
 
-        public record HitSave(int triangle, Axis Axis, Vector3i Cell, VisibleSide Direction, FaceHitLocation Area, Vector3 HitPosition, bool Front);
-
-        public static Raycasting.Triangle[] CollectTriangles(Mesh mesh)
+        public static Triangle[] CollectTriangles(Mesh mesh)
         {
             var triangleCount = mesh.Triangles.Count / 3;
-            var result = new Raycasting.Triangle[triangleCount];
+            var result = new Triangle[triangleCount];
             for (var i = 0; i < triangleCount; i++)
             {
                 var v1 = mesh.Vertices[mesh.Triangles[i * 3]];
                 var v2 = mesh.Vertices[mesh.Triangles[i * 3 + 1]];
                 var v3 = mesh.Vertices[mesh.Triangles[i * 3 + 2]];
-                result[i] = new Raycasting.Triangle(v1, v2, v3);
+                result[i] = new Triangle(v1, v2, v3);
             }
 
             return result;
         }
 
-        public static ProtoGrid Convert(Raycasting.Triangle[] triangles, GridParameters gridParameters)
+        public static ProtoGrid Convert(Triangle[] triangles, GridParameters gridParameters)
         {
             var triangleCount = triangles.Length;
             var faces = new Dictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>>();
@@ -177,14 +165,14 @@
             return new ProtoGrid(gridParameters, newFaces);
         }
 
-        private static int LolPleaseRenameMe(GridParameters gridParameters, Raycasting.Ray ray, Axis axis, Raycasting.Triangle triangle,
+        private static int LolPleaseRenameMe(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
             int hitCount, IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
         {
             for (var k = 0; k < 9; k++)
             {
                 var hitGrade = (FaceHitLocation)(1 << k);
                 var adjustedRay = GetAdjustedRay(ray, hitGrade, gridParameters, axis);
-                var hitResult = Raycasting.Raycast(adjustedRay, triangle, out var hitPosition,
+                var hitResult = adjustedRay.Raycast(triangle, out var hitPosition,
                     out var frontFace);
                 if (hitResult)
                 {
@@ -239,17 +227,17 @@
         }
 
 
-        private static (Raycasting.Ray xRay, Raycasting.Ray yRay, Raycasting.Ray zRay) GetRay(Vector3i target, GridParameters grid)
+        private static (Ray xRay, Ray yRay, Ray zRay) GetRay(Vector3i target, GridParameters grid)
         {
             var newTarget = grid.GridOrigin + (Vector3.One + new Vector3(target.X, target.Y, target.Z)) * grid.GridIncrement;
             var newOrigin = grid.GridOrigin;
-            var xRay = new Raycasting.Ray(new Vector3(newOrigin.X, newTarget.Y, newTarget.Z), Vector3.UnitX);
-            var yRay = new Raycasting.Ray(new Vector3(newTarget.X, newOrigin.Y, newTarget.Z), Vector3.UnitY);
-            var zRay = new Raycasting.Ray(new Vector3(newTarget.X, newTarget.Y, newOrigin.Z), Vector3.UnitZ);
+            var xRay = new Ray(new Vector3(newOrigin.X, newTarget.Y, newTarget.Z), Vector3.UnitX);
+            var yRay = new Ray(new Vector3(newTarget.X, newOrigin.Y, newTarget.Z), Vector3.UnitY);
+            var zRay = new Ray(new Vector3(newTarget.X, newTarget.Y, newOrigin.Z), Vector3.UnitZ);
             return (xRay, yRay, zRay);
         }
 
-        private static (Vector3i start, Vector3i end) GetPotentialGridPositions(Raycasting.Bounds bounds, GridParameters gridParameters)
+        private static (Vector3i start, Vector3i end) GetPotentialGridPositions(Bounds bounds, GridParameters gridParameters)
         {
             var start = PositionToCell(bounds.Min, gridParameters);
             var end = PositionToCell(bounds.Max, gridParameters);
@@ -263,18 +251,18 @@
             return new Vector3i((int)MathF.Floor(startF.X), (int)MathF.Floor(startF.Y), (int)MathF.Floor(startF.Z));
         }
 
-        private static Raycasting.Bounds GetBounds(Raycasting.Triangle triangle)
+        private static Bounds GetBounds(Triangle triangle)
         {
             var min = Vector3.Min(triangle.V1, Vector3.Min(triangle.V2, triangle.V3));
             var max = Vector3.Max(triangle.V1, Vector3.Max(triangle.V2, triangle.V3));
-            return new Raycasting.Bounds(min, max);
+            return new Bounds(min, max);
         }
 
         public static SectorFaces ConvertSector(SectorSplitter.ProtoSector protoSector, string outputDirectoryFullName)
         {
             var groupedGeometry = protoSector.Geometries.GroupBy(g => g.TreeIndex);
             var protoNodes = new List<ProtoFaceNode>();
-            var bounds = new Raycasting.Bounds(protoSector.BoundingBoxMin, protoSector.BoundingBoxMax);
+            var bounds = new Bounds(protoSector.BoundingBoxMin, protoSector.BoundingBoxMax);
             var size = bounds.Size;
             var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
             var increment = MathF.Min(MathF.Max(minDim / 50, MinFaceSize), MaxFaceSize);
