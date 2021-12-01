@@ -29,5 +29,11 @@
         public Vector3 BboxMax { get; }
 
         public FacesGrid? SectorContents { get; }
+
+        public CoverageFactors GetCoverageFactors()
+        {
+            // TODO: implement
+            return new CoverageFactors{ Xy = 0.1f, Yz = 0.1f, Xz = 0.1f };
+        }
     }
 }
