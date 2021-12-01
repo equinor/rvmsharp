@@ -112,7 +112,7 @@
                     for (var z = start.Z; z <= end.Z; z++)
                     {
                         const Axis axis = Axis.X;
-                        var xRay = GetRay(new Vector3i(0, y, z), gridParameters, axis);
+                        var xRay = GetRayForGridCellAndDirection(new Vector3i(0, y, z), gridParameters, axis);
                         CollectHits(gridParameters, xRay, axis, triangle, faces);
                     }
                 }
@@ -123,7 +123,7 @@
                     for (var z = start.Z; z <= end.Z; z++)
                     {
                         const Axis axis = Axis.Y;
-                        var yRay = GetRay(new Vector3i(x, 0, z), gridParameters, axis);
+                        var yRay = GetRayForGridCellAndDirection(new Vector3i(x, 0, z), gridParameters, axis);
                         CollectHits(gridParameters, yRay, axis, triangle, faces);
                     }
                 }
@@ -134,7 +134,7 @@
                     for (var y = start.Y; y <= end.Y; y++)
                     {
                         const Axis axis = Axis.Z;
-                        var zRay = GetRay(new Vector3i(x, y, 0), gridParameters, axis);
+                        var zRay = GetRayForGridCellAndDirection(new Vector3i(x, y, 0), gridParameters, axis);
                         CollectHits(gridParameters, zRay, axis, triangle, faces);
                     }
                 }
@@ -218,7 +218,7 @@
         }
 
 
-        private static Ray GetRay(Vector3i target, GridParameters grid, Axis axis)
+        private static Ray GetRayForGridCellAndDirection(Vector3i target, GridParameters grid, Axis axis)
         {
             var newTarget = grid.GridOrigin + (Vector3.One + new Vector3(target.X, target.Y, target.Z)) * grid.GridIncrement;
             var newOrigin = grid.GridOrigin;
