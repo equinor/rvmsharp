@@ -2,7 +2,6 @@
 {
     using AlgebraExtensions;
     using Faces;
-    using Newtonsoft.Json;
     using RvmSharp.Tessellation;
     using System;
     using System.Collections.Generic;
@@ -15,6 +14,15 @@
 
     public static class FacesConverter
     {
+        /// <summary>
+        /// Maximum size for a face side in meters
+        /// </summary>
+        private const float MaxFaceSize = 2.5f;
+
+        /// <summary>
+        /// Minimum size for a face side in meters
+        /// </summary>
+        private const float MinFaceSize = 0.1f;
 
         public record ProtoGrid(GridParameters GridParameters, IReadOnlyDictionary<Vector3i, FaceDirection> Faces);
 
@@ -99,19 +107,11 @@
             return result;
         }
 
-#if DUMP_FACES
-        private static List<HitSave> Hits = new();
-        private static List<LabeledRay> Rays = new();
-        private record LabeledRay(Axis Axis, Vector3i Cell, FaceHitGrade Grade, Raycasting.Ray Ray);
-#endif
-
-
         public static ProtoGrid Convert(Raycasting.Triangle[] triangles, GridParameters gridParameters)
         {
             var triangleCount = triangles.Length;
             var faces = new Dictionary<Vector3i, Dictionary<FaceDirection, FaceHitGrade>>();
             var hitCount = 0;
-            var triangleMap = new Dictionary<Vector3i, List<Raycasting.Triangle>>();
             for (var i = 0; i < triangleCount; i++)
             {
 
@@ -126,7 +126,7 @@
                     {
                         var (xRay, _, _) = GetRay(new Vector3i(0, y, z), gridParameters);
                         var axis = Axis.X;
-                        hitCount = LolPleaseRenameMe(gridParameters, xRay, axis,  0, y, z, triangle, hitCount, faces, i);
+                        hitCount = LolPleaseRenameMe(gridParameters, xRay, axis, triangle, hitCount, faces);
                     }
                 }
 
@@ -137,7 +137,7 @@
                     {
                         var (_, yRay, _) = GetRay(new Vector3i(x, 0, z), gridParameters);
                         var axis = Axis.Y;
-                        hitCount = LolPleaseRenameMe(gridParameters, yRay, axis,  x, 0, z, triangle, hitCount, faces, i);
+                        hitCount = LolPleaseRenameMe(gridParameters, yRay, axis, triangle, hitCount, faces);
                     }
                 }
 
@@ -148,15 +148,15 @@
                     {
                         var (_, _, zRay) = GetRay(new Vector3i(x, y, 0), gridParameters);
                         var axis = Axis.Z;
-                        hitCount = LolPleaseRenameMe(gridParameters, zRay, axis,  x, y, 0, triangle, hitCount, faces, i);
+                        hitCount = LolPleaseRenameMe(gridParameters, zRay, axis, triangle, hitCount, faces);
                     }
                 }
             }
 
             var newFaces = faces.Select(kvp =>
                 {
-                    var faces = kvp.Value;
-                    var result = faces.Select(kvp =>
+                    var currentFace = kvp.Value;
+                    var result = currentFace.Select(kvp =>
                     {
                         var g = kvp.Value;
                         if (((g.HasFlag(FaceHitGrade.C) ? 2 : 0)
@@ -174,17 +174,11 @@
                     return (kvp.Key, result);
                 }).Where(kvp => kvp.result != FaceDirection.None)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.result);
-#if DUMP_FACES
-            File.WriteAllText("E://gush//projects//FacesFiles//Assets//StreamingAssets//protogrid.json", JsonConvert.SerializeObject(newFaces));
-            File.WriteAllText("E://gush//projects//FacesFiles//Assets//StreamingAssets//hits.json", JsonConvert.SerializeObject(Hits));
-            File.WriteAllText(@"E:\gush\projects\FacesFiles\Assets\StreamingAssets\gridParameters.json", JsonConvert.SerializeObject(gridParameters, Formatting.Indented));
-            JsonUtils.JsonSerializeToFile(Rays, "E://gush//projects//FacesFiles//Assets//StreamingAssets//rays.json");
-#endif
             return new ProtoGrid(gridParameters, newFaces);
         }
 
-        private static int LolPleaseRenameMe(GridParameters gridParameters, Raycasting.Ray? ray, Axis axis, int x, int y, int z, Raycasting.Triangle? triangle,
-            int hitCount, Dictionary<Vector3i, Dictionary<FaceDirection, FaceHitGrade>>? faces, int i)
+        private static int LolPleaseRenameMe(GridParameters gridParameters, Raycasting.Ray ray, Axis axis, Raycasting.Triangle triangle,
+            int hitCount, IDictionary<Vector3i, Dictionary<FaceDirection, FaceHitGrade>> faces)
         {
             for (var k = 0; k < 9; k++)
             {
@@ -209,10 +203,6 @@
                     }
 
                     face[direction] = oldHitGrade | hitGrade;
-#if DUMP_FACES
-                    Rays.Add(new LabeledRay(axis, new Vector3i(x, y, z), hitGrade, adjustedRay));
-                    Hits.Add(new HitSave(i, axis, cell, direction, hitGrade, hitPosition, frontFace));
-#endif
                 }
             }
 
@@ -287,7 +277,7 @@
             var bounds = new Raycasting.Bounds(protoSector.BoundingBoxMin, protoSector.BoundingBoxMax);
             var size = bounds.Size;
             var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
-            var increment = minDim / 50;
+            var increment = MathF.Min(MathF.Max(minDim / 50, MinFaceSize), MaxFaceSize);
             var gridSizeX = (uint)(Math.Ceiling(size.X / increment) + 1);
             var gridSizeY = (uint)(Math.Ceiling(size.Y / increment) + 1);
             var gridSizeZ = (uint)(Math.Ceiling(size.Z / increment) + 1);
@@ -301,6 +291,10 @@
                 var meshesWithColors = geometries.Select(g => (g.SourcePrimitive, g.Color)).Select(mc => (TessellatorBridge.Tessellate(mc.SourcePrimitive, 0.01f), mc.Color)).ToArray();
                 var singleColor = meshesWithColors.Select(mc => mc.Color).Distinct().Count() == 1;
                 // TODO: support for multiple colors
+                if (!singleColor)
+                {
+                    throw new NotImplementedException("Multi color support per node is not yet implemented");
+                }
                 var color = meshesWithColors.Select(mc => mc.Color).First();
                 var triangles = meshesWithColors.Select(mc => mc.Item1).WhereNotNull().SelectMany(FacesConverter.CollectTriangles).ToArray();
                 var protoGrid = FacesConverter.Convert(triangles, grid);
@@ -328,17 +322,17 @@
             return sector;
         }
 
-        public static FaceFlags ConvertFaceFlags(FacesConverter.FaceDirection direction)
+        public static FaceFlags ConvertFaceFlags(FaceDirection direction)
         {
-            if (direction == FacesConverter.FaceDirection.None)
+            if (direction == FaceDirection.None)
                 throw new ArgumentException("Must contain at least one face");
             var result = FaceFlags.None;
-            if (direction.HasFlag(FacesConverter.FaceDirection.Xp)) result |= FaceFlags.PositiveXVisible;
-            if (direction.HasFlag(FacesConverter.FaceDirection.Yp)) result |= FaceFlags.PositiveYVisible;
-            if (direction.HasFlag(FacesConverter.FaceDirection.Zp)) result |= FaceFlags.PositiveZVisible;
-            if (direction.HasFlag(FacesConverter.FaceDirection.Xm)) result |= FaceFlags.NegativeXVisible;
-            if (direction.HasFlag(FacesConverter.FaceDirection.Ym)) result |= FaceFlags.NegativeYVisible;
-            if (direction.HasFlag(FacesConverter.FaceDirection.Zm)) result |= FaceFlags.NegativeZVisible;
+            if (direction.HasFlag(FaceDirection.Xp)) result |= FaceFlags.PositiveXVisible;
+            if (direction.HasFlag(FaceDirection.Yp)) result |= FaceFlags.PositiveYVisible;
+            if (direction.HasFlag(FaceDirection.Zp)) result |= FaceFlags.PositiveZVisible;
+            if (direction.HasFlag(FaceDirection.Xm)) result |= FaceFlags.NegativeXVisible;
+            if (direction.HasFlag(FaceDirection.Ym)) result |= FaceFlags.NegativeYVisible;
+            if (direction.HasFlag(FaceDirection.Zm)) result |= FaceFlags.NegativeZVisible;
             return result;
         }
 
