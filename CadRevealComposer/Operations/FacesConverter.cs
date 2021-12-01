@@ -24,38 +24,38 @@
         /// </summary>
         private const float MinFaceSize = 0.1f;
 
-        public record ProtoGrid(GridParameters GridParameters, IReadOnlyDictionary<Vector3i, FaceDirection> Faces);
+        public record ProtoGrid(GridParameters GridParameters, IReadOnlyDictionary<Vector3i, VisibleSide> Faces);
 
         public record ProtoFaceNode(ulong TreeIndex, ulong NodeId, Color Color, ProtoGrid Faces);
 
         [Flags]
-        public enum FaceDirection
+        public enum VisibleSide
         {
             None = 0,
-            Xp = 0b000001,
-            Xm = 0b000010,
-            Yp = 0b000100,
-            Ym = 0b001000,
-            Zp = 0b010000,
-            Zm = 0b100000,
+            XPositive = 1 << 0,
+            XNegative = 1 << 1,
+            YPositive = 1 << 2,
+            YNegative = 1 << 3,
+            ZPositive = 1 << 4,
+            ZNegative = 1 << 5
         }
 
         [Flags]
-        public enum FaceHitGrade
+        public enum FaceHitLocation
         {
             None = 0,
-            N = 0b00000000_00000001,
-            NE = 0b00000000_00000010,
-            E = 0b00000000_00000100,
-            SE = 0b00000000_00001000,
-            S = 0b00000000_00010000,
-            SW = 0b00000000_00100000,
-            W = 0b00000000_01000000,
-            NW = 0b00000000_10000000,
-            C = 0b00000001_00000000,
+            North = 1 << 0,
+            NorthEast = 1 << 1,
+            East = 1 << 2,
+            SouthEast = 1 << 3,
+            South = 1 << 4,
+            SouthWest = 1 << 5,
+            West = 1 << 6,
+            NorthWest = 1 << 7,
+            Center = 1 << 8,
         }
 
-        private static Raycasting.Ray GetAdjustedRay(Raycasting.Ray rayIn, FaceHitGrade grade, GridParameters gridParameters, Axis direction)
+        private static Raycasting.Ray GetAdjustedRay(Raycasting.Ray rayIn, FaceHitLocation location, GridParameters gridParameters, Axis direction)
         {
             var (north, east) = direction switch
             {
@@ -65,32 +65,32 @@
                 _ => throw new ArgumentException()
             };
             var multiplier = gridParameters.GridIncrement / 3;
-            switch (grade)
+            switch (location)
             {
-                case FaceHitGrade.N:
+                case FaceHitLocation.North:
                     return rayIn with { Origin = rayIn.Origin + north * multiplier};
-                case FaceHitGrade.NE:
+                case FaceHitLocation.NorthEast:
                     return rayIn with { Origin = rayIn.Origin + (north + east) * multiplier};
-                case FaceHitGrade.E:
+                case FaceHitLocation.East:
                     return rayIn with { Origin = rayIn.Origin + east * multiplier};
-                case FaceHitGrade.SE:
+                case FaceHitLocation.SouthEast:
                     return rayIn with { Origin = rayIn.Origin + (-north + east) * multiplier};
-                case FaceHitGrade.S:
+                case FaceHitLocation.South:
                     return rayIn with { Origin = rayIn.Origin - north * multiplier};
-                case FaceHitGrade.SW:
+                case FaceHitLocation.SouthWest:
                     return rayIn with { Origin = rayIn.Origin - (north + east) * multiplier};
-                case FaceHitGrade.W:
+                case FaceHitLocation.West:
                     return rayIn with { Origin = rayIn.Origin - east * multiplier};
-                case FaceHitGrade.NW:
+                case FaceHitLocation.NorthWest:
                     return rayIn with { Origin = rayIn.Origin + (north - east) * multiplier};
-                case FaceHitGrade.C:
+                case FaceHitLocation.Center:
                     return rayIn;
                 default:
-                    throw new ArgumentOutOfRangeException(nameof(grade), grade, null);
+                    throw new ArgumentOutOfRangeException(nameof(location), location, null);
             }
         }
 
-        public record HitSave(int triangle, Axis Axis, Vector3i Cell, FaceDirection Direction, FaceHitGrade Area, Vector3 HitPosition, bool Front);
+        public record HitSave(int triangle, Axis Axis, Vector3i Cell, VisibleSide Direction, FaceHitLocation Area, Vector3 HitPosition, bool Front);
 
         public static Raycasting.Triangle[] CollectTriangles(Mesh mesh)
         {
@@ -110,7 +110,7 @@
         public static ProtoGrid Convert(Raycasting.Triangle[] triangles, GridParameters gridParameters)
         {
             var triangleCount = triangles.Length;
-            var faces = new Dictionary<Vector3i, Dictionary<FaceDirection, FaceHitGrade>>();
+            var faces = new Dictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>>();
             var hitCount = 0;
             for (var i = 0; i < triangleCount; i++)
             {
@@ -159,47 +159,47 @@
                     var result = currentFace.Select(kvp =>
                     {
                         var g = kvp.Value;
-                        if (((g.HasFlag(FaceHitGrade.C) ? 2 : 0)
-                             + (g.HasFlag(FaceHitGrade.N) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.NE) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.E) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.SE) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.S) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.SW) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.W) ? 1 : 0)
-                             + (g.HasFlag(FaceHitGrade.NW) ? 1 : 0)) >= 4)
+                        if (((g.HasFlag(FaceHitLocation.Center) ? 2 : 0)
+                             + (g.HasFlag(FaceHitLocation.North) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.NorthEast) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.East) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.SouthEast) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.South) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.SouthWest) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.West) ? 1 : 0)
+                             + (g.HasFlag(FaceHitLocation.NorthWest) ? 1 : 0)) >= 4)
                             return kvp.Key;
-                        return FaceDirection.None;
-                    }).Where(v => v != FaceDirection.None).Aggregate(FaceDirection.None, (a, b) => a | b);
+                        return VisibleSide.None;
+                    }).Where(v => v != VisibleSide.None).Aggregate(VisibleSide.None, (a, b) => a | b);
                     return (kvp.Key, result);
-                }).Where(kvp => kvp.result != FaceDirection.None)
+                }).Where(kvp => kvp.result != VisibleSide.None)
                 .ToDictionary(kvp => kvp.Key, kvp => kvp.result);
             return new ProtoGrid(gridParameters, newFaces);
         }
 
         private static int LolPleaseRenameMe(GridParameters gridParameters, Raycasting.Ray ray, Axis axis, Raycasting.Triangle triangle,
-            int hitCount, IDictionary<Vector3i, Dictionary<FaceDirection, FaceHitGrade>> faces)
+            int hitCount, IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
         {
             for (var k = 0; k < 9; k++)
             {
-                var hitGrade = (FaceHitGrade)(1 << k);
+                var hitGrade = (FaceHitLocation)(1 << k);
                 var adjustedRay = GetAdjustedRay(ray, hitGrade, gridParameters, axis);
                 var hitResult = Raycasting.Raycast(adjustedRay, triangle, out var hitPosition,
                     out var frontFace);
                 if (hitResult)
                 {
                     hitCount++;
-                    (var cell, FaceDirection direction) = HitResultToFaceIn(hitPosition, frontFace,
+                    (var cell, VisibleSide direction) = HitResultToFaceIn(hitPosition, frontFace,
                         gridParameters, axis);
                     if (!faces.TryGetValue(cell, out var face))
                     {
-                        face = new Dictionary<FaceDirection, FaceHitGrade>();
+                        face = new Dictionary<VisibleSide, FaceHitLocation>();
                         faces[cell] = face;
                     }
 
                     if (!face.TryGetValue(direction, out var oldHitGrade))
                     {
-                        oldHitGrade = FaceHitGrade.None;
+                        oldHitGrade = FaceHitLocation.None;
                     }
 
                     face[direction] = oldHitGrade | hitGrade;
@@ -216,13 +216,13 @@
             Z = 2
         }
 
-        private static (Vector3i cell, FaceDirection direction) HitResultToFaceIn(Vector3 hitPosition, bool isFrontFace, GridParameters grid, Axis axis)
+        private static (Vector3i cell, VisibleSide direction) HitResultToFaceIn(Vector3 hitPosition, bool isFrontFace, GridParameters grid, Axis axis)
         {
             var cell = PositionToCell(hitPosition, grid);
             var center = grid.GridOrigin + (cell + Vector3i.One) * grid.GridIncrement;
             var isHigh = new[]{center.X < hitPosition.X,center.Y < hitPosition.Y,center.Z < hitPosition.Z};
-            var lowFaces = new[] { FaceDirection.Xm, FaceDirection.Ym, FaceDirection.Zm };
-            var highFaces = new[] { FaceDirection.Xp, FaceDirection.Yp, FaceDirection.Zp };
+            var lowFaces = new[] { VisibleSide.XNegative, VisibleSide.YNegative, VisibleSide.ZNegative };
+            var highFaces = new[] { VisibleSide.XPositive, VisibleSide.YPositive, VisibleSide.ZPositive };
             var axisIndex = (int)axis;
             var direction = isFrontFace ? lowFaces[axisIndex] : highFaces[axisIndex];
 
@@ -322,17 +322,17 @@
             return sector;
         }
 
-        public static FaceFlags ConvertFaceFlags(FaceDirection direction)
+        public static FaceFlags ConvertFaceFlags(VisibleSide direction)
         {
-            if (direction == FaceDirection.None)
+            if (direction == VisibleSide.None)
                 throw new ArgumentException("Must contain at least one face");
             var result = FaceFlags.None;
-            if (direction.HasFlag(FaceDirection.Xp)) result |= FaceFlags.PositiveXVisible;
-            if (direction.HasFlag(FaceDirection.Yp)) result |= FaceFlags.PositiveYVisible;
-            if (direction.HasFlag(FaceDirection.Zp)) result |= FaceFlags.PositiveZVisible;
-            if (direction.HasFlag(FaceDirection.Xm)) result |= FaceFlags.NegativeXVisible;
-            if (direction.HasFlag(FaceDirection.Ym)) result |= FaceFlags.NegativeYVisible;
-            if (direction.HasFlag(FaceDirection.Zm)) result |= FaceFlags.NegativeZVisible;
+            if (direction.HasFlag(VisibleSide.XPositive)) result |= FaceFlags.PositiveXVisible;
+            if (direction.HasFlag(VisibleSide.YPositive)) result |= FaceFlags.PositiveYVisible;
+            if (direction.HasFlag(VisibleSide.ZPositive)) result |= FaceFlags.PositiveZVisible;
+            if (direction.HasFlag(VisibleSide.XNegative)) result |= FaceFlags.NegativeXVisible;
+            if (direction.HasFlag(VisibleSide.YNegative)) result |= FaceFlags.NegativeYVisible;
+            if (direction.HasFlag(VisibleSide.ZNegative)) result |= FaceFlags.NegativeZVisible;
             return result;
         }
 
