@@ -103,7 +103,7 @@
             {
 
                 var triangle = triangles[i];
-                var bounds = GetBounds(triangle);
+                var bounds = triangle.Bounds;
                 var (start, end) = GetPotentialGridPositions(bounds, gridParameters);
 
                 // X cast
@@ -243,13 +243,6 @@
             var startF = (position - (grid.GridOrigin + Vector3.One * grid.GridIncrement / 2)) /
                          grid.GridIncrement;
             return new Vector3i((int)MathF.Floor(startF.X), (int)MathF.Floor(startF.Y), (int)MathF.Floor(startF.Z));
-        }
-
-        private static Bounds GetBounds(Triangle triangle)
-        {
-            var min = Vector3.Min(triangle.V1, Vector3.Min(triangle.V2, triangle.V3));
-            var max = Vector3.Max(triangle.V1, Vector3.Max(triangle.V2, triangle.V3));
-            return new Bounds(min, max);
         }
 
         public static SectorFaces ConvertSector(SectorSplitter.ProtoSector protoSector, string outputDirectoryFullName)
