@@ -113,7 +113,7 @@
                     {
                         const Axis axis = Axis.X;
                         var xRay = GetRay(new Vector3i(0, y, z), gridParameters, axis);
-                        LolPleaseRenameMe(gridParameters, xRay, axis, triangle, faces);
+                        CollectHits(gridParameters, xRay, axis, triangle, faces);
                     }
                 }
 
@@ -124,7 +124,7 @@
                     {
                         const Axis axis = Axis.Y;
                         var yRay = GetRay(new Vector3i(x, 0, z), gridParameters, axis);
-                        LolPleaseRenameMe(gridParameters, yRay, axis, triangle, faces);
+                        CollectHits(gridParameters, yRay, axis, triangle, faces);
                     }
                 }
 
@@ -135,7 +135,7 @@
                     {
                         const Axis axis = Axis.Z;
                         var zRay = GetRay(new Vector3i(x, y, 0), gridParameters, axis);
-                        LolPleaseRenameMe(gridParameters, zRay, axis, triangle, faces);
+                        CollectHits(gridParameters, zRay, axis, triangle, faces);
                     }
                 }
             }
@@ -164,7 +164,7 @@
             return new ProtoGrid(gridParameters, newFaces);
         }
 
-        private static void LolPleaseRenameMe(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
+        private static void CollectHits(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
             IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
         {
             for (var k = 0; k < 9; k++)
@@ -289,7 +289,7 @@
                     protoNodes.Select(pn =>
                         new Node(CompressFlags.IndexIsLong, pn.NodeId, pn.TreeIndex, pn.Color,
                             pn.Faces.Faces.Select(f =>
-                                new Face(ConvertFaceFlags(f.Value), 0, VectorToIndex(f.Key, grid),
+                                new Face(ConvertFaceFlags(f.Value), 0, CellPositionToGridIndex(f.Key, grid),
                                     null)).ToArray())
                     ).ToArray()));
             using var output = File.OpenWrite(outputFilename);
@@ -311,7 +311,7 @@
             return result;
         }
 
-        public static ulong VectorToIndex(Vector3i v, GridParameters gridParameters)
+        public static ulong CellPositionToGridIndex(Vector3i v, GridParameters gridParameters)
         {
             return (ulong)(v.X + (gridParameters.GridSizeX - 1) * v.Y + (gridParameters.GridSizeX - 1) * (gridParameters.GridSizeY - 1) * v.Z);
         }

@@ -155,7 +155,7 @@
                 protoGrid.GridParameters, new[]
                 {
                     new Node(CompressFlags.IndexIsLong, 1, 1, Color.Red, protoGrid.Faces.Select(f =>
-                            new Face(SectorToFacesConverter.ConvertFaceFlags(f.Value), 0, SectorToFacesConverter.VectorToIndex(f.Key, protoGrid.GridParameters),
+                            new Face(SectorToFacesConverter.ConvertFaceFlags(f.Value), 0, SectorToFacesConverter.CellPositionToGridIndex(f.Key, protoGrid.GridParameters),
                                 null)).ToArray()
                     )
                 }));
