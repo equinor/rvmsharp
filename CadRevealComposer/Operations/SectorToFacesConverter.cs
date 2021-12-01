@@ -104,7 +104,7 @@
 
                 var triangle = triangles[i];
                 var bounds = triangle.Bounds;
-                var (start, end) = GetPotentialGridPositions(bounds, gridParameters);
+                var (start, end) = GetGridCellsForBounds(bounds, gridParameters);
 
                 // X cast
                 for (var y = start.Y; y <= end.Y; y++)
@@ -231,7 +231,7 @@
             };
         }
 
-        private static (Vector3i start, Vector3i end) GetPotentialGridPositions(Bounds bounds, GridParameters gridParameters)
+        private static (Vector3i start, Vector3i end) GetGridCellsForBounds(Bounds bounds, GridParameters gridParameters)
         {
             var start = PositionToCell(bounds.Min, gridParameters);
             var end = PositionToCell(bounds.Max, gridParameters);
