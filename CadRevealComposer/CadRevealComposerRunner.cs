@@ -266,7 +266,7 @@ namespace CadRevealComposer
             Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var faceSectors = sectors.AsParallel().Select(s => FacesConverter.ConvertSector(s, outputDirectory.FullName)).ToArray();
+            var faceSectors = sectors.AsParallel().Select(s => SectorToFacesConverter.ConvertSector(s, outputDirectory.FullName)).ToArray();
             Console.WriteLine("Converted into sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
