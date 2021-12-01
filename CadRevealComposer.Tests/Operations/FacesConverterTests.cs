@@ -35,7 +35,7 @@
                 .Select(p => TessellatorBridge.Tessellate(p, 0.01f))
                 .WhereNotNull().ToArray();
 
-            var triangles = meshes.SelectMany(FacesConverter.CollectTriangles).ToArray();
+            var triangles = meshes.SelectMany(SectorToFacesConverter.CollectTriangles).ToArray();
 
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
@@ -57,7 +57,7 @@
             }
 
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
-            var protoGrid = FacesConverter.Convert(triangles, grid);
+            var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
 
             var sector = DumpTranslation(protoGrid, bounds);
             File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
@@ -78,7 +78,7 @@
             //var mesh = TessellatorBridge.Tessellate(new RvmSphere(
 //                1, matrix, new RvmBoundingBox(-Vector3.One * 0.5f, Vector3.One * 0.5f), 1f), 0.01f);
 
-            var triangles = FacesConverter.CollectTriangles(mesh);
+            var triangles = SectorToFacesConverter.CollectTriangles(mesh);
 
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
@@ -96,7 +96,7 @@
             e.WriteMesh(mesh);
 
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
-            var protoGrid = FacesConverter.Convert(triangles, grid);
+            var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
 
             var sector = DumpTranslation(protoGrid, bounds);
             File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
@@ -136,7 +136,7 @@
             var gridOrigin = bounds.Min - Vector3.One * increment / 2;
 
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
-            var protoGrid = FacesConverter.Convert(triangles, grid);
+            var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
 
             var sector = DumpTranslation(protoGrid, bounds);
             File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
@@ -149,13 +149,13 @@
 
 
 
-        private SectorFaces DumpTranslation(FacesConverter.ProtoGrid protoGrid, Bounds bounds)
+        private SectorFaces DumpTranslation(SectorToFacesConverter.ProtoGrid protoGrid, Bounds bounds)
         {
             return new SectorFaces(1, null, bounds.Min, bounds.Max, new FacesGrid(
                 protoGrid.GridParameters, new[]
                 {
                     new Node(CompressFlags.IndexIsLong, 1, 1, Color.Red, protoGrid.Faces.Select(f =>
-                            new Face(FacesConverter.ConvertFaceFlags(f.Value), 0, FacesConverter.VectorToIndex(f.Key, protoGrid.GridParameters),
+                            new Face(SectorToFacesConverter.ConvertFaceFlags(f.Value), 0, SectorToFacesConverter.VectorToIndex(f.Key, protoGrid.GridParameters),
                                 null)).ToArray()
                     )
                 }));

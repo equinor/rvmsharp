@@ -12,7 +12,7 @@
     using Utils;
     using Writers;
 
-    public static class FacesConverter
+    public static class SectorToFacesConverter
     {
         /// <summary>
         /// Maximum size for a face side in meters
@@ -99,7 +99,6 @@
         {
             var triangleCount = triangles.Length;
             var faces = new Dictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>>();
-            var hitCount = 0;
             for (var i = 0; i < triangleCount; i++)
             {
 
@@ -114,7 +113,7 @@
                     {
                         var (xRay, _, _) = GetRay(new Vector3i(0, y, z), gridParameters);
                         var axis = Axis.X;
-                        hitCount = LolPleaseRenameMe(gridParameters, xRay, axis, triangle, hitCount, faces);
+                        LolPleaseRenameMe(gridParameters, xRay, axis, triangle, faces);
                     }
                 }
 
@@ -125,7 +124,7 @@
                     {
                         var (_, yRay, _) = GetRay(new Vector3i(x, 0, z), gridParameters);
                         var axis = Axis.Y;
-                        hitCount = LolPleaseRenameMe(gridParameters, yRay, axis, triangle, hitCount, faces);
+                        LolPleaseRenameMe(gridParameters, yRay, axis, triangle, faces);
                     }
                 }
 
@@ -136,7 +135,7 @@
                     {
                         var (_, _, zRay) = GetRay(new Vector3i(x, y, 0), gridParameters);
                         var axis = Axis.Z;
-                        hitCount = LolPleaseRenameMe(gridParameters, zRay, axis, triangle, hitCount, faces);
+                        LolPleaseRenameMe(gridParameters, zRay, axis, triangle, faces);
                     }
                 }
             }
@@ -165,36 +164,35 @@
             return new ProtoGrid(gridParameters, newFaces);
         }
 
-        private static int LolPleaseRenameMe(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
-            int hitCount, IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
+        private static void LolPleaseRenameMe(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
+            IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
         {
             for (var k = 0; k < 9; k++)
             {
-                var hitGrade = (FaceHitLocation)(1 << k);
-                var adjustedRay = GetAdjustedRay(ray, hitGrade, gridParameters, axis);
+                var hitLocation = (FaceHitLocation)(1 << k);
+                var adjustedRay = GetAdjustedRay(ray, hitLocation, gridParameters, axis);
                 var hitResult = adjustedRay.Trace(triangle, out var hitPosition,
                     out var frontFace);
-                if (hitResult)
+                if (!hitResult)
                 {
-                    hitCount++;
-                    (var cell, VisibleSide direction) = HitResultToFaceIn(hitPosition, frontFace,
-                        gridParameters, axis);
-                    if (!faces.TryGetValue(cell, out var face))
-                    {
-                        face = new Dictionary<VisibleSide, FaceHitLocation>();
-                        faces[cell] = face;
-                    }
-
-                    if (!face.TryGetValue(direction, out var oldHitGrade))
-                    {
-                        oldHitGrade = FaceHitLocation.None;
-                    }
-
-                    face[direction] = oldHitGrade | hitGrade;
+                    continue;
                 }
-            }
 
-            return hitCount;
+                (var cell, VisibleSide direction) = HitResultToFaceIn(hitPosition, frontFace,
+                    gridParameters, axis);
+                if (!faces.TryGetValue(cell, out var face))
+                {
+                    face = new Dictionary<VisibleSide, FaceHitLocation>();
+                    faces[cell] = face;
+                }
+
+                if (!face.TryGetValue(direction, out var oldHitGrade))
+                {
+                    oldHitGrade = FaceHitLocation.None;
+                }
+
+                face[direction] = oldHitGrade | hitLocation;
+            }
         }
 
         public enum Axis
@@ -284,8 +282,8 @@
                     throw new NotImplementedException("Multi color support per node is not yet implemented");
                 }
                 var color = meshesWithColors.Select(mc => mc.Color).First();
-                var triangles = meshesWithColors.Select(mc => mc.Item1).WhereNotNull().SelectMany(FacesConverter.CollectTriangles).ToArray();
-                var protoGrid = FacesConverter.Convert(triangles, grid);
+                var triangles = meshesWithColors.Select(mc => mc.Item1).WhereNotNull().SelectMany(SectorToFacesConverter.CollectTriangles).ToArray();
+                var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
                 protoNodes.Add(new ProtoFaceNode(treeIndex, nodeId, color, protoGrid));
             }
 
