@@ -28,7 +28,7 @@
         }
 
         /// <summary>
-        /// Flags define which side of the voxel is visible and whenever multiple faces are defined by this face
+        /// Flags define which side of the cell is visible and whenever this is face strip (multiple) or a single face
         /// </summary>
         public FaceFlags FaceFlags { get; }
 
