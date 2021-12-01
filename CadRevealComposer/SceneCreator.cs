@@ -63,12 +63,7 @@ namespace CadRevealComposer
                         FacesCount = sectorFaces.SectorContents.Nodes.Select(n => (long)n.Faces.Length).Sum(),
                         FileName = $"sector_{sector.SectorId}.f3d",
                         DownloadSize = new FileInfo(outputDirectory.FullName + $"/sector_{sector.SectorId}.f3d").Length,
-                        CoverageFactors = new CoverageFactors
-                        {
-                            Xy = 0.1f, // TODO
-                            Yz = 0.1f,
-                            Xz = 0.1f
-                        }
+                        CoverageFactors = sectorFaces.GetCoverageFactors()
                         };
                 }
 
