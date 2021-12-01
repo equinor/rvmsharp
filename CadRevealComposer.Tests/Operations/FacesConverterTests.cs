@@ -40,7 +40,7 @@
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
             var size = max - min;
-            var bounds = new Raycasting.Bounds(min, max);
+            var bounds = new Bounds(min, max);
             var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
             var increment = minDim / 50;
             Console.WriteLine(increment);
@@ -83,7 +83,7 @@
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
 
-            var bounds = new Raycasting.Bounds(min, max);
+            var bounds = new Bounds(min, max);
             var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
             var increment = minDim / 5;
             var gridSizeX = (uint)(Math.Ceiling(size.X / increment) + 1);
@@ -104,11 +104,52 @@
             //F3dWriter.WriteSector(sector, output);
         }
 
+        private struct MeshHolder
+        {
+            public int[] Indices;
+            public Vector3[] Vertices;
+            public Vector3[] Normals;
+        }
+
+        [Test]
+        public void ConvertRandomObj()
+        {
+            var mh = JsonConvert.DeserializeObject<MeshHolder>(File.ReadAllText("D:/gush.json"));
+            var tCount = mh.Indices.Length / 3;
+            var triangles = new Triangle[tCount];
+            for (var i = 0; i < tCount; i++)
+            {
+                triangles[i] = new Triangle(mh.Vertices[mh.Indices[i * 3]],
+                    mh.Vertices[mh.Indices[i * 3 + 1]], mh.Vertices[mh.Indices[i * 3 + 2]]);
+            }
+
+            var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
+            var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
+            var size = max - min;
+            var bounds = new Bounds(min, max);
+            var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
+            var increment = minDim / 100;
+            Console.WriteLine(increment);
+            var gridSizeX = (uint)(Math.Ceiling(size.X / increment) + 1);
+            var gridSizeY = (uint)(Math.Ceiling(size.Y / increment) + 1);
+            var gridSizeZ = (uint)(Math.Ceiling(size.Z / increment) + 1);
+            var gridOrigin = bounds.Min - Vector3.One * increment / 2;
+
+            var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
+            var protoGrid = FacesConverter.Convert(triangles, grid);
+
+            var sector = DumpTranslation(protoGrid, bounds);
+            File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
+            using var output = File.OpenWrite(@"e:\gush\projects\cognite\reveal\examples\public\primitives\sector_0.f3d");
+            F3dWriter.WriteSector(sector, output);
+            Console.WriteLine($"Bounds: {bounds.Min.ToString("G4")}{bounds.Max.ToString("G4")}");
+        }
 
 
 
 
-        private SectorFaces DumpTranslation(FacesConverter.ProtoGrid protoGrid, Raycasting.Bounds bounds)
+
+        private SectorFaces DumpTranslation(FacesConverter.ProtoGrid protoGrid, Bounds bounds)
         {
             return new SectorFaces(1, null, bounds.Min, bounds.Max, new FacesGrid(
                 protoGrid.GridParameters, new[]

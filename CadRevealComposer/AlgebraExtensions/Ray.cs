@@ -4,18 +4,9 @@ namespace CadRevealComposer.AlgebraExtensions
     using System.Numerics;
     using Utils;
 
-    public static class Raycasting
+    public record Ray(Vector3 Origin, Vector3 Direction)
     {
-        public record Ray(Vector3 Origin, Vector3 Direction);
-
-        public record Triangle(Vector3 V1, Vector3 V2, Vector3 V3);
-
-        public record Bounds(Vector3 Min, Vector3 Max)
-        {
-            public Vector3 Size => Max - Min;
-        }
-
-        public static bool Raycast(Ray ray, Triangle triangle, out Vector3 intersectionPoint, out bool isFrontFace)
+        public bool Raycast(Triangle triangle, out Vector3 intersectionPoint, out bool isFrontFace)
         {
             intersectionPoint = Vector3.Zero;
             isFrontFace = false;
@@ -35,15 +26,15 @@ namespace CadRevealComposer.AlgebraExtensions
             // Ray(t) = Ro + t * Rd
             // t = (d - n * Ro)/(n * Rd)
             var d = Vector3.Dot(planeNormal, triangle.V1);
-            if (Vector3.Dot(planeNormal, ray.Direction).ApproximatelyEquals(0))
+            if (Vector3.Dot(planeNormal, Direction).ApproximatelyEquals(0))
                 return false;
             var t =
-                (d - Vector3.Dot(planeNormal, ray.Origin)) / Vector3.Dot(planeNormal, ray.Direction);
+                (d - Vector3.Dot(planeNormal, Origin)) / Vector3.Dot(planeNormal, Direction);
             if (t < 0)
                 return false;
 
-            intersectionPoint = ray.Origin + ray.Direction * t;
-            isFrontFace = planeNormal.AngleTo(ray.Direction) > Math.PI / 2;
+            intersectionPoint = Origin + Direction * t;
+            isFrontFace = planeNormal.AngleTo(Direction) > Math.PI / 2;
 
             // Triangle test
             var v1pi = intersectionPoint - triangle.V1;
