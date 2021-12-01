@@ -12,8 +12,8 @@
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
-    using System.Collections;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Drawing;
     using System.IO;
     using System.Linq;
@@ -27,7 +27,7 @@
         public void ConvertSimpleMesh()
         {
             // Collect RVM files
-            var workload = Workload.CollectWorkload(new[] { @"d:\Models\hda\faces" });
+            var workload = Workload.CollectWorkload(new[] { @"d:\Models\hda\rvm20210126" });
             // Read RVM
             var store = Workload.ReadRvmData(workload);
             var rootNodes = store.RvmFiles.SelectMany(f => f.Model.Children);
@@ -57,7 +57,10 @@
             }
 
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
+            var stopwatch = Stopwatch.StartNew();
             var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
+            stopwatch.Stop();
+            Console.WriteLine($"Time: {stopwatch.Elapsed}");
 
             var sector = DumpTranslation(protoGrid, bounds);
             File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));

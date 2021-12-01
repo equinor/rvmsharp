@@ -4,6 +4,7 @@
     using Faces;
     using RvmSharp.Tessellation;
     using System;
+    using System.Collections;
     using System.Collections.Generic;
     using System.Drawing;
     using System.IO;
@@ -95,16 +96,16 @@
             return result;
         }
 
+        public record Hit(Vector3i Cell, VisibleSide Direction, FaceHitLocation HitLocation);
+
         public static ProtoGrid Convert(Triangle[] triangles, GridParameters gridParameters)
         {
-            var triangleCount = triangles.Length;
             var faces = new Dictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>>();
-            for (var i = 0; i < triangleCount; i++)
+            var hits = triangles.AsParallel().SelectMany(triangle =>
             {
-
-                var triangle = triangles[i];
                 var bounds = triangle.Bounds;
                 var (start, end) = GetGridCellsForBounds(bounds, gridParameters);
+                var hits = new List<Hit>();
 
                 // X cast
                 for (var y = start.Y; y <= end.Y; y++)
@@ -113,7 +114,7 @@
                     {
                         const Axis axis = Axis.X;
                         var xRay = GetRayForGridCellAndDirection(new Vector3i(0, y, z), gridParameters, axis);
-                        CollectHits(gridParameters, xRay, axis, triangle, faces);
+                        hits.AddRange(CollectHits(gridParameters, xRay, axis, triangle, faces));
                     }
                 }
 
@@ -124,7 +125,7 @@
                     {
                         const Axis axis = Axis.Y;
                         var yRay = GetRayForGridCellAndDirection(new Vector3i(x, 0, z), gridParameters, axis);
-                        CollectHits(gridParameters, yRay, axis, triangle, faces);
+                        hits.AddRange(CollectHits(gridParameters, yRay, axis, triangle, faces));
                     }
                 }
 
@@ -135,9 +136,27 @@
                     {
                         const Axis axis = Axis.Z;
                         var zRay = GetRayForGridCellAndDirection(new Vector3i(x, y, 0), gridParameters, axis);
-                        CollectHits(gridParameters, zRay, axis, triangle, faces);
+                        hits.AddRange(CollectHits(gridParameters, zRay, axis, triangle, faces));
                     }
                 }
+
+                return hits;
+            });
+
+            foreach (var hit in hits)
+            {
+                if (!faces.TryGetValue(hit.Cell, out var face))
+                {
+                    face = new Dictionary<VisibleSide, FaceHitLocation>();
+                    faces[hit.Cell] = face;
+                }
+
+                if (!face.TryGetValue(hit.Direction, out var oldHitGrade))
+                {
+                    oldHitGrade = FaceHitLocation.None;
+                }
+
+                face[hit.Direction] = oldHitGrade | hit.HitLocation;
             }
 
             var newFaces = faces.Select(kvp =>
@@ -164,7 +183,7 @@
             return new ProtoGrid(gridParameters, newFaces);
         }
 
-        private static void CollectHits(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
+        private static IEnumerable<Hit> CollectHits(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
             IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
         {
             for (var k = 0; k < 9; k++)
@@ -180,18 +199,8 @@
 
                 (var cell, VisibleSide direction) = HitResultToFaceIn(hitPosition, frontFace,
                     gridParameters, axis);
-                if (!faces.TryGetValue(cell, out var face))
-                {
-                    face = new Dictionary<VisibleSide, FaceHitLocation>();
-                    faces[cell] = face;
-                }
 
-                if (!face.TryGetValue(direction, out var oldHitGrade))
-                {
-                    oldHitGrade = FaceHitLocation.None;
-                }
-
-                face[direction] = oldHitGrade | hitLocation;
+                yield return new Hit(cell, direction, hitLocation);
             }
         }
 
