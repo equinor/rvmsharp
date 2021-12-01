@@ -20,7 +20,7 @@ namespace CadRevealComposer.Tests.Utils
             );
 
             var ray = new Ray(rayOrigin, rayDirection);
-            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
+            var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);
@@ -39,7 +39,7 @@ namespace CadRevealComposer.Tests.Utils
             );
 
             var ray = new Ray(rayOrigin, rayDirection);
-            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
+            var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);
@@ -58,7 +58,7 @@ namespace CadRevealComposer.Tests.Utils
             );
 
             var ray = new Ray(rayOrigin, rayDirection);
-            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
+            var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(!hitResult);
@@ -76,7 +76,7 @@ namespace CadRevealComposer.Tests.Utils
             );
 
             var ray = new Ray(rayOrigin, rayDirection);
-            var hitResult = ray.Raycast(triangle, out var intersectionPoint, out var isFrontFace);
+            var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
             Assert.That(hitResult);
