@@ -6,7 +6,7 @@ namespace CadRevealComposer.AlgebraExtensions
 
     public record Ray(Vector3 Origin, Vector3 Direction)
     {
-        public bool Raycast(Triangle triangle, out Vector3 intersectionPoint, out bool isFrontFace)
+        public bool Trace(Triangle triangle, out Vector3 intersectionPoint, out bool isFrontFace)
         {
             intersectionPoint = Vector3.Zero;
             isFrontFace = false;

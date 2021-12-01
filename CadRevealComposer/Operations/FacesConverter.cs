@@ -172,7 +172,7 @@
             {
                 var hitGrade = (FaceHitLocation)(1 << k);
                 var adjustedRay = GetAdjustedRay(ray, hitGrade, gridParameters, axis);
-                var hitResult = adjustedRay.Raycast(triangle, out var hitPosition,
+                var hitResult = adjustedRay.Trace(triangle, out var hitPosition,
                     out var frontFace);
                 if (hitResult)
                 {
