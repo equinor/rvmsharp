@@ -111,8 +111,8 @@
                 {
                     for (var z = start.Z; z <= end.Z; z++)
                     {
-                        var (xRay, _, _) = GetRay(new Vector3i(0, y, z), gridParameters);
-                        var axis = Axis.X;
+                        const Axis axis = Axis.X;
+                        var xRay = GetRay(new Vector3i(0, y, z), gridParameters, axis);
                         LolPleaseRenameMe(gridParameters, xRay, axis, triangle, faces);
                     }
                 }
@@ -122,8 +122,8 @@
                 {
                     for (var z = start.Z; z <= end.Z; z++)
                     {
-                        var (_, yRay, _) = GetRay(new Vector3i(x, 0, z), gridParameters);
-                        var axis = Axis.Y;
+                        const Axis axis = Axis.Y;
+                        var yRay = GetRay(new Vector3i(x, 0, z), gridParameters, axis);
                         LolPleaseRenameMe(gridParameters, yRay, axis, triangle, faces);
                     }
                 }
@@ -133,8 +133,8 @@
                 {
                     for (var y = start.Y; y <= end.Y; y++)
                     {
-                        var (_, _, zRay) = GetRay(new Vector3i(x, y, 0), gridParameters);
-                        var axis = Axis.Z;
+                        const Axis axis = Axis.Z;
+                        var zRay = GetRay(new Vector3i(x, y, 0), gridParameters, axis);
                         LolPleaseRenameMe(gridParameters, zRay, axis, triangle, faces);
                     }
                 }
@@ -218,14 +218,17 @@
         }
 
 
-        private static (Ray xRay, Ray yRay, Ray zRay) GetRay(Vector3i target, GridParameters grid)
+        private static Ray GetRay(Vector3i target, GridParameters grid, Axis axis)
         {
             var newTarget = grid.GridOrigin + (Vector3.One + new Vector3(target.X, target.Y, target.Z)) * grid.GridIncrement;
             var newOrigin = grid.GridOrigin;
-            var xRay = new Ray(new Vector3(newOrigin.X, newTarget.Y, newTarget.Z), Vector3.UnitX);
-            var yRay = new Ray(new Vector3(newTarget.X, newOrigin.Y, newTarget.Z), Vector3.UnitY);
-            var zRay = new Ray(new Vector3(newTarget.X, newTarget.Y, newOrigin.Z), Vector3.UnitZ);
-            return (xRay, yRay, zRay);
+            return axis switch
+            {
+                Axis.X => new Ray(new Vector3(newOrigin.X, newTarget.Y, newTarget.Z), Vector3.UnitX),
+                Axis.Y => new Ray(new Vector3(newTarget.X, newOrigin.Y, newTarget.Z), Vector3.UnitY),
+                Axis.Z => new Ray(new Vector3(newTarget.X, newTarget.Y, newOrigin.Z), Vector3.UnitZ),
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
 
         private static (Vector3i start, Vector3i end) GetPotentialGridPositions(Bounds bounds, GridParameters gridParameters)
