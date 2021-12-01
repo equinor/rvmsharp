@@ -195,13 +195,6 @@
             }
         }
 
-        public enum Axis
-        {
-            X = 0,
-            Y = 1,
-            Z = 2
-        }
-
         private static (Vector3i cell, VisibleSide direction) HitResultToFaceIn(Vector3 hitPosition, bool isFrontFace, GridParameters grid, Axis axis)
         {
             var cell = PositionToCell(hitPosition, grid);
