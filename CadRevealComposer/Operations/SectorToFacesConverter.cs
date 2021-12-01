@@ -197,7 +197,7 @@
 
         private static (Vector3i cell, VisibleSide direction) HitResultToFaceIn(Vector3 hitPosition, bool isFrontFace, GridParameters grid, Axis axis)
         {
-            var cell = PositionToCell(hitPosition, grid);
+            var cell = PositionToGridCell(hitPosition, grid);
             var center = grid.GridOrigin + (cell + Vector3i.One) * grid.GridIncrement;
             var isHigh = new[]{center.X < hitPosition.X,center.Y < hitPosition.Y,center.Z < hitPosition.Z};
             var lowFaces = new[] { VisibleSide.XNegative, VisibleSide.YNegative, VisibleSide.ZNegative };
@@ -233,12 +233,12 @@
 
         private static (Vector3i start, Vector3i end) GetGridCellsForBounds(Bounds bounds, GridParameters gridParameters)
         {
-            var start = PositionToCell(bounds.Min, gridParameters);
-            var end = PositionToCell(bounds.Max, gridParameters);
+            var start = PositionToGridCell(bounds.Min, gridParameters);
+            var end = PositionToGridCell(bounds.Max, gridParameters);
             return (start, end);
         }
 
-        private static Vector3i PositionToCell(Vector3 position, GridParameters grid)
+        private static Vector3i PositionToGridCell(Vector3 position, GridParameters grid)
         {
             var startF = (position - (grid.GridOrigin + Vector3.One * grid.GridIncrement / 2)) /
                          grid.GridIncrement;
@@ -289,7 +289,7 @@
                     protoNodes.Select(pn =>
                         new Node(CompressFlags.IndexIsLong, pn.NodeId, pn.TreeIndex, pn.Color,
                             pn.Faces.Faces.Select(f =>
-                                new Face(ConvertFaceFlags(f.Value), 0, CellPositionToGridIndex(f.Key, grid),
+                                new Face(ConvertVisibleSidesToFaceFlags(f.Value), 0, GridCellToGridIndex(f.Key, grid),
                                     null)).ToArray())
                     ).ToArray()));
             using var output = File.OpenWrite(outputFilename);
@@ -297,7 +297,7 @@
             return sector;
         }
 
-        public static FaceFlags ConvertFaceFlags(VisibleSide direction)
+        public static FaceFlags ConvertVisibleSidesToFaceFlags(VisibleSide direction)
         {
             if (direction == VisibleSide.None)
                 throw new ArgumentException("Must contain at least one face");
@@ -311,7 +311,7 @@
             return result;
         }
 
-        public static ulong CellPositionToGridIndex(Vector3i v, GridParameters gridParameters)
+        public static ulong GridCellToGridIndex(Vector3i v, GridParameters gridParameters)
         {
             return (ulong)(v.X + (gridParameters.GridSizeX - 1) * v.Y + (gridParameters.GridSizeX - 1) * (gridParameters.GridSizeY - 1) * v.Z);
         }
