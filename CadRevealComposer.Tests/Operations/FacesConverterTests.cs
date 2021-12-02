@@ -161,7 +161,7 @@
                             new Face(SectorToFacesConverter.ConvertVisibleSidesToFaceFlags(f.Value), 0, SectorToFacesConverter.GridCellToGridIndex(f.Key, protoGrid.GridParameters),
                                 null)).ToArray()
                     )
-                }));
+                }), new CoverageFactors { Xy = 0.1f, Yz = 0.1f, Xz = 0.1f });
         }
 
         private IEnumerable<RvmPrimitive> GetMesh(RvmGroup group)

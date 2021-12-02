@@ -280,6 +280,8 @@
 
         private static SectorFaces ExportFaceSector(SectorSplitter.ProtoSector protoSector, List<ProtoFaceNode> protoNodes, GridParameters grid, string outputFilename)
         {
+            // TODO: Calculate coverage factors from input
+            // TODO: Implement compression
             var sector = new SectorFaces(protoSector.SectorId, protoSector.ParentSectorId, protoSector.BoundingBoxMin,
                 protoSector.BoundingBoxMax,
 
@@ -290,7 +292,7 @@
                             pn.Faces.Faces.Select(f =>
                                 new Face(ConvertVisibleSidesToFaceFlags(f.Value), 0, GridCellToGridIndex(f.Key, grid),
                                     null)).ToArray())
-                    ).ToArray()));
+                    ).ToArray()), new CoverageFactors { Xy = 0.1f, Yz = 0.1f, Xz = 0.1f });
             using var output = File.OpenWrite(outputFilename);
             F3dWriter.WriteSector(sector, output);
             return sector;
