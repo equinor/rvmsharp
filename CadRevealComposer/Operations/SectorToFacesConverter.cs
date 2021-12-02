@@ -4,7 +4,6 @@
     using Faces;
     using RvmSharp.Tessellation;
     using System;
-    using System.Collections;
     using System.Collections.Generic;
     using System.Drawing;
     using System.IO;
@@ -28,6 +27,8 @@
         public record ProtoGrid(GridParameters GridParameters, IReadOnlyDictionary<Vector3i, VisibleSide> Faces);
 
         public record ProtoFaceNode(ulong TreeIndex, ulong NodeId, Color Color, ProtoGrid Faces);
+
+        public record Hit(Vector3i Cell, VisibleSide Direction, FaceHitLocation HitLocation);
 
         [Flags]
         public enum VisibleSide
@@ -96,8 +97,6 @@
             return result;
         }
 
-        public record Hit(Vector3i Cell, VisibleSide Direction, FaceHitLocation HitLocation);
-
         public static ProtoGrid Convert(Triangle[] triangles, GridParameters gridParameters)
         {
             var faces = new Dictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>>();
@@ -114,7 +113,7 @@
                     {
                         const Axis axis = Axis.X;
                         var xRay = GetRayForGridCellAndDirection(new Vector3i(0, y, z), gridParameters, axis);
-                        hits.AddRange(CollectHits(gridParameters, xRay, axis, triangle, faces));
+                        hits.AddRange(CollectHits(gridParameters, xRay, axis, triangle));
                     }
                 }
 
@@ -125,7 +124,7 @@
                     {
                         const Axis axis = Axis.Y;
                         var yRay = GetRayForGridCellAndDirection(new Vector3i(x, 0, z), gridParameters, axis);
-                        hits.AddRange(CollectHits(gridParameters, yRay, axis, triangle, faces));
+                        hits.AddRange(CollectHits(gridParameters, yRay, axis, triangle));
                     }
                 }
 
@@ -136,7 +135,7 @@
                     {
                         const Axis axis = Axis.Z;
                         var zRay = GetRayForGridCellAndDirection(new Vector3i(x, y, 0), gridParameters, axis);
-                        hits.AddRange(CollectHits(gridParameters, zRay, axis, triangle, faces));
+                        hits.AddRange(CollectHits(gridParameters, zRay, axis, triangle));
                     }
                 }
 
@@ -183,8 +182,7 @@
             return new ProtoGrid(gridParameters, newFaces);
         }
 
-        private static IEnumerable<Hit> CollectHits(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle,
-            IDictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>> faces)
+        private static IEnumerable<Hit> CollectHits(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle)
         {
             for (var k = 0; k < 9; k++)
             {
@@ -274,7 +272,6 @@
                 var nodeId = geometries.First().NodeId;
                 var meshesWithColors = geometries.Select(g => (g.SourcePrimitive, g.Color)).Select(mc => (TessellatorBridge.Tessellate(mc.SourcePrimitive, 0.01f), mc.Color)).ToArray();
                 var singleColor = meshesWithColors.Select(mc => mc.Color).Distinct().Count() == 1;
-                // TODO: support for multiple colors
                 if (!singleColor)
                 {
                     throw new NotImplementedException("Multi color support per node is not yet implemented");
