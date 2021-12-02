@@ -15,7 +15,7 @@ namespace CadRevealComposer.AlgebraExtensions
             var v2v3 = triangle.V3 - triangle.V2;
             var v3v1 = triangle.V1 - triangle.V3;
             var planeNormal = Vector3.Cross(v1v2, v1v3);
-            if (planeNormal.LengthSquared() < 0.0000000001f) // TODO: arbitrary value
+            if (planeNormal.LengthSquared() < 0.0000000001f) // NOTE: arbitrary value, works fine for now
                 return false; // Triangle is too small for raycast
             planeNormal = Vector3.Normalize(planeNormal);
 
