@@ -17,6 +17,9 @@
         Multiple = 0b1000_0000
     }
 
+    /// <summary>
+    /// F3D face, base element
+    /// </summary>
     public record Face
     {
         public Face(FaceFlags faceFlags, byte repetitions, ulong index, Color? color)
