@@ -2,6 +2,7 @@
 {
     using System;
     using System.Drawing;
+    using System.Linq;
 
     [Flags]
     public enum CompressFlags : byte
@@ -21,6 +22,16 @@
     {
         public Node(CompressFlags compressFlags, ulong nodeId, ulong treeIndex, Color? color, Face[] faces)
         {
+            if (compressFlags.HasFlag(CompressFlags.HasColorOnEachCell))
+            {
+                if (faces.Any(f => !f.Color.HasValue))
+                    throw new ArgumentNullException("Face is missing color");
+            }
+            else if (!color.HasValue)
+            {
+                throw new ArgumentNullException("Node is missing color");
+            }
+
             CompressFlags = compressFlags;
             NodeId = nodeId;
             TreeIndex = treeIndex;
