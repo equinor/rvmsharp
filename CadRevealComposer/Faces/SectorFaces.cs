@@ -4,6 +4,9 @@
 
     public record FacesGrid(GridParameters GridParameters, Node[] Nodes);
 
+    /// <summary>
+    /// Reveal sector faces representation
+    /// </summary>
     public record SectorFaces
     {
         public SectorFaces(ulong sectorId, ulong? parentSectorId, Vector3 bboxMin, Vector3 bboxMax, FacesGrid? sectorContents)

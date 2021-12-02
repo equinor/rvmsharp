@@ -2,6 +2,9 @@
 {
     using System.Numerics;
 
+    /// <summary>
+    /// F3D grid parameters
+    /// </summary>
     public record GridParameters
     {
         public GridParameters(uint gridSizeX, uint gridSizeY, uint gridSizeZ, Vector3 gridOrigin, float gridIncrement)
