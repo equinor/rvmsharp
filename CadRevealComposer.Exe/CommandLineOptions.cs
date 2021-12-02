@@ -46,6 +46,9 @@ namespace CadRevealComposer.Exe
             HelpText = "Create triangle meshes instead of instance meshes.")]
         public bool NoInstancing { get; init; }
 
+        [Option(longName: "NoFaces", Required = false)]
+        public bool NoFaces { get; init; }
+
         [Option(longName: "SingleSector", shortName: 's', Required = false, HelpText = "Create a single sector.")]
         public bool SingleSector { get; init; }
 
