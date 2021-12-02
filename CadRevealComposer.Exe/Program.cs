@@ -45,7 +45,8 @@
             var toolsParameters = new ComposerParameters(
                 Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
                 options.NoInstancing,
-                options.SingleSector);
+                options.SingleSector,
+                options.NoFaces);
 
             if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
             {
