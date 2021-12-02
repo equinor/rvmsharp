@@ -57,6 +57,9 @@
             Center = 1 << 8,
         }
 
+        private static readonly FaceHitLocation[] AllHitLocations =
+            Enum.GetValues<FaceHitLocation>().Where(l => l != FaceHitLocation.None).ToArray();
+
         private static Ray GetAdjustedRay(Ray rayIn, FaceHitLocation location, GridParameters gridParameters, Axis direction)
         {
             var (north, east) = direction switch
@@ -184,9 +187,8 @@
 
         private static IEnumerable<Hit> CollectHits(GridParameters gridParameters, Ray ray, Axis axis, Triangle triangle)
         {
-            for (var k = 0; k < 9; k++)
+            foreach (var hitLocation in AllHitLocations)
             {
-                var hitLocation = (FaceHitLocation)(1 << k);
                 var adjustedRay = GetAdjustedRay(ray, hitLocation, gridParameters, axis);
                 var hitResult = adjustedRay.Trace(triangle, out var hitPosition,
                     out var frontFace);
