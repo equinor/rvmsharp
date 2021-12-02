@@ -9,13 +9,14 @@
     /// </summary>
     public record SectorFaces
     {
-        public SectorFaces(ulong sectorId, ulong? parentSectorId, Vector3 bboxMin, Vector3 bboxMax, FacesGrid? sectorContents)
+        public SectorFaces(ulong sectorId, ulong? parentSectorId, Vector3 bboxMin, Vector3 bboxMax, FacesGrid? sectorContents, CoverageFactors coverageFactors)
         {
             SectorId = sectorId;
             ParentSectorId = parentSectorId;
             BboxMin = bboxMin;
             BboxMax = bboxMax;
             SectorContents = sectorContents;
+            CoverageFactors = coverageFactors;
         }
 
         public ulong SectorId { get; }
@@ -33,10 +34,6 @@
 
         public FacesGrid? SectorContents { get; }
 
-        public CoverageFactors GetCoverageFactors()
-        {
-            // TODO: implement
-            return new CoverageFactors{ Xy = 0.1f, Yz = 0.1f, Xz = 0.1f };
-        }
+        public CoverageFactors CoverageFactors { get; }
     }
 }
