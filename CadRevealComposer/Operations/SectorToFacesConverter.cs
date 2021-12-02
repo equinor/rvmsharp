@@ -167,17 +167,8 @@
                     var result = currentFace.Select(kvp =>
                     {
                         var g = kvp.Value;
-                        if (((g.HasFlag(FaceHitLocation.Center) ? 2 : 0)
-                             + (g.HasFlag(FaceHitLocation.North) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.NorthEast) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.East) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.SouthEast) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.South) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.SouthWest) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.West) ? 1 : 0)
-                             + (g.HasFlag(FaceHitLocation.NorthWest) ? 1 : 0)) >= 4)
-                            return kvp.Key;
-                        return VisibleSide.None;
+                        var weight = BitOperations.PopCount((uint)g) + (g.HasFlag(FaceHitLocation.Center) ? 1 : 0);
+                        return weight >= 4 ? kvp.Key : VisibleSide.None;
                     }).Where(v => v != VisibleSide.None).Aggregate(VisibleSide.None, (a, b) => a | b);
                     return (kvp.Key, result);
                 }).Where(kvp => kvp.result != VisibleSide.None)
