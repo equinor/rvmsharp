@@ -20,4 +20,22 @@
     <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\TestSamples\Huldra\Equinor_open_data_sharing_license_-_Huldra.pdf">
+      <Link>TestSamples\Huldra\Equinor_open_data_sharing_license_-_Huldra.pdf</Link>
+    </Content>
+    <Content Include="..\TestSamples\Huldra\LICENSE.md">
+      <Link>TestSamples\Huldra\LICENSE.md</Link>
+    </Content>
+    <Content Include="..\TestSamples\Huldra\README.md">
+      <Link>TestSamples\Huldra\README.md</Link>
+    </Content>
+    <Content Include="..\TestSamples\Huldra\WD1-PSUP.RVM">
+      <Link>TestSamples\Huldra\WD1-PSUP.RVM</Link>
+    </Content>
+    <Content Include="..\TestSamples\Huldra\WD1-PSUP.txt">
+      <Link>TestSamples\Huldra\WD1-PSUP.txt</Link>
+    </Content>
+  </ItemGroup>
+
 </Project>

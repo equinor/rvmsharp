@@ -54,6 +54,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="..\TestSamples">
+        <Link>TestSamples</Link>
+      </Folder>
       <Folder Include="TestSamples\FacetGroups" />
     </ItemGroup>
 
