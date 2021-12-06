@@ -1,15 +1,16 @@
 namespace CadRevealComposer.Tests.Utils
 {
     using AlgebraExtensions;
+    using CadRevealComposer.Utils;
     using NUnit.Framework;
     using System;
     using System.Numerics;
 
     [TestFixture]
-    public class RaycastingTests
+    public class RayTests
     {
         [Test]
-        public void RaycastInZHitFrontFace()
+        public void RaycastInZHitBackFace()
         {
             var rayOrigin = new Vector3(0, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
@@ -23,12 +24,13 @@ namespace CadRevealComposer.Tests.Utils
             var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
+            Assert.True(intersectionPoint.ApproximatelyEquals(new Vector3(0,0,2)));
             Assert.That(hitResult);
-            Assert.True(isFrontFace);
+            Assert.True(!isFrontFace);
         }
 
         [Test]
-        public void RaycastInZHitBackFace()
+        public void RaycastInZHitFrontFace()
         {
             var rayOrigin = new Vector3(0, 0, 0);
             var rayDirection = new Vector3(0, 0, 1);
@@ -42,8 +44,9 @@ namespace CadRevealComposer.Tests.Utils
             var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
+            Assert.True(intersectionPoint.ApproximatelyEquals(new Vector3(0,0,2)));
             Assert.That(hitResult);
-            Assert.False(isFrontFace);
+            Assert.True(isFrontFace);
         }
 
         [Test]
@@ -79,6 +82,7 @@ namespace CadRevealComposer.Tests.Utils
             var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
             LogResult(hitResult, intersectionPoint, isFrontFace);
 
+            Assert.True(intersectionPoint.ApproximatelyEquals(new Vector3(0,0,0)));
             Assert.That(hitResult);
             Assert.That(isFrontFace);
         }

@@ -21,7 +21,7 @@
     using Writers;
 
     [TestFixture]
-    public class FacesConverterTests
+    public class SectorToFacesConverterTests
     {
         [Test]
         public void ConvertSimpleMesh()
@@ -70,16 +70,13 @@
         }
 
         [Test]
-        public void ConvertSimpleMesh2()
+        public void ConvertRvmBox()
         {
             var center = new Vector3(15, 15, 13);
             var matrix = Matrix4x4.CreateTranslation(center);
             var size = new Vector3(1, 1, 1);
             var rvmBounds = new RvmBoundingBox(center - size / 2, center + size / 2);
-            //var mesh = TessellatorBridge.Tessellate(new RvmBox(1, matrix, rvmBounds, 1f, 1f, 1f), 0.1f);
-            var mesh = TessellatorBridge.Tessellate(new RvmCylinder(1, matrix, rvmBounds, 0.5f, 0.7f), 0.01f);
-            //var mesh = TessellatorBridge.Tessellate(new RvmSphere(
-//                1, matrix, new RvmBoundingBox(-Vector3.One * 0.5f, Vector3.One * 0.5f), 1f), 0.01f);
+            var mesh = TessellatorBridge.Tessellate(new RvmBox(1, matrix, rvmBounds, 1f, 1f, 1f), 0.1f);
 
             var triangles = SectorToFacesConverter.CollectTriangles(mesh);
 
@@ -94,17 +91,9 @@
             var gridSizeZ = (uint)(Math.Ceiling(size.Z / increment) + 1);
             var gridOrigin = bounds.Min - Vector3.One * increment / 2;
 
-            using var e = new ObjExporter(@"E:\gush\projects\FacesFiles\Assets\m.obj");
-            e.StartGroup("m");
-            e.WriteMesh(mesh);
-
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
             var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
-
-            var sector = DumpTranslation(protoGrid, bounds);
-            File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
-            //using var output = File.OpenWrite(@"e:\gush\projects\cognite\reveal\examples\public\primitives\sector_0.f3d");
-            //F3dWriter.WriteSector(sector, output);
+            Assert.IsFalse(true);
         }
 
         private struct MeshHolder
