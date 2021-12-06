@@ -4,21 +4,16 @@
     using CadRevealComposer.Operations;
     using CadRevealComposer.Utils;
     using Faces;
-    using Newtonsoft.Json;
     using NUnit.Framework;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
-    using RvmSharp.Exporters;
     using RvmSharp.Primitives;
     using RvmSharp.Tessellation;
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Drawing;
-    using System.IO;
     using System.Linq;
     using System.Numerics;
-    using Writers;
+    using Utils;
 
     [TestFixture]
     public class SectorToFacesConverterTests
@@ -27,7 +22,8 @@
         public void ConvertSimpleMesh()
         {
             // Collect RVM files
-            var workload = Workload.CollectWorkload(new[] { @"d:\Models\hda\rvm20210126" });
+
+            var workload = Workload.CollectWorkload(new[] { $"{TestSampleLoader.GlobalTestSamplesDirectory}/Huldra" });
             // Read RVM
             var store = Workload.ReadRvmData(workload);
             var rootNodes = store.RvmFiles.SelectMany(f => f.Model.Children);
@@ -49,24 +45,10 @@
             var gridSizeZ = (uint)(Math.Ceiling(size.Z / increment) + 1);
             var gridOrigin = bounds.Min - Vector3.One * increment / 2;
 
-            using var e = new ObjExporter(@"E:\gush\projects\FacesFiles\Assets\m.obj");
-            e.StartGroup("m");
-            foreach (var mesh in meshes)
-            {
-                e.WriteMesh(mesh);
-            }
-
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
-            var stopwatch = Stopwatch.StartNew();
             var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
-            stopwatch.Stop();
-            Console.WriteLine($"Time: {stopwatch.Elapsed}");
-
-            var sector = DumpTranslation(protoGrid, bounds);
-            File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
-            using var output = File.OpenWrite(@"e:\gush\projects\cognite\reveal\examples\public\primitives\sector_0.f3d");
-            F3dWriter.WriteSector(sector, output);
-            Console.WriteLine($"Bounds: {bounds.Min.ToString("G4")}{bounds.Max.ToString("G4")}");
+            // NOTE: Once compression is implemented, this test should be changed to a more sophisticated one
+            Assert.That(protoGrid.Faces.Count, Is.EqualTo(19661));
         }
 
         [Test]
@@ -78,7 +60,7 @@
             var rvmBounds = new RvmBoundingBox(center - size / 2, center + size / 2);
             var mesh = TessellatorBridge.Tessellate(new RvmBox(1, matrix, rvmBounds, 1f, 1f, 1f), 0.1f);
 
-            var triangles = SectorToFacesConverter.CollectTriangles(mesh);
+            var triangles = SectorToFacesConverter.CollectTriangles(mesh!);
 
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
@@ -93,64 +75,8 @@
 
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
             var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
-            Assert.IsFalse(true);
-        }
-
-        private struct MeshHolder
-        {
-            public int[] Indices;
-            public Vector3[] Vertices;
-            public Vector3[] Normals;
-        }
-
-        [Test]
-        public void ConvertRandomObj()
-        {
-            var mh = JsonConvert.DeserializeObject<MeshHolder>(File.ReadAllText("D:/gush.json"));
-            var tCount = mh.Indices.Length / 3;
-            var triangles = new Triangle[tCount];
-            for (var i = 0; i < tCount; i++)
-            {
-                triangles[i] = new Triangle(mh.Vertices[mh.Indices[i * 3]],
-                    mh.Vertices[mh.Indices[i * 3 + 1]], mh.Vertices[mh.Indices[i * 3 + 2]]);
-            }
-
-            var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
-            var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
-            var size = max - min;
-            var bounds = new Bounds(min, max);
-            var minDim = MathF.Min(size.X, MathF.Min(size.Y, size.Z));
-            var increment = minDim / 100;
-            Console.WriteLine(increment);
-            var gridSizeX = (uint)(Math.Ceiling(size.X / increment) + 1);
-            var gridSizeY = (uint)(Math.Ceiling(size.Y / increment) + 1);
-            var gridSizeZ = (uint)(Math.Ceiling(size.Z / increment) + 1);
-            var gridOrigin = bounds.Min - Vector3.One * increment / 2;
-
-            var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
-            var protoGrid = SectorToFacesConverter.Convert(triangles, grid);
-
-            var sector = DumpTranslation(protoGrid, bounds);
-            File.WriteAllText(@"D:\m.json",JsonConvert.SerializeObject(protoGrid, Formatting.Indented));
-            using var output = File.OpenWrite(@"e:\gush\projects\cognite\reveal\examples\public\primitives\sector_0.f3d");
-            F3dWriter.WriteSector(sector, output);
-            Console.WriteLine($"Bounds: {bounds.Min.ToString("G4")}{bounds.Max.ToString("G4")}");
-        }
-
-
-
-
-
-        private SectorFaces DumpTranslation(SectorToFacesConverter.ProtoGrid protoGrid, Bounds bounds)
-        {
-            return new SectorFaces(1, null, bounds.Min, bounds.Max, new FacesGrid(
-                protoGrid.GridParameters, new[]
-                {
-                    new Node(CompressFlags.IndexIsLong, 1, 1, Color.Red, protoGrid.Faces.Select(f =>
-                            new Face(SectorToFacesConverter.ConvertVisibleSidesToFaceFlags(f.Value), 0, SectorToFacesConverter.GridCellToGridIndex(f.Key, protoGrid.GridParameters),
-                                null)).ToArray()
-                    )
-                }), new CoverageFactors { Xy = 0.1f, Yz = 0.1f, Xz = 0.1f });
+            // NOTE: Once compression is implemented, this test should be changed to a more sophisticated one
+            Assert.That(protoGrid.Faces.Count, Is.EqualTo(98));
         }
 
         private IEnumerable<RvmPrimitive> GetMesh(RvmGroup group)
