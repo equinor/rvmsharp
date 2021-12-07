@@ -32,6 +32,7 @@ steps:
     inputs:
       command: "build"
       projects: "$(solution)"
+      arguments: "/warnaserror"
 
   - task: DotNetCoreCLI@2
     displayName: "Test"
