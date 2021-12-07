@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+	<IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="3.1.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="JetBrains.DotMemoryUnit" Version="3.1.20200127.214830" />
+    <PackageReference Include="NUnit" Version="3.13.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.1.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\TestSamples\Huldra\WD1-PSUP.RVM">
+      <Link>TestSamples\Huldra\WD1-PSUP.RVM</Link>
+    </Content>
+    <Content Include="..\..\TestSamples\Huldra\WD1-PSUP.txt">
+      <Link>TestSamples\Huldra\WD1-PSUP.txt</Link>
+    </Content>
+  </ItemGroup>
+
+</Project>
