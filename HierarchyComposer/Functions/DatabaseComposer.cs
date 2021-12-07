@@ -30,7 +30,7 @@
             var connectionStringBuilder = new SqliteConnectionStringBuilder
             {
                 DataSource = outputDatabaseFullPath,
-                Pooling = false,
+                Pooling = false, // We do not need pooling yet, and the tests fail as the database is not fully closed until the app exits when pooling is enabled.
                 Mode = SqliteOpenMode.ReadWriteCreate
             };
             var connectionString = connectionStringBuilder.ToString();
