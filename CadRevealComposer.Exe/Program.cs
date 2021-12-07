@@ -15,6 +15,11 @@
 
         static async Task Main(string[] args)
         {
+            // use full Profile Guided Optimization
+            Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");
+            Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
+            Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
+
             var result = await Parser.Default.ParseArguments<CommandLineOptions>(args)
                 .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
             Environment.Exit(result);

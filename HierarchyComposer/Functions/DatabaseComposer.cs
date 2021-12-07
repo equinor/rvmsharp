@@ -1,6 +1,7 @@
 ﻿namespace HierarchyComposer.Functions
 {
     using Extensions;
+    using Microsoft.Data.Sqlite;
     using Microsoft.EntityFrameworkCore;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Abstractions;
@@ -26,8 +27,16 @@
             if (File.Exists(outputDatabaseFullPath))
                 File.Delete(outputDatabaseFullPath);
 
+            var connectionStringBuilder = new SqliteConnectionStringBuilder
+            {
+                DataSource = outputDatabaseFullPath,
+                Pooling = false, // We do not need pooling yet, and the tests fail as the database is not fully closed until the app exits when pooling is enabled.
+                Mode = SqliteOpenMode.ReadWriteCreate
+            };
+            var connectionString = connectionStringBuilder.ToString();
+
             var optionsBuilder = new DbContextOptionsBuilder<HierarchyContext>();
-            optionsBuilder.UseSqlite($"Data Source={outputDatabaseFullPath};");
+            optionsBuilder.UseSqlite(connectionString);
             CreateEmptyDatabase(optionsBuilder.Options);
 
             var jsonNodesWithoutPdms = inputNodes.Where(n => !n.PDMSData.Any()).ToArray();
@@ -85,7 +94,7 @@
 
             var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
-            using var connection = new SQLiteConnection($"Data Source={outputDatabaseFullPath}");
+            using var connection = new SQLiteConnection(connectionString);
             connection.Open();
             using var cmd = new SQLiteCommand(connection);
 
