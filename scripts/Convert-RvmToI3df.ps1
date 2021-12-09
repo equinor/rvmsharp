@@ -89,6 +89,7 @@ end {
 
     $artifactStagingGlobs = @(
         "scene.json"
+        "initialCamera.json"
         "*.db"
         "*.i3d"
         "*.f3d"
