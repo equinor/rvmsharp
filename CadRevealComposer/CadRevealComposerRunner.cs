@@ -275,15 +275,14 @@ namespace CadRevealComposer
             stopwatch.Restart();
 
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-            var (cameraPosition, cameraDirection) = CameraPositioning.CalculateInitialCamera(geometries);
+            var cameraPosition = CameraPositioning.CalculateInitialCamera(geometries);
             SceneCreator.WriteSceneFile(
                 sectorsWithDownloadSize,
                 modelParameters,
                 outputDirectory,
                 treeIndexGenerator.CurrentMaxGeneratedIndex,
                 faceSectors,
-                cameraPosition,
-                cameraDirection);
+                cameraPosition);
 
             Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
             stopwatch.Restart();

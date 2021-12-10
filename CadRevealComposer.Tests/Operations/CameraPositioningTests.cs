@@ -11,33 +11,35 @@
     public class CameraPositioningTests
     {
         [Test]
-        public void InitialCameraPositionXaxis()
+        public void InitialCameraPositionLongestAxisX()
         {
             APrimitive[] geometries = {
                 new TestPrimitiveWithBoundingBox(
-                    new Vector3(1, 1, 1),
-                    new Vector3(1, 1, 1)
+                    new Vector3(0, 0, 0),
+                    new Vector3(100, 50, 100)
                     )
             };
 
-            var (position, direction) = CameraPositioning.CalculateInitialCamera(geometries);
-            Assert.AreEqual(new Vector3(), position);
-            Assert.AreEqual(new Vector3(), direction);
+            var (position, target, direction) = CameraPositioning.CalculateInitialCamera(geometries);
+            Assert.AreEqual(new Vector3(50, -103.56537f, 124.22725f), position);
+            Assert.AreEqual(new Vector3(50, 25, 50), target);
+            Assert.AreEqual(new Vector3(0, 0.8660254f, -0.5f), direction);
         }
 
         [Test]
-        public void InitialCameraPositionYaxis()
+        public void InitialCameraPositionLongestAxisY()
         {
             APrimitive[] geometries = {
                 new TestPrimitiveWithBoundingBox(
-                    new Vector3(1, 1, 1),
-                    new Vector3(1, 1, 1)
+                    new Vector3(0, 0, 0),
+                    new Vector3(50, 100, 100)
                 )
             };
 
-            var (position, direction) = CameraPositioning.CalculateInitialCamera(geometries);
-            Assert.AreEqual(new Vector3(), position);
-            Assert.AreEqual(new Vector3(), direction);
+            var (position, target, direction) = CameraPositioning.CalculateInitialCamera(geometries);
+            Assert.AreEqual(new Vector3(-103.56537f, 50, 124.22725f), position);
+            Assert.AreEqual(new Vector3(25, 50, 50), target);
+            Assert.AreEqual(new Vector3(0.8660254f, 0, -0.5f), direction);
         }
 
         private record TestPrimitiveWithBoundingBox : APrimitive

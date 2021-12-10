@@ -56,8 +56,7 @@ namespace CadRevealComposer
             DirectoryInfo outputDirectory,
             ulong maxTreeIndex,
             SectorFaces[] sectorFacesArray,
-            Vector3 cameraPosition,
-            Vector3 cameraDirection)
+            CameraPositioning.CameraPosition cameraPosition)
         {
             var dict = sectorFacesArray.ToDictionary(kvp => kvp.SectorId, kvp => kvp);
             static Sector FromSector(SectorInfo sector, Dictionary<ulong, SectorFaces> dict, DirectoryInfo outputDirectory)
@@ -110,7 +109,7 @@ namespace CadRevealComposer
 
             var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
-            JsonUtils.JsonSerializeToFile(cameraPosition, cameraDirection, cameraPath);
+            JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
             JsonUtils.JsonSerializeToFile(scene, scenePath, Formatting.Indented);
         }
 

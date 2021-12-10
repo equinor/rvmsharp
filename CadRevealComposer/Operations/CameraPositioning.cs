@@ -7,7 +7,9 @@ namespace CadRevealComposer.Operations
 
     public static class CameraPositioning
     {
-        public static (Vector3 cameraPosition, Vector3 cameraDirection) CalculateInitialCamera(APrimitive[] geometries)
+        public record CameraPosition(Vector3 Position, Vector3 Target, Vector3 Direction);
+
+        public static CameraPosition CalculateInitialCamera(APrimitive[] geometries)
         {
             // Camera looks towards platform center, with tilt down.
             // The camera is positioned such that the longest side X or Y is in view.
@@ -40,7 +42,7 @@ namespace CadRevealComposer.Operations
             var position = platformCenter + dir * cameraDistance;
             var direction = Vector3.Negate(dir);
 
-            return (position, direction);
+            return new CameraPosition(position, platformCenter, direction);
         }
 
         private static float PythagorasTan(float oppositeLeg, float angleRad) => oppositeLeg / MathF.Tan(angleRad);

@@ -1,8 +1,8 @@
 namespace CadRevealComposer.Utils
 {
     using Newtonsoft.Json;
+    using Operations;
     using System.IO;
-    using System.Numerics;
 
     public static class JsonUtils
     {
@@ -15,21 +15,27 @@ namespace CadRevealComposer.Utils
             jsonSerializer.Serialize(jsonWriter, obj);
         }
 
-        public static void JsonSerializeToFile(Vector3 cameraPosition, Vector3 cameraDirection, string filePath)
+        public static void JsonSerializeToFile(CameraPositioning.CameraPosition cameraPosition, string filePath)
         {
             var json = JsonConvert.SerializeObject(new
             {
                 cameraPosition = new
                 {
-                    x = cameraPosition.X,
-                    y = cameraPosition.Y,
-                    z = cameraPosition.Z
+                    x = cameraPosition.Position.X,
+                    y = cameraPosition.Position.Y,
+                    z = cameraPosition.Position.Z
                 },
                 cameraDirection = new
                 {
-                    x = cameraDirection.X,
-                    y = cameraDirection.Y,
-                    z = cameraDirection.Z
+                    x = cameraPosition.Direction.X,
+                    y = cameraPosition.Direction.Y,
+                    z = cameraPosition.Direction.Z
+                },
+                targetPosition = new
+                {
+                    x = cameraPosition.Target.X,
+                    y = cameraPosition.Target.Y,
+                    z = cameraPosition.Target.Z
                 }
             }, Formatting.Indented);
             File.WriteAllText(filePath, json);
