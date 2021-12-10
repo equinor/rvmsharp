@@ -11,12 +11,15 @@ namespace CadRevealComposer.Operations
 
         public static CameraPosition CalculateInitialCamera(APrimitive[] geometries)
         {
+            static float PythagorasTan(float oppositeLeg, float angleRad) => oppositeLeg / MathF.Tan(angleRad);
+            static float DegToRad(float degree) => MathF.PI / 180f * degree;
+
             // Camera looks towards platform center, with tilt down.
             // The camera is positioned such that the longest side X or Y is in view.
 
-            const float cameraFieldOfViewDeg = 45f;
+            const float cameraVerticalFieldOfViewDeg = 45f;
             const float additionalCameraDistanceFactor = 1.1f;
-            const float cameraHorizonAngleDeg = 30f;
+            const float cameraVerticalHorizonAngleDeg = 30f;
 
             var (boundingBoxMin, boundingBoxMax) = GetPlatformBoundingBox(geometries);
             var platformSides = boundingBoxMax - boundingBoxMin;
@@ -28,15 +31,15 @@ namespace CadRevealComposer.Operations
             {
                 var platformYzPlaneMin = new Vector3(boundingBoxMin.X + (platformSides.X / 2), boundingBoxMin.Y, boundingBoxMin.Z);
                 var distanceCenterToYzPlaneMin = (platformCenter - platformYzPlaneMin).Length();
-                cameraDistance = additionalCameraDistanceFactor * PythagorasTan(distanceCenterToYzPlaneMin, DegToRad(cameraFieldOfViewDeg) / 2);
-                dir = Vector3.Normalize(new Vector3(0, -MathF.Cos(DegToRad(cameraHorizonAngleDeg)), MathF.Sin(DegToRad(cameraHorizonAngleDeg))));
+                cameraDistance = additionalCameraDistanceFactor * PythagorasTan(distanceCenterToYzPlaneMin, DegToRad(cameraVerticalFieldOfViewDeg) / 2);
+                dir = Vector3.Normalize(new Vector3(0, -MathF.Cos(DegToRad(cameraVerticalHorizonAngleDeg)), MathF.Sin(DegToRad(cameraVerticalHorizonAngleDeg))));
             }
             else
             {
                 var platformXzPlaneMin = new Vector3(boundingBoxMin.X, boundingBoxMin.Y + (platformSides.Y / 2), boundingBoxMin.Z);
                 var distanceCenterToYzPlaneMin = (platformCenter - platformXzPlaneMin).Length();
-                cameraDistance = additionalCameraDistanceFactor * PythagorasTan(distanceCenterToYzPlaneMin, DegToRad(cameraFieldOfViewDeg) / 2);
-                dir = Vector3.Normalize(new Vector3(-MathF.Cos(DegToRad(cameraHorizonAngleDeg)), 0, MathF.Sin(DegToRad(cameraHorizonAngleDeg))));
+                cameraDistance = additionalCameraDistanceFactor * PythagorasTan(distanceCenterToYzPlaneMin, DegToRad(cameraVerticalFieldOfViewDeg) / 2);
+                dir = Vector3.Normalize(new Vector3(-MathF.Cos(DegToRad(cameraVerticalHorizonAngleDeg)), 0, MathF.Sin(DegToRad(cameraVerticalHorizonAngleDeg))));
             }
 
             var position = platformCenter + dir * cameraDistance;
@@ -44,9 +47,6 @@ namespace CadRevealComposer.Operations
 
             return new CameraPosition(position, platformCenter, direction);
         }
-
-        private static float PythagorasTan(float oppositeLeg, float angleRad) => oppositeLeg / MathF.Tan(angleRad);
-        private static float DegToRad(float degree) => MathF.PI / 180f * degree;
 
         private static (Vector3 PlatformBoundingBoxMin, Vector3 PlatformBoundingBoxMax) GetPlatformBoundingBox(APrimitive[] geometries)
         {
