@@ -56,8 +56,8 @@ namespace CadRevealComposer
             var dict = sectorFacesArray.ToDictionary(kvp => kvp.SectorId, kvp => kvp);
             static Sector FromSector(SectorInfo sector, Dictionary<ulong, SectorFaces> dict, DirectoryInfo outputDirectory)
             {
-                FacesFile facesFile = null;
-                if (dict.TryGetValue(sector.SectorId, out var sectorFaces))
+                FacesFile? facesFile = null;
+                if (dict.TryGetValue(sector.SectorId, out var sectorFaces) && sectorFaces.SectorContents is not null)
                 {
                     facesFile = new FacesFile { QuadSize = sectorFaces.SectorContents.GridParameters.GridIncrement,
                         FacesCount = sectorFaces.SectorContents.Nodes.Select(n => (long)n.Faces.Length).Sum(),
