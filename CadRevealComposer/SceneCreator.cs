@@ -50,8 +50,13 @@ namespace CadRevealComposer
             exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
         }
 
-        public static void WriteSceneFile(ImmutableArray<SectorInfo> sectors, ModelParameters parameters,
-            DirectoryInfo outputDirectory, ulong maxTreeIndex, SectorFaces[] sectorFacesArray)
+        public static void WriteSceneFile(
+            ImmutableArray<SectorInfo> sectors,
+            ModelParameters parameters,
+            DirectoryInfo outputDirectory,
+            ulong maxTreeIndex,
+            SectorFaces[] sectorFacesArray,
+            CameraPositioning.CameraPosition cameraPosition)
         {
             var dict = sectorFacesArray.ToDictionary(kvp => kvp.SectorId, kvp => kvp);
             static Sector FromSector(SectorInfo sector, Dictionary<ulong, SectorFaces> dict, DirectoryInfo outputDirectory)
@@ -102,7 +107,9 @@ namespace CadRevealComposer
                 Sectors = sectors.Select(s => FromSector(s, dict, outputDirectory)).ToArray()
             };
 
+            var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
             var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
+            JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
             JsonUtils.JsonSerializeToFile(scene, scenePath, Formatting.Indented);
         }
 
