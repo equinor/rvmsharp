@@ -4,7 +4,7 @@
 
 A library and utility for reading and converting RVM files into something else.
 
-Library supports .NET 5.0 and .NET Standard 2.0 (Partially Unity compatible)
+Library supports .NET 6.0 and .NET Standard 2.1
 
 ## Dependencies
 
