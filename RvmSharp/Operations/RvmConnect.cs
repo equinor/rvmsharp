@@ -67,7 +67,7 @@
 
                 for (int i = j + 1; i < anchors.Length && anchors[i].Position.X <= anchors[j].Position.X + epsilon; i++)
                 {
-                    bool canMatch = anchors[i].Matched == false && anchors[i].Geo != anchors[j].Geo;
+                    bool canMatch = anchors[i].Matched == false && !ReferenceEquals(anchors[i].Geo, anchors[j].Geo);
                     bool close = Vector3.DistanceSquared(anchors[j].Position, anchors[i].Position) <= epsilonSquared;
 
                     const float alignedThreshold = -0.98f;
