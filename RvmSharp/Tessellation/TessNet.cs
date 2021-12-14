@@ -13,10 +13,10 @@ namespace RvmSharp.Tessellation
         {
             public Vector3[] VertexData = Array.Empty<Vector3>();
             public Vector3[] NormalData = Array.Empty<Vector3>();
-            public readonly List<int> Indices = new List<int>();
+            public List<int> Indices = new List<int>();
         }
 
-        public static TessellateResult Tessellate(RvmContour[] contours)
+        public static TessellateResult Tessellate(IEnumerable<RvmContour> contours)
         {
             var tess = new Tess();
             Vec3 normal = default;
@@ -45,14 +45,20 @@ namespace RvmSharp.Tessellation
             tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, CombineNormals, normal);
             result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
             result.NormalData = tess.Vertices.Select(v => (Vector3)v.Data).ToArray();
-
+            result.Indices = new List<int>(tess.ElementCount * 3);
             for (var i = 0; i < tess.ElementCount; i++)
             {
-                var t = new int[3];
-                Array.Copy(tess.Elements, i * 3, t, 0, 3);
-                if (t.Any(e => e == Tess.Undef))
+                var indices  = tess.Elements.AsSpan(i * 3, 3);
+                var x = indices[0];
+                var y = indices[1];
+                var z = indices[2];
+                if (x == Tess.Undef || y == Tess.Undef || z == Tess.Undef)
+                {
                     continue;
-                result.Indices.AddRange(t);
+                }
+                result.Indices.Add(x);
+                result.Indices.Add(y);
+                result.Indices.Add(z);
             }
             return result;
         }

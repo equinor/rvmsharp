@@ -693,7 +693,7 @@ namespace RvmSharp.Tessellation
 
                 var adjustedContours = poly.Contours.Select(v => new RvmContour(
                     v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()
-                )).ToArray();
+                ));
 
                 var outJob = TessNet.Tessellate(adjustedContours);
 

@@ -241,7 +241,6 @@ namespace CadRevealComposer
                                 (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
                     }))
                 .Where(t => t.TempTessellatedMesh!.Vertices.Count > 0)
-                .AsParallel()
                 .ToArray();
 
             Console.WriteLine($"\tTessellated {tMeshes.Length} Triangle Meshes in " + tMeshesTimer.Elapsed);
