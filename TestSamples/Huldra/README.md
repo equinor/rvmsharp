@@ -2,7 +2,7 @@
 
 This directory contains a (small) subset of data from the Equinor Huldra dataset.
 
-All files in this directory is under a separate permissive license. See [LICENSE](./LICENSE) for more information.
+All files in this directory is under a separate permissive license. See [LICENSE.md](./LICENSE.md) for more information.
 
 ## Download Link
 
