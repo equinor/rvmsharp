@@ -149,7 +149,7 @@ namespace CadRevealComposer.Primitives
                 case RvmSphere rvmSphere:
                     {
                         AssertUniformScale(scale);
-                        var radius = (rvmSphere.Diameter / 2) * scale.X;
+                        var radius = rvmSphere.Radius * scale.X;
                         return new Sphere
                         (
                             commonPrimitiveProperties,

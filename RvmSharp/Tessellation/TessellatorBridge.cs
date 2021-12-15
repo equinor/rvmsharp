@@ -75,7 +75,7 @@ namespace RvmSharp.Tessellation
                     // we cannot tessellate a line, we should handle it elsewhere
                     return null;
                 case RvmSphere sphere:
-                    return Tessellate(sphere, 0.5f * sphere.Diameter, (float)Math.PI, 0.0f, 1.0f, scale, tolerance);
+                    return Tessellate(sphere, sphere.Radius, (float)Math.PI, 0.0f, 1.0f, scale, tolerance);
                 case RvmEllipticalDish ellipticalDish:
                     return Tessellate(ellipticalDish, ellipticalDish.BaseRadius, (float)Math.PI / 2, 0.0f,
                         ellipticalDish.Height / ellipticalDish.BaseRadius, scale, tolerance);
