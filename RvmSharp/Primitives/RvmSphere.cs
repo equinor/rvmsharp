@@ -6,7 +6,7 @@ namespace RvmSharp.Primitives
             uint Version,
             Matrix4x4 Matrix,
             RvmBoundingBox BoundingBoxLocal,
-            float Diameter)
+            float Radius)
         : RvmPrimitive(
             Version,
             RvmPrimitiveKind.Sphere,
