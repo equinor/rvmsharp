@@ -62,12 +62,31 @@ namespace CadRevealComposer
             Console.WriteLine("Converted to reveal nodes in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
+            static bool IsValidGeometry(RvmPrimitive geometry)
+            {
+                var extents = geometry.BoundingBoxLocal.Extents;
+                if (extents.X < 0 || extents.Y < 0 || extents.Z < 0)
+                {
+                    return false;
+                }
+                return true;
+            }
+
+            var invalidGeometriesGroupedByType = allNodes
+                .SelectMany(x => x.RvmGeometries.Where(g => !IsValidGeometry(g)))
+                .GroupBy(g => g.GetType())
+                .OrderBy(g => g.Key.Name);
+            foreach (var group in invalidGeometriesGroupedByType)
+            {
+                Console.WriteLine($"Excluded {group.Count()} {group.Key.Name} due to negative extents in either X/Y/Z.");
+            }
+
             var geometries = allNodes
                 .AsParallel()
                 .AsOrdered()
-                .SelectMany(x => x.RvmGeometries.Select(primitive =>
-                    APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(),
-                        primitive)))
+                .SelectMany(x => x.RvmGeometries
+                    .Where(IsValidGeometry)
+                    .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
                 .WhereNotNull()
                 .ToArray();
 
