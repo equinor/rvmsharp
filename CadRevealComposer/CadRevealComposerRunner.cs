@@ -64,6 +64,7 @@ namespace CadRevealComposer
 
             static bool IsValidGeometry(RvmPrimitive geometry)
             {
+                // TODO: Investigate why we have negative extents in the RVM data, and clarify if we have negligable data loss by excluding these parts. Follow up in AB#58629 ( https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/58629 )
                 var extents = geometry.BoundingBoxLocal.Extents;
                 if (extents.X < 0 || extents.Y < 0 || extents.Z < 0)
                 {
@@ -76,6 +77,7 @@ namespace CadRevealComposer
                 .SelectMany(x => x.RvmGeometries.Where(g => !IsValidGeometry(g)))
                 .GroupBy(g => g.GetType())
                 .OrderBy(g => g.Key.Name);
+
             foreach (var group in invalidGeometriesGroupedByType)
             {
                 Console.WriteLine($"Excluded {group.Count()} {group.Key.Name} due to negative extents in either X/Y/Z.");
