@@ -83,7 +83,7 @@
             var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - maximumSagitta / (scale * radius)));
             if (double.IsNaN(samples))
             {
-                throw new Exception("Number of samples is calculated as NaN.");
+                throw new Exception($"Number of samples is calculated as NaN. Diagnostics: ({nameof(scale)}: {scale}, {nameof(arc)}: {arc}, {nameof(radius)}: {radius}, {nameof(tolerance)}: {tolerance} )");
             }
             return Math.Min(MaxSamples, (int)(Math.Max(MinSamples, Math.Ceiling(samples))));
         }
