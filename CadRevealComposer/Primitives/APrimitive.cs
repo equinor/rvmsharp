@@ -90,51 +90,26 @@ namespace CadRevealComposer.Primitives
                         var radius = rvmCylinder.Radius * scale.X;
                         if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
                         {
-                            //throw new Exception("Not implemented!");
+                            throw new Exception("Not implemented!");
                         }
-
-                        if (rvmCylinder.Connections[0] != null || rvmCylinder.Connections[1] != null)
-                        {
-                            return new OpenCylinder
-                            (
-                                commonPrimitiveProperties,
-                                CenterAxis: normal,
-                                Height: height,
-                                Radius: radius
-                            );
-                        }
-                        else
-                        {
-                            return new ClosedCylinder
-                            (
-                                commonPrimitiveProperties,
-                                CenterAxis: normal,
-                                Height: height,
-                                Radius: radius
-                            );
-                        }
+                        return new ClosedCylinder
+                        (
+                            commonPrimitiveProperties,
+                            CenterAxis: normal,
+                            Height: height,
+                            Radius: radius
+                        );
                     }
                 case RvmEllipticalDish rvmEllipticalDish:
                     {
                         AssertUniformScale(scale);
                         var verticalRadius = rvmEllipticalDish.Height * scale.X;
                         var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
-                        if (rvmEllipticalDish.Connections[0] != null)
-                        {
-                            return new ClosedEllipsoidSegment(commonPrimitiveProperties,
-                                Normal: normal,
-                                Height: verticalRadius,
-                                HorizontalRadius: horizontalRadius,
-                                VerticalRadius: verticalRadius);
-                        }
-                        else
-                        {
-                            return new OpenEllipsoidSegment(commonPrimitiveProperties,
-                                Normal: normal,
-                                Height: verticalRadius,
-                                HorizontalRadius: horizontalRadius,
-                                VerticalRadius: verticalRadius);
-                        }
+                        return new ClosedEllipsoidSegment(commonPrimitiveProperties,
+                            Normal: normal,
+                            Height: verticalRadius,
+                            HorizontalRadius: horizontalRadius,
+                            VerticalRadius: verticalRadius);
                     }
                 case RvmFacetGroup facetGroup:
                     return new ProtoMeshFromFacetGroup(commonPrimitiveProperties, facetGroup);
@@ -169,20 +144,10 @@ namespace CadRevealComposer.Primitives
                         var position = commonPrimitiveProperties.Position - upVector * d;
                         commonPrimitiveProperties = commonPrimitiveProperties with { Position = position };
 
-                        if (rvmSphericalDish.Connections[0] != null)
-                        {
-                            return new ClosedSphericalSegment(commonPrimitiveProperties,
-                                Normal: normal,
-                                Height: height,
-                                Radius: sphereRadius);
-                        }
-                        else
-                        {
-                            return new ClosedSphericalSegment(commonPrimitiveProperties,
-                                Normal: normal,
-                                Height: height,
-                                Radius: sphereRadius);
-                        }
+                        return new ClosedSphericalSegment(commonPrimitiveProperties,
+                            Normal: normal,
+                            Height: height,
+                            Radius: sphereRadius);
                     }
                 case RvmSnout rvmSnout:
                     return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
@@ -200,28 +165,14 @@ namespace CadRevealComposer.Primitives
                     }
                     else
                     {
-                        if (rvmRectangularTorus.Connections[0] != null && rvmRectangularTorus.Connections[1] != null)
-                        {
-                            return new OpenExtrudedRingSegment(
-                                commonPrimitiveProperties,
-                                CenterAxis: normal,
-                                Height: rvmRectangularTorus.Height * scale.Z,
-                                InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
-                                OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
-                                RotationAngle: rotationAngle,
-                                ArcAngle: rvmRectangularTorus.Angle);
-                        }
-                        else
-                        {
-                            return new ClosedExtrudedRingSegment(
-                                commonPrimitiveProperties,
-                                CenterAxis: normal,
-                                Height: rvmRectangularTorus.Height * scale.Z,
-                                InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
-                                OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
-                                RotationAngle: rotationAngle,
-                                ArcAngle: rvmRectangularTorus.Angle);
-                        }
+                        return new ClosedExtrudedRingSegment(
+                            commonPrimitiveProperties,
+                            CenterAxis: normal,
+                            Height: rvmRectangularTorus.Height * scale.Z,
+                            InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
+                            OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
+                            RotationAngle: rotationAngle,
+                            ArcAngle: rvmRectangularTorus.Angle);
                     }
                 default:
                     throw new InvalidOperationException();

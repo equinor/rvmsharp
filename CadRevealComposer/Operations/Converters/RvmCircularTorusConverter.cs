@@ -29,17 +29,6 @@
                 );
             }
 
-            if (rvmCircularTorus.Connections[0] != null || rvmCircularTorus.Connections[1] != null)
-                return new OpenTorusSegment
-                (
-                    commonPrimitiveProperties,
-                    Normal: normal,
-                    Radius: radius,
-                    TubeRadius: tubeRadius,
-                    RotationAngle: rotationAngle,
-                    ArcAngle: rvmCircularTorus.Angle
-                );
-
             return new ClosedTorusSegment
             (
                 commonPrimitiveProperties,

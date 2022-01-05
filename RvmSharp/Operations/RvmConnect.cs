@@ -8,6 +8,12 @@
     using System.Linq;
     using System.Numerics;
 
+    /// <summary>
+    /// Make connection between geometries that share a boundary and are aligned.
+    /// Tesselation use the connections to:
+    /// - Avoid adding internal caps between adjacent shapes.
+    /// - Align circumferential sample points between adjacent shapes.
+    /// </summary>
     public static class RvmConnect
     {
         class Anchor

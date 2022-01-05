@@ -47,68 +47,33 @@
                     if (rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom))
                     {
                         // General cylinder
-                        if (IsOpen(rvmSnout))
-                        {
-                            return new OpenGeneralCylinder(
-                                commons,
-                                CenterAxis: commons.RotationDecomposed.Normal,
-                                Height: height,
-                                Radius: radiusA,
-                                RotationAngle: commons.RotationDecomposed.RotationAngle,
-                                ArcAngle: 2*MathF.PI,
-                                SlopeA: slopeA,
-                                SlopeB: slopeB,
-                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
-                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
-                            );
-
-                        } else {
-                            return new ClosedGeneralCylinder(
-                                commons,
-                                CenterAxis: commons.RotationDecomposed.Normal,
-                                Height: height,
-                                Radius: radiusA,
-                                RotationAngle: commons.RotationDecomposed.RotationAngle,
-                                ArcAngle: 2*MathF.PI,
-                                SlopeA: slopeA,
-                                SlopeB: slopeB,
-                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
-                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
-                            );
-                        }
+                        return new ClosedGeneralCylinder(
+                            commons,
+                            CenterAxis: commons.RotationDecomposed.Normal,
+                            Height: height,
+                            Radius: radiusA,
+                            RotationAngle: commons.RotationDecomposed.RotationAngle,
+                            ArcAngle: 2 * MathF.PI,
+                            SlopeA: slopeA,
+                            SlopeB: slopeB,
+                            ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
+                            ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
+                        );
                     } else {
                         // General cone
-                        if (IsOpen(rvmSnout))
-                        {
-                            return new OpenGeneralCone(
-                                commons,
-                                CenterAxis: commons.RotationDecomposed.Normal,
-                                Height: height,
-                                RadiusA: radiusA,
-                                RadiusB: radiusB,
-                                RotationAngle: commons.RotationDecomposed.RotationAngle,
-                                ArcAngle: 2*MathF.PI,
-                                SlopeA: slopeA,
-                                SlopeB: slopeB,
-                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
-                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
-                            );
-
-                        } else {
-                            return new ClosedGeneralCone(
-                                commons,
-                                CenterAxis: commons.RotationDecomposed.Normal,
-                                Height: height,
-                                RadiusA: radiusA,
-                                RadiusB: radiusB,
-                                RotationAngle: commons.RotationDecomposed.RotationAngle,
-                                ArcAngle: 2*MathF.PI,
-                                SlopeA: slopeA,
-                                SlopeB: slopeB,
-                                ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
-                                ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
-                            );
-                        }
+                        return new ClosedGeneralCone(
+                            commons,
+                            CenterAxis: commons.RotationDecomposed.Normal,
+                            Height: height,
+                            RadiusA: radiusA,
+                            RadiusB: radiusB,
+                            RotationAngle: commons.RotationDecomposed.RotationAngle,
+                            ArcAngle: 2 * MathF.PI,
+                            SlopeA: slopeA,
+                            SlopeB: slopeB,
+                            ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
+                            ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
+                        );
                     }
                 }
             }
@@ -117,48 +82,21 @@
                 if (IsEccentric(rvmSnout))
                 {
                     var capNormal = Vector3.Transform(Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height) * scale.X), commons.Rotation);
-                    if (IsOpen(rvmSnout))
-                    {
-                        return new OpenEccentricCone(
-                            commons,
-                            CenterAxis: capNormal,
-                            Height: height,
-                            RadiusA: radiusA,
-                            RadiusB: radiusB,
-                            CapNormal: commons.RotationDecomposed.Normal);
-                    }
-                    else
-                    {
-                        return new ClosedEccentricCone(commons,
-                            CenterAxis: capNormal,
-                            Height: height,
-                            RadiusA: radiusA,
-                            RadiusB: radiusB,
-                            CapNormal: commons.RotationDecomposed.Normal);
-                    }
+                    return new ClosedEccentricCone(commons,
+                        CenterAxis: capNormal,
+                        Height: height,
+                        RadiusA: radiusA,
+                        RadiusB: radiusB,
+                        CapNormal: commons.RotationDecomposed.Normal);
                 }
                 else
                 {
-                    if (IsOpen(rvmSnout))
-                    {
-                        var c = new OpenCone(
-                            commons,
-                            CenterAxis: commons.RotationDecomposed.Normal,
-                            Height: height,
-                            RadiusA: radiusA,
-                            RadiusB: radiusB);
-
-                        return c;
-                    }
-                    else
-                    {
-                        return new ClosedCone(
-                            commons,
-                            CenterAxis: commons.RotationDecomposed.Normal,
-                            Height: height,
-                            RadiusA: radiusA,
-                            RadiusB: radiusB);
-                    }
+                    return new ClosedCone(
+                        commons,
+                        CenterAxis: commons.RotationDecomposed.Normal,
+                        Height: height,
+                        RadiusA: radiusA,
+                        RadiusB: radiusB);
                 }
             }
         }
@@ -172,11 +110,6 @@
         {
             return rvmSnout.BottomShearX != 0 || rvmSnout.BottomShearY != 0 || rvmSnout.TopShearX != 0 ||
                    rvmSnout.TopShearY != 0;
-        }
-
-        private static bool IsOpen(RvmSnout rvmSnout)
-        {
-            return rvmSnout.Connections[0] != null || rvmSnout.Connections[1] != null;
         }
     }
 }
