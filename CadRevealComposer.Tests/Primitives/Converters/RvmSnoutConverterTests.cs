@@ -45,7 +45,7 @@
         }
 
         [Test]
-        public void ConvertToRevealPrimitive_WhenConnections_ProducesOpenCone()
+        public void ConvertToRevealPrimitive_WhenConnections_ProducesClosedCone()
         {
             _rvmSnout.Connections[0] = new RvmConnection(_rvmSnout, _rvmSnout, 0, 0, Vector3.One, Vector3.UnitZ,
                 RvmConnection.ConnectionType.HasCircularSide);
@@ -53,7 +53,7 @@
             var cone = _rvmSnout.ConvertToRevealPrimitive(_revealNode, _rvmNode);
 
             Assert.That(cone, Is.Not.Null);
-            Assert.That(cone, Is.TypeOf<OpenCone>());
+            Assert.That(cone, Is.TypeOf<ClosedCone>());
         }
 
         [Test]

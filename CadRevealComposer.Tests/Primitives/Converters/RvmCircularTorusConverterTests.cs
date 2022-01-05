@@ -56,7 +56,7 @@
         }
 
         [Test]
-        public void RvmCircularConverter_WhenNotCompleteAndHasConnection_ReturnsOpenTorusSegment()
+        public void RvmCircularConverter_WhenNotCompleteAndHasConnection_ReturnsClosedTorusSegment()
         {
             var angle = MathF.PI;
             var torus = _rvmCircularTorus with {Angle = angle};
@@ -64,9 +64,9 @@
                 RvmConnection.ConnectionType.HasCircularSide);
             var primitive = torus.ConvertToRevealPrimitive(_rvmNode, _revealNode);
 
-            Assert.That(primitive, Is.TypeOf<OpenTorusSegment>());
+            Assert.That(primitive, Is.TypeOf<ClosedTorusSegment>());
 
-            var closedTorusSegment = (OpenTorusSegment) primitive;
+            var closedTorusSegment = (ClosedTorusSegment) primitive;
             Assert.That(closedTorusSegment.ArcAngle, Is.EqualTo(angle).Within(0.001));
         }
     }
