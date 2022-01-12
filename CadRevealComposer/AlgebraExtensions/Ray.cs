@@ -43,7 +43,8 @@ namespace CadRevealComposer.AlgebraExtensions
             var v2pi = intersectionPoint - triangle.V2;
             var v3pi = intersectionPoint - triangle.V3;
             // Check if intersection point is on any corner
-            if (v1pi.EqualsWithinTolerance(Vector3.Zero, tolerance) || v2pi.EqualsWithinTolerance(Vector3.Zero, tolerance) ||
+            if (v1pi.EqualsWithinTolerance(Vector3.Zero, tolerance) ||
+                v2pi.EqualsWithinTolerance(Vector3.Zero, tolerance) ||
                 v3pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
                 return true;
 

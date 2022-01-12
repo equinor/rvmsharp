@@ -44,7 +44,7 @@
 
                 var Mr = Matrix4x4.CreateFromQuaternion(q);
                 var Ms = Matrix4x4.CreateScale(scale);
-                var Mt = Matrix4x4.CreateTranslation(new Vector3(10));
+                var Mt = Matrix4x4.CreateTranslation(Vector3.Zero);
                 var Ma = Ms * Mr * Mt;
 
                 var meshB = meshA.TransformVertexData(Ma);

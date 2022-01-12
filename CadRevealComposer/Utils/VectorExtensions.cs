@@ -46,6 +46,9 @@
             return Math.Abs(vector.X - vector.Y) < tolerance && Math.Abs(vector.X - vector.Z) < tolerance;
         }
 
+        /// <summary>
+        /// Checks that each vector component from both vectors are within the given tolerance.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool EqualsWithinTolerance(this Vector3 vector, Vector3 other, float tolerance)
         {
@@ -54,18 +57,38 @@
                    Math.Abs(vector.Z - other.Z) < tolerance;
         }
 
+        /// <summary>
+        /// Checks that each vector component from both vectors are within the given factor.
+        /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool EqualsWithinPercentage(this Vector3 vector, Vector3 other, float percentage)
+        public static bool EqualsWithinFactor(this Vector3 vector, Vector3 other, float factor)
         {
-            var factor = percentage / 100.0f;
             var upperTolerance = 1.0f + factor;
             var lowerTolerance = 1.0f - factor;
             var divided = vector / other;
 
-            // with protection against divide by zero
-            return ((float.IsNaN(divided.X) && vector.X.ApproximatelyEquals(other.X)) || (divided.X >= lowerTolerance && divided.X <= upperTolerance)) &&
-                   ((float.IsNaN(divided.Y) && vector.Y.ApproximatelyEquals(other.Y)) || (divided.Y >= lowerTolerance && divided.Y <= upperTolerance)) &&
-                   ((float.IsNaN(divided.Z) && vector.Z.ApproximatelyEquals(other.Z)) || (divided.Z >= lowerTolerance && divided.Z <= upperTolerance));
+            // with protection against zero cases, then compare using a small tolerance of epsilon
+            // - 0f/0f = NaN
+            // - epsilon/0f = Infinity
+            const float tolerance = 1E-10f;
+            return (float.IsNaN(divided.X) || float.IsInfinity(divided.X)
+                       ? Math.Abs(vector.X - other.X) < tolerance
+                       : (divided.X >= lowerTolerance && divided.X <= upperTolerance)) &&
+                   (float.IsNaN(divided.Y) || float.IsInfinity(divided.Y)
+                       ? Math.Abs(vector.Y - other.Y) < tolerance
+                       : (divided.Y >= lowerTolerance && divided.Y <= upperTolerance)) &&
+                   (float.IsNaN(divided.Z) || float.IsInfinity(divided.Z)
+                       ? Math.Abs(vector.Z - other.Z) < tolerance
+                       : (divided.Z >= lowerTolerance && divided.Z <= upperTolerance));
+        }
+
+        /// <summary>
+        /// Checks that each vector component from both vectors are within the given factor, or else within the given tolerance.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool EqualsWithinFactorOrTolerance(this Vector3 vector, Vector3 other, float factor, float tolerance)
+        {
+            return vector.EqualsWithinFactor(other, factor) || vector.EqualsWithinTolerance(other, tolerance);
         }
     }
 }

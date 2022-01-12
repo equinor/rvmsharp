@@ -91,18 +91,18 @@ namespace CadRevealComposer.Operations
                     .AsParallel()
                     .GroupBy(CalculateKey)
                     .Where(x => x.Count() >= instancingThreshold) // We can ignore all groups of less items than the threshold.
-                    .Select(g => (g.Key, facetGroups: g.ToArray()))
+                    .Select(g => (g.Key, FacetGroups: g.OrderByDescending(x => x.BoundingBoxLocal.Diagonal).ToArray()))
                     .ToArray();
 
-            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.facetGroups.Length);
+            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.FacetGroups.Length);
             Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items for a count of {facetGroupForMatchingCount} facet groups of total {facetGroups.Length} in {groupingTimer.Elapsed}");
             Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
             var matchingTimer = Stopwatch.StartNew();
             var result =
                 groupedFacetGroups
-                    .OrderBy(x => x)
+                    .OrderByDescending(x => x.FacetGroups.Length)
                     .AsParallel()
-                    .Select(g => MatchGroups(g.facetGroups))
+                    .Select(g => MatchGroups(g.FacetGroups))
                     .SelectMany(d => d)
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
@@ -252,7 +252,7 @@ namespace CadRevealComposer.Operations
                     {
                         var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!transformedVector.EqualsWithinPercentage(vb, 0.1f))
+                        if (!transformedVector.EqualsWithinFactorOrTolerance(vb, 0.001f, 0.001f))
                         {
                             return false;
                         }
@@ -289,13 +289,13 @@ namespace CadRevealComposer.Operations
                         var candidateVertexA = aContour.Vertices[k].Vertex;
                         var candidateVertexB = bContour.Vertices[k].Vertex;
 
-                        const float percentage = 0.1f;
+                        const float factor = 0.001f; // 0.1%
                         var isDuplicateVertex = testVertex1.isSet &&
-                                                testVertex1.vertexA.EqualsWithinPercentage(candidateVertexA, percentage) ||
+                                                testVertex1.vertexA.EqualsWithinFactor(candidateVertexA, factor) ||
                                                 testVertex2.isSet &&
-                                                testVertex2.vertexA.EqualsWithinPercentage(candidateVertexA, percentage) ||
+                                                testVertex2.vertexA.EqualsWithinFactor(candidateVertexA, factor) ||
                                                 testVertex3.isSet &&
-                                                testVertex3.vertexA.EqualsWithinPercentage(candidateVertexA, percentage);
+                                                testVertex3.vertexA.EqualsWithinFactor(candidateVertexA, factor);
                         if (isDuplicateVertex)
                         {
                             // ignore duplicate vertex
