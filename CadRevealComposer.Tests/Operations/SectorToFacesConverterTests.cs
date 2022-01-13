@@ -31,7 +31,7 @@
                 .Select(p => TessellatorBridge.Tessellate(p, 0.01f))
                 .WhereNotNull().ToArray();
 
-            var triangles = meshes.SelectMany(SectorToFacesConverter.CollectTriangles).ToArray();
+            var triangles = meshes.SelectMany(SectorToFacesConverter.CollectTrianglesForMesh).ToArray();
 
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);
@@ -60,7 +60,7 @@
             var rvmBounds = new RvmBoundingBox(center - size / 2, center + size / 2);
             var mesh = TessellatorBridge.Tessellate(new RvmBox(1, matrix, rvmBounds, 1f, 1f, 1f), 0.1f);
 
-            var triangles = SectorToFacesConverter.CollectTriangles(mesh!);
+            var triangles = SectorToFacesConverter.CollectTrianglesForMesh(mesh!);
 
             var min = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Min);
             var max = triangles.SelectMany(t => new []{ t.V1, t.V2, t.V3 }).Aggregate(Vector3.Max);

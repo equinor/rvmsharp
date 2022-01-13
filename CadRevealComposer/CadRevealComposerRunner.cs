@@ -285,8 +285,13 @@ namespace CadRevealComposer
             Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var faceSectors = composerParameters.NoFaces ? Array.Empty<SectorFaces>() : sectors.AsParallel().Select(s => SectorToFacesConverter.ConvertSector(s, outputDirectory.FullName)).ToArray();
-            Console.WriteLine("Converted into sectors in " + stopwatch.Elapsed);
+            var faceSectors = composerParameters.NoFaces
+                ? Array.Empty<SectorFaces>()
+                : sectors
+                    .AsParallel()
+                    .Select(s => SectorToFacesConverter.ConvertSector(s, outputDirectory.FullName))
+                    .ToArray();
+            Console.WriteLine("Calculated faces in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
