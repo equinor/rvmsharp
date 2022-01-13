@@ -91,18 +91,18 @@ namespace CadRevealComposer.Operations
                     .AsParallel()
                     .GroupBy(CalculateKey)
                     .Where(x => x.Count() >= instancingThreshold) // We can ignore all groups of less items than the threshold.
-                    .Select(g => (g.Key, facetGroups: g.ToArray()))
+                    .Select(g => (g.Key, FacetGroups: g.OrderByDescending(x => x.BoundingBoxLocal.Diagonal).ToArray()))
                     .ToArray();
 
-            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.facetGroups.Length);
+            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.FacetGroups.Length);
             Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items for a count of {facetGroupForMatchingCount} facet groups of total {facetGroups.Length} in {groupingTimer.Elapsed}");
-
+            Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
             var matchingTimer = Stopwatch.StartNew();
             var result =
                 groupedFacetGroups
-                    .OrderBy(x => x)
+                    .OrderByDescending(x => x.FacetGroups.Length)
                     .AsParallel()
-                    .Select(g => MatchGroups(g.facetGroups))
+                    .Select(g => MatchGroups(g.FacetGroups))
                     .SelectMany(d => d)
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
@@ -128,6 +128,7 @@ namespace CadRevealComposer.Operations
             var templates = new List<TemplateItem>(); // sorted high to low by explicit call
 
             var timer = Stopwatch.StartNew();
+            var matchCount = 0;
             foreach (var facetGroup in facetGroups)
             {
                 var matchFoundFromPreviousTemplates = false;
@@ -136,6 +137,7 @@ namespace CadRevealComposer.Operations
                 for (var i = 0; i < templates.Count; i++)
                 {
                     var item = templates[i];
+                    matchCount++;
                     if (!Match(item.Template, bakedFacetGroup, out var transform))
                     {
                         continue;
@@ -145,9 +147,9 @@ namespace CadRevealComposer.Operations
                     item.MatchCount++;
 
                     // sort template list descending by match count
-                    var matchCount = item.MatchCount;
+                    var templateMatchCount = item.MatchCount;
                     var j = i;
-                    while (j - 1 >= 0 && matchCount > templates[j - 1].MatchCount)
+                    while (j - 1 >= 0 && templateMatchCount > templates[j - 1].MatchCount)
                     {
                         j--;
                     }
@@ -175,7 +177,7 @@ namespace CadRevealComposer.Operations
             var fraction = 1.0 - (templateCount / (float)facetGroups.Length);
             Console.WriteLine(
                 $"\tFound {templateCount,5:N0} templates in {facetGroups.Length,6:N0} items ({fraction,6:P1}). " +
-                $"Vertex count was {vertexCount,5:N0} in {timer.Elapsed.TotalSeconds,6:N} s");
+                $"Vertex count was {vertexCount,5:N0} in {timer.Elapsed.TotalSeconds,6:N} s. {matchCount:N0} iterations.");
             return result;
         }
 
@@ -250,7 +252,7 @@ namespace CadRevealComposer.Operations
                     {
                         var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!transformedVector.ApproximatelyEquals(vb, 0.001f))
+                        if (!transformedVector.EqualsWithinFactorOrTolerance(vb, 0.001f, 0.001f))
                         {
                             return false;
                         }
@@ -287,13 +289,13 @@ namespace CadRevealComposer.Operations
                         var candidateVertexA = aContour.Vertices[k].Vertex;
                         var candidateVertexB = bContour.Vertices[k].Vertex;
 
-                        const float tolerance = 0.005f;
+                        const float factor = 0.001f; // 0.1%
                         var isDuplicateVertex = testVertex1.isSet &&
-                                                testVertex1.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex1.vertexA.EqualsWithinFactor(candidateVertexA, factor) ||
                                                 testVertex2.isSet &&
-                                                testVertex2.vertexA.ApproximatelyEquals(candidateVertexA, tolerance) ||
+                                                testVertex2.vertexA.EqualsWithinFactor(candidateVertexA, factor) ||
                                                 testVertex3.isSet &&
-                                                testVertex3.vertexA.ApproximatelyEquals(candidateVertexA, tolerance);
+                                                testVertex3.vertexA.EqualsWithinFactor(candidateVertexA, factor);
                         if (isDuplicateVertex)
                         {
                             // ignore duplicate vertex
@@ -324,7 +326,7 @@ namespace CadRevealComposer.Operations
                                 testVertex1.vertexA.Z, testVertex2.vertexA.Z, testVertex3.vertexA.Z, candidateVertexA.Z,
                                 1, 1, 1, 1);
                             var determinant = ma.GetDeterminant();
-                            if (!determinant.ApproximatelyEquals(0, 0.00000001f))
+                            if (!determinant.ApproximatelyEquals(0, 0.000_001f))
                             {
                                 return AlgebraUtils.GetTransform(
                                     testVertex1.vertexA,

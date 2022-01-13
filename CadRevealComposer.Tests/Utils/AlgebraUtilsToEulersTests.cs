@@ -57,10 +57,10 @@
             Console.WriteLine(ya.ToString("0.0000") + " = "  + yb.ToString("0.0000"));
             Console.WriteLine(za.ToString("0.0000") + " = " + zb.ToString("0.0000"));
             Console.WriteLine(oa.ToString("0.0000") + " = " + ob.ToString("0.0000"));
-            Assert.That(xa.ApproximatelyEquals(xb, 0.001f));
-            Assert.That(ya.ApproximatelyEquals(yb, 0.001f));
-            Assert.That(za.ApproximatelyEquals(zb, 0.001f));
-            Assert.That(oa.ApproximatelyEquals(ob, 0.001f));
+            Assert.That(xa.EqualsWithinTolerance(xb, 0.0001f));
+            Assert.That(ya.EqualsWithinTolerance(yb, 0.0001f));
+            Assert.That(za.EqualsWithinTolerance(zb, 0.0001f));
+            Assert.That(oa.EqualsWithinTolerance(ob, 0.0001f));
         }
 
         [Test]
@@ -91,9 +91,9 @@
             var yb = Vector3.Transform(Vector3.UnitY, qc);
             var zb = Vector3.Transform(Vector3.UnitZ, qc);
 
-            Assert.That(xa.ApproximatelyEquals(xb, 0.001f));
-            Assert.That(ya.ApproximatelyEquals(yb, 0.001f));
-            Assert.That(za.ApproximatelyEquals(zb, 0.001f));
+            Assert.That(xa.EqualsWithinTolerance(xb, 0.00001f));
+            Assert.That(ya.EqualsWithinTolerance(yb, 0.00001f));
+            Assert.That(za.EqualsWithinTolerance(zb, 0.00001f));
         }
     }
 }

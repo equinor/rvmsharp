@@ -106,7 +106,7 @@ namespace CadRevealComposer.Utils
             var v1 = Vector3.Transform(Vector3.One, rotation);
             var v2 = Vector3.Transform(Vector3.One, qc);
             Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
-            Debug.Assert(v1.ApproximatelyEquals(v2, 0.001f));
+            Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
         }
 
         /// <summary>
@@ -228,17 +228,18 @@ namespace CadRevealComposer.Utils
 
                 var scaleSquared = Vector3.Transform(squaredBLengths, Matrix4x4.Transpose(vaMatrixInverse));
                 scale = new Vector3(MathF.Sqrt(scaleSquared.X), MathF.Sqrt(scaleSquared.Y), MathF.Sqrt(scaleSquared.Z));
-                va12 = va12 * scale;
-                va13 = va13 * scale;
             }
 
+            var va12Scaled = va12 * scale;
+            var va13Scaled = va13 * scale;
+
             // 2 rotation va'1,va'2 -> vb1,vb2
-            var vaNormal = Vector3.Normalize(Vector3.Cross(va12, va13));
+            var vaNormal = Vector3.Normalize(Vector3.Cross(va12Scaled, va13Scaled));
             var vbNormal = Vector3.Normalize(Vector3.Cross(vb12, vb13));
             var rot1 = vaNormal.FromToRotation(vbNormal);
 
             // 3 axis rotation: axis=vb2-vb1 va'3-va'1
-            var va12r1 = Vector3.Transform(va12, rot1);
+            var va12r1 = Vector3.Transform(va12Scaled, rot1);
             var angle2 = va12r1.AngleTo(vb12);
 
             var va12r1vb12cross = Vector3.Cross(va12r1, vb12);
@@ -257,10 +258,12 @@ namespace CadRevealComposer.Utils
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(translation);
 
-            return pb1.ApproximatelyEquals(Vector3.Transform(pa1, transform), 0.001f) &&
-                   pb2.ApproximatelyEquals(Vector3.Transform(pa2, transform), 0.001f) &&
-                   pb3.ApproximatelyEquals(Vector3.Transform(pa3, transform), 0.001f) &&
-                   pb4.ApproximatelyEquals(Vector3.Transform(pa4, transform), 0.001f);
+            const float factor = 0.001f; // 0.1%
+            const float tolerance = 0.001f;
+            return pb1.EqualsWithinFactorOrTolerance(Vector3.Transform(pa1, transform), factor, tolerance) &&
+                   pb2.EqualsWithinFactorOrTolerance(Vector3.Transform(pa2, transform), factor, tolerance) &&
+                   pb3.EqualsWithinFactorOrTolerance(Vector3.Transform(pa3, transform), factor, tolerance) &&
+                   pb4.EqualsWithinFactorOrTolerance(Vector3.Transform(pa4, transform), factor, tolerance);
         }
     }
 }

@@ -49,7 +49,7 @@ namespace CadRevealComposer.Tests.Utils
             var quaternionInput = new Quaternion(test.QuaternionIn.X,test.QuaternionIn.Y,test.QuaternionIn.Z,test.QuaternionIn.W);
             var normalExpected = new Vector3(test.NormalExpected.X, test.NormalExpected.Y, test.NormalExpected.Z);
             (Vector3 normalCalculated, float rotationAngleCalculated) = quaternionInput.DecomposeQuaternion();
-            Assert.That(normalExpected.ApproximatelyEquals(normalCalculated));
+            Assert.That(normalExpected.EqualsWithinTolerance(normalCalculated, 0.00001f));
             Assert.AreEqual(rotationAngleCalculated, test.RotationAngleExpected, 0.01f);
         }
     }
