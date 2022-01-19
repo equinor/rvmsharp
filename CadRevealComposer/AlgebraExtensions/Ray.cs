@@ -62,15 +62,6 @@ namespace CadRevealComposer.AlgebraExtensions
             var v3v1Crossv3pi = Vector3.Cross(v3v1, v3pi);
 
             // Check if intersection point is on any of the sides
-
-            // TODO: ApproximatelyEquals with 0
-            // TODO: ApproximatelyEquals with 0
-            // TODO: ApproximatelyEquals with 0
-
-            // TODO: rename ApproximatelyEquals
-            // TODO: rename ApproximatelyEquals
-            // TODO: rename ApproximatelyEquals
-
             if (v1v2Crossv1pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
             {
                 if ((triangle.V2 - intersectionPoint).AngleTo(v1v2).ApproximatelyEquals(0) &&

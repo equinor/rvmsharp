@@ -161,7 +161,7 @@
             }
 
             var faces = new Dictionary<Vector3i, Dictionary<VisibleSide, FaceHitLocation>>();
-            foreach (var (voxelCoordinate, visibleSide, faceHitLocation) in hits)
+            foreach (var (voxelCoordinate, potentiallyVisibleSide, faceHitLocation) in hits)
             {
                 if (!faces.TryGetValue(voxelCoordinate, out var face))
                 {
@@ -169,12 +169,12 @@
                     faces[voxelCoordinate] = face;
                 }
 
-                if (!face.TryGetValue(visibleSide, out var oldHitGrade))
+                if (!face.TryGetValue(potentiallyVisibleSide, out var oldHitGrade))
                 {
                     oldHitGrade = FaceHitLocation.None;
                 }
 
-                face[visibleSide] = oldHitGrade | faceHitLocation;
+                face[potentiallyVisibleSide] = oldHitGrade | faceHitLocation;
             }
 
             var resultFaces = faces
@@ -204,8 +204,6 @@
 
         private static (Vector3i cell, VisibleSide direction) HitResultToFaceIn(in Vector3 hitPosition, bool isFrontFace, GridParameters grid, Axis axis)
         {
-            #pragma warning disable CS8524 // missing catch all case in switch
-
             var cell = PositionToGridCell(hitPosition, grid);
             var center = grid.GridOrigin + (cell + Vector3i.One) * grid.GridIncrement;
             var isHigh = axis switch
@@ -213,50 +211,43 @@
                 Axis.X => center.X < hitPosition.X,
                 Axis.Y => center.Y < hitPosition.Y,
                 Axis.Z => center.Z < hitPosition.Z,
+                _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, null)
             };
             var direction = isFrontFace
                 ? axis switch
                 {
                     Axis.X => VisibleSide.XNegative,
                     Axis.Y => VisibleSide.YNegative,
-                    Axis.Z => VisibleSide.ZNegative
+                    Axis.Z => VisibleSide.ZNegative,
+                    _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, null)
                 }
                 : axis switch
                 {
                     Axis.X => VisibleSide.XPositive,
                     Axis.Y => VisibleSide.YPositive,
-                    Axis.Z => VisibleSide.ZPositive
+                    Axis.Z => VisibleSide.ZPositive,
+                    _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, null)
                 };
 
             if (isFrontFace & isHigh)
             {
-                switch (axis)
+                cell = axis switch
                 {
-                    case Axis.X:
-                        cell = cell with { X = cell.X + 1 };
-                        break;
-                    case Axis.Y:
-                        cell = cell with { Y = cell.Y + 1 };
-                        break;
-                    case Axis.Z:
-                        cell = cell with { Z = cell.Z + 1 };
-                        break;
-                }
+                    Axis.X => cell with { X = cell.X + 1 },
+                    Axis.Y => cell with { Y = cell.Y + 1 },
+                    Axis.Z => cell with { Z = cell.Z + 1 },
+                    _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, null)
+                };
             }
             else if (!isFrontFace & !isHigh)
             {
-                switch (axis)
+                cell = axis switch
                 {
-                    case Axis.X:
-                        cell = cell with { X = cell.X - 1 };
-                        break;
-                    case Axis.Y:
-                        cell = cell with { Y = cell.Y - 1 };
-                        break;
-                    case Axis.Z:
-                        cell = cell with { Z = cell.Z - 1 };
-                        break;
-                }
+                    Axis.X => cell with { X = cell.X - 1 },
+                    Axis.Y => cell with { Y = cell.Y - 1 },
+                    Axis.Z => cell with { Z = cell.Z - 1 },
+                    _ => throw new ArgumentOutOfRangeException(nameof(axis), axis, null)
+                };
             }
 
             return (cell, direction);
@@ -306,8 +297,10 @@
             var gridOrigin = bounds.Min - Vector3.One * increment / 2; // center of first voxel
             var grid = new GridParameters(gridSizeX, gridSizeY, gridSizeZ, gridOrigin, increment);
 
+            // Only process meshes, skip primitives. We do this to save processing time, and memory use.
+            // Most structure elements and similar are meshes, so this still gives a nice faces model. We might revisit this decision later.
             var nodeGroupedGeometry = protoSector.Geometries
-                .Where(g => g is InstancedMesh or TriangleMesh) // only process meshes, skip primitives
+                .Where(g => g is InstancedMesh or TriangleMesh)
                 .GroupBy(g => g.TreeIndex)
                 .ToArray();
 
