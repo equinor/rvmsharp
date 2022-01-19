@@ -3,7 +3,7 @@ namespace CadRevealComposer.AlgebraExtensions
     using System.Numerics;
 
     // ReSharper disable once InconsistentNaming
-    public record struct Vector3i(int X, int Y, int Z)
+    public readonly record struct Vector3i(int X, int Y, int Z)
     {
         public static Vector3i One { get; } = new(1, 1, 1);
 
