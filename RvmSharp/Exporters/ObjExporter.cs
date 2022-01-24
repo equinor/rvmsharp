@@ -25,7 +25,7 @@
 
             _writer = new StreamWriter(File.Create(filename), Encoding.ASCII);
             _writer.WriteLine("# rvmsharp OBJ export");
-            _writer.WriteLine($"mtlib {materialFilename}");
+            _writer.WriteLine($"mtllib {materialFilename}");
 
             _materialWriter = new StreamWriter(File.Create(materialFullFilename), Encoding.ASCII);
         }
@@ -43,6 +43,35 @@
             _writer.WriteLine("g " + name);
         }
 
+        public void StartMaterial(Color color)
+        {
+            if (!_colors.TryGetValue(color, out var materialName))
+            {
+                materialName = $"material_{_colors.Count + 1}";
+                _colors.Add(color, materialName);
+                _materialWriter.WriteLine($"newmtl {materialName}");
+                // TODO
+                _materialWriter.WriteLine("Ns 323.999994");
+                // ambient
+                _materialWriter.WriteLine("Ka 1.000000 1.000000 1.000000");
+                // diffuse
+                _materialWriter.WriteLine(
+                    $"Kd {FastToString((float)color.R / 255)} {FastToString((float)color.G / 255)} {FastToString((float)color.B / 255)}");
+                // specular
+                _materialWriter.WriteLine("Ks 0.500000 0.500000 0.500000");
+                // TODO
+                _materialWriter.WriteLine("Ke 0.000000 0.000000 0.000000");
+                // TODO
+                _materialWriter.WriteLine("Ni 1.450000");
+                // transparency
+                _materialWriter.WriteLine("d 1.000000");
+                // TODO
+                _materialWriter.WriteLine("illum 2");
+            }
+            _writer.WriteLine($"usemtl {materialName}");
+
+        }
+
         public void StartObject(string name)
         {
             _writer.WriteLine("o " + name);
@@ -53,36 +82,8 @@
         /// </summary>
         /// <param name="mesh">The mesh to serialize</param>
         /// <param name="color">Color of the mesh</param>
-        public void WriteMesh(Mesh mesh, Color? color = null)
+        public void WriteMesh(Mesh mesh)
         {
-            var materialName = "";
-            if (color != null)
-            {
-                if (!_colors.TryGetValue(color.Value, out materialName))
-                {
-                    materialName = $"material_{_colors.Count + 1}";
-                    _colors.Add(color.Value, materialName);
-                    _materialWriter.WriteLine($"newmtl {materialName}");
-                    // TODO
-                    _materialWriter.WriteLine("Ns 323.999994");
-                    // ambient
-                    _materialWriter.WriteLine("Ka 1.000000 1.000000 1.000000");
-                    // diffuse
-                    _materialWriter.WriteLine(
-                        $"Kd {FastToString((float)color.Value.R / 255)} {FastToString((float)color.Value.G / 255)} {FastToString((float)color.Value.B / 255)}");
-                    // specular
-                    _materialWriter.WriteLine("Ks 0.500000 0.500000 0.500000");
-                    // TODO
-                    _materialWriter.WriteLine("Ke 0.000000 0.000000 0.000000");
-                    // TODO
-                    _materialWriter.WriteLine("Ni 1.450000");
-                    // transparency
-                    _materialWriter.WriteLine("d 1.000000");
-                    // TODO
-                    _materialWriter.WriteLine("illum 2");
-                }
-            }
-
             foreach (var vertex in mesh.Vertices)
             {
                 _writer.WriteLine($"v {FastToString(vertex.X)} {FastToString(vertex.Z)} {FastToString(-vertex.Y)}");
@@ -93,11 +94,7 @@
                 _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
             }
 
-            if (color != null)
-            {
-                _writer.WriteLine($"usemtl {materialName}");
-                _writer.WriteLine("s off");
-            }
+            _writer.WriteLine("s off");
 
             var tris = mesh.Triangles;
             for (var t = 0; t < tris.Count; t += 3)
