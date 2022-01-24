@@ -13,6 +13,7 @@
     using Operations;
     using Primitives;
     using System.Collections.Immutable;
+    using System.Drawing;
     using System.Text.RegularExpressions;
 
     static class Program
@@ -60,11 +61,12 @@
             progressBar = new ProgressBar(meshes.Length, "Exporting");
 
             using var objExporter = new ObjExporter(options.Output);
-            foreach ((string objectName, IEnumerable<Mesh> primitives) in meshes)
+            foreach ((string objectName, IEnumerable<(Mesh, Color)> primitives) in meshes)
             {
                 objExporter.StartObject(objectName);
+                objExporter.StartGroup(objectName);
                 foreach (var primitive in primitives)
-                    objExporter.WriteMesh(primitive);
+                    objExporter.WriteMesh(primitive.Item1, primitive.Item2);
                 progressBar.Tick();
             }
 

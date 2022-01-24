@@ -8,13 +8,14 @@ namespace RvmSharp.Tessellation
 {
     using Primitives;
     using System.Diagnostics;
+    using System.Drawing;
 
     // ReSharper disable once UnusedType.Global -- Public API
     public static class TessellatorBridge
     {
         private const float MinimumThreshold = 1e-7f;
 
-        public static Mesh[] Tessellate(RvmNode group, float tolerance)
+        public static (Mesh, Color)[] Tessellate(RvmNode group, float tolerance)
         {
             var meshes = group.Children.OfType<RvmPrimitive>().Select(primitive =>
             {
@@ -25,8 +26,14 @@ namespace RvmSharp.Tessellation
                     throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
                 }
 #endif
-                return Tessellate(primitive, tolerance);
-            }).Where(m => m != null).Select(m => m!);
+
+                if (!PdmsColors.TryGetColorByCode(group.MaterialId, out var color))
+                {
+                    color = Color.Magenta;
+                }
+
+                return (Tessellate(primitive, tolerance), color);
+            }).Where(mc => mc.Item1 != null).Select(m => (m.Item1!, m.color));
 
             return meshes.ToArray();
         }
