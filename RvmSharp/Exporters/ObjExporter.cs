@@ -2,6 +2,8 @@
 {
     using Operations;
     using System;
+    using System.Collections.Generic;
+    using System.Drawing;
     using System.Globalization;
     using System.IO;
     using System.Runtime.CompilerServices;
@@ -11,18 +13,29 @@
     public sealed class ObjExporter : IDisposable
     {
         private readonly StreamWriter _writer;
+        private readonly StreamWriter _materialWriter;
+        private readonly Dictionary<Color, string> _colors = new ();
         private int _vertexCount;
         private int _normalCount;
 
         public ObjExporter(string filename)
         {
+            var materialFullFilename = Path.ChangeExtension(filename, "mtl");
+            var materialFilename = Path.GetFileName(materialFullFilename);
+
             _writer = new StreamWriter(File.Create(filename), Encoding.ASCII);
+            _writer.WriteLine("# rvmsharp OBJ export");
+            _writer.WriteLine($"mtlib {materialFilename}");
+
+            _materialWriter = new StreamWriter(File.Create(materialFullFilename), Encoding.ASCII);
         }
 
         public void Dispose()
         {
             _writer.Close();
             _writer.Dispose();
+            _materialWriter.Close();
+            _materialWriter.Dispose();
         }
 
         public void StartGroup(string name)
@@ -39,8 +52,37 @@
         /// Add a mesh to the current Object.
         /// </summary>
         /// <param name="mesh">The mesh to serialize</param>
-        public void WriteMesh(Mesh mesh)
+        /// <param name="color">Color of the mesh</param>
+        public void WriteMesh(Mesh mesh, Color? color = null)
         {
+            var materialName = "";
+            if (color != null)
+            {
+                if (!_colors.TryGetValue(color.Value, out materialName))
+                {
+                    materialName = $"material_{_colors.Count + 1}";
+                    _colors.Add(color.Value, materialName);
+                    _materialWriter.WriteLine($"newmtl {materialName}");
+                    // TODO
+                    _materialWriter.WriteLine("Ns 323.999994");
+                    // ambient
+                    _materialWriter.WriteLine("Ka 1.000000 1.000000 1.000000");
+                    // diffuse
+                    _materialWriter.WriteLine(
+                        $"Kd {FastToString((float)color.Value.R / 255)} {FastToString((float)color.Value.G / 255)} {FastToString((float)color.Value.B / 255)}");
+                    // specular
+                    _materialWriter.WriteLine("Ks 0.500000 0.500000 0.500000");
+                    // TODO
+                    _materialWriter.WriteLine("Ke 0.000000 0.000000 0.000000");
+                    // TODO
+                    _materialWriter.WriteLine("Ni 1.450000");
+                    // transparency
+                    _materialWriter.WriteLine("d 1.000000");
+                    // TODO
+                    _materialWriter.WriteLine("illum 2");
+                }
+            }
+
             foreach (var vertex in mesh.Vertices)
             {
                 _writer.WriteLine($"v {FastToString(vertex.X)} {FastToString(vertex.Z)} {FastToString(-vertex.Y)}");
@@ -51,7 +93,11 @@
                 _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
             }
 
-            _writer.WriteLine("s off");
+            if (color != null)
+            {
+                _writer.WriteLine($"usemtl {materialName}");
+                _writer.WriteLine("s off");
+            }
 
             var tris = mesh.Triangles;
             for (var t = 0; t < tris.Count; t += 3)
