@@ -55,18 +55,18 @@
                 progressBar.Message = leaf.Name;
                 var tesselatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
                 progressBar.Tick();
-                return (leaf.Name, tesselatedMeshes);
+                return (name: leaf.Name, primitives: tesselatedMeshes);
             }).ToArray();
             progressBar.Dispose();
             progressBar = new ProgressBar(meshes.Length, "Exporting");
 
             using var objExporter = new ObjExporter(options.Output);
-            foreach ((string objectName, IEnumerable<(Mesh, Color)> primitives) in meshes)
+            foreach ((string objectName, (Mesh, Color)[] primitives) in meshes)
             {
                 objExporter.StartObject(objectName);
                 objExporter.StartGroup(objectName);
-                foreach (var primitive in primitives)
-                    objExporter.WriteMesh(primitive.Item1, primitive.Item2);
+                foreach ((Mesh? mesh, Color color) in primitives)
+                    objExporter.WriteMesh(mesh, color);
                 progressBar.Tick();
             }
 

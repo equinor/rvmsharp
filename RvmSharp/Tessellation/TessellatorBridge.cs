@@ -32,8 +32,8 @@ namespace RvmSharp.Tessellation
                     color = Color.Magenta;
                 }
 
-                return (Tessellate(primitive, tolerance), color);
-            }).Where(mc => mc.Item1 != null).Select(m => (m.Item1!, m.color));
+                return (mesh: Tessellate(primitive, tolerance), color);
+            }).Where(mc => mc.mesh != null).Select(m => (m.mesh!, m.color));
 
             return meshes.ToArray();
         }
