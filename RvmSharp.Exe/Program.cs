@@ -61,12 +61,20 @@
             progressBar = new ProgressBar(meshes.Length, "Exporting");
 
             using var objExporter = new ObjExporter(options.Output);
+            Color? previousColor = null;
             foreach ((string objectName, (Mesh, Color)[] primitives) in meshes)
             {
                 objExporter.StartObject(objectName);
                 objExporter.StartGroup(objectName);
+
                 foreach ((Mesh? mesh, Color color) in primitives)
-                    objExporter.WriteMesh(mesh, color);
+                {
+                    if (previousColor != color)
+                        objExporter.StartMaterial(color);
+                    objExporter.WriteMesh(mesh);
+                    previousColor = color;
+                }
+
                 progressBar.Tick();
             }
 
