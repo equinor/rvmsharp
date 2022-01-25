@@ -95,7 +95,7 @@ namespace CadRevealComposer.Operations
                     .ToArray();
 
             var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.FacetGroups.Length);
-            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items for a count of {facetGroupForMatchingCount} facet groups of total {facetGroups.Length} in {groupingTimer.Elapsed}");
+            Console.WriteLine($"Found {groupedFacetGroups.Length:N0} groups with more than {instancingThreshold:N0} items for a count of {facetGroupForMatchingCount:N0} facet groups of total {facetGroups.Length:N0} in {groupingTimer.Elapsed}");
             Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
             var matchingTimer = Stopwatch.StartNew();
             var result =
@@ -108,7 +108,7 @@ namespace CadRevealComposer.Operations
 
             var uniqueTemplateCount = result.DistinctBy(x => x.Value.template).Count();
             var fraction = 1.0 - (uniqueTemplateCount / (float)facetGroupForMatchingCount);
-            Console.WriteLine($"Found {uniqueTemplateCount} unique from a total of {facetGroupForMatchingCount} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
+            Console.WriteLine($"Found {uniqueTemplateCount:N0} unique from a total of {facetGroupForMatchingCount:N0} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
             return result;
         }
 
@@ -128,7 +128,7 @@ namespace CadRevealComposer.Operations
             var templates = new List<TemplateItem>(); // sorted high to low by explicit call
 
             var timer = Stopwatch.StartNew();
-            var matchCount = 0;
+            var matchCount = 0L;
             foreach (var facetGroup in facetGroups)
             {
                 var matchFoundFromPreviousTemplates = false;
@@ -193,6 +193,37 @@ namespace CadRevealComposer.Operations
         {
             unchecked
             {
+                // optimize for a very common primitive: triangles with depth
+                // - 2 parallel triangles with 3 rectangular sides
+                // optimization: triangles are scale invariant, but angels
+                var isSpecialPrimitive =
+                    facetGroup.Polygons.Length == 5 &&
+                    facetGroup.Polygons[0].Contours.Length == 1 &&
+                    facetGroup.Polygons[1].Contours.Length == 1 &&
+                    facetGroup.Polygons[2].Contours.Length == 1 &&
+                    facetGroup.Polygons[3].Contours.Length == 1 &&
+                    facetGroup.Polygons[4].Contours.Length == 1 &&
+                    facetGroup.Polygons[0].Contours[0].Vertices.Length == 3 &&
+                    facetGroup.Polygons[1].Contours[0].Vertices.Length == 3 &&
+                    facetGroup.Polygons[2].Contours[0].Vertices.Length == 4 &&
+                    facetGroup.Polygons[3].Contours[0].Vertices.Length == 4 &&
+                    facetGroup.Polygons[4].Contours[0].Vertices.Length == 4;
+
+                var specialPrimitiveHash = 0L;
+                if (isSpecialPrimitive)
+                {
+                    var triangle = facetGroup.Polygons[0].Contours[0];
+                    var v1 = triangle.Vertices[0].Vertex;
+                    var v2 = triangle.Vertices[1].Vertex;
+                    var v3 = triangle.Vertices[2].Vertex;
+
+                    var v12 = v1 - v2;
+                    var v13 = v1 - v3;
+
+                    var angle = MathF.Round(v12.AngleTo(v13) * 180f / MathF.PI, 0);
+                    specialPrimitiveHash = (long)(angle / 15f); // divide into groups for every 15 degrees
+                }
+
                 // Based on https://stackoverflow.com/a/263416
                 long key = 17;
                 const long hashMultiplier = 486187739;
@@ -208,7 +239,7 @@ namespace CadRevealComposer.Operations
                     }
                 }
 
-                return key;
+                return key + specialPrimitiveHash;
             }
         }
 
@@ -252,7 +283,7 @@ namespace CadRevealComposer.Operations
                     {
                         var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!transformedVector.EqualsWithinFactorOrTolerance(vb, 0.001f, 0.001f))
+                        if (!transformedVector.EqualsWithinTolerance(vb, 0.001f))
                         {
                             return false;
                         }

@@ -258,12 +258,11 @@ namespace CadRevealComposer.Utils
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(translation);
 
-            const float factor = 0.001f; // 0.1%
-            const float tolerance = 0.001f;
-            return pb1.EqualsWithinFactorOrTolerance(Vector3.Transform(pa1, transform), factor, tolerance) &&
-                   pb2.EqualsWithinFactorOrTolerance(Vector3.Transform(pa2, transform), factor, tolerance) &&
-                   pb3.EqualsWithinFactorOrTolerance(Vector3.Transform(pa3, transform), factor, tolerance) &&
-                   pb4.EqualsWithinFactorOrTolerance(Vector3.Transform(pa4, transform), factor, tolerance);
+            const float OneMillimeter = 0.001f; // assumption: the data is in meters
+            return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), OneMillimeter) &&
+                   pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), OneMillimeter) &&
+                   pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), OneMillimeter) &&
+                   pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), OneMillimeter);
         }
     }
 }
