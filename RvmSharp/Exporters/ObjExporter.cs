@@ -47,26 +47,27 @@
         {
             if (!_colors.TryGetValue(color, out var materialName))
             {
+                // for complete list of parameters and explanation see http://paulbourke.net/dataformats/mtl/
                 materialName = $"material_{_colors.Count + 1}";
                 _colors.Add(color, materialName);
                 _materialWriter.WriteLine($"newmtl {materialName}");
-                // TODO
-                _materialWriter.WriteLine("Ns 323.999994");
-                // ambient
-                _materialWriter.WriteLine("Ka 1.000000 1.000000 1.000000");
-                // diffuse
+                // Ambient color
+                _materialWriter.WriteLine("Ka 0.000000 0.000000 0.000000");
+                // Diffuse color
                 _materialWriter.WriteLine(
                     $"Kd {FastToString((float)color.R / 255)} {FastToString((float)color.G / 255)} {FastToString((float)color.B / 255)}");
-                // specular
-                _materialWriter.WriteLine("Ks 0.500000 0.500000 0.500000");
-                // TODO
+                // Specular color
+                _materialWriter.WriteLine("Ks 0.000000 0.000000 0.000000");
+                // Emission color
                 _materialWriter.WriteLine("Ke 0.000000 0.000000 0.000000");
-                // TODO
-                _materialWriter.WriteLine("Ni 1.450000");
-                // transparency
+                // Shininess parameter
+                _materialWriter.WriteLine("Ns 1.000000");
+                // Index of refraction
+                _materialWriter.WriteLine("Ni 1.000000");
+                // Dissolve (alpha)
                 _materialWriter.WriteLine("d 1.000000");
-                // TODO
-                _materialWriter.WriteLine("illum 2");
+                // Illumination model
+                _materialWriter.WriteLine("illum 1");
             }
             _writer.WriteLine($"usemtl {materialName}");
 

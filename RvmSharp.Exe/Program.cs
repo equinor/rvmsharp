@@ -36,50 +36,34 @@
 
         private static int RunOptionsAndReturnExitCode(Options options)
         {
+            using var pbar = new ProgressBar(2, "Converting RVM to OBJ");
             var workload = CollectWorkload(options);
 
             var rvmStore = ReadRvmData(workload);
 
-            var progressBar = new ProgressBar(2, "Connecting geometry");
+            using var connectProgressBar = pbar.Spawn(2, "Connecting geometry");
             RvmConnect.Connect(rvmStore);
-            progressBar.Tick();
-            progressBar.Message = "Aligning geometry";
+            connectProgressBar.Tick();
+            connectProgressBar.Message = "Aligning geometry";
             RvmAlign.Align(rvmStore);
-            progressBar.Tick();
-            progressBar.Dispose();
+            connectProgressBar.Tick();
+            pbar.Tick();
 
-            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectGeometryNodes)).ToArray();
-            progressBar = new ProgressBar(leafs.Length, "Tessellating");
-            var meshes = leafs.AsParallel().Select(leaf =>
-            {
-                progressBar.Message = leaf.Name;
-                var tesselatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
-                progressBar.Tick();
-                return (name: leaf.Name, primitives: tesselatedMeshes);
-            }).ToArray();
-            progressBar.Dispose();
-            progressBar = new ProgressBar(meshes.Length, "Exporting");
+            using var tessellationProgressBar = pbar.Spawn(1, "Tessellating");
+            using var exportProgressBar = pbar.Spawn(1, "Exporting");
 
-            using var objExporter = new ObjExporter(options.Output);
-            Color? previousColor = null;
-            foreach ((string objectName, (Mesh, Color)[] primitives) in meshes)
-            {
-                objExporter.StartObject(objectName);
-                objExporter.StartGroup(objectName);
-
-                foreach ((Mesh? mesh, Color color) in primitives)
+            RvmObjExporter.ExportToObj(rvmStore, options.Tolerance, options.Output,
+                ((i, i1, arg3) =>
                 {
-                    if (previousColor != color)
-                        objExporter.StartMaterial(color);
-                    objExporter.WriteMesh(mesh);
-                    previousColor = color;
-                }
-
-                progressBar.Tick();
-            }
-
-            progressBar.Dispose();
-
+                    tessellationProgressBar.MaxTicks = i;
+                    tessellationProgressBar.Tick(i1, arg3);
+                }),
+                (i, i1, arg3) =>
+                {
+                    exportProgressBar.MaxTicks = i;
+                    exportProgressBar.Tick(i1, arg3);
+                });
+            pbar.Tick();
             Console.WriteLine("Done!");
             return 0;
         }
@@ -146,14 +130,6 @@
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
             return rvmStore;
-        }
-
-        private static IEnumerable<RvmNode> CollectGeometryNodes(RvmNode root)
-        {
-            if (root.Children.OfType<RvmPrimitive>().Any())
-                yield return root;
-            foreach (var geometryNode in root.Children.OfType<RvmNode>().SelectMany(CollectGeometryNodes))
-                yield return geometryNode;
         }
     }
 }
