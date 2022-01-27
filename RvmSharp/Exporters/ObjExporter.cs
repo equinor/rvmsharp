@@ -82,7 +82,6 @@
         /// Add a mesh to the current Object.
         /// </summary>
         /// <param name="mesh">The mesh to serialize</param>
-        /// <param name="color">Color of the mesh</param>
         public void WriteMesh(Mesh mesh)
         {
             foreach (var vertex in mesh.Vertices)
