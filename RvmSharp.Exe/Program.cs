@@ -36,21 +36,22 @@
 
         private static int RunOptionsAndReturnExitCode(Options options)
         {
-            using var pbar = new ProgressBar(2, "Converting RVM to OBJ");
             var workload = CollectWorkload(options);
+
+            using var parentProgressBar = new ProgressBar(2, "Converting RVM to OBJ");
 
             var rvmStore = ReadRvmData(workload);
 
-            using var connectProgressBar = pbar.Spawn(2, "Connecting geometry");
+            using var connectProgressBar = parentProgressBar.Spawn(2, "Connecting geometry");
             RvmConnect.Connect(rvmStore);
             connectProgressBar.Tick();
             connectProgressBar.Message = "Aligning geometry";
             RvmAlign.Align(rvmStore);
             connectProgressBar.Tick();
-            pbar.Tick();
+            parentProgressBar.Tick();
 
-            using var tessellationProgressBar = pbar.Spawn(1, "Tessellating");
-            using var exportProgressBar = pbar.Spawn(1, "Exporting");
+            using var tessellationProgressBar = parentProgressBar.Spawn(1, "Tessellating");
+            using var exportProgressBar = parentProgressBar.Spawn(1, "Exporting");
 
             RvmObjExporter.ExportToObj(rvmStore, options.Tolerance, options.Output,
                 ((i, i1, arg3) =>
@@ -63,7 +64,7 @@
                     exportProgressBar.MaxTicks = i;
                     exportProgressBar.Tick(i1, arg3);
                 });
-            pbar.Tick();
+            parentProgressBar.Tick();
             Console.WriteLine("Done!");
             return 0;
         }
