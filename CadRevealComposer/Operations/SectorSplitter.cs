@@ -34,53 +34,51 @@ namespace CadRevealComposer.Operations
             Vector3 BoundingBoxMax,
             float Diagonal);
 
-        public static IEnumerable<ProtoSector> SplitIntoSectors(
-            APrimitive[] allGeometries,
-            SequentialIdGenerator sectorIdGenerator,
-            bool useSingleSector)
+        public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones)
         {
+            var sectorIdGenerator = new SequentialIdGenerator();
+
+            var rootZone = zones.Single(z => z is ZoneSplitter.RootZone);
+
             var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+            yield return CreateRootSector(rootSectorId, rootZone.Primitives);
 
-            if (useSingleSector)
+            foreach (var zone in zones.Where(z => z is not ZoneSplitter.RootZone))
             {
-                yield return CreateRootSector(rootSectorId, allGeometries);
-                yield break;
-            }
+                var nodes = zone.Primitives
+                    .GroupBy(p => p.NodeId)
+                    .Select(g =>
+                    {
+                        var geometries = g.ToArray();
+                        var boundingBoxMin = geometries.GetBoundingBoxMin();
+                        var boundingBoxMax = geometries.GetBoundingBoxMax();
+                        return new Node(
+                            g.Key,
+                            geometries,
+                            geometries.Sum(DrawCallEstimator.EstimateByteSize),
+                            boundingBoxMin,
+                            boundingBoxMax,
+                            Vector3.Distance(boundingBoxMin, boundingBoxMax));
+                    })
+                    .ToArray();
 
-            var nodes = allGeometries
-                .GroupBy(p => p.NodeId)
-                .Select(g =>
+                var sectors = SplitIntoSectors(
+                    nodes,
+                    StartDepth + 1,
+                    $"{rootSectorId}",
+                    rootSectorId,
+                    sectorIdGenerator);
+
+                foreach (var sector in sectors)
                 {
-                    var geometries = g.ToArray();
-                    var boundingBoxMin = geometries.GetBoundingBoxMin();
-                    var boundingBoxMax = geometries.GetBoundingBoxMax();
-                    return new Node(
-                        g.Key,
-                        geometries,
-                        geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                        boundingBoxMin,
-                        boundingBoxMax,
-                        Vector3.Distance(boundingBoxMin, boundingBoxMax));
-                })
-                .ToArray();
-
-            var rootNodes = GetRootSectorNodes(nodes);
-            var rootGeometries = rootNodes.SelectMany(n => n.Geometries).ToArray();
-            var rootSector = CreateRootSector(rootSectorId, rootGeometries);
-
-            var restNodes = nodes.Except(rootNodes).ToArray();
-            var sectors = SplitIntoSectors(
-                restNodes,
-                StartDepth + 1,
-                $"{rootSectorId}",
-                rootSectorId,
-                sectorIdGenerator);
-
-            yield return rootSector;
-            foreach (var sector in sectors)
-            {
-                yield return sector;
+                    yield return sector;
+                }
             }
+        }
+
+        public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
+        {
+            yield return CreateRootSector(0, allGeometries);
         }
 
         private static IEnumerable<ProtoSector> SplitIntoSectors(

@@ -52,7 +52,6 @@ namespace CadRevealComposer
         {
             TreeIndexGenerator treeIndexGenerator = new();
             NodeIdProvider nodeIdGenerator = new();
-            SequentialIdGenerator sectorIdGenerator = new();
 
             Console.WriteLine("Generating i3d");
 
@@ -276,11 +275,13 @@ namespace CadRevealComposer
             Console.WriteLine($"Tessellated all geometries in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var sectors = SectorSplitter.SplitIntoSectors(
-                    geometries,
-                    sectorIdGenerator,
-                    composerParameters.SingleSector)
-                .OrderBy(x => x.SectorId).ToArray();
+            var sectors = (
+                composerParameters.SingleSector
+                    ? SectorSplitter.CreateSingleSector(geometries)
+                    : SectorSplitter.SplitIntoSectors(ZoneSplitter.SplitIntoZones(geometries, outputDirectory))
+                )
+                .OrderBy(x => x.SectorId)
+                .ToArray();
 
             Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);
             stopwatch.Restart();
