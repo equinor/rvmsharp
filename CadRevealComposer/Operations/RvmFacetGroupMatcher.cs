@@ -182,6 +182,42 @@ namespace CadRevealComposer.Operations
         }
 
         /// <summary>
+        /// Identifies a facet group with 2 parallel triangles with 3 rectangular sides.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsSpecialCaseVolumeTriangle(RvmFacetGroup facetGroup)
+        {
+            return facetGroup.Polygons.Length == 5 &&
+                   facetGroup.Polygons[0].Contours.Length == 1 &&
+                   facetGroup.Polygons[1].Contours.Length == 1 &&
+                   facetGroup.Polygons[2].Contours.Length == 1 &&
+                   facetGroup.Polygons[3].Contours.Length == 1 &&
+                   facetGroup.Polygons[4].Contours.Length == 1 &&
+                   facetGroup.Polygons[0].Contours[0].Vertices.Length == 3 &&
+                   facetGroup.Polygons[1].Contours[0].Vertices.Length == 3 &&
+                   facetGroup.Polygons[2].Contours[0].Vertices.Length == 4 &&
+                   facetGroup.Polygons[3].Contours[0].Vertices.Length == 4 &&
+                   facetGroup.Polygons[4].Contours[0].Vertices.Length == 4;
+        }
+
+        /// <summary>
+        /// Support method for use with <see cref="IsSpecialCaseVolumeTriangle"/>.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float GetFirstAngleForSpecialCaseVolumeTriangleInDegrees(RvmFacetGroup facetGroup)
+        {
+            var triangle = facetGroup.Polygons[0].Contours[0];
+            var v1 = triangle.Vertices[0].Vertex;
+            var v2 = triangle.Vertices[1].Vertex;
+            var v3 = triangle.Vertices[2].Vertex;
+
+            var v12 = v1 - v2;
+            var v13 = v1 - v3;
+
+            return v12.AngleTo(v13) * 180f / MathF.PI;
+        }
+
+        /// <summary>
         /// to compose a unique key for a facet group we use polygon count in billions, total contour count in millions
         /// and vertex count added together. This will give us keys with very few collision where counts are different
         /// the key is used to create compare buckets of facet groups. There is no point to compare facet groups with
@@ -193,37 +229,6 @@ namespace CadRevealComposer.Operations
         {
             unchecked
             {
-                // optimize for a very common primitive: triangles with depth
-                // - 2 parallel triangles with 3 rectangular sides
-                // optimization: triangles are scale invariant, but angels
-                var isSpecialPrimitive =
-                    facetGroup.Polygons.Length == 5 &&
-                    facetGroup.Polygons[0].Contours.Length == 1 &&
-                    facetGroup.Polygons[1].Contours.Length == 1 &&
-                    facetGroup.Polygons[2].Contours.Length == 1 &&
-                    facetGroup.Polygons[3].Contours.Length == 1 &&
-                    facetGroup.Polygons[4].Contours.Length == 1 &&
-                    facetGroup.Polygons[0].Contours[0].Vertices.Length == 3 &&
-                    facetGroup.Polygons[1].Contours[0].Vertices.Length == 3 &&
-                    facetGroup.Polygons[2].Contours[0].Vertices.Length == 4 &&
-                    facetGroup.Polygons[3].Contours[0].Vertices.Length == 4 &&
-                    facetGroup.Polygons[4].Contours[0].Vertices.Length == 4;
-
-                var specialPrimitiveHash = 0L;
-                if (isSpecialPrimitive)
-                {
-                    var triangle = facetGroup.Polygons[0].Contours[0];
-                    var v1 = triangle.Vertices[0].Vertex;
-                    var v2 = triangle.Vertices[1].Vertex;
-                    var v3 = triangle.Vertices[2].Vertex;
-
-                    var v12 = v1 - v2;
-                    var v13 = v1 - v3;
-
-                    var angle = MathF.Round(v12.AngleTo(v13) * 180f / MathF.PI, 0);
-                    specialPrimitiveHash = (long)(angle / 15f); // divide into groups for every 15 degrees
-                }
-
                 // Based on https://stackoverflow.com/a/263416
                 long key = 17;
                 const long hashMultiplier = 486187739;
@@ -239,7 +244,11 @@ namespace CadRevealComposer.Operations
                     }
                 }
 
-                return key + specialPrimitiveHash;
+                // The special case is for Melkøya which has 885k of these. With O(N^2) this takes time, so let's divide this group into smaller groups.
+                // Create groups for every 15 degrees using the first angle in the triangle.
+                return IsSpecialCaseVolumeTriangle(facetGroup)
+                    ? key + (long)(MathF.Round(GetFirstAngleForSpecialCaseVolumeTriangleInDegrees(facetGroup), 0) / 15f)
+                    : key;
             }
         }
 
