@@ -95,7 +95,7 @@ namespace CadRevealComposer.Operations
                     .ToArray();
 
             var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.FacetGroups.Length);
-            Console.WriteLine($"Found {groupedFacetGroups.Length} groups with more than {instancingThreshold} items for a count of {facetGroupForMatchingCount} facet groups of total {facetGroups.Length} in {groupingTimer.Elapsed}");
+            Console.WriteLine($"Found {groupedFacetGroups.Length:N0} groups with more than {instancingThreshold:N0} items for a count of {facetGroupForMatchingCount:N0} facet groups of total {facetGroups.Length:N0} in {groupingTimer.Elapsed}");
             Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
             var matchingTimer = Stopwatch.StartNew();
             var result =
@@ -108,7 +108,7 @@ namespace CadRevealComposer.Operations
 
             var uniqueTemplateCount = result.DistinctBy(x => x.Value.template).Count();
             var fraction = 1.0 - (uniqueTemplateCount / (float)facetGroupForMatchingCount);
-            Console.WriteLine($"Found {uniqueTemplateCount} unique from a total of {facetGroupForMatchingCount} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
+            Console.WriteLine($"Found {uniqueTemplateCount:N0} unique from a total of {facetGroupForMatchingCount:N0} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
             return result;
         }
 
@@ -128,7 +128,7 @@ namespace CadRevealComposer.Operations
             var templates = new List<TemplateItem>(); // sorted high to low by explicit call
 
             var timer = Stopwatch.StartNew();
-            var matchCount = 0;
+            var matchCount = 0L;
             foreach (var facetGroup in facetGroups)
             {
                 var matchFoundFromPreviousTemplates = false;
@@ -182,6 +182,42 @@ namespace CadRevealComposer.Operations
         }
 
         /// <summary>
+        /// Identifies a facet group with 2 parallel triangles with 3 rectangular sides.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static bool IsSpecialCaseVolumeTriangle(RvmFacetGroup facetGroup)
+        {
+            return facetGroup.Polygons.Length == 5 &&
+                   facetGroup.Polygons[0].Contours.Length == 1 &&
+                   facetGroup.Polygons[1].Contours.Length == 1 &&
+                   facetGroup.Polygons[2].Contours.Length == 1 &&
+                   facetGroup.Polygons[3].Contours.Length == 1 &&
+                   facetGroup.Polygons[4].Contours.Length == 1 &&
+                   facetGroup.Polygons[0].Contours[0].Vertices.Length == 3 &&
+                   facetGroup.Polygons[1].Contours[0].Vertices.Length == 3 &&
+                   facetGroup.Polygons[2].Contours[0].Vertices.Length == 4 &&
+                   facetGroup.Polygons[3].Contours[0].Vertices.Length == 4 &&
+                   facetGroup.Polygons[4].Contours[0].Vertices.Length == 4;
+        }
+
+        /// <summary>
+        /// Support method for use with <see cref="IsSpecialCaseVolumeTriangle"/>.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static float GetFirstAngleForSpecialCaseVolumeTriangleInDegrees(RvmFacetGroup facetGroup)
+        {
+            var triangle = facetGroup.Polygons[0].Contours[0];
+            var v1 = triangle.Vertices[0].Vertex;
+            var v2 = triangle.Vertices[1].Vertex;
+            var v3 = triangle.Vertices[2].Vertex;
+
+            var v12 = v1 - v2;
+            var v13 = v1 - v3;
+
+            return v12.AngleTo(v13) * 180f / MathF.PI;
+        }
+
+        /// <summary>
         /// to compose a unique key for a facet group we use polygon count in billions, total contour count in millions
         /// and vertex count added together. This will give us keys with very few collision where counts are different
         /// the key is used to create compare buckets of facet groups. There is no point to compare facet groups with
@@ -208,7 +244,11 @@ namespace CadRevealComposer.Operations
                     }
                 }
 
-                return key;
+                // The special case is for Melkøya which has 885k of these. With O(N^2) this takes time, so let's divide this group into smaller groups.
+                // Create groups for every 15 degrees using the first angle in the triangle.
+                return IsSpecialCaseVolumeTriangle(facetGroup)
+                    ? key + (long)(MathF.Round(GetFirstAngleForSpecialCaseVolumeTriangleInDegrees(facetGroup), 0) / 15f)
+                    : key;
             }
         }
 
@@ -252,7 +292,7 @@ namespace CadRevealComposer.Operations
                     {
                         var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                         var vb = bContour.Vertices[k].Vertex;
-                        if (!transformedVector.EqualsWithinFactorOrTolerance(vb, 0.001f, 0.001f))
+                        if (!transformedVector.EqualsWithinTolerance(vb, 0.001f))
                         {
                             return false;
                         }

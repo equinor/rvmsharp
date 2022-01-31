@@ -81,14 +81,5 @@
                        ? Math.Abs(vector.Z - other.Z) < tolerance
                        : (divided.Z >= lowerTolerance && divided.Z <= upperTolerance));
         }
-
-        /// <summary>
-        /// Checks that each vector component from both vectors are within the given factor, or else within the given tolerance.
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool EqualsWithinFactorOrTolerance(this Vector3 vector, Vector3 other, float factor, float tolerance)
-        {
-            return vector.EqualsWithinFactor(other, factor) || vector.EqualsWithinTolerance(other, tolerance);
-        }
     }
 }
