@@ -4,5 +4,6 @@ namespace CadRevealComposer.Configuration
         string Mesh2CtmToolPath,
         bool NoInstancing,
         bool SingleSector,
-        bool NoFaces);
+        bool NoFaces,
+        bool SplitIntoZones);
 }

@@ -12,6 +12,10 @@ using System.Numerics;
 using System.Runtime.Versioning;
 using Utils;
 
+/// <summary>
+/// Divides a model into zones for a better starting point for sector splitting.
+/// This is needed for models spread over a larger area like Melkøya and Tjeldbergodden.
+/// </summary>
 public static class ZoneSplitter
 {
     public record Zone(APrimitive[] Primitives);
@@ -23,7 +27,7 @@ public static class ZoneSplitter
     {
         public List<Node> Nodes { get; } = new();
 
-        // flags for processing
+        // mutable flags for processing
         public bool IsQueued { get; set; }
         public bool IsProcessed { get; set; }
         public bool IsPlacedInZone { get; set; }
@@ -77,6 +81,7 @@ public static class ZoneSplitter
 
         public static Grid Create(APrimitive[] primitives)
         {
+            // 10x10m cell size chosen by experiments
             const float tenMeterCellSize = 10f; // assumption: data is in meters
 
             // group primitives into nodes
@@ -114,13 +119,17 @@ public static class ZoneSplitter
                 var cellCountX = (int)MathF.Ceiling(node.Extents.X / tenMeterCellSize);
                 var cellCountY = (int)MathF.Ceiling(node.Extents.Y / tenMeterCellSize);
 
-                for (var x = cellStartX; x < cellStartX + cellCountX; x++)
-                for (var y = cellStartY; y < cellStartY + cellCountY; y++)
+                var isLargeNode = cellCountX * cellCountY > 100;
+                if (!isLargeNode)
                 {
-                    matrix[x, y] ??= new Cell(x, y);
-                    var cell = matrix[x, y]!;
-                    node.Cells.Add(cell);
-                    cell.Nodes.Add(node);
+                    for (var x = cellStartX; x < cellStartX + cellCountX; x++)
+                    for (var y = cellStartY; y < cellStartY + cellCountY; y++)
+                    {
+                        matrix[x, y] ??= new Cell(x, y);
+                        var cell = matrix[x, y]!;
+                        node.Cells.Add(cell);
+                        cell.Nodes.Add(node);
+                    }
                 }
             }
 
@@ -133,13 +142,6 @@ public static class ZoneSplitter
                 {
                     cellsList.Add(cell);
                 }
-            }
-
-            // remove nodes that span a large number of cells
-            // NOTE: those nodes will be placed into the root zone later on (for creating the root sector)
-            foreach (var cell in cellsList)
-            {
-                cell.Nodes.RemoveAll(n => n.Cells.Count > 100);
             }
 
             return new Grid(matrix, cellsList.ToImmutableArray());
@@ -170,20 +172,21 @@ public static class ZoneSplitter
         var minNodeCountInCellList = new[] { 10, 7, 3, 1 };
         foreach (var minNodeCountInCell in minNodeCountInCellList)
         {
-            while (grid.Cells.Any(cell => cell.Nodes.Count > 0 && cell.IsProcessed is false))
+            while (grid.Cells.Any(cell => cell.IsProcessed is false))
             {
+                // select seed cell which has the highest node count
                 var seedCell = grid.Cells
-                    .Where(cell => cell.Nodes.Count > 0 && cell.IsProcessed is false)
+                    .Where(cell => cell.IsProcessed is false)
                     .MaxBy(cell => cell.Nodes.Count);
 
-                var zone = GetZoneUsingMaxCell(seedCell!, grid, minNodeCountInCell);
+                var zone = GetZoneUsingSeedCell(seedCell!, grid, minNodeCountInCell);
                 if (zone.Cells.Any())
                 {
                     zonesInternal.Add(zone);
                 }
             }
 
-            // reset cell flags ready for next iteration
+            // reset cell flags, ready for next iteration
             grid.ResetCellFlags();
         }
 
@@ -201,7 +204,7 @@ public static class ZoneSplitter
 
         static Zone ConvertToZone(ZoneInternal zone)
         {
-            // A node may be placed into multiple cells.
+            // A node may be placed into multiple cells, hence the use of Distinct().
             // Let's filter out the nodes which extends beyond the zone.
             var zoneCellSet = zone.Cells.ToHashSet();
             var nodesContainedWithinZone = zone.Cells
@@ -233,7 +236,10 @@ public static class ZoneSplitter
         return zones.ToArray();
     }
 
-    private static ZoneInternal GetZoneUsingMaxCell(Cell seedCell, Grid grid, int minNodeCountInCell)
+    /// <summary>
+    /// Grows a zone using a seed cell.
+    /// </summary>
+    private static ZoneInternal GetZoneUsingSeedCell(Cell seedCell, Grid grid, int minNodeCountInCell)
     {
         var queue = new Queue<Cell>();
         queue.Enqueue(seedCell);
@@ -245,7 +251,7 @@ public static class ZoneSplitter
 
             // check if all cells 5x5 matches the rules
             // NOTE: the current cell is in the middle
-            var ok = true;
+            var isPartOfZone = true;
             for (var x = currentCell.X - 2; x <= currentCell.X + 2; x++)
             {
                 for (var y = currentCell.Y - 2; y <= currentCell.Y + 2; y++)
@@ -259,12 +265,12 @@ public static class ZoneSplitter
                                cell.Nodes.Count >= minNodeCountInCell;
                     if (!cellOk)
                     {
-                        ok = false;
+                        isPartOfZone = false;
                         break;
                     }
                 }
 
-                if (!ok)
+                if (!isPartOfZone)
                 {
                     break;
                 }
@@ -272,7 +278,7 @@ public static class ZoneSplitter
 
             currentCell.IsProcessed = true;
 
-            if (ok)
+            if (isPartOfZone)
             {
                 // place in zone (if not already)
                 for (var x = currentCell.X - 2; x <= currentCell.X + 2; x++)
@@ -292,12 +298,7 @@ public static class ZoneSplitter
                 {
                     for (var y = currentCell.Y - 1; y <= currentCell.Y + 1; y++)
                     {
-                        var isWithinGridBounds = x >= 0 &&
-                                                 y >= 0 &&
-                                                 x < grid.GridSizeX &&
-                                                 y < grid.GridSizeY;
-                        if (isWithinGridBounds &&
-                            grid[x, y] is { IsProcessed: false, IsQueued: false } cell)
+                        if (grid[x, y] is { IsProcessed: false, IsQueued: false } cell)
                         {
                             cell.IsQueued = true;
                             queue.Enqueue(cell);
@@ -310,6 +311,9 @@ public static class ZoneSplitter
         return new ZoneInternal(result.ToArray(), minNodeCountInCell);
     }
 
+    /// <summary>
+    /// System.Drawing.Common only available for Windows. Only used for debugging. Implement cross platform if needed.
+    /// </summary>
     [SupportedOSPlatform("windows")]
     private static void WriteZoneBitmap(Stream stream, List<ZoneInternal> zones, uint gridSizeX, uint gridSizeY)
     {
