@@ -1,11 +1,13 @@
 ﻿namespace RvmSharp.BatchUtils
 {
+#if NET6_0_OR_GREATER
     using Ben.Collections.Specialized;
+    using System.Collections.Immutable;
+#endif
     using Containers;
-    using RvmSharp.Operations;
+    using Operations;
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -55,10 +57,11 @@
         public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null)
         {
             var progress = 0;
+#if NET6_0_OR_GREATER
             var stringInternPool = new SharedInternPool();
-            var redundantPdmsAttributesToExclude = ImmutableList<string>.Empty
-                .Add("Name")
-                .Add("Position");
+#endif
+            var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
+
 
             RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
             {
@@ -67,7 +70,11 @@
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
+#if NET6_0_OR_GREATER
                     rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
+#else
+                    rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude);
+#endif
                 }
 
                 progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
@@ -80,7 +87,9 @@
                 .Select(ParseRvmFile)
                 .ToArray();
 
+#if NET6_0_OR_GREATER
             Console.WriteLine($"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+#endif
 
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
