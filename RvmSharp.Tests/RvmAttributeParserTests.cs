@@ -1,6 +1,7 @@
 ﻿namespace RvmSharp.Tests
 {
     using Ben.Collections.Specialized;
+    using Exe;
     using JetBrains.dotMemoryUnit;
     using System;
     using NUnit.Framework;
@@ -43,7 +44,7 @@
             var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
                 ImmutableList<string>.Empty.Add("Name").Add("Position"),
-                InternPool.Shared);
+                new BenPoolWrapper(InternPool.Shared));
 
             var expectedMetadata = new Dictionary<string, string>
             {
@@ -72,7 +73,7 @@
 
             var memoryCheckPointA = dotMemory.Check();
 
-            var stringInternPool = new InternPool(30_000, int.MaxValue);
+            var stringInternPool = new BenPoolWrapper(new InternPool(30_000, int.MaxValue));
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
                 ImmutableList<string>.Empty,
@@ -95,7 +96,7 @@
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
                 ImmutableList<string>.Empty,
-                new FakeInternPoolWithoutInterning());
+                new BenPoolWrapper(new FakeInternPoolWithoutInterning()));
 
             dotMemory.Check(memory =>
             {

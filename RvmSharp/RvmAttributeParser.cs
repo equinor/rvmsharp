@@ -1,9 +1,6 @@
 ﻿namespace RvmSharp
 {
-#if NET6_0_OR_GREATER
-    using Ben.Collections.Specialized;
-    using System.Collections.Immutable;
-#endif
+    using BatchUtils;
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -34,11 +31,7 @@
 
         public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath)
         {
-#if NET6_0_OR_GREATER
-            return GetAllPdmsNodesInFile(pdmsTxtFilePath, ImmutableArray<string>.Empty, InternPool.Shared);
-#else
-            return GetAllPdmsNodesInFile(pdmsTxtFilePath, Array.Empty<string>());
-#endif
+            return GetAllPdmsNodesInFile(pdmsTxtFilePath, Array.Empty<string>(), null);
         }
 
         /// <summary>
@@ -46,12 +39,8 @@
         /// </summary>
         /// <param name="pdmsTxtFilePath">File path RVM TEXT</param>
         /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
-#if NET6_0_OR_GREATER
         /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
-        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, IInternPool stringInternPool)
-#else
-        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude)
-#endif
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, ISharedInternPool? stringInternPool)
         {
 
             var pdmsNodes = new List<PdmsNode>();
@@ -116,13 +105,15 @@
                             if (!IsExcludedAttribute(key, attributesToExclude))
                             {
                                 var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
-#if NET6_0_OR_GREATER
-                                var keyInterned = stringInternPool.Intern(key);
-                                var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
-#else
-                                currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
-#endif
+                                if (stringInternPool  != null)
+                                {
+                                    var keyInterned = stringInternPool.Intern(key);
+                                    var valueInterned = stringInternPool.Intern(StripQuotes(value));
+                                    currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+                                } else
+                                {
+                                    currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
+                                }
 
                             }
                         }

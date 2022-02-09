@@ -1,9 +1,5 @@
 ﻿namespace RvmSharp.BatchUtils
 {
-#if NET6_0_OR_GREATER
-    using Ben.Collections.Specialized;
-    using System.Collections.Immutable;
-#endif
     using Containers;
     using Operations;
     using System;
@@ -54,12 +50,9 @@
             return result.ToArray();
         }
 
-        public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null)
+        public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null, ISharedInternPool? stringInternPool = null)
         {
             var progress = 0;
-#if NET6_0_OR_GREATER
-            var stringInternPool = new SharedInternPool();
-#endif
             var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
 
@@ -70,11 +63,7 @@
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-#if NET6_0_OR_GREATER
                     rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
-#else
-                    rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude);
-#endif
                 }
 
                 progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
@@ -87,9 +76,11 @@
                 .Select(ParseRvmFile)
                 .ToArray();
 
-#if NET6_0_OR_GREATER
-            Console.WriteLine($"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
-#endif
+            if (stringInternPool != null)
+            {
+                Console.WriteLine(
+                    $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+            }
 
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
@@ -101,4 +92,6 @@
             return rvmStore;
         }
     }
+
+
 }
