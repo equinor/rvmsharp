@@ -105,7 +105,7 @@
         {
             using var progressBar = new ProgressBar(workload.Count, "Parsing input");
 
-            var stringInternPool = new InternPool();
+            var stringInternPool = new BenPoolWrapper(new InternPool());
             var rvmFiles = workload.Select(filePair =>
             {
                 (string rvmFilename, string? txtFilename) = filePair;
