@@ -12,30 +12,27 @@
 
     public sealed class ObjExporter : IDisposable
     {
+        private readonly string _filename;
         private readonly StreamWriter _writer;
-        private readonly StreamWriter _materialWriter;
+        private StreamWriter? _materialWriter;
         private readonly Dictionary<Color, string> _colors = new ();
         private int _vertexCount;
         private int _normalCount;
 
         public ObjExporter(string filename)
         {
-            var materialFullFilename = Path.ChangeExtension(filename, "mtl");
-            var materialFilename = Path.GetFileName(materialFullFilename);
+            _filename = filename;
 
             _writer = new StreamWriter(File.Create(filename), Encoding.ASCII);
             _writer.WriteLine("# rvmsharp OBJ export");
-            _writer.WriteLine($"mtllib {materialFilename}");
-
-            _materialWriter = new StreamWriter(File.Create(materialFullFilename), Encoding.ASCII);
         }
 
         public void Dispose()
         {
             _writer.Close();
             _writer.Dispose();
-            _materialWriter.Close();
-            _materialWriter.Dispose();
+            _materialWriter?.Close();
+            _materialWriter?.Dispose();
         }
 
         public void StartGroup(string name)
@@ -45,6 +42,12 @@
 
         public void StartMaterial(Color color)
         {
+            if (_materialWriter == null) {
+                var materialFullFilename = Path.ChangeExtension(_filename, "mtl");
+                var materialFilename = Path.GetFileName(materialFullFilename);
+                _writer.WriteLine($"mtllib {materialFilename}");
+                _materialWriter = new StreamWriter(File.Create(materialFullFilename), Encoding.ASCII);
+            }
             if (!_colors.TryGetValue(color, out var materialName))
             {
                 // for complete list of parameters and explanation see http://paulbourke.net/dataformats/mtl/
