@@ -119,8 +119,11 @@
 #if NET6_0_OR_GREATER
                                 var keyInterned = stringInternPool.Intern(key);
                                 var valueInterned = stringInternPool.Intern(StripQuotes(value));
-#endif
+                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+#else
                                 currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
+#endif
+
                             }
                         }
                     }
