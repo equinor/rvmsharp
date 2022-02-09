@@ -11,24 +11,23 @@ using Tessellation;
 
 public static class RvmObjExporter
 {
-    public static void ExportToObj(RvmStore rvmStore, float tolerance, string outputFilename, Action<int, int, string>? tesselationProgressCallback = null, Action<int, int, string>? exportProgressCallback = null)
+    public static void ExportToObj(RvmStore rvmStore, float tolerance, string outputFilename,
+        (Action<int> init, Action tick)? tesselationProgressCallback = null,
+        (Action<int> init, Action tick)? exportProgressCallback = null)
     {
         var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectGeometryNodes)).ToArray();
         var totalLeafs = leafs.Length;
-        var tessellationProgress = 0;
+        tesselationProgressCallback?.init(totalLeafs);
         var meshes = leafs.AsParallel().Select(leaf =>
         {
-            var progressMessage = $"Tessellating {leaf.Name}";
-            tesselationProgressCallback?.Invoke(totalLeafs, tessellationProgress, progressMessage);
             var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, tolerance);
             // FIXME: this type of callback does not really work in MT environment
-            tesselationProgressCallback?.Invoke(totalLeafs, (++tessellationProgress), progressMessage);
+            tesselationProgressCallback?.tick();
             return (name: leaf.Name, primitives: tessellatedMeshes);
         }).ToArray();
 
         var totalMeshes = meshes.Length;
-        var exportProgress = 0;
-        exportProgressCallback?.Invoke(totalMeshes, exportProgress, "Exporting...");
+        exportProgressCallback?.init(totalMeshes);
 
         using var objExporter = new ObjExporter(outputFilename);
         Color? previousColor = null;
@@ -44,8 +43,7 @@ public static class RvmObjExporter
                 objExporter.WriteMesh(mesh);
                 previousColor = color;
             }
-
-            exportProgressCallback?.Invoke(totalMeshes, ++exportProgress, "Exporting...");
+            exportProgressCallback?.tick();
         }
     }
 

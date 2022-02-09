@@ -54,16 +54,8 @@
             using var exportProgressBar = parentProgressBar.Spawn(1, "Exporting");
 
             RvmObjExporter.ExportToObj(rvmStore, options.Tolerance, options.Output,
-                ((i, i1, arg3) =>
-                {
-                    tessellationProgressBar.MaxTicks = i;
-                    tessellationProgressBar.Tick(i1, arg3);
-                }),
-                (i, i1, arg3) =>
-                {
-                    exportProgressBar.MaxTicks = i;
-                    exportProgressBar.Tick(i1, arg3);
-                });
+                ((i) => tessellationProgressBar.MaxTicks = i, () => tessellationProgressBar.Tick()),
+                ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick()));
             parentProgressBar.Tick();
             Console.WriteLine("Done!");
             return 0;
