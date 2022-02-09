@@ -1,9 +1,11 @@
 ﻿namespace RvmSharp
 {
+#if NET6_0_OR_GREATER
     using Ben.Collections.Specialized;
+    using System.Collections.Immutable;
+#endif
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
     using System.Runtime.CompilerServices;
@@ -11,9 +13,9 @@
     public static class PdmsTextParser
     {
         public record PdmsNode(
-            string Name, 
+            string Name,
             Dictionary<string, string> MetadataDict,
-            PdmsNode? Parent, 
+            PdmsNode? Parent,
             List<PdmsNode> Children);
 
         private class StatefulReader : StreamReader
@@ -32,7 +34,11 @@
 
         public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath)
         {
+#if NET6_0_OR_GREATER
             return GetAllPdmsNodesInFile(pdmsTxtFilePath, ImmutableArray<string>.Empty, InternPool.Shared);
+#else
+            return GetAllPdmsNodesInFile(pdmsTxtFilePath, Array.Empty<string>());
+#endif
         }
 
         /// <summary>
@@ -40,10 +46,14 @@
         /// </summary>
         /// <param name="pdmsTxtFilePath">File path RVM TEXT</param>
         /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
+#if NET6_0_OR_GREATER
         /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
         public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, IInternPool stringInternPool)
+#else
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude)
+#endif
         {
-            
+
             var pdmsNodes = new List<PdmsNode>();
 
             using (var reader = new StatefulReader(pdmsTxtFilePath))
@@ -62,7 +72,7 @@
                         throw new NullReferenceException( $"Unexpected null in {nameof(line)}");
 
                     var lineSpan = line.AsSpan();
-                    
+
                     var trimmedLine = lineSpan.Trim();
                     if (trimmedLine.StartsWith(newItemSeparator, StringComparison.Ordinal))
                     {
@@ -80,7 +90,7 @@
                             pdmsNodes.Add(pdmsNode);
                         else
                             currentPdmsNode.Children.Add(pdmsNode);
-                        
+
                         currentPdmsNode = pdmsNode;
                     }
                     else
@@ -106,9 +116,11 @@
                             if (!IsExcludedAttribute(key, attributesToExclude))
                             {
                                 var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
+#if NET6_0_OR_GREATER
                                 var keyInterned = stringInternPool.Intern(key);
                                 var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+#endif
+                                currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
                             }
                         }
                     }
@@ -146,7 +158,7 @@
         private static PdmsFileHeader ParseHeader(StreamReader reader)
         {
             var header = new PdmsFileHeader();
-            
+
             string[] cadcAttributesFilesSupported = {"CADC_Attributes_File v1.0"};
 
             // Parse the first line:
@@ -167,7 +179,7 @@
             header.EndSeparator = firstLineSegments[2].Split(':')[1].Trim();
             header.NameEnd = firstLineSegments[3].Substring("name_end:".Length).Trim();
             header.Sep = firstLineSegments[4].Split(':')[1].Trim();
-            
+
             // Read Header Information:
             var firstLineHeaderInformation = reader.ReadLine()!;
             if (firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
@@ -217,7 +229,7 @@
 
             if (input[0] == input[^1] && (input[0] == '\'' || input[0] == '"'))
                 return input.Slice(1, input.Length - 2);
-            
+
             return input;
         }
     }
