@@ -37,7 +37,7 @@ namespace CadRevealComposer
             {
                 Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
             });
-            var stringInternPool = new BenStringInternPool(new InternPool());
+            var stringInternPool = new BenStringInternPool(new SharedInternPool());
             var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
             var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
             Console.WriteLine(
