@@ -76,7 +76,7 @@
             var stringInternPool = new BenStringInternPool(new InternPool(30_000, int.MaxValue));
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty,
+                Array.Empty<string>(),
                 stringInternPool);
 
             dotMemory.Check(memory =>
@@ -95,8 +95,8 @@
 
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty,
-                new BenStringInternPool(new InternPool()));
+                Array.Empty<string>(),
+                new BenStringInternPool(new FakeInternPoolWithoutInterning()));
 
             dotMemory.Check(memory =>
             {
@@ -126,6 +126,27 @@
             {
                 return _internPool.Intern(key);
             }
+        }
+
+        /// <summary>
+        /// Intern pool that doesn't intern at all.
+        /// </summary>
+        private sealed class FakeInternPoolWithoutInterning : IInternPool
+        {
+            public bool Contains(string item) => throw new NotImplementedException();
+            public string Intern(ReadOnlySpan<char> value) => value.ToString();
+            public string Intern(string value) => throw new NotImplementedException();
+            public string InternAscii(ReadOnlySpan<byte> asciiValue) => throw new NotImplementedException();
+            public string InternUtf8(ReadOnlySpan<byte> utf8Value) => throw new NotImplementedException();
+            public string Intern(char[] value) => throw new NotImplementedException();
+            public string InternAscii(byte[] asciiValue) => throw new NotImplementedException();
+            public string InternUtf8(byte[] utf8Value) => throw new NotImplementedException();
+
+            public long Added { get; }
+            public long Considered { get; }
+            public int Count { get; }
+            public long Deduped { get; }
+
         }
     }
 }
