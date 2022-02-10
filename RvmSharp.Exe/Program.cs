@@ -1,6 +1,5 @@
 ﻿namespace RvmSharp.Exe
 {
-    using Ben.Collections.Specialized;
     using CommandLine;
     using Tessellation;
     using ShellProgressBar;
@@ -105,7 +104,6 @@
         {
             using var progressBar = new ProgressBar(workload.Count, "Parsing input");
 
-            var stringInternPool = new BenPoolWrapper(new InternPool());
             var rvmFiles = workload.Select(filePair =>
             {
                 (string rvmFilename, string? txtFilename) = filePair;
@@ -114,7 +112,7 @@
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-                    rvmFile.AttachAttributes(txtFilename, ImmutableList<string>.Empty, stringInternPool);
+                    rvmFile.AttachAttributes(txtFilename);
                 }
 
                 progressBar.Tick();

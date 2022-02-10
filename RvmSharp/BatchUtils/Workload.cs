@@ -50,11 +50,13 @@
             return result.ToArray();
         }
 
-        public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null, ISharedInternPool? stringInternPool = null)
+        public static RvmStore ReadRvmData(
+            IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload,
+            IProgress<(string fileName, int progress, int total)>? progressReport = null,
+            IStringInternPool? stringInternPool = null)
         {
             var progress = 0;
             var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
-
 
             RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
             {

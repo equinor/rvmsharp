@@ -2,7 +2,10 @@ namespace RvmSharp.BatchUtils
 {
     using System;
 
-    public interface ISharedInternPool
+    /// <summary>
+    /// Intern / reuse strings instead of allocating the same string multiple times.
+    /// </summary>
+    public interface IStringInternPool
     {
         long Considered { get; }
         long Added { get; }
