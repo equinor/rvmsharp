@@ -21,7 +21,6 @@ public static class RvmObjExporter
         var meshes = leafs.AsParallel().Select(leaf =>
         {
             var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, tolerance);
-            // FIXME: this type of callback does not really work in MT environment
             tesselationProgressCallback?.tick();
             return (name: leaf.Name, primitives: tessellatedMeshes);
         }).ToArray();
