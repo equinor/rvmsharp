@@ -1,16 +1,16 @@
 ﻿namespace RvmSharp.Tests
 {
+    using BatchUtils;
     using Ben.Collections.Specialized;
-    using Exe;
     using JetBrains.dotMemoryUnit;
-    using System;
     using NUnit.Framework;
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Collections.Immutable;
 
     [TestFixture]
-    public class RvmAttributeParserTests
+    public class PdmsTextParserTests
     {
         [Test]
         public void ParsesValidAttributeFile()
@@ -43,8 +43,7 @@
         {
             var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty.Add("Name").Add("Position"),
-                new BenPoolWrapper(InternPool.Shared));
+                ImmutableList<string>.Empty.Add("Name").Add("Position"));
 
             var expectedMetadata = new Dictionary<string, string>
             {
@@ -73,7 +72,7 @@
 
             var memoryCheckPointA = dotMemory.Check();
 
-            var stringInternPool = new BenPoolWrapper(new InternPool(30_000, int.MaxValue));
+            var stringInternPool = new BenStringInternPool(new InternPool(30_000, int.MaxValue));
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
                 ImmutableList<string>.Empty,
@@ -96,7 +95,7 @@
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
                 ImmutableList<string>.Empty,
-                new BenPoolWrapper(new FakeInternPoolWithoutInterning()));
+                new BenStringInternPool(new InternPool()));
 
             dotMemory.Check(memory =>
             {
@@ -112,24 +111,22 @@
 
         }
 
-        /// <summary>
-        /// Intern pool that doesn't intern at all.
-        /// </summary>
-        private sealed class FakeInternPoolWithoutInterning : IInternPool
+        private class BenStringInternPool : IStringInternPool
         {
-            public bool Contains(string item) => throw new NotImplementedException();
-            public string Intern(ReadOnlySpan<char> value) => value.ToString();
-            public string Intern(string value) => throw new NotImplementedException();
-            public string InternAscii(ReadOnlySpan<byte> asciiValue) => throw new NotImplementedException();
-            public string InternUtf8(ReadOnlySpan<byte> utf8Value) => throw new NotImplementedException();
-            public string Intern(char[] value) => throw new NotImplementedException();
-            public string InternAscii(byte[] asciiValue) => throw new NotImplementedException();
-            public string InternUtf8(byte[] utf8Value) => throw new NotImplementedException();
+            private readonly IInternPool _internPool;
+            public long Considered => _internPool.Considered;
+            public long Added => _internPool.Added;
+            public long Deduped => _internPool.Deduped;
 
-            public long Added { get; }
-            public long Considered { get; }
-            public int Count { get; }
-            public long Deduped { get; }
+            public BenStringInternPool(IInternPool internPool)
+            {
+                _internPool = internPool;
+            }
+
+            public string Intern(ReadOnlySpan<char> key)
+            {
+                return _internPool.Intern(key);
+            }
         }
     }
 }

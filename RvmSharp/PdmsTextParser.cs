@@ -40,7 +40,7 @@
         /// <param name="pdmsTxtFilePath">File path RVM TEXT</param>
         /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
         /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
-        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, ISharedInternPool? stringInternPool)
+        public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, IStringInternPool? stringInternPool = default)
         {
 
             var pdmsNodes = new List<PdmsNode>();
