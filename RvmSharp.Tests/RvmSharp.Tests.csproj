@@ -18,7 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RvmSharp.Exe\RvmSharp.Exe.csproj" />
     <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
   </ItemGroup>
 
