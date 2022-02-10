@@ -107,8 +107,6 @@
 
                 Assert.That(allocatedStringObjectCount, Is.EqualTo(137_614));
             });
-
-
         }
 
         private class BenStringInternPool : IStringInternPool
