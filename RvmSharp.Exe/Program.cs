@@ -1,18 +1,13 @@
 ﻿namespace RvmSharp.Exe
 {
     using CommandLine;
-    using Tessellation;
     using ShellProgressBar;
     using System;
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
     using Containers;
-    using Exporters;
     using Operations;
-    using Primitives;
-    using System.Collections.Immutable;
-    using System.Drawing;
     using System.Text.RegularExpressions;
 
     static class Program

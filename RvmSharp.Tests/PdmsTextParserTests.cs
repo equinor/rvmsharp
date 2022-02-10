@@ -6,8 +6,8 @@
     using NUnit.Framework;
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Collections.Immutable;
+    using System.Linq;
 
     [TestFixture]
     public class PdmsTextParserTests
@@ -43,7 +43,8 @@
         {
             var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty.Add("Name").Add("Position"));
+                new[] { "Name", "Position" },
+                null);
 
             var expectedMetadata = new Dictionary<string, string>
             {
