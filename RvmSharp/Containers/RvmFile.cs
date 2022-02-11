@@ -1,6 +1,6 @@
 ﻿namespace RvmSharp.Containers
 {
-    using Ben.Collections.Specialized;
+    using BatchUtils;
     using Primitives;
     using System.Collections.Generic;
     using System.Linq;
@@ -32,7 +32,7 @@
         /// <param name="txtFilename">File path RVM TEXT</param>
         /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
         /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
-        public void AttachAttributes(string txtFilename, IReadOnlyList<string> attributesToExclude, IInternPool stringInternPool)
+        public void AttachAttributes(string txtFilename, IReadOnlyList<string> attributesToExclude, IStringInternPool? stringInternPool)
         {
             var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename, attributesToExclude, stringInternPool);
             AssignRecursive(pdms, Model.Children);

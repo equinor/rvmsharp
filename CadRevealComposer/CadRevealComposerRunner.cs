@@ -1,5 +1,6 @@
 namespace CadRevealComposer
 {
+    using Ben.Collections.Specialized;
     using Configuration;
     using Faces;
     using IdProviders;
@@ -36,7 +37,8 @@ namespace CadRevealComposer
             {
                 Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
             });
-            var rvmStore = Workload.ReadRvmData(workload, progressReport);
+            var stringInternPool = new BenStringInternPool(new SharedInternPool());
+            var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
             var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
             Console.WriteLine(
                 $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");

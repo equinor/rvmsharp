@@ -1,11 +1,9 @@
 ﻿namespace RvmSharp.BatchUtils
 {
-    using Ben.Collections.Specialized;
     using Containers;
-    using RvmSharp.Operations;
+    using Operations;
     using System;
     using System.Collections.Generic;
-    using System.Collections.Immutable;
     using System.IO;
     using System.Linq;
     using System.Text.RegularExpressions;
@@ -52,13 +50,13 @@
             return result.ToArray();
         }
 
-        public static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, IProgress<(string fileName, int progress, int total)>? progressReport = null)
+        public static RvmStore ReadRvmData(
+            IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload,
+            IProgress<(string fileName, int progress, int total)>? progressReport = null,
+            IStringInternPool? stringInternPool = null)
         {
             var progress = 0;
-            var stringInternPool = new SharedInternPool();
-            var redundantPdmsAttributesToExclude = ImmutableList<string>.Empty
-                .Add("Name")
-                .Add("Position");
+            var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
             RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
             {
@@ -80,7 +78,11 @@
                 .Select(ParseRvmFile)
                 .ToArray();
 
-            Console.WriteLine($"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+            if (stringInternPool != null)
+            {
+                Console.WriteLine(
+                    $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+            }
 
             var rvmStore = new RvmStore();
             rvmStore.RvmFiles.AddRange(rvmFiles);
@@ -92,4 +94,6 @@
             return rvmStore;
         }
     }
+
+
 }

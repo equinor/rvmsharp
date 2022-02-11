@@ -9,8 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-	    <PackageReference Include="Ben.StringIntern" Version="0.1.8" />
-		<PackageReference Include="LibTessDotNet" Version="1.1.15" />
+      <PackageReference Include="LibTessDotNet" Version="1.1.15" />
     </ItemGroup>
 
 </Project>

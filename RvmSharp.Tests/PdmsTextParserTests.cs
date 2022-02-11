@@ -1,15 +1,16 @@
 ﻿namespace RvmSharp.Tests
 {
+    using BatchUtils;
     using Ben.Collections.Specialized;
     using JetBrains.dotMemoryUnit;
-    using System;
     using NUnit.Framework;
+    using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Collections.Immutable;
+    using System.Linq;
 
     [TestFixture]
-    public class RvmAttributeParserTests
+    public class PdmsTextParserTests
     {
         [Test]
         public void ParsesValidAttributeFile()
@@ -42,8 +43,8 @@
         {
             var pdmsNodesInFile = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty.Add("Name").Add("Position"),
-                InternPool.Shared);
+                new[] { "Name", "Position" },
+                null);
 
             var expectedMetadata = new Dictionary<string, string>
             {
@@ -72,10 +73,10 @@
 
             var memoryCheckPointA = dotMemory.Check();
 
-            var stringInternPool = new InternPool(30_000, int.MaxValue);
+            var stringInternPool = new BenStringInternPool(new InternPool(30_000, int.MaxValue));
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty,
+                Array.Empty<string>(),
                 stringInternPool);
 
             dotMemory.Check(memory =>
@@ -94,8 +95,8 @@
 
             _ = PdmsTextParser.GetAllPdmsNodesInFile(
                 TestFileHelpers.BasicTxtAttTestFile,
-                ImmutableList<string>.Empty,
-                new FakeInternPoolWithoutInterning());
+                Array.Empty<string>(),
+                new BenStringInternPool(new FakeInternPoolWithoutInterning()));
 
             dotMemory.Check(memory =>
             {
@@ -107,8 +108,24 @@
 
                 Assert.That(allocatedStringObjectCount, Is.EqualTo(137_614));
             });
+        }
 
+        private class BenStringInternPool : IStringInternPool
+        {
+            private readonly IInternPool _internPool;
+            public long Considered => _internPool.Considered;
+            public long Added => _internPool.Added;
+            public long Deduped => _internPool.Deduped;
 
+            public BenStringInternPool(IInternPool internPool)
+            {
+                _internPool = internPool;
+            }
+
+            public string Intern(ReadOnlySpan<char> key)
+            {
+                return _internPool.Intern(key);
+            }
         }
 
         /// <summary>
@@ -129,6 +146,7 @@
             public long Considered { get; }
             public int Count { get; }
             public long Deduped { get; }
+
         }
     }
 }
