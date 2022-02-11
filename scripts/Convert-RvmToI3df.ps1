@@ -8,6 +8,7 @@ param (
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
     [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Int32]] $InstancingThreshold = $null, # Optional. Must be > 0 if defined.
     [switch] $NoFaces = $false, # To ignore creating faces files
+    [switch] $SplitIntoZones = $false, # Used for large in extents assets to have separate splitting roots.
     [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
     [switch] $Force = $false
 )
@@ -69,9 +70,14 @@ end {
         $composerArgs += $InstancingThreshold
     }
 
-    if($NoFaces){
+    if ($NoFaces) {
         $composerArgs += "--NoFaces"
         $composerArgs += $NoFaces
+    }
+
+    if ($SplitIntoZones) {
+        $composerArgs += "--SplitIntoZones"
+        $composerArgs += $SplitIntoZones
     }
 
     # Note: The arg containing only " -- " separates the args to the dotnet compiler and the args to CadRevealComposer
