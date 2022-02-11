@@ -54,7 +54,6 @@ namespace CadRevealComposer
         {
             TreeIndexGenerator treeIndexGenerator = new();
             NodeIdProvider nodeIdGenerator = new();
-            SequentialIdGenerator sectorIdGenerator = new();
 
             Console.WriteLine("Generating i3d");
 
@@ -278,14 +277,31 @@ namespace CadRevealComposer
             Console.WriteLine($"Tessellated all geometries in " + stopwatch.Elapsed);
             stopwatch.Restart();
 
-            var sectors = SectorSplitter.SplitIntoSectors(
-                    geometries,
-                    sectorIdGenerator,
-                    composerParameters.SingleSector)
-                .OrderBy(x => x.SectorId).ToArray();
+            SectorSplitter.ProtoSector[] sectors;
+            if (composerParameters.SingleSector)
+            {
+                sectors = SectorSplitter.CreateSingleSector(geometries).ToArray();
+            }
+            else if (composerParameters.SplitIntoZones)
+            {
+                var zones = ZoneSplitter.SplitIntoZones(geometries, outputDirectory);
+                Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
+                stopwatch.Restart();
 
-            Console.WriteLine($"Split into {sectors.Length} sectors in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+                sectors = SectorSplitter.SplitIntoSectors(zones)
+                    .OrderBy(x => x.SectorId)
+                    .ToArray();
+                Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+                stopwatch.Restart();
+            }
+            else
+            {
+                sectors = SectorSplitter.SplitIntoSectors(geometries)
+                    .OrderBy(x => x.SectorId)
+                    .ToArray();
+                Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+                stopwatch.Restart();
+            }
 
             var faceSectors = composerParameters.NoFaces
                 ? Array.Empty<SectorFaces>()

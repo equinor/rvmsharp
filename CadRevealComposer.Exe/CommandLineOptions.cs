@@ -52,6 +52,9 @@ namespace CadRevealComposer.Exe
         [Option(longName: "SingleSector", shortName: 's', Required = false, HelpText = "Create a single sector.")]
         public bool SingleSector { get; init; }
 
+        [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
+        public bool SplitIntoZones { get; init; }
+
         [Option(
              longName: "InstancingThreshold",
              shortName: 't',
