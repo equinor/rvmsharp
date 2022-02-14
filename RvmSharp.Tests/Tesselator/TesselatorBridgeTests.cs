@@ -3,6 +3,7 @@
     using NUnit.Framework;
     using RvmSharp.Operations;
     using RvmSharp.Primitives;
+    using System;
     using System.Numerics;
     using Tessellation;
 
@@ -85,6 +86,23 @@
                 var line = TessellatorBridge.TessellateWithoutApplyingMatrix(rvmLine, 1, randomToleranceValue);
 
                 Assert.That(line, Is.Null);
+            }
+        }
+
+        [TestFixture]
+        public class SigmaErrorTests
+        {
+            [Test]
+            public void SigmaShouldBeOk()
+            {
+                var rvmCircularTorus = new RvmCircularTorus(1, new Matrix4x4(
+                        0.000958819757f, -0.000284015347f, 0, 0,
+                        0.000284015347f, 0.000958819757f, 0, 0,
+                        0, 0, 0.00100000005f, 0,
+                        314.999939f, 122.049881f, 555.681885f, 1),
+                    new RvmBoundingBox(new Vector3(-57025, 0, -25), new Vector3(57025, 57025, 25)),
+                    57000, 25, 3.14159274f);
+                TessellatorBridge.TessellateWithoutApplyingMatrix(rvmCircularTorus, 0.001f, 0.01f);
             }
         }
     }
