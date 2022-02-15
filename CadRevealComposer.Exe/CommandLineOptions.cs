@@ -58,11 +58,12 @@ namespace CadRevealComposer.Exe
         [Option(
              longName: "InstancingThreshold",
              shortName: 't',
+             Default = (uint)300,
              Required = false,
              HelpText =
                  "Require at least this many matches to mark a mesh as Instanced. If not specified this will have a default value. Minimum 1.")
          , Range(1, uint.MaxValue)]
-        public uint? InstancingThreshold { get; set; }
+        public uint InstancingThreshold { get; set; }
 
         public static void AssertValidOptions(CommandLineOptions options)
         {

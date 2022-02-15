@@ -60,8 +60,15 @@ namespace CadRevealComposer
             var total = Stopwatch.StartNew();
             var stopwatch = Stopwatch.StartNew();
             var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
-            Console.WriteLine("Converted to reveal nodes in " + stopwatch.Elapsed);
+            Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
             stopwatch.Restart();
+
+            var exportHierarchyDatabaseTask = Task.Run(() =>
+            {
+                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+                SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
+                Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
+            });
 
             static bool IsValidGeometry(RvmPrimitive geometry)
             {
@@ -93,198 +100,82 @@ namespace CadRevealComposer
                 .WhereNotNull()
                 .ToArray();
 
-            Console.WriteLine("Primitives converted in " + stopwatch.Elapsed);
+            Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
-            var exportHierarchyDatabaseTask = Task.Run(() =>
+            var facetGroupsWithEmbeddedProtoMeshes = geometries
+                .OfType<ProtoMeshFromFacetGroup>()
+                .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+                .Cast<RvmFacetGroup>()
+                .ToArray();
+
+            RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
+            if (composerParameters.NoInstancing)
             {
-                var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-                SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
-                Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
-            });
+                facetGroupInstancingResult = facetGroupsWithEmbeddedProtoMeshes
+                    .Select(x => new RvmFacetGroupMatcher.NotInstancedResult(x))
+                    .Cast<RvmFacetGroupMatcher.Result>()
+                    .ToArray();
+            }
+            else
+            {
+                facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
+                    facetGroupsWithEmbeddedProtoMeshes,
+                    facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value);
+                Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
+                stopwatch.Restart();
+            }
 
-            var protoMeshesFromFacetGroups = geometries.OfType<ProtoMeshFromFacetGroup>().ToArray();
             var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
+            var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
+            if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
+            {
+                var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
+                Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
+            }
+            RvmPyramidInstancer.Result[] pyramidInstancingResult;
+            if (composerParameters.NoInstancing)
+            {
+                pyramidInstancingResult = uniqueProtoMeshesFromPyramid
+                    .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
+                    .OfType<RvmPyramidInstancer.Result>()
+                    .ToArray();
+            }
+            else
+            {
+                pyramidInstancingResult = RvmPyramidInstancer.Process(
+                    uniqueProtoMeshesFromPyramid,
+                    pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
+                Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
+                stopwatch.Restart();
+            }
 
-            const uint defaultInstancingThreshold = 300; // We should consider making this threshold dynamic. Value of 300 is picked arbitrary.
-            uint instanceCandidateThreshold = modelParameters.InstancingThresholdOverride?.Value ?? defaultInstancingThreshold;
-
-            var sourceMeshes = protoMeshesFromFacetGroups.Select(x => x.SourceFacetGroup).ToArray();
-            var facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(sourceMeshes, instanceCandidateThreshold)
-                .GroupBy(x => x.Value.template);
-
-            Console.WriteLine("Facet groups matched in " + stopwatch.Elapsed);
-            stopwatch.Restart();
-
-            var pyramidInstancingResult = RvmPyramidInstancer.Process(protoMeshesFromPyramids)
-                .GroupBy(x => x.Value.template);
-
-            Console.WriteLine("Pyramids matched in " + stopwatch.Elapsed);
-            stopwatch.Restart();
-
-            var instancedMeshesFromFacetGroups = facetGroupInstancingResult
-                .Where(g => g.Count() >= instanceCandidateThreshold)
-                .ToArray();
-            var instancedMeshesFromPyramids = pyramidInstancingResult
-                .Where(g => g.Count() >= instanceCandidateThreshold)
-                .ToArray();
-            var instancedTemplateAndTransformByOriginalFacetGroup = instancedMeshesFromFacetGroups
-                .SelectMany(g => g)
-                .ToDictionary(g => g.Key, g => g.Value);
-            var instancedTemplateAndTranformByOriginalPyramid = instancedMeshesFromPyramids
-                .SelectMany(g => g)
-                .ToDictionary(g => g.Key, g => g.Value);
-
-            const float unusedTesValue = 0;
-            var meshByInstance = instancedMeshesFromFacetGroups.ToDictionary(g => g.Key,
-                g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
-            var meshByPyramidInstance = instancedMeshesFromPyramids.ToDictionary(g => g.Key,
-                g => TessellatorBridge.Tessellate(g.Key, unusedTesValue));
+            
 
             var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
-            var (instancedMeshFileId, instancedMeshLookup) = await exporter.ExportMeshesToObjAndCtmFile(meshByInstance
-                .Select(im => im.Value).Concat(meshByPyramidInstance.Select(im => im.Value))
-                .ToArray());
-            var offsetByTemplate =
-                meshByInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
-            var offsetByTemplate2 =
-                meshByPyramidInstance.ToDictionary(g => g.Key, g => instancedMeshLookup[new RefLookup<Mesh>(g.Value!)]);
 
-            Console.WriteLine("Composed instance dictionaries in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+            Console.WriteLine("Start tessellate");
+            var meshes = await TessellateAndOutputInstanceMeshes(
+                facetGroupInstancingResult,
+                pyramidInstancingResult,
+                exporter);
 
-            Console.WriteLine("Start Tessellate");
-
-            var iMeshesTimer = Stopwatch.StartNew();
-            var iMeshes = protoMeshesFromFacetGroups
-                .Where(p => instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceFacetGroup))
-                .Select(p =>
-                {
-                    var (template, transform) = instancedTemplateAndTransformByOriginalFacetGroup[p.SourceFacetGroup];
-                    var (triangleOffset, triangleCount) = offsetByTemplate[template];
-                    if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
-                    {
-                        throw new Exception("Could not decompose");
-                    }
-
-                    (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
-                    AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
-
-                    return new InstancedMesh(
-                        new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
-                            Vector3.One,
-                            p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                            (Vector3.UnitZ, 0), p.SourcePrimitive),
-                        instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
-                        translation.Y, translation.Z,
-                        rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
-                }).Concat(protoMeshesFromPyramids
-                    .Where(p => instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
-                    .Select(p =>
-                    {
-                        var (template, transform) = instancedTemplateAndTranformByOriginalPyramid[p];
-                        var (triangleOffset, triangleCount) = offsetByTemplate2[template];
-                        if (!Matrix4x4.Decompose(transform, out var scale, out var rotation, out var translation))
-                        {
-                            throw new Exception("Could not decompose");
-                        }
-
-                        rotation = Quaternion.Normalize(rotation);
-                        (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
-                        AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
-
-                        return new InstancedMesh(
-                            new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
-                                Vector3.One,
-                                p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0), p.SourcePrimitive),
-                            instancedMeshFileId, (ulong)triangleOffset, (ulong)triangleCount, translation.X,
-                            translation.Y, translation.Z,
-                            rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
-                    }))
-                .ToArray();
-
-            Console.WriteLine($"\tTessellated {iMeshes.Length} Instanced Meshes in " + iMeshesTimer.Elapsed);
-            var tMeshesTimer = Stopwatch.StartNew();
-            var tMeshes = protoMeshesFromFacetGroups
-                .AsParallel()
-                .Where(p => !instancedTemplateAndTransformByOriginalFacetGroup.ContainsKey(p.SourceFacetGroup))
-                .Select(p =>
-                    {
-                        Mesh? mesh;
-                        try
-                        {
-                            mesh = TessellatorBridge.Tessellate(p.SourceFacetGroup, unusedTesValue)!;
-                        }
-                        catch (Exception e)
-                        {
-                            Console.Error.WriteLine(e);
-                            Console.WriteLine("Error caused by tessellating: " + p.SourceFacetGroup);
-                            var fileName = $"treeIndex_{p.TreeIndex}.json";
-                            var diagnosticsOutputDir = Path.Join(outputDirectory.FullName, "Failed");
-                            // Ensure output folder exists.
-                            Directory.CreateDirectory(diagnosticsOutputDir);
-
-                            Console.WriteLine($"Writing Bad mesh to to file {fileName}");
-                            JsonUtils.JsonSerializeToFile(p.SourceFacetGroup.Polygons,
-                                Path.Join(outputDirectory.FullName, "Failed", fileName));
-                            mesh = new Mesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
-                        }
-
-                        if (mesh.Vertices.Count == 0)
-                        {
-                            Console.WriteLine("WARNING: Could not tessellate facet group! " +
-                                              p.SourceFacetGroup.Polygons.Length);
-                        }
-                        var triangleCount = mesh.Triangles.Count / 3;
-                        return new TriangleMesh(
-                                new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
-                                    Vector3.Zero, Quaternion.Identity, Vector3.One,
-                                    p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                    (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
-                    }
-                )
-                .Concat(protoMeshesFromPyramids
-                    .AsParallel()
-                    .Where(p => !instancedTemplateAndTranformByOriginalPyramid.ContainsKey(p))
-                    .Select(p =>
-                    {
-                        var mesh = TessellatorBridge.Tessellate(p.SourcePyramid, unusedTesValue);
-                        if (mesh!.Vertices.Count == 0)
-                        {
-                            Console.WriteLine("WARNING: Could not tessellate facet group!");
-                        }
-
-                        var triangleCount = mesh.Triangles.Count / 3;
-                        return new TriangleMesh(
-                            new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
-                                Vector3.Zero, Quaternion.Identity, Vector3.One,
-                                p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                                (Vector3.UnitZ, 0), p.SourcePrimitive), 0, (ulong)triangleCount, mesh);
-                    }))
-                .Where(t => t.TempTessellatedMesh!.Vertices.Count > 0)
-                .AsParallel()
-                .ToArray();
-
-            Console.WriteLine($"\tTessellated {tMeshes.Length} Triangle Meshes in " + tMeshesTimer.Elapsed);
-
-            geometries = geometries
+            var geometriesIncludingMeshes = geometries
                 .Where(g => g is not ProtoMesh)
-                .Concat(iMeshes)
-                .Concat(tMeshes)
+                .Concat(meshes)
                 .ToArray();
 
-            Console.WriteLine($"Tessellated all geometries in " + stopwatch.Elapsed);
+            Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
             SectorSplitter.ProtoSector[] sectors;
             if (composerParameters.SingleSector)
             {
-                sectors = SectorSplitter.CreateSingleSector(geometries).ToArray();
+                sectors = SectorSplitter.CreateSingleSector(geometriesIncludingMeshes).ToArray();
             }
             else if (composerParameters.SplitIntoZones)
             {
-                var zones = ZoneSplitter.SplitIntoZones(geometries, outputDirectory);
+                var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
                 Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
                 stopwatch.Restart();
 
@@ -296,30 +187,36 @@ namespace CadRevealComposer
             }
             else
             {
-                sectors = SectorSplitter.SplitIntoSectors(geometries)
+                sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)
                     .OrderBy(x => x.SectorId)
                     .ToArray();
                 Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
                 stopwatch.Restart();
             }
 
-            var faceSectors = composerParameters.NoFaces
-                ? Array.Empty<SectorFaces>()
-                : sectors
+            SectorFaces[] faceSectors;
+            if (composerParameters.NoFaces)
+            {
+                faceSectors = Array.Empty<SectorFaces>();
+            }
+            else
+            {
+                faceSectors = sectors
                     .AsParallel()
                     .Select(s => SectorToFacesConverter.ConvertSector(s, outputDirectory.FullName))
                     .ToArray();
-            Console.WriteLine("Calculated faces in " + stopwatch.Elapsed);
-            stopwatch.Restart();
+                Console.WriteLine($"Calculated faces in {stopwatch.Elapsed}");
+                stopwatch.Restart();
+            }
 
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
-            Console.WriteLine($"Serialized {sectorInfos.Length} sectors in " + stopwatch.Elapsed);
+            Console.WriteLine($"Serialized {sectorInfos.Length} sectors in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
             var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-            var cameraPosition = CameraPositioning.CalculateInitialCamera(geometries);
+            var cameraPosition = CameraPositioning.CalculateInitialCamera(geometriesIncludingMeshes);
             SceneCreator.WriteSceneFile(
                 sectorsWithDownloadSize,
                 modelParameters,
@@ -328,13 +225,13 @@ namespace CadRevealComposer
                 faceSectors,
                 cameraPosition);
 
-            Console.WriteLine("Wrote scene file in " + stopwatch.Elapsed);
+            Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
             Task.WaitAll(exportHierarchyDatabaseTask);
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-            Console.WriteLine("Convert completed in " + total.Elapsed);
+            Console.WriteLine($"Convert completed in {total.Elapsed}");
         }
 
         private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
@@ -343,11 +240,12 @@ namespace CadRevealComposer
             var meshes = p.Geometries
                 .OfType<TriangleMesh>()
                 .Select(t => t.TempTessellatedMesh)
+                .WhereNotNull()
                 .ToArray();
             var geometries = p.Geometries;
             if (meshes.Length > 0)
             {
-                var (triangleMeshFileId, _) = await exporter.ExportMeshesToObjAndCtmFile(meshes);
+                var (triangleMeshFileId, _) = await exporter.ExportMeshesToObjAndCtmFile(meshes, mesh => mesh);
                 geometries = p.Geometries.Select(g => g switch
                 {
                     TriangleMesh t => t with { FileId = triangleMeshFileId },
@@ -384,5 +282,138 @@ namespace CadRevealComposer
                 };
             }
         }
+
+        private static async Task<APrimitive[]> TessellateAndOutputInstanceMeshes(
+            RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
+            RvmPyramidInstancer.Result[] pyramidInstancingResult,
+            PeripheralFileExporter exporter)
+        {
+            static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
+            {
+                var mesh = Tessellate(p.ProtoPrimitive);
+                var triangleCount = mesh.Triangles.Count / 3;
+                return new TriangleMesh(
+                    new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
+                        Vector3.Zero, Quaternion.Identity, Vector3.One,
+                        p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                        (Vector3.UnitZ, 0), p.ProtoPrimitive), 0, (ulong)triangleCount, mesh);
+            }
+
+            static InstancedMesh CreateInstanceMesh(ProtoMesh p, Matrix4x4 transform, uint meshFileId, ulong triangleOffset, ulong triangleCount)
+            {
+                if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
+                {
+                    throw new Exception("Could not decompose");
+                }
+
+                (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
+                AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
+
+                return new InstancedMesh(
+                    new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
+                        Vector3.One,
+                        p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
+                        (Vector3.UnitZ, 0), p.ProtoPrimitive),
+                    meshFileId, triangleOffset, triangleCount, translation.X,
+                    translation.Y, translation.Z,
+                    rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
+            }
+
+            var facetGroupsNotInstanced = facetGroupInstancingResult
+                .OfType<RvmFacetGroupMatcher.NotInstancedResult>()
+                .Select(result => ((RvmFacetGroupWithProtoMesh)result.FacetGroup).ProtoMesh)
+                .Cast<ProtoMesh>()
+                .ToArray();
+
+            var pyramidsNotInstanced = pyramidInstancingResult
+                .OfType<RvmPyramidInstancer.NotInstancedResult>()
+                .Select(result => result.Pyramid)
+                .Cast<ProtoMesh>()
+                .ToArray();
+
+            var facetGroupInstanced = facetGroupInstancingResult
+                .OfType<RvmFacetGroupMatcher.InstancedResult>()
+                .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
+                .ToArray();
+
+            var pyramidsInstanced = pyramidInstancingResult
+                .OfType<RvmPyramidInstancer.InstancedResult>()
+                .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)x.Pyramid, x.Transform))
+                .ToArray();
+
+            // tessellate instanced geometries
+            var stopwatch = Stopwatch.StartNew();
+            var meshes = facetGroupInstanced
+                .Concat(pyramidsInstanced)
+                .AsParallel()
+                .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key)))
+                .Where(g => g.Mesh.Triangles.Count > 0) // ignore empty meshes
+                .ToArray();
+            var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
+            Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
+
+            // write instanced meshes to file
+            var exportedMeshes = await exporter.ExportMeshesToObjAndCtmFile(meshes, m => m.Mesh);
+
+            // create InstancedMesh objects
+            var instancedMeshes = exportedMeshes.Results
+                .SelectMany(x =>
+                {
+                    return x.Item.InstanceGroup.Select(y => CreateInstanceMesh(y.ProtoMesh, y.Transform, exportedMeshes.FileId, x.TriangleOffset, x.TriangleCount));
+                })
+                .ToArray();
+
+            // tessellate and create TriangleMesh objects
+            stopwatch.Restart();
+            var triangleMeshes = facetGroupsNotInstanced
+                .Concat(pyramidsNotInstanced)
+                .AsParallel()
+                .Select(TessellateAndCreateTriangleMesh)
+                .Where(t => t.TriangleCount > 0) // ignore empty meshes
+                .ToArray();
+            Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
+
+            return instancedMeshes
+                .Cast<APrimitive>()
+                .Concat(triangleMeshes)
+                .ToArray();
+        }
+
+        private static Mesh Tessellate(RvmPrimitive primitive)
+        {
+            Mesh mesh;
+            try
+            {
+                mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? Mesh.Empty;
+            }
+            catch
+            {
+                mesh = Mesh.Empty;
+            }
+
+            if (mesh.Vertices.Count == 0)
+            {
+                if (primitive is RvmFacetGroup f)
+                {
+                    Console.WriteLine($"WARNING: Could not tessellate facet group! Polygon count: {f.Polygons.Length}");
+                }
+                else if (primitive is RvmPyramid)
+                {
+                    Console.WriteLine("WARNING: Could not tessellate pyramid!");
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            return mesh;
+        }
+
+        /// <summary>
+        /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.
+        /// </summary>
+        private record RvmFacetGroupWithProtoMesh(ProtoMeshFromFacetGroup ProtoMesh, uint Version, Matrix4x4 Matrix, RvmBoundingBox BoundingBoxLocal, RvmFacetGroup.RvmPolygon[] Polygons)
+            : RvmFacetGroup(Version, Matrix, BoundingBoxLocal, Polygons);
     }
 }

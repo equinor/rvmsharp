@@ -148,8 +148,6 @@ namespace CadRevealComposer.Operations
                 InstancedMesh => 20 * sizeof(ulong),
                 TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.TriangleCount * 6 * sizeof(float),
                 ProtoMesh => 0,
-                ProtoMeshFromFacetGroup => 0,
-                ProtoMeshFromPyramid => 0,
                 _ => throw new NotImplementedException()
             };
         }

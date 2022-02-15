@@ -37,7 +37,7 @@
             };
 
             var res =
-                RvmPyramidInstancer.Process(protoPyramids);
+                RvmPyramidInstancer.Process(protoPyramids, _ => true);
 
             Assert.That(res, Has.Exactly(2).Items);
         }
@@ -76,15 +76,18 @@
             var arbitraryProps = new CommonPrimitiveProperties(0, 1, Vector3.Zero, Quaternion.Identity, Vector3.One,
                 1,
                 _throwawayBoundingBox, Color.Aqua, (Vector3.One, 0), null!);
-            var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }.Select(rvmPyramid =>
-                new ProtoMeshFromPyramid(arbitraryProps, rvmPyramid)).ToArray();
-
+            var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }
+                .Select(rvmPyramid => new ProtoMeshFromPyramid(arbitraryProps, rvmPyramid))
+                .ToArray();
 
             Assert.That(rvmPyramidA, Is.Not.EqualTo(rvmPyramidAHalfScaled));
 
-            var templateLookup = RvmPyramidInstancer.Process(protoPyramids);
+            var templateLookup = RvmPyramidInstancer.Process(protoPyramids, _ => true);
 
-            var templates = templateLookup.Values.Select(x => x.template).ToArray();
+            var templates = templateLookup
+                .OfType<RvmPyramidInstancer.InstancedResult>()
+                .Select(x => x.Template)
+                .ToArray();
 
             Assert.That(templates, Contains.Item(rvmPyramidA));
             Assert.That(templates, Contains.Item(rvmPyramidCUnique));

@@ -8,6 +8,8 @@
 
     public class Mesh : IEquatable<Mesh>
     {
+        public static Mesh Empty { get; } = new Mesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
+
         public float Error { get; }
 
         public IReadOnlyList<Vector3> Vertices => _vertices;

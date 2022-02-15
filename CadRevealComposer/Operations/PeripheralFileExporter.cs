@@ -9,13 +9,14 @@ namespace CadRevealComposer.Operations
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-    using Utils;
 
     public class PeripheralFileExporter
     {
         private readonly string _outputDirectory;
         private readonly string _meshToCtmExePath;
         private readonly SequentialIdGenerator _idGenerator;
+
+        public record ExportResult<T>(T Item, ulong TriangleOffset, ulong TriangleCount);
 
         public PeripheralFileExporter(string outputDirectory, string meshToCtmExePath)
         {
@@ -24,32 +25,34 @@ namespace CadRevealComposer.Operations
             _idGenerator = new SequentialIdGenerator();
         }
 
-        public async Task<(ulong fileId, Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>)> ExportMeshesToObjAndCtmFile(IReadOnlyCollection<Mesh?> meshGeometries)
+        public async Task<(uint FileId, ExportResult<T>[] Results)> ExportMeshesToObjAndCtmFile<T>(IReadOnlyCollection<T> items, Func<T, Mesh> meshSelector)
         {
-            if (!meshGeometries.Any())
-                await Console.Error.WriteLineAsync(
-                    "WARNING: Trying to export InstancedMeshes but the argument has no items. The InstancingThreshold is maybe too high?");
+            if (!items.Any())
+            {
+                await Console.Error.WriteLineAsync("WARNING: Trying to export InstancedMeshes but the argument has no items. The InstancingThreshold is maybe too high?");
+            }
 
-            var meshFileId = _idGenerator.GetNextId();
+            var meshFileId = (uint)_idGenerator.GetNextId();
             var objFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.obj");
             var ctmFileName = Path.Combine(_outputDirectory, $"mesh_{meshFileId}.ctm");
             using var objExporter = new ObjExporter(objFileName);
             objExporter.StartObject("root");
 
             var triangleOffset = 0L;
-            var result = new Dictionary<RefLookup<Mesh>, (long triangleOffset, long triangleCount)>();
-            foreach (var mesh in meshGeometries)
+            var result = new List<ExportResult<T>>();
+            foreach (var item in items)
             {
-                objExporter.WriteMesh(mesh!);
-                var triangleCount = mesh!.Triangles.Count / 3;
-                result.Add(new RefLookup<Mesh>(mesh), (triangleOffset, triangleCount));
+                var mesh = meshSelector(item);
+                objExporter.WriteMesh(mesh);
+                var triangleCount = mesh.Triangles.Count / 3;
+                result.Add(new ExportResult<T>(item, (ulong)triangleOffset, (ulong)triangleCount));
                 triangleOffset += triangleCount;
             }
 
             objExporter.Dispose();
             await Convert(objFileName, ctmFileName);
 
-            return (meshFileId, result);
+            return (meshFileId, result.ToArray());
         }
 
         /// <summary>
