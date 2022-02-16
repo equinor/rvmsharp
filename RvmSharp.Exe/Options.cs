@@ -24,5 +24,9 @@
 
         [Option('t', "tolerance", Default = 0.1f, Required = false, HelpText = "Tessellation tolerance")]
         public float Tolerance { get; }
+
+        [Option('z', "optimize", Required = false,
+            HelpText = "Replace simple pyramids and snouts by boxes and cylinders")]
+        public bool Optimize { get; }
     }
 }

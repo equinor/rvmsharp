@@ -34,7 +34,8 @@
 
             using var parentProgressBar = new ProgressBar(2, "Converting RVM to OBJ");
 
-            var rvmStore = ReadRvmData(workload);
+            var readOptions = options.Optimize ? new RvmReadOptions(true, true) : new RvmReadOptions();
+            var rvmStore = ReadRvmData(workload, readOptions);
 
             using var connectProgressBar = parentProgressBar.Spawn(2, "Connecting geometry");
             RvmConnect.Connect(rvmStore);
@@ -95,7 +96,7 @@
             return result.ToArray();
         }
 
-        private static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload)
+        private static RvmStore ReadRvmData(IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload, RvmReadOptions options)
         {
             using var progressBar = new ProgressBar(workload.Count, "Parsing input");
 
@@ -104,7 +105,7 @@
                 (string rvmFilename, string? txtFilename) = filePair;
                 progressBar.Message = Path.GetFileNameWithoutExtension(rvmFilename);
                 using var stream = File.OpenRead(rvmFilename);
-                var rvmFile = RvmParser.ReadRvm(stream);
+                var rvmFile = RvmParser.ReadRvm(stream, options);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
                     rvmFile.AttachAttributes(txtFilename);
