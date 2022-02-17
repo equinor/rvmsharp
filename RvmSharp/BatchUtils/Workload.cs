@@ -53,16 +53,19 @@
         public static RvmStore ReadRvmData(
             IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload,
             IProgress<(string fileName, int progress, int total)>? progressReport = null,
-            IStringInternPool? stringInternPool = null)
+            IStringInternPool? stringInternPool = null,
+            RvmReadOptions? rvmReadOptions = null)
         {
             var progress = 0;
             var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
+
+            rvmReadOptions ??= new RvmReadOptions();
 
             RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
             {
                 (string rvmFilename, string? txtFilename) = filePair;
                 using var stream = File.OpenRead(rvmFilename);
-                var rvmFile = RvmParser.ReadRvm(stream);
+                var rvmFile = RvmParser.ReadRvm(stream, rvmReadOptions);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
                     rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
