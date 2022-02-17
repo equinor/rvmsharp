@@ -14,16 +14,17 @@ public static class BoxDetector
             Matrix4x4.Identity,
             new RvmBoundingBox(Vector3.Zero, Vector3.Zero),
             0, 0, 0);
-        var sides = new (Vector3[] vertices, Vector3 normal)[6];
 
-        // we need 6 sides
         if (facetGroup.Polygons.Length != 6)
             return false;
-        var i = 0;
+
+        var sides = new (Vector3[] vertices, Vector3 normal)[6];
+        // we need 6 sides
 
         // collect sides and check normal on all vertices
-        foreach (var polygon in facetGroup.Polygons)
+        for (var i = 0; i < facetGroup.Polygons.Length; i++)
         {
+            var polygon = facetGroup.Polygons[i];
             if (polygon.Contours.Length != 1)
                 return false;
             foreach (var contour in polygon.Contours)
@@ -36,17 +37,17 @@ public static class BoxDetector
                     vs[2].Normal != vs[3].Normal)
                     return false;
 
-                sides[i++] = (new [] { vs[0].Vertex, vs[1].Vertex, vs[2].Vertex, vs[3].Vertex }, vs[0].Normal);
+                sides[i++] = (new[] { vs[0].Vertex, vs[1].Vertex, vs[2].Vertex, vs[3].Vertex }, vs[0].Normal);
             }
         }
 
         // Check that all angles in each side are 90 degrees
         foreach (var side in sides)
         {
-            var a1 = AngleToDeg(side.vertices[1] - side.vertices[0], side.vertices[3] - side.vertices[0]);
-            var a2 = AngleToDeg(side.vertices[1] - side.vertices[2], side.vertices[2] - side.vertices[3]);
-            var a3 = AngleToDeg(side.vertices[0] - side.vertices[1], side.vertices[2] - side.vertices[1]);
-            if (!ApproximatelyEquals(a1, 90) || !ApproximatelyEquals(a2, 90) || !ApproximatelyEquals(a3, 90))
+            var a1 = AngleToRad(side.vertices[1] - side.vertices[0], side.vertices[3] - side.vertices[0]);
+            var a2 = AngleToRad(side.vertices[1] - side.vertices[2], side.vertices[2] - side.vertices[3]);
+            var a3 = AngleToRad(side.vertices[0] - side.vertices[1], side.vertices[2] - side.vertices[1]);
+            if (!ApproximatelyEquals(a1, MathF.PI / 2) || !ApproximatelyEquals(a2, MathF.PI / 2) || !ApproximatelyEquals(a3, MathF.PI / 2))
                 return false;
         }
 
@@ -58,14 +59,11 @@ public static class BoxDetector
             {
                 if (uniqueVertices.Any(uv => uv.Equals(v)))
                     continue;
-
-                uniqueVertices.Add(v);
-
-                if (uniqueVertices.Count > 8)
+                if (uniqueVertices.Count == 8) // we have more than 8 unique vertices
                     return false;
+                uniqueVertices.Add(v);
             }
         }
-
         if (uniqueVertices.Count != 8)
             return false;
 
@@ -76,45 +74,51 @@ public static class BoxDetector
         Vector3 dir1 = default;
         Vector3 dir2 = default;
         Vector3 dir3 = default;
-        foreach (var v11 in sides[1].vertices)
+        foreach (var side1VertexX in sides[1].vertices)
         {
-            var vs0 = sides[0].vertices;
-            if (vs0.Any(v0 => v0.ApproximatelyEquals(v11)))
+            var side0Vertices = sides[0].vertices;
+            if (side0Vertices.Any(v => v.ApproximatelyEquals(side1VertexX)))
                 continue;
 
-            // find v0 with 90 degrees angle
-            if (AngleToDeg(v11 - vs0[0], vs0[1] - vs0[0]).ApproximatelyEquals(90))
+            // find side 0 vertex that is connected to side 1 vertex X, by measuring angle
+            if (AngleToRad(side1VertexX - side0Vertices[0], side0Vertices[1] - side0Vertices[0]).ApproximatelyEquals(MathF.PI / 2))
             {
-                origin = vs0[0];
-                dir1 = vs0[1] - origin;
-                dir2 = vs0[3] - origin;
-                dir3 = v11 - origin;
-            } else if (AngleToDeg(v11 - vs0[1], vs0[2] - vs0[1]).ApproximatelyEquals(90))
+                // connected to side 0 vertex 0
+                origin = side0Vertices[0];
+                dir1 = side0Vertices[1] - origin;
+                dir2 = side0Vertices[3] - origin;
+                dir3 = side1VertexX - origin;
+            } else if (AngleToRad(side1VertexX - side0Vertices[1], side0Vertices[2] - side0Vertices[1]).ApproximatelyEquals(MathF.PI / 2))
             {
-                origin = vs0[1];
-                dir1 = vs0[2] - origin;
-                dir2 = vs0[0] - origin;
-                dir3 = v11 - origin;
-            } else if (AngleToDeg(v11 - vs0[2], vs0[3] - vs0[2]).ApproximatelyEquals(90))
+                // connected to side 0 vertex 1
+                origin = side0Vertices[1];
+                dir1 = side0Vertices[2] - origin;
+                dir2 = side0Vertices[0] - origin;
+                dir3 = side1VertexX - origin;
+            } else if (AngleToRad(side1VertexX - side0Vertices[2], side0Vertices[3] - side0Vertices[2]).ApproximatelyEquals(MathF.PI / 2))
             {
-                origin = vs0[2];
-                dir1 = vs0[3] - origin;
-                dir2 = vs0[1] - origin;
-                dir3 = v11 - origin;
-            } else if (AngleToDeg(v11 - vs0[3], vs0[0] - vs0[3]).ApproximatelyEquals(90))
+                // connected to side 0 vertex 2
+                origin = side0Vertices[2];
+                dir1 = side0Vertices[3] - origin;
+                dir2 = side0Vertices[1] - origin;
+                dir3 = side1VertexX - origin;
+            } else if (AngleToRad(side1VertexX - side0Vertices[3], side0Vertices[0] - side0Vertices[3]).ApproximatelyEquals(MathF.PI / 2))
             {
-                origin = vs0[3];
-                dir1 = vs0[0] - origin;
-                dir2 = vs0[2] - origin;
-                dir3 = v11 - origin;
+                // connected to side 0 vertex 3
+                origin = side0Vertices[3];
+                dir1 = side0Vertices[0] - origin;
+                dir2 = side0Vertices[2] - origin;
+                dir3 = side1VertexX - origin;
             }
             else
             {
+                // something is not right, bail
                 return false;
             }
             break;
         }
 
+        // Creating new box, from initial vertex and 3 directional vectors with lengths
         var v1 = origin;
         var v2 = origin + dir1;
         var v3 = origin + dir1 + dir2;
@@ -126,7 +130,7 @@ public static class BoxDetector
         var n1 = Vector3.Normalize(dir1);
         var n2 = Vector3.Normalize(dir2);
         var n3 = Vector3.Normalize(dir3);
-        var newSides = new[]
+        var newSides = new (Vector3[] vertices, Vector3 normal)[]
         {
             (new []{v1, v2, v3, v4}, -n3),
             (new []{v5, v6, v7, v8}, n3),
@@ -136,24 +140,22 @@ public static class BoxDetector
             (new []{v4, v1, v5, v8}, -n1),
         };
 
+        // verify that all sides are present and found in original facet group
         foreach (var newSide in newSides)
         {
             var found = false;
             foreach (var oldSide in sides)
             {
-                if (newSide.Item2.ApproximatelyEquals(oldSide.normal))
+                if (!newSide.normal.ApproximatelyEquals(oldSide.normal))
+                    continue;
+
+                foreach (var v in newSide.vertices)
                 {
-                    foreach (var v in newSide.Item1)
-                    {
-                        if (!oldSide.vertices.Any(vv => vv.ApproximatelyEquals(v)))
-                            return false;
-                    }
-
-                    found = true;
-                    break;
+                    if (!oldSide.vertices.Any(vv => vv.ApproximatelyEquals(v)))
+                        return false;
                 }
-
-
+                found = true;
+                break;
             }
             if (!found)
                 return false;
@@ -163,7 +165,7 @@ public static class BoxDetector
             return false; // no point in trying
 
         var boxCenter = origin + (dir1 + dir2 + dir3) / 2;
-        // two is enough
+        // check that two directions are axis aligned, two is enough to determine that all 3 are aligned
         var dir1NormalizedAbs = Vector3.Abs(Vector3.Normalize(dir1));
         var dir2NormalizedAbs = Vector3.Abs(Vector3.Normalize(dir2));
         if (dir1NormalizedAbs.X.ApproximatelyEquals(1) && dir2NormalizedAbs.Y.ApproximatelyEquals(1) ||
@@ -173,7 +175,6 @@ public static class BoxDetector
             dir1NormalizedAbs.Z.ApproximatelyEquals(1) && dir2NormalizedAbs.X.ApproximatelyEquals(1) ||
             dir1NormalizedAbs.Z.ApproximatelyEquals(1) && dir2NormalizedAbs.Y.ApproximatelyEquals(1))
         {
-            FacetGroupsToBoxWithoutRotation++;
             // axis aligned box, lets choose optimal with identity transform
             var size = Vector3.Abs(dir1 + dir2 + dir3);
 
@@ -190,25 +191,24 @@ public static class BoxDetector
         }
         else
         {
-            FacetGroupsToBoxWithRotation++;
             var rot1 = Vector3.UnitX.FromToRotation(Vector3.Normalize(dir1));
-            var yTrans = Vector3.Normalize(Vector3.Transform(Vector3.UnitY, rot1));
-            var angle = yTrans.AngleToRad(Vector3.Normalize(dir3));
-            var rotationNormal = Vector3.Cross(yTrans, Vector3.Normalize(dir3));
+            var yTransformed = Vector3.Normalize(Vector3.Transform(Vector3.UnitY, rot1));
+            var angle = yTransformed.AngleToRad(Vector3.Normalize(dir3));
+            var rotationNormal = Vector3.Cross(yTransformed, Vector3.Normalize(dir3));
             var rot2 = rotationNormal.LengthSquared().ApproximatelyEquals(0) ?
                 Quaternion.Identity : Quaternion.CreateFromAxisAngle(Vector3.Normalize(rotationNormal), angle);
 
             var lengthX = dir1.Length();
             var lengthY = dir3.Length();
             var lengthZ = dir2.Length();
-            var rotInv = Quaternion.Normalize(rot2 * rot1);
+            var rotationCombined = Quaternion.Normalize(rot2 * rot1);
 
             box = box with
             {
                 BoundingBoxLocal = new RvmBoundingBox(new Vector3(-lengthX/2, - lengthY /2, -lengthZ /2),
                     new Vector3(lengthX/ 2, lengthY /2, lengthZ/2)),
                 Matrix = Matrix4x4.CreateScale(scale) *
-                         Matrix4x4.CreateFromQuaternion(rotInv * rotation) *
+                         Matrix4x4.CreateFromQuaternion(rotationCombined * rotation) *
                          // Box center already rotated, so no need to rotate
                          Matrix4x4.CreateTranslation(boxCenter * scale) * Matrix4x4.CreateTranslation(translation),
                 LengthX = lengthX,
@@ -218,9 +218,6 @@ public static class BoxDetector
         }
         return true;
     }
-
-    public static int FacetGroupsToBoxWithRotation = 0;
-    public static int FacetGroupsToBoxWithoutRotation = 0;
 
     private static bool ApproximatelyEquals(this Vector3 v1, Vector3 v2, float tolerance = 0.001f)
     {
@@ -233,12 +230,6 @@ public static class BoxDetector
     private static bool ApproximatelyEquals(this float f1, float f2, float tolerance = 0.001f)
     {
         return MathF.Abs(f1 - f2) < tolerance;
-    }
-
-    // This should be in helper class together with the rest of helper functions from CadRevealComposer
-    private static float AngleToDeg(this Vector3 from, Vector3 to)
-    {
-        return 180 * AngleToRad(from, to) / MathF.PI;
     }
 
     private static float AngleToRad(this Vector3 from, Vector3 to)

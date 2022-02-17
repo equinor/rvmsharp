@@ -52,6 +52,7 @@
                 ((i) => tessellationProgressBar.MaxTicks = i, () => tessellationProgressBar.Tick()),
                 ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick()));
             parentProgressBar.Tick();
+            parentProgressBar.Dispose(); // keep to be able to write to console
             Console.WriteLine("Done!");
             return 0;
         }
