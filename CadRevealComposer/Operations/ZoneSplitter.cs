@@ -14,7 +14,7 @@ using Utils;
 
 /// <summary>
 /// Divides a model into zones for a better starting point for sector splitting.
-/// This is needed for models spread over a larger area like Melkøya and Tjeldbergodden.
+/// This is needed for models spread over a larger area like Melkoya and Tjeldbergodden.
 /// </summary>
 public static class ZoneSplitter
 {

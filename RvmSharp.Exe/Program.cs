@@ -34,7 +34,7 @@
 
             using var parentProgressBar = new ProgressBar(2, "Converting RVM to OBJ");
 
-            var readOptions = options.Optimize ? new RvmReadOptions(true, true) : new RvmReadOptions();
+            var readOptions = options.Optimize ? new RvmReadOptions(true, true, true) : new RvmReadOptions();
             var rvmStore = ReadRvmData(workload, readOptions);
 
             using var connectProgressBar = parentProgressBar.Spawn(2, "Connecting geometry");

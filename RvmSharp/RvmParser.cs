@@ -1,6 +1,7 @@
 ﻿namespace RvmSharp
 {
     using Containers;
+    using Operations;
     using Primitives;
     using System;
     using System.Collections.Generic;
@@ -239,7 +240,14 @@
                         .ThenBy(p => p.Contours.Sum(c => c.Vertices.Length))
                         .ToArray();
                     var facetGroup = new RvmFacetGroup(version, matrix, bBoxLocal, polygonsOrdered);
-                    primitive = facetGroup;
+                    if (options.FacetGroupToBox && BoxDetector.IsBox(facetGroup, out var box))
+                    {
+                        primitive = box;
+                    }
+                    else
+                    {
+                        primitive = facetGroup;
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unexpected Kind");
