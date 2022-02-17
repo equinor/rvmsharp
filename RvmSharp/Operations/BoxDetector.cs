@@ -37,7 +37,7 @@ public static class BoxDetector
                     vs[2].Normal != vs[3].Normal)
                     return false;
 
-                sides[i++] = (new[] { vs[0].Vertex, vs[1].Vertex, vs[2].Vertex, vs[3].Vertex }, vs[0].Normal);
+                sides[i] = (new[] { vs[0].Vertex, vs[1].Vertex, vs[2].Vertex, vs[3].Vertex }, vs[0].Normal);
             }
         }
 
