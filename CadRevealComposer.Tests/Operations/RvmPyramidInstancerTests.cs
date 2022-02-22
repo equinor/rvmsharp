@@ -84,9 +84,9 @@
 
             var results = RvmPyramidInstancer.Process(protoPyramids, _ => true);
 
-            var templates = results
+            var templatePyramids = results
                 .OfType<RvmPyramidInstancer.TemplateResult>()
-                .Select(x => x.Template)
+                .Select(x => x.Pyramid.Pyramid)
                 .ToArray();
 
             var instancedPyramids = results
@@ -99,9 +99,17 @@
                 .Select(x => x.Pyramid.Pyramid)
                 .ToArray();
 
-            Assert.That(templates, Contains.Item(rvmPyramidA));
-            Assert.That(notInstancedPyramids, Contains.Item(rvmPyramidCUnique));
-            Assert.That(instancedPyramids, Contains.Item(rvmPyramidAHalfScaled)); // This should have been templated
+            Assert.That(templatePyramids, Does.Contain(rvmPyramidA));
+            Assert.That(instancedPyramids, Does.Contain(rvmPyramidA));
+            Assert.That(notInstancedPyramids, Does.Not.Contain(rvmPyramidA));
+
+            Assert.That(templatePyramids, Does.Not.Contain(rvmPyramidAHalfScaled));
+            Assert.That(instancedPyramids, Does.Contain(rvmPyramidAHalfScaled));
+            Assert.That(notInstancedPyramids, Does.Not.Contain(rvmPyramidAHalfScaled));
+
+            Assert.That(templatePyramids, Does.Not.Contain(rvmPyramidCUnique));
+            Assert.That(instancedPyramids, Does.Not.Contain(rvmPyramidCUnique));
+            Assert.That(notInstancedPyramids, Does.Contain(rvmPyramidCUnique));
         }
     }
 }

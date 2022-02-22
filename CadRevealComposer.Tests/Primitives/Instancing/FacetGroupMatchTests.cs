@@ -3,8 +3,10 @@
     using CadRevealComposer.Operations;
     using Newtonsoft.Json;
     using NUnit.Framework;
+    using NUnit.Framework.Constraints;
     using RvmSharp.Primitives;
     using System.IO;
+    using System.Linq;
     using System.Numerics;
     using Utils;
 
@@ -31,10 +33,8 @@
         [Test]
         public void MatchRotatedHinges()
         {
-            var hinges1 = JsonConvert.DeserializeObject<RvmFacetGroup>(
-                File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "m1.json")));
-            var hinges2 = JsonConvert.DeserializeObject<RvmFacetGroup>(
-                File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "m2.json")));
+            var hinges1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json");
+            var hinges2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m2.json");
             var hingesEqual = RvmFacetGroupMatcher.Match(hinges1, hinges2, out Matrix4x4 _);
             Assert.IsFalse(hingesEqual);
         }
@@ -42,10 +42,8 @@
         [Test]
         public void MatchUnequalPanelsWithOffset()
         {
-            var panel1 = JsonConvert.DeserializeObject<RvmFacetGroup>(
-                File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "0.json")));
-            var panel2 = JsonConvert.DeserializeObject<RvmFacetGroup>(
-                File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "2.json")));
+            var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
+            var panel2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("2.json");
             var panelsEqual = RvmFacetGroupMatcher.Match(panel1, panel2, out Matrix4x4 _);
             Assert.IsFalse(panelsEqual);
         }
@@ -58,12 +56,36 @@
         [Explicit]
         public void MatchEqualPanelsWithDifferentPolygonOrder()
         {
-            var pipe1 = JsonConvert.DeserializeObject<RvmFacetGroup>(
-                File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "5.json")));
-            var pipe2 = JsonConvert.DeserializeObject<RvmFacetGroup>(
-                File.ReadAllText(Path.Combine(TestSampleLoader.TestSamplesDirectory, "6.json")));
+            var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("5.json");
+            var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("6.json");
             var facetGroupsEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out Matrix4x4 _);
             Assert.That(facetGroupsEqual);
+        }
+
+        [Test]
+        public void MatchAll()
+        {
+            var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");
+            var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43908.json");
+            var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
+
+            var results = RvmFacetGroupMatcher.MatchAll(new []{ pipe1, pipe2, panel1}, _ => true);
+
+            var templates = results.OfType<RvmFacetGroupMatcher.TemplateResult>().Select(r => r.FacetGroup).ToArray();
+            var instanced = results.OfType<RvmFacetGroupMatcher.InstancedResult>().Select(r => r.FacetGroup).ToArray();
+            var notInstanced = results.OfType<RvmFacetGroupMatcher.NotInstancedResult>().Select(r => r.FacetGroup).ToArray();
+
+            Assert.That(templates, Does.Contain(pipe1));
+            Assert.That(instanced, Does.Contain(pipe1));
+            Assert.That(notInstanced, Does.Not.Contain(pipe1));
+
+            Assert.That(templates, Does.Not.Contain(pipe2));
+            Assert.That(instanced, Does.Contain(pipe2));
+            Assert.That(notInstanced, Does.Not.Contain(pipe2));
+
+            Assert.That(templates, Does.Not.Contain(panel1));
+            Assert.That(instanced, Does.Not.Contain(panel1));
+            Assert.That(notInstanced, Does.Contain(panel1));
         }
     }
 }

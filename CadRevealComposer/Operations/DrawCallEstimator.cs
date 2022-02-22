@@ -147,7 +147,6 @@ namespace CadRevealComposer.Operations
                 Torus => 9 * sizeof(ulong),
                 InstancedMesh => 20 * sizeof(ulong),
                 TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.TriangleCount * 6 * sizeof(float),
-                ProtoMesh => 0,
                 _ => throw new NotImplementedException()
             };
         }

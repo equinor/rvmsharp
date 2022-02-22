@@ -116,6 +116,7 @@ namespace CadRevealComposer
                     .Select(x => new RvmFacetGroupMatcher.NotInstancedResult(x))
                     .Cast<RvmFacetGroupMatcher.Result>()
                     .ToArray();
+                Console.WriteLine("Facet group instancing disabled.");
             }
             else
             {
@@ -127,6 +128,7 @@ namespace CadRevealComposer
             }
 
             var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
+            // We have models where several pyramids on the same "part" are completely identical.
             var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
             if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
             {
@@ -140,6 +142,7 @@ namespace CadRevealComposer
                     .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
                     .OfType<RvmPyramidInstancer.Result>()
                     .ToArray();
+                Console.WriteLine("Pyramid instancing disabled.");
             }
             else
             {
