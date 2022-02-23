@@ -87,5 +87,26 @@
             Assert.That(instanced, Does.Not.Contain(panel1));
             Assert.That(notInstanced, Does.Contain(panel1));
         }
+
+        [Test]
+        public void MatchAllWithFilter()
+        {
+            var equalPipes = Enumerable.Range(0, 10)
+                .Select(_ => TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json"));
+
+            var equalHinges = Enumerable.Range(0, 5)
+                .Select(_ => TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json"));
+
+            var facetGroups = equalPipes.Concat(equalHinges).ToArray();
+            var results = RvmFacetGroupMatcher.MatchAll(facetGroups, group => group.Length >= 10);
+
+            var templates = results.OfType<RvmFacetGroupMatcher.TemplateResult>().Select(r => r.FacetGroup).ToArray();
+            var instanced = results.OfType<RvmFacetGroupMatcher.InstancedResult>().Select(r => r.FacetGroup).ToArray();
+            var notInstanced = results.OfType<RvmFacetGroupMatcher.NotInstancedResult>().Select(r => r.FacetGroup).ToArray();
+
+            Assert.AreEqual(1, templates.Length);
+            Assert.AreEqual(10, instanced.Length);
+            Assert.AreEqual(5, notInstanced.Length);
+        }
     }
 }
