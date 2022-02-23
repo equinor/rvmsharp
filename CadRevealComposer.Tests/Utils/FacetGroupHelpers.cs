@@ -67,8 +67,6 @@
             }
         }
 
-
-
         [Explicit(ExplicitReason)]
         [Test]
         public void ExportAllUnmatchedFacetGroupsAsObjs()
@@ -78,13 +76,14 @@
             var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
             var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 
-            var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups,0);
+            var groupToTemplateWithTransform = RvmFacetGroupMatcher.MatchAll(facetGroups, _ => true);
             var templateToMatchCount = groupToTemplateWithTransform
-                .Select(kvp => (kvp.Value.template, kvp.Key))
-                .GroupBy(p => p.template)
+                .OfType<RvmFacetGroupMatcher.InstancedResult>()
+                .GroupBy(r => r.Template)
                 .ToDictionary(p => p.Key, p => p.Count());
             var templateToFacetGroup = groupToTemplateWithTransform
-                .Select(kvp => kvp.Value.template)
+                .OfType<RvmFacetGroupMatcher.InstancedResult>()
+                .Select(r => r.Template)
                 .Distinct()
                 .GroupBy(RvmFacetGroupMatcher.CalculateKey)
                 .ToArray();
@@ -121,7 +120,7 @@
                 totalCount += totalMatches;
             }
 
-            Assert.AreEqual(groupToTemplateWithTransform.Count, totalCount);
+            Assert.AreEqual(groupToTemplateWithTransform.Length, totalCount);
         }
 
         private static IEnumerable<RvmFacetGroup> GetAllFacetGroups(RvmNode root)

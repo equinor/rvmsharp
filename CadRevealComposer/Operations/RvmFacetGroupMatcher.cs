@@ -11,17 +11,26 @@ namespace CadRevealComposer.Operations
 
     public static class RvmFacetGroupMatcher
     {
+        public abstract record Result(RvmFacetGroup FacetGroup);
+        public record NotInstancedResult(RvmFacetGroup FacetGroup) : Result(FacetGroup);
+        public record InstancedResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : Result(FacetGroup);
+        public record TemplateResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template, Transform);
+
         /// <summary>
         /// Mutable to allow fast sorting of templates by swapping properties.
         /// </summary>
         private class TemplateItem
         {
-            public TemplateItem(RvmFacetGroup template)
+            public TemplateItem(RvmFacetGroup original, RvmFacetGroup template, Matrix4x4 transform)
             {
+                Original = original;
                 Template = template;
+                Transform = transform;
             }
 
+            public RvmFacetGroup Original { get; set; }
             public RvmFacetGroup Template { get; set; }
+            public Matrix4x4 Transform { get; set; }
             public int MatchCount { get; set; }
         }
 
@@ -83,52 +92,137 @@ namespace CadRevealComposer.Operations
             };
         }
 
-        public static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchAll(RvmFacetGroup[] facetGroups, uint instancingThreshold)
+        public static Result[] MatchAll(RvmFacetGroup[] allFacetGroups, Func<RvmFacetGroup[], bool> shouldInstance)
         {
             var groupingTimer = Stopwatch.StartNew();
             var groupedFacetGroups =
-                facetGroups
+                allFacetGroups
                     .AsParallel()
                     .GroupBy(CalculateKey)
-                    .Where(x => x.Count() >= instancingThreshold) // We can ignore all groups of less items than the threshold.
-                    .Select(g => (g.Key, FacetGroups: g.OrderByDescending(x => x.BoundingBoxLocal.Diagonal).ToArray()))
+                    .Select(g => g.OrderByDescending(x => x.BoundingBoxLocal.Diagonal).ToArray())
                     .ToArray();
 
-            var facetGroupForMatchingCount = groupedFacetGroups.Sum(x => x.FacetGroups.Length);
-            Console.WriteLine($"Found {groupedFacetGroups.Length:N0} groups with more than {instancingThreshold:N0} items for a count of {facetGroupForMatchingCount:N0} facet groups of total {facetGroups.Length:N0} in {groupingTimer.Elapsed}");
+            var groupCount = groupedFacetGroups.Count(shouldInstance);
+            var facetGroupForMatchingCount = groupedFacetGroups
+                .Where(shouldInstance)
+                .Sum(facetGroups => facetGroups.Length);
+            Console.WriteLine($"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
             Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
-            var matchingTimer = Stopwatch.StartNew();
+
+            IEnumerable<Result> MatchGroup(RvmFacetGroup[] facetGroups)
+            {
+                if (shouldInstance(facetGroups) is false)
+                {
+                    foreach (var facetGroup in facetGroups)
+                    {
+                        yield return new NotInstancedResult(facetGroup);
+                    }
+
+                    // return early so the group isn't logged to console
+                    yield break; 
+                }
+
+                var timer = Stopwatch.StartNew();
+                var instancingResults = MatchGroups(facetGroups, out var iterationCounter);
+
+                // post determine if group is adequate for instancing
+                var templateCount = 0L;
+                var instancedCount = 0L;
+                foreach (var instancingGroup in instancingResults.ToLookup(x => x is InstancedResult))
+                {
+                    // is not instanced
+                    if (instancingGroup.Key is false)
+                    {
+                        foreach (var instanceResult in instancingGroup)
+                        {
+                            yield return instanceResult;
+                        }
+                        continue;
+                    }
+
+                    // is instanced
+                    var instanceGroups = instancingGroup
+                        .OfType<InstancedResult>()
+                        .GroupBy(r => r.Template);
+
+                    foreach (var instanceGroup in instanceGroups)
+                    {
+                        var fg = instanceGroup
+                            .Select(x => x.FacetGroup)
+                            .ToArray();
+                        var shouldInstanceGroup = shouldInstance(fg);
+
+                        foreach (var instancedResult in instanceGroup)
+                        {
+                            if (shouldInstanceGroup)
+                            {
+                                instancedCount++;
+                                if (instancedResult is TemplateResult)
+                                {
+                                    templateCount++;
+                                }
+                            }
+
+                            yield return shouldInstanceGroup
+                                ? instancedResult
+                                : new NotInstancedResult(instancedResult.FacetGroup);
+                        }
+                    }
+                }
+
+                var vertexCount = facetGroups
+                    .First()
+                    .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+                var fraction = instancedCount / (float)facetGroups.Length;
+                Console.WriteLine(
+                    $"\tFound {instancedCount,5:N0} instances in {facetGroups.Length,6:N0} items ({fraction,7:P1})." +
+                    $" TC: {templateCount,4:N0}, VC: {vertexCount,4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
+            }
+
             var result =
                 groupedFacetGroups
-                    .OrderByDescending(x => x.FacetGroups.Length)
+                    .OrderByDescending(facetGroups => facetGroups.Length)
                     .AsParallel()
-                    .Select(g => MatchGroups(g.FacetGroups))
-                    .SelectMany(d => d)
-                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    .SelectMany(MatchGroup)
+                    .ToArray();
 
-            var uniqueTemplateCount = result.DistinctBy(x => x.Value.template).Count();
-            var fraction = 1.0 - (uniqueTemplateCount / (float)facetGroupForMatchingCount);
-            Console.WriteLine($"Found {uniqueTemplateCount:N0} unique from a total of {facetGroupForMatchingCount:N0} ({fraction:P1}). Time: {matchingTimer.Elapsed}");
+            var templateCount = result.OfType<TemplateResult>().Count();
+            var instancedCount = result.OfType<InstancedResult>().Count();
+            var fraction = instancedCount / (float)allFacetGroups.Length;
+            Console.WriteLine($"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
+
+            if (result.Length != allFacetGroups.Length)
+            {
+                throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
+            }
+
             return result;
         }
 
-        private static Dictionary<RvmFacetGroup, (RvmFacetGroup template, Matrix4x4 transform)> MatchGroups(RvmFacetGroup[] facetGroups)
+        private static List<Result> MatchGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
         {
             static void SwapItemData(TemplateItem a, TemplateItem b)
             {
+                var aOriginal = a.Original;
                 var aTemplate = a.Template;
+                var aTransform = a.Transform;
                 var aMatchCount = a.MatchCount;
+
+                a.Original = b.Original;
                 a.Template = b.Template;
+                a.Transform = b.Transform;
                 a.MatchCount = b.MatchCount;
+
+                b.Original = aOriginal;
                 b.Template = aTemplate;
+                b.Transform = aTransform;
                 b.MatchCount = aMatchCount;
             }
 
-            var result = new Dictionary<RvmFacetGroup, (RvmFacetGroup, Matrix4x4)>();
-            var templates = new List<TemplateItem>(); // sorted high to low by explicit call
+            var result = new List<Result>();
+            var templates = new List<TemplateItem>(); // sorted high to low by explicit code
 
-            var timer = Stopwatch.StartNew();
-            var matchCount = 0L;
+            var iterCounter = 0L;
             foreach (var facetGroup in facetGroups)
             {
                 var matchFoundFromPreviousTemplates = false;
@@ -137,13 +231,13 @@ namespace CadRevealComposer.Operations
                 for (var i = 0; i < templates.Count; i++)
                 {
                     var item = templates[i];
-                    matchCount++;
+                    iterCounter++;
                     if (!Match(item.Template, bakedFacetGroup, out var transform))
                     {
                         continue;
                     }
 
-                    result.Add(facetGroup, (item.Template, transform));
+                    result.Add(new InstancedResult(facetGroup, item.Template, transform));
                     item.MatchCount++;
 
                     // sort template list descending by match count
@@ -168,16 +262,19 @@ namespace CadRevealComposer.Operations
                 }
 
                 var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
-                templates.Add(new TemplateItem(newTemplate));
-                result.Add(facetGroup, (newTemplate, newTransform));
+                templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
             }
 
-            var templateCount = result.DistinctBy(x => x.Value.Item1).Count();
-            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
-            var fraction = 1.0 - (templateCount / (float)facetGroups.Length);
-            Console.WriteLine(
-                $"\tFound {templateCount,5:N0} templates in {facetGroups.Length,6:N0} items ({fraction,6:P1}). " +
-                $"Vertex count was {vertexCount,5:N0} in {timer.Elapsed.TotalSeconds,6:N} s. {matchCount:N0} iterations.");
+            foreach (var template in templates)
+            {
+                Result r = template.MatchCount > 0
+                    ? new TemplateResult(template.Original, template.Template, template.Transform)
+                    : new NotInstancedResult(template.Original);
+
+                result.Add(r);
+            }
+
+            iterationCounter = iterCounter;
             return result;
         }
 

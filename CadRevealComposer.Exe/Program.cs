@@ -42,7 +42,7 @@
                     new ProjectId(options.ProjectId),
                     new ModelId(options.ModelId),
                     new RevisionId(options.RevisionId),
-                    options.InstancingThreshold.HasValue ? new InstancingThresholdOverride(options.InstancingThreshold.Value) : null
+                    new InstancingThreshold(options.InstancingThreshold)
                     );
 
             var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
