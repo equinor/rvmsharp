@@ -7,7 +7,7 @@
     public class RvmNode : RvmGroup
     {
         public readonly List<RvmGroup> Children = new List<RvmGroup>();
-        public readonly string Name;
+        public string Name;
         public readonly Vector3 Translation;
         public readonly uint MaterialId;
         public readonly Dictionary<string, string> Attributes = new();

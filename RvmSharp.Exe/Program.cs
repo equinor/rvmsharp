@@ -40,7 +40,8 @@
             progressBar.Tick();
             progressBar.Dispose();
 
-            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectGeometryNodes)).ToArray();
+            var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(node =>
+                CollectGeometryNodes(node))).ToArray();
             progressBar = new ProgressBar(leafs.Length, "Tessellating");
             var meshes = leafs.AsParallel().Select(leaf =>
             {
@@ -130,11 +131,15 @@
             return rvmStore;
         }
 
-        private static IEnumerable<RvmNode> CollectGeometryNodes(RvmNode root)
+        private static IEnumerable<RvmNode> CollectGeometryNodes(RvmNode root, string parentName = "")
         {
+            string rootName = string.IsNullOrEmpty(parentName) ? root.Name : parentName + (root.Name.StartsWith('/') ? "" : "/") + root.Name;
             if (root.Children.OfType<RvmPrimitive>().Any())
+            {
+                root.Name = rootName;
                 yield return root;
-            foreach (var geometryNode in root.Children.OfType<RvmNode>().SelectMany(CollectGeometryNodes))
+            }
+            foreach (var geometryNode in root.Children.OfType<RvmNode>().SelectMany(node => CollectGeometryNodes(node, rootName)))
                 yield return geometryNode;
         }
     }
