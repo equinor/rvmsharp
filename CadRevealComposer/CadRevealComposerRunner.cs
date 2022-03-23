@@ -15,9 +15,11 @@ namespace CadRevealComposer
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
+    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Numerics;
+    using System.Reflection;
     using System.Threading.Tasks;
     using Utils;
 
@@ -153,7 +155,7 @@ namespace CadRevealComposer
                 stopwatch.Restart();
             }
 
-            
+
 
             var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
 
@@ -212,6 +214,12 @@ namespace CadRevealComposer
                 stopwatch.Restart();
             }
 
+            ///////////// DEGBUG /////////////
+            //sectors = DebugColorExteriorInteriorSectors(sectors, Color.Black, Color.Red);
+            //sectors = DebugColorSectorsAtDepth(sectors, 10);
+            //sectors = DebugColorDepths(sectors);
+            //////////////////////////////////
+
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
@@ -235,6 +243,86 @@ namespace CadRevealComposer
 
             Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
             Console.WriteLine($"Convert completed in {total.Elapsed}");
+        }
+
+        // TODO Not relevant
+        private static SectorSplitter.ProtoSector[] DebugColorExteriorInteriorSectors(SectorSplitter.ProtoSector[] sectors, Color exteriorColor, Color interiorColor)
+        {
+            for (int i = 0; i < sectors.Length; i++)
+            {
+                if (i == 0)
+                    sectors[i] = DebugColorSector(sectors[i], exteriorColor);
+                else
+                    sectors[i] = DebugColorSector(sectors[i], interiorColor);
+            }
+
+            return sectors;
+        }
+
+        private static SectorSplitter.ProtoSector[] DebugColorSectorsAtDepth(SectorSplitter.ProtoSector[] sectors, int depth)
+        {
+            var colorList = DebugGetListOfColors();
+
+            for (int i = 0; i < sectors.Length; i++)
+            {
+                if (sectors[i].Depth == depth)
+                    sectors[i] = DebugColorSector(sectors[i], colorList[i * 7 % colorList.Count]);
+            }
+
+            return sectors;
+        }
+
+        private static SectorSplitter.ProtoSector[] DebugColorDepths(SectorSplitter.ProtoSector[] sectors)
+        {
+            var colorList = DebugGetListOfColors();
+            int count = 0;
+
+            for (int i = 1; i < sectors.Length; i++)
+            {
+                (sectors, count) = DebugColorDepth(sectors, i, colorList[i * 7 % colorList.Count]);
+                if (count == 0)
+                    break;
+            }
+
+            return sectors;
+        }
+
+        private static (SectorSplitter.ProtoSector[], int) DebugColorDepth(SectorSplitter.ProtoSector[] sectors, int depth, Color color)
+        {
+            int count = 0;
+            for (int i = 0; i < sectors.Length; i++)
+            {
+                if (sectors[i].Depth == depth)
+                {
+                    sectors[i] = DebugColorSector(sectors[i], color);
+                    count++;
+                }
+            }
+
+            return (sectors, count);
+        }
+
+        private static SectorSplitter.ProtoSector DebugColorSector(SectorSplitter.ProtoSector sector, Color color)
+        {
+            var newGeometries = sector.Geometries.Select(prop => prop with { Color = color }).ToArray();
+            return sector with { Geometries = newGeometries };
+        }
+
+        private static List<Color> DebugGetListOfColors()
+        {
+            var colorList = new List<Color>();
+
+            foreach (var prop in typeof(Color).GetProperties(BindingFlags.Public | BindingFlags.Static))
+            {
+                if (prop.PropertyType == typeof(Color))
+                {
+                    var value = prop.GetValue(null);
+                    if (value != null)
+                        colorList.Add((Color)value);
+                }
+            }
+
+            return colorList;
         }
 
         private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
