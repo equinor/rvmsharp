@@ -54,16 +54,38 @@
             float yMax = sector.BoundingBoxMax.Y;
             float zMax = sector.BoundingBoxMax.Z;
 
-            var box1 = CreateBox(new Vector3((xMax + xMin) / 2, yMin, zMin), new Vector3(xMax - xMin, 0.1f, 0.1f), color);
-            var box2 = CreateBox(new Vector3((xMax + xMin) / 2, yMax, zMin), new Vector3(xMax - xMin, 0.1f, 0.1f), color);
-            var box3 = CreateBox(new Vector3(xMin, (yMin + yMax) / 2, zMin), new Vector3(0.1f, yMax - yMin, 0.1f), color);
-            var box4 = CreateBox(new Vector3(xMax, (yMin + yMax) / 2, zMin), new Vector3(0.1f, yMax - yMin, 0.1f), color);
+            float boxWidth = 0.5f;
+
+            var box1 = CreateBox(new Vector3((xMax + xMin) / 2, yMin, zMin), new Vector3(xMax - xMin, boxWidth, boxWidth), color);
+            var box2 = CreateBox(new Vector3((xMax + xMin) / 2, yMax, zMin), new Vector3(xMax - xMin, boxWidth, boxWidth), color);
+            var box3 = CreateBox(new Vector3(xMin, (yMin + yMax) / 2, zMin), new Vector3(0.1f, yMax - yMin, boxWidth), color);
+            var box4 = CreateBox(new Vector3(xMax, (yMin + yMax) / 2, zMin), new Vector3(0.1f, yMax - yMin, boxWidth), color);
+
+            var box5 = CreateBox(new Vector3(xMin, yMin, (zMax + zMin) / 2), new Vector3(boxWidth, boxWidth, zMax - zMin), color);
+            var box6 = CreateBox(new Vector3(xMin, yMax, (zMax + zMin) / 2), new Vector3(boxWidth, boxWidth, zMax - zMin), color);
+            var box7 = CreateBox(new Vector3(xMax, yMin, (zMax + zMin) / 2), new Vector3(boxWidth, boxWidth, zMax - zMin), color);
+            var box8 = CreateBox(new Vector3(xMax, yMax, (zMax + zMin) / 2), new Vector3(boxWidth, boxWidth, zMax - zMin), color);
+
+            var box9 = CreateBox(new Vector3((xMax + xMin) / 2, yMin, zMax), new Vector3(xMax - xMin, boxWidth, boxWidth), color);
+            var box10 = CreateBox(new Vector3((xMax + xMin) / 2, yMax, zMax), new Vector3(xMax - xMin, boxWidth, boxWidth), color);
+            var box11 = CreateBox(new Vector3(xMin, (yMin + yMax) / 2, zMax), new Vector3(boxWidth, yMax - yMin, boxWidth), color);
+            var box12 = CreateBox(new Vector3(xMax, (yMin + yMax) / 2, zMax), new Vector3(boxWidth, yMax - yMin, boxWidth), color);
+
 
             var newGeometries = new List<APrimitive>(sector.Geometries);
             newGeometries.Add(box1);
             newGeometries.Add(box2);
             newGeometries.Add(box3);
             newGeometries.Add(box4);
+            newGeometries.Add(box5);
+            newGeometries.Add(box6);
+            newGeometries.Add(box7);
+            newGeometries.Add(box8);
+            newGeometries.Add(box9);
+            newGeometries.Add(box10);
+            newGeometries.Add(box11);
+            newGeometries.Add(box12);
+
 
             return sector with { Geometries = newGeometries.ToArray() };
         }
