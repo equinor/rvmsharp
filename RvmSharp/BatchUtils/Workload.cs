@@ -58,7 +58,7 @@ public static class Workload
         var progress = 0;
         var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
-        RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
+        RmvPdmsFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
         {
             (string rvmFilename, string? txtFilename) = filePair;
             using var stream = File.OpenRead(rvmFilename);
@@ -69,7 +69,7 @@ public static class Workload
             }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
-            return rvmFile;
+            return new RmvPdmsFile(rvmFilename, txtFilename, rvmFile.Header, rvmFile.Model);
         }
 
         var rvmFiles = workload
@@ -93,4 +93,16 @@ public static class Workload
         progressReport?.Report(("Import finished", 2, 2));
         return rvmStore;
     }
+}
+
+public class RmvPdmsFile : RvmFile
+{
+    public RmvPdmsFile(string rvmFilePath, string? pdmsFilePath, RvmHeader header, RvmModel model) : base(header, model)
+    {
+        RvmFilePath = rvmFilePath;
+        PdmsFilePath = pdmsFilePath;
+    }
+
+    public string RvmFilePath { get; }
+    public string? PdmsFilePath { get; }
 }

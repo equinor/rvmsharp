@@ -55,7 +55,8 @@ public class CameraPositioningTests
                 new RvmBoundingBox(bbMin, bbMax),
                 Color.Black,
                 (Vector3.One, float.Epsilon),
-                null))
+                null!,
+                null!))
         {
 
         }

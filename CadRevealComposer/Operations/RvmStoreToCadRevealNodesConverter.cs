@@ -22,9 +22,9 @@ static internal class RvmStoreToCadRevealNodesConverter
         };
 
         rootNode.Children = rvmStore.RvmFiles
-            .SelectMany(f => f.Model.Children)
+            .SelectMany(f => f.Model.Children.Select(root => (root, f)))
             .Select(root =>
-                RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root, rootNode, nodeIdGenerator,
+                RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root.f, root.root, rootNode, nodeIdGenerator,
                     treeIndexGenerator))
             .ToArray();
 

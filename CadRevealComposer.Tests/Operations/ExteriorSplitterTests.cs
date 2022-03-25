@@ -3,7 +3,6 @@
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using NUnit.Framework;
-using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Linq;
@@ -40,6 +39,7 @@ public class ExteriorSplitterTests
             new RvmBoundingBox(new Vector3(-boxSize / 2f), new Vector3(boxSize / 2f)),
             Color.Blue,
             (Vector3.UnitZ, 0),
+            null!,
             null!);
         return new Box(common, Vector3.UnitZ, boxSize, boxSize, boxSize, 0);
     }

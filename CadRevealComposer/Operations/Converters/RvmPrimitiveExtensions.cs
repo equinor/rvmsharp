@@ -4,7 +4,6 @@ using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Drawing;
-using System.Numerics;
 using Utils;
 
 public static class RvmPrimitiveExtensions
@@ -45,6 +44,7 @@ public static class RvmPrimitiveExtensions
             axisAlignedBoundingBox,
             colors,
             RotationDecomposed: rot.DecomposeQuaternion(),
-            rvmPrimitive);
+            rvmPrimitive,
+            cadNode.RvmFile);
     }
 }

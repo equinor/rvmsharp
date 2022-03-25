@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Operations;
 
 using IdProviders;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System;
 using System.Linq;
@@ -8,7 +9,7 @@ using Utils;
 
 public static class RvmNodeToCadRevealNodeConverter
 {
-    public static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode parent, NodeIdProvider nodeIdProvider, TreeIndexGenerator treeIndexGenerator)
+    public static CadRevealNode CollectGeometryNodesRecursive(RvmFile rvmFile, RvmNode root, CadRevealNode parent, NodeIdProvider nodeIdProvider, TreeIndexGenerator treeIndexGenerator)
     {
         var newNode = new CadRevealNode
         {
@@ -16,12 +17,12 @@ public static class RvmNodeToCadRevealNodeConverter
             TreeIndex = treeIndexGenerator.GetNextId(),
             Group = root,
             Parent = parent,
-            Children = null
+            Children = null,
+            RvmFile = rvmFile
         };
 
         CadRevealNode[] childrenCadNodes;
         RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
-
 
         if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
         {
@@ -31,12 +32,13 @@ public static class RvmNodeToCadRevealNodeConverter
                 {
                     case RvmPrimitive rvmPrimitive:
                         return CollectGeometryNodesRecursive(
+                            rvmFile,
                             new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
                             {
                                 Children = { rvmPrimitive }
                             }, newNode, nodeIdProvider, treeIndexGenerator);
                     case RvmNode rvmNode:
-                        return CollectGeometryNodesRecursive(rvmNode, newNode, nodeIdProvider, treeIndexGenerator);
+                        return CollectGeometryNodesRecursive(rvmFile, rvmNode, newNode, nodeIdProvider, treeIndexGenerator);
                     default:
                         throw new Exception();
                 }
@@ -45,7 +47,7 @@ public static class RvmNodeToCadRevealNodeConverter
         else
         {
             childrenCadNodes = root.Children.OfType<RvmNode>()
-                .Select(n => CollectGeometryNodesRecursive(n, newNode, nodeIdProvider, treeIndexGenerator))
+                .Select(n => CollectGeometryNodesRecursive(rvmFile, n, newNode, nodeIdProvider, treeIndexGenerator))
                 .ToArray();
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
         }
@@ -60,7 +62,7 @@ public static class RvmNodeToCadRevealNodeConverter
 
         var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
         newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
-            ? primitiveAndChildrenBoundingBoxes.Aggregate((a,b) => a.Encapsulate(b))
+            ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
             : null;
 
         return newNode;

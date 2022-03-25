@@ -2,10 +2,12 @@ namespace CadRevealComposer.Operations;
 
 using IdProviders;
 using Primitives;
+using RvmSharp.BatchUtils;
 using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using Utils;
@@ -13,9 +15,8 @@ using Utils;
 public static class SectorSplitter
 {
     private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
-    private const int StartDepth = 1;
+    private const int StartDepth = 0;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
-    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
 
     public record ProtoSector(
         uint SectorId,
@@ -29,43 +30,101 @@ public static class SectorSplitter
 
     private record Node(
         ulong NodeId,
+        bool IsExterior,
+        string Area,
         APrimitive[] Geometries,
         long EstimatedByteSize,
         Vector3 BoundingBoxMin,
         Vector3 BoundingBoxMax,
+        Vector3 Center,
         float Diagonal);
 
-    public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones)
+    public static IEnumerable<ProtoSector> SplitIntoSectorsByAreas(APrimitive[] allGeometries)
     {
-        var sectorIdGenerator = new SequentialIdGenerator();
-
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-
-        var sectorsFromAllZones = new List<ProtoSector>();
-
-        foreach (var zone in zones)
+        static Vector3 GetBinPoint(Vector3 center, float binSizeInMeters)
         {
-            var nodes = zone.Primitives
-                .GroupBy(p => p.NodeId)
-                .Select(g =>
+            return new Vector3(
+                MathF.Floor(center.X / binSizeInMeters),
+                MathF.Floor(center.Y / binSizeInMeters),
+                MathF.Floor(center.Z / binSizeInMeters)
+            );
+        }
+
+        static Node[] ConvertToNodes(APrimitive[] exterior, APrimitive[] interior)
+        {
+            var exteriorNodes = exterior.GroupBy(p => p.NodeId, (nodeId, primitives) => (nodeId, primitives, isExterior: true));
+            var interiorNodes = interior.GroupBy(p => p.NodeId, (nodeId, primitives) => (nodeId, primitives, isExterior: false));
+
+            return exteriorNodes
+                .Concat(interiorNodes)
+                .Select(node =>
                 {
-                    var geometries = g.ToArray();
+                    var rvmFile = node.primitives.First().RvmFile as RmvPdmsFile ?? throw new Exception("Should be RmvPdmsFile");
+                    var rvmFilename = Path.GetFileNameWithoutExtension(rvmFile.RvmFilePath);
+                    var filenameParts = rvmFilename.Split('-');
+                    if (filenameParts.Length != 2)
+                    {
+                        throw new Exception("Filename should consist of AREA-DISCIPLINE");
+                    }
+                    var area = filenameParts.First();
+
+                    var geometries = node.primitives.ToArray();
                     var boundingBoxMin = geometries.GetBoundingBoxMin();
                     var boundingBoxMax = geometries.GetBoundingBoxMax();
+                    var center = (boundingBoxMax - boundingBoxMin) / 2 + boundingBoxMin;
                     return new Node(
-                        g.Key,
+                        node.nodeId,
+                        node.isExterior,
+                        area,
                         geometries,
                         geometries.Sum(DrawCallEstimator.EstimateByteSize),
                         boundingBoxMin,
                         boundingBoxMax,
+                        center,
                         Vector3.Distance(boundingBoxMin, boundingBoxMax));
-                })
-                .ToArray();
+                }).ToArray();
+        }
 
+        var sectorIdGenerator = new SequentialIdGenerator();
+
+        var (exterior, interior) = ExteriorSplitter.Split(allGeometries);
+
+        var nodes = ConvertToNodes(exterior, interior);
+
+        var rootBudget = SectorEstimatedByteSizeBudget;
+        var rootNodes = nodes
+            .OrderByDescending(n => n.IsExterior)
+            .ThenByDescending(n => n.Diagonal)
+            .TakeWhile(n => n.IsExterior && (rootBudget -= n.EstimatedByteSize) > 0)
+            .ToArray();
+        var childNodes = nodes
+            .Except(rootNodes)
+            .ToArray();
+
+        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        yield return new ProtoSector(
+            rootSectorId,
+            ParentSectorId: null,
+            StartDepth,
+            $"{rootSectorId}/",
+            rootNodes.SelectMany(n => n.Geometries).ToArray(),
+            allGeometries.GetBoundingBoxMin(),
+            allGeometries.GetBoundingBoxMax()
+        );
+
+        // TODO: exterior priority - above or below area
+        // TODO: exterior priority - above or below area
+        // TODO: exterior priority - above or below area
+
+        var groupings = childNodes
+            .GroupBy(n => (n.Area, BinnedMidpoint: GetBinPoint(n.Center, 15)));
+
+        foreach (var grouping in groupings)
+        {
             var sectors = SplitIntoSectorsRecursive(
-                nodes,
+                grouping.ToArray(),
                 StartDepth + 1,
-                $"{rootSectorId}",
+                $"{rootSectorId}/",
                 rootSectorId,
                 sectorIdGenerator);
 
@@ -73,74 +132,7 @@ public static class SectorSplitter
             {
                 yield return sector;
             }
-
-            sectorsFromAllZones.AddRange(sectors);
         }
-        // TODO: Investigate if we need a root sector at all when its empty like this.
-        var rootSector = new ProtoSector(
-            rootSectorId,
-            ParentSectorId: null,
-            StartDepth,
-            $"{rootSectorId}",
-            Array.Empty<APrimitive>(),
-            sectorsFromAllZones.Select(s => s.BoundingBoxMin).Aggregate(Vector3.Min),
-            sectorsFromAllZones.Select(p => p.BoundingBoxMax).Aggregate(Vector3.Max)
-        );
-        yield return rootSector;
-    }
-
-    public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
-    {
-        yield return CreateRootSector(0, allGeometries);
-    }
-
-    public static IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
-    {
-        var sectorIdGenerator = new SequentialIdGenerator();
-
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-
-        var nodes = allGeometries
-            .GroupBy(p => p.NodeId)
-            .Select(g =>
-            {
-                var geometries = g.ToArray();
-                var boundingBoxMin = geometries.GetBoundingBoxMin();
-                var boundingBoxMax = geometries.GetBoundingBoxMax();
-                return new Node(
-                    g.Key,
-                    geometries,
-                    geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                    boundingBoxMin,
-                    boundingBoxMax,
-                    Vector3.Distance(boundingBoxMin, boundingBoxMax));
-            })
-            .ToArray();
-
-
-        var sectors = SplitIntoSectorsRecursive(
-            nodes,
-            StartDepth + 1,
-            $"{rootSectorId}",
-            rootSectorId,
-            sectorIdGenerator);
-
-        foreach (var sector in sectors)
-        {
-            yield return sector;
-        }
-
-        // TODO: Investigate if we need a root sector at all when its empty like this.
-        var rootSector = new ProtoSector(
-            rootSectorId,
-            ParentSectorId: null,
-            StartDepth,
-            $"{rootSectorId}",
-            Array.Empty<APrimitive>(),
-            sectors.Select(p => p.BoundingBoxMin).Aggregate(Vector3.Min),
-            sectors.Select(p => p.BoundingBoxMax).Aggregate(Vector3.Max)
-        );
-        yield return rootSector;
     }
 
     private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
@@ -163,29 +155,11 @@ public static class SectorSplitter
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
-        var bbMidPoint = (bbMin + bbMax) / 2;
-        var bbSize = Vector3.Distance(bbMin, bbMax);
+        var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
 
-        var mainVoxelNodes = Array.Empty<Node>();
-        var subVoxelNodes = Array.Empty<Node>();
-        bool isLeaf = false;
-
-        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
-        {
-            mainVoxelNodes = nodes;
-            var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
-            isLeaf = true;
-        }
-        else
-        {
-            // fill main voxel according to budget
-            long estimatedByteSize = 0;
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
-            mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-            subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
-
-            isLeaf = subVoxelNodes.Length == 0;
-        }
+        var mainVoxelNodes = GetNodesByBudget(nodes, SectorEstimatedByteSizeBudget).ToArray();
+        var subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
+        bool isLeaf = subVoxelNodes.Length == 0;
 
         if (isLeaf)
         {
@@ -253,51 +227,35 @@ public static class SectorSplitter
         }
     }
 
-    private static ProtoSector CreateRootSector(uint sectorId, APrimitive[] geometries)
-    {
-        var bbMin = geometries.GetBoundingBoxMin();
-        var bbMax = geometries.GetBoundingBoxMax();
-        return new ProtoSector(
-            sectorId,
-            ParentSectorId: null,
-            StartDepth,
-            $"{sectorId}",
-            geometries,
-            bbMin,
-            bbMax
-        );
-    }
-
     private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, long budget)
     {
-        // TODO: Optimize, or find a better way, to include the right amount of TriangleMesh and primitives. Without weighting too many primitives will be included. 
         var nodesInPrioritizedOrder = nodes
             .OrderByDescending(x =>
-                {
-                    var isTriangleMesh = x.Geometries.Any(x => x is TriangleMesh);
-                    var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
-
-                    return x.Diagonal / (x.EstimatedByteSize * weightFactor);
-                }
-            );
-
-        // Always add atleast one node if there is still budget left, to avoid nothing ever being added if the largest node exceeds the maximum budget
-        var budgetLeft = budget;
-        foreach (var node in nodesInPrioritizedOrder)
-        {
-            if (budgetLeft < 0)
             {
-                yield break;
-            }
+                var hasTriangleMesh = x.Geometries
+                    .OfType<TriangleMesh>()
+                    .Any();
 
-            budgetLeft -= node.EstimatedByteSize;
-            yield return node;
-        }
+                    // Theory: Primitives have more overhead than their byte size. This is not verified.
+                    return hasTriangleMesh switch
+                {
+                    true => x.Diagonal / x.EstimatedByteSize,
+                    false => x.Diagonal / (x.EstimatedByteSize * 10)
+                };
+            }
+        );
+
+        var budgetLeft = budget;
+        return nodesInPrioritizedOrder
+            .TakeWhile(n => (budgetLeft -= n.EstimatedByteSize) > 0);
     }
 
     private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
     {
-        return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y, geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
+        return (
+                geometryBoundingBox.Center.X < bbMidPoint.X,
+                geometryBoundingBox.Center.Y < bbMidPoint.Y,
+                geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
         {
             (false, false, false) => SubVoxelA,
             (false, false, true) => SubVoxelB,
@@ -308,6 +266,7 @@ public static class SectorSplitter
             (true, true, false) => SubVoxelG,
             (true, true, true) => SubVoxelH
         };
+
     }
 
     private static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
@@ -322,22 +281,28 @@ public static class SectorSplitter
         }
 
         // Return the voxel key where most of the node's geometries lie
-        return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+        return voxelKeyAndUsageCount
+            .Aggregate((l, r) => l.Value > r.Value ? l : r)
+            .Key;
     }
 
-    private static Vector3 GetBoundingBoxMin(this IReadOnlyCollection<Node> nodes)
+    private static Vector3 GetBoundingBoxMin(this IEnumerable<Node> nodes)
     {
         if (!nodes.Any())
             throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty", nameof(nodes));
 
-        return nodes.Select(p => p.BoundingBoxMin).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
+        return nodes
+            .Select(p => p.BoundingBoxMin)
+            .Aggregate(new Vector3(float.MaxValue), Vector3.Min);
     }
 
-    private static Vector3 GetBoundingBoxMax(this IReadOnlyCollection<Node> nodes)
+    private static Vector3 GetBoundingBoxMax(this IEnumerable<Node> nodes)
     {
         if (!nodes.Any())
             throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty", nameof(nodes));
 
-        return nodes.Select(p => p.BoundingBoxMax).Aggregate(new Vector3(float.MinValue), Vector3.Max);
+        return nodes
+            .Select(p => p.BoundingBoxMax)
+            .Aggregate(new Vector3(float.MinValue), Vector3.Max);
     }
 }

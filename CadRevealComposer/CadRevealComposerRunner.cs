@@ -152,7 +152,7 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-            
+
 
         var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
 
@@ -170,31 +170,9 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        SectorSplitter.ProtoSector[] sectors;
-        if (composerParameters.SingleSector)
-        {
-            sectors = SectorSplitter.CreateSingleSector(geometriesIncludingMeshes).ToArray();
-        }
-        else if (composerParameters.SplitIntoZones)
-        {
-            var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            sectors = SectorSplitter.SplitIntoSectors(zones)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
-        else
-        {
-            sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
+        var sectors = SectorSplitter
+            .SplitIntoSectorsByAreas(geometriesIncludingMeshes)
+            .ToArray();
 
         var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
         var sectorInfos = await Task.WhenAll(sectorInfoTasks);
@@ -282,7 +260,7 @@ public static class CadRevealComposerRunner
                 new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
                     Vector3.Zero, Quaternion.Identity, Vector3.One,
                     p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                    (Vector3.UnitZ, 0), p.ProtoPrimitive), 0, (ulong)triangleCount, mesh);
+                    (Vector3.UnitZ, 0), p.ProtoPrimitive, p.RvmFile), 0, (ulong)triangleCount, mesh);
         }
 
         static InstancedMesh CreateInstanceMesh(ProtoMesh p, Matrix4x4 transform, uint meshFileId, ulong triangleOffset, ulong triangleCount)
@@ -299,7 +277,7 @@ public static class CadRevealComposerRunner
                 new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
                     Vector3.One,
                     p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                    (Vector3.UnitZ, 0), p.ProtoPrimitive),
+                    (Vector3.UnitZ, 0), p.ProtoPrimitive, p.RvmFile),
                 meshFileId, triangleOffset, triangleCount, translation.X,
                 translation.Y, translation.Z,
                 rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);

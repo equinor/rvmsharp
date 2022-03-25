@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CadRevealComposer.Exe": {
+      "commandName": "Project",
+      "commandLineArgs": "-o \"C:/Appl/Source/reveal/examples/public/primitives\" -i \"D:/Models/Huldra 2021.04.01\"  -p 10000 -m 1 -r 0"
+    }
+  }
+}

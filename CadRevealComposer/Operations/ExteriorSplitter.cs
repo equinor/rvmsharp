@@ -135,7 +135,9 @@ public static class ExteriorSplitter
                 {
                     var result = primitive switch
                     {
-                        TessellatedPrimitive rayCast => MatchRayCast(rayCast.Triangles, ray.Ray),
+                        TessellatedPrimitive rayCast => MatchBoundingBox(primitive.OriginalPrimitive.AxisAlignedBoundingBox, ray.Box, ray.Ray).Hit
+                            ? MatchRayCast(rayCast.Triangles, ray.Ray)
+                            : (Hit: false, Distance: float.NaN),
                         _ => MatchBoundingBox(primitive.OriginalPrimitive.AxisAlignedBoundingBox, ray.Box, ray.Ray)
                     };
                     if (result.Hit && result.Distance < distance)

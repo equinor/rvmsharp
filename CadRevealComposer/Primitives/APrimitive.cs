@@ -5,6 +5,7 @@ namespace CadRevealComposer.Primitives;
 
 using Newtonsoft.Json;
 using Operations.Converters;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System;
 using System.Diagnostics;
@@ -22,7 +23,8 @@ public record CommonPrimitiveProperties(
     RvmBoundingBox AxisAlignedBoundingBox,
     Color Color,
     (Vector3 Normal, float RotationAngle) RotationDecomposed,
-    RvmPrimitive SourcePrimitive);
+    RvmPrimitive SourcePrimitive,
+    RvmFile RvmFile);
 
 public abstract record APrimitive(
     [property: I3df(I3dfAttribute.AttributeType.Null)]
@@ -43,6 +45,8 @@ public abstract record APrimitive(
     RvmBoundingBox AxisAlignedBoundingBox,
     [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
     RvmPrimitive SourcePrimitive,
+    [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
+    RvmFile RvmFile,
     [property: JsonIgnore,
                Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true),
                I3df(I3dfAttribute.AttributeType.Ignore)]
@@ -64,7 +68,8 @@ public abstract record APrimitive(
             commonPrimitiveProperties.Position.Y,
             commonPrimitiveProperties.Position.Z,
             commonPrimitiveProperties.AxisAlignedBoundingBox,
-            commonPrimitiveProperties.SourcePrimitive)
+            commonPrimitiveProperties.SourcePrimitive,
+            commonPrimitiveProperties.RvmFile)
     {
     }
 
@@ -77,7 +82,7 @@ public abstract record APrimitive(
         PrimitiveCounter.pc++;
         var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
         (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
-            (Vector3 normal, float rotationAngle), RvmPrimitive _) = commonPrimitiveProperties;
+            (Vector3 normal, float rotationAngle), RvmPrimitive _, RvmFile _) = commonPrimitiveProperties;
 
         switch (rvmPrimitive)
         {

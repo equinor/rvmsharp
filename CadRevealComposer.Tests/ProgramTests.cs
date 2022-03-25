@@ -3,7 +3,9 @@ namespace CadRevealComposer.Tests;
 using CadRevealComposer.Operations;
 using IdProviders;
 using NUnit.Framework;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
+using System;
 using System.Numerics;
 
 [TestFixture]
@@ -23,9 +25,11 @@ public class ProgramTests
 
         var nodeIdGenerator = new NodeIdProvider();
         var treeIndexGenerator = new TreeIndexGenerator();
-
+        var rvmFile = new RvmFile(
+            new RvmFile.RvmHeader(0, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty),
+            new RvmModel(0, string.Empty, string.Empty, Array.Empty<RvmNode>(), Array.Empty<RvmPrimitive>(), Array.Empty<RvmColor>()));
         var rootNodeCadNode =
-            RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(rvmRootNode, new CadRevealNode(), nodeIdGenerator, treeIndexGenerator);
+            RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(rvmFile, rvmRootNode, new CadRevealNode(), nodeIdGenerator, treeIndexGenerator);
 
         Assert.That(rootNodeCadNode.Children, Has.One.Items);
         Assert.That(rootNodeCadNode.Children![0].Group, Is.EqualTo(node1));
