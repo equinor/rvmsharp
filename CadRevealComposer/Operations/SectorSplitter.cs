@@ -14,7 +14,7 @@ namespace CadRevealComposer.Operations
     {
         private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
         private const int StartDepth = 1;
-        private const long SectorEstimatedByteSizeBudget = 3_000_000; // bytes
+        private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes
 
         public record ProtoSector(
             uint SectorId,
@@ -62,7 +62,7 @@ namespace CadRevealComposer.Operations
                     })
                     .ToArray();
 
-                var sectors = SplitIntoSectors(
+                var sectors = SplitIntoSectorsRecursive(
                     nodes,
                     StartDepth + 1,
                     $"{rootSectorId}",
@@ -109,7 +109,7 @@ namespace CadRevealComposer.Operations
             var rootSector = CreateRootSector(rootSectorId, rootGeometries);
 
             var restNodes = nodes.Except(rootNodes).ToArray();
-            var sectors = SplitIntoSectors(
+            var sectors = SplitIntoSectorsRecursive(
                 restNodes,
                 StartDepth + 1,
                 $"{rootSectorId}",
@@ -123,7 +123,9 @@ namespace CadRevealComposer.Operations
             }
         }
 
-        private static IEnumerable<ProtoSector> SplitIntoSectors(
+        private static int[] sectorBudget = new int[] { 0, 100_000, 200_000, 500_000, 2_000_000 };
+
+        private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
             Node[] nodes,
             int recursiveDepth,
             string parentPath,
@@ -152,12 +154,26 @@ namespace CadRevealComposer.Operations
                 .ToArray();
 
             // fill main voxel according to budget
+            int budget;
+            if (recursiveDepth >= sectorBudget.Length)
+            {
+                budget = sectorBudget[sectorBudget.Length - 1];
+            }
+            else
+            {
+                budget = sectorBudget[recursiveDepth];
+            }
+
+
+
             var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, SectorEstimatedByteSizeBudget - estimatedByteSize).ToArray();
+            //var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, SectorEstimatedByteSizeBudget - estimatedByteSize).ToArray();
+            var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, budget - estimatedByteSize).ToArray();
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = subVoxelNodes.Except(additionalMainVoxelNodesByBudget).ToArray();
 
-            var isLeaf = subVoxelNodes.Length == 0 || nodes.Sum(n => n.EstimatedByteSize) <= SectorEstimatedByteSizeBudget;
+            //var isLeaf = subVoxelNodes.Length == 0 || nodes.Sum(n => n.EstimatedByteSize) <= SectorEstimatedByteSizeBudget;
+            var isLeaf = subVoxelNodes.Length == 0 || nodes.Sum(n => n.EstimatedByteSize) <= budget;
             if (isLeaf)
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
@@ -214,7 +230,7 @@ namespace CadRevealComposer.Operations
                         throw new Exception("Main voxel should not appear here. Main voxel should be processed separately.");
                     }
 
-                    var sectors = SplitIntoSectors(
+                    var sectors = SplitIntoSectorsRecursive(
                         voxelGroup.ToArray(),
                         recursiveDepth + 1,
                         parentPathForChildren,

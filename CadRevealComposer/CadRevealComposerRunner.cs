@@ -218,7 +218,7 @@ namespace CadRevealComposer
             //sectors = Debug.AddGeometry.AddBoxesForSectors(sectors);
             sectors = Debug.AddGeometry.AddWireframeBoxForSectors(sectors);
             sectors = Debug.Coloring.ColorSectors(sectors);
-            sectors = Debug.Coloring.MergeToOneSector(sectors);
+            //sectors = Debug.Coloring.MergeToOneSector(sectors);
             /////////////////////////////////
 
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
