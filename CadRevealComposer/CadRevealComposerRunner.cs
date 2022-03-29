@@ -15,11 +15,9 @@ namespace CadRevealComposer
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Diagnostics;
-    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Numerics;
-    using System.Reflection;
     using System.Threading.Tasks;
     using Utils;
 

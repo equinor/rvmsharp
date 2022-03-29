@@ -41,7 +41,7 @@ namespace CadRevealComposer.Operations
             var rootZone = zones.Single(z => z is ZoneSplitter.RootZone);
 
             var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-            yield return CreateRootSector(rootSectorId, rootZone.Primitives);
+            //yield return CreateRootSector(rootSectorId, rootZone.Primitives);
 
             foreach (var zone in zones.Where(z => z is not ZoneSplitter.RootZone))
             {
@@ -78,7 +78,8 @@ namespace CadRevealComposer.Operations
 
         public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
         {
-            yield return CreateRootSector(0, allGeometries);
+            //yield return CreateRootSector(0, allGeometries);
+            yield return null;
         }
 
         public static IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
@@ -106,15 +107,20 @@ namespace CadRevealComposer.Operations
 
             var rootNodes = GetRootSectorNodes(nodes);
             var rootGeometries = rootNodes.SelectMany(n => n.Geometries).ToArray();
-            var rootSector = CreateRootSector(rootSectorId, rootGeometries);
+            //var rootSector = CreateRootSector(rootSectorId, rootGeometries);
 
-            var restNodes = nodes.Except(rootNodes).ToArray();
+            var restNodes = nodes.ToArray();
             var sectors = SplitIntoSectorsRecursive(
                 restNodes,
                 StartDepth + 1,
                 $"{rootSectorId}",
                 rootSectorId,
-                sectorIdGenerator);
+                sectorIdGenerator).ToArray();
+
+            var minBB = sectors.Select(s => s.BoundingBoxMin).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
+            var maxBB = sectors.Select(s => s.BoundingBoxMax).Aggregate(new Vector3(float.MinValue), Vector3.Max);
+
+            var rootSector = CreateRootSector(rootSectorId, minBB, maxBB);
 
             yield return rootSector;
             foreach (var sector in sectors)
@@ -123,7 +129,7 @@ namespace CadRevealComposer.Operations
             }
         }
 
-        private static int[] sectorBudget = new int[] { 0, 100_000, 200_000, 500_000, 2_000_000 };
+        private static int[] sectorBudget = new int[] { 0, 1_000_000, 2_000_000, 2_000_000, 10_000_000 }; // Arbitrary numbers
 
         private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
             Node[] nodes,
@@ -146,9 +152,14 @@ namespace CadRevealComposer.Operations
             var bbMax = nodes.GetBoundingBoxMax();
             var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
 
-            var mainVoxelNodes = nodes
-                .Where(node => CalculateVoxelKeyForNode(node.Geometries, bbMidPoint) == MainVoxel)
-                .ToArray();
+
+            var mainVoxelNodes = new Node[] { };
+            if (recursiveDepth >= 3)
+            {
+                mainVoxelNodes = nodes
+                    .Where(node => CalculateVoxelKeyForNode(node.Geometries, bbMidPoint) == MainVoxel)
+                    .ToArray();
+            }
             var subVoxelNodes = nodes
                 .Except(mainVoxelNodes)
                 .ToArray();
@@ -163,8 +174,6 @@ namespace CadRevealComposer.Operations
             {
                 budget = sectorBudget[recursiveDepth];
             }
-
-
 
             var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
             //var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, SectorEstimatedByteSizeBudget - estimatedByteSize).ToArray();
@@ -225,10 +234,10 @@ namespace CadRevealComposer.Operations
 
                 foreach (var voxelGroup in voxels)
                 {
-                    if (voxelGroup.Key == MainVoxel)
-                    {
-                        throw new Exception("Main voxel should not appear here. Main voxel should be processed separately.");
-                    }
+                    //if (voxelGroup.Key == MainVoxel)
+                    //{
+                    //    throw new Exception("Main voxel should not appear here. Main voxel should be processed separately.");
+                    //}
 
                     var sectors = SplitIntoSectorsRecursive(
                         voxelGroup.ToArray(),
@@ -244,16 +253,17 @@ namespace CadRevealComposer.Operations
             }
         }
 
-        private static ProtoSector CreateRootSector(uint sectorId, APrimitive[] geometries)
+        private static ProtoSector CreateRootSector(uint sectorId, Vector3 bbMin, Vector3 bbMax)
         {
-            var bbMin = geometries.GetBoundingBoxMin();
-            var bbMax = geometries.GetBoundingBoxMax();
+            //var bbMin = geometries.GetBoundingBoxMin(); // TODO Change to Rvm axis box encapsulate
+            //var bbMax = geometries.GetBoundingBoxMax();
+
             return new ProtoSector(
                 sectorId,
                 ParentSectorId: null,
                 StartDepth,
                 $"{sectorId}",
-                geometries,
+                Array.Empty<APrimitive>(),
                 bbMin,
                 bbMax
                 );
@@ -262,7 +272,7 @@ namespace CadRevealComposer.Operations
         private static Node[] GetRootSectorNodes(Node[] nodes)
         {
             // get bounding box for platform using approximation (99th percentile)
-            var percentile = 0.01;
+            var percentile = 0.00;
             var platformMinX = nodes.Select(node => node.BoundingBoxMin.X).OrderBy(x => x).Skip((int)(percentile * nodes.Length)).First();
             var platformMinY = nodes.Select(node => node.BoundingBoxMin.Y).OrderBy(x => x).Skip((int)(percentile * nodes.Length)).First();
             var platformMinZ = nodes.Select(node => node.BoundingBoxMin.Z).OrderBy(x => x).Skip((int)(percentile * nodes.Length)).First();
