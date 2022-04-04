@@ -14,7 +14,8 @@ namespace CadRevealComposer.Operations
     {
         private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
         private const int StartDepth = 1;
-        private const long SectorEstimatedByteSizeBudget = 3_000_000; // bytes
+        private const long SectorEstimatedByteSizeBudget = 100_000; // bytes, Arbitrary value
+        private const float SectorSizeThreshold = 30.0f; // Arbitrary value
 
         public record ProtoSector(
             uint SectorId,
@@ -143,21 +144,35 @@ namespace CadRevealComposer.Operations
             var bbMin = nodes.GetBoundingBoxMin();
             var bbMax = nodes.GetBoundingBoxMax();
             var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
+            var bbSize = Vector3.Distance(bbMin, bbMax);
 
-            var mainVoxelNodes = nodes
-                .Where(node => CalculateVoxelKeyForNode(node.Geometries, bbMidPoint) == MainVoxel)
-                .ToArray();
-            var subVoxelNodes = nodes
-                .Except(mainVoxelNodes)
-                .ToArray();
+            var mainVoxelNodes = Array.Empty<Node>();
+            var subVoxelNodes = Array.Empty<Node>();
+            bool isLeaf = false;
 
-            // fill main voxel according to budget
-            var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes, SectorEstimatedByteSizeBudget - estimatedByteSize).ToArray();
-            mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-            subVoxelNodes = subVoxelNodes.Except(additionalMainVoxelNodesByBudget).ToArray();
+            if (bbSize < SectorSizeThreshold)
+            {
+                mainVoxelNodes = nodes;
+                isLeaf = true;
+            }
+            else
+            {
+                mainVoxelNodes = nodes
+                    .Where(node => CalculateVoxelKeyForNode(node.Geometries, bbMidPoint) == MainVoxel)
+                    .ToArray();
+                subVoxelNodes = nodes
+                    .Except(mainVoxelNodes)
+                    .ToArray();
 
-            var isLeaf = subVoxelNodes.Length == 0 || nodes.Sum(n => n.EstimatedByteSize) <= SectorEstimatedByteSizeBudget;
+                // fill main voxel according to budget
+                var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
+                var additionalMainVoxelNodesByBudget = GetNodesByBudget(subVoxelNodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
+                mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
+                subVoxelNodes = subVoxelNodes.Except(additionalMainVoxelNodesByBudget).ToArray();
+
+                isLeaf = subVoxelNodes.Length == 0;
+            }
+
             if (isLeaf)
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
