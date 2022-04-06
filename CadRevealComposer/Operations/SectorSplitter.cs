@@ -88,7 +88,7 @@ namespace CadRevealComposer.Operations
                 );
                 yield return rootSector;
             }
-            
+
         }
 
         public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
@@ -316,9 +316,19 @@ namespace CadRevealComposer.Operations
 
         private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, long budget)
         {
+
             // TODO: Be smarter. Adjust tho account for diagonal AND vertex count. Larger parts are maybe not better if they cost a lot.
             var nodesInPrioritizedOrder = nodes
-                .OrderByDescending(x => x.Diagonal);
+                .OrderByDescending(x =>
+                {
+
+                    var isTriangleMesh = x.Geometries.Any(x => x is TriangleMesh);
+                    var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
+
+                    return x.Diagonal / (x.EstimatedByteSize * weightFactor);
+                }
+                );
+
 
             var budgetLeft = budget;
             foreach (var node in nodesInPrioritizedOrder)
@@ -387,7 +397,7 @@ namespace CadRevealComposer.Operations
         {
             if (!nodes.Any())
                 throw new ArgumentException("Need to have at least 1 node to calculaTe bounds. Was empty", nameof(nodes));
-            
+
             return nodes.Select(p => p.BoundingBoxMin).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
         }
 
