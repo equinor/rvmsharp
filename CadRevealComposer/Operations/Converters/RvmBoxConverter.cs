@@ -13,13 +13,18 @@
                 commons.Scale,
                 new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
 
+            var matrix =
+                Matrix4x4.CreateScale(unitBoxScale)
+                * Matrix4x4.CreateFromQuaternion(commons.Rotation)
+                * Matrix4x4.CreateTranslation(commons.Position);
+
             Box revealBox = new Box(
                 CommonPrimitiveProperties: commons,
                 Normal: commons.RotationDecomposed.Normal,
                 DeltaX: unitBoxScale.X,
                 DeltaY: unitBoxScale.Y,
                 DeltaZ: unitBoxScale.Z,
-                RotationAngle: commons.RotationDecomposed.RotationAngle);
+                RotationAngle: commons.RotationDecomposed.RotationAngle, matrix);
 
             return revealBox;
         }
