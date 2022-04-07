@@ -1,26 +1,32 @@
-﻿namespace CadRevealComposer.Operations.Converters;
-
-using Primitives;
-using RvmSharp.Primitives;
-using System.Numerics;
-
-public static class RvmBoxExtensions
+﻿namespace CadRevealComposer.Operations.Converters
 {
-    public static Box ConvertToRevealPrimitive(this RvmBox rvmBox, CadRevealNode revealNode, RvmNode container)
+    using Primitives;
+    using RvmSharp.Primitives;
+    using System.Numerics;
+
+    public static class RvmBoxExtensions
     {
-        var commons = rvmBox.GetCommonProps(container, revealNode);
-        var unitBoxScale = Vector3.Multiply(
-            commons.Scale,
-            new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
+        public static Box ConvertToRevealPrimitive(this RvmBox rvmBox, CadRevealNode revealNode, RvmNode container)
+        {
+            var commons = rvmBox.GetCommonProps(container, revealNode);
+            var unitBoxScale = Vector3.Multiply(
+                commons.Scale,
+                new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
 
-        Box revealBox = new Box(
-            CommonPrimitiveProperties: commons,
-            Normal: commons.RotationDecomposed.Normal,
-            DeltaX: unitBoxScale.X,
-            DeltaY: unitBoxScale.Y,
-            DeltaZ: unitBoxScale.Z,
-            RotationAngle: commons.RotationDecomposed.RotationAngle);
+            var matrix =
+                Matrix4x4.CreateScale(unitBoxScale)
+                * Matrix4x4.CreateFromQuaternion(commons.Rotation)
+                * Matrix4x4.CreateTranslation(commons.Position);
 
-        return revealBox;
+            Box revealBox = new Box(
+                CommonPrimitiveProperties: commons,
+                Normal: commons.RotationDecomposed.Normal,
+                DeltaX: unitBoxScale.X,
+                DeltaY: unitBoxScale.Y,
+                DeltaZ: unitBoxScale.Z,
+                RotationAngle: commons.RotationDecomposed.RotationAngle, matrix);
+
+            return revealBox;
+        }
     }
 }
