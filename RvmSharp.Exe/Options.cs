@@ -5,12 +5,13 @@
 
     internal class Options
     {
-        public Options(IEnumerable<string> inputs, string filter, string output, float tolerance)
+        public Options(IEnumerable<string> inputs, string filter, string output, float tolerance, bool optimize)
         {
             Inputs = inputs;
             Filter = filter;
             Output = output;
             Tolerance = tolerance;
+            Optimize = optimize;
         }
 
         [Option('i', "input", Required = true, HelpText = "Input file or folder, can specify multiple items")]
@@ -24,5 +25,9 @@
 
         [Option('t', "tolerance", Default = 0.1f, Required = false, HelpText = "Tessellation tolerance")]
         public float Tolerance { get; }
+
+        [Option('z', "optimize", Required = false,
+            HelpText = "Replace simple pyramids and snouts by boxes and cylinders")]
+        public bool Optimize { get; }
     }
 }

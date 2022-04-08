@@ -1,6 +1,7 @@
 ﻿namespace RvmSharp
 {
     using Containers;
+    using Operations;
     using Primitives;
     using System;
     using System.Collections.Generic;
@@ -86,7 +87,7 @@
             return (version, project, name);
         }
 
-        private static RvmPrimitive ReadPrimitive(Stream stream)
+        private static RvmPrimitive ReadPrimitive(Stream stream, RvmReadOptions options)
         {
             var version = ReadUint(stream);
             var kind = (RvmPrimitiveKind)ReadUint(stream);
@@ -109,8 +110,19 @@
                         var offsetX = ReadFloat(stream);
                         var offsetY = ReadFloat(stream);
                         var height = ReadFloat(stream);
-                        primitive = new RvmPyramid(version, matrix, bBoxLocal, bottomX, bottomY, topX, topY, offsetX,
-                            offsetY, height);
+
+                        if (options.PyramidToBox &&
+                            MathF.Abs(bottomX - topX) < options.OptimizationTolerance &&
+                            MathF.Abs(bottomY - topY) < options.OptimizationTolerance &&
+                            offsetX == 0 && offsetY == 0)
+                        {
+                            primitive = new RvmBox(version, matrix, bBoxLocal, bottomX, bottomY, height);
+                        } else
+                        {
+                            primitive = new RvmPyramid(version, matrix, bBoxLocal, bottomX, bottomY, topX, topY,
+                                offsetX,
+                                offsetY, height);
+                        }
                         break;
                     }
                 case RvmPrimitiveKind.Box:
@@ -163,8 +175,19 @@
                         var bottomShearY = ReadFloat(stream);
                         var topShearX = ReadFloat(stream);
                         var topShearY = ReadFloat(stream);
-                        primitive = new RvmSnout(version, matrix, bBoxLocal, radiusBottom, radiusTop, height,
-                            offsetX, offsetY, bottomShearX, bottomShearY, topShearX, topShearY);
+                        if (options.SnoutToCylinder &&
+                            Math.Abs(radiusBottom - radiusTop) < options.OptimizationTolerance &&
+                            bottomShearX == 0 && bottomShearY == 0 &&
+                            topShearX == 0 && topShearY == 0 &&
+                            offsetX == 0 && offsetY == 0)
+                        {
+                                primitive = new RvmCylinder(version, matrix, bBoxLocal, radiusBottom, height);
+                        }
+                        else
+                        {
+                            primitive = new RvmSnout(version, matrix, bBoxLocal, radiusBottom, radiusTop, height,
+                                offsetX, offsetY, bottomShearX, bottomShearY, topShearX, topShearY);
+                        }
                         break;
                     }
                 case RvmPrimitiveKind.Cylinder:
@@ -211,11 +234,20 @@
 
                     // We order the polygons here so that we can have a better match rate when doing facet group matching.
                     // This simple change can improve facet matching depending on 3D model (~10% for Huldra), while the output is visually equal.
+
                     var polygonsOrdered = polygons
                         .OrderBy(p => p.Contours.Length) // OrderBy uses a stable sorting algorithm which preserves original ordering upon ordering equals
                         .ThenBy(p => p.Contours.Sum(c => c.Vertices.Length))
                         .ToArray();
-                    primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygonsOrdered);
+                    var facetGroup = new RvmFacetGroup(version, matrix, bBoxLocal, polygonsOrdered);
+                    if (options.FacetGroupToBox && BoxDetector.IsBox(facetGroup, out var box))
+                    {
+                        primitive = box;
+                    }
+                    else
+                    {
+                        primitive = facetGroup;
+                    }
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unexpected Kind");
@@ -225,7 +257,7 @@
             // transform bb to world?
         }
 
-        private static RvmNode ReadCntb(Stream stream)
+        private static RvmNode ReadCntb(Stream stream, RvmReadOptions options)
         {
             var version = ReadUint(stream);
             var name = ReadString(stream);
@@ -254,10 +286,10 @@
                 switch (id)
                 {
                     case "CNTB":
-                        group.AddChild(ReadCntb(stream));
+                        group.AddChild(ReadCntb(stream, options));
                         break;
                     case "PRIM":
-                        group.AddChild(ReadPrimitive(stream));
+                        group.AddChild(ReadPrimitive(stream, options));
                         break;
                     default:
                         throw new NotImplementedException($"Unknown chunk: {id}");
@@ -297,8 +329,9 @@
             return new RvmFile.RvmHeader(version, info, note, date, user, encoding);
         }
 
-        public static RvmFile ReadRvm(Stream stream)
+        public static RvmFile ReadRvm(Stream stream, RvmReadOptions? options = null)
         {
+            options ??= new RvmReadOptions();
             uint len, dunno;
 
             var head = ReadChunkHeader(stream, out len, out dunno);
@@ -319,10 +352,10 @@
                 switch (chunk)
                 {
                     case "CNTB":
-                        modelChildren.Add(ReadCntb(stream));
+                        modelChildren.Add(ReadCntb(stream, options));
                         break;
                     case "PRIM":
-                        modelPrimitives.Add(ReadPrimitive(stream));
+                        modelPrimitives.Add(ReadPrimitive(stream, options));
                         break;
                     case "COLR":
                         modelColors.Add(ReadColor(stream));

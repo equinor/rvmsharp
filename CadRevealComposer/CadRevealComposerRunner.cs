@@ -7,6 +7,7 @@ namespace CadRevealComposer
     using Operations;
     using Primitives;
     using Primitives.Reflection;
+    using RvmSharp;
     using RvmSharp.BatchUtils;
     using RvmSharp.Containers;
     using RvmSharp.Primitives;
@@ -38,7 +39,7 @@ namespace CadRevealComposer
                 Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
             });
             var stringInternPool = new BenStringInternPool(new SharedInternPool());
-            var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
+            var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool, new RvmReadOptions(true, true, true));
             var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
             Console.WriteLine(
                 $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
