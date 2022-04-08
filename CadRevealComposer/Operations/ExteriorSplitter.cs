@@ -18,7 +18,7 @@ using Utils;
 public static class ExteriorSplitter
 {
     private record Primitive(APrimitive OriginalPrimitive);
-    private sealed record TesselatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
+    private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
 
     private readonly record struct Node(Bounds BoundingBox, Primitive[] Primitives);
 
@@ -132,7 +132,7 @@ public static class ExteriorSplitter
                 {
                     var result = primitive switch
                     {
-                        TesselatedPrimitive rayCast => MatchRayCast(rayCast.Triangles, ray.Ray),
+                        TessellatedPrimitive rayCast => MatchRayCast(rayCast.Triangles, ray.Ray),
                         _ => MatchBoundingBox(primitive.OriginalPrimitive.AxisAlignedBoundingBox, ray.Box, ray.Ray)
                     };
                     if (result.Hit && result.Distance < distance)
@@ -236,7 +236,7 @@ public static class ExteriorSplitter
 
     private static Node[] CreateNodes(APrimitive[] primitives)
     {
-        static TesselatedPrimitive? TesselatePrimitive(APrimitive primitive)
+        static TessellatedPrimitive? TessellatePrimitive(APrimitive primitive)
         {
             var mesh = TessellatorBridge.Tessellate(primitive.SourcePrimitive, 1.0f);
             if (mesh is null)
@@ -244,7 +244,7 @@ public static class ExteriorSplitter
                 return null;
             }
             var triangles = CollectTrianglesForMesh(mesh).ToArray();
-            return new TesselatedPrimitive(triangles, primitive);
+            return new TessellatedPrimitive(triangles, primitive);
         }
 
         static Node ConvertNode(IGrouping<ulong, APrimitive> nodeGroup)
@@ -256,8 +256,8 @@ public static class ExteriorSplitter
             var primitives = nodeGroup
                 .Select(p => p switch
                 {
-                    InstancedMesh instancedMesh => TesselatePrimitive(instancedMesh),
-                    TriangleMesh triangleMesh => TesselatePrimitive(triangleMesh),
+                    InstancedMesh instancedMesh => TessellatePrimitive(instancedMesh),
+                    TriangleMesh triangleMesh => TessellatePrimitive(triangleMesh),
                     _ => new Primitive(p)
                 })
                 .WhereNotNull()

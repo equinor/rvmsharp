@@ -100,7 +100,7 @@ namespace RvmSharp.Tessellation
                     }
                 default:
                     throw new ArgumentOutOfRangeException(
-                        $"(Currently) Unsupported type for tesselation: {primitive.Kind}");
+                        $"(Currently) Unsupported type for tessellation: {primitive.Kind}");
             }
         }
 

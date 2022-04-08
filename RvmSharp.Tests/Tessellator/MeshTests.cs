@@ -1,4 +1,4 @@
-﻿namespace RvmSharp.Tests.Tesselator
+﻿namespace RvmSharp.Tests.Tessellator
 {
     using NUnit.Framework;
     using RvmSharp.Primitives;
