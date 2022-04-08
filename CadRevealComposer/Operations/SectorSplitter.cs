@@ -76,7 +76,7 @@ namespace CadRevealComposer.Operations
 
                 sectorsFromAllZones.AddRange(sectors);
             }
-
+            // TODO: Investigate if we need a root sector at all when its empty like this.
             var rootSector = new ProtoSector(
                 rootSectorId,
                 ParentSectorId: null,
@@ -130,6 +130,7 @@ namespace CadRevealComposer.Operations
                 yield return sector;
             }
 
+            // TODO: Investigate if we need a root sector at all when its empty like this.
             var rootSector = new ProtoSector(
                 rootSectorId,
                 ParentSectorId: null,
@@ -149,8 +150,9 @@ namespace CadRevealComposer.Operations
             uint parentSectorId,
             SequentialIdGenerator sectorIdGenerator)
         {
-            /* Recursively divides space into eight voxels of equal size (each dimension X,Y,Z is divided in half).
-             * A geometry is placed in a voxel only if it fully encloses the geometry.
+
+            /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
+             * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
              * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
              */
 
@@ -310,24 +312,23 @@ namespace CadRevealComposer.Operations
 
         private static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
         {
-            var voxelKeys = new Dictionary<int, int>();
-            int value = 0;
+            var voxelKeyAndUsageCount = new Dictionary<int, int>();
 
             foreach (var geometry in nodeGroupGeometries.Geometries)
             {
                 var voxelKey = CalculateVoxelKeyForGeometry(geometry.AxisAlignedBoundingBox, bbMidPoint);
-                var succ = voxelKeys.TryGetValue(voxelKey, out value);
-                voxelKeys[voxelKey] = value + 1;
+                var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount) ? existingCount : 0;
+                voxelKeyAndUsageCount[voxelKey] = count + 1;
             }
 
             // Return the voxel key where most of the node's geometries lie
-            return voxelKeys.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+            return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
         }
 
         private static Vector3 GetBoundingBoxMin(this IReadOnlyCollection<Node> nodes)
         {
             if (!nodes.Any())
-                throw new ArgumentException("Need to have at least 1 node to calculaTe bounds. Was empty", nameof(nodes));
+                throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty", nameof(nodes));
 
             return nodes.Select(p => p.BoundingBoxMin).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
         }
@@ -335,7 +336,8 @@ namespace CadRevealComposer.Operations
         private static Vector3 GetBoundingBoxMax(this IReadOnlyCollection<Node> nodes)
         {
             if (!nodes.Any())
-                throw new ArgumentException("Need to have at least 1 node to calculaTe bounds. Was empty", nameof(nodes));
+                throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty", nameof(nodes));
+
             return nodes.Select(p => p.BoundingBoxMax).Aggregate(new Vector3(float.MinValue), Vector3.Max);
         }
     }
