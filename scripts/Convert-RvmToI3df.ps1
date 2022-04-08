@@ -7,7 +7,6 @@ param (
     [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
     [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Int32]] $InstancingThreshold = $null, # Optional. Must be > 0 if defined.
-    [switch] $NoFaces = $false, # To ignore creating faces files
     [switch] $SplitIntoZones = $false, # Used for large in extents assets to have separate splitting roots.
     [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
     [switch] $Force = $false
@@ -68,11 +67,6 @@ end {
     if ($InstancingThreshold) {
         $composerArgs += "--InstancingThreshold"
         $composerArgs += $InstancingThreshold
-    }
-
-    if ($NoFaces) {
-        $composerArgs += "--NoFaces"
-        $composerArgs += $NoFaces
     }
 
     if ($SplitIntoZones) {
