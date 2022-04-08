@@ -1,7 +1,6 @@
 namespace CadRevealComposer
 {
     using Configuration;
-    using Faces;
     using HierarchyComposer.Functions;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Abstractions;
@@ -55,23 +54,10 @@ namespace CadRevealComposer
             ModelParameters parameters,
             DirectoryInfo outputDirectory,
             ulong maxTreeIndex,
-            SectorFaces[] sectorFacesArray,
             CameraPositioning.CameraPosition cameraPosition)
         {
-            var dict = sectorFacesArray.ToDictionary(kvp => kvp.SectorId, kvp => kvp);
-            static Sector FromSector(SectorInfo sector, Dictionary<ulong, SectorFaces> dict, DirectoryInfo outputDirectory)
+            static Sector FromSector(SectorInfo sector)
             {
-                FacesFile? facesFile = null;
-                if (dict.TryGetValue(sector.SectorId, out var sectorFaces) && sectorFaces.SectorContents is not null)
-                {
-                    facesFile = new FacesFile { QuadSize = sectorFaces.SectorContents.GridParameters.GridIncrement,
-                        FacesCount = sectorFaces.SectorContents.Nodes.Select(n => (long)n.Faces.Length).Sum(),
-                        FileName = $"sector_{sector.SectorId}.f3d",
-                        DownloadSize = new FileInfo(outputDirectory.FullName + $"/sector_{sector.SectorId}.f3d").Length,
-                        CoverageFactors = sectorFaces.CoverageFactors
-                        };
-                }
-
                 return new Sector
                 {
                     Id = sector.SectorId,
@@ -89,7 +75,6 @@ namespace CadRevealComposer
                         FileName: sector.Filename,
                         DownloadSize: sector.DownloadSize,
                         PeripheralFiles: sector.PeripheralFiles),
-                    FacesFile = facesFile,
                     EstimatedTriangleCount = sector.EstimatedTriangleCount,
                     EstimatedDrawCallCount = sector.EstimatedDrawCallCount
                 };
@@ -104,7 +89,7 @@ namespace CadRevealComposer
                 SubRevisionId = -1,
                 MaxTreeIndex = maxTreeIndex,
                 Unit = "Meters",
-                Sectors = sectors.Select(s => FromSector(s, dict, outputDirectory)).ToArray()
+                Sectors = sectors.Select(FromSector).ToArray()
             };
 
             var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");

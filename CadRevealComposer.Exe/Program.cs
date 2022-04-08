@@ -51,7 +51,6 @@
                 Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
                 options.NoInstancing,
                 options.SingleSector,
-                options.NoFaces,
                 options.SplitIntoZones);
 
             if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
