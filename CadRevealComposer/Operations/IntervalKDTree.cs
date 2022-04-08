@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
-public class IntervalKdTree<T> where T : notnull
+internal class IntervalKdTree<T> where T : notnull
 {
     private readonly Node _rootNode;
     private readonly int _divisionThreshold;
