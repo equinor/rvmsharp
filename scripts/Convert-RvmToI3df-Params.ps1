@@ -11,7 +11,6 @@ $Arguments = @{
     ModelId             = 1
     RevisionId          = 2
     InstancingThreshold = $null
-    NoFaces             = $false
     SplitIntoZones      = $false
     ArtifactDirectory   = $(Join-Path "$PSScriptRoot" ".." "TestData" "RunArtifact/" -Resolve )
     Force               = $true

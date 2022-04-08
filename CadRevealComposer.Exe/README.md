@@ -28,7 +28,6 @@ Geometry data is read from RVM files and PDMS metadata from TXT files (tag data 
 
 - OBJ files are temporary files and are converted to CTM files.
 - CTM files and I3D files together constitutes the 3D model.
-- F3D files (or faces files) are level of detail files.
 - I3D files contains all geometries, and pointers to meshes. Meshes are stored in CTM files.
 
 ## Processing pipeline

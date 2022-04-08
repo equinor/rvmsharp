@@ -42,8 +42,6 @@
 
         [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
 
-        [JsonProperty("facesFile")] public FacesFile? FacesFile { get; set; }
-
         [JsonProperty("estimatedTriangleCount")]
         public long EstimatedTriangleCount { get; set; }
 
@@ -62,22 +60,6 @@
         [property: JsonProperty("y")] double Y,
         [property: JsonProperty("z")] double Z
     );
-
-    public class FacesFile
-    {
-        [JsonProperty("quadSize")] public double QuadSize { get; set; }
-
-        [JsonProperty("facesCount")] public long FacesCount { get; set; }
-
-        [JsonProperty("recursiveCoverageFactors")]
-        public CoverageFactors RecursiveCoverageFactors { get; set; } = null!;
-
-        [JsonProperty("coverageFactors")] public CoverageFactors CoverageFactors { get; set; } = null!;
-
-        [JsonProperty("fileName")] public string FileName { get; set; } = "";
-
-        [JsonProperty("downloadSize")] public long DownloadSize { get; set; }
-    }
 
     public class CoverageFactors
     {

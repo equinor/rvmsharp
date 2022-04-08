@@ -2,7 +2,6 @@ namespace CadRevealComposer
 {
     using Ben.Collections.Specialized;
     using Configuration;
-    using Faces;
     using IdProviders;
     using Operations;
     using Primitives;
@@ -197,21 +196,6 @@ namespace CadRevealComposer
                 stopwatch.Restart();
             }
 
-            SectorFaces[] faceSectors;
-            if (composerParameters.NoFaces)
-            {
-                faceSectors = Array.Empty<SectorFaces>();
-            }
-            else
-            {
-                faceSectors = sectors
-                    .AsParallel()
-                    .Select(s => SectorToFacesConverter.ConvertSector(s, outputDirectory.FullName))
-                    .ToArray();
-                Console.WriteLine($"Calculated faces in {stopwatch.Elapsed}");
-                stopwatch.Restart();
-            }
-
             var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
             var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
@@ -225,7 +209,6 @@ namespace CadRevealComposer
                 modelParameters,
                 outputDirectory,
                 treeIndexGenerator.CurrentMaxGeneratedIndex,
-                faceSectors,
                 cameraPosition);
 
             Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
