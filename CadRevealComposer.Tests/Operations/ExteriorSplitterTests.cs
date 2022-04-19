@@ -26,7 +26,7 @@ public class ExteriorSplitterTests
     }
 
     /// <summary>
-    /// The exterior splitter uses source rvm primitive. All other data is irrelevant.
+    /// The exterior splitter uses axis aligned bounding box for Box primitive. All other data is irrelevant.
     /// </summary>
     private static Box CreateBoxCenteredInOrigin(ulong nodeId, float boxSize)
     {
