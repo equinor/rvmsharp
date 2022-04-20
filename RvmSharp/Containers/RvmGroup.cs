@@ -1,4 +1,3 @@
-﻿namespace RvmSharp.Containers
-{
-    public abstract record RvmGroup(uint Version);
-}
+﻿namespace RvmSharp.Containers;
+
+public abstract record RvmGroup(uint Version);

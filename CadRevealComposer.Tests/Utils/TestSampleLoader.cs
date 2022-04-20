@@ -1,26 +1,25 @@
-﻿namespace CadRevealComposer.Tests.Utils
+﻿namespace CadRevealComposer.Tests.Utils;
+
+using Newtonsoft.Json;
+using NUnit.Framework;
+using System.IO;
+
+public static class TestSampleLoader
 {
-    using Newtonsoft.Json;
-    using NUnit.Framework;
-    using System.IO;
+    public static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
+    public static readonly string GlobalTestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "TestSamples"));
 
-    public static class TestSampleLoader
+    /// <summary>
+    /// Loads test sample from TestSamples folder.
+    /// To add a new test sample, create a file in TestSamples folder of this project, and specify in Test project
+    /// that this file must be copied in output folder
+    /// NOTE: This method will read the whole file into string
+    /// </summary>
+    /// <param name="filename">JSON filename relative to TestSamples folder</param>
+    /// <typeparam name="T">Type to use for deserialization</typeparam>
+    /// <returns>Deserialized object</returns>
+    public static T LoadTestJson<T>(string filename)
     {
-        public static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
-        public static readonly string GlobalTestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "TestSamples"));
-
-        /// <summary>
-        /// Loads test sample from TestSamples folder.
-        /// To add a new test sample, create a file in TestSamples folder of this project, and specify in Test project
-        /// that this file must be copied in output folder
-        /// NOTE: This method will read the whole file into string
-        /// </summary>
-        /// <param name="filename">JSON filename relative to TestSamples folder</param>
-        /// <typeparam name="T">Type to use for deserialization</typeparam>
-        /// <returns>Deserialized object</returns>
-        public static T LoadTestJson<T>(string filename)
-        {
-            return JsonConvert.DeserializeObject<T>(File.ReadAllText(Path.Combine(TestSamplesDirectory, filename)));
-        }
+        return JsonConvert.DeserializeObject<T>(File.ReadAllText(Path.Combine(TestSamplesDirectory, filename)));
     }
 }

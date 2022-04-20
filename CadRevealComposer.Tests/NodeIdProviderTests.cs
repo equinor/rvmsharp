@@ -1,22 +1,21 @@
-﻿namespace CadRevealComposer.Tests
+﻿namespace CadRevealComposer.Tests;
+
+using IdProviders;
+using NUnit.Framework;
+
+[TestFixture]
+public class NodeIdProviderTests
 {
-    using IdProviders;
-    using NUnit.Framework;
-
-    [TestFixture]
-    public class NodeIdProviderTests
+    [Test]
+    public void FuzzTest_Produces_NoOutsideValidRange()
     {
-        [Test]
-        public void FuzzTest_Produces_NoOutsideValidRange()
-        {
-            // This test tests N random values. It should never fail.
-            var nip = new NodeIdProvider();
+        // This test tests N random values. It should never fail.
+        var nip = new NodeIdProvider();
 
-            const ulong maxSafeInt = SequentialIdGenerator.MaxSafeInteger;
+        const ulong maxSafeInt = SequentialIdGenerator.MaxSafeInteger;
 
-            for(var i=0; i<100; i++)
-                Assert.That(nip.GetNodeId(null), Is.LessThanOrEqualTo(maxSafeInt));
-        }
-
+        for(var i=0; i<100; i++)
+            Assert.That(nip.GetNodeId(null), Is.LessThanOrEqualTo(maxSafeInt));
     }
+
 }

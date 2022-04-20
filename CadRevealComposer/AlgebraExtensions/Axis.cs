@@ -1,9 +1,8 @@
-﻿namespace CadRevealComposer.AlgebraExtensions
+﻿namespace CadRevealComposer.AlgebraExtensions;
+
+public enum Axis
 {
-    public enum Axis
-    {
-        X,
-        Y,
-        Z
-    }
+    X,
+    Y,
+    Z
 }

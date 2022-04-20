@@ -1,12 +1,11 @@
-namespace RvmSharp.Primitives
-{
-    using System.Numerics;
+namespace RvmSharp.Primitives;
 
-    public record RvmLine(
-            uint Version,
-            Matrix4x4 Matrix,
-            RvmBoundingBox BoundingBoxLocal,
-            float A,
-            float B)
-        : RvmPrimitive(Version, RvmPrimitiveKind.Line, Matrix, BoundingBoxLocal);
-}
+using System.Numerics;
+
+public record RvmLine(
+        uint Version,
+        Matrix4x4 Matrix,
+        RvmBoundingBox BoundingBoxLocal,
+        float A,
+        float B)
+    : RvmPrimitive(Version, RvmPrimitiveKind.Line, Matrix, BoundingBoxLocal);

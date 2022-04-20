@@ -1,15 +1,14 @@
-namespace CadRevealComposer.Primitives
-{
-    using System.Numerics;
+namespace CadRevealComposer.Primitives;
 
-    public record Torus(
-            CommonPrimitiveProperties CommonPrimitiveProperties,
-            [property: I3df(I3dfAttribute.AttributeType.Normal)]
-             Vector3 Normal,
-            [property: I3df(I3dfAttribute.AttributeType.Radius)]
-             float Radius,
-            [property: I3df(I3dfAttribute.AttributeType.Radius)]
+using System.Numerics;
 
-            float TubeRadius)
-        : APrimitive(CommonPrimitiveProperties);
-}
+public record Torus(
+        CommonPrimitiveProperties CommonPrimitiveProperties,
+        [property: I3df(I3dfAttribute.AttributeType.Normal)]
+        Vector3 Normal,
+        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+        float Radius,
+        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+
+        float TubeRadius)
+    : APrimitive(CommonPrimitiveProperties);

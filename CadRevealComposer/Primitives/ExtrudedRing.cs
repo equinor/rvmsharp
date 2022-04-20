@@ -1,18 +1,17 @@
-namespace CadRevealComposer.Primitives
-{
-    using System.Numerics;
+namespace CadRevealComposer.Primitives;
 
-    public record ExtrudedRing(
-        CommonPrimitiveProperties CommonPrimitiveProperties,
-        [property: I3df(I3dfAttribute.AttributeType.Normal)]
-         Vector3 CenterAxis,
-        [property: I3df(I3dfAttribute.AttributeType.Height)]
-         float Height,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+using System.Numerics;
 
-        float InnerRadius,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+public record ExtrudedRing(
+    CommonPrimitiveProperties CommonPrimitiveProperties,
+    [property: I3df(I3dfAttribute.AttributeType.Normal)]
+    Vector3 CenterAxis,
+    [property: I3df(I3dfAttribute.AttributeType.Height)]
+    float Height,
+    [property: I3df(I3dfAttribute.AttributeType.Radius)]
 
-        float OuterRadius
-    ) : APrimitive(CommonPrimitiveProperties);
-}
+    float InnerRadius,
+    [property: I3df(I3dfAttribute.AttributeType.Radius)]
+
+    float OuterRadius
+) : APrimitive(CommonPrimitiveProperties);
