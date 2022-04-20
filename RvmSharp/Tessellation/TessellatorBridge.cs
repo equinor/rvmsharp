@@ -1,11 +1,10 @@
-﻿using System;
+﻿namespace RvmSharp.Tessellation;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using static RvmSharp.Primitives.RvmFacetGroup;
-
-namespace RvmSharp.Tessellation;
-
 using Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -261,10 +260,10 @@ public static class TessellatorBridge
         var h2 = 0.5f * rectangularTorus.Height;
         float[,] square =
         {
-            {rectangularTorus.RadiusOuter, -h2},
-            {rectangularTorus.RadiusInner, -h2},
-            {rectangularTorus.RadiusInner, h2},
-            {rectangularTorus.RadiusOuter, h2},
+            { rectangularTorus.RadiusOuter, -h2 },
+            { rectangularTorus.RadiusInner, -h2 },
+            { rectangularTorus.RadiusInner, h2 },
+            { rectangularTorus.RadiusOuter, h2 },
         };
 
         // Not closed
@@ -288,10 +287,10 @@ public static class TessellatorBridge
             {
                 float[,] n =
                 {
-                    {0.0f, 0.0f, -1.0f},
-                    {-t0[2 * i + 0], -t0[2 * i + 1], 0.0f},
-                    {0.0f, 0.0f, 1.0f},
-                    {t0[2 * i + 0], t0[2 * i + 1], 0.0f},
+                    { 0.0f, 0.0f, -1.0f },
+                    { -t0[2 * i + 0], -t0[2 * i + 1], 0.0f },
+                    { 0.0f, 0.0f, 1.0f },
+                    { t0[2 * i + 0], t0[2 * i + 1], 0.0f },
                 };
 
                 for (var k = 0; k < 4; k++)
@@ -581,14 +580,12 @@ public static class TessellatorBridge
 
         Vector3[,] v = new Vector3[,]
         {
-            {
-                new Vector3(xm, ym, zp), new Vector3(xm, yp, zp), new Vector3(xm, yp, zm), new Vector3(xm, ym, zm)
-            },
-            {new Vector3(xp, ym, zm), new Vector3(xp, yp, zm), new Vector3(xp, yp, zp), new Vector3(xp, ym, zp)},
-            {new Vector3(xp, ym, zm), new Vector3(xp, ym, zp), new Vector3(xm, ym, zp), new Vector3(xm, ym, zm)},
-            {new Vector3(xm, yp, zm), new Vector3(xm, yp, zp), new Vector3(xp, yp, zp), new Vector3(xp, yp, zm)},
-            {new Vector3(xm, yp, zm), new Vector3(xp, yp, zm), new Vector3(xp, ym, zm), new Vector3(xm, ym, zm)},
-            {new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp), new Vector3(xm, yp, zp)}
+            { new Vector3(xm, ym, zp), new Vector3(xm, yp, zp), new Vector3(xm, yp, zm), new Vector3(xm, ym, zm) },
+            { new Vector3(xp, ym, zm), new Vector3(xp, yp, zm), new Vector3(xp, yp, zp), new Vector3(xp, ym, zp) },
+            { new Vector3(xp, ym, zm), new Vector3(xp, ym, zp), new Vector3(xm, ym, zp), new Vector3(xm, ym, zm) },
+            { new Vector3(xm, yp, zm), new Vector3(xm, yp, zp), new Vector3(xp, yp, zp), new Vector3(xp, yp, zm) },
+            { new Vector3(xm, yp, zm), new Vector3(xp, yp, zm), new Vector3(xp, ym, zm), new Vector3(xm, ym, zm) },
+            { new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp), new Vector3(xm, yp, zp) }
         };
 
         Vector3[] n =

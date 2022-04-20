@@ -1,11 +1,11 @@
-﻿using LibTessDotNet;
+﻿namespace RvmSharp.Tessellation;
+
+using LibTessDotNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using static RvmSharp.Primitives.RvmFacetGroup;
-
-namespace RvmSharp.Tessellation;
 
 public static class TessNet
 {
@@ -29,7 +29,9 @@ public static class TessNet
                 // Skip degenerate contour with less than 3 vertices
                 continue;
             }
-            var cv = contour.Vertices.Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal)).ToArray();
+
+            var cv = contour.Vertices
+                .Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal)).ToArray();
             tess.AddContour(cv);
             var n = contour.Vertices[0].Normal;
             normal = new Vec3(n.X, n.Y, n.Z);
@@ -38,10 +40,10 @@ public static class TessNet
 
         if (!shouldTessellate)
             return new TessellateResult();
-            
-            
+
+
         var result = new TessellateResult();
-            
+
         tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, CombineNormals, normal);
         result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
         result.NormalData = tess.Vertices.Select(v => (Vector3)v.Data).ToArray();
@@ -54,6 +56,7 @@ public static class TessNet
                 continue;
             result.Indices.AddRange(t);
         }
+
         return result;
     }
 
