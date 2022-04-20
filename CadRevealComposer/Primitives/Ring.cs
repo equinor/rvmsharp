@@ -1,16 +1,15 @@
-namespace CadRevealComposer.Primitives
-{
-    using System.Numerics;
+namespace CadRevealComposer.Primitives;
 
-    public record Ring(
-        CommonPrimitiveProperties CommonPrimitiveProperties,
-        [property: I3df(I3dfAttribute.AttributeType.Normal)]
-         Vector3 Normal,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+using System.Numerics;
 
-        float InnerRadius,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+public record Ring(
+    CommonPrimitiveProperties CommonPrimitiveProperties,
+    [property: I3df(I3dfAttribute.AttributeType.Normal)]
+    Vector3 Normal,
+    [property: I3df(I3dfAttribute.AttributeType.Radius)]
 
-        float OuterRadius
-    ) : APrimitive(CommonPrimitiveProperties);
-}
+    float InnerRadius,
+    [property: I3df(I3dfAttribute.AttributeType.Radius)]
+
+    float OuterRadius
+) : APrimitive(CommonPrimitiveProperties);

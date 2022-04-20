@@ -1,158 +1,158 @@
-﻿namespace RvmSharp.Operations
+﻿namespace RvmSharp.Operations;
+
+using Containers;
+using Primitives;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Numerics;
+
+/// <summary>
+/// Make connection between geometries that share a boundary and are aligned.
+/// Tessellation use the connections to:
+/// - Avoid adding internal caps between adjacent shapes.
+/// - Align circumferential sample points between adjacent shapes.
+/// </summary>
+public static class RvmConnect
 {
-    using Containers;
-    using Primitives;
-    using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Numerics;
-
-    /// <summary>
-    /// Make connection between geometries that share a boundary and are aligned.
-    /// Tessellation use the connections to:
-    /// - Avoid adding internal caps between adjacent shapes.
-    /// - Align circumferential sample points between adjacent shapes.
-    /// </summary>
-    public static class RvmConnect
+    class Anchor
     {
-        class Anchor
-        {
-            public RvmPrimitive Geo { get; } // Not sure if this can be null.
-            public Vector3 Position { get; }
-            public Vector3 Direction { get; }
-            public uint Offset { get; }
-            public RvmConnection.ConnectionType ConnectionTypeFlags { get; }
+        public RvmPrimitive Geo { get; } // Not sure if this can be null.
+        public Vector3 Position { get; }
+        public Vector3 Direction { get; }
+        public uint Offset { get; }
+        public RvmConnection.ConnectionType ConnectionTypeFlags { get; }
             
-            public bool Matched { get; set; }
+        public bool Matched { get; set; }
             
-            public Anchor(RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
-                RvmConnection.ConnectionType connectionTypeFlags)
-            {
-                Geo = geo;
-                Position = position;
-                Direction = direction;
-                Offset = offset;
-                ConnectionTypeFlags = connectionTypeFlags;
-            }
-        };
-
-        class Context
+        public Anchor(RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
+            RvmConnection.ConnectionType connectionTypeFlags)
         {
-            public RvmStore store;
-            public readonly List<Anchor> Anchors = new List<Anchor>();
-            public const float epsilon = 0.001f;
+            Geo = geo;
+            Position = position;
+            Direction = direction;
+            Offset = offset;
+            ConnectionTypeFlags = connectionTypeFlags;
+        }
+    };
 
-            public Context(RvmStore store)
-            {
-                this.store = store;
-            }
+    class Context
+    {
+        public RvmStore store;
+        public readonly List<Anchor> Anchors = new List<Anchor>();
+        public const float epsilon = 0.001f;
 
-            public int AnchorsCount => Anchors.Count;
-            public uint AnchorsMatched { get; set; }
-        };
-
-        private static void Connect(Context context, int offset)
+        public Context(RvmStore store)
         {
-            var anchorsCount = context.AnchorsCount;
-
-            const float epsilon = Context.epsilon;
-            const float epsilonSquared = epsilon * epsilon;
-
-            if (offset > anchorsCount)
-                throw new ArgumentOutOfRangeException(nameof(offset), offset,
-                    $"{nameof(offset)} is greater than {nameof(anchorsCount)} {anchorsCount}");
-
-            var anchors = context.Anchors.Skip(offset).OrderBy(e => e.Position.X).ToArray();
-
-
-            for (int j = 0; j < anchors.Length; j++)
-            {
-                if (anchors[j].Matched)
-                    continue;
-
-                for (int i = j + 1; i < anchors.Length && anchors[i].Position.X <= anchors[j].Position.X + epsilon; i++)
-                {
-                    bool canMatch = anchors[i].Matched == false && !ReferenceEquals(anchors[i].Geo, anchors[j].Geo);
-                    bool close = Vector3.DistanceSquared(anchors[j].Position, anchors[i].Position) <= epsilonSquared;
-
-                    const float alignedThreshold = -0.98f;
-                    bool aligned = Vector3.Dot(anchors[j].Direction, anchors[i].Direction) < alignedThreshold;
-
-                    if (canMatch && close && aligned)
-                    {
-                        RvmConnection connection = new RvmConnection
-                        (
-                            primitive1: anchors[j].Geo,
-                            primitive2: anchors[i].Geo,
-                            offsetX: anchors[j].Offset,
-                            offsetY: anchors[i].Offset,
-                            position: anchors[j].Position,
-                            direction: anchors[j].Direction,
-                            connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
-                        );
-
-                        context.store.Connections.Add(connection);
-
-                        anchors[j].Geo.Connections[anchors[j].Offset] = connection;
-                        anchors[i].Geo.Connections[anchors[i].Offset] = connection;
-
-                        anchors[j].Matched = true;
-                        anchors[i].Matched = true;
-                        context.AnchorsMatched += 2;
-
-
-                        //context->store->addDebugLine((a[j].p + 0.03f*a[j].d).data,
-                        //                             (a[i].p + 0.03f*a[i].d).data,
-                        //                             0x0000ff);
-                    }
-                }
-            }
-
-            // Remove matched anchors.
-            for (var j = offset; j < context.Anchors.Count;)
-            {
-                if (context.Anchors[j].Matched)
-                {
-                    context.Anchors.RemoveAt(j);
-                }
-                else
-                {
-                    j++;
-                }
-            }
-
-            if (offset > context.Anchors.Count)
-                throw new Exception("Something went wrong");
+            this.store = store;
         }
 
-        private static void AddAnchor(Context context, RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
-            RvmConnection.ConnectionType flags)
+        public int AnchorsCount => Anchors.Count;
+        public uint AnchorsMatched { get; set; }
+    };
+
+    private static void Connect(Context context, int offset)
+    {
+        var anchorsCount = context.AnchorsCount;
+
+        const float epsilon = Context.epsilon;
+        const float epsilonSquared = epsilon * epsilon;
+
+        if (offset > anchorsCount)
+            throw new ArgumentOutOfRangeException(nameof(offset), offset,
+                $"{nameof(offset)} is greater than {nameof(anchorsCount)} {anchorsCount}");
+
+        var anchors = context.Anchors.Skip(offset).OrderBy(e => e.Position.X).ToArray();
+
+
+        for (int j = 0; j < anchors.Length; j++)
         {
-            Anchor a = new Anchor(
-                geo: geo,
-                position: Vector3.Transform(position, geo.Matrix),
-                direction: Vector3.Normalize(Vector3.TransformNormal(direction, geo.Matrix)),
-                offset: offset,
-                connectionTypeFlags: flags
-            );
+            if (anchors[j].Matched)
+                continue;
 
-            //Console.WriteLine($"add {a.p.X:0.00000} {a.p.Y:0.00000} {a.p.Z:0.00000}");
+            for (int i = j + 1; i < anchors.Length && anchors[i].Position.X <= anchors[j].Position.X + epsilon; i++)
+            {
+                bool canMatch = anchors[i].Matched == false && !ReferenceEquals(anchors[i].Geo, anchors[j].Geo);
+                bool close = Vector3.DistanceSquared(anchors[j].Position, anchors[i].Position) <= epsilonSquared;
 
-            context.Anchors.Add(a);
+                const float alignedThreshold = -0.98f;
+                bool aligned = Vector3.Dot(anchors[j].Direction, anchors[i].Direction) < alignedThreshold;
+
+                if (canMatch && close && aligned)
+                {
+                    RvmConnection connection = new RvmConnection
+                    (
+                        primitive1: anchors[j].Geo,
+                        primitive2: anchors[i].Geo,
+                        offsetX: anchors[j].Offset,
+                        offsetY: anchors[i].Offset,
+                        position: anchors[j].Position,
+                        direction: anchors[j].Direction,
+                        connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
+                    );
+
+                    context.store.Connections.Add(connection);
+
+                    anchors[j].Geo.Connections[anchors[j].Offset] = connection;
+                    anchors[i].Geo.Connections[anchors[i].Offset] = connection;
+
+                    anchors[j].Matched = true;
+                    anchors[i].Matched = true;
+                    context.AnchorsMatched += 2;
+
+
+                    //context->store->addDebugLine((a[j].p + 0.03f*a[j].d).data,
+                    //                             (a[i].p + 0.03f*a[i].d).data,
+                    //                             0x0000ff);
+                }
+            }
         }
 
-        private static void Recurse(Context context, RvmNode group)
+        // Remove matched anchors.
+        for (var j = offset; j < context.Anchors.Count;)
         {
-            var offset = context.AnchorsCount;
-            foreach (var child in group.Children.OfType<RvmNode>())
-                Recurse(context, child);
-
-            foreach (var prim in group.Children.OfType<RvmPrimitive>())
+            if (context.Anchors[j].Matched)
             {
-                switch (prim)
-                {
-                    case RvmPyramid pyramid:
+                context.Anchors.RemoveAt(j);
+            }
+            else
+            {
+                j++;
+            }
+        }
+
+        if (offset > context.Anchors.Count)
+            throw new Exception("Something went wrong");
+    }
+
+    private static void AddAnchor(Context context, RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
+        RvmConnection.ConnectionType flags)
+    {
+        Anchor a = new Anchor(
+            geo: geo,
+            position: Vector3.Transform(position, geo.Matrix),
+            direction: Vector3.Normalize(Vector3.TransformNormal(direction, geo.Matrix)),
+            offset: offset,
+            connectionTypeFlags: flags
+        );
+
+        //Console.WriteLine($"add {a.p.X:0.00000} {a.p.Y:0.00000} {a.p.Z:0.00000}");
+
+        context.Anchors.Add(a);
+    }
+
+    private static void Recurse(Context context, RvmNode group)
+    {
+        var offset = context.AnchorsCount;
+        foreach (var child in group.Children.OfType<RvmNode>())
+            Recurse(context, child);
+
+        foreach (var prim in group.Children.OfType<RvmPrimitive>())
+        {
+            switch (prim)
+            {
+                case RvmPyramid pyramid:
                     {
                         var b = 0.5f * new Vector2(pyramid.BottomX, pyramid.BottomY);
                         var t = 0.5f * new Vector2(pyramid.TopX, pyramid.TopY);
@@ -192,7 +192,7 @@
 
                         break;
                     }
-                    case RvmBox box:
+                case RvmBox box:
                     {
                         Vector3[] n =
                         {
@@ -222,7 +222,7 @@
                             AddAnchor(context, box, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
                         break;
                     }
-                    case RvmRectangularTorus rt:
+                case RvmRectangularTorus rt:
                     {
                         var c = (float)Math.Cos(rt.Angle);
                         var s = (float)Math.Sin(rt.Angle);
@@ -234,7 +234,7 @@
                         break;
                     }
 
-                    case RvmCircularTorus ct:
+                case RvmCircularTorus ct:
                     {
                         var c = (float)Math.Cos(ct.Angle);
                         var s = (float)Math.Sin(ct.Angle);
@@ -248,15 +248,15 @@
                         break;
                     }
 
-                    case RvmEllipticalDish:
-                    case RvmSphericalDish:
+                case RvmEllipticalDish:
+                case RvmSphericalDish:
                     {
                         AddAnchor(context, prim, new Vector3(0, 0, 0), new Vector3(0, 0, -1), 0,
                             RvmConnection.ConnectionType.HasCircularSide);
                         break;
                     }
 
-                    case RvmSnout sn:
+                case RvmSnout sn:
                     {
                         Vector3[] n =
                         {
@@ -277,7 +277,7 @@
                         break;
                     }
 
-                    case RvmCylinder cylinder:
+                case RvmCylinder cylinder:
                     {
                         Vector3[] d = {new Vector3(0, 0, -1.0f), new Vector3(0, 0, 1.0f)};
                         Vector3[] p =
@@ -289,39 +289,38 @@
                         break;
                     }
 
-                    case RvmSphere:
-                    case RvmFacetGroup:
-                    case RvmLine:
-                        break;
+                case RvmSphere:
+                case RvmFacetGroup:
+                case RvmLine:
+                    break;
 
-                    default:
-                        throw new ArgumentOutOfRangeException("Unsupported primitive type: " + prim.GetType());
-                }
+                default:
+                    throw new ArgumentOutOfRangeException("Unsupported primitive type: " + prim.GetType());
             }
-
-
-            Connect(context, offset);
         }
 
 
-        public static void Connect(RvmStore store)
+        Connect(context, offset);
+    }
+
+
+    public static void Connect(RvmStore store)
+    {
+        var context = new Context(store);
+
+
+        var stopwatch = Stopwatch.StartNew();
+        foreach (var root in store.RvmFiles.SelectMany(file => file.Model.Children))
         {
-            var context = new Context(store);
-
-
-            var stopwatch = Stopwatch.StartNew();
-            foreach (var root in store.RvmFiles.SelectMany(file => file.Model.Children))
-            {
-                Recurse(context, root);
-            }
-
-            if (context.Anchors.Any(a => a.Matched))
-            {
-                throw new Exception("Matched connections left in context");
-            }
-
-            var e0 = stopwatch.Elapsed;
-            Console.WriteLine($"Matched {context.AnchorsMatched} of {context.AnchorsCount} anchors {e0}.");
+            Recurse(context, root);
         }
+
+        if (context.Anchors.Any(a => a.Matched))
+        {
+            throw new Exception("Matched connections left in context");
+        }
+
+        var e0 = stopwatch.Elapsed;
+        Console.WriteLine($"Matched {context.AnchorsMatched} of {context.AnchorsCount} anchors {e0}.");
     }
 }

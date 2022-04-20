@@ -1,24 +1,23 @@
-namespace CadRevealComposer.Primitives
-{
-    using System.Numerics;
+namespace CadRevealComposer.Primitives;
 
-    public record OpenExtrudedRingSegment(
-        CommonPrimitiveProperties CommonPrimitiveProperties,
-        [property: I3df(I3dfAttribute.AttributeType.Normal)]
-         Vector3 CenterAxis,
-        [property: I3df(I3dfAttribute.AttributeType.Height)]
-         float Height,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+using System.Numerics;
 
-        float InnerRadius,
-        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+public record OpenExtrudedRingSegment(
+    CommonPrimitiveProperties CommonPrimitiveProperties,
+    [property: I3df(I3dfAttribute.AttributeType.Normal)]
+    Vector3 CenterAxis,
+    [property: I3df(I3dfAttribute.AttributeType.Height)]
+    float Height,
+    [property: I3df(I3dfAttribute.AttributeType.Radius)]
 
-        float OuterRadius,
-        [property: I3df(I3dfAttribute.AttributeType.Angle)]
+    float InnerRadius,
+    [property: I3df(I3dfAttribute.AttributeType.Radius)]
 
-        float RotationAngle,
-        [property: I3df(I3dfAttribute.AttributeType.Angle)]
+    float OuterRadius,
+    [property: I3df(I3dfAttribute.AttributeType.Angle)]
 
-        float ArcAngle
-    ) : APrimitive(CommonPrimitiveProperties);
-}
+    float RotationAngle,
+    [property: I3df(I3dfAttribute.AttributeType.Angle)]
+
+    float ArcAngle
+) : APrimitive(CommonPrimitiveProperties);

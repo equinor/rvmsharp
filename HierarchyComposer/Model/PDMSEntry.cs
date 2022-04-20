@@ -1,64 +1,63 @@
-﻿namespace HierarchyComposer.Model
+﻿namespace HierarchyComposer.Model;
+
+using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+
+public class PDMSEntry : IEquatable<PDMSEntry>
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Data.SQLite;
+    public long Id { get; init; } = -1;
+    public string? Key { get; init; }
+    public string? Value { get; init; }
+    public virtual ICollection<NodePDMSEntry> NodePDMSEntry { get; set; } = null!; // Navigation property
 
-    public class PDMSEntry : IEquatable<PDMSEntry>
+    public void RawInsert(SQLiteCommand command)
     {
-        public long Id { get; init; } = -1;
-        public string? Key { get; init; }
-        public string? Value { get; init; }
-        public virtual ICollection<NodePDMSEntry> NodePDMSEntry { get; set; } = null!; // Navigation property
+        command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES (@Id, @Key, @Value);";
+        command.Parameters.AddRange(new[] {
+            new SQLiteParameter("@Id", Id),
+            new SQLiteParameter("@Key", Key),
+            new SQLiteParameter("@Value", Value)});
+        command.ExecuteNonQuery();
+    }
 
-        public void RawInsert(SQLiteCommand command)
+    public bool Equals(PDMSEntry? other)
+    {
+        if (ReferenceEquals(null, other))
         {
-            command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES (@Id, @Key, @Value);";
-            command.Parameters.AddRange(new[] {
-                        new SQLiteParameter("@Id", Id),
-                        new SQLiteParameter("@Key", Key),
-                        new SQLiteParameter("@Value", Value)});
-            command.ExecuteNonQuery();
+            return false;
         }
 
-        public bool Equals(PDMSEntry? other)
+        if (ReferenceEquals(this, other))
         {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
-
-            return Key == other.Key && Value == other.Value;
+            return true;
         }
 
-        public override bool Equals(object? obj)
+        return Key == other.Key && Value == other.Value;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (ReferenceEquals(null, obj))
         {
-            if (ReferenceEquals(null, obj))
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != this.GetType())
-            {
-                return false;
-            }
-
-            return Equals((PDMSEntry)obj);
+            return false;
         }
 
-        public override int GetHashCode()
+        if (ReferenceEquals(this, obj))
         {
-            return HashCode.Combine(Key, Value);
+            return true;
         }
+
+        if (obj.GetType() != this.GetType())
+        {
+            return false;
+        }
+
+        return Equals((PDMSEntry)obj);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Key, Value);
     }
 }

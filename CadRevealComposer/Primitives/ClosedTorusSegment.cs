@@ -1,21 +1,20 @@
-namespace CadRevealComposer.Primitives
-{
-    using System.Numerics;
+namespace CadRevealComposer.Primitives;
 
-    public record ClosedTorusSegment(
-            CommonPrimitiveProperties CommonPrimitiveProperties,
-            [property: I3df(I3dfAttribute.AttributeType.Normal)]
-             Vector3 Normal,
-            [property: I3df(I3dfAttribute.AttributeType.Radius)]
-             float Radius,
-            [property: I3df(I3dfAttribute.AttributeType.Radius)]
+using System.Numerics;
 
-            float TubeRadius,
-            [property: I3df(I3dfAttribute.AttributeType.Angle)]
+public record ClosedTorusSegment(
+        CommonPrimitiveProperties CommonPrimitiveProperties,
+        [property: I3df(I3dfAttribute.AttributeType.Normal)]
+        Vector3 Normal,
+        [property: I3df(I3dfAttribute.AttributeType.Radius)]
+        float Radius,
+        [property: I3df(I3dfAttribute.AttributeType.Radius)]
 
-            float RotationAngle,
-            [property: I3df(I3dfAttribute.AttributeType.Angle)]
-             float ArcAngle
-        )
-        : APrimitive(CommonPrimitiveProperties);
-}
+        float TubeRadius,
+        [property: I3df(I3dfAttribute.AttributeType.Angle)]
+
+        float RotationAngle,
+        [property: I3df(I3dfAttribute.AttributeType.Angle)]
+        float ArcAngle
+    )
+    : APrimitive(CommonPrimitiveProperties);
