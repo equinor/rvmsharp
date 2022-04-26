@@ -19,3 +19,7 @@ public record ProtoMeshFromFacetGroup(CommonPrimitiveProperties CommonPrimitiveP
 public record ProtoMeshFromPyramid(CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Ignore)] RvmPyramid Pyramid)
     : ProtoMesh(CommonPrimitiveProperties, Pyramid);
+
+public record ProtoMeshFromSnout(CommonPrimitiveProperties CommonPrimitiveProperties,
+        [property: I3df(I3dfAttribute.AttributeType.Ignore)] RvmSnout Snout)
+    : ProtoMesh(CommonPrimitiveProperties, Snout);

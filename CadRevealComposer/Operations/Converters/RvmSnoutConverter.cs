@@ -42,39 +42,7 @@ public static class RvmSnoutConverter
             }
             else
             {
-                (float slopeA, float zangleA) = TranslateShearToSlope((rvmSnout.TopShearX, rvmSnout.TopShearY));
-                (float slopeB, float zangleB) = TranslateShearToSlope((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
-                if (rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom))
-                {
-                    // General cylinder
-                    return new ClosedGeneralCylinder(
-                        commons,
-                        CenterAxis: commons.RotationDecomposed.Normal,
-                        Height: height,
-                        Radius: radiusA,
-                        RotationAngle: commons.RotationDecomposed.RotationAngle,
-                        ArcAngle: 2 * MathF.PI,
-                        SlopeA: slopeA,
-                        SlopeB: slopeB,
-                        ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
-                        ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
-                    );
-                } else {
-                    // General cone
-                    return new ClosedGeneralCone(
-                        commons,
-                        CenterAxis: commons.RotationDecomposed.Normal,
-                        Height: height,
-                        RadiusA: radiusA,
-                        RadiusB: radiusB,
-                        RotationAngle: commons.RotationDecomposed.RotationAngle,
-                        ArcAngle: 2 * MathF.PI,
-                        SlopeA: slopeA,
-                        SlopeB: slopeB,
-                        ZangleA: zangleA + commons.RotationDecomposed.RotationAngle,
-                        ZangleB: zangleB + commons.RotationDecomposed.RotationAngle
-                    );
-                }
+                return new ProtoMeshFromSnout(commons, rvmSnout);
             }
         }
         else

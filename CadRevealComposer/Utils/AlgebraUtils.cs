@@ -6,6 +6,22 @@ using System.Numerics;
 
 public static class AlgebraUtils
 {
+    /// <summary>
+    /// Decompose a Matrix4x4 to its translation, rot and scale parts.
+    /// Will throw if this is not possible.
+    /// </summary>
+    /// <param name="matrix"></param>
+    /// <returns></returns>
+    public static (Vector3 pos, Quaternion rot, Vector3 scale) DecomposeToTRS(Matrix4x4 matrix)
+    {
+        var success = Matrix4x4.Decompose(matrix, out var scale, out var rot, out var pos);
+        if (!success)
+        {
+            throw new Exception("Could not decompose matrix into TRS parts.");
+        }
+        return (pos, rot, scale);
+    }
+
     public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
     {
         var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
@@ -106,7 +122,7 @@ public static class AlgebraUtils
         var v1 = Vector3.Transform(Vector3.One, rotation);
         var v2 = Vector3.Transform(Vector3.One, qc);
         Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
-        Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
+        // Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
     }
 
     /// <summary>

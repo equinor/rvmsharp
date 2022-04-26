@@ -160,6 +160,7 @@ public static class CadRevealComposerRunner
         var meshes = await TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
             pyramidInstancingResult,
+            geometries.OfType<ProtoMeshFromSnout>().ToArray(),
             exporter);
 
         var geometriesIncludingMeshes = geometries
@@ -272,6 +273,7 @@ public static class CadRevealComposerRunner
     private static async Task<APrimitive[]> TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult,
+        ProtoMeshFromSnout[] snouts,
         PeripheralFileExporter exporter)
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
@@ -353,6 +355,7 @@ public static class CadRevealComposerRunner
         stopwatch.Restart();
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
+            .Concat(snouts)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.TriangleCount > 0) // ignore empty meshes
@@ -370,7 +373,7 @@ public static class CadRevealComposerRunner
         Mesh mesh;
         try
         {
-            mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? Mesh.Empty;
+            mesh = TessellatorBridge.Tessellate(primitive, 0.01f) ?? Mesh.Empty;
         }
         catch
         {
@@ -386,6 +389,10 @@ public static class CadRevealComposerRunner
             else if (primitive is RvmPyramid)
             {
                 Console.WriteLine("WARNING: Could not tessellate pyramid!");
+            }
+            else if (primitive is RvmSnout)
+            {
+                Console.WriteLine("WARNING: Could not tessellate snout!");
             }
             else
             {
