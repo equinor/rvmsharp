@@ -75,6 +75,7 @@ public static class Workload
         var rvmFiles = workload
             .AsParallel()
             .AsOrdered()
+            .Where(x => x.rvmFilename.Contains("HVAC"))
             .Select(ParseRvmFile)
             .ToArray();
 

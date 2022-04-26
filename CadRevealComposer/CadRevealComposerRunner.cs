@@ -1,6 +1,7 @@
 namespace CadRevealComposer;
 
 using Ben.Collections.Specialized;
+using CadRevealComposer.Operations.Converters;
 using Configuration;
 using IdProviders;
 using Operations;
@@ -94,8 +95,18 @@ public static class CadRevealComposerRunner
             .AsParallel()
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries
-                .Where(IsValidGeometry)
-                .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
+                //.Where(IsValidGeometry)
+                .SelectMany(primitive =>
+                {
+                    var node = x.Group as RvmNode ?? throw new InvalidOperationException();
+                    var l = new List<APrimitive?>() { APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive) };
+                    if (!IsValidGeometry(primitive))
+                    {
+                        var scaledExtents = primitive.BoundingBoxLocal.Extents * 0.001f;
+                        l.Add(new Box(primitive.GetCommonProps(node, x), Vector3.UnitY, MathF.Abs(scaledExtents.X), MathF.Abs(scaledExtents.Y), MathF.Abs(scaledExtents.Z) / 2, 0));
+                    }
+                    return l;
+                }))
             .WhereNotNull()
             .ToArray();
 
@@ -152,7 +163,7 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-            
+
 
         var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
 
