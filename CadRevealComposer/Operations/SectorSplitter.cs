@@ -15,7 +15,7 @@ public static class SectorSplitter
     private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
     private const int StartDepth = 1;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
-    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 50.0f; // Arbitrary value
+    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 100.0f; // Arbitrary value
 
     public record ProtoSector(
         uint SectorId,
