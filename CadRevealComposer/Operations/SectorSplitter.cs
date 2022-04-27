@@ -163,7 +163,7 @@ public static class SectorSplitter
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
-        var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
+        var bbMidPoint = (bbMin + bbMax) / 2;
         var bbSize = Vector3.Distance(bbMin, bbMax);
 
         var mainVoxelNodes = Array.Empty<Node>();
@@ -281,11 +281,11 @@ public static class SectorSplitter
                 }
             );
 
-
+        // Always add atleast one node if there is still budget left, to avoid nothing ever being added if the largest node exceeds the maximum budget
         var budgetLeft = budget;
         foreach (var node in nodesInPrioritizedOrder)
         {
-            if (budgetLeft - node.EstimatedByteSize < 0)
+            if (budgetLeft < 0)
             {
                 yield break;
             }
