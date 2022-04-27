@@ -14,7 +14,7 @@ public static class SectorSplitter
 {
     private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
     private const int StartDepth = 1;
-    private const long SectorEstimatedByteSizeBudget = 1_500_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
 
     public record ProtoSector(
@@ -163,7 +163,7 @@ public static class SectorSplitter
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
-        var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
+        var bbMidPoint = (bbMin + bbMax) / 2;
         var bbSize = Vector3.Distance(bbMin, bbMax);
 
         var mainVoxelNodes = Array.Empty<Node>();
@@ -285,7 +285,7 @@ public static class SectorSplitter
         var budgetLeft = budget;
         foreach (var node in nodesInPrioritizedOrder)
         {
-            if (budgetLeft - node.EstimatedByteSize < 0)
+            if (budgetLeft < 0)
             {
                 yield break;
             }
