@@ -281,7 +281,7 @@ public static class SectorSplitter
                 }
             );
 
-
+        // Always add atleast one node if there is still budget left, to avoid nothing ever being added if the largest node exceeds the maximum budget
         var budgetLeft = budget;
         foreach (var node in nodesInPrioritizedOrder)
         {
