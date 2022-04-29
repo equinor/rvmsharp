@@ -25,10 +25,77 @@ public class SceneSectorAnalyzer
     }
 
 
-    public record SectorTreeNode(SectorTreeNode[] Children, Sector Self)
+    public record SectorTreeNode(SectorTreeNode[] Children, Sector Self, Sector? Parent)
     {
         public bool IsLeaf => !Children.Any();
+
+        public IEnumerable<SectorTreeNode> FindLeafs()
+        {
+            if (this.IsLeaf)
+            {
+                yield return this;
+                yield break;
+            }
+
+            foreach (var child in Children)
+            {
+                if (child.IsLeaf)
+                {
+                    yield return child;
+                }
+                else
+                {
+                    foreach (var item in child.FindLeafs())
+                    {
+                        yield return item;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<SectorTreeNode> TraverseDepthFirst()
+        {
+            yield return this;
+
+            foreach (var child in Children)
+            {
+                foreach (var node in child.TraverseDepthFirst())
+                {
+                    yield return node;
+                }
+            }
+        }
     }
+
+    public static (string sectorId, Sector sector)[][] CalculateMinimumCostForLeafs(Sector[] data)
+    {
+        var sectorTree = GenerateSectorTree(data);
+
+        var allSectorsById = data.ToDictionary(k => k.Id, v => v);
+
+        var leafs = sectorTree.SelectMany(x => x.FindLeafs());
+
+        var costPerLeaf = leafs.Select(leaf => calculateMinimumCostForNode(leaf.Self, allSectorsById));
+        return costPerLeaf.ToArray();
+    }
+
+    public static (string path, Sector sector)[] calculateMinimumCostForNode(Sector leafSector, Dictionary<long, Sector> allSectorsById)
+    {
+        var cost = new List<(string, Sector)>();
+        cost.Add((leafSector.Id.ToString(), leafSector));
+        var parentId = leafSector.ParentId;
+        while (parentId != -1)
+        {
+            var parentSector = allSectorsById[parentId];
+
+            cost.Add((parentSector.Id.ToString(), parentSector));
+            parentId = parentSector.ParentId;
+        }
+        cost.Reverse();
+        return cost.ToArray();
+    }
+
+
     /// <summary>
     /// Generate a tree based on a list of sectors.
     /// This returns the "Root" nodes (can be multiple),
@@ -40,9 +107,9 @@ public class SceneSectorAnalyzer
     public static SectorTreeNode[] GenerateSectorTree(Sector[] sectors)
     {
         var roots = new List<SectorTreeNode>();
-        foreach(Sector sector in sectors.Where(x => x.ParentId == -1))
+        foreach (Sector sector in sectors.Where(x => x.ParentId == -1))
         {
-            var treeNode = new SectorTreeNode(MakeTreeRecursive(sector, sectors), Self: sector);
+            var treeNode = new SectorTreeNode(MakeTreeRecursive(sector, sectors), Self: sector, Parent: null);
             roots.Add(treeNode);
         }
 
@@ -54,7 +121,7 @@ public class SceneSectorAnalyzer
         var children = new List<SectorTreeNode>();
         foreach (var item in datas.Where(x => x.ParentId == parent.Id))
         {
-            children.Add(new SectorTreeNode(MakeTreeRecursive(item, datas), item));
+            children.Add(new SectorTreeNode(MakeTreeRecursive(item, datas), item, Parent: parent));
         }
         return children.ToArray();
     }
