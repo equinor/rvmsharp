@@ -51,6 +51,7 @@ public static class SectorSplitter
                     return new Node(
                         g.Key,
                         geometries,
+                        // TODO: Should this calculate based on TriangleCount? That is whats used in the reveal code to calculate budget
                         geometries.Sum(DrawCallEstimator.EstimateByteSize),
                         boundingBoxMin,
                         boundingBoxMax,
@@ -91,6 +92,7 @@ public static class SectorSplitter
                 return new Node(
                     g.Key,
                     geometries,
+                    // TODO: Should this calculate based on TriangleCount? That is whats used in the reveal code to calculate budget
                     geometries.Sum(DrawCallEstimator.EstimateByteSize),
                     boundingBoxMin,
                     boundingBoxMax,
