@@ -17,6 +17,7 @@ public static class SectorSplitter
     private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
     private const int StartDepth = 0;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
+    private const int SectorSizeInMeters = 15;
 
     public record ProtoSector(
         uint SectorId,
@@ -41,8 +42,9 @@ public static class SectorSplitter
 
     public static IEnumerable<ProtoSector> SplitIntoSectorsByAreas(APrimitive[] allGeometries)
     {
-        static Vector3 GetBinPoint(Vector3 center, float binSizeInMeters)
+        static Vector3 GetBin3D(Vector3 center, float binSizeInMeters)
         {
+            // calculate which 3D bin the center belongs to
             return new Vector3(
                 MathF.Floor(center.X / binSizeInMeters),
                 MathF.Floor(center.Y / binSizeInMeters),
@@ -66,7 +68,7 @@ public static class SectorSplitter
                     {
                         throw new Exception("Filename should consist of AREA-DISCIPLINE");
                     }
-                    var area = filenameParts.First();
+                    var area = filenameParts.First().ToUpperInvariant();
 
                     var geometries = node.primitives.ToArray();
                     var boundingBoxMin = geometries.GetBoundingBoxMin();
@@ -85,41 +87,36 @@ public static class SectorSplitter
                 }).ToArray();
         }
 
+        // TODO: group areas close together, then do exterior splitting
+
         var sectorIdGenerator = new SequentialIdGenerator();
 
         var (exterior, interior) = ExteriorSplitter.Split(allGeometries);
 
         var nodes = ConvertToNodes(exterior, interior);
-
-        var rootBudget = SectorEstimatedByteSizeBudget;
-        var rootNodes = nodes
-            .OrderByDescending(n => n.IsExterior)
-            .ThenByDescending(n => n.Diagonal)
-            .TakeWhile(n => n.IsExterior && (rootBudget -= n.EstimatedByteSize) > 0)
-            .ToArray();
+        var rootNodes = GetNodesByBudget(nodes, SectorEstimatedByteSizeBudget);
         var childNodes = nodes
             .Except(rootNodes)
             .ToArray();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        var rootGeometries = rootNodes
+            .SelectMany(n => n.Geometries)
+            .ToArray();
         yield return new ProtoSector(
             rootSectorId,
             ParentSectorId: null,
             StartDepth,
             $"{rootSectorId}/",
-            rootNodes.SelectMany(n => n.Geometries).ToArray(),
+            rootGeometries,
             allGeometries.GetBoundingBoxMin(),
             allGeometries.GetBoundingBoxMax()
         );
 
-        // TODO: exterior priority - above or below area
-        // TODO: exterior priority - above or below area
-        // TODO: exterior priority - above or below area
+        var groupByAreaAndBin3D = childNodes
+            .GroupBy(n => (n.Area, Bin3D: GetBin3D(n.Center, SectorSizeInMeters)));
 
-        var groupings = childNodes
-            .GroupBy(n => (n.Area, BinnedMidpoint: GetBinPoint(n.Center, 15)));
-
-        foreach (var grouping in groupings)
+        foreach (var grouping in groupByAreaAndBin3D)
         {
             var sectors = SplitIntoSectorsRecursive(
                 grouping.ToArray(),
@@ -157,8 +154,10 @@ public static class SectorSplitter
         var bbMax = nodes.GetBoundingBoxMax();
         var bbMidPoint = bbMin + ((bbMax - bbMin) / 2);
 
-        var mainVoxelNodes = GetNodesByBudget(nodes, SectorEstimatedByteSizeBudget).ToArray();
-        var subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
+        var mainVoxelNodes = GetNodesByBudget(nodes, SectorEstimatedByteSizeBudget);
+        var subVoxelNodes = nodes
+            .Except(mainVoxelNodes)
+            .ToArray();
         bool isLeaf = subVoxelNodes.Length == 0;
 
         if (isLeaf)
@@ -227,27 +226,14 @@ public static class SectorSplitter
         }
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, long budget)
+    private static Node[] GetNodesByBudget(Node[] nodes, long budget)
     {
-        var nodesInPrioritizedOrder = nodes
-            .OrderByDescending(x =>
-            {
-                var hasTriangleMesh = x.Geometries
-                    .OfType<TriangleMesh>()
-                    .Any();
-
-                    // Theory: Primitives have more overhead than their byte size. This is not verified.
-                    return hasTriangleMesh switch
-                {
-                    true => x.Diagonal / x.EstimatedByteSize,
-                    false => x.Diagonal / (x.EstimatedByteSize * 10)
-                };
-            }
-        );
-
-        var budgetLeft = budget;
-        return nodesInPrioritizedOrder
-            .TakeWhile(n => (budgetLeft -= n.EstimatedByteSize) > 0);
+        var currentBudget = budget;
+        return nodes
+            .OrderByDescending(n => n.IsExterior)
+            .ThenByDescending(n => n.Diagonal)
+            .TakeWhile(n => (currentBudget -= n.EstimatedByteSize) > 0)
+            .ToArray();
     }
 
     private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
@@ -269,14 +255,16 @@ public static class SectorSplitter
 
     }
 
-    private static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
+    private static int CalculateVoxelKeyForNode(Node node, Vector3 bbMidPoint)
     {
         var voxelKeyAndUsageCount = new Dictionary<int, int>();
 
-        foreach (var geometry in nodeGroupGeometries.Geometries)
+        foreach (var geometry in node.Geometries)
         {
             var voxelKey = CalculateVoxelKeyForGeometry(geometry.AxisAlignedBoundingBox, bbMidPoint);
-            var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount) ? existingCount : 0;
+            var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount)
+                ? existingCount
+                : 0;
             voxelKeyAndUsageCount[voxelKey] = count + 1;
         }
 
