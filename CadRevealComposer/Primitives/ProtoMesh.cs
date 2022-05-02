@@ -20,6 +20,7 @@ public record ProtoMeshFromPyramid(CommonPrimitiveProperties CommonPrimitiveProp
         [property: I3df(I3dfAttribute.AttributeType.Ignore)] RvmPyramid Pyramid)
     : ProtoMesh(CommonPrimitiveProperties, Pyramid);
 
+// Workaround for Reveal not rendering ClosedGeneralCylinder and ClosedGeneralCone correctly
 public record ProtoMeshFromSnout(CommonPrimitiveProperties CommonPrimitiveProperties,
         [property: I3df(I3dfAttribute.AttributeType.Ignore)] RvmSnout Snout)
     : ProtoMesh(CommonPrimitiveProperties, Snout);

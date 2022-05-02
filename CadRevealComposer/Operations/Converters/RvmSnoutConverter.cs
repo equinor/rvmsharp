@@ -42,6 +42,8 @@ public static class RvmSnoutConverter
             }
             else
             {
+                // Workaround for Reveal not rendering ClosedGeneralCylinder and ClosedGeneralCone correctly
+                // Meshes out these specific primitives instead
                 return new ProtoMeshFromSnout(commons, rvmSnout);
             }
         }

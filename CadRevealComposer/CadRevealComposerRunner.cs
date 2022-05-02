@@ -1,7 +1,6 @@
 namespace CadRevealComposer;
 
 using Ben.Collections.Specialized;
-using CadRevealComposer.Operations.Converters;
 using Configuration;
 using IdProviders;
 using Operations;
@@ -81,34 +80,23 @@ public static class CadRevealComposerRunner
             return true;
         }
 
-        var invalidGeometriesGroupedByType = allNodes
-            .SelectMany(x => x.RvmGeometries.Where(g => !IsValidGeometry(g)))
-            .GroupBy(g => g.GetType())
-            .OrderBy(g => g.Key.Name);
+        var facetGroupsWithNegativeBounds = allNodes
+            .SelectMany(x => x.RvmGeometries.Where(g => g is RvmFacetGroup && !IsValidGeometry(g)));
 
-        foreach (var group in invalidGeometriesGroupedByType)
+        if (facetGroupsWithNegativeBounds.Any())
         {
-            Console.WriteLine($"Excluded {group.Count()} {group.Key.Name} due to negative extents in either X/Y/Z.");
+            Console.WriteLine($"Excluded {facetGroupsWithNegativeBounds.Count()} FacetGroups due to negative extents in either X/Y/Z.");
         }
 
         var geometries = allNodes
             .AsParallel()
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries
-                //.Where(IsValidGeometry)
-                .SelectMany(primitive =>
-                {
-                    var node = x.Group as RvmNode ?? throw new InvalidOperationException();
-                    var l = new List<APrimitive?>() { APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive) };
-                    if (!IsValidGeometry(primitive))
-                    {
-                        var scaledExtents = primitive.BoundingBoxLocal.Extents * 0.001f;
-                        l.Add(new Box(primitive.GetCommonProps(node, x), Vector3.UnitY, MathF.Abs(scaledExtents.X), MathF.Abs(scaledExtents.Y), MathF.Abs(scaledExtents.Z) / 2, 0));
-                    }
-                    return l;
-                }))
+                .Where(g => !(g is RvmFacetGroup) || IsValidGeometry(g)) // TODO: This is hack filtering out FacetGroups with negative extents. This assumes that this is the only primitive that creates problems
+                .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
             .WhereNotNull()
             .ToArray();
+
 
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -162,8 +150,6 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
-
-
 
         var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
 
