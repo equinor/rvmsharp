@@ -69,19 +69,19 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
         });
 
-        static bool IsValidGeometry(RvmPrimitive geometry)
+        static bool HasInvalidBoundsSize(RvmPrimitive geometry)
         {
             // TODO: Investigate why we have negative extents in the RVM data, and clarify if we have negligable data loss by excluding these parts. Follow up in AB#58629 ( https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/58629 )
             var extents = geometry.BoundingBoxLocal.Extents;
             if (extents.X < 0 || extents.Y < 0 || extents.Z < 0)
             {
-                return false;
+                return true;
             }
-            return true;
+            return false;
         }
 
         var facetGroupsWithNegativeBounds = allNodes
-            .SelectMany(x => x.RvmGeometries.Where(g => g is RvmFacetGroup && !IsValidGeometry(g)));
+            .SelectMany(x => x.RvmGeometries.Where(g => g is RvmFacetGroup && HasInvalidBoundsSize(g)));
 
         if (facetGroupsWithNegativeBounds.Any())
         {
@@ -92,7 +92,7 @@ public static class CadRevealComposerRunner
             .AsParallel()
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries
-                .Where(g => !(g is RvmFacetGroup) || IsValidGeometry(g)) // TODO: This is hack filtering out FacetGroups with negative extents. This assumes that this is the only primitive that creates problems
+                .Where(g => !(g is RvmFacetGroup) || !HasInvalidBoundsSize(g)) // TODO: This is hack filtering out FacetGroups with negative extents. This assumes that this is the only primitive that creates problems
                 .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
             .WhereNotNull()
             .ToArray();

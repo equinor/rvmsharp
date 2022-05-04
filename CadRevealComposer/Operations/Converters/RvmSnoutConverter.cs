@@ -43,7 +43,9 @@ public static class RvmSnoutConverter
             else
             {
                 // Workaround for Reveal not rendering ClosedGeneralCylinder and ClosedGeneralCone correctly
-                // Meshes out these specific primitives instead
+                // To make this work would require a counter-bug, which has not yet been prioritized
+                // See Work item 65211 for more info: https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/65211/
+                // This fix meshes out these specific primitives instead
                 return new ProtoMeshFromSnout(commons, rvmSnout);
             }
         }

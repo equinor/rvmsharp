@@ -122,7 +122,7 @@ public static class AlgebraUtils
         var v1 = Vector3.Transform(Vector3.One, rotation);
         var v2 = Vector3.Transform(Vector3.One, qc);
         Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
-        // Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1% // TODO: Meshing out snouts breaks this
+        Debug.Assert(v1.EqualsWithinFactor(v2, 0.1f)); // 0.1% // TODO: Is this correct
     }
 
     /// <summary>
