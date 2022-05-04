@@ -92,7 +92,7 @@ public static class CadRevealComposerRunner
             .AsParallel()
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries
-                .Where(g => !(g is RvmFacetGroup) || !HasInvalidBoundsSize(g)) // TODO: This is hack filtering out FacetGroups with negative extents. This assumes that this is the only primitive that creates problems
+                //.Where(g => !(g is RvmFacetGroup) || !HasInvalidBoundsSize(g)) // TODO: This is hack filtering out FacetGroups with negative extents. This assumes that this is the only primitive that creates problems
                 .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
             .WhereNotNull()
             .ToArray();
