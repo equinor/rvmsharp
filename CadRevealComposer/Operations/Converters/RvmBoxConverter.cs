@@ -1,32 +1,30 @@
-﻿namespace CadRevealComposer.Operations.Converters
+﻿namespace CadRevealComposer.Operations.Converters;
+
+using Primitives;
+using RvmSharp.Primitives;
+using System;
+using System.Numerics;
+using Utils;
+
+public static class RvmBoxExtensions
 {
-    using Primitives;
-    using RvmSharp.Primitives;
-    using System.Numerics;
-
-    public static class RvmBoxExtensions
+    public static Box ConvertToRevealPrimitive(this RvmBox rvmBox, CadRevealNode revealNode, RvmNode container)
     {
-        public static Box ConvertToRevealPrimitive(this RvmBox rvmBox, CadRevealNode revealNode, RvmNode container)
+        if (!rvmBox.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
-            var commons = rvmBox.GetCommonProps(container, revealNode);
-            var unitBoxScale = Vector3.Multiply(
-                commons.Scale,
-                new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
-
-            var matrix =
-                Matrix4x4.CreateScale(unitBoxScale)
-                * Matrix4x4.CreateFromQuaternion(commons.Rotation)
-                * Matrix4x4.CreateTranslation(commons.Position);
-
-            Box revealBox = new Box(
-                CommonPrimitiveProperties: commons,
-                Normal: commons.RotationDecomposed.Normal,
-                DeltaX: unitBoxScale.X,
-                DeltaY: unitBoxScale.Y,
-                DeltaZ: unitBoxScale.Z,
-                RotationAngle: commons.RotationDecomposed.RotationAngle, matrix);
-
-            return revealBox;
+            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmBox.Matrix);
         }
+        var unitBoxScale = Vector3.Multiply(
+            scale,
+            new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
+
+        var matrix =
+            Matrix4x4.CreateScale(unitBoxScale)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(position);
+
+        var color = RvmPrimitiveExtensions.GetColor(container);
+
+        return new Box(revealNode.TreeIndex, color, matrix);
     }
 }

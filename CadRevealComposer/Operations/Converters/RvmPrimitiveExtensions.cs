@@ -9,7 +9,7 @@ using Utils;
 
 public static class RvmPrimitiveExtensions
 {
-    private static Color GetColor(RvmNode container)
+    public static Color GetColor(RvmNode container)
     {
         if (PdmsColors.TryGetColorByCode(container.MaterialId, out var color))
         {

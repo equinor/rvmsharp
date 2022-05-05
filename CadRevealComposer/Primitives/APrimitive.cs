@@ -3,7 +3,6 @@
 
 namespace CadRevealComposer.Primitives;
 
-using Newtonsoft.Json;
 using Operations.Converters;
 using RvmSharp.Primitives;
 using System;
@@ -12,67 +11,32 @@ using System.Drawing;
 using System.Numerics;
 using Utils;
 
-public record CommonPrimitiveProperties(
-    ulong NodeId,
-    ulong TreeIndex,
-    Vector3 Position,
-    Quaternion Rotation,
-    Vector3 Scale,
-    float AxisAlignedDiagonal,
-    RvmBoundingBox AxisAlignedBoundingBox,
-    Color Color,
-    (Vector3 Normal, float RotationAngle) RotationDecomposed,
-    RvmPrimitive SourcePrimitive);
+public abstract record ProtoMesh(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record ProtoMeshFromFacetGroup(ulong TreeIndex) : ProtoMesh(TreeIndex);
+public sealed record ProtoMeshFromPyramid(ulong TreeIndex) : ProtoMesh(TreeIndex);
 
-public abstract record APrimitive(
-    [property: I3df(I3dfAttribute.AttributeType.Null)]
-    ulong NodeId,
-    [property: I3df(I3dfAttribute.AttributeType.Null)]
-    ulong TreeIndex,
-    [property: I3df(I3dfAttribute.AttributeType.Color)]
-    Color Color,
-    [property: I3df(I3dfAttribute.AttributeType.Diagonal)]
-    float Diagonal,
-    [property: I3df(I3dfAttribute.AttributeType.CenterX)]
-    float CenterX,
-    [property: I3df(I3dfAttribute.AttributeType.CenterY)]
-    float CenterY,
-    [property: I3df(I3dfAttribute.AttributeType.CenterZ)]
-    float CenterZ,
-    [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
-    RvmBoundingBox AxisAlignedBoundingBox,
-    [property: JsonIgnore, I3df(I3dfAttribute.AttributeType.Ignore)]
-    RvmPrimitive SourcePrimitive,
-    [property: JsonIgnore,
-               Obsolete("This is a hack to simplify inheritance. Use the other properties instead.", error: true),
-               I3df(I3dfAttribute.AttributeType.Ignore)]
-    CommonPrimitiveProperties? CommonPrimitiveProperties =
-        null! // The hack: Add JsonIgnore here, but in all inheritors use the simplified constructor.
-)
+
+public sealed record Box(ulong TreeIndex, Color Color, Matrix4x4 Matrix) : APrimitive(TreeIndex);
+public sealed record Circle(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record Cone(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record EccentricCone(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record Ellipsoid(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record GeneralCylinder(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record GeneralRing(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record Quad(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record Torus(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record Trapezium(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record Nut(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record InstancedMesh(ulong TreeIndex) : APrimitive(TreeIndex);
+public sealed record TriangleMesh(ulong TreeIndex) : APrimitive(TreeIndex);
+
+
+public abstract record APrimitive(ulong TreeIndex)
 {
-    /// <summary>
-    /// Alternative constructor to simplify inheritance
-    /// </summary>
-    /// <param name="commonPrimitiveProperties"></param>
-    protected APrimitive(CommonPrimitiveProperties commonPrimitiveProperties)
-        : this(
-            commonPrimitiveProperties.NodeId,
-            commonPrimitiveProperties.TreeIndex,
-            commonPrimitiveProperties.Color,
-            commonPrimitiveProperties.AxisAlignedDiagonal,
-            commonPrimitiveProperties.Position.X,
-            commonPrimitiveProperties.Position.Y,
-            commonPrimitiveProperties.Position.Z,
-            commonPrimitiveProperties.AxisAlignedBoundingBox,
-            commonPrimitiveProperties.SourcePrimitive)
-    {
-    }
-
-    // TODO: this code must be refactored, it does not belong in this namespace
     public static APrimitive? FromRvmPrimitive(
-        CadRevealNode revealNode,
-        RvmNode rvmNode,
-        RvmPrimitive rvmPrimitive)
+            CadRevealNode revealNode,
+            RvmNode rvmNode,
+            RvmPrimitive rvmPrimitive)
     {
         PrimitiveCounter.pc++;
         var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
