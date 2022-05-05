@@ -1,23 +1,19 @@
 namespace CadRevealComposer
 {
     using Configuration;
-    using Faces;
     using HierarchyComposer.Functions;
     using Microsoft.Extensions.Logging;
     using Microsoft.Extensions.Logging.Abstractions;
     using Newtonsoft.Json;
     using Operations;
     using Primitives;
-    using Primitives.Reflection;
     using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
-    using System.Drawing;
     using System.IO;
     using System.Linq;
     using System.Numerics;
     using Utils;
-    using Utils.Comparers;
     using Writers;
 
     public static class SceneCreator
@@ -53,11 +49,9 @@ namespace CadRevealComposer
             ModelParameters parameters,
             DirectoryInfo outputDirectory,
             ulong maxTreeIndex,
-            SectorFaces[] sectorFacesArray,
             CameraPositioning.CameraPosition cameraPosition)
         {
-            var dict = sectorFacesArray.ToDictionary(kvp => kvp.SectorId, kvp => kvp);
-            static Sector FromSector(SectorInfo sector, Dictionary<ulong, SectorFaces> dict, DirectoryInfo outputDirectory)
+            static Sector FromSector(SectorInfo sector, DirectoryInfo outputDirectory)
             {
 
                 return new Sector
@@ -90,7 +84,7 @@ namespace CadRevealComposer
                 SubRevisionId = -1,
                 MaxTreeIndex = maxTreeIndex,
                 Unit = "Meters",
-                Sectors = sectors.Select(s => FromSector(s, dict, outputDirectory)).ToArray()
+                Sectors = sectors.Select(s => FromSector(s, outputDirectory)).ToArray()
             };
 
             var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
