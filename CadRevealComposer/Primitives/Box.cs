@@ -14,5 +14,6 @@ public record Box(
     float DeltaZ,
     [property: I3df(I3dfAttribute.AttributeType.Angle)]
 
-    float RotationAngle
+    float RotationAngle,
+    Matrix4x4 Matrix
 ) : APrimitive(CommonPrimitiveProperties);

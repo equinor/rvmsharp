@@ -17,9 +17,15 @@ public static class RvmPyramidConverter
                 commonProps.Scale,
                 new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
             PrimitiveCounter.pyramidAsBox++;
+
+            var matrix =
+                Matrix4x4.CreateScale(unitBoxScale)
+                * Matrix4x4.CreateFromQuaternion(commonProps.Rotation)
+                * Matrix4x4.CreateTranslation(commonProps.Position);
+
             return new Box(commonProps,
                 commonProps.RotationDecomposed.Normal, unitBoxScale.X,
-                unitBoxScale.Y, unitBoxScale.Z, commonProps.RotationDecomposed.RotationAngle);
+                unitBoxScale.Y, unitBoxScale.Z, commonProps.RotationDecomposed.RotationAngle, matrix);
         }
 
         return new ProtoMeshFromPyramid(commonProps, rvmPyramid);

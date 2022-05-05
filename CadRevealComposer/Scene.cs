@@ -40,13 +40,17 @@ public class Sector
 
     [JsonProperty("boundingBox")] public BoundingBox BoundingBox { get; set; } = null!;
 
-    [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
+    [JsonProperty("sectorFileName")] public string SectorFileName { get; set; } = null!;
+
+
+    // [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
 
     [JsonProperty("estimatedTriangleCount")]
     public long EstimatedTriangleCount { get; set; }
 
     [JsonProperty("estimatedDrawCallCount")]
     public long EstimatedDrawCallCount { get; set; }
+    [JsonProperty("downloadSize")] public long DownloadSize { get; set; }
 }
 
 public record BoundingBox(

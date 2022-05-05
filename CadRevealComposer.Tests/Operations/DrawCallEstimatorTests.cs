@@ -17,13 +17,13 @@ public class DrawCallEstimatorTests
         {
             new Box(
                 new CommonPrimitiveProperties(1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 1.0f, new RvmBoundingBox(-Vector3.One, Vector3.One), Color.Blue, (Vector3.UnitZ, 0), null!),
-                Vector3.UnitZ, 1, 1, 1, 0),
+                Vector3.UnitZ, 1, 1, 1, 0, Matrix4x4.Identity),
             new Box(
                 new CommonPrimitiveProperties(1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 1.0f, new RvmBoundingBox(-Vector3.One, Vector3.One), Color.Blue, (Vector3.UnitZ, 0), null!),
-                Vector3.UnitZ, 1, 1, 1, 0),
+                Vector3.UnitZ, 1, 1, 1, 0,  Matrix4x4.Identity),
             new Box(
                 new CommonPrimitiveProperties(1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 1.0f, new RvmBoundingBox(-Vector3.One, Vector3.One), Color.Blue, (Vector3.UnitZ, 0), null!),
-                Vector3.UnitZ, 1, 1, 1, 0),
+                Vector3.UnitZ, 1, 1, 1, 0,  Matrix4x4.Identity),
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
         Assert.AreEqual(1, estimatedDrawCalls);

@@ -41,6 +41,6 @@ public class ExteriorSplitterTests
             Color.Blue,
             (Vector3.UnitZ, 0),
             null!);
-        return new Box(common, Vector3.UnitZ, boxSize, boxSize, boxSize, 0);
+        return new Box(common, Vector3.UnitZ, boxSize, boxSize, boxSize, 0, Matrix4x4.Identity);
     }
 }

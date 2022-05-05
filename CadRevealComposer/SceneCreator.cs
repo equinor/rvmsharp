@@ -21,8 +21,6 @@ using Writers;
 
 public static class SceneCreator
 {
-    private const int I3DFMagicBytes = 1178874697; // I3DF chars as bytes.
-
     public record SectorInfo(
         uint SectorId,
         uint? ParentSectorId,
@@ -61,7 +59,7 @@ public static class SceneCreator
             return new Sector
             {
                 Id = sector.SectorId,
-                ParentId = sector.ParentSectorId.HasValue
+                ParentId = sector.ParentSectorId.HasValue // FIXME: not needed anymore? Can be null?
                     ? sector.ParentSectorId.Value
                     : -1,
                 BoundingBox =
@@ -71,18 +69,17 @@ public static class SceneCreator
                     ),
                 Depth = sector.Depth,
                 Path = sector.Path,
-                IndexFile = new IndexFile(
-                    FileName: sector.Filename,
-                    DownloadSize: sector.DownloadSize,
-                    PeripheralFiles: sector.PeripheralFiles),
+                SectorFileName = $"{sector.SectorId}.glb",
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
-                EstimatedDrawCallCount = sector.EstimatedDrawCallCount
+                EstimatedDrawCallCount = sector.EstimatedDrawCallCount,
+                // FIXME diagonal data
+                DownloadSize = 1000, //FIXME: right size
             };
         }
 
         var scene = new Scene
         {
-            Version = 8,
+            Version = 9,
             ProjectId = parameters.ProjectId,
             ModelId = parameters.ModelId,
             RevisionId = parameters.RevisionId,
@@ -102,127 +99,6 @@ public static class SceneCreator
     {
         var geometries = sector.Geometries;
 
-        var colors = ImmutableSortedSet<Color>.Empty;
-        var diagonals = ImmutableSortedSet<float>.Empty;
-        var centerX = ImmutableSortedSet<float>.Empty;
-        var centerY = ImmutableSortedSet<float>.Empty;
-        var centerZ = ImmutableSortedSet<float>.Empty;
-        var normals = ImmutableSortedSet<Vector3>.Empty;
-        var deltas = ImmutableSortedSet<float>.Empty;
-        var heights = ImmutableSortedSet<float>.Empty;
-        var radii = ImmutableSortedSet<float>.Empty;
-        var angles = ImmutableSortedSet<float>.Empty;
-        var translationsX = ImmutableSortedSet<float>.Empty;
-        var translationsY = ImmutableSortedSet<float>.Empty;
-        var translationsZ = ImmutableSortedSet<float>.Empty;
-        var scalesX = ImmutableSortedSet<float>.Empty;
-        var scalesY = ImmutableSortedSet<float>.Empty;
-        var scalesZ = ImmutableSortedSet<float>.Empty;
-        var fileIds = Array.Empty<ulong>();
-        var textures = Array.Empty<Texture>();
-
-        foreach (var attributeKind in Enum.GetValues<I3dfAttribute.AttributeType>())
-        {
-            switch (attributeKind)
-            {
-                case I3dfAttribute.AttributeType.Null:
-                    // Intentionally ignored
-                    break;
-                case I3dfAttribute.AttributeType.Color:
-                    // ReSharper disable once RedundantTypeArgumentsOfMethod
-                    colors = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Color>(
-                        geometries, attributeKind, new RgbaColorComparer());
-                    break;
-                case I3dfAttribute.AttributeType.Diagonal:
-                    diagonals =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.CenterX:
-                    centerX =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.CenterY:
-                    centerY =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.CenterZ:
-                    centerZ =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.Normal:
-                    // ReSharper disable once RedundantTypeArgumentsOfMethod
-                    normals =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<Vector3>(
-                            geometries, attributeKind, new XyzVector3Comparer());
-                    break;
-                case I3dfAttribute.AttributeType.Delta:
-                    deltas =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.Height:
-                    heights =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.Radius:
-                    radii = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                        geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.Angle:
-                    angles = APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                        geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.TranslationX:
-                    translationsX =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.TranslationY:
-                    translationsY =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.TranslationZ:
-                    translationsZ =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.ScaleX:
-                    scalesX =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.ScaleY:
-                    scalesY =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.ScaleZ:
-                    scalesZ =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<float>(
-                            geometries, attributeKind);
-                    break;
-                case I3dfAttribute.AttributeType.FileId:
-                    fileIds =
-                        APrimitiveReflectionHelpers.GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(
-                            geometries, attributeKind).ToArray();
-                    break;
-                case I3dfAttribute.AttributeType.Texture:
-                    textures = Array.Empty<Texture>();
-                    break;
-                case I3dfAttribute.AttributeType.Ignore:
-                    // AttributeType.Ignore are intentionally ignored, and not exported.
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(attributeKind), attributeKind, "Unexpected i3df attribute.");
-            }
-        }
-
         var primitiveCollections = new PrimitiveCollections();
         foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
         {
@@ -238,49 +114,8 @@ public static class SceneCreator
             fieldInfo.SetValue(primitiveCollections, typedArray);
         }
 
-        var file = new FileI3D
-        {
-            FileSector = new FileSector
-            {
-                Header = new Header
-                {
-                    // Constants
-                    MagicBytes = I3DFMagicBytes,
-                    FormatVersion = 8,
-                    OptimizerVersion = 1,
-
-                    // Arbitrary selected numbers
-                    SectorId = sector.SectorId,
-                    ParentSectorId = sector.ParentSectorId,
-                    BboxMax = sector.BoundingBoxMax,
-                    BboxMin = sector.BoundingBoxMin,
-                    Attributes = new Attributes
-                    {
-                        Angle = angles,
-                        CenterX = centerX,
-                        CenterY = centerY,
-                        CenterZ = centerZ,
-                        Color = colors,
-                        Normal = normals,
-                        Delta = deltas,
-                        Diagonal = diagonals,
-                        ScaleX = scalesX,
-                        ScaleY = scalesY,
-                        ScaleZ = scalesZ,
-                        TranslationX = translationsX,
-                        TranslationY = translationsY,
-                        TranslationZ = translationsZ,
-                        Radius = radii,
-                        FileId = fileIds,
-                        Height = heights,
-                        Texture = textures
-                    }
-                },
-                PrimitiveCollections = primitiveCollections
-            }
-        };
-        var filepath = Path.Join(outputDirectory, $"sector_{file.FileSector.Header.SectorId}.i3d");
-        using var i3dSectorFile = File.Create(filepath);
-        I3dWriter.WriteSector(file.FileSector, i3dSectorFile);
+        var filepath2 = Path.Join(outputDirectory, $"{sector.SectorId}.glb");
+        using var gltfSectorFile = File.Create(filepath2);
+        GltfWriterV9.WriteSector(geometries.ToArray(), gltfSectorFile);
     }
 }
