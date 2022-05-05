@@ -11,27 +11,32 @@ using System.Drawing;
 using System.Numerics;
 using Utils;
 
-public abstract record ProtoMesh(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record ProtoMeshFromFacetGroup(ulong TreeIndex) : ProtoMesh(TreeIndex);
-public sealed record ProtoMeshFromPyramid(ulong TreeIndex) : ProtoMesh(TreeIndex);
+// RVM model - converted to GLTF model in the end
+public sealed record FacetGroup(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Pyramid(Matrix4x4 Matrix, ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+
+// instancing processing - converted to GLTF in the end
+public abstract record ProtoMesh(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record ProtoMeshFromFacetGroup(FacetGroup FacetGroup, ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, AxisAlignedBoundingBox);
+public sealed record ProtoMeshFromPyramid(Pyramid Pyramid, ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, AxisAlignedBoundingBox);
+
+// Reveal GLTF model
+public sealed record Box(Color Color, Matrix4x4 Matrix, ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Circle(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Cone(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record EccentricCone(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Ellipsoid(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record GeneralCylinder(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record GeneralRing(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Quad(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Torus(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Trapezium(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record Nut(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record InstancedMesh(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
+public sealed record TriangleMesh(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, AxisAlignedBoundingBox);
 
 
-public sealed record Box(ulong TreeIndex, Color Color, Matrix4x4 Matrix) : APrimitive(TreeIndex);
-public sealed record Circle(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record Cone(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record EccentricCone(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record Ellipsoid(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record GeneralCylinder(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record GeneralRing(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record Quad(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record Torus(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record Trapezium(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record Nut(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record InstancedMesh(ulong TreeIndex) : APrimitive(TreeIndex);
-public sealed record TriangleMesh(ulong TreeIndex) : APrimitive(TreeIndex);
-
-
-public abstract record APrimitive(ulong TreeIndex)
+public abstract record APrimitive(ulong TreeIndex, RvmBoundingBox AxisAlignedBoundingBox)
 {
     public static APrimitive? FromRvmPrimitive(
             CadRevealNode revealNode,

@@ -226,7 +226,7 @@ public static class ZoneSplitter
             .Except(zones.SelectMany(z => z.Primitives))
             .ToArray();
         var nodesWithoutZone = primitivesWithoutZone
-            .GroupBy(p => p.NodeId)
+            .GroupBy(p => p.TreeIndex)
             .ToArray();
 
         Console.WriteLine($"Root sector has {nodesWithoutZone.Length:N0} nodes and {primitivesWithoutZone.Length:N0} geometries.");
