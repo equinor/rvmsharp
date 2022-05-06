@@ -87,6 +87,12 @@ public sealed record GeneralRing(
     Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
+public sealed record Nut(
+    Matrix4x4 InstanceMatrix,
+    ulong TreeIndex,
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+
 public sealed record Quad(
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
@@ -107,12 +113,6 @@ public sealed record Trapezium(
     Vector3 Vertex2,
     Vector3 Vertex3,
     Vector3 Vertex4,
-    ulong TreeIndex,
-    Color Color,
-    RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-
-public sealed record Nut(
-    Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
     Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
