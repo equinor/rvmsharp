@@ -1,11 +1,7 @@
 ﻿namespace CadRevealComposer.Operations.Converters;
 
-using Primitives;
 using RvmSharp.Primitives;
-using System;
 using System.Drawing;
-using System.Numerics;
-using Utils;
 
 public static class RvmPrimitiveExtensions
 {
@@ -18,33 +14,5 @@ public static class RvmPrimitiveExtensions
 
         // TODO: Fallback color is arbitrarily chosen. It seems we have some issue with the material mapping table, and should have had more colors.
         return Color.Magenta;
-    }
-
-    /// <summary>
-    /// Retrieve the common properties, that are present for all RvmPrimitives.
-    /// Converted to world space.
-    /// </summary>
-    internal static CommonPrimitiveProperties GetCommonProps(this RvmPrimitive rvmPrimitive, RvmNode container, CadRevealNode cadNode)
-    {
-        if (!rvmPrimitive.Matrix.DecomposeAndNormalize(out var scale, out var rot, out var pos))
-        {
-            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPrimitive.Matrix);
-        }
-
-        var axisAlignedBoundingBox = rvmPrimitive.CalculateAxisAlignedBoundingBox();
-
-        var colors = GetColor(container);
-
-        return new CommonPrimitiveProperties(
-            cadNode.NodeId,
-            cadNode.TreeIndex,
-            pos,
-            rot,
-            scale,
-            axisAlignedBoundingBox.Diagonal,
-            axisAlignedBoundingBox,
-            colors,
-            RotationDecomposed: rot.DecomposeQuaternion(),
-            rvmPrimitive);
     }
 }

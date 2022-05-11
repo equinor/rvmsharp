@@ -270,7 +270,7 @@ public static class ExteriorSplitter
         }
 
         return primitives
-            .GroupBy(p => p.NodeId)
+            .GroupBy(p => p.TreeIndex)
             .AsParallel()
             .Select(ConvertNode)
             .ToArray();

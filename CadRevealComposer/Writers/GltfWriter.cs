@@ -105,20 +105,21 @@ public static class GltfWriter
             buffer.Write(box.InstanceMatrix, ref bufferPos);
         }
 
-        var node = scene.CreateNode("BoxCollection");
-        var meshGpuInstancing = node.UseExtension<MeshGpuInstancing>();
-
+        // create buffer accessors
         var treeIndexAccessor = model.CreateAccessor();
         var colorAccessor = model.CreateAccessor();
         var instanceMatrixAccessor = model.CreateAccessor();
 
-        meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
-        meshGpuInstancing.SetAccessor("_color", colorAccessor);
-        meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
-
         treeIndexAccessor.SetData(bufferView, 0, boxCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         colorAccessor.SetData(bufferView, 4, boxCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
         instanceMatrixAccessor.SetData(bufferView, 8, boxCount, DimensionType.MAT4, EncodingType.FLOAT, false);
+
+        // create node
+        var node = scene.CreateNode("BoxCollection");
+        var meshGpuInstancing = node.UseExtension<MeshGpuInstancing>();
+        meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
+        meshGpuInstancing.SetAccessor("_color", colorAccessor);
+        meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
     }
 
     private static void WriteCircles(Circle[] circles, ModelRoot model, Scene scene)
@@ -219,6 +220,8 @@ public static class GltfWriter
 
         var treeIndexAccessor = model.CreateAccessor();
         var colorAccessor = model.CreateAccessor();
+        var centerAAccessor = model.CreateAccessor();
+        var centerBAccessor = model.CreateAccessor();
         var normalAccessor = model.CreateAccessor();
         var radiusAAccessor = model.CreateAccessor();
         var radiusBAccessor = model.CreateAccessor();
@@ -227,12 +230,14 @@ public static class GltfWriter
         var meshGpuInstancing = node.UseExtension<MeshGpuInstancing>();
         meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
         meshGpuInstancing.SetAccessor("_color", colorAccessor);
+        meshGpuInstancing.SetAccessor("_centerA", centerAAccessor);
+        meshGpuInstancing.SetAccessor("_centerB", centerBAccessor);
         meshGpuInstancing.SetAccessor("_normal", normalAccessor);
         meshGpuInstancing.SetAccessor("_radiusA", radiusAAccessor);
         meshGpuInstancing.SetAccessor("_radiusB", radiusBAccessor);
 
         // create byte buffer
-        const int byteStride = (1 + 1 + 3 + 1 + 1) * sizeof(float);
+        const int byteStride = (1 + 1 + 3 + 3 + 3 + 1 + 1) * sizeof(float);
         var bufferView = model.CreateBufferView(byteStride * eccentricConeCount, byteStride);
         var buffer = bufferView.Content.Array!;
         var bufferPos = 0;
@@ -241,6 +246,8 @@ public static class GltfWriter
             var treeIndex = (float)eccentricCone.TreeIndex;
             buffer.Write(treeIndex, ref bufferPos);
             buffer.Write(eccentricCone.Color, ref bufferPos);
+            buffer.Write(eccentricCone.CenterA, ref bufferPos);
+            buffer.Write(eccentricCone.CenterB, ref bufferPos);
             buffer.Write(eccentricCone.Normal, ref bufferPos);
             buffer.Write(eccentricCone.RadiusA, ref bufferPos);
             buffer.Write(eccentricCone.RadiusB, ref bufferPos);
@@ -248,9 +255,11 @@ public static class GltfWriter
 
         treeIndexAccessor.SetData(bufferView, 0, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         colorAccessor.SetData(bufferView, 4, eccentricConeCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        normalAccessor.SetData(bufferView, 8, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        radiusAAccessor.SetData(bufferView, 20, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        radiusBAccessor.SetData(bufferView, 24, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        centerAAccessor.SetData(bufferView, 8, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        centerBAccessor.SetData(bufferView, 20, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        normalAccessor.SetData(bufferView, 32, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        radiusAAccessor.SetData(bufferView, 44, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        radiusBAccessor.SetData(bufferView, 48, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
     }
 
     private static void WriteEllipsoids(Ellipsoid[] ellipsoids, ModelRoot model, Scene scene)
@@ -576,7 +585,7 @@ public static class GltfWriter
         var target = buffer.AsSpan(bufferPos, sizeof(float));
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
-        bufferPos += 4;
+        bufferPos += sizeof(float);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -607,9 +616,9 @@ public static class GltfWriter
     private static void Write(this byte[] buffer, Vector4 vector, ref int bufferPos)
     {
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector4.cs
-        // writes Vector3 memory byte layout directly to buffer
+        // writes Vector4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
-        var target = buffer.AsSpan(bufferPos, sizeof(float) * 3);
+        var target = buffer.AsSpan(bufferPos, sizeof(float) * 4);
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float) * 4;

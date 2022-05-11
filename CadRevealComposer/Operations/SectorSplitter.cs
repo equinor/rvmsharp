@@ -46,7 +46,7 @@ public static class SectorSplitter
         foreach (var zone in zones)
         {
             var nodes = zone.Primitives
-                .GroupBy(p => p.NodeId)
+                .GroupBy(p => p.TreeIndex)
                 .Select(g =>
                 {
                     var geometries = g.ToArray();
@@ -101,7 +101,7 @@ public static class SectorSplitter
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
 
         var nodes = allGeometries
-            .GroupBy(p => p.NodeId)
+            .GroupBy(p => p.TreeIndex)
             .Select(g =>
             {
                 var geometries = g.ToArray();

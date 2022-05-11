@@ -25,6 +25,6 @@ public static class RvmBoxExtensions
 
         var color = RvmPrimitiveExtensions.GetColor(container);
 
-        return new Box(revealNode.TreeIndex, color, matrix);
+        return new Box(matrix, color, revealNode.TreeIndex, rvmBox.BoundingBoxLocal);
     }
 }

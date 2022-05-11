@@ -86,7 +86,7 @@ public static class ZoneSplitter
 
             // group primitives into nodes
             var nodes = primitives
-                .GroupBy(p => p.NodeId)
+                .GroupBy(p => p.TreeIndex)
                 .Select(g =>
                 {
                     var geometries = g.ToArray();

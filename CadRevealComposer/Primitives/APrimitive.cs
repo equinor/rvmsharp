@@ -17,8 +17,8 @@ public sealed record Pyramid(Matrix4x4 Matrix, ulong TreeIndex, Color Color, Rvm
 
 // instancing processing - converted to GLTF model in the end
 public abstract record ProtoMesh(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record ProtoMeshFromFacetGroup(FacetGroup FacetGroup, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record ProtoMeshFromPyramid(Pyramid Pyramid, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record ProtoMeshFromFacetGroup(RvmFacetGroup FacetGroup, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record ProtoMeshFromPyramid(RvmPyramid Pyramid, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, Color, AxisAlignedBoundingBox);
 
 // Reveal GLTF model
 public sealed record Box(

@@ -95,25 +95,8 @@ public static class SceneCreator
 
     public static void ExportSector(SectorInfo sector, string outputDirectory)
     {
-        var geometries = sector.Geometries;
-
-        var primitiveCollections = new PrimitiveCollections();
-        foreach (var geometriesByType in geometries.GroupBy(g => g.GetType()))
-        {
-            var elementType = geometriesByType.Key;
-            if (elementType == typeof(ProtoMesh) || elementType  == typeof(ProtoMeshFromFacetGroup)  || elementType == typeof(ProtoMeshFromPyramid))
-                continue; // ProtoMesh is a temporary primitive, and should not be exported.
-            var elements = geometriesByType.ToArray();
-
-            var fieldInfo = primitiveCollections.GetType().GetFields()
-                .First(pc => pc.FieldType.GetElementType() == elementType);
-            var typedArray = Array.CreateInstance(elementType, elements.Length);
-            Array.Copy(elements, typedArray, elements.Length);
-            fieldInfo.SetValue(primitiveCollections, typedArray);
-        }
-
-        var filepath2 = Path.Join(outputDirectory, $"{sector.SectorId}.glb");
-        using var gltfSectorFile = File.Create(filepath2);
-        GltfWriter.WriteSector(geometries.ToArray(), gltfSectorFile);
+        var filePath = Path.Join(outputDirectory, $"{sector.SectorId}.glb");
+        using var gltfSectorFile = File.Create(filePath);
+        GltfWriter.WriteSector(sector.Geometries.ToArray(), gltfSectorFile);
     }
 }
