@@ -153,13 +153,10 @@ public static class CadRevealComposerRunner
 
             
 
-        var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
-
         Console.WriteLine("Start tessellate");
         var meshes = await TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
-            pyramidInstancingResult,
-            exporter);
+            pyramidInstancingResult);
 
         var geometriesIncludingMeshes = geometries
             .Where(g => g is not ProtoMesh)
@@ -195,7 +192,7 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-        var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
+        var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName));
         var sectorInfos = await Task.WhenAll(sectorInfoTasks);
 
         Console.WriteLine($"Serialized {sectorInfos.Length} sectors in {stopwatch.Elapsed}");
@@ -219,34 +216,21 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {total.Elapsed}");
     }
 
-    private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
+    private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
     {
-        var sectorFileName = $"sector_{p.SectorId}.i3d";
-        var meshes = p.Geometries
-            .OfType<TriangleMesh>()
-            .Select(t => t.TempTessellatedMesh)
-            .WhereNotNull()
-            .ToArray();
-        var geometries = p.Geometries;
-        if (meshes.Length > 0)
-        {
-            var (triangleMeshFileId, _) = await exporter.ExportMeshesToObjAndCtmFile(meshes, mesh => mesh);
-            geometries = p.Geometries.Select(g => g switch
-            {
-                TriangleMesh t => t with { FileId = triangleMeshFileId },
-                _ => g
-            }).ToArray();
-        }
+        var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(geometries);
-
-        var peripheralFiles = APrimitiveReflectionHelpers
-            .GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, I3dfAttribute.AttributeType.FileId)
-            .Distinct()
-            .Select(id => $"mesh_{id}.ctm")
-            .ToArray();
-        var sectorInfo = new SceneCreator.SectorInfo(p.SectorId, p.ParentSectorId, p.Depth, p.Path, sectorFileName,
-            peripheralFiles, estimatedTriangleCount, estimatedDrawCallCount, geometries, p.BoundingBoxMin, p.BoundingBoxMax);
+        var sectorInfo = new SceneCreator.SectorInfo(
+            p.SectorId,
+            p.ParentSectorId,
+            p.Depth,
+            p.Path,
+            $"sector_{p.SectorId}.gltb",
+            estimatedTriangleCount,
+            estimatedDrawCallCount,
+            p.Geometries,
+            p.BoundingBoxMin,
+            p.BoundingBoxMax);
         SceneCreator.ExportSector(sectorInfo, outputDirectory);
 
         return sectorInfo;
@@ -256,22 +240,17 @@ public static class CadRevealComposerRunner
     {
         foreach (var sector in sectors)
         {
-            var downloadSize = sector.PeripheralFiles
-                .Concat(new[] { sector.Filename })
-                .Select(filename => Path.Combine(outputDirectory.FullName, filename))
-                .Select(filepath => new FileInfo(filepath).Length)
-                .Sum();
+            var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
             yield return sector with
             {
-                DownloadSize = downloadSize
+                DownloadSize = new FileInfo(filepath).Length
             };
         }
     }
 
     private static async Task<APrimitive[]> TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
-        RvmPyramidInstancer.Result[] pyramidInstancingResult,
-        PeripheralFileExporter exporter)
+        RvmPyramidInstancer.Result[] pyramidInstancingResult)
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
@@ -336,9 +315,6 @@ public static class CadRevealComposerRunner
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
         Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
-
-        // write instanced meshes to file
-        var exportedMeshes = await exporter.ExportMeshesToObjAndCtmFile(meshes, m => m.Mesh);
 
         // create InstancedMesh objects
         var instancedMeshes = exportedMeshes.Results

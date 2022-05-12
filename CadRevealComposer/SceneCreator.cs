@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Operations;
 using Primitives;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -24,7 +23,6 @@ public static class SceneCreator
         long Depth,
         string Path,
         string Filename,
-        string[] PeripheralFiles,
         long EstimatedTriangleCount,
         long EstimatedDrawCallCount,
         IReadOnlyList<APrimitive> Geometries,
@@ -51,7 +49,7 @@ public static class SceneCreator
         ulong maxTreeIndex,
         CameraPositioning.CameraPosition cameraPosition)
     {
-        static Sector FromSector(SectorInfo sector, DirectoryInfo outputDirectory)
+        static Sector FromSector(SectorInfo sector)
         {
 
             return new Sector
@@ -84,7 +82,7 @@ public static class SceneCreator
             SubRevisionId = -1,
             MaxTreeIndex = maxTreeIndex,
             Unit = "Meters",
-            Sectors = sectors.Select(s => FromSector(s, outputDirectory)).ToArray()
+            Sectors = sectors.Select(FromSector).ToArray()
         };
 
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
@@ -95,7 +93,7 @@ public static class SceneCreator
 
     public static void ExportSector(SectorInfo sector, string outputDirectory)
     {
-        var filePath = Path.Join(outputDirectory, $"{sector.SectorId}.glb");
+        var filePath = Path.Join(outputDirectory, sector.Filename);
         using var gltfSectorFile = File.Create(filePath);
         GltfWriter.WriteSector(sector.Geometries.ToArray(), gltfSectorFile);
     }
