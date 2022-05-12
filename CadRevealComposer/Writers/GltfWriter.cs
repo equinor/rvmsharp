@@ -23,7 +23,7 @@ using System.Runtime.InteropServices;
 /// GltfSectorParser.ts
 /// GltfSectorLoader.ts
 ///
-/// Little endian, Vector3, Vector4, float, ushort, Matrix4x4, arrays
+/// Little endian, Vector3, Vector4, float, ushort, Matrix4x4, arrays, Color
 /// </summary>
 public static class GltfWriter
 {
@@ -222,11 +222,54 @@ public static class GltfWriter
     {
         foreach (var triangleMesh in meshes)
         {
-            var mesh = model.CreateMesh();
-            
+            var mesh = triangleMesh.Mesh;
+
+            // create GLTF byte buffer
+            var indicesCount = mesh.Triangles.Length;
+            var vertexCount = mesh.Vertices.Length;
+            var indicesBufferSize = indicesCount * sizeof(ushort);
+            var vertexBufferSize = vertexCount * 3 * sizeof(float);
+
+            var meshBufferSize = indicesBufferSize + vertexBufferSize;
+            var buffer = model.CreateBuffer(meshBufferSize);
+
+            // create GLTF buffer views
+            var indexBuffer = model.UseBufferView(
+                buffer,
+                byteLength: indicesBufferSize,
+                target: BufferMode.ELEMENT_ARRAY_BUFFER);
+            var vertexBuffer = model.UseBufferView(
+                buffer,
+                byteOffset: indicesBufferSize,
+                byteLength: vertexBufferSize,
+                target: BufferMode.ARRAY_BUFFER);
+
+            // write indices
+            var indices = mesh.Triangles;
+            var indicesBufferShort = MemoryMarshal.Cast<byte, ushort>(indexBuffer.Content.AsSpan());
+            for (var i = 0; i < indices.Length; i++)
+            {
+                indicesBufferShort[i] = (ushort)indices[i];
+            }
+
+            // write vertices
+            var vertexBufferVector = MemoryMarshal.Cast<byte, Vector3>(vertexBuffer.Content.AsSpan());
+            mesh.Vertices.CopyTo(vertexBufferVector);
+
+            // create mesh buffer accessors
+            var indexAccessor = model.CreateAccessor();
+            var vertexAccessor = model.CreateAccessor();
+
+            indexAccessor.SetData(indexBuffer, 0, indicesCount, DimensionType.SCALAR, EncodingType.UNSIGNED_SHORT, false);
+            vertexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+
             // create node
             var node = scene.CreateNode("TriangleMesh");
-            node.Mesh = mesh;
+            var gltfMesh = model.CreateMesh();
+            var meshPrimitive = gltfMesh.CreatePrimitive();
+            meshPrimitive.SetIndexAccessor(indexAccessor);
+            meshPrimitive.SetVertexAccessor("POSITION", vertexAccessor);
+            node.Mesh = gltfMesh;
         }
     }
 
