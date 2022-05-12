@@ -12,11 +12,11 @@ public class Mesh : IEquatable<Mesh>
 
     public float Error { get; }
 
-    public IReadOnlyList<Vector3> Vertices => _vertices;
+    public Vector3[] Vertices => _vertices;
 
-    public IReadOnlyList<Vector3> Normals => _normals;
+    public Vector3[] Normals => _normals;
 
-    public IReadOnlyList<int> Triangles => _triangles;
+    public int[] Triangles => _triangles;
 
     private readonly Vector3[] _vertices;
     private readonly Vector3[] _normals;

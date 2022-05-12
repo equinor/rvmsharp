@@ -5,6 +5,7 @@ namespace CadRevealComposer.Primitives;
 
 using Operations.Converters;
 using RvmSharp.Primitives;
+using RvmSharp.Tessellation;
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -117,9 +118,18 @@ public sealed record Trapezium(
     Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
-public sealed record InstancedMesh(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record TriangleMesh(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record InstancedMesh(
+    Mesh Mesh,
+    Matrix4x4 InstanceMatrix,
+    ulong TreeIndex,
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
+public sealed record TriangleMesh(
+    Mesh Mesh,
+    ulong TreeIndex,
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox)
 {
@@ -128,7 +138,6 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
             RvmNode rvmNode,
             RvmPrimitive rvmPrimitive)
     {
-        PrimitiveCounter.pc++;
         var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
         (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
             (Vector3 normal, float rotationAngle), RvmPrimitive _) = commonPrimitiveProperties;

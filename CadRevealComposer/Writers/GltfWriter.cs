@@ -11,13 +11,44 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+// TODO: COLOR_0, POSITION, _treeIndex
+
+/// <summary>
+/// Cognite Reveal format:
+/// - Primitives are written with GLTF instancing extension. One GLTF node per type of primitive.
+/// - One GLTF node per instanced mesh.
+/// - One GLTF node per triangle mesh.
+///  
+/// https://github.com/KhronosGroup/glTF-Tutorials/tree/master/gltfTutorial
+/// GltfSectorParser.ts
+/// GltfSectorLoader.ts
+///
+/// Little endian, Vector3, Vector4, float, ushort, Matrix4x4, arrays
+/// </summary>
 public static class GltfWriter
 {
     public static void WriteSector(APrimitive[] /* do NOT replace with IEnumerable */ primitives, Stream stream)
     {
+        if (!BitConverter.IsLittleEndian)
+        {
+            throw new Exception("This code copies bytes directly from memory to output and is coded to work with machines having little endian.");
+        }
+
         var model = ModelRoot.CreateModel();
         var scene = model.UseScene(null);
         model.DefaultScene = scene;
+
+        var instancedMeshes = primitives.OfType<InstancedMesh>().ToArray();
+        if (instancedMeshes.Length > 0)
+        {
+            WriteInstancedMeshes(instancedMeshes, model, scene);
+        }
+
+        var triangleMeshes = primitives.OfType<TriangleMesh>().ToArray();
+        if (triangleMeshes.Length > 0)
+        {
+            WriteTriangleMeshes(triangleMeshes, model, scene);
+        }
 
         var boxes = primitives.OfType<Box>().ToArray();
         if (boxes.Length > 0)
@@ -88,6 +119,117 @@ public static class GltfWriter
         model.WriteGLB(stream);
     }
 
+    private static void WriteInstancedMeshes(InstancedMesh[] meshes, ModelRoot model, Scene scene)
+    {
+        // TODO: document byte alignment
+        // TODO: document byte alignment
+        // TODO: document byte alignment
+        // TODO: document byte alignment
+
+        // TODO: don't write single mesh
+        // TODO: don't write single mesh
+        // TODO: don't write single mesh
+        // TODO: don't write single mesh
+
+        var instanceMeshGroups = meshes.GroupBy(m => m.Mesh);
+
+        foreach (var instanceMeshGroup in instanceMeshGroups)
+        {
+            var instanceMesh = instanceMeshGroup.Key;
+
+            // create GLTF byte buffer
+            var indicesCount = instanceMesh.Triangles.Length;
+            var vertexCount = instanceMesh.Vertices.Length;
+            var indicesBufferSize = indicesCount * sizeof(ushort);
+            var vertexBufferSize = vertexCount * 3 * sizeof(float);
+            var instanceCount = instanceMeshGroup.Count();
+            const int byteStride = (1 + 1 + 16) * sizeof(float); // tree index + color + matrix
+            var instanceBufferSize = byteStride * instanceCount;
+
+            var meshBufferSize = indicesBufferSize + vertexBufferSize + instanceBufferSize;
+            var buffer = model.CreateBuffer(meshBufferSize);
+
+            // create GLTF buffer views
+            var indexBuffer = model.UseBufferView(
+                buffer,
+                byteLength: indicesBufferSize,
+                target: BufferMode.ELEMENT_ARRAY_BUFFER);
+            var vertexBuffer = model.UseBufferView(
+                buffer,
+                byteOffset: indicesBufferSize,
+                byteLength: vertexBufferSize,
+                target: BufferMode.ARRAY_BUFFER);
+            var instanceBufferView = model.UseBufferView(
+                buffer,
+                byteOffset: indicesBufferSize + vertexBufferSize,
+                byteLength: instanceBufferSize,
+                byteStride: byteStride);
+
+            // write indices
+            var indices = instanceMesh.Triangles;
+            var indicesBufferShort = MemoryMarshal.Cast<byte, ushort>(indexBuffer.Content.AsSpan());
+            for (var i = 0; i < indices.Length; i++)
+            {
+                indicesBufferShort[i] = (ushort)indices[i];
+            }
+
+            // write vertices
+            var vertexBufferVector = MemoryMarshal.Cast<byte, Vector3>(vertexBuffer.Content.AsSpan());
+            instanceMesh.Vertices.CopyTo(vertexBufferVector);
+
+            // write instances
+            var instanceBuffer = instanceBufferView.Content.AsSpan();
+            var instanceBufferPos = 0;
+            foreach (var instancedMesh in instanceMeshGroup)
+            {
+                var treeIndex = (float)instancedMesh.TreeIndex;
+                instanceBuffer.Write(treeIndex, ref instanceBufferPos);
+                instanceBuffer.Write(instancedMesh.Color, ref instanceBufferPos);
+                instanceBuffer.Write(instancedMesh.InstanceMatrix, ref instanceBufferPos);
+            }
+
+            // create mesh buffer accessors
+            var indexAccessor = model.CreateAccessor();
+            var vertexAccessor = model.CreateAccessor();
+
+            indexAccessor.SetData(indexBuffer, 0, indicesCount, DimensionType.SCALAR, EncodingType.UNSIGNED_SHORT, false);
+            vertexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+
+            // create instance buffer accessors
+            var treeIndexAccessor = model.CreateAccessor();
+            var colorAccessor = model.CreateAccessor();
+            var instanceMatrixAccessor = model.CreateAccessor();
+
+            treeIndexAccessor.SetData(instanceBufferView, 0, instanceCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+            colorAccessor.SetData(instanceBufferView, 4, instanceCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
+            instanceMatrixAccessor.SetData(instanceBufferView, 8, instanceCount, DimensionType.MAT4, EncodingType.FLOAT, false);
+
+            // create node
+            var node = scene.CreateNode("InstanceMesh");
+            var mesh = model.CreateMesh();
+            var meshPrimitive = mesh.CreatePrimitive();
+            meshPrimitive.SetIndexAccessor(indexAccessor);
+            meshPrimitive.SetVertexAccessor("POSITION", vertexAccessor);
+            node.Mesh = mesh;
+            var meshGpuInstancing = node.UseExtension<MeshGpuInstancing>();
+            meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
+            meshGpuInstancing.SetAccessor("_color", colorAccessor);
+            meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
+        }
+    }
+
+    private static void WriteTriangleMeshes(TriangleMesh[] meshes, ModelRoot model, Scene scene)
+    {
+        foreach (var triangleMesh in meshes)
+        {
+            var mesh = model.CreateMesh();
+            
+            // create node
+            var node = scene.CreateNode("TriangleMesh");
+            node.Mesh = mesh;
+        }
+    }
+
     private static void WriteBoxes(Box[] boxes, ModelRoot model, Scene scene)
     {
         var boxCount = boxes.Length;
@@ -95,7 +237,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * boxCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var box in boxes)
         {
@@ -141,7 +283,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 16 + 3) * sizeof(float); // id + color + matrix + normal
         var bufferView = model.CreateBufferView(byteStride * circleCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var circle in circles)
         {
@@ -187,7 +329,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 3 + 3 + 3 + 1 + 1) * sizeof(float);
         var bufferView = model.CreateBufferView(byteStride * coneCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var cone in cones)
         {
@@ -239,7 +381,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 3 + 3 + 3 + 1 + 1) * sizeof(float);
         var bufferView = model.CreateBufferView(byteStride * eccentricConeCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var eccentricCone in eccentricCones)
         {
@@ -285,7 +427,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 1 + 3) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * ellipsoidCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var ellipsoid in ellipsoids)
         {
@@ -337,7 +479,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 3 + 3 + 3 + 4 + 4 + 1) * sizeof(float);
         var bufferView = model.CreateBufferView(byteStride * generalCylinderCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var generalCylinder in generalCylinders)
         {
@@ -391,7 +533,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 16 + 3 + 1) * sizeof(float);
         var bufferView = model.CreateBufferView(byteStride * generalRingCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var generalRing in generalRings)
         {
@@ -431,7 +573,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * nutCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var nut in nuts)
         {
@@ -463,7 +605,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * quadCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var quad in quads)
         {
@@ -501,7 +643,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 16 + 1 + 1) * sizeof(float);
         var bufferView = model.CreateBufferView(byteStride * torusCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var tor in torus)
         {
@@ -545,7 +687,7 @@ public static class GltfWriter
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 1 + 1) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * trapeziumCount, byteStride);
-        var buffer = bufferView.Content.Array!;
+        var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var trapezium in trapeziums)
         {
@@ -567,58 +709,58 @@ public static class GltfWriter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Write(this byte[] buffer, float value, ref int bufferPos)
+    private static void Write(this Span<byte> buffer, float value, ref int bufferPos)
     {
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref value, 1));
-        var target = buffer.AsSpan(bufferPos, sizeof(float));
+        var target = buffer.Slice(bufferPos, sizeof(float));
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Write(this byte[] buffer, Color color, ref int bufferPos)
+    private static void Write(this Span<byte> buffer, Color color, ref int bufferPos)
     {
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Drawing.Primitives/src/System/Drawing/Color.cs
         // writes Color memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref color, 1));
-        var target = buffer.AsSpan(bufferPos, sizeof(float));
+        var target = buffer.Slice(bufferPos, sizeof(float));
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Write(this byte[] buffer, Matrix4x4 matrix, ref int bufferPos)
+    private static void Write(this Span<byte> buffer, Matrix4x4 matrix, ref int bufferPos)
     {
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Matrix4x4.cs
         // writes Matrix4x4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref matrix, 1));
-        var target = buffer.AsSpan(bufferPos, sizeof(float) * 16);
+        var target = buffer.Slice(bufferPos, sizeof(float) * 16);
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float) * 16;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Write(this byte[] buffer, Vector3 vector, ref int bufferPos)
+    private static void Write(this Span<byte> buffer, Vector3 vector, ref int bufferPos)
     {
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector3.cs
         // writes Vector3 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
-        var target = buffer.AsSpan(bufferPos, sizeof(float) * 3);
+        var target = buffer.Slice(bufferPos, sizeof(float) * 3);
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float) * 3;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void Write(this byte[] buffer, Vector4 vector, ref int bufferPos)
+    private static void Write(this Span<byte> buffer, Vector4 vector, ref int bufferPos)
     {
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector4.cs
         // writes Vector4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
-        var target = buffer.AsSpan(bufferPos, sizeof(float) * 4);
+        var target = buffer.Slice(bufferPos, sizeof(float) * 4);
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float) * 4;
