@@ -254,33 +254,8 @@ public static class CadRevealComposerRunner
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
-            var mesh = Tessellate(p.ProtoPrimitive);
-            var triangleCount = mesh.Triangles.Count / 3;
-            return new TriangleMesh(
-                new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
-                    Vector3.Zero, Quaternion.Identity, Vector3.One,
-                    p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                    (Vector3.UnitZ, 0), p.ProtoPrimitive), 0, (ulong)triangleCount, mesh);
-        }
-
-        static InstancedMesh CreateInstanceMesh(ProtoMesh p, Matrix4x4 transform, uint meshFileId, ulong triangleOffset, ulong triangleCount)
-        {
-            if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
-            {
-                throw new Exception("Could not decompose");
-            }
-
-            (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
-            AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
-
-            return new InstancedMesh(
-                new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
-                    Vector3.One,
-                    p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                    (Vector3.UnitZ, 0), p.ProtoPrimitive),
-                meshFileId, triangleOffset, triangleCount, translation.X,
-                translation.Y, translation.Z,
-                rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
+            var mesh = Tessellate(p.RvmPrimitive);
+            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
@@ -311,17 +286,13 @@ public static class CadRevealComposerRunner
             .Concat(pyramidsInstanced)
             .AsParallel()
             .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key)))
-            .Where(g => g.Mesh.Triangles.Count > 0) // ignore empty meshes
+            .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
         Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
 
-        // create InstancedMesh objects
-        var instancedMeshes = exportedMeshes.Results
-            .SelectMany(x =>
-            {
-                return x.Item.InstanceGroup.Select(y => CreateInstanceMesh(y.ProtoMesh, y.Transform, exportedMeshes.FileId, x.TriangleOffset, x.TriangleCount));
-            })
+        var instancedMeshes = meshes
+            .SelectMany(g => g.InstanceGroup.Select(i => new InstancedMesh(g.Mesh, i.Transform, i.ProtoMesh.TreeIndex, i.ProtoMesh.Color, i.ProtoMesh.AxisAlignedBoundingBox)))
             .ToArray();
 
         // tessellate and create TriangleMesh objects
@@ -330,7 +301,7 @@ public static class CadRevealComposerRunner
             .Concat(pyramidsNotInstanced)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
-            .Where(t => t.TriangleCount > 0) // ignore empty meshes
+            .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
 
@@ -352,7 +323,7 @@ public static class CadRevealComposerRunner
             mesh = Mesh.Empty;
         }
 
-        if (mesh.Vertices.Count == 0)
+        if (mesh.Vertices.Length == 0)
         {
             if (primitive is RvmFacetGroup f)
             {

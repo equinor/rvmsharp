@@ -226,7 +226,7 @@ public static class ExteriorSplitter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IEnumerable<Triangle> CollectTrianglesForMesh(Mesh mesh)
     {
-        var triangleCount = mesh.Triangles.Count / 3;
+        var triangleCount = mesh.Triangles.Length / 3;
         var vertices = mesh.Vertices;
         for (var i = 0; i < triangleCount; i++)
         {
@@ -239,14 +239,15 @@ public static class ExteriorSplitter
 
     private static Node[] CreateNodes(APrimitive[] primitives)
     {
-        static TessellatedPrimitive? TessellatePrimitive(APrimitive primitive)
+        static TessellatedPrimitive? TessellateInstancedMesh(InstancedMesh primitive)
         {
-            var mesh = TessellatorBridge.Tessellate(primitive.SourcePrimitive, 1.0f);
-            if (mesh is null)
-            {
-                return null;
-            }
-            var triangles = CollectTrianglesForMesh(mesh).ToArray();
+            var triangles = CollectTrianglesForMesh(primitive.Mesh).ToArray();
+            return new TessellatedPrimitive(triangles, primitive);
+        }
+
+        static TessellatedPrimitive? TessellateTriangleMesh(TriangleMesh primitive)
+        {
+            var triangles = CollectTrianglesForMesh(primitive.Mesh).ToArray();
             return new TessellatedPrimitive(triangles, primitive);
         }
 
@@ -259,8 +260,8 @@ public static class ExteriorSplitter
             var primitives = nodeGroup
                 .Select(p => p switch
                 {
-                    InstancedMesh instancedMesh => TessellatePrimitive(instancedMesh),
-                    TriangleMesh triangleMesh => TessellatePrimitive(triangleMesh),
+                    InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
+                    TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
                     _ => new Primitive(p)
                 })
                 .WhereNotNull()

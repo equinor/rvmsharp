@@ -12,14 +12,10 @@ using System.Drawing;
 using System.Numerics;
 using Utils;
 
-// RVM model - converted to GLTF model in the end
-public sealed record FacetGroup(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record Pyramid(Matrix4x4 Matrix, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-
 // instancing processing - converted to GLTF model in the end
-public abstract record ProtoMesh(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record ProtoMeshFromFacetGroup(RvmFacetGroup FacetGroup, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record ProtoMeshFromPyramid(RvmPyramid Pyramid, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(TreeIndex, Color, AxisAlignedBoundingBox);
+public abstract record ProtoMesh(RvmPrimitive RvmPrimitive, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record ProtoMeshFromFacetGroup(RvmFacetGroup FacetGroup, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record ProtoMeshFromPyramid(RvmPyramid Pyramid, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
 
 // Reveal GLTF model
 public sealed record Box(
@@ -138,10 +134,6 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
             RvmNode rvmNode,
             RvmPrimitive rvmPrimitive)
     {
-        var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
-        (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
-            (Vector3 normal, float rotationAngle), RvmPrimitive _) = commonPrimitiveProperties;
-
         switch (rvmPrimitive)
         {
             case RvmBox rvmBox:
@@ -175,7 +167,11 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
                         VerticalRadius: verticalRadius);
                 }
             case RvmFacetGroup facetGroup:
-                return new ProtoMeshFromFacetGroup(commonPrimitiveProperties, facetGroup);
+                return new ProtoMeshFromFacetGroup(
+                    facetGroup,
+                    revealNode.TreeIndex,
+                    RvmPrimitiveExtensions.GetColor(rvmNode),
+                    facetGroup.BoundingBoxLocal);
             case RvmLine:
                 PrimitiveCounter.line++;
                 // Intentionally ignored.
