@@ -29,17 +29,12 @@ public class ExteriorSplitterTests
     /// </summary>
     private static Box CreateBoxCenteredInOrigin(ulong nodeId, float boxSize)
     {
-        var common = new CommonPrimitiveProperties(
-            nodeId,
-            nodeId,
-            Vector3.Zero,
-            Quaternion.Identity,
-            Vector3.One,
-            1.0f,
-            new RvmBoundingBox(new Vector3(-boxSize / 2f), new Vector3(boxSize / 2f)),
-            Color.Blue,
-            (Vector3.UnitZ, 0),
-            null!);
-        return new Box(common, Vector3.UnitZ, boxSize, boxSize, boxSize, 0);
+        return new Box(
+            Matrix4x4.Identity,
+            Color.Red,
+            int.MaxValue,
+            new RvmBoundingBox(
+                new Vector3(-boxSize / 2f),
+                new Vector3(boxSize / 2f)));
     }
 }

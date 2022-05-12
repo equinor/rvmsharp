@@ -42,22 +42,6 @@ public class CameraPositioningTests
         Assert.AreEqual(new Vector3(0.8660254f, 0, -0.5f), direction);
     }
 
-    private record TestPrimitiveWithBoundingBox : APrimitive
-    {
-        public TestPrimitiveWithBoundingBox(Vector3 bbMin, Vector3 bbMax)
-            : base(new CommonPrimitiveProperties(
-                int.MaxValue,
-                int.MaxValue,
-                Vector3.One,
-                Quaternion.Identity,
-                Vector3.One,
-                float.Epsilon,
-                new RvmBoundingBox(bbMin, bbMax),
-                Color.Black,
-                (Vector3.One, float.Epsilon),
-                null))
-        {
-
-        }
-    }
+    private record TestPrimitiveWithBoundingBox(Vector3 Min, Vector3 Max)
+        : APrimitive(int.MaxValue, Color.Red, new RvmBoundingBox(Min, Max));
 }
