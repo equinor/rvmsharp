@@ -100,7 +100,7 @@ public sealed class ObjExporter : IDisposable
         _writer.WriteLine("s off");
 
         var tris = mesh.Triangles;
-        for (var t = 0; t < tris.Count; t += 3)
+        for (var t = 0; t < tris.Length; t += 3)
         {
             var i2 = tris[t] + 1;
             var v2 = _vertexCount + i2;
@@ -116,8 +116,8 @@ public sealed class ObjExporter : IDisposable
             _writer.WriteLine($"f {v1}//{n1} {v0}//{n0} {v2}//{n2}");
         }
 
-        _vertexCount += mesh.Vertices.Count;
-        _normalCount += mesh.Normals.Count;
+        _vertexCount += mesh.Vertices.Length;
+        _normalCount += mesh.Normals.Length;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -68,7 +68,7 @@ public class Mesh : IEquatable<Mesh>
 
     public static Mesh Merge(Mesh mesh1, Mesh mesh2)
     {
-        var mesh1VertexCount = mesh1.Vertices.Count;
+        var mesh1VertexCount = mesh1.Vertices.Length;
         var vertices = mesh1.Vertices.Concat(mesh2.Vertices).ToArray();
         var normals = mesh1.Normals.Concat(mesh2.Normals).ToArray();
         var triangles = mesh1.Triangles.Concat(mesh2.Triangles.Select(t => t + mesh1VertexCount)).ToArray();
