@@ -4,7 +4,6 @@ using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Diagnostics;
-using Utils;
 
 public static class RvmCircularTorusConverter
 {

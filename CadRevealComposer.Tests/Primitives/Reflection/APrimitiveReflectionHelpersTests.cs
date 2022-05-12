@@ -3,7 +3,6 @@
 namespace CadRevealComposer.Tests.Primitives.Reflection;
 
 using CadRevealComposer.Primitives;
-using CadRevealComposer.Primitives.Reflection;
 using System;
 using System.Linq;
 

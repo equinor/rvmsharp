@@ -3,7 +3,6 @@
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using NUnit.Framework;
-using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Linq;
