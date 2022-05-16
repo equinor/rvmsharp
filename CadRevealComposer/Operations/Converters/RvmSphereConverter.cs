@@ -3,6 +3,7 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using Utils;
 
@@ -17,7 +18,7 @@ public static class RvmSphereConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphere.Matrix);
         }
-        AssertUniformScale(scale);
+        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
         if (!rotation.IsIdentity)
         {
             throw new Exception("Cognite Reveal does not support spheres with rotation.");
@@ -32,6 +33,6 @@ public static class RvmSphereConverter
             position,
             treeIndex,
             color,
-            rvmSphere.BoundingBoxLocal);
+            rvmSphere.CalculateAxisAlignedBoundingBox());
     }
 }

@@ -36,6 +36,6 @@ public static class RvmSphericalDishConverter
             position,
             treeIndex,
             color,
-            rvmSphericalDish.BoundingBoxLocal);
+            rvmSphericalDish.CalculateAxisAlignedBoundingBox());
     }
 }

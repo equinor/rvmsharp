@@ -34,7 +34,7 @@ public static class RvmEllipticalDishConverter
             position,
             treeIndex,
             color,
-            rvmEllipticalDish.BoundingBoxLocal
+            rvmEllipticalDish.CalculateAxisAlignedBoundingBox()
         );
     }
 }

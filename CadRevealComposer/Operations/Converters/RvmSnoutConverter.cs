@@ -14,53 +14,44 @@ public static class RvmSnoutConverter
         ulong treeIndex,
         Color color)
     {
-    }
-}
-
-public static class RvmSnoutConverter
-{
-    public static APrimitive ConvertToRevealPrimitive(
-        this RvmSnout rvmSnout,
-        ulong treeIndex,
-        Color color)
-    {
-        if (HasShear(rvmSnout))
-        {
-            if (IsEccentric(rvmSnout))
-            {
-                throw new NotImplementedException(
-                    "This type of primitive is missing from CadReveal, should convert to mesh?");
-            }
-            else
-            {
-                (float slopeA, float zangleA) = TranslateShearToSlope((rvmSnout.TopShearX, rvmSnout.TopShearY));
-                (float slopeB, float zangleB) = TranslateShearToSlope((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
-                if (rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom))
-                {
-                    // General cylinder
-                    return new GeneralCylinder(rvmSnout.
-                        rvmSnout,
-                        2 * MathF.PI,
-                        revealNode.TreeIndex,
-                        container.GetColor(),
-                        revealNode.BoundingBoxAxisAligned);
-                } else {
-                    // General cone
-                    return new Cone();
-                }
-            }
-        }
-        else
-        {
-            if (IsEccentric(rvmSnout))
-            {
-                return new EccentricCone();
-            }
-            else
-            {
-                return new Cone();
-            }
-        }
+        return null;
+        //if (HasShear(rvmSnout))
+        //{
+        //    if (IsEccentric(rvmSnout))
+        //    {
+        //        throw new NotImplementedException(
+        //            "This type of primitive is missing from CadReveal, should convert to mesh?");
+        //    }
+        //    else
+        //    {
+        //        (float slopeA, float zangleA) = TranslateShearToSlope((rvmSnout.TopShearX, rvmSnout.TopShearY));
+        //        (float slopeB, float zangleB) = TranslateShearToSlope((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
+        //        if (rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom))
+        //        {
+        //            // General cylinder
+        //            return new GeneralCylinder(rvmSnout.
+        //                rvmSnout,
+        //                2 * MathF.PI,
+        //                revealNode.TreeIndex,
+        //                container.GetColor(),
+        //                revealNode.BoundingBoxAxisAligned);
+        //        } else {
+        //            // General cone
+        //            return new Cone();
+        //        }
+        //    }
+        //}
+        //else
+        //{
+        //    if (IsEccentric(rvmSnout))
+        //    {
+        //        return new EccentricCone();
+        //    }
+        //    else
+        //    {
+        //        return new Cone();
+        //    }
+        //}
     }
 
     private static bool IsEccentric(RvmSnout rvmSnout)

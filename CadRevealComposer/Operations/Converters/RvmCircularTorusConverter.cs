@@ -29,7 +29,7 @@ public static class RvmCircularTorusConverter
             tubeRadius,
             treeIndex,
             color,
-            rvmCircularTorus.BoundingBoxLocal
+            rvmCircularTorus.CalculateAxisAlignedBoundingBox()
         );
     }
 }

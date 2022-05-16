@@ -107,6 +107,11 @@ public static class AlgebraUtils
         var v2 = Vector3.Transform(Vector3.One, qc);
         Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
         //Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
+        // TODO: fix assert
+        // TODO: fix assert
+        // TODO: fix assert
+        // TODO: fix assert
+        // TODO: fix assert
     }
 
     /// <summary>

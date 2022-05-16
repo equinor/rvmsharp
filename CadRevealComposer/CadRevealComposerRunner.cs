@@ -225,7 +225,7 @@ public static class CadRevealComposerRunner
             p.ParentSectorId,
             p.Depth,
             p.Path,
-            $"sector_{p.SectorId}.gltb",
+            $"sector_{p.SectorId}.glb",
             estimatedTriangleCount,
             estimatedDrawCallCount,
             p.Geometries,

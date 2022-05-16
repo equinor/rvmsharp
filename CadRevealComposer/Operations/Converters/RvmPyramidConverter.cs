@@ -34,14 +34,14 @@ public static class RvmPyramidConverter
                 matrix,
                 treeIndex,
                 color,
-                rvmPyramid.BoundingBoxLocal);
+                rvmPyramid.CalculateAxisAlignedBoundingBox());
         }
 
         return new ProtoMeshFromPyramid(
             rvmPyramid,
             treeIndex,
             color,
-            rvmPyramid.BoundingBoxLocal);
+            rvmPyramid.CalculateAxisAlignedBoundingBox());
     }
 
     /// <summary>

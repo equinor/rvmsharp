@@ -1,16 +1,11 @@
-// ReSharper disable ArgumentsStyleNamedExpression
-// ReSharper disable ArgumentsStyleOther
-
 namespace CadRevealComposer.Primitives;
 
 using Operations.Converters;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
-using Utils;
 
 // instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
 public abstract record ProtoMesh(
@@ -154,20 +149,7 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
             case RvmBox rvmBox:
                 return rvmBox.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmCylinder rvmCylinder:
-                {
-                    return new GeneralCylinder(
-                        angle,
-                        2 * MathF.PI,
-                        CenterA,
-                        CenterB:,
-                        axis,
-                        PlaneA:,
-                        PlaneB:,
-                        rvmCylinder.Radius,
-                        revealNode.TreeIndex,
-                        rvmNode.GetColor(),
-                        revealNode.BoundingBoxAxisAligned);
-                }
+                return rvmCylinder.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmEllipticalDish rvmEllipticalDish:
                 return rvmEllipticalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmFacetGroup facetGroup:
@@ -175,7 +157,7 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
                     facetGroup,
                     revealNode.TreeIndex,
                     rvmNode.GetColor(),
-                    facetGroup.BoundingBoxLocal);
+                    facetGroup.CalculateAxisAlignedBoundingBox());
             case RvmLine:
                 // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
                 return null;
@@ -190,16 +172,9 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
             case RvmSnout rvmSnout:
                 return rvmSnout.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmRectangularTorus rvmRectangularTorus:
-                {
-                    return new GeneralRing();
-                }
+                return rvmRectangularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             default:
                 throw new InvalidOperationException();
         }
-    }
-
-    private static void AssertUniformScale(Vector3 scale)
-    {
-        Trace.Assert(scale.IsUniform(), $"Expected uniform scale. Was {scale}.");
     }
 }

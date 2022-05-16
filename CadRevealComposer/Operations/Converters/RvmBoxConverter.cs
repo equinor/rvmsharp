@@ -32,6 +32,6 @@ public static class RvmBoxExtensions
             matrix,
             treeIndex,
             color,
-            rvmBox.BoundingBoxLocal);
+            rvmBox.CalculateAxisAlignedBoundingBox());
     }
 }

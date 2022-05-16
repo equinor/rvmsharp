@@ -65,7 +65,7 @@ public static class SceneCreator
                     ),
                 Depth = sector.Depth,
                 Path = sector.Path,
-                SectorFileName = $"{sector.SectorId}.glb",
+                SectorFileName = sector.Filename,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
                 EstimatedDrawCallCount = sector.EstimatedDrawCallCount,
                 // FIXME diagonal data
@@ -96,5 +96,6 @@ public static class SceneCreator
         var filePath = Path.Join(outputDirectory, sector.Filename);
         using var gltfSectorFile = File.Create(filePath);
         GltfWriter.WriteSector(sector.Geometries.ToArray(), gltfSectorFile);
+        gltfSectorFile.Flush(true);
     }
 }
