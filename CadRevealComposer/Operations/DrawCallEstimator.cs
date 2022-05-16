@@ -52,34 +52,15 @@ public static class DrawCallEstimator
         {
             Box => new[] { RenderPrimitive.Box },
             Circle => new [] { RenderPrimitive.Circle },
-            ClosedCone => new [] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone }, // TODO: if one R is 0, should be 1 circle
-            ClosedCylinder => new [] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone },
-            ClosedEccentricCone => new [] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.EccentricCone },
-            ClosedEllipsoidSegment => new [] { RenderPrimitive.Circle, RenderPrimitive.EllipsoidSegment },
-            ClosedExtrudedRingSegment => new [] { RenderPrimitive.Rectangle, RenderPrimitive.Rectangle, RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.Cone, RenderPrimitive.Cone },
-            ClosedGeneralCone => new [] { RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder }, // TODO: this one is unsure
-            ClosedGeneralCylinder => new [] { RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder },
-            ClosedSphericalSegment => new [] { RenderPrimitive.Circle, RenderPrimitive.SphericalSegment},
-            ClosedTorusSegment => new [] { RenderPrimitive.TorusSegment },
+            Cone => new[] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone }, // TODO: if one R is 0, should be 1 circle
+            EccentricCone => new[] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.EccentricCone },
             Ellipsoid => new [] { RenderPrimitive.EllipsoidSegment },
-            ExtrudedRing => new[] {RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.Cone, RenderPrimitive.Cone },
+            GeneralCylinder => new[] { RenderPrimitive.SlopedCylinder },
+            GeneralRing => new[] { RenderPrimitive.TorusSegment },
             Nut => new[] { RenderPrimitive.Nut },
-            OpenCone => new[] { RenderPrimitive.Cone },
-            OpenCylinder => new[] { RenderPrimitive.Cone },
-            OpenEccentricCone => new[] {RenderPrimitive.EccentricCone },
-            OpenEllipsoidSegment => new[] { RenderPrimitive.EllipsoidSegment },
-            OpenExtrudedRingSegment => new[] {RenderPrimitive.Cone, RenderPrimitive.Cone },
-            OpenGeneralCone => new[] { RenderPrimitive.SlopedCylinder},
-            OpenGeneralCylinder => new[] { RenderPrimitive.SlopedCylinder},
-            OpenSphericalSegment => new[] { RenderPrimitive.SphericalSegment },
-            OpenTorusSegment => new[] { RenderPrimitive.TorusSegment },
-            Ring => new[] { RenderPrimitive.RingSegment },
-            SolidClosedGeneralCone => new[] {RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder, RenderPrimitive.SlopedCylinder  },
-            SolidClosedGeneralCylinder => new[] {RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder , RenderPrimitive.SlopedCylinder },
-            SolidOpenGeneralCone => new[] {RenderPrimitive.SlopedCylinder, RenderPrimitive.SlopedCylinder },
-            SolidOpenGeneralCylinder => new[] { RenderPrimitive.SlopedCylinder, RenderPrimitive.SlopedCylinder},
-            Sphere => new[] { RenderPrimitive.SphericalSegment },
+            Quad => new[] { RenderPrimitive.Rectangle },
             Torus => new[] { RenderPrimitive.TorusSegment },
+            Trapezium => new[] { RenderPrimitive.Rectangle },
             _ => Array.Empty<RenderPrimitive>()
         };
     }
@@ -91,11 +72,13 @@ public static class DrawCallEstimator
         var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();
 
         var estimatedTriangleMeshTriangleCount = geometry.OfType<TriangleMesh>()
-            .Select(tm => (long)tm.TempTessellatedMesh!.Triangles.Count / 3).Sum();
-        var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0 ? 1 : 0;
+            .Select(tm => (long)tm.Mesh.TriangleCount).Sum();
+        var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0
+            ? 1
+            : 0;
 
         var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
-        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TriangleCount).Sum();
+        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.Mesh.TriangleCount).Sum();
         var estimatedInstancedMeshDrawCallCount = instancedMeshes.Distinct().Count();
 
         var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +
@@ -117,36 +100,17 @@ public static class DrawCallEstimator
         {
             Box => 11 * sizeof(ulong),
             Circle => 8 * sizeof(ulong),
-            ClosedCone => 10 * sizeof(ulong),
-            ClosedCylinder => 9 * sizeof(ulong),
-            ClosedEccentricCone => 11 * sizeof(ulong),
-            ClosedEllipsoidSegment => 10 * sizeof(ulong),
-            ClosedExtrudedRingSegment => 12 * sizeof(ulong),
-            ClosedGeneralCone => 16 * sizeof(ulong),
-            ClosedGeneralCylinder => 15 * sizeof(ulong),
-            ClosedSphericalSegment => 9 * sizeof(ulong),
-            ClosedTorusSegment => 11 * sizeof(ulong),
+            Cone => 10 * sizeof(ulong),
+            EccentricCone => 11 * sizeof(ulong),
             Ellipsoid => 9 * sizeof(ulong),
-            ExtrudedRing => 10 * sizeof(ulong),
+            GeneralCylinder => 9 * sizeof(ulong),
+            GeneralRing => 9 * sizeof(ulong),
             Nut => 10 * sizeof(ulong),
-            OpenCone => 10 * sizeof(ulong),
-            OpenCylinder => 9 * sizeof(ulong),
-            OpenEccentricCone => 11 * sizeof(ulong),
-            OpenEllipsoidSegment => 10 * sizeof(ulong),
-            OpenExtrudedRingSegment => 12 * sizeof(ulong),
-            OpenGeneralCone => 16 * sizeof(ulong),
-            OpenGeneralCylinder => 15 * sizeof(ulong),
-            OpenSphericalSegment => 9 * sizeof(ulong),
-            OpenTorusSegment => 11 * sizeof(ulong),
-            Ring => 9 * sizeof(ulong),
-            SolidClosedGeneralCone => 16 * sizeof(ulong),
-            SolidClosedGeneralCylinder => 15 * sizeof(ulong),
-            SolidOpenGeneralCone => 16 * sizeof(ulong),
-            SolidOpenGeneralCylinder => 15 * sizeof(ulong),
-            Sphere => 7 * sizeof(ulong),
+            Quad => 4 * sizeof(ulong),
             Torus => 9 * sizeof(ulong),
+            Trapezium => 4 * sizeof(ulong),
             InstancedMesh => 20 * sizeof(ulong),
-            TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.TriangleCount * 6 * sizeof(float),
+            TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.Mesh.TriangleCount * 6 * sizeof(float),
             _ => throw new NotImplementedException()
         };
     }

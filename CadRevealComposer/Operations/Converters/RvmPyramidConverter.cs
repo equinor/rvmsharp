@@ -2,6 +2,8 @@
 
 using Primitives;
 using RvmSharp.Primitives;
+using System;
+using System.Drawing;
 using System.Numerics;
 using Utils;
 
@@ -9,26 +11,37 @@ public static class RvmPyramidConverter
 {
     public static APrimitive ConvertToRevealPrimitive(
         this RvmPyramid rvmPyramid,
-        CommonPrimitiveProperties commonProps)
+        ulong treeIndex,
+        Color color)
     {
         if (IsBoxShaped(rvmPyramid))
         {
+            if (!rvmPyramid.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
+            {
+                throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPyramid.Matrix);
+            }
+
             var unitBoxScale = Vector3.Multiply(
-                commonProps.Scale,
+                scale,
                 new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
-            PrimitiveCounter.pyramidAsBox++;
 
             var matrix =
                 Matrix4x4.CreateScale(unitBoxScale)
-                * Matrix4x4.CreateFromQuaternion(commonProps.Rotation)
-                * Matrix4x4.CreateTranslation(commonProps.Position);
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(position);
 
-            return new Box(commonProps,
-                commonProps.RotationDecomposed.Normal, unitBoxScale.X,
-                unitBoxScale.Y, unitBoxScale.Z, commonProps.RotationDecomposed.RotationAngle, matrix);
+            return new Box(
+                matrix,
+                treeIndex,
+                color,
+                rvmPyramid.BoundingBoxLocal);
         }
 
-        return new ProtoMeshFromPyramid(commonProps, rvmPyramid);
+        return new ProtoMeshFromPyramid(
+            rvmPyramid,
+            treeIndex,
+            color,
+            rvmPyramid.BoundingBoxLocal);
     }
 
     /// <summary>

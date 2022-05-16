@@ -12,16 +12,30 @@ using System.Drawing;
 using System.Numerics;
 using Utils;
 
-// instancing processing - converted to GLTF model in the end
-public abstract record ProtoMesh(RvmPrimitive RvmPrimitive, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record ProtoMeshFromFacetGroup(RvmFacetGroup FacetGroup, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
-public sealed record ProtoMeshFromPyramid(RvmPyramid Pyramid, ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
+// instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
+public abstract record ProtoMesh(
+    RvmPrimitive RvmPrimitive,
+    ulong TreeIndex,
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+
+public sealed record ProtoMeshFromFacetGroup(
+    RvmFacetGroup FacetGroup,
+    ulong TreeIndex,
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
+
+public sealed record ProtoMeshFromPyramid(
+    RvmPyramid Pyramid,
+    ulong TreeIndex,
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
 
 // Reveal GLTF model
 public sealed record Box(
     Matrix4x4 InstanceMatrix,
-    Color Color,
     ulong TreeIndex,
+    Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record Circle(
@@ -40,7 +54,8 @@ public sealed record Cone(
     float RadiusA,
     float RadiusB,
     ulong TreeIndex,
-    Color Color, RvmBoundingBox AxisAlignedBoundingBox): APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    Color Color,
+    RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record EccentricCone(
     Vector3 CenterA,
@@ -137,101 +152,46 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
         switch (rvmPrimitive)
         {
             case RvmBox rvmBox:
-                return rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
+                return rvmBox.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmCylinder rvmCylinder:
                 {
-                    var height = rvmCylinder.Height * scale.Z;
-                    // TODO: if scale is not uniform on X,Y, we should create something else
-                    var radius = rvmCylinder.Radius * scale.X;
-                    if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
-                    {
-                        throw new Exception("Not implemented!");
-                    }
-                    return new ClosedCylinder
-                    (
-                        commonPrimitiveProperties,
-                        CenterAxis: normal,
-                        Height: height,
-                        Radius: radius
-                    );
+                    return new GeneralCylinder(
+                        angle,
+                        2 * MathF.PI,
+                        CenterA,
+                        CenterB:,
+                        axis,
+                        PlaneA:,
+                        PlaneB:,
+                        rvmCylinder.Radius,
+                        revealNode.TreeIndex,
+                        rvmNode.GetColor(),
+                        revealNode.BoundingBoxAxisAligned);
                 }
             case RvmEllipticalDish rvmEllipticalDish:
-                {
-                    AssertUniformScale(scale);
-                    var verticalRadius = rvmEllipticalDish.Height * scale.X;
-                    var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
-                    return new ClosedEllipsoidSegment(commonPrimitiveProperties,
-                        Normal: normal,
-                        Height: verticalRadius,
-                        HorizontalRadius: horizontalRadius,
-                        VerticalRadius: verticalRadius);
-                }
+                return rvmEllipticalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmFacetGroup facetGroup:
                 return new ProtoMeshFromFacetGroup(
                     facetGroup,
                     revealNode.TreeIndex,
-                    RvmPrimitiveExtensions.GetColor(rvmNode),
+                    rvmNode.GetColor(),
                     facetGroup.BoundingBoxLocal);
             case RvmLine:
-                PrimitiveCounter.line++;
-                // Intentionally ignored.
+                // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
                 return null;
             case RvmPyramid rvmPyramid:
-                return rvmPyramid.ConvertToRevealPrimitive(commonPrimitiveProperties);
+                return rvmPyramid.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmCircularTorus circularTorus:
-                return circularTorus.ConvertToRevealPrimitive(rvmNode, revealNode);
+                return circularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmSphere rvmSphere:
-                {
-                    AssertUniformScale(scale);
-                    var radius = rvmSphere.Radius * scale.X;
-                    return new Sphere
-                    (
-                        commonPrimitiveProperties,
-                        Radius: radius
-                    );
-                }
+                return rvmSphere.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmSphericalDish rvmSphericalDish:
-                {
-                    AssertUniformScale(scale);
-                    var height = rvmSphericalDish.Height * scale.X;
-                    var baseRadius = rvmSphericalDish.BaseRadius * scale.X;
-                    // radius R = h / 2 + c^2 / (8 * h), where c is the cord length or 2 * baseRadius
-                    var sphereRadius = height / 2 + baseRadius * baseRadius / (2 * height);
-                    var d = sphereRadius - height;
-                    var upVector = Vector3.Transform(Vector3.UnitZ,
-                        Matrix4x4.CreateFromQuaternion(commonPrimitiveProperties.Rotation));
-                    var position = commonPrimitiveProperties.Position - upVector * d;
-                    commonPrimitiveProperties = commonPrimitiveProperties with { Position = position };
-
-                    return new ClosedSphericalSegment(commonPrimitiveProperties,
-                        Normal: normal,
-                        Height: height,
-                        Radius: sphereRadius);
-                }
+                return rvmSphericalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmSnout rvmSnout:
-                return rvmSnout.ConvertToRevealPrimitive(revealNode, rvmNode);
+                return rvmSnout.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmRectangularTorus rvmRectangularTorus:
-                AssertUniformScale(scale);
-                if (rvmRectangularTorus.Angle >= MathF.PI * 2)
                 {
-                    return new ExtrudedRing(
-                        commonPrimitiveProperties,
-                        CenterAxis: normal,
-                        Height: rvmRectangularTorus.Height * scale.Z,
-                        InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
-                        OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X
-                    );
-                }
-                else
-                {
-                    return new ClosedExtrudedRingSegment(
-                        commonPrimitiveProperties,
-                        CenterAxis: normal,
-                        Height: rvmRectangularTorus.Height * scale.Z,
-                        InnerRadius: rvmRectangularTorus.RadiusInner * scale.X,
-                        OuterRadius: rvmRectangularTorus.RadiusOuter * scale.X,
-                        RotationAngle: rotationAngle,
-                        ArcAngle: rvmRectangularTorus.Angle);
+                    return new GeneralRing();
                 }
             default:
                 throw new InvalidOperationException();

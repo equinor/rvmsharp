@@ -3,17 +3,22 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Drawing;
 using System.Numerics;
 using Utils;
 
 public static class RvmBoxExtensions
 {
-    public static Box ConvertToRevealPrimitive(this RvmBox rvmBox, CadRevealNode revealNode, RvmNode container)
+    public static Box ConvertToRevealPrimitive(
+        this RvmBox rvmBox,
+        ulong treeIndex,
+        Color color)
     {
         if (!rvmBox.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmBox.Matrix);
         }
+
         var unitBoxScale = Vector3.Multiply(
             scale,
             new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
@@ -23,8 +28,10 @@ public static class RvmBoxExtensions
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
-        var color = RvmPrimitiveExtensions.GetColor(container);
-
-        return new Box(matrix, color, revealNode.TreeIndex, rvmBox.BoundingBoxLocal);
+        return new Box(
+            matrix,
+            treeIndex,
+            color,
+            rvmBox.BoundingBoxLocal);
     }
 }

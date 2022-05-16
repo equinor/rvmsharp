@@ -18,6 +18,8 @@ public class Mesh : IEquatable<Mesh>
 
     public int[] Triangles => _triangles;
 
+    public int TriangleCount => _triangles.Length / 3;
+
     private readonly Vector3[] _vertices;
     private readonly Vector3[] _normals;
     private readonly int[] _triangles;
