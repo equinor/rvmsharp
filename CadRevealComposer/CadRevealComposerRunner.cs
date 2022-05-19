@@ -154,7 +154,7 @@ public static class CadRevealComposerRunner
             
 
         Console.WriteLine("Start tessellate");
-        var meshes = await TessellateAndOutputInstanceMeshes(
+        var meshes = TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
             pyramidInstancingResult);
 
@@ -248,7 +248,7 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static async Task<APrimitive[]> TessellateAndOutputInstanceMeshes(
+    private static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult)
     {
@@ -292,7 +292,13 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
 
         var instancedMeshes = meshes
-            .SelectMany(g => g.InstanceGroup.Select(i => new InstancedMesh(g.Mesh, i.Transform, i.ProtoMesh.TreeIndex, i.ProtoMesh.Color, i.ProtoMesh.AxisAlignedBoundingBox)))
+            .SelectMany((group, index) => group.InstanceGroup.Select(item => new InstancedMesh(
+                InstanceId: index,
+                group.Mesh,
+                item.Transform,
+                item.ProtoMesh.TreeIndex,
+                item.ProtoMesh.Color,
+                item.ProtoMesh.AxisAlignedBoundingBox)))
             .ToArray();
 
         // tessellate and create TriangleMesh objects
@@ -345,6 +351,11 @@ public static class CadRevealComposerRunner
     /// <summary>
     /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.
     /// </summary>
-    private record RvmFacetGroupWithProtoMesh(ProtoMeshFromFacetGroup ProtoMesh, uint Version, Matrix4x4 Matrix, RvmBoundingBox BoundingBoxLocal, RvmFacetGroup.RvmPolygon[] Polygons)
+    private record RvmFacetGroupWithProtoMesh(
+            ProtoMeshFromFacetGroup ProtoMesh,
+            uint Version,
+            Matrix4x4 Matrix,
+            RvmBoundingBox BoundingBoxLocal,
+            RvmFacetGroup.RvmPolygon[] Polygons)
         : RvmFacetGroup(Version, Matrix, BoundingBoxLocal, Polygons);
 }

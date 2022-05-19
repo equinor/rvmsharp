@@ -709,7 +709,7 @@ public static class TessellatorBridge
                 throw new Exception();
         }
 
-        return new Mesh(vertices.ToArray(), normals.ToArray(), indices.ToArray(), 0);
+        return new Mesh(vertices.ToArray(), normals.ToArray(), indices.Select(x => (uint)x).ToArray(), 0);
     }
 
     private static Mesh TessellateCylinder(RvmCylinder cylinder, float scale, float tolerance)
@@ -841,7 +841,7 @@ public static class TessellatorBridge
         Debug.Assert(l == triangles_n * 3);
         Debug.Assert(o == vertCount);
 
-        return new Mesh(vertices, normals, indices, error);
+        return new Mesh(vertices, normals, indices.Select(x => (uint)x).ToArray(), error);
     }
 
     private static Mesh Tessellate(RvmSnout snout, float scale, float tolerance)

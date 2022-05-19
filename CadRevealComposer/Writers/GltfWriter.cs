@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Writers;
 
 using Primitives;
+using SharpGLTF.IO;
 using SharpGLTF.Schema2;
 using System;
 using System.Diagnostics;
@@ -14,8 +15,8 @@ using System.Runtime.InteropServices;
 /// <summary>
 /// Cognite Reveal format:
 /// - Primitives are written with GLTF instancing extension. One GLTF node per type of primitive.
+/// - All triangle meshes written in one single GLTF mesh.
 /// - One GLTF node per instanced mesh.
-/// - One GLTF node per triangle mesh.
 ///  
 /// https://github.com/KhronosGroup/glTF-Tutorials/tree/master/gltfTutorial
 /// GltfSectorParser.ts
@@ -114,6 +115,7 @@ public static class GltfWriter
             WriteTrapeziums(trapeziums, model, scene);
         }
 
+        model.Asset.Copyright = "Equinor ASA";
         model.WriteGLB(stream);
     }
 
@@ -129,23 +131,24 @@ public static class GltfWriter
         // TODO: don't write single mesh
         // TODO: don't write single mesh
 
-        var instanceMeshGroups = meshes.GroupBy(m => m.Mesh);
+        var instanceMeshGroups = meshes.GroupBy(m => m.InstanceId);
 
         foreach (var instanceMeshGroup in instanceMeshGroups)
         {
-            var instanceMesh = instanceMeshGroup.Key;
+            var instanceId = instanceMeshGroup.Key;
+            var sourceMesh = instanceMeshGroup.First().Mesh;
 
             // create GLTF byte buffer
-            var indicesCount = instanceMesh.Triangles.Length;
-            var vertexCount = instanceMesh.Vertices.Length;
-            var indicesBufferSize = indicesCount * sizeof(uint);
+            var indexCount = sourceMesh.Triangles.Length;
+            var vertexCount = sourceMesh.Vertices.Length;
+            var indicesBufferSize = indexCount * sizeof(uint);
             var vertexBufferSize = vertexCount * 3 * sizeof(float);
             var instanceCount = instanceMeshGroup.Count();
             const int byteStride = (1 + 1 + 16) * sizeof(float); // tree index + color + matrix
             var instanceBufferSize = byteStride * instanceCount;
 
-            var meshBufferSize = indicesBufferSize + vertexBufferSize + instanceBufferSize;
-            var buffer = model.CreateBuffer(meshBufferSize);
+            var bufferSize = indicesBufferSize + vertexBufferSize + instanceBufferSize;
+            var buffer = model.CreateBuffer(bufferSize);
 
             // create GLTF buffer views
             var indexBuffer = model.UseBufferView(
@@ -157,40 +160,36 @@ public static class GltfWriter
                 byteOffset: indicesBufferSize,
                 byteLength: vertexBufferSize,
                 target: BufferMode.ARRAY_BUFFER);
-            var instanceBufferView = model.UseBufferView(
+            var instanceBuffer = model.UseBufferView(
                 buffer,
                 byteOffset: indicesBufferSize + vertexBufferSize,
                 byteLength: instanceBufferSize,
                 byteStride: byteStride);
 
             // write indices
-            var indices = instanceMesh.Triangles;
-            var indicesBufferShort = MemoryMarshal.Cast<byte, ushort>(indexBuffer.Content.AsSpan());
-            for (var i = 0; i < indices.Length; i++)
-            {
-                indicesBufferShort[i] = (ushort)indices[i];
-            }
+            var indexBufferInt = MemoryMarshal.Cast<byte, uint>(indexBuffer.Content.AsSpan());
+            sourceMesh.Triangles.CopyTo(indexBufferInt);
 
             // write vertices
             var vertexBufferVector = MemoryMarshal.Cast<byte, Vector3>(vertexBuffer.Content.AsSpan());
-            instanceMesh.Vertices.CopyTo(vertexBufferVector);
+            sourceMesh.Vertices.CopyTo(vertexBufferVector);
 
             // write instances
-            var instanceBuffer = instanceBufferView.Content.AsSpan();
+            var instanceBufferSpan = instanceBuffer.Content.AsSpan();
             var instanceBufferPos = 0;
             foreach (var instancedMesh in instanceMeshGroup)
             {
                 var treeIndex = (float)instancedMesh.TreeIndex;
-                instanceBuffer.Write(treeIndex, ref instanceBufferPos);
-                instanceBuffer.Write(instancedMesh.Color, ref instanceBufferPos);
-                instanceBuffer.Write(instancedMesh.InstanceMatrix, ref instanceBufferPos);
+                instanceBufferSpan.Write(treeIndex, ref instanceBufferPos);
+                instanceBufferSpan.Write(instancedMesh.Color, ref instanceBufferPos);
+                instanceBufferSpan.Write(instancedMesh.InstanceMatrix, ref instanceBufferPos);
             }
 
             // create mesh buffer accessors
             var indexAccessor = model.CreateAccessor();
             var vertexAccessor = model.CreateAccessor();
 
-            indexAccessor.SetData(indexBuffer, 0, indicesCount, DimensionType.SCALAR, EncodingType.UNSIGNED_INT, false);
+            indexAccessor.SetData(indexBuffer, 0, indexCount, DimensionType.SCALAR, EncodingType.UNSIGNED_INT, false);
             vertexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
 
             // create instance buffer accessors
@@ -198,13 +197,14 @@ public static class GltfWriter
             var colorAccessor = model.CreateAccessor();
             var instanceMatrixAccessor = model.CreateAccessor();
 
-            treeIndexAccessor.SetData(instanceBufferView, 0, instanceCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-            colorAccessor.SetData(instanceBufferView, 4, instanceCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-            instanceMatrixAccessor.SetData(instanceBufferView, 8, instanceCount, DimensionType.MAT4, EncodingType.FLOAT, false);
+            treeIndexAccessor.SetData(instanceBuffer, 0, instanceCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+            colorAccessor.SetData(instanceBuffer, 4, instanceCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
+            instanceMatrixAccessor.SetData(instanceBuffer, 8, instanceCount, DimensionType.MAT4, EncodingType.FLOAT, false);
 
             // create node
             var node = scene.CreateNode("InstanceMesh");
             var mesh = model.CreateMesh();
+            mesh.Extras = JsonContent.Parse(FormattableString.Invariant($"{{\"InstanceId\":{instanceId}}}"));
             var meshPrimitive = mesh.CreatePrimitive();
             meshPrimitive.SetIndexAccessor(indexAccessor);
             meshPrimitive.SetVertexAccessor("POSITION", vertexAccessor);
@@ -216,70 +216,85 @@ public static class GltfWriter
         }
     }
 
-    private static void WriteTriangleMeshes(TriangleMesh[] meshes, ModelRoot model, Scene scene)
+    private static void WriteTriangleMeshes(TriangleMesh[] triangleMeshes, ModelRoot model, Scene scene)
     {
-        foreach (var triangleMesh in meshes)
+        var indexCount = triangleMeshes.Sum(m => m.Mesh.Triangles.Length);
+        var vertexCount = triangleMeshes.Sum(m => m.Mesh.Vertices.Length);
+        var indexBufferSize = indexCount * sizeof(uint);
+        var vertexBufferByteStride = (1 + 1 + 3) * sizeof(float);
+        var vertexBufferSize = vertexCount * vertexBufferByteStride;
+
+        // create GLTF byte buffer
+        var bufferSize = indexBufferSize + vertexBufferSize;
+        var buffer = model.CreateBuffer(bufferSize);
+
+        // create GLTF buffer views
+        var indexBuffer = model.UseBufferView(
+            buffer,
+            byteLength: indexBufferSize,
+            target: BufferMode.ELEMENT_ARRAY_BUFFER);
+        var vertexBuffer = model.UseBufferView(
+            buffer,
+            byteOffset: indexBufferSize,
+            byteLength: vertexBufferSize,
+            byteStride: vertexBufferByteStride,
+            target: BufferMode.ARRAY_BUFFER);
+
+        // write all triangle meshes to same buffer
+        var indexOffset = 0;
+        var vertexOffset = 0;
+        foreach (var triangleMesh in triangleMeshes)
         {
-            var mesh = triangleMesh.Mesh;
-
-            // create GLTF byte buffer
-            var indexCount = mesh.Triangles.Length;
-            var vertexCount = mesh.Vertices.Length;
-            var indexBufferSize = indexCount * sizeof(uint);
-            var vertexBufferByteStride = (1 + 1 + 3) * sizeof(float);
-            var vertexBufferSize = vertexCount * vertexBufferByteStride;
-
-            var meshBufferSize = indexBufferSize + vertexBufferSize;
-            var buffer = model.CreateBuffer(meshBufferSize);
-
-            // create GLTF buffer views
-            var indexBuffer = model.UseBufferView(
-                buffer,
-                byteLength: indexBufferSize,
-                target: BufferMode.ELEMENT_ARRAY_BUFFER);
-            var vertexBuffer = model.UseBufferView(
-                buffer,
-                byteOffset: indexBufferSize,
-                byteLength: vertexBufferSize,
-                byteStride: vertexBufferByteStride);
+            var sourceMesh = triangleMesh.Mesh;
 
             // write indices
-            var indexBufferInt = MemoryMarshal.Cast<byte, int>(indexBuffer.Content.AsSpan());
-            mesh.Triangles.CopyTo(indexBufferInt);
+            var indices = sourceMesh.Triangles;
+            var indexBufferSpan = MemoryMarshal
+                .Cast<byte, uint>(indexBuffer.Content.AsSpan())
+                .Slice(indexOffset, indices.Length);
+            for (var i = 0; i < indices.Length; i++)
+            {
+                indexBufferSpan[i] = (uint)vertexOffset + indices[i];
+            }
 
             // write vertices
             var treeIndex = (float)triangleMesh.TreeIndex;
             var color = triangleMesh.Color;
-            var bufferV = vertexBuffer.Content.AsSpan();
+            var vertexBufferSpan = vertexBuffer.Content.AsSpan()
+                .Slice(vertexOffset * vertexBufferByteStride, sourceMesh.Vertices.Length * vertexBufferByteStride);
+
             var bufferPos = 0;
-            foreach (var vertex in mesh.Vertices)
+            foreach (var vertex in sourceMesh.Vertices)
             {
-                bufferV.Write(treeIndex, ref bufferPos);
-                bufferV.Write(color, ref bufferPos);
-                bufferV.Write(vertex, ref bufferPos);
+                vertexBufferSpan.Write(treeIndex, ref bufferPos);
+                vertexBufferSpan.Write(color, ref bufferPos);
+                vertexBufferSpan.Write(vertex, ref bufferPos);
             }
 
-            // create mesh buffer accessors
-            var indexAccessor = model.CreateAccessor();
-            var treeIndexAccessor = model.CreateAccessor();
-            var colorAccessor = model.CreateAccessor();
-            var positionAccessor = model.CreateAccessor();
-
-            indexAccessor.SetData(indexBuffer, 0, indexCount, DimensionType.SCALAR, EncodingType.UNSIGNED_INT, false);
-            treeIndexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-            colorAccessor.SetData(vertexBuffer, 4, vertexCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-            positionAccessor.SetData(vertexBuffer, 8, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-
-            // create node
-            var node = scene.CreateNode("TriangleMesh");
-            var gltfMesh = model.CreateMesh();
-            var meshPrimitive = gltfMesh.CreatePrimitive();
-            meshPrimitive.SetIndexAccessor(indexAccessor);
-            meshPrimitive.SetVertexAccessor("_treeIndex", treeIndexAccessor);
-            meshPrimitive.SetVertexAccessor("COLOR_0", colorAccessor);
-            meshPrimitive.SetVertexAccessor("POSITION", positionAccessor);
-            node.Mesh = gltfMesh;
+            indexOffset += sourceMesh.Triangles.Length;
+            vertexOffset += sourceMesh.Vertices.Length;
         }
+
+        // create mesh buffer accessors
+        var indexAccessor = model.CreateAccessor();
+        var treeIndexAccessor = model.CreateAccessor();
+        var colorAccessor = model.CreateAccessor();
+        var positionAccessor = model.CreateAccessor();
+
+        indexAccessor.SetData(indexBuffer, 0, indexCount, DimensionType.SCALAR, EncodingType.UNSIGNED_INT, false);
+        treeIndexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        colorAccessor.SetData(vertexBuffer, 4, vertexCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, true);
+        positionAccessor.SetData(vertexBuffer, 8, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+
+        // create node
+        var node = scene.CreateNode("TriangleMesh");
+        var mesh = model.CreateMesh();
+        var meshPrimitive = mesh.CreatePrimitive();
+        meshPrimitive.SetIndexAccessor(indexAccessor);
+        meshPrimitive.SetVertexAccessor("_treeIndex", treeIndexAccessor);
+        meshPrimitive.SetVertexAccessor("COLOR_0", colorAccessor);
+        meshPrimitive.SetVertexAccessor("POSITION", positionAccessor);
+        node.Mesh = mesh;
     }
 
     private static void WriteBoxes(Box[] boxes, ModelRoot model, Scene scene)
