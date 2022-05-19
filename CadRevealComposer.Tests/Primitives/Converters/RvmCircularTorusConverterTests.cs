@@ -40,7 +40,7 @@ public class RvmCircularTorusConverterTests
     {
         var torus = _rvmCircularTorus with {Angle = 2 * MathF.PI};
         var primitive = torus.ConvertToRevealPrimitive(_rvmNode, _revealNode);
-        Assert.That(primitive, Is.TypeOf<Torus>());
+        Assert.That(primitive, Is.TypeOf<TorusSegment>());
     }
 
     [Test]

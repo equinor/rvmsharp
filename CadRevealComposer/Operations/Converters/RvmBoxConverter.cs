@@ -7,7 +7,7 @@ using System.Drawing;
 using System.Numerics;
 using Utils;
 
-public static class RvmBoxExtensions
+public static class RvmBoxConverter
 {
     public static Box ConvertToRevealPrimitive(
         this RvmBox rvmBox,

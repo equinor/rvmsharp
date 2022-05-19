@@ -32,10 +32,10 @@ public static class RvmCylinderConverter
         // let rotation = Rotation3::rotation_between(&Vector3::z_axis(), &normal)
         //     .unwrap_or_else(|| Rotation3::from_axis_angle(&Vector3::x_axis(), PI));
 
-        // TODO: create caps
-        // TODO: create caps
-        // TODO: create caps
-        // TODO: create caps
+        // TODO: create caps GeneralRing
+        // TODO: create caps GeneralRing
+        // TODO: create caps GeneralRing
+        // TODO: create caps GeneralRing
 
         (Vector3 normal, float rotationAngle) = rotation.DecomposeQuaternion();
 
@@ -47,8 +47,8 @@ public static class RvmCylinderConverter
         var centerB = position - normal * halfHeight;
 
         var localZAxis = Vector3.Transform(Vector3.UnitZ, rotation);
-        var planeA = new Vector4(localZAxis, height);
-        var planeB = new Vector4(-localZAxis, height);
+        var planeA = new Vector4(localZAxis, halfHeight);
+        var planeB = new Vector4(-localZAxis, halfHeight);
 
         var angle = Vector3.UnitZ.AngleTo(normal);
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);

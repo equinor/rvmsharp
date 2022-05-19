@@ -73,10 +73,10 @@ public static class GltfWriter
             WriteEccentricCones(eccentricCones, model, scene);
         }
 
-        var ellipsoids = primitives.OfType<Ellipsoid>().ToArray();
+        var ellipsoids = primitives.OfType<EllipsoidSegment>().ToArray();
         if (ellipsoids.Length > 0)
         {
-            WriteEllipsoids(ellipsoids, model, scene);
+            WriteEllipsoidSegments(ellipsoids, model, scene);
         }
 
         var generalCylinders = primitives.OfType<GeneralCylinder>().ToArray();
@@ -103,10 +103,10 @@ public static class GltfWriter
             WriteQuads(quads, model, scene);
         }
 
-        var torus = primitives.OfType<Torus>().ToArray();
+        var torus = primitives.OfType<TorusSegment>().ToArray();
         if (torus.Length > 0)
         {
-            WriteTorus(torus, model, scene);
+            WriteTorusSegments(torus, model, scene);
         }
 
         var trapeziums = primitives.OfType<Trapezium>().ToArray();
@@ -471,7 +471,7 @@ public static class GltfWriter
         radiusBAccessor.SetData(bufferView, 48, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
     }
 
-    private static void WriteEllipsoids(Ellipsoid[] ellipsoids, ModelRoot model, Scene scene)
+    private static void WriteEllipsoidSegments(EllipsoidSegment[] ellipsoids, ModelRoot model, Scene scene)
     {
         var ellipsoidCount = ellipsoids.Length;
 
@@ -481,6 +481,7 @@ public static class GltfWriter
         var verticalRadiusAccessor = model.CreateAccessor();
         var heightAccessor = model.CreateAccessor();
         var centerAccessor = model.CreateAccessor();
+        var normalAccessor = model.CreateAccessor();
 
         var node = scene.CreateNode("EllipsoidSegmentCollection");
         var meshGpuInstancing = node.UseExtension<MeshGpuInstancing>();
@@ -490,9 +491,10 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_verticalRadius", verticalRadiusAccessor);
         meshGpuInstancing.SetAccessor("_height", heightAccessor);
         meshGpuInstancing.SetAccessor("_center", centerAccessor);
+        meshGpuInstancing.SetAccessor("_normal", normalAccessor);
 
         // create byte buffer
-        const int byteStride = (1 + 1 + 1 + 1 + 1 + 3) * sizeof(float); // id + color + matrix
+        const int byteStride = (1 + 1 + 1 + 1 + 1 + 3 + 3) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * ellipsoidCount, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
@@ -505,6 +507,7 @@ public static class GltfWriter
             buffer.Write(ellipsoid.VerticalRadius, ref bufferPos);
             buffer.Write(ellipsoid.Height, ref bufferPos);
             buffer.Write(ellipsoid.Center, ref bufferPos);
+            buffer.Write(ellipsoid.Normal, ref bufferPos);
         }
 
         treeIndexAccessor.SetData(bufferView, 0, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
@@ -513,6 +516,7 @@ public static class GltfWriter
         verticalRadiusAccessor.SetData(bufferView, 12, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         heightAccessor.SetData(bufferView, 16, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         centerAccessor.SetData(bufferView, 20, ellipsoidCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        normalAccessor.SetData(bufferView, 32, ellipsoidCount, DimensionType.VEC3, EncodingType.FLOAT, false);
     }
 
     private static void WriteGeneralCylinders(GeneralCylinder[] generalCylinders, ModelRoot model, Scene scene)
@@ -540,7 +544,7 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_centerB", centerBAccessor);
         meshGpuInstancing.SetAccessor("_localXAxis", localXAxisAccessor);
         meshGpuInstancing.SetAccessor("_planeA", planeAAccessor);
-        meshGpuInstancing.SetAccessor("_planeA", planeBAccessor);
+        meshGpuInstancing.SetAccessor("_planeB", planeBAccessor);
         meshGpuInstancing.SetAccessor("_radius", radiusAccessor);
 
         // create byte buffer
@@ -687,7 +691,7 @@ public static class GltfWriter
         instanceMatrixAccessor.SetData(bufferView, 8, quadCount, DimensionType.MAT4, EncodingType.FLOAT, false);
     }
 
-    private static void WriteTorus(Torus[] torus, ModelRoot model, Scene scene)
+    private static void WriteTorusSegments(TorusSegment[] torus, ModelRoot model, Scene scene)
     {
         var torusCount = torus.Length;
 

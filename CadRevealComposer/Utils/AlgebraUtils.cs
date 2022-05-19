@@ -184,6 +184,14 @@ public static class AlgebraUtils
         if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
         {
             rotation = Quaternion.Normalize(rotation);
+            if (rotation.X.ApproximatelyEquals(Quaternion.Identity.X, 0.000_005) &&
+                rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, 0.000_005) &&
+                rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, 0.000_005) &&
+                rotation.W.ApproximatelyEquals(Quaternion.Identity.W, 0.000_005))
+            {
+                rotation = Quaternion.Identity;
+            }
+
             return true;
         }
 

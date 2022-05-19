@@ -19,19 +19,18 @@ public static class RvmEllipticalDishConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmEllipticalDish.Matrix);
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
-        if (!rotation.IsIdentity)
-        {
-            throw new Exception("Cognite Reveal does not support spheres with rotation.");
-        }
+
+        var (normal, _) = rotation.DecomposeQuaternion();
 
         var verticalRadius = rvmEllipticalDish.Height * scale.X;
         var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
 
-        return new Ellipsoid(
+        return new EllipsoidSegment(
             horizontalRadius,
             verticalRadius,
             rvmEllipticalDish.Height,
             position,
+            normal,
             treeIndex,
             color,
             rvmEllipticalDish.CalculateAxisAlignedBoundingBox()

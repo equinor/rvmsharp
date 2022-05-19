@@ -62,11 +62,12 @@ public sealed record EccentricCone(
     Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
-public sealed record Ellipsoid(
+public sealed record EllipsoidSegment(
     float HorizontalRadius,
     float VerticalRadius,
     float Height,
     Vector3 Center,
+    Vector3 Normal,
     ulong TreeIndex,
     Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -106,7 +107,7 @@ public sealed record Quad(
     Color Color,
     RvmBoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
-public sealed record Torus(
+public sealed record TorusSegment(
     float ArcAngle,
     Matrix4x4 InstanceMatrix,
     float Radius,
@@ -152,8 +153,7 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
             case RvmCylinder rvmCylinder:
                 return rvmCylinder.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmEllipticalDish rvmEllipticalDish:
-                return null;
-                //return rvmEllipticalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
+                return rvmEllipticalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmFacetGroup facetGroup:
                 return new ProtoMeshFromFacetGroup(
                     facetGroup,
@@ -164,22 +164,19 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
                 // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
                 return null;
             case RvmPyramid rvmPyramid:
-                return null;
-                //return rvmPyramid.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
+                return rvmPyramid.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmCircularTorus circularTorus:
                 return circularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmSphere rvmSphere:
-                return null;
-                //return rvmSphere.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
+                return rvmSphere.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmSphericalDish rvmSphericalDish:
-                return null;
-                //return rvmSphericalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
+                return rvmSphericalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmSnout rvmSnout:
                 return rvmSnout.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmRectangularTorus rvmRectangularTorus:
                 return rvmRectangularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             default:
-                throw new InvalidOperationException();
+                throw new ArgumentOutOfRangeException(nameof(rvmPrimitive), rvmPrimitive, nameof(rvmPrimitive));
         }
     }
 }

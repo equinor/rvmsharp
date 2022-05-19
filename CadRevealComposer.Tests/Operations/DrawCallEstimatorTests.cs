@@ -55,7 +55,7 @@ public class DrawCallEstimatorTests
             new SolidClosedGeneralCone(
                 new CommonPrimitiveProperties(1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 1.0f, new RvmBoundingBox(-Vector3.One, Vector3.One), Color.Blue, (Vector3.UnitZ, 0), null!),
                 Vector3.One, 13, 3, 5, 0.3f, 1.5f, 0.1f, 0.0f, 0.0f, 0.1f, 0.2f),
-            new Torus(
+            new TorusSegment(
                 new CommonPrimitiveProperties(1, 1, Vector3.Zero, Quaternion.Identity, Vector3.One, 1.0f, new RvmBoundingBox(-Vector3.One, Vector3.One), Color.Blue, (Vector3.UnitZ, 0), null!),
                 Vector3.UnitY, 10, 5),
             new ClosedCylinder(

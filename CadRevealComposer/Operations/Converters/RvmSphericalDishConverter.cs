@@ -19,21 +19,20 @@ public static class RvmSphericalDishConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphericalDish.Matrix);
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
-        if (!rotation.IsIdentity)
-        {
-            throw new Exception("Cognite Reveal does not support spheres with rotation.");
-        }
+
+        var (normal, _) = rotation.DecomposeQuaternion();
 
         var height = rvmSphericalDish.Height * scale.X;
         var baseRadius = rvmSphericalDish.BaseRadius * scale.X;
         // radius R = h / 2 + c^2 / (8 * h), where c is the cord length or 2 * baseRadius
         var sphereRadius = height / 2 + baseRadius * baseRadius / (2 * height);
 
-        return new Ellipsoid(
+        return new EllipsoidSegment(
             sphereRadius,
             sphereRadius,
             height,
             position,
+            normal,
             treeIndex,
             color,
             rvmSphericalDish.CalculateAxisAlignedBoundingBox());

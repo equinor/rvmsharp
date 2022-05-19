@@ -22,7 +22,7 @@ public static class RvmCircularTorusConverter
 
         var tubeRadius = rvmCircularTorus.Radius * scale.X;
         var radius = rvmCircularTorus.Offset * scale.X;
-        return new Torus(
+        return new TorusSegment(
             rvmCircularTorus.Angle,
             rvmCircularTorus.Matrix,
             radius,
