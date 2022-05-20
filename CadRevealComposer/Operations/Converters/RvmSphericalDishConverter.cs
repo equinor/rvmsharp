@@ -41,5 +41,9 @@ public static class RvmSphericalDishConverter
             treeIndex,
             color,
             rvmSphericalDish.CalculateAxisAlignedBoundingBox());
+
+        // TODO: add cap
+        // TODO: add cap
+        // TODO: add cap
     }
 }

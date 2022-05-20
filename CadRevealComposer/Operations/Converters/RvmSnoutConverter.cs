@@ -134,6 +134,10 @@ public static class RvmSnoutConverter
         var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
         if (isCylinderShaped)
         {
+            // TODO: was ClosedGeneralCylinder which translates to 1x GeneralCylinder, 2x GeneralRing (see cylinder.rs)
+            // TODO: was ClosedGeneralCylinder which translates to 1x GeneralCylinder, 2x GeneralRing (see cylinder.rs)
+            // TODO: was ClosedGeneralCylinder which translates to 1x GeneralCylinder, 2x GeneralRing (see cylinder.rs)
+
             yield return new GeneralCylinder(
                 Angle: 0f,
                 ArcAngle: 2f * MathF.PI,
@@ -148,21 +152,9 @@ public static class RvmSnoutConverter
                 rvmSnout.CalculateAxisAlignedBoundingBox()
             );
 
-            yield return new Circle(
-                matrixCapA,
-                normal,
-                treeIndex,
-                color,
-                rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
-            );
-
-            yield return new Circle(
-                matrixCapB,
-                -normal,
-                treeIndex,
-                color,
-                rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
-            );
+            // TODO: 2x GeneralRing
+            // TODO: 2x GeneralRing
+            // TODO: 2x GeneralRing
 
             yield break;
         }
@@ -170,6 +162,10 @@ public static class RvmSnoutConverter
         // TODO: shear
         // TODO: shear
         // TODO: shear
+
+        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
+        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
+        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
 
         yield return new Cone(
             Angle: 0f,
@@ -184,21 +180,9 @@ public static class RvmSnoutConverter
             rvmSnout.CalculateAxisAlignedBoundingBox()
         );
 
-        yield return new Circle(
-            matrixCapA,
-            normal,
-            treeIndex,
-            color,
-            rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
-        );
-
-        yield return new Circle(
-            matrixCapB,
-            -normal,
-            treeIndex,
-            color,
-            rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
-        );
+        // TODO: 2x GeneralRing
+        // TODO: 2x GeneralRing
+        // TODO: 2x GeneralRing
     }
 
     private static bool IsEccentric(RvmSnout rvmSnout)

@@ -38,5 +38,9 @@ public static class RvmRectangularTorusConverter
             color,
             rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
             );
+
+        // TODO: was ExtrudedRing or ClosedExtrudedRingSegment which translates to 2x GeneralRing, 2x Cone (see ring.rs)
+        // TODO: was ExtrudedRing or ClosedExtrudedRingSegment which translates to 2x GeneralRing, 2x Cone (see ring.rs)
+        // TODO: was ExtrudedRing or ClosedExtrudedRingSegment which translates to 2x GeneralRing, 2x Cone (see ring.rs)
     }
 }

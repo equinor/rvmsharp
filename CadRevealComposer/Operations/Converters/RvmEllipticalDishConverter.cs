@@ -36,5 +36,9 @@ public static class RvmEllipticalDishConverter
             color,
             rvmEllipticalDish.CalculateAxisAlignedBoundingBox()
         );
+
+        // TODO: add cap
+        // TODO: add cap
+        // TODO: add cap
     }
 }
