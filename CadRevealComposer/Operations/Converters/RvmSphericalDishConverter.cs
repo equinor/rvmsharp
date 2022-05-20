@@ -5,6 +5,7 @@ using RvmSharp.Primitives;
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Numerics;
 using Utils;
 
 public static class RvmSphericalDishConverter
@@ -26,12 +27,15 @@ public static class RvmSphericalDishConverter
         var baseRadius = rvmSphericalDish.BaseRadius * scale.X;
         // radius R = h / 2 + c^2 / (8 * h), where c is the cord length or 2 * baseRadius
         var sphereRadius = height / 2 + baseRadius * baseRadius / (2 * height);
+        var d = sphereRadius - height;
+        var upVector = Vector3.Transform(Vector3.UnitZ, Matrix4x4.CreateFromQuaternion(rotation));
+        var center = position - upVector * d;
 
         return new EllipsoidSegment(
             sphereRadius,
             sphereRadius,
             height,
-            position,
+            center,
             normal,
             treeIndex,
             color,

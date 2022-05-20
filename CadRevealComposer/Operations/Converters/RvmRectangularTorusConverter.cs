@@ -15,7 +15,7 @@ public static class RvmRectangularTorusConverter
         ulong treeIndex,
         Color color)
     {
-        if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
+        if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out _))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
         }
@@ -29,7 +29,7 @@ public static class RvmRectangularTorusConverter
 
         return new GeneralRing(
             rotationAngle,
-            MathF.PI * 2,
+            rvmRectangularTorus.Angle,
             rvmRectangularTorus.Matrix,
             normal,
             thickness,

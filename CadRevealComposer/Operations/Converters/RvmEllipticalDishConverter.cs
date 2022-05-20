@@ -28,7 +28,7 @@ public static class RvmEllipticalDishConverter
         return new EllipsoidSegment(
             horizontalRadius,
             verticalRadius,
-            rvmEllipticalDish.Height,
+            verticalRadius,
             position,
             normal,
             treeIndex,
