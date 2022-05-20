@@ -6,27 +6,14 @@ using CadRevealComposer.Utils;
 using NUnit.Framework;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
+using System.Drawing;
+using System.Linq;
 using System.Numerics;
 
 [TestFixture]
 public class RvmPyramidConverterTests
 {
     private readonly RvmBoundingBox _throwawayBoundingBox = new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
-
-    internal RvmNode RvmNodeTestInstance;
-
-    internal const ulong NodeId = 675;
-    internal const int TreeIndex = 1337;
-    internal CadRevealNode RevealNode;
-
-
-    [SetUp]
-    public void Setup()
-    {
-        RvmNodeTestInstance = new RvmNode(2, "BoxNode", new Vector3(1, 2, 3), 2);
-        RevealNode = new CadRevealNode() { NodeId = NodeId, TreeIndex = TreeIndex };
-    }
-
 
     [Test]
     public void ConvertRvmPyramid_WhenTopAndBottomIsEqualAndNoOffset_IsBox()
@@ -37,22 +24,9 @@ public class RvmPyramidConverterTests
             transform,
             new RvmBoundingBox(new Vector3(-1, -2, -3), new Vector3(1, 2, 3)),
             LengthX: 2, LengthY: 4, LengthZ: 6);
-        var rvmNode = new RvmNode(2, "BoxNode", new Vector3(1, 2, 3), 2);
-        var revealNode = new CadRevealNode() { NodeId = NodeId, TreeIndex = TreeIndex };
-        var box = rvmBox.ConvertToRevealPrimitive(revealNode, rvmNode);
+        var box = rvmBox.ConvertToRevealPrimitive(1337, Color.Red).SingleOrDefault() as Box;
 
         Assert.That(box, Is.Not.Null);
-        Assert.That(box, Is.TypeOf<Box>());
-        Assert.That(box.DeltaX, Is.EqualTo(2));
-        Assert.That(box.DeltaY, Is.EqualTo(4));
-        Assert.That(box.DeltaZ, Is.EqualTo(6));
-        Assert.That(box.CenterX, Is.EqualTo(0)); // Translation of RvmNode is ignored.
-        Assert.That(box.CenterY, Is.EqualTo(0));
-        Assert.That(box.CenterZ, Is.EqualTo(0));
-        Assert.That(box.NodeId, Is.EqualTo(NodeId));
-        Assert.That(box.TreeIndex, Is.EqualTo(TreeIndex));
-        Assert.That(box.Normal, Is.EqualTo(Vector3.UnitZ));
-        Assert.That(box.RotationAngle, Is.EqualTo(0));
     }
 
     [TestFixture]

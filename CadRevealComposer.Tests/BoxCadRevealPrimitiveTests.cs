@@ -4,6 +4,7 @@ using CadRevealComposer.Primitives;
 using NUnit.Framework;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
+using System.Linq;
 using System.Numerics;
 
 [TestFixture]
@@ -29,13 +30,12 @@ public class BoxCadRevealPrimitiveTests
 
         RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
-        var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox) as Box;
+        var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox).SingleOrDefault() as Box;
 
         Assert.That(box, Is.Not.Null);
-        Assert.That(box.CenterX, Is.EqualTo(10));
-        Assert.That(box.CenterY, Is.EqualTo(0));
-        Assert.That(box.CenterZ, Is.EqualTo(0));
-        Assert.That(box.Diagonal, Is.EqualTo(expectedDiagonal));
-        Assert.That(box.RotationAngle, Is.EqualTo(expectedAngle));
+        Assert.That(box.InstanceMatrix.Translation.X, Is.EqualTo(10));
+        Assert.That(box.InstanceMatrix.Translation.Y, Is.EqualTo(0));
+        Assert.That(box.InstanceMatrix.Translation.Z, Is.EqualTo(0));
+        Assert.That(box.AxisAlignedBoundingBox.Diagonal, Is.EqualTo(expectedDiagonal));
     }
 }

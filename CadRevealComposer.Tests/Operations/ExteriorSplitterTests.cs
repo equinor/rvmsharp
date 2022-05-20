@@ -31,8 +31,8 @@ public class ExteriorSplitterTests
     {
         return new Box(
             Matrix4x4.Identity,
-            Color.Red,
             int.MaxValue,
+            Color.Red,
             new RvmBoundingBox(
                 new Vector3(-boxSize / 2f),
                 new Vector3(boxSize / 2f)));

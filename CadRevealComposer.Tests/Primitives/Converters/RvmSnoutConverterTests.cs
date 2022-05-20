@@ -1,16 +1,16 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Converters;
 
 using CadRevealComposer.Operations.Converters;
+using CadRevealComposer.Primitives;
 using NUnit.Framework;
 using RvmSharp.Primitives;
+using System.Drawing;
 using System.Numerics;
 
 [TestFixture]
 public class RvmSnoutConverterTests
 {
     private static RvmSnout _rvmSnout;
-    private static RvmNode _rvmNode = new RvmNode(2, "SnoutParent", Vector3.One, 2);
-    private static CadRevealNode _revealNode = new CadRevealNode() {NodeId = 456, TreeIndex = 1337};
 
     [SetUp]
     public void Setup()
@@ -28,19 +28,15 @@ public class RvmSnoutConverterTests
             BottomShearY: 0,
             TopShearX: 0,
             TopShearY: 0);
-
-        _rvmNode = new RvmNode(2, "SnoutParent", Vector3.One, 2);
-
-        _revealNode = new CadRevealNode() {NodeId = 456, TreeIndex = 1337};
     }
 
     [Test]
     public void ConvertToRevealPrimitive()
     {
-        var cone = _rvmSnout.ConvertToRevealPrimitive(_revealNode, _rvmNode);
+        var cone = _rvmSnout.ConvertToRevealPrimitive(1337, Color.Red);
 
         Assert.That(cone, Is.Not.Null);
-        Assert.That(cone, Is.TypeOf<ClosedCone>());
+        Assert.That(cone, Is.TypeOf<Cone>());
     }
 
     [Test]
@@ -49,10 +45,10 @@ public class RvmSnoutConverterTests
         _rvmSnout.Connections[0] = new RvmConnection(_rvmSnout, _rvmSnout, 0, 0, Vector3.One, Vector3.UnitZ,
             RvmConnection.ConnectionType.HasCircularSide);
 
-        var cone = _rvmSnout.ConvertToRevealPrimitive(_revealNode, _rvmNode);
+        var cone = _rvmSnout.ConvertToRevealPrimitive(1337, Color.Red);
 
         Assert.That(cone, Is.Not.Null);
-        Assert.That(cone, Is.TypeOf<ClosedCone>());
+        Assert.That(cone, Is.TypeOf<Cone>());
     }
 
     [Test]
@@ -60,7 +56,7 @@ public class RvmSnoutConverterTests
     public void ConvertToRevealPrimitive_WhenOffset_ProducesCorrectPrimitive()
     {
         var rvmSnoutWithOffset = _rvmSnout with {OffsetX = 1};
-        var cone = rvmSnoutWithOffset.ConvertToRevealPrimitive(_revealNode, _rvmNode);
+        var cone = rvmSnoutWithOffset.ConvertToRevealPrimitive(1337, Color.Red);
         Assert.That(cone, Is.Not.Null);
     }
 }
