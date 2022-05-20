@@ -3,13 +3,14 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using Utils;
 
 public static class RvmCircularTorusConverter
 {
-    public static APrimitive ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
         Color color)
@@ -22,7 +23,7 @@ public static class RvmCircularTorusConverter
 
         var tubeRadius = rvmCircularTorus.Radius * scale.X;
         var radius = rvmCircularTorus.Offset * scale.X;
-        return new TorusSegment(
+        yield return new TorusSegment(
             rvmCircularTorus.Angle,
             rvmCircularTorus.Matrix,
             radius,

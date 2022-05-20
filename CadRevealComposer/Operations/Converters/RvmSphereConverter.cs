@@ -3,13 +3,14 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using Utils;
 
 public static class RvmSphereConverter
 {
-    public static APrimitive ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphere rvmSphere,
         ulong treeIndex,
         Color color)
@@ -24,7 +25,7 @@ public static class RvmSphereConverter
 
         var radius = rvmSphere.Radius * scale.X;
         var diameter = radius * 2f;
-        return new EllipsoidSegment(
+        yield return new EllipsoidSegment(
             radius,
             radius,
             diameter,

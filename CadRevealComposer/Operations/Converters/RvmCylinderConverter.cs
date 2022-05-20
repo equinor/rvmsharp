@@ -3,13 +3,14 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 using Utils;
 
 public static class RvmCylinderConverter
 {
-    public static APrimitive ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCylinder rvmCylinder,
         ulong treeIndex,
         Color color)
@@ -53,7 +54,7 @@ public static class RvmCylinderConverter
         var angle = Vector3.UnitZ.AngleTo(normal);
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
-        return new GeneralCylinder(
+        yield return new GeneralCylinder(
             angle,
             MathF.PI * 2f,
             centerA,

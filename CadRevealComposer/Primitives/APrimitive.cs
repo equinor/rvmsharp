@@ -4,6 +4,7 @@ using Operations.Converters;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
@@ -141,7 +142,7 @@ public sealed record TriangleMesh(
 
 public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox AxisAlignedBoundingBox)
 {
-    public static APrimitive? FromRvmPrimitive(
+    public static IEnumerable<APrimitive> FromRvmPrimitive(
             CadRevealNode revealNode,
             RvmNode rvmNode,
             RvmPrimitive rvmPrimitive)
@@ -154,15 +155,11 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
                 return rvmCylinder.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmEllipticalDish rvmEllipticalDish:
                 return rvmEllipticalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmFacetGroup facetGroup:
-                return new ProtoMeshFromFacetGroup(
-                    facetGroup,
-                    revealNode.TreeIndex,
-                    rvmNode.GetColor(),
-                    facetGroup.CalculateAxisAlignedBoundingBox());
+            case RvmFacetGroup rvmFacetGroup:
+                return rvmFacetGroup.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmLine:
                 // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
-                return null;
+                return Array.Empty<APrimitive>();
             case RvmPyramid rvmPyramid:
                 return rvmPyramid.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             case RvmCircularTorus circularTorus:

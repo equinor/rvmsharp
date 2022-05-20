@@ -3,13 +3,14 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using Utils;
 
 public static class RvmEllipticalDishConverter
 {
-    public static APrimitive ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmEllipticalDish rvmEllipticalDish,
         ulong treeIndex,
         Color color)
@@ -25,7 +26,7 @@ public static class RvmEllipticalDishConverter
         var verticalRadius = rvmEllipticalDish.Height * scale.X;
         var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
 
-        return new EllipsoidSegment(
+        yield return new EllipsoidSegment(
             horizontalRadius,
             verticalRadius,
             verticalRadius,

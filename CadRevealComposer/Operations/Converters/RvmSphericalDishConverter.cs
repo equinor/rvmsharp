@@ -3,6 +3,7 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
@@ -10,7 +11,7 @@ using Utils;
 
 public static class RvmSphericalDishConverter
 {
-    public static APrimitive ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphericalDish rvmSphericalDish,
         ulong treeIndex,
         Color color)
@@ -31,7 +32,7 @@ public static class RvmSphericalDishConverter
         var upVector = Vector3.Transform(Vector3.UnitZ, Matrix4x4.CreateFromQuaternion(rotation));
         var center = position - upVector * d;
 
-        return new EllipsoidSegment(
+        yield return new EllipsoidSegment(
             sphereRadius,
             sphereRadius,
             height,

@@ -3,6 +3,7 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
@@ -10,7 +11,7 @@ using Utils;
 
 public static class RvmRectangularTorusConverter
 {
-    public static APrimitive ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
         Color color)
@@ -27,7 +28,7 @@ public static class RvmRectangularTorusConverter
 
         (Vector3 normal, float rotationAngle) = rotation.DecomposeQuaternion();
 
-        return new GeneralRing(
+        yield return new GeneralRing(
             rotationAngle,
             rvmRectangularTorus.Angle,
             rvmRectangularTorus.Matrix,

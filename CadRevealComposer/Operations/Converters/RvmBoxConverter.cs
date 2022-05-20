@@ -3,13 +3,14 @@
 using Primitives;
 using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 using Utils;
 
 public static class RvmBoxConverter
 {
-    public static Box ConvertToRevealPrimitive(
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmBox rvmBox,
         ulong treeIndex,
         Color color)
@@ -28,7 +29,7 @@ public static class RvmBoxConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
-        return new Box(
+        yield return new Box(
             matrix,
             treeIndex,
             color,
