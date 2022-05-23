@@ -43,12 +43,12 @@ public static class RvmCylinderConverter
         var centerB = position + normalB * halfHeight;
 
         var matrixCapA =
-            Matrix4x4.CreateScale(diameter)
+            Matrix4x4.CreateScale(diameter, diameter, 1f)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerA);
 
         var matrixCapB =
-            Matrix4x4.CreateScale(diameter)
+            Matrix4x4.CreateScale(diameter, diameter, 1f)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
 

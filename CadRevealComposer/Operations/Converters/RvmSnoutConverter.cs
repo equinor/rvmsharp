@@ -24,64 +24,83 @@ public static class RvmSnoutConverter
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
+        var bbox = rvmSnout.CalculateAxisAlignedBoundingBox();
+
         var height = scale.Z * MathF.Sqrt(
             rvmSnout.Height * rvmSnout.Height +
             rvmSnout.OffsetX * rvmSnout.OffsetX +
             rvmSnout.OffsetY * rvmSnout.OffsetY);
         var halfHeight = 0.5f * height;
+        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
-        var centerA = position + halfHeight * normal;
-        var centerB = position - halfHeight * normal;
+        var diameterA = 2f * radiusA;
+        var diameterB = 2f * radiusB;
 
-        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        var normalA = normal;
+        var normalB = -normal;
+
+        var centerA = position + normalA * halfHeight;
+        var centerB = position + normalB * halfHeight;
 
         var matrixCapA =
-            Matrix4x4.CreateScale(2f * radiusA, 2f * radiusA, 1f)
+            Matrix4x4.CreateScale(diameterA)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerA);
 
         var matrixCapB =
-            Matrix4x4.CreateScale(2f * radiusB, 2f * radiusB, 1f)
+            Matrix4x4.CreateScale(diameterB)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
 
         var isConeShaped = !HasShear(rvmSnout);
+        var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
+
         if (isConeShaped)
         {
             if (IsEccentric(rvmSnout))
             {
-                var capNormal = Vector3.Transform(
+                var eccentricNormal = Vector3.Transform(
                     Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height) * scale.X),
                     rotation);
 
+                var matrixEccentricCapA =
+                    Matrix4x4.CreateScale(diameterA)
+                    * Matrix4x4.CreateFromQuaternion(rotation)
+                    * Matrix4x4.CreateTranslation(position + eccentricNormal * halfHeight);
+
+                var matrixEccentricCapB =
+                    Matrix4x4.CreateScale(diameterB)
+                    * Matrix4x4.CreateFromQuaternion(rotation)
+                    * Matrix4x4.CreateTranslation(position - eccentricNormal * halfHeight);
+
                 yield return new EccentricCone(
-                    centerA,
-                    centerB,
+                    position + eccentricNormal * halfHeight,
+                    position - eccentricNormal * halfHeight,
                     normal,
                     radiusA,
                     radiusB,
                     treeIndex,
                     color,
-                    rvmSnout.CalculateAxisAlignedBoundingBox()
+                    bbox
                     );
 
                 yield return new Circle(
-                    matrixCapA,
-                    capNormal,
+                    matrixEccentricCapA,
+                    normalA,
                     treeIndex,
                     color,
-                    rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
+                    bbox // use same bbox as RVM source
                 );
 
                 yield return new Circle(
-                    matrixCapB,
-                    -capNormal,
+                    matrixEccentricCapB,
+                    normalB,
                     treeIndex,
                     color,
-                    rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
+                    bbox // use same bbox as RVM source
                 );
 
                 yield break;
@@ -97,23 +116,23 @@ public static class RvmSnoutConverter
                 radiusB,
                 treeIndex,
                 color,
-                rvmSnout.CalculateAxisAlignedBoundingBox()
+                bbox
             );
 
             yield return new Circle(
                 matrixCapA,
-                normal,
+                normalA,
                 treeIndex,
                 color,
-                rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
+                bbox // use same bbox as RVM source
             );
 
             yield return new Circle(
                 matrixCapB,
-                -normal,
+                normalB,
                 treeIndex,
                 color,
-                rvmSnout.CalculateAxisAlignedBoundingBox() // use same bbox as RVM source
+                bbox // use same bbox as RVM source
             );
 
             yield break;
@@ -125,18 +144,17 @@ public static class RvmSnoutConverter
                 "This type of primitive is missing from CadReveal, should convert to mesh?");
         }
 
-        var normalA = ShearToNormal((rvmSnout.TopShearX, rvmSnout.TopShearY));
-        var normalB = ShearToNormal((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
-
-        var planeA = new Vector4(normalA, halfHeight);
-        var planeB = new Vector4(-normalB, -halfHeight);
-
-        var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
         if (isCylinderShaped)
         {
             // TODO: was ClosedGeneralCylinder which translates to 1x GeneralCylinder, 2x GeneralRing (see cylinder.rs)
             // TODO: was ClosedGeneralCylinder which translates to 1x GeneralCylinder, 2x GeneralRing (see cylinder.rs)
             // TODO: was ClosedGeneralCylinder which translates to 1x GeneralCylinder, 2x GeneralRing (see cylinder.rs)
+
+            var planeNormalA = ShearToNormal((rvmSnout.TopShearX, rvmSnout.TopShearY));
+            var planeNormalB = ShearToNormal((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
+
+            var planeA = new Vector4(planeNormalA, -Vector3.Dot(planeNormalA, centerA));
+            var planeB = new Vector4(planeNormalB, -Vector3.Dot(planeNormalB, centerB));
 
             yield return new GeneralCylinder(
                 Angle: 0f,
@@ -149,23 +167,41 @@ public static class RvmSnoutConverter
                 radiusA,
                 treeIndex,
                 color,
-                rvmSnout.CalculateAxisAlignedBoundingBox()
+                bbox
             );
 
-            // TODO: 2x GeneralRing
-            // TODO: 2x GeneralRing
-            // TODO: 2x GeneralRing
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                InstanceMatrix: matrixCapA,
+                Normal: normalA,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox // use same bbox as RVM source
+            );
+
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                InstanceMatrix: matrixCapB,
+                Normal: normalB,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox // use same bbox as RVM source
+            );
 
             yield break;
         }
 
-        // TODO: shear
-        // TODO: shear
-        // TODO: shear
+        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
+        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
+        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
 
-        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
-        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
-        // TODO: was ClosedGeneralCone which translates to 1x Cone, 2x GeneralRing (see cone.rs)
+        // TODO: shear
+        // TODO: shear
+        // TODO: shear
 
         yield return new Cone(
             Angle: 0f,
@@ -177,26 +213,44 @@ public static class RvmSnoutConverter
             radiusB,
             treeIndex,
             color,
-            rvmSnout.CalculateAxisAlignedBoundingBox()
+            bbox
         );
 
-        // TODO: 2x GeneralRing
-        // TODO: 2x GeneralRing
-        // TODO: 2x GeneralRing
+        yield return new GeneralRing(
+            Angle: 0f,
+            ArcAngle: 2f * MathF.PI,
+            InstanceMatrix: matrixCapA,
+            Normal: normal,
+            Thickness: 1f,
+            treeIndex,
+            color,
+            bbox // use same bbox as RVM source
+        );
+
+        yield return new GeneralRing(
+            Angle: 0f,
+            ArcAngle: 2f * MathF.PI,
+            InstanceMatrix: matrixCapB,
+            Normal: normal,
+            Thickness: 1f,
+            treeIndex,
+            color,
+            bbox // use same bbox as RVM source
+        );
     }
 
     private static bool IsEccentric(RvmSnout rvmSnout)
     {
-        return rvmSnout.OffsetX != 0 ||
-               rvmSnout.OffsetY != 0;
+        return rvmSnout.OffsetX > 0f ||
+               rvmSnout.OffsetY > 0f;
     }
 
     private static bool HasShear(RvmSnout rvmSnout)
     {
-        return rvmSnout.BottomShearX != 0 ||
-               rvmSnout.BottomShearY != 0 ||
-               rvmSnout.TopShearX != 0 ||
-               rvmSnout.TopShearY != 0;
+        return rvmSnout.BottomShearX > 0f ||
+               rvmSnout.BottomShearY > 0f ||
+               rvmSnout.TopShearX > 0f ||
+               rvmSnout.TopShearY > 0f;
     }
 
     private static Vector3 ShearToNormal((float shearX, float shearY) input)
