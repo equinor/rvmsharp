@@ -536,52 +536,52 @@ public static class GltfWriter
             var treeIndex = (float)generalCylinder.TreeIndex;
             buffer.Write(treeIndex, ref bufferPos);
             buffer.Write(generalCylinder.Color, ref bufferPos);
-            buffer.Write(generalCylinder.Angle, ref bufferPos);
-            buffer.Write(generalCylinder.ArcAngle, ref bufferPos);
             buffer.Write(generalCylinder.CenterA, ref bufferPos);
             buffer.Write(generalCylinder.CenterB, ref bufferPos);
-            buffer.Write(generalCylinder.LocalXAxis, ref bufferPos);
+            buffer.Write(generalCylinder.Radius, ref bufferPos);
             buffer.Write(generalCylinder.PlaneA, ref bufferPos);
             buffer.Write(generalCylinder.PlaneB, ref bufferPos);
-            buffer.Write(generalCylinder.Radius, ref bufferPos);
+            buffer.Write(generalCylinder.LocalXAxis, ref bufferPos);
+            buffer.Write(generalCylinder.Angle, ref bufferPos);
+            buffer.Write(generalCylinder.ArcAngle, ref bufferPos);
         }
 
         // create buffer accessors
         var treeIndexAccessor = model.CreateAccessor();
         var colorAccessor = model.CreateAccessor();
-        var angleAccessor = model.CreateAccessor();
-        var arcAngleAccessor = model.CreateAccessor();
         var centerAAccessor = model.CreateAccessor();
         var centerBAccessor = model.CreateAccessor();
-        var localXAxisAccessor = model.CreateAccessor();
+        var radiusAccessor = model.CreateAccessor();
         var planeAAccessor = model.CreateAccessor();
         var planeBAccessor = model.CreateAccessor();
-        var radiusAccessor = model.CreateAccessor();
+        var localXAxisAccessor = model.CreateAccessor();
+        var angleAccessor = model.CreateAccessor();
+        var arcAngleAccessor = model.CreateAccessor();
 
         treeIndexAccessor.SetData(bufferView, 0, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         colorAccessor.SetData(bufferView, 4, generalCylinderCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        angleAccessor.SetData(bufferView, 8, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        arcAngleAccessor.SetData(bufferView, 12, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        centerAAccessor.SetData(bufferView, 16, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        centerBAccessor.SetData(bufferView, 28, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        localXAxisAccessor.SetData(bufferView, 40, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        planeAAccessor.SetData(bufferView, 52, generalCylinderCount, DimensionType.VEC4, EncodingType.FLOAT, false);
-        planeBAccessor.SetData(bufferView, 68, generalCylinderCount, DimensionType.VEC4, EncodingType.FLOAT, false);
-        radiusAccessor.SetData(bufferView, 84, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        centerAAccessor.SetData(bufferView, 8, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        centerBAccessor.SetData(bufferView, 20, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        radiusAccessor.SetData(bufferView, 32, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        planeAAccessor.SetData(bufferView, 36, generalCylinderCount, DimensionType.VEC4, EncodingType.FLOAT, false);
+        planeBAccessor.SetData(bufferView, 52, generalCylinderCount, DimensionType.VEC4, EncodingType.FLOAT, false);
+        localXAxisAccessor.SetData(bufferView, 68, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        angleAccessor.SetData(bufferView, 80, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        arcAngleAccessor.SetData(bufferView, 84, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
 
         // create node
         var node = scene.CreateNode("GeneralCylinderCollection");
         var meshGpuInstancing = node.UseExtension<MeshGpuInstancing>();
         meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
         meshGpuInstancing.SetAccessor("_color", colorAccessor);
-        meshGpuInstancing.SetAccessor("_angle", angleAccessor);
-        meshGpuInstancing.SetAccessor("_arcAngle", arcAngleAccessor);
         meshGpuInstancing.SetAccessor("_centerA", centerAAccessor);
         meshGpuInstancing.SetAccessor("_centerB", centerBAccessor);
-        meshGpuInstancing.SetAccessor("_localXAxis", localXAxisAccessor);
+        meshGpuInstancing.SetAccessor("_radius", radiusAccessor);
         meshGpuInstancing.SetAccessor("_planeA", planeAAccessor);
         meshGpuInstancing.SetAccessor("_planeB", planeBAccessor);
-        meshGpuInstancing.SetAccessor("_radius", radiusAccessor);
+        meshGpuInstancing.SetAccessor("_localXAxis", localXAxisAccessor);
+        meshGpuInstancing.SetAccessor("_angle", angleAccessor);
+        meshGpuInstancing.SetAccessor("_arcAngle", arcAngleAccessor);
     }
 
     private static void WriteGeneralRings(GeneralRing[] generalRings, ModelRoot model, Scene scene)
