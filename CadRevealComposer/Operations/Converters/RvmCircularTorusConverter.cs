@@ -21,8 +21,8 @@ public static class RvmCircularTorusConverter
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
-        var tubeRadius = rvmCircularTorus.Radius * scale.X;
-        var radius = rvmCircularTorus.Offset * scale.X;
+        var tubeRadius = rvmCircularTorus.Radius;
+        var radius = rvmCircularTorus.Offset;
         yield return new TorusSegment(
             rvmCircularTorus.Angle,
             rvmCircularTorus.Matrix,

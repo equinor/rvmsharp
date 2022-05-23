@@ -90,11 +90,12 @@ public static class CadRevealComposerRunner
         }
 
         var geometries = allNodes
-            .AsParallel()
-            .AsOrdered()
+            //.AsParallel()
+            //.AsOrdered()
             .SelectMany(x => x.RvmGeometries
-                .Where(IsValidGeometry)
-                .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
+                //.Where(IsValidGeometry)
+                .SelectMany(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
+                .WhereNotNull()
             .WhereNotNull()
             .ToArray();
 

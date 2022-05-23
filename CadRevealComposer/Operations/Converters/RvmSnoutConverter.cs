@@ -16,6 +16,9 @@ public static class RvmSnoutConverter
         ulong treeIndex,
         Color color)
     {
+        color = Color.White;
+
+
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
