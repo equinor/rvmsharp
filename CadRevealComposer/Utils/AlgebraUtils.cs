@@ -6,6 +6,14 @@ using System.Numerics;
 
 public static class AlgebraUtils
 {
+    public static float NormalizeRadians(float value)
+    {
+        var twoPi = MathF.PI + MathF.PI;
+        while (value <= -Math.PI) value += twoPi;
+        while (value > Math.PI) value -= twoPi;
+        return value;
+    }
+
     public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
     {
         var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
