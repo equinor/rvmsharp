@@ -11,6 +11,8 @@ using Utils;
 
 public static class RvmRectangularTorusConverter
 {
+    public static int count = 0;
+
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
@@ -37,13 +39,13 @@ public static class RvmRectangularTorusConverter
 
         color = Color.Red;
 
-        // TODO, this messes with arcangle, how much is shown
-        rotationAngle += MathF.PI / 2.0f; // TODO: This is right for some, not for all
         var arcAngle = rvmRectangularTorus.Angle;
+        var transformedRotationAngle = rotationAngle - (1 + rotationAngle / arcAngle) * arcAngle;
+        var normalizedRotationAngle = AlgebraUtils.NormalizeRadians(transformedRotationAngle);
 
         yield return new Cone(
-            rotationAngle,
-            arcAngle,
+            normalizedRotationAngle,
+            rvmRectangularTorus.Angle,
             centerA,
             centerB,
             localXAxis,
@@ -54,18 +56,21 @@ public static class RvmRectangularTorusConverter
             rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
         );
 
-        yield return new Cone(
-            rotationAngle,
-            arcAngle,
-            centerA,
-            centerB,
-            localXAxis,
-            radiusInner,
-            radiusInner,
-            treeIndex,
-            color,
-            rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
-        );
+        if (radiusInner > 0)
+        {
+            yield return new Cone(
+                normalizedRotationAngle,
+                rvmRectangularTorus.Angle,
+                centerA,
+                centerB,
+                localXAxis,
+                radiusInner,
+                radiusInner,
+                treeIndex,
+                color,
+                rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
+            );
+        }
 
         var matrixRingA =
             Matrix4x4.CreateScale(outerDiameter)
@@ -82,7 +87,7 @@ public static class RvmRectangularTorusConverter
             0f,
             rvmRectangularTorus.Angle,
             matrixRingA,
-            normal,
+            -normal,
             thickness,
             treeIndex,
             color,
@@ -93,15 +98,11 @@ public static class RvmRectangularTorusConverter
             0f,
             rvmRectangularTorus.Angle,
             matrixRingB,
-            -normal,
+            normal,
             thickness,
             treeIndex,
             color,
             rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
         );
-
-        // TODO: was ExtrudedRing or ClosedExtrudedRingSegment which translates to 2x GeneralRing, 2x Cone (see ring.rs)
-        // TODO: was ExtrudedRing or ClosedExtrudedRingSegment which translates to 2x GeneralRing, 2x Cone (see ring.rs)
-        // TODO: was ExtrudedRing or ClosedExtrudedRingSegment which translates to 2x GeneralRing, 2x Cone (see ring.rs)
     }
 }
