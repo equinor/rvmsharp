@@ -26,46 +26,59 @@ public static class RvmCylinderConverter
             throw new Exception("Non uniform X,Y scale is not implemented.");
         }
 
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // let rotation = Rotation3::rotation_between(&Vector3::z_axis(), &normal)
-        //     .unwrap_or_else(|| Rotation3::from_axis_angle(&Vector3::x_axis(), PI));
+        var (normal, _) = rotation.DecomposeQuaternion();
 
-        // TODO: create caps GeneralRing
-        // TODO: create caps GeneralRing
-        // TODO: create caps GeneralRing
-        // TODO: create caps GeneralRing
-
-        (Vector3 normal, float rotationAngle) = rotation.DecomposeQuaternion();
+        var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox();
 
         var height = rvmCylinder.Height * scale.Z;
         var radius = rvmCylinder.Radius * scale.X;
-
         var halfHeight = height / 2f;
-        var centerA = position + normal * halfHeight;
-        var centerB = position - normal * halfHeight;
-
-        var localZAxis = Vector3.Transform(Vector3.UnitZ, rotation);
-        var planeA = new Vector4(localZAxis, halfHeight);
-        var planeB = new Vector4(-localZAxis, halfHeight);
-
-        var angle = Vector3.UnitZ.AngleTo(normal);
+        var diameter = 2f * radius;
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
-        yield return new GeneralCylinder(
-            angle,
-            MathF.PI * 2f,
+        var normalA = normal;
+        var normalB = -normal;
+
+        var centerA = position + normalA * halfHeight;
+        var centerB = position + normalB * halfHeight;
+
+        var matrixCapA =
+            Matrix4x4.CreateScale(diameter, diameter, 1f)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(centerA);
+
+        var matrixCapB =
+            Matrix4x4.CreateScale(diameter, diameter, 1f)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        yield return new Cone(
+            Angle: 0f,
+            ArcAngle: 2f * MathF.PI,
             centerA,
             centerB,
             localXAxis,
-            planeA,
-            planeB,
+            radius,
             radius,
             treeIndex,
             color,
-            rvmCylinder.CalculateAxisAlignedBoundingBox()
+            bbox
+        );
+
+        yield return new Circle(
+            InstanceMatrix: matrixCapA,
+            Normal: normalA,
+            treeIndex,
+            color,
+            bbox
+        );
+
+        yield return new Circle(
+            InstanceMatrix: matrixCapB,
+            Normal: normalB,
+            treeIndex,
+            color,
+            bbox
         );
     }
 }
