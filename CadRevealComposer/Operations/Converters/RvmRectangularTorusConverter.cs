@@ -36,7 +36,7 @@ public static class RvmRectangularTorusConverter
         var centerB = position + normal * halfHeight;
 
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
-
+        var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox();
         color = Color.Red;
 
         var arcAngle = rvmRectangularTorus.Angle;
@@ -53,7 +53,7 @@ public static class RvmRectangularTorusConverter
             radiusOuter,
             treeIndex,
             color,
-            rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
+            bbBox
         );
 
         if (radiusInner > 0)
@@ -68,7 +68,7 @@ public static class RvmRectangularTorusConverter
                 radiusInner,
                 treeIndex,
                 color,
-                rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
+                bbBox
             );
         }
 
@@ -91,7 +91,7 @@ public static class RvmRectangularTorusConverter
             thickness,
             treeIndex,
             color,
-            rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
+            bbBox
         );
 
         yield return new GeneralRing(
@@ -102,7 +102,52 @@ public static class RvmRectangularTorusConverter
             thickness,
             treeIndex,
             color,
-            rvmRectangularTorus.CalculateAxisAlignedBoundingBox()
+            bbBox
         );
+
+        // Add sides if the torus is going all the way round
+        if (2 * MathF.PI - arcAngle > 0.01f)
+        {
+            var v1 = localXAxis;
+
+            var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
+            var newQ = rotation * q2;
+            var v2 = Vector3.Transform(Vector3.UnitX, newQ);
+
+            if (normalizedRotationAngle < 0)
+                color = Color.Yellow;
+
+            var vertex1InnerBottom = centerA + v1 * radiusInner;
+            var vertex1InnerTop = centerB + v1 * radiusInner;
+            var vertex1OuterBottom = centerA + v1 * radiusOuter;
+            var vertex1OuterTop = centerB + v1 * radiusOuter;
+
+            var vertex2InnerBottom = centerA + v2 * radiusInner;
+            var vertex2InnerTop = centerB + v2 * radiusInner;
+            var vertex2OuterBottom = centerA + v2 * radiusOuter;
+            var vertex2OuterTop = centerB + v2 * radiusOuter;
+
+            yield return new Trapezium(
+                vertex1InnerBottom,
+                vertex1OuterBottom,
+                vertex1InnerTop,
+                vertex1OuterTop,
+                treeIndex,
+                color,
+                bbBox
+            );
+
+            color = Color.Blue;
+
+            yield return new Trapezium(
+                vertex2OuterBottom,
+                vertex2InnerBottom,
+                vertex2OuterTop,
+                vertex2InnerTop,
+                treeIndex,
+                color,
+                bbBox
+            );
+        }
     }
 }
