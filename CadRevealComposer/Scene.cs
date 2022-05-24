@@ -64,9 +64,9 @@ public record BbVector3
 );
 
 public record CoverageFactors(
-    [JsonProperty("yz")] float Yz,
-    [JsonProperty("xz")] float Xz,
-    [JsonProperty("xy")] float Xy);
+    [property: JsonProperty("yz")] float Yz,
+    [property: JsonProperty("xz")] float Xz,
+    [property: JsonProperty("xy")] float Xy);
 
 public record IndexFile(
     [property: JsonProperty("fileName")] string FileName,
