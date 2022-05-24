@@ -196,64 +196,42 @@ public static class RvmSnoutConverter
         var diameter = 2f * radius;
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
-        var (slopeA, rotationA) = TranslateShearToSlope((rvmSnout.TopShearX, rvmSnout.TopShearY));
-        var (slopeB, rotationB) = TranslateShearToSlope((rvmSnout.BottomShearX, rvmSnout.BottomShearY));
+        var (planeRotationA, planeNormalA, planeSlopeA) = TranslateShearToSlope(rvmSnout.TopShearX, rvmSnout.TopShearY);
+        var (planeRotationB, planeNormalB, planeSlopeB) = TranslateShearToSlope(rvmSnout.BottomShearX, rvmSnout.BottomShearY);
 
-        // the slope will extend the height of the cylinder with radius * tan(slope)
-        // NOTE: the cylinder will be cut correctly by the planes
-        var extendedCenterA = centerA + normal * (MathF.Tan(slopeA) * radius);
-        var extendedCenterB = centerB - normal * (MathF.Tan(slopeB) * radius);
+        // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
+        var extendedHeightA = MathF.Tan(planeSlopeA) * radius;
+        var extendedHeightB = MathF.Tan(planeSlopeB) * radius;
 
-        // planes are locally coordinated
-        var halfHeight = height / 2f;
-        var dist_from_a_to_ext_a = radius + MathF.Tan(slopeA);
-        var dist_from_b_to_ext_b = radius + MathF.Tan(slopeB);
-        var heightA = dist_from_b_to_ext_b + height;
-        var heightB = dist_from_b_to_ext_b;
+        var extendedCenterA = centerA + normal * extendedHeightA;
+        var extendedCenterB = centerB - normal * extendedHeightB;
 
-        var planeA = new Vector4(normal, heightA);
-        var planeB = new Vector4(-normal, heightB);
+        var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height);
+        var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB);
 
         var matrixCapA =
             Matrix4x4.CreateScale(diameter)
-            * Matrix4x4.CreateFromQuaternion(rotation * rotationA)
+            * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
             * Matrix4x4.CreateTranslation(centerA);
 
         var matrixCapB =
             Matrix4x4.CreateScale(diameter)
-            * Matrix4x4.CreateFromQuaternion(rotation * rotationB)
+            * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
             * Matrix4x4.CreateTranslation(centerB);
 
-        yield return new Cone(
+        yield return new GeneralCylinder(
             Angle: 0f,
             ArcAngle: 2f * MathF.PI,
             extendedCenterA,
             extendedCenterB,
             localXAxis,
-            radius,
+            planeA,
+            planeB,
             radius,
             treeIndex,
             color,
             bbox
         );
-
-        // TODO: use GeneralCylinder instead of Cone
-        // TODO: use GeneralCylinder instead of Cone
-        // TODO: use GeneralCylinder instead of Cone
-
-        //yield return new GeneralCylinder(
-        //    Angle: 0f,
-        //    ArcAngle: 2f * MathF.PI,
-        //    extendedCenterA,
-        //    extendedCenterB,
-        //    localXAxis,
-        //    planeA,
-        //    planeB,
-        //    radius,
-        //    treeIndex,
-        //    color,
-        //    bbox
-        //);
 
         yield return new GeneralRing(
             Angle: 0f,
@@ -357,14 +335,14 @@ public static class RvmSnoutConverter
                rvmSnout.TopShearY is > 0f or < 0f;
     }
 
-    private static (float slope, Quaternion rotation) TranslateShearToSlope((float shearX, float shearY) input)
+    private static (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)
     {
-        var rotationAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -input.shearX);
-        var rotationAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, input.shearY);
+        var rotationAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -shearX);
+        var rotationAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, shearY);
         var rotation = rotationAroundX * rotationAroundY;
         var normal = Vector3.Transform(Vector3.UnitZ, rotation);
         var slope = MathF.PI / 2f - MathF.Atan2(normal.Z, MathF.Sqrt(normal.X * normal.X + normal.Y * normal.Y));
 
-        return (slope, rotation);
+        return (rotation, normal, slope);
     }
 }
