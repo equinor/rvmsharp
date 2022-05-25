@@ -42,6 +42,8 @@ public class Sector
 
     [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
 
+    [JsonProperty("facesFile")] public FacesFile? FacesFile { get; set; }
+
     [JsonProperty("estimatedTriangleCount")]
     public long EstimatedTriangleCount { get; set; }
 
@@ -56,19 +58,15 @@ public record BoundingBox(
 
 public record BbVector3
 (
-    [property: JsonProperty("x")] double X,
-    [property: JsonProperty("y")] double Y,
-    [property: JsonProperty("z")] double Z
+    [property: JsonProperty("x")] float X,
+    [property: JsonProperty("y")] float Y,
+    [property: JsonProperty("z")] float Z
 );
 
-public class CoverageFactors
-{
-    [JsonProperty("yz")] public double Yz { get; set; }
-
-    [JsonProperty("xz")] public double Xz { get; set; }
-
-    [JsonProperty("xy")] public double Xy { get; set; }
-}
+public record CoverageFactors(
+    [property: JsonProperty("yz")] float Yz,
+    [property: JsonProperty("xz")] float Xz,
+    [property: JsonProperty("xy")] float Xy);
 
 public record IndexFile(
     [property: JsonProperty("fileName")] string FileName,
@@ -76,3 +74,13 @@ public record IndexFile(
     long DownloadSize,
     [property: JsonProperty("peripheralFiles")]
     string[] PeripheralFiles);
+
+public record FacesFile(
+    [property: JsonProperty("fileName")] string? FileName,
+    [property: JsonProperty("downloadSize")]
+    long DownloadSize,
+    [property: JsonProperty("quadSize")] float QuadSize,
+    [property: JsonProperty("coverageFactors")]
+    CoverageFactors CoverageFactors,
+    [property: JsonProperty("recursiveCoverageFactors")]
+    CoverageFactors? RecursiveCoverageFactors);
