@@ -5,6 +5,7 @@ using CadRevealComposer.Primitives;
 using NUnit.Framework;
 using RvmSharp.Primitives;
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
 
 [TestFixture]
@@ -33,10 +34,13 @@ public class RvmSnoutConverterTests
     [Test]
     public void ConvertToRevealPrimitive()
     {
-        var cone = _rvmSnout.ConvertToRevealPrimitive(1337, Color.Red);
+        var geometries = _rvmSnout
+            .ConvertToRevealPrimitive(1337, Color.Red)
+            .ToArray();
 
-        Assert.That(cone, Is.Not.Null);
-        Assert.That(cone, Is.TypeOf<Cone>());
+        Assert.That(geometries[0], Is.TypeOf<Cone>());
+        Assert.That(geometries[1], Is.TypeOf<Circle>());
+        Assert.That(geometries[2], Is.TypeOf<Circle>());
     }
 
     [Test]
@@ -45,10 +49,13 @@ public class RvmSnoutConverterTests
         _rvmSnout.Connections[0] = new RvmConnection(_rvmSnout, _rvmSnout, 0, 0, Vector3.One, Vector3.UnitZ,
             RvmConnection.ConnectionType.HasCircularSide);
 
-        var cone = _rvmSnout.ConvertToRevealPrimitive(1337, Color.Red);
+        var geometries = _rvmSnout
+            .ConvertToRevealPrimitive(1337, Color.Red)
+            .ToArray();
 
-        Assert.That(cone, Is.Not.Null);
-        Assert.That(cone, Is.TypeOf<Cone>());
+        Assert.That(geometries[0], Is.TypeOf<Cone>());
+        Assert.That(geometries[1], Is.TypeOf<Circle>());
+        Assert.That(geometries[2], Is.TypeOf<Circle>());
     }
 
     [Test]
