@@ -30,19 +30,17 @@ public static class RvmRectangularTorusConverter
         var outerDiameter = radiusOuter * 2;
         var halfHeight = rvmRectangularTorus.Height / 2.0f * scale.Y;
 
-        var centerA = position - normal * halfHeight;
-        var centerB = position + normal * halfHeight;
+        var centerA = position + normal * halfHeight;
+        var centerB = position - normal * halfHeight;
 
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
         var arcAngle = rvmRectangularTorus.Angle;
-        var transformedRotationAngle = rotationAngle - (1 + rotationAngle / arcAngle) * arcAngle;
-        var normalizedRotationAngle = AlgebraUtils.NormalizeRadians(transformedRotationAngle);
 
         var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox();
 
         yield return new Cone(
-            normalizedRotationAngle,
-            rvmRectangularTorus.Angle,
+            0,
+            arcAngle,
             centerA,
             centerB,
             localXAxis,
@@ -57,8 +55,8 @@ public static class RvmRectangularTorusConverter
         if (radiusInner > 0)
         {
             yield return new Cone(
-                normalizedRotationAngle,
-                rvmRectangularTorus.Angle,
+                0,
+                arcAngle,
                 centerA,
                 centerB,
                 localXAxis,
@@ -83,9 +81,9 @@ public static class RvmRectangularTorusConverter
 
         yield return new GeneralRing(
             0f,
-            rvmRectangularTorus.Angle,
+            arcAngle,
             matrixRingA,
-            -normal,
+            normal,
             thickness,
             treeIndex,
             color,
@@ -94,9 +92,9 @@ public static class RvmRectangularTorusConverter
 
         yield return new GeneralRing(
             0f,
-            rvmRectangularTorus.Angle,
+            arcAngle,
             matrixRingB,
-            normal,
+            -normal,
             thickness,
             treeIndex,
             color,
@@ -124,20 +122,20 @@ public static class RvmRectangularTorusConverter
             var vertex2OuterTop = centerB + v2 * radiusOuter;
 
             yield return new Trapezium(
-                vertex1InnerBottom,
-                vertex1OuterBottom,
                 vertex1InnerTop,
                 vertex1OuterTop,
+                vertex1InnerBottom,
+                vertex1OuterBottom,
                 treeIndex,
                 color,
                 bbBox
             );
 
             yield return new Trapezium(
-                vertex2OuterBottom,
-                vertex2InnerBottom,
                 vertex2OuterTop,
                 vertex2InnerTop,
+                vertex2OuterBottom,
+                vertex2InnerBottom,
                 treeIndex,
                 color,
                 bbBox
