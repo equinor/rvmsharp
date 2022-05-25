@@ -53,6 +53,7 @@ public static class RvmRectangularTorusConverter
             bbBox
         );
 
+        // If inner radius equals 0, then the geometry is basically a cylinder segment, and the inner cone is unnecessary
         if (radiusInner > 0)
         {
             yield return new Cone(
@@ -102,7 +103,10 @@ public static class RvmRectangularTorusConverter
             bbBox
         );
 
-        if (2 * MathF.PI - arcAngle > 0.001f)
+        // Add caps to the two ends of the torus, where the segment is "cut out"
+        // This is not needed if the torus goes all the way around
+        var isTorusSegment = !arcAngle.ApproximatelyEquals(2 * MathF.PI);
+        if (isTorusSegment)
         {
             var v1 = localXAxis;
 
