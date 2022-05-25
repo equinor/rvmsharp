@@ -24,24 +24,23 @@ public static class RvmRectangularTorusConverter
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
+        (Vector3 normal, float rotationAngle) = rotation.DecomposeQuaternion();
+
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
         var radiusOuter = rvmRectangularTorus.RadiusOuter * scale.X;
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
         var outerDiameter = radiusOuter * 2;
-
-        (Vector3 normal, float rotationAngle) = rotation.DecomposeQuaternion();
-
         var halfHeight = rvmRectangularTorus.Height / 2.0f * scale.Y;
+
         var centerA = position - normal * halfHeight;
         var centerB = position + normal * halfHeight;
 
         var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
-        var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox();
-        color = Color.Red;
-
         var arcAngle = rvmRectangularTorus.Angle;
         var transformedRotationAngle = rotationAngle - (1 + rotationAngle / arcAngle) * arcAngle;
         var normalizedRotationAngle = AlgebraUtils.NormalizeRadians(transformedRotationAngle);
+
+        var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox();
 
         yield return new Cone(
             normalizedRotationAngle,
@@ -105,17 +104,12 @@ public static class RvmRectangularTorusConverter
             bbBox
         );
 
-        // Add sides if the torus is going all the way round
-        if (2 * MathF.PI - arcAngle > 0.01f)
+        if (2 * MathF.PI - arcAngle > 0.001f)
         {
             var v1 = localXAxis;
 
             var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
-            var newQ = rotation * q2;
-            var v2 = Vector3.Transform(Vector3.UnitX, newQ);
-
-            if (normalizedRotationAngle < 0)
-                color = Color.Yellow;
+            var v2 = Vector3.Transform(v1, q2);
 
             var vertex1InnerBottom = centerA + v1 * radiusInner;
             var vertex1InnerTop = centerB + v1 * radiusInner;
@@ -136,8 +130,6 @@ public static class RvmRectangularTorusConverter
                 color,
                 bbBox
             );
-
-            color = Color.Blue;
 
             yield return new Trapezium(
                 vertex2OuterBottom,
