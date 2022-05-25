@@ -9,8 +9,8 @@ public static class AlgebraUtils
     public static float NormalizeRadians(float value)
     {
         var twoPi = MathF.PI + MathF.PI;
-        while (value <= -Math.PI) value += twoPi;
-        while (value > Math.PI) value -= twoPi;
+        while (value < 0) value += twoPi;
+        while (value > twoPi) value -= twoPi;
         return value;
     }
 

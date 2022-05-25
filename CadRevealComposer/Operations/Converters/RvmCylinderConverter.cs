@@ -42,15 +42,7 @@ public static class RvmCylinderConverter
         var centerA = position + normalA * halfHeight;
         var centerB = position + normalB * halfHeight;
 
-        var matrixCapA =
-            Matrix4x4.CreateScale(diameter, diameter, 1f)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerA);
-
-        var matrixCapB =
-            Matrix4x4.CreateScale(diameter, diameter, 1f)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerB);
+        var(showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmCylinder, centerA, centerB);
 
         yield return new Cone(
             Angle: 0f,
@@ -65,20 +57,36 @@ public static class RvmCylinderConverter
             bbox
         );
 
-        yield return new Circle(
-            InstanceMatrix: matrixCapA,
-            Normal: normalA,
-            treeIndex,
-            color,
-            bbox
-        );
+        if (showCapA)
+        {
+            var matrixCapA =
+                Matrix4x4.CreateScale(diameter, diameter, 1f)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(centerA);
 
-        yield return new Circle(
-            InstanceMatrix: matrixCapB,
-            Normal: normalB,
-            treeIndex,
-            color,
-            bbox
-        );
+            yield return new Circle(
+                InstanceMatrix: matrixCapA,
+                Normal: normalA,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
+
+        if (showCapB)
+        {
+            var matrixCapB =
+                Matrix4x4.CreateScale(diameter, diameter, 1f)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(centerB);
+
+            yield return new Circle(
+                InstanceMatrix: matrixCapB,
+                Normal: normalB,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
     }
 }

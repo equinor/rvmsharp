@@ -21,18 +21,18 @@ public static class RvmConnect
         public RvmPrimitive Geo { get; } // Not sure if this can be null.
         public Vector3 Position { get; }
         public Vector3 Direction { get; }
-        public uint Offset { get; }
+        public uint ConnectionIndex { get; }
         public RvmConnection.ConnectionType ConnectionTypeFlags { get; }
             
         public bool Matched { get; set; }
             
-        public Anchor(RvmPrimitive geo, Vector3 position, Vector3 direction, uint offset,
+        public Anchor(RvmPrimitive geo, Vector3 position, Vector3 direction, uint connectionIndex,
             RvmConnection.ConnectionType connectionTypeFlags)
         {
             Geo = geo;
             Position = position;
             Direction = direction;
-            Offset = offset;
+            ConnectionIndex = connectionIndex;
             ConnectionTypeFlags = connectionTypeFlags;
         }
     };
@@ -85,8 +85,8 @@ public static class RvmConnect
                     (
                         primitive1: anchors[j].Geo,
                         primitive2: anchors[i].Geo,
-                        offsetX: anchors[j].Offset,
-                        offsetY: anchors[i].Offset,
+                        connectionIndex1: anchors[j].ConnectionIndex,
+                        connectionIndex2: anchors[i].ConnectionIndex,
                         position: anchors[j].Position,
                         direction: anchors[j].Direction,
                         connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
@@ -94,8 +94,8 @@ public static class RvmConnect
 
                     context.store.Connections.Add(connection);
 
-                    anchors[j].Geo.Connections[anchors[j].Offset] = connection;
-                    anchors[i].Geo.Connections[anchors[i].Offset] = connection;
+                    anchors[j].Geo.Connections[anchors[j].ConnectionIndex] = connection;
+                    anchors[i].Geo.Connections[anchors[i].ConnectionIndex] = connection;
 
                     anchors[j].Matched = true;
                     anchors[i].Matched = true;
@@ -133,7 +133,7 @@ public static class RvmConnect
             geo: geo,
             position: Vector3.Transform(position, geo.Matrix),
             direction: Vector3.Normalize(Vector3.TransformNormal(direction, geo.Matrix)),
-            offset: offset,
+            connectionIndex: offset,
             connectionTypeFlags: flags
         );
 
