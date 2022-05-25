@@ -26,11 +26,18 @@ public static class RvmSphericalDishConverter
 
         var height = rvmSphericalDish.Height * scale.X;
         var baseRadius = rvmSphericalDish.BaseRadius * scale.X;
+        var baseDiameter = baseRadius * 2.0f;
         // radius R = h / 2 + c^2 / (8 * h), where c is the cord length or 2 * baseRadius
         var sphereRadius = height / 2 + baseRadius * baseRadius / (2 * height);
         var d = sphereRadius - height;
         var upVector = Vector3.Transform(Vector3.UnitZ, Matrix4x4.CreateFromQuaternion(rotation));
         var center = position - upVector * d;
+        var bbBox = rvmSphericalDish.CalculateAxisAlignedBoundingBox();
+
+        var matrixCap =
+            Matrix4x4.CreateScale(baseDiameter, baseDiameter, 1f)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(position);
 
         yield return new EllipsoidSegment(
             sphereRadius,
@@ -40,10 +47,15 @@ public static class RvmSphericalDishConverter
             normal,
             treeIndex,
             color,
-            rvmSphericalDish.CalculateAxisAlignedBoundingBox());
+            bbBox
+        );
 
-        // TODO: add cap
-        // TODO: add cap
-        // TODO: add cap
+        yield return new Circle(
+            matrixCap,
+            -normal,
+            treeIndex,
+            color,
+            bbBox
+        );
     }
 }

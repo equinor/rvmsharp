@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Numerics;
 using Utils;
 
 public static class RvmEllipticalDishConverter
@@ -26,6 +27,13 @@ public static class RvmEllipticalDishConverter
         var verticalRadius = rvmEllipticalDish.Height * scale.X;
         var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
 
+        var bbBox = rvmEllipticalDish.CalculateAxisAlignedBoundingBox();
+
+        var matrixCap =
+            Matrix4x4.CreateScale(horizontalRadius * 2, horizontalRadius * 2, 1f)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(position);
+
         yield return new EllipsoidSegment(
             horizontalRadius,
             verticalRadius,
@@ -34,11 +42,15 @@ public static class RvmEllipticalDishConverter
             normal,
             treeIndex,
             color,
-            rvmEllipticalDish.CalculateAxisAlignedBoundingBox()
+            bbBox
         );
 
-        // TODO: add cap
-        // TODO: add cap
-        // TODO: add cap
+        yield return new Circle(
+            matrixCap,
+            -normal,
+            treeIndex,
+            color,
+            bbBox
+        );
     }
 }

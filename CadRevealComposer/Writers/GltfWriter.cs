@@ -753,7 +753,7 @@ public static class GltfWriter
         var trapeziumCount = trapeziums.Length;
 
         // create byte buffer
-        const int byteStride = (1 + 1 + 1 + 1 + 1 + 1) * sizeof(float); // id + color + matrix
+        const int byteStride = (1 + 1 + 3 + 3 + 3 + 3) * sizeof(float); // id + color + matrix
         var bufferView = model.CreateBufferView(byteStride * trapeziumCount, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
@@ -778,10 +778,10 @@ public static class GltfWriter
 
         treeIndexAccessor.SetData(bufferView, 0, trapeziumCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         colorAccessor.SetData(bufferView, 4, trapeziumCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        vertex1Accessor.SetData(bufferView, 8, trapeziumCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        vertex2Accessor.SetData(bufferView, 12, trapeziumCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        vertex3Accessor.SetData(bufferView, 16, trapeziumCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        vertex4Accessor.SetData(bufferView, 20, trapeziumCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        vertex1Accessor.SetData(bufferView, 8, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        vertex2Accessor.SetData(bufferView, 20, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        vertex3Accessor.SetData(bufferView, 32, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        vertex4Accessor.SetData(bufferView, 44, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
 
         // create node
         var node = scene.CreateNode("TrapeziumCollection");
