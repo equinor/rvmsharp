@@ -191,10 +191,11 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-        var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName));
-        var sectorInfos = await Task.WhenAll(sectorInfoTasks);
+        var sectorInfos = sectors
+            .Select(s => SerializeSector(s, outputDirectory.FullName))
+            .ToArray();
 
-        Console.WriteLine($"Serialized {sectorInfos.Length} sectors in {stopwatch.Elapsed}");
+        Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
         var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
@@ -215,7 +216,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {total.Elapsed}");
     }
 
-    private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
     {
         var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(p.Geometries);
 
