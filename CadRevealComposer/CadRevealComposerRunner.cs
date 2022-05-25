@@ -41,10 +41,10 @@ public static class CadRevealComposerRunner
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
 
-        await ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
+        ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
     }
 
-    public static async Task ProcessRvmStore(
+    public static void ProcessRvmStore(
         RvmStore rvmStore,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
