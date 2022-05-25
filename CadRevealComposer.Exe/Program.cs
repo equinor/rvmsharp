@@ -13,26 +13,26 @@ public static class Program
 {
     private const int Success = 0;
 
-    static async Task Main(string[] args)
+    static void Main(string[] args)
     {
         // use full Profile Guided Optimization
         Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
 
-        var result = await Parser.Default.ParseArguments<CommandLineOptions>(args)
+        var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
             .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
         Environment.Exit(result);
     }
 
-    private static Task<int> HandleParseError(IEnumerable<Error> arg)
+    private static int HandleParseError(IEnumerable<Error> arg)
     {
         // TODO: Handle errors?
         Console.WriteLine(arg.First());
-        return Task.FromResult(-1);
+        return -1;
     }
 
-    private static async Task<int> RunOptionsAndReturnExitCode(CommandLineOptions options)
+    private static int RunOptionsAndReturnExitCode(CommandLineOptions options)
     {
         var timer = Stopwatch.StartNew();
         CommandLineOptions.AssertValidOptions(options);
@@ -59,7 +59,7 @@ public static class Program
             return 1;
         }
 
-        await CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
+        CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
 
         Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
         return Success;

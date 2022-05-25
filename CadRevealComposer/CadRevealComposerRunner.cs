@@ -21,7 +21,7 @@ using Utils;
 
 public static class CadRevealComposerRunner
 {
-    public static async Task Process(
+    public static void Process(
         DirectoryInfo inputRvmFolderPath,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
