@@ -2,8 +2,11 @@
 
 using Primitives;
 using RvmSharp.Primitives;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Numerics;
+using Utils;
 
 public static class RvmCircularTorusConverter
 {
@@ -12,14 +15,70 @@ public static class RvmCircularTorusConverter
         ulong treeIndex,
         Color color)
     {
+        if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
+        {
+            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCircularTorus.Matrix);
+        }
+
+        var (normal, _) = rotation.DecomposeQuaternion();
+
+        var bbox = rvmCircularTorus.CalculateAxisAlignedBoundingBox();
+
+        const float oneDegree = 2 * MathF.PI / 360f;
+        var arcAngle = AlgebraUtils.NormalizeRadians(rvmCircularTorus.Angle);
+        var isTorusSegment = !arcAngle.ApproximatelyEquals(2f * MathF.PI, acceptableDifference: oneDegree);
+
         yield return new TorusSegment(
-            rvmCircularTorus.Angle,
+            arcAngle,
             rvmCircularTorus.Matrix,
             Radius: rvmCircularTorus.Offset,
             TubeRadius: rvmCircularTorus.Radius,
             treeIndex,
             color,
-            rvmCircularTorus.CalculateAxisAlignedBoundingBox()
+            bbox
         );
+
+        if (isTorusSegment)
+        {
+            var offset = rvmCircularTorus.Offset * scale.X;
+            var radius = rvmCircularTorus.Radius * scale.X;
+            var diameter = 2f * radius;
+
+            var localXAxisA = Vector3.Transform(Vector3.UnitX, rotation);
+            var arcRotation = rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
+            var localXAxisB = Vector3.Transform(Vector3.UnitX, arcRotation);
+
+            var positionCapA = position + localXAxisA * offset;
+            var positionCapB = position + localXAxisB * offset;
+
+            var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localXAxisA));
+            var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localXAxisB));
+
+            var matrixCapA =
+                Matrix4x4.CreateScale(diameter, diameter, 1f)
+                * Matrix4x4.CreateFromQuaternion(rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f))
+                * Matrix4x4.CreateTranslation(positionCapA);
+
+            var matrixCapB =
+                Matrix4x4.CreateScale(diameter, diameter, 1f)
+                * Matrix4x4.CreateFromQuaternion(arcRotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f))
+                * Matrix4x4.CreateTranslation(positionCapB);
+
+            yield return new Circle(
+                    matrixCapA,
+                    normalCapA,
+                    treeIndex,
+                    color,
+                    bbox
+                );
+
+            yield return new Circle(
+                matrixCapB,
+                normalCapB,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
     }
 }
