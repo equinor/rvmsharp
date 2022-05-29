@@ -42,9 +42,9 @@ public class Sector
 
     [JsonProperty("sectorFileName")] public string SectorFileName { get; set; } = "";
 
-    //[JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
+    [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
 
-    //[JsonProperty("facesFile")] public FacesFile? FacesFile { get; set; }
+    [JsonProperty("facesFile")] public FacesFile? FacesFile { get; set; }
 
     [JsonProperty("estimatedTriangleCount")]
     public long EstimatedTriangleCount { get; set; }
@@ -62,35 +62,25 @@ public record BoundingBox(
 
 public record BbVector3
 (
-    [property: JsonProperty("x")] double X,
-    [property: JsonProperty("y")] double Y,
-    [property: JsonProperty("z")] double Z
+    [property: JsonProperty("x")] float X,
+    [property: JsonProperty("y")] float Y,
+    [property: JsonProperty("z")] float Z
 );
 
-public class FacesFile
-{
-    [JsonProperty("quadSize")] public double QuadSize { get; set; }
+public record FacesFile(
+    [property: JsonProperty("fileName")] string? FileName,
+    [property: JsonProperty("downloadSize")]
+    long DownloadSize,
+    [property: JsonProperty("quadSize")] float QuadSize,
+    [property: JsonProperty("coverageFactors")]
+    CoverageFactors CoverageFactors,
+    [property: JsonProperty("recursiveCoverageFactors")]
+    CoverageFactors? RecursiveCoverageFactors);
 
-    [JsonProperty("facesCount")] public long FacesCount { get; set; }
-
-    [JsonProperty("recursiveCoverageFactors")]
-    public CoverageFactors RecursiveCoverageFactors { get; set; } = null!;
-
-    [JsonProperty("coverageFactors")] public CoverageFactors CoverageFactors { get; set; } = null!;
-
-    [JsonProperty("fileName")] public string FileName { get; set; } = "";
-
-    [JsonProperty("downloadSize")] public long DownloadSize { get; set; }
-}
-
-public class CoverageFactors
-{
-    [JsonProperty("yz")] public double Yz { get; set; }
-
-    [JsonProperty("xz")] public double Xz { get; set; }
-
-    [JsonProperty("xy")] public double Xy { get; set; }
-}
+public record CoverageFactors(
+    [property: JsonProperty("yz")] float Yz,
+    [property: JsonProperty("xz")] float Xz,
+    [property: JsonProperty("xy")] float Xy);
 
 public record IndexFile(
     [property: JsonProperty("fileName")] string FileName,

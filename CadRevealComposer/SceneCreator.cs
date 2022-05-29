@@ -66,6 +66,16 @@ public static class SceneCreator
                 Depth = sector.Depth,
                 Path = sector.Path,
                 SectorFileName = sector.Filename,
+                FacesFile =
+                    // We add a Fake Faces file to work around a possible bug in Reveal where CoverageFactors will be defaulted to "-1" and this makes the Reveal GpuOrderSectorsByVisibilityCoverage code load less than we expect.
+                    new FacesFile(
+                        FileName: null,
+                        DownloadSize: sector.DownloadSize, // Use sector downloadSize (same as reveal when it does not have a faces file)
+                        QuadSize: -1, // This is the default value in Reveal v8 when we do not have faces
+                        // CoverageFactors use a hard-coded value to avoid an issue in Reveal where this is hardcoded to -1, -1, -1
+                        // which causes the reveal loading code to assume "100%" coverage, and never loading sectors within other sectors.
+                        CoverageFactors: new CoverageFactors(Xy: 0.7f, Xz: 0.7f, Yz: 0.7f), // 0.7 is an arbitrary number assuming 70% coverage (Range of 0-1 of how much of this sector is covered by 3D data)
+                        RecursiveCoverageFactors: null),
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
                 EstimatedDrawCallCount = sector.EstimatedDrawCallCount,
                 // FIXME diagonal data
