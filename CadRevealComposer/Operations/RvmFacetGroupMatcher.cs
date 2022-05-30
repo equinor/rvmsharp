@@ -224,11 +224,11 @@ public static class RvmFacetGroupMatcher
         var templates = new List<TemplateItem>(); // sorted high to low by explicit code
 
         var iterCounter = 0L;
-        var stopwatch = Stopwatch.StartNew();
+        var matchingTimer = Stopwatch.StartNew();
         var target = TimeSpan.FromMinutes(5);
         foreach (var facetGroup in facetGroups)
         {
-            if (stopwatch.Elapsed > target)
+            if (matchingTimer.Elapsed > target)
             {
                 var groupKey = CalculateKey(facetGroup);
                 var vertexCount = facetGroups
