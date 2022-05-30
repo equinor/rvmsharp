@@ -196,12 +196,16 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
     {
+        var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
+
         var sectorInfo = new SceneCreator.SectorInfo(
             p.SectorId,
             p.ParentSectorId,
             p.Depth,
             p.Path,
             $"sector_{p.SectorId}.glb",
+            EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
+            EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
             p.Geometries,
             p.BoundingBoxMin,
             p.BoundingBoxMax);

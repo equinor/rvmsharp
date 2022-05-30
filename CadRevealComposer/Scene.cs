@@ -31,16 +31,24 @@ public class Scene
 public class Sector
 {
     [JsonProperty("id")] public long Id { get; set; }
-    [JsonProperty("parentId")] public long ParentId { get; set; }
+    [JsonProperty("parentId")] public long? ParentId { get; set; }
     [JsonProperty("path")] public string Path { get; set; } = "";
     [JsonProperty("depth")] public long Depth { get; set; }
+
+    [JsonProperty("estimatedDrawCallCount")]
+    public long EstimatedDrawCallCount { get; set; }
+
+    [JsonProperty("estimatedTriangleCount")]
+    public long EstimatedTriangleCount { get; set; }
+
     [JsonProperty("boundingBox")] public BoundingBox BoundingBox { get; set; } = null!;
 
     /// <summary>
-    /// TODO: Figure out what this is needed for
+    /// TODO: Figure out what GeometryBoundingBox is needed for.
+    /// Semi optional since its gracefully handled in reveal to not use this field in v9
     /// </summary>
     [JsonProperty("geometryBoundingBox")]
-    public BoundingBox GeometryBoundingBox { get; set; } = null!;
+    public BoundingBox? GeometryBoundingBox { get; set; }
 
     #region GltfSceneSectorMetadata
 
@@ -63,25 +71,3 @@ public record BbVector3
     [property: JsonProperty("y")] float Y,
     [property: JsonProperty("z")] float Z
 );
-
-public record FacesFile(
-    [property: JsonProperty("fileName")] string? FileName,
-    [property: JsonProperty("downloadSize")]
-    long DownloadSize,
-    [property: JsonProperty("quadSize")] float QuadSize,
-    [property: JsonProperty("coverageFactors")]
-    CoverageFactors CoverageFactors,
-    [property: JsonProperty("recursiveCoverageFactors")]
-    CoverageFactors? RecursiveCoverageFactors);
-
-public record CoverageFactors(
-    [property: JsonProperty("yz")] float Yz,
-    [property: JsonProperty("xz")] float Xz,
-    [property: JsonProperty("xy")] float Xy);
-
-public record IndexFile(
-    [property: JsonProperty("fileName")] string FileName,
-    [property: JsonProperty("downloadSize")]
-    long DownloadSize,
-    [property: JsonProperty("peripheralFiles")]
-    string[] PeripheralFiles);
