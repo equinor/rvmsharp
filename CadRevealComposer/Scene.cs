@@ -31,28 +31,25 @@ public class Scene
 public class Sector
 {
     [JsonProperty("id")] public long Id { get; set; }
-
     [JsonProperty("parentId")] public long ParentId { get; set; }
-
     [JsonProperty("path")] public string Path { get; set; } = "";
-
     [JsonProperty("depth")] public long Depth { get; set; }
-
     [JsonProperty("boundingBox")] public BoundingBox BoundingBox { get; set; } = null!;
 
-    [JsonProperty("sectorFileName")] public string SectorFileName { get; set; } = "";
+    /// <summary>
+    /// TODO: Figure out what this is needed for
+    /// </summary>
+    [JsonProperty("geometryBoundingBox")]
+    public BoundingBox GeometryBoundingBox { get; set; } = null!;
 
-    [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
+    #region GltfSceneSectorMetadata
 
-    [JsonProperty("facesFile")] public FacesFile? FacesFile { get; set; }
-
-    [JsonProperty("estimatedTriangleCount")]
-    public long EstimatedTriangleCount { get; set; }
-
-    [JsonProperty("estimatedDrawCallCount")]
-    public long EstimatedDrawCallCount { get; set; }
-
+    [JsonProperty("sectorFileName")] public string? SectorFileName { get; set; } = null;
+    [JsonProperty("minDiagonalLength")] public float MinDiagonalLength { get; set; } = 1;
+    [JsonProperty("maxDiagonalLength")] public float MaxDiagonalLength { get; set; } = 1;
     [JsonProperty("downloadSize")] public long DownloadSize { get; set; }
+
+    #endregion
 }
 
 public record BoundingBox(

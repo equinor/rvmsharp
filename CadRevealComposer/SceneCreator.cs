@@ -23,15 +23,13 @@ public static class SceneCreator
         long Depth,
         string Path,
         string Filename,
-        long EstimatedTriangleCount,
-        long EstimatedDrawCallCount,
         IReadOnlyList<APrimitive> Geometries,
         Vector3 BoundingBoxMin,
         Vector3 BoundingBoxMax
     )
     {
         public long DownloadSize { get; init; }
-    };
+    }
 
     public static void ExportHierarchyDatabase(string databasePath, CadRevealNode[] allNodes)
     {
@@ -49,9 +47,16 @@ public static class SceneCreator
         ulong maxTreeIndex,
         CameraPositioning.CameraPosition cameraPosition)
     {
-        static Sector FromSector(SectorInfo sector)
+        Sector FromSector(SectorInfo sector)
         {
-
+            const float arbitraryDiagonal = 1.0f; // Not sure if this is a good value.
+            // TODO: Check if this may be the correct way to handle min and max diagonal values.
+            float maxDiagonalLength = sector.Geometries.Any()
+                ? sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal)
+                : arbitraryDiagonal;
+            float minDiagonalLength = sector.Geometries.Any()
+                ? sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal)
+                : arbitraryDiagonal;
             return new Sector
             {
                 Id = sector.SectorId,
@@ -66,20 +71,9 @@ public static class SceneCreator
                 Depth = sector.Depth,
                 Path = sector.Path,
                 SectorFileName = sector.Filename,
-                FacesFile =
-                    // We add a Fake Faces file to work around a possible bug in Reveal where CoverageFactors will be defaulted to "-1" and this makes the Reveal GpuOrderSectorsByVisibilityCoverage code load less than we expect.
-                    new FacesFile(
-                        FileName: null,
-                        DownloadSize: sector.DownloadSize, // Use sector downloadSize (same as reveal when it does not have a faces file)
-                        QuadSize: -1, // This is the default value in Reveal v8 when we do not have faces
-                        // CoverageFactors use a hard-coded value to avoid an issue in Reveal where this is hardcoded to -1, -1, -1
-                        // which causes the reveal loading code to assume "100%" coverage, and never loading sectors within other sectors.
-                        CoverageFactors: new CoverageFactors(Xy: 0.7f, Xz: 0.7f, Yz: 0.7f), // 0.7 is an arbitrary number assuming 70% coverage (Range of 0-1 of how much of this sector is covered by 3D data)
-                        RecursiveCoverageFactors: null),
-                EstimatedTriangleCount = sector.EstimatedTriangleCount,
-                EstimatedDrawCallCount = sector.EstimatedDrawCallCount,
-                // FIXME diagonal data
-                DownloadSize = 1000, //FIXME: right size
+                MaxDiagonalLength = maxDiagonalLength,
+                MinDiagonalLength = minDiagonalLength,
+                DownloadSize = new FileInfo(Path.Join(outputDirectory.FullName, sector.Filename)).Length
             };
         }
 
