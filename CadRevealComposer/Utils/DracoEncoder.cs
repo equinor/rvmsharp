@@ -160,23 +160,24 @@ public static class DracoEncoder
     {
         var dracoEncoder = dracoEncoderCreate(vertexCount);
 
-        foreach (var vertexAccessor in mesh.VertexAccessors)
+        // NOTE: fix index array to avoid GC moving while in use
+        fixed (void* indicesData = buffer.Content)
         {
-            var attribute = vertexAccessor.Key;
-            var format = GetVertexAttributeFormat(attribute);
-            var dimension = GetVertexAttributeDimension(attribute);
-            attributeIds[attribute] = dracoEncoderSetAttribute(
-                dracoEncoder,
-                (int)GetAttributeType(attribute),
-                GetDataType(format),
-                dimension,
-                vertexAccessor.Value.SourceBufferView.ByteStride,
-                vertexAccessor.Value.ByteOffset);
-        }
-        
-        fixed (IntPtr indicesData = buffer.Content)
-        {
-            dracoEncoderSetIndices(dracoEncoder, DataType.DT_UINT32, (uint)indexLength, indicesData);
+            foreach (var vertexAccessor in mesh.VertexAccessors)
+            {
+                var attribute = vertexAccessor.Key;
+                var format = GetVertexAttributeFormat(attribute);
+                var dimension = GetVertexAttributeDimension(attribute);
+                attributeIds[attribute] = dracoEncoderSetAttribute(
+                    dracoEncoder,
+                    (int)GetAttributeType(attribute),
+                    GetDataType(format),
+                    dimension,
+                    vertexAccessor.Value.SourceBufferView.ByteStride,
+                    vertexAccessor.Value.ByteOffset);
+            }
+
+            dracoEncoderSetIndices(dracoEncoder, DataType.DT_UINT32, (uint)indexLength, (IntPtr)indicesData);
         }
 
         // For both encoding and decoding (0 = slow and best compression; 10 = fast) 
@@ -194,6 +195,7 @@ public static class DracoEncoder
 
         var dracoDataSize = (int)dracoEncoderGetByteLength(dracoEncoder);
 
+        // TODO: copy draco compressed data to GLTF mesh primitive
         var dracoData = new NativeArray<byte>(dracoDataSize, Allocator.Persistent);
         dracoEncoderCopy(dracoEncoder, dracoData.GetUnsafePtr());
 
