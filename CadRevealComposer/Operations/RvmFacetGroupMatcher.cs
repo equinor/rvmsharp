@@ -108,6 +108,7 @@ public static class RvmFacetGroupMatcher
             .Sum(facetGroups => facetGroups.Length);
         Console.WriteLine($"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
+        Console.WriteLine("Explanations. IC: iteration count, TC: template count, VC: vertex count");
 
         IEnumerable<Result> MatchGroup(RvmFacetGroup[] facetGroups)
         {
@@ -175,8 +176,8 @@ public static class RvmFacetGroupMatcher
                 .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
             var fraction = instancedCount / (float)facetGroups.Length;
             Console.WriteLine(
-                $"\tFound {instancedCount,5:N0} instances in {facetGroups.Length,6:N0} items ({fraction,7:P1})." +
-                $" TC: {templateCount,4:N0}, VC: {vertexCount,4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
+                $"\tFound {instancedCount,7:N0} instances in {facetGroups.Length,7:N0} items ({fraction,6:P1})." +
+                $" TC: {templateCount,3:N0}, VC: {vertexCount,5:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
         }
 
         var result =
@@ -223,8 +224,20 @@ public static class RvmFacetGroupMatcher
         var templates = new List<TemplateItem>(); // sorted high to low by explicit code
 
         var iterCounter = 0L;
+        var matchingTimer = Stopwatch.StartNew();
+        var target = TimeSpan.FromMinutes(5);
         foreach (var facetGroup in facetGroups)
         {
+            if (matchingTimer.Elapsed > target)
+            {
+                var groupKey = CalculateKey(facetGroup);
+                var vertexCount = facetGroups
+                    .First()
+                    .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+                Console.WriteLine($"Grouping with {vertexCount} vertices taking a long time. More than {(int)target.TotalMinutes} minutes. Group key is: {groupKey}");
+                target += TimeSpan.FromMinutes(5);
+            }
+
             var matchFoundFromPreviousTemplates = false;
             var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
 
@@ -341,7 +354,7 @@ public static class RvmFacetGroupMatcher
                 }
             }
 
-            // The special case is for Melkï¿½ya which has 885k of these. With O(N^2) this takes time, so let's divide this group into smaller groups.
+            // The special case is for Melkøya which has 885k of these. With O(N^2) this takes time, so let's divide this group into smaller groups.
             // Create groups for every 15 degrees using the first angle in the triangle.
             return IsSpecialCaseVolumeTriangle(facetGroup)
                 ? key + (long)(MathF.Round(GetFirstAngleForSpecialCaseVolumeTriangleInDegrees(facetGroup), 0) / 15f)
