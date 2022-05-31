@@ -4,6 +4,7 @@ using Primitives;
 using SharpGLTF.IO;
 using SharpGLTF.Schema2;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -17,7 +18,7 @@ using System.Runtime.InteropServices;
 /// - Primitives are written with GLTF instancing extension. One GLTF node per type of primitive.
 /// - All triangle meshes written in one single GLTF mesh.
 /// - One GLTF node per instanced mesh.
-///  
+///
 /// https://github.com/KhronosGroup/glTF-Tutorials/tree/master/gltfTutorial
 /// GltfSectorParser.ts
 /// GltfSectorLoader.ts
@@ -26,7 +27,7 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class GltfWriter
 {
-    public static void WriteSector(APrimitive[] /* do NOT replace with IEnumerable */ primitives, Stream stream)
+    public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream stream)
     {
         if (!BitConverter.IsLittleEndian)
         {
@@ -115,7 +116,9 @@ public static class GltfWriter
             WriteTrapeziums(trapeziums, model, scene);
         }
 
-        model.Asset.Copyright = "Equinor ASA";
+        model.Asset.Copyright = $"Equinor ASA {DateTime.UtcNow.Year}";
+        model.Asset.Generator = "rvmsharp";
+
         model.WriteGLB(stream);
     }
 

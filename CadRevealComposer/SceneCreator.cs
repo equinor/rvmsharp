@@ -51,14 +51,12 @@ public static class SceneCreator
     {
         Sector FromSector(SectorInfo sector)
         {
-            const float arbitraryDiagonal = 1.0f; // Not sure if this is a good value.
+            if (!sector.Geometries.Any())
+                throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
-            float maxDiagonalLength = sector.Geometries.Any()
-                ? sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal)
-                : arbitraryDiagonal * 0.8f;
-            float minDiagonalLength = sector.Geometries.Any()
-                ? sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal)
-                : arbitraryDiagonal;
+            float maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
+            float minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
             return new Sector
             {
                 Id = sector.SectorId,
