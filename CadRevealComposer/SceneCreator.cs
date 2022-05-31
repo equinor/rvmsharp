@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Operations;
 using Primitives;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -100,7 +101,7 @@ public static class SceneCreator
     {
         var filePath = Path.Join(outputDirectory, sector.Filename);
         using var gltfSectorFile = File.Create(filePath);
-        GltfWriter.WriteSector(sector.Geometries.ToArray(), gltfSectorFile);
+        GltfWriter.WriteSector(sector.Geometries, gltfSectorFile);
         gltfSectorFile.Flush(true);
     }
 }

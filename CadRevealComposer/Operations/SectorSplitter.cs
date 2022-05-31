@@ -13,7 +13,7 @@ using Utils;
 public static class SectorSplitter
 {
     private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
-    private const int StartDepth = 1;
+    private const int StartDepth = 0;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
 
@@ -39,10 +39,6 @@ public static class SectorSplitter
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-
-        var sectorsFromAllZones = new List<ProtoSector>();
-
         foreach (var zone in zones)
         {
             var nodes = zone.Primitives
@@ -64,29 +60,16 @@ public static class SectorSplitter
 
             var sectors = SplitIntoSectorsRecursive(
                 nodes,
-                StartDepth + 1,
-                $"{rootSectorId}",
-                rootSectorId,
-                sectorIdGenerator);
+                StartDepth,
+                "",
+                null,
+                sectorIdGenerator).ToArray();
 
             foreach (var sector in sectors)
             {
                 yield return sector;
             }
-
-            sectorsFromAllZones.AddRange(sectors);
         }
-        // TODO: Investigate if we need a root sector at all when its empty like this.
-        var rootSector = new ProtoSector(
-            rootSectorId,
-            ParentSectorId: null,
-            StartDepth,
-            $"{rootSectorId}",
-            Array.Empty<APrimitive>(),
-            sectorsFromAllZones.Select(s => s.BoundingBoxMin).Aggregate(Vector3.Min),
-            sectorsFromAllZones.Select(p => p.BoundingBoxMax).Aggregate(Vector3.Max)
-        );
-        yield return rootSector;
     }
 
     public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
@@ -97,8 +80,6 @@ public static class SectorSplitter
     public static IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
-
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
 
         var nodes = allGeometries
             .GroupBy(p => p.TreeIndex)
@@ -120,34 +101,22 @@ public static class SectorSplitter
 
         var sectors = SplitIntoSectorsRecursive(
             nodes,
-            StartDepth + 1,
-            $"{rootSectorId}",
-            rootSectorId,
-            sectorIdGenerator);
+            StartDepth,
+            "",
+            null,
+            sectorIdGenerator).ToArray();
 
         foreach (var sector in sectors)
         {
             yield return sector;
         }
-
-        // TODO: Investigate if we need a root sector at all when its empty like this.
-        var rootSector = new ProtoSector(
-            rootSectorId,
-            ParentSectorId: null,
-            StartDepth,
-            $"{rootSectorId}",
-            Array.Empty<APrimitive>(),
-            sectors.Select(p => p.BoundingBoxMin).Aggregate(Vector3.Min),
-            sectors.Select(p => p.BoundingBoxMax).Aggregate(Vector3.Max)
-        );
-        yield return rootSector;
     }
 
     private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
         Node[] nodes,
         int recursiveDepth,
         string parentPath,
-        uint parentSectorId,
+        uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator)
     {
 
@@ -268,13 +237,13 @@ public static class SectorSplitter
         );
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, long budget)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
     {
-        // TODO: Optimize, or find a better way, to include the right amount of TriangleMesh and primitives. Without weighting too many primitives will be included. 
+        // TODO: Optimize, or find a better way, to include the right amount of TriangleMesh and primitives. Without weighting too many primitives will be included.
         var nodesInPrioritizedOrder = nodes
             .OrderByDescending(x =>
                 {
-                    var isTriangleMesh = x.Geometries.Any(x => x is TriangleMesh);
+                    var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
                     var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
 
                     return x.Diagonal / (x.EstimatedByteSize * weightFactor);
