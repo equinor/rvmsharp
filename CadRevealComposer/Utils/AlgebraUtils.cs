@@ -6,9 +6,11 @@ using System.Numerics;
 
 public static class AlgebraUtils
 {
+    public const float twoPi = MathF.PI + MathF.PI;
+    public const double QuaternionApproximatelyEqualThreshold = 0.000_005;
+
     public static float NormalizeRadians(float value)
     {
-        var twoPi = MathF.PI + MathF.PI;
         while (value <= -Math.PI) value += twoPi;
         while (value > Math.PI) value -= twoPi;
         return value;
@@ -85,7 +87,8 @@ public static class AlgebraUtils
         var r33 = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3; // cos(rollX) * cos(pitchY)
 
 
-        if (Math.Abs(r31) < gimbalLockLimit) { // Gimbal lock/singularity check
+        if (Math.Abs(r31) < gimbalLockLimit)
+        { // Gimbal lock/singularity check
             var pitchY = -Math.Asin(r31);
             var rollX = Math.Atan2(r32 / Math.Cos(pitchY), r33 / Math.Cos(pitchY));
             var yawZ = Math.Atan2(r21 / Math.Cos(pitchY), r11 / Math.Cos(pitchY));
@@ -115,10 +118,6 @@ public static class AlgebraUtils
         var v2 = Vector3.Transform(Vector3.One, qc);
         Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
         //Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
-        // TODO: fix assert
-        // TODO: fix assert
-        // TODO: fix assert
-        // TODO: fix assert
         // TODO: fix assert
     }
 
@@ -192,10 +191,10 @@ public static class AlgebraUtils
         if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
         {
             rotation = Quaternion.Normalize(rotation);
-            if (rotation.X.ApproximatelyEquals(Quaternion.Identity.X, 0.000_005) &&
-                rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, 0.000_005) &&
-                rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, 0.000_005) &&
-                rotation.W.ApproximatelyEquals(Quaternion.Identity.W, 0.000_005))
+            if (rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold) &&
+                rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold) &&
+                rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold) &&
+                rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold))
             {
                 rotation = Quaternion.Identity;
             }
