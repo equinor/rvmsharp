@@ -44,15 +44,15 @@ public static class RvmCircularTorusConverter
             var radius = rvmCircularTorus.Radius * scale.X;
             var diameter = 2f * radius;
 
-            var localXAxisA = Vector3.Transform(Vector3.UnitX, rotation);
+            var localToWorldXAxisA = Vector3.Transform(Vector3.UnitX, rotation);
             var arcRotation = rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
-            var localXAxisB = Vector3.Transform(Vector3.UnitX, arcRotation);
+            var localToWorldXAxisB = Vector3.Transform(Vector3.UnitX, arcRotation);
 
-            var positionCapA = position + localXAxisA * offset;
-            var positionCapB = position + localXAxisB * offset;
+            var positionCapA = position + localToWorldXAxisA * offset;
+            var positionCapB = position + localToWorldXAxisB * offset;
 
-            var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localXAxisA));
-            var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localXAxisB));
+            var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisA));
+            var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisB));
 
             var matrixCapA =
                 Matrix4x4.CreateScale(diameter, diameter, 1f)
