@@ -25,7 +25,7 @@ public static class RvmCircularTorusConverter
         var bbox = rvmCircularTorus.CalculateAxisAlignedBoundingBox();
 
         const float oneDegree = 2 * MathF.PI / 360f;
-        var arcAngle = AlgebraUtils.NormalizeRadians(rvmCircularTorus.Angle);
+        var arcAngle = rvmCircularTorus.Angle;
         var isTorusSegment = !arcAngle.ApproximatelyEquals(2f * MathF.PI, acceptableDifference: oneDegree);
 
         yield return new TorusSegment(
