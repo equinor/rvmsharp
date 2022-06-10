@@ -63,9 +63,11 @@ public static class CadRevealComposerRunner
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
+            var databaseExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
             SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
-            Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
+            Console.WriteLine(
+                $"Exported hierarchy database to path \"{databasePath}\" in {databaseExportTimer.Elapsed}");
         });
 
         var geometries = allNodes
@@ -78,67 +80,71 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        var facetGroupsWithEmbeddedProtoMeshes = geometries
-            .OfType<ProtoMeshFromFacetGroup>()
-            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
-            .Cast<RvmFacetGroup>()
-            .ToArray();
+        // var facetGroupsWithEmbeddedProtoMeshes = geometries
+        //     .OfType<ProtoMeshFromFacetGroup>()
+        //     .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
+        //         p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+        //     .Cast<RvmFacetGroup>()
+        //     .ToArray();
+        //
+        // RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
+        // if (composerParameters.NoInstancing)
+        // {
+        //     facetGroupInstancingResult = facetGroupsWithEmbeddedProtoMeshes
+        //         .Select(x => new RvmFacetGroupMatcher.NotInstancedResult(x))
+        //         .Cast<RvmFacetGroupMatcher.Result>()
+        //         .ToArray();
+        //     Console.WriteLine("Facet group instancing disabled.");
+        // }
+        // else
+        // {
+        //     facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
+        //         facetGroupsWithEmbeddedProtoMeshes,
+        //         facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value);
+        //     Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
+        //     stopwatch.Restart();
+        // }
+        //
+        // var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
+        // // We have models where several pyramids on the same "part" are completely identical.
+        // var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
+        // if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
+        // {
+        //     var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
+        //     Console.WriteLine(
+        //         $"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
+        // }
+        //
+        // RvmPyramidInstancer.Result[] pyramidInstancingResult;
+        // if (composerParameters.NoInstancing)
+        // {
+        //     pyramidInstancingResult = uniqueProtoMeshesFromPyramid
+        //         .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
+        //         .OfType<RvmPyramidInstancer.Result>()
+        //         .ToArray();
+        //     Console.WriteLine("Pyramid instancing disabled.");
+        // }
+        // else
+        // {
+        //     pyramidInstancingResult = RvmPyramidInstancer.Process(
+        //         uniqueProtoMeshesFromPyramid,
+        //         pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
+        //     Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
+        //     stopwatch.Restart();
+        // }
+        //
+        //
+        // Console.WriteLine("Start tessellate");
+        // var meshes = TessellateAndOutputInstanceMeshes(
+        //     facetGroupInstancingResult,
+        //     pyramidInstancingResult);
+        //
+        // var geometriesIncludingMeshes = geometries
+        //     .Where(g => g is not ProtoMesh)
+        //     .Concat(meshes)
+        //     .ToArray();
 
-        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
-        if (composerParameters.NoInstancing)
-        {
-            facetGroupInstancingResult = facetGroupsWithEmbeddedProtoMeshes
-                .Select(x => new RvmFacetGroupMatcher.NotInstancedResult(x))
-                .Cast<RvmFacetGroupMatcher.Result>()
-                .ToArray();
-            Console.WriteLine("Facet group instancing disabled.");
-        }
-        else
-        {
-            facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
-                facetGroupsWithEmbeddedProtoMeshes,
-                facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value);
-            Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
-
-        var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
-        // We have models where several pyramids on the same "part" are completely identical.
-        var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
-        if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
-        {
-            var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
-            Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
-        }
-        RvmPyramidInstancer.Result[] pyramidInstancingResult;
-        if (composerParameters.NoInstancing)
-        {
-            pyramidInstancingResult = uniqueProtoMeshesFromPyramid
-                .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
-                .OfType<RvmPyramidInstancer.Result>()
-                .ToArray();
-            Console.WriteLine("Pyramid instancing disabled.");
-        }
-        else
-        {
-            pyramidInstancingResult = RvmPyramidInstancer.Process(
-                uniqueProtoMeshesFromPyramid,
-                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
-            Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
-
-            
-
-        Console.WriteLine("Start tessellate");
-        var meshes = TessellateAndOutputInstanceMeshes(
-            facetGroupInstancingResult,
-            pyramidInstancingResult);
-
-        var geometriesIncludingMeshes = geometries
-            .Where(g => g is not ProtoMesh)
-            .Concat(meshes)
-            .ToArray();
+        var geometriesIncludingMeshes = geometries;
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -226,7 +232,7 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static APrimitive[] TessellateAndOutputInstanceMeshes(
+    public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult)
     {
@@ -267,7 +273,8 @@ public static class CadRevealComposerRunner
             .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
-        Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
+        // Console.WriteLine(
+        //     $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
 
         var instancedMeshes = meshes
             .SelectMany((group, index) => group.InstanceGroup.Select(item => new InstancedMesh(
@@ -287,7 +294,7 @@ public static class CadRevealComposerRunner
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
-        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
+        // Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
 
         return instancedMeshes
             .Cast<APrimitive>()
@@ -329,7 +336,7 @@ public static class CadRevealComposerRunner
     /// <summary>
     /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.
     /// </summary>
-    private record RvmFacetGroupWithProtoMesh(
+    public record RvmFacetGroupWithProtoMesh(
             ProtoMeshFromFacetGroup ProtoMesh,
             uint Version,
             Matrix4x4 Matrix,

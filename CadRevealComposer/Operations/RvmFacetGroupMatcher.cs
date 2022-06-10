@@ -106,8 +106,8 @@ public static class RvmFacetGroupMatcher
         var facetGroupForMatchingCount = groupedFacetGroups
             .Where(shouldInstance)
             .Sum(facetGroups => facetGroups.Length);
-        Console.WriteLine($"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
-        Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
+        // Console.WriteLine($"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
+        // Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
 
         IEnumerable<Result> MatchGroup(RvmFacetGroup[] facetGroups)
         {
@@ -119,7 +119,7 @@ public static class RvmFacetGroupMatcher
                 }
 
                 // return early so the group isn't logged to console
-                yield break; 
+                yield break;
             }
 
             var timer = Stopwatch.StartNew();
@@ -174,9 +174,9 @@ public static class RvmFacetGroupMatcher
                 .First()
                 .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
             var fraction = instancedCount / (float)facetGroups.Length;
-            Console.WriteLine(
-                $"\tFound {instancedCount,5:N0} instances in {facetGroups.Length,6:N0} items ({fraction,7:P1})." +
-                $" TC: {templateCount,4:N0}, VC: {vertexCount,4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
+            // Console.WriteLine(
+            //     $"\tFound {instancedCount,5:N0} instances in {facetGroups.Length,6:N0} items ({fraction,7:P1})." +
+            //     $" TC: {templateCount,4:N0}, VC: {vertexCount,4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
         }
 
         var result =
@@ -189,7 +189,7 @@ public static class RvmFacetGroupMatcher
         var templateCount = result.OfType<TemplateResult>().Count();
         var instancedCount = result.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
-        Console.WriteLine($"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
+        // Console.WriteLine($"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
 
         if (result.Length != allFacetGroups.Length)
         {

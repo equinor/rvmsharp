@@ -111,7 +111,9 @@ public static class DrawCallEstimator
             Trapezium => 4 * sizeof(ulong),
             InstancedMesh => 20 * sizeof(ulong),
             TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.Mesh.TriangleCount * 6 * sizeof(float),
-            _ => throw new NotImplementedException()
+            ProtoMeshFromFacetGroup pm => 10 * sizeof(ulong) + pm.FacetGroup.Polygons.Sum(x => x.Contours.Sum(y=>y.Vertices.LongLength)) * 6 * sizeof(float),
+            ProtoMeshFromPyramid => 10 * sizeof(ulong) + 18 * sizeof(float),
+            _ => throw new NotImplementedException(primitive.GetType().ToString())
         };
     }
 }

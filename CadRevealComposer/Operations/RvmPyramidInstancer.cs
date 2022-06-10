@@ -95,7 +95,7 @@ public static class RvmPyramidInstancer
         var templateCount = result.OfType<TemplateResult>().Count();
         var instancedCount = result.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)protoPyramids.Length;
-        Console.WriteLine($"Pyramids found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {protoPyramids.Length:N0} ({fraction:P1}).");
+        // Console.WriteLine($"Pyramids found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {protoPyramids.Length:N0} ({fraction:P1}).");
 
         return result.ToArray();
     }

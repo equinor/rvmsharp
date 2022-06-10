@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Operations;
 using Primitives;
+using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -99,9 +100,29 @@ public static class SceneCreator
 
     public static void ExportSector(SectorInfo sector, string outputDirectory)
     {
+        var facetGroupsWithProtoMesh = sector.Geometries
+            .OfType<ProtoMeshFromFacetGroup>()
+            .Select(p => new CadRevealComposerRunner.RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version,
+                p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+            .Cast<RvmFacetGroup>()
+            .ToArray();
+        var facetGroupInstancingResults = RvmFacetGroupMatcher.MatchAll(facetGroupsWithProtoMesh, fg => fg.Length >= 20);
+
+        var protoMeshesFromPyramids = sector.Geometries.OfType<ProtoMeshFromPyramid>().ToArray();
+        // We have models where several pyramids on the same "part" are completely identical.
+        var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
+        var pyramidInstancingResult = RvmPyramidInstancer.Process(uniqueProtoMeshesFromPyramid, py => py.Length > 20);
         var filePath = Path.Join(outputDirectory, sector.Filename);
+
+        var meshes =
+            CadRevealComposerRunner.TessellateAndOutputInstanceMeshes(facetGroupInstancingResults,
+                pyramidInstancingResult);
+        var geometriesIncludingMeshes = sector.Geometries.Where(x => x is not ProtoMesh).Concat(meshes).ToArray();
+
         using var gltfSectorFile = File.Create(filePath);
-        GltfWriter.WriteSector(sector.Geometries, gltfSectorFile);
+        GltfWriter.WriteSector(geometriesIncludingMeshes, gltfSectorFile);
         gltfSectorFile.Flush(true);
     }
+
+
 }
