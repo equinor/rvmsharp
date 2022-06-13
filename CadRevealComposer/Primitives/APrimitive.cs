@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Primitives;
 
 using Operations.Converters;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System;
@@ -144,9 +145,15 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
 {
     public static IEnumerable<APrimitive> FromRvmPrimitive(
             CadRevealNode revealNode,
-            RvmNode rvmNode,
             RvmPrimitive rvmPrimitive)
     {
+        var rvmNode = revealNode.Group as RvmNode;
+        if (rvmNode == null)
+        {
+            Console.WriteLine($"The RvmGroup for Node {revealNode.NodeId} was null. Returning empty array.");
+            return Array.Empty<APrimitive>();
+        }
+
         switch (rvmPrimitive)
         {
             case RvmBox rvmBox:

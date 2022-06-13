@@ -72,7 +72,7 @@ public static class CadRevealComposerRunner
             .AsParallel()
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries.SelectMany(
-                primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
+                primitive => APrimitive.FromRvmPrimitive(x, primitive)))
             .ToArray();
 
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
