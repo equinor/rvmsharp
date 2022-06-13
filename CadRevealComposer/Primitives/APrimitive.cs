@@ -150,7 +150,7 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
         var rvmNode = revealNode.Group as RvmNode;
         if (rvmNode == null)
         {
-            Console.WriteLine($"The RvmGroup for Node {revealNode.NodeId} was null. Returning empty array.");
+            Console.WriteLine($"The RvmGroup for Node {revealNode.NodeId} was invalid: {revealNode.Group?.GetType()}. Returning empty array.");
             return Array.Empty<APrimitive>();
         }
 
