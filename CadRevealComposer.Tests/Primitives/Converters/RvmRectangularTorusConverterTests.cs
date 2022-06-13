@@ -5,6 +5,7 @@ using CadRevealComposer.Primitives;
 using NUnit.Framework;
 using RvmSharp.Primitives;
 using System;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 
@@ -32,7 +33,7 @@ internal class RvmRectangularTorusConverterTests
     {
         var torus = _rvmRectangularTorus with { Angle = 2 * MathF.PI };
 
-        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, System.Drawing.Color.Red).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Cone>());
@@ -41,11 +42,12 @@ internal class RvmRectangularTorusConverterTests
         Assert.That(geometries.Length, Is.EqualTo(4));
     }
 
+    [Test]
     public void RvmRectangularTorusConverter_WhenInnerRadiusIsZero_ReturnsOnlyOneConeWithCaps()
     {
         var torus = _rvmRectangularTorus with { Angle = 2 * MathF.PI, RadiusInner = 0 };
 
-        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, System.Drawing.Color.Red).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<GeneralRing>());
@@ -53,9 +55,10 @@ internal class RvmRectangularTorusConverterTests
         Assert.That(geometries.Length, Is.EqualTo(3));
     }
 
+    [Test]
     public void RvmRectangularTorusConverter_WhenAngleIsLessThan2Pi_ReturnsTorusWithCaps()
     {
-        var geometries = _rvmRectangularTorus.ConvertToRevealPrimitive(_treeIndex, System.Drawing.Color.Red).ToArray();
+        var geometries = _rvmRectangularTorus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Cone>());
@@ -64,5 +67,15 @@ internal class RvmRectangularTorusConverterTests
         Assert.That(geometries[4], Is.TypeOf<Trapezium>());
         Assert.That(geometries[5], Is.TypeOf<Trapezium>());
         Assert.That(geometries.Length, Is.EqualTo(6));
+    }
+
+    [Test]
+    public void RvmRectangularTorusConverter_WhenOuterRadiusIsZero_ReturnEmpty()
+    {
+        var torus = _rvmRectangularTorus with { RadiusOuter = 0 };
+
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+
+        Assert.That(geometries, Is.Empty);
     }
 }

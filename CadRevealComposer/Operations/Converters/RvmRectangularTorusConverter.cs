@@ -26,7 +26,15 @@ public static class RvmRectangularTorusConverter
 
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
         var radiusOuter = rvmRectangularTorus.RadiusOuter * scale.X;
+
+        if (radiusOuter <= 0)
+        {
+            Console.WriteLine($"Rectangular Torus was removed, because outer radius was zero or less");
+            yield break;
+        }
+
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
+
         var outerDiameter = radiusOuter * 2;
         var halfHeight = rvmRectangularTorus.Height / 2.0f * scale.Y;
 
@@ -77,7 +85,6 @@ public static class RvmRectangularTorusConverter
             Matrix4x4.CreateScale(outerDiameter)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
-
 
         yield return new GeneralRing(
             0f,
