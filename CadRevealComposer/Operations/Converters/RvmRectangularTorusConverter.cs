@@ -29,7 +29,7 @@ public static class RvmRectangularTorusConverter
 
         if (radiusOuter <= 0)
         {
-            Console.WriteLine($"Rectangular Torus was removed, because outer radius was zero or less");
+            Console.WriteLine($"Rectangular Torus was removed, because outer radius was: {radiusOuter}");
             yield break;
         }
 
