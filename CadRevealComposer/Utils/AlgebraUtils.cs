@@ -1,3 +1,5 @@
+// ReSharper disable UnusedMember.Global -- Could be useful later. If the math is correct it's not tech debt.
+// ReSharper disable MemberCanBePrivate.Global -- Could be useful later. If the math is correct its not tech debt.
 namespace CadRevealComposer.Utils;
 
 using System;
@@ -6,14 +8,21 @@ using System.Numerics;
 
 public static class AlgebraUtils
 {
-    public const float twoPi = MathF.PI + MathF.PI;
-    public const double QuaternionApproximatelyEqualThreshold = 0.000_005;
+    /// <summary>
+    /// Just 2*MathF.PI
+    /// </summary>
+    /// <remarks>
+    /// Also known as Tau
+    /// </remarks>
+    public const float TwoPi = MathF.Tau;
+    private const double QuaternionApproximatelyEqualThreshold = 0.0001d;
 
+    /// <summary>
+    /// Normalizes a Radian value to [-PI..PI) range.
+    /// </summary>
     public static float NormalizeRadians(float value)
     {
-        while (value <= -Math.PI) value += twoPi;
-        while (value > Math.PI) value -= twoPi;
-        return value;
+        return value - TwoPi * MathF.Floor((value + MathF.PI) / TwoPi);
     }
 
     public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
@@ -117,8 +126,7 @@ public static class AlgebraUtils
         var v1 = Vector3.Transform(Vector3.One, rotation);
         var v2 = Vector3.Transform(Vector3.One, qc);
         Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
-        //Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
-        // TODO: fix assert
+        Debug.Assert(v1.EqualsWithinTolerance(v2, 0.001f));
     }
 
     /// <summary>
