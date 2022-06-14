@@ -27,11 +27,12 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class GltfWriter
 {
-    public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream stream)
+    public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream outputStream)
     {
         if (!BitConverter.IsLittleEndian)
         {
-            throw new Exception("This code copies bytes directly from memory to output and is coded to work with machines having little endian.");
+            throw new Exception(
+                "This code copies bytes directly from memory to output and is coded to work with machines having little endian.");
         }
 
         var model = ModelRoot.CreateModel();
@@ -119,7 +120,7 @@ public static class GltfWriter
         model.Asset.Copyright = $"Equinor ASA {DateTime.UtcNow.Year}";
         model.Asset.Generator = "rvmsharp";
 
-        model.WriteGLB(stream);
+        model.WriteGLB(outputStream);
     }
 
     private static void WriteInstancedMeshes(InstancedMesh[] meshes, ModelRoot model, Scene scene)
