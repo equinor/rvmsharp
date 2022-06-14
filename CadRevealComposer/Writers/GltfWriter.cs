@@ -125,10 +125,9 @@ public static class GltfWriter
 
     private static void WriteInstancedMeshes(InstancedMesh[] meshes, ModelRoot model, Scene scene)
     {
-        // TODO: don't write single mesh
-        // TODO: don't write single mesh
-        // TODO: don't write single mesh
-        // TODO: don't write single mesh
+        // Remark: InstancedMesh.InstanceId is shared across Sectors, and that means that we can have InstancedMesh groups
+        // with only one item in this sector, but it will use the shared instance from another sector if already loaded from that sector.
+        // So small instance groups increases file size, but not memory use.
 
         var instanceMeshGroups = meshes.GroupBy(m => m.InstanceId);
 
