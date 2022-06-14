@@ -2,6 +2,7 @@
 
 using BatchUtils;
 using Primitives;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -43,7 +44,10 @@ public class RvmFile
     {
         //if (attributes.Count != groups.Count)
         //    Console.Error.WriteLine("Length of attribute nodes does not match group length");
-        var rvmNodeNameLookup = groups.ToDictionary(x => x.Name, y => y);
+        if (!attributeNodes.Any()) // No need to keep recursing if there are no attributeNodes
+            return;
+
+        var rvmNodeNameLookup = groups.ToDictionary(x => x.Name!=""?x.Name:Guid.NewGuid().ToString(), y => y);  // For some reason, some nodes are unnamed - Assigning them a fictive name
 
         foreach (var attributeNode in attributeNodes)
         {
@@ -51,7 +55,8 @@ public class RvmFile
             {
                 foreach (var kvp in attributeNode.MetadataDict)
                     rvmNode.Attributes.Add(kvp.Key, kvp.Value);
-                AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
+                if (attributeNode.Children.Any())   //No need to keep recursing when the attributeNode has no children
+                    AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
             }
         }
     }
