@@ -800,6 +800,7 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, float value, ref int bufferPos)
     {
+        ThrowIfValueIsNotFinite(value);
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref value, 1));
         var target = buffer.Slice(bufferPos, sizeof(float));
         Debug.Assert(source.Length == target.Length);
@@ -835,6 +836,9 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, Vector3 vector, ref int bufferPos)
     {
+        ThrowIfValueIsNotFinite(vector.X);
+        ThrowIfValueIsNotFinite(vector.Y);
+        ThrowIfValueIsNotFinite(vector.Z);
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector3.cs
         // writes Vector3 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
@@ -847,6 +851,10 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, Vector4 vector, ref int bufferPos)
     {
+        ThrowIfValueIsNotFinite(vector.X);
+        ThrowIfValueIsNotFinite(vector.Y);
+        ThrowIfValueIsNotFinite(vector.Z);
+        ThrowIfValueIsNotFinite(vector.W);
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector4.cs
         // writes Vector4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
@@ -854,5 +862,24 @@ public static class GltfWriter
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float) * 4;
+    }
+
+
+    /// <summary>
+    /// This guards from writing non-finite values of floats.
+    /// Will throw an ArgumentOutOfRangeException if input value is not finite.
+    ///
+    /// This is done to avoid this error coming when we try to serialize to gltf,
+    /// as we then do not have any stack trace to what primitive or other was trying
+    /// to write the non-finite number.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ThrowIfValueIsNotFinite(float value)
+    {
+        if (!float.IsFinite(value))
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), value,
+                $"value was {value}, and cannot be serialized to gltf json.");
+        }
     }
 }
