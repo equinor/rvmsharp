@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Operations.Converters;
 
 using Primitives;
+using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
@@ -26,10 +27,7 @@ public static class RvmPyramidConverter
                 scale,
                 new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
 
-            var matrix =
-                Matrix4x4.CreateScale(unitBoxScale)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(position);
+            var matrix = Matrix4x4Helpers.CalculateTransformMatrix(position, rotation, unitBoxScale);
 
             yield return new Box(
                 matrix,
