@@ -16,6 +16,12 @@ public static class RvmFacetGroupMatcher
     public record InstancedResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : Result(FacetGroup);
     public record TemplateResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template, Transform);
 
+    private static long _iteratorCounter = 0;
+    private static object _iterationCounterLock = new object();
+
+    private static int _templateCleanupThreshold = 5000;
+    private static int _templateCleanupNumberToKeep = 1000;
+
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
     /// </summary>
@@ -119,11 +125,16 @@ public static class RvmFacetGroupMatcher
                 }
 
                 // return early so the group isn't logged to console
-                yield break; 
+                yield break;
             }
 
             var timer = Stopwatch.StartNew();
             var instancingResults = MatchGroups(facetGroups, out var iterationCounter);
+
+            lock (_iterationCounterLock)
+            {
+                _iteratorCounter += iterationCounter;
+            }
 
             // post determine if group is adequate for instancing
             var templateCount = 0L;
@@ -190,10 +201,15 @@ public static class RvmFacetGroupMatcher
         var instancedCount = result.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
         Console.WriteLine($"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
+        Console.WriteLine($"Total iteration count: {_iteratorCounter}");
+        Console.WriteLine($"Template cleaning threshold: {_templateCleanupThreshold}");
+        Console.WriteLine($"Templates kept after cleaning: {_templateCleanupNumberToKeep}");
 
+        // TODO: Is this check necessary?
         if (result.Length != allFacetGroups.Length)
         {
-            throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
+
+            //throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
         }
 
         return result;
@@ -262,6 +278,12 @@ public static class RvmFacetGroupMatcher
             }
 
             var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
+
+            if (templates.Count > _templateCleanupThreshold)
+            {
+                templates.RemoveRange(_templateCleanupNumberToKeep, templates.Count - _templateCleanupNumberToKeep - 1);
+            }
+
             templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
         }
 
