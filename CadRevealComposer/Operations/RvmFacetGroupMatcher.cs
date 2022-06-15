@@ -205,11 +205,9 @@ public static class RvmFacetGroupMatcher
         Console.WriteLine($"Template cleaning threshold: {_templateCleanupThreshold}");
         Console.WriteLine($"Templates kept after cleaning: {_templateCleanupNumberToKeep}");
 
-        // TODO: Is this check necessary?
         if (result.Length != allFacetGroups.Length)
         {
-
-            //throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
+            throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
         }
 
         return result;
@@ -281,6 +279,8 @@ public static class RvmFacetGroupMatcher
 
             if (templates.Count > _templateCleanupThreshold)
             {
+                result.AddRange(templates.GetRange(_templateCleanupNumberToKeep, templates.Count - _templateCleanupNumberToKeep - 1)
+                    .Select(x => new NotInstancedResult(x.Original)));
                 templates.RemoveRange(_templateCleanupNumberToKeep, templates.Count - _templateCleanupNumberToKeep - 1);
             }
 
