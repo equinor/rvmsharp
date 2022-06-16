@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using Utils;
 
 public static class RvmFacetGroupMatcher
@@ -18,17 +19,14 @@ public static class RvmFacetGroupMatcher
     public record InstancedResult
         (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : Result(FacetGroup);
 
-    public record TemplateResult(
-            RvmFacetGroup FacetGroup,
-            RvmFacetGroup Template,
-            Matrix4x4 Transform)
-        : InstancedResult(FacetGroup, Template, Transform);
+    public record TemplateResult
+        (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template,
+            Transform);
 
     private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
     private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
 
     private static long _iteratorCounter = 0;
-    private static readonly object _iterationCounterLock = new object();
 
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
@@ -143,10 +141,7 @@ public static class RvmFacetGroupMatcher
             var timer = Stopwatch.StartNew();
             var instancingResults = MatchGroups(facetGroups, out var iterationCounter);
 
-            lock (_iterationCounterLock)
-            {
-                _iteratorCounter += iterationCounter;
-            }
+            Interlocked.Add(ref _iteratorCounter, iterationCounter);
 
             // post determine if group is adequate for instancing
             var templateCount = 0L;
