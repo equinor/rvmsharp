@@ -25,7 +25,6 @@ public static class RvmFacetGroupMatcher
         : InstancedResult(FacetGroup, Template, Transform);
 
     private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
-
     private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
 
     private static long _iteratorCounter = 0;
