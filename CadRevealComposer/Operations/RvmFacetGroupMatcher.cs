@@ -18,9 +18,11 @@ public static class RvmFacetGroupMatcher
     public record InstancedResult
         (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : Result(FacetGroup);
 
-    public record TemplateResult
-        (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template,
-            Transform);
+    public record TemplateResult(
+            RvmFacetGroup FacetGroup,
+            RvmFacetGroup Template,
+            Matrix4x4 Transform)
+        : InstancedResult(FacetGroup, Template, Transform);
 
     private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
 
@@ -122,7 +124,8 @@ public static class RvmFacetGroupMatcher
             .Where(shouldInstance)
             .Sum(facetGroups => facetGroups.Length);
         Console.WriteLine(
-            $"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
+            $"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups " +
+            $"of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
 
         IEnumerable<Result> MatchGroup(RvmFacetGroup[] facetGroups)
@@ -212,7 +215,8 @@ public static class RvmFacetGroupMatcher
         var instancedCount = result.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
         Console.WriteLine(
-            $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
+            $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
+            $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
         Console.WriteLine($"Total iteration count: {_iteratorCounter}");
 
         if (result.Length != allFacetGroups.Length)
