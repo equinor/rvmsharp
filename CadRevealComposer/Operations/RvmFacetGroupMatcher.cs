@@ -12,15 +12,22 @@ using Utils;
 public static class RvmFacetGroupMatcher
 {
     public abstract record Result(RvmFacetGroup FacetGroup);
+
     public record NotInstancedResult(RvmFacetGroup FacetGroup) : Result(FacetGroup);
-    public record InstancedResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : Result(FacetGroup);
-    public record TemplateResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template, Transform);
+
+    public record InstancedResult
+        (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : Result(FacetGroup);
+
+    public record TemplateResult
+        (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template,
+            Transform);
+
+    private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
+
+    private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
 
     private static long _iteratorCounter = 0;
-    private static object _iterationCounterLock = new object();
-
-    private static int _templateCleanupThreshold = 5000;
-    private static int _templateCleanupNumberToKeep = 1000;
+    private static readonly object _iterationCounterLock = new object();
 
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
@@ -41,7 +48,8 @@ public static class RvmFacetGroupMatcher
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup facetGroup, bool centerMesh, out Matrix4x4 translationMatrix)
+    private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup facetGroup, bool centerMesh,
+        out Matrix4x4 translationMatrix)
     {
         var originalMatrix = facetGroup.Matrix;
 
@@ -85,7 +93,8 @@ public static class RvmFacetGroupMatcher
             Contours = p.Contours
                 .Select(c => new RvmFacetGroup.RvmContour(
                     c.Vertices
-                        .Select(vn => (Vector3.Transform(vn.Vertex, finalMatrix), Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed)))
+                        .Select(vn => (Vector3.Transform(vn.Vertex, finalMatrix),
+                            Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed)))
                         .ToArray()))
                 .ToArray()
         }).ToArray();
@@ -112,7 +121,8 @@ public static class RvmFacetGroupMatcher
         var facetGroupForMatchingCount = groupedFacetGroups
             .Where(shouldInstance)
             .Sum(facetGroups => facetGroups.Length);
-        Console.WriteLine($"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
+        Console.WriteLine(
+            $"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
 
         IEnumerable<Result> MatchGroup(RvmFacetGroup[] facetGroups)
@@ -148,6 +158,7 @@ public static class RvmFacetGroupMatcher
                     {
                         yield return instanceResult;
                     }
+
                     continue;
                 }
 
@@ -200,10 +211,9 @@ public static class RvmFacetGroupMatcher
         var templateCount = result.OfType<TemplateResult>().Count();
         var instancedCount = result.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
-        Console.WriteLine($"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
+        Console.WriteLine(
+            $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
         Console.WriteLine($"Total iteration count: {_iteratorCounter}");
-        Console.WriteLine($"Template cleaning threshold: {_templateCleanupThreshold}");
-        Console.WriteLine($"Templates kept after cleaning: {_templateCleanupNumberToKeep}");
 
         if (result.Length != allFacetGroups.Length)
         {
@@ -261,6 +271,7 @@ public static class RvmFacetGroupMatcher
                 {
                     j--;
                 }
+
                 if (j != i) // swap items
                 {
                     SwapItemData(item, templates[j]);
@@ -277,11 +288,14 @@ public static class RvmFacetGroupMatcher
 
             var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
 
-            if (templates.Count > _templateCleanupThreshold)
+            // To avoid comparing with too many templates, making the worst case O(N^2),
+            // we remove the templates with the least number of matches after reaching the threshold
+            if (templates.Count > TemplateCleanupThreshold)
             {
-                result.AddRange(templates.GetRange(_templateCleanupNumberToKeep, templates.Count - _templateCleanupNumberToKeep - 1)
+                result.AddRange(templates
+                    .GetRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1)
                     .Select(x => new NotInstancedResult(x.Original)));
-                templates.RemoveRange(_templateCleanupNumberToKeep, templates.Count - _templateCleanupNumberToKeep - 1);
+                templates.RemoveRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1);
             }
 
             templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
@@ -423,7 +437,8 @@ public static class RvmFacetGroupMatcher
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 transform)
+    private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup,
+        out Matrix4x4 transform)
     {
         // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
 
