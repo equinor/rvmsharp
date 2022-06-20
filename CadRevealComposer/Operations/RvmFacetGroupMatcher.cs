@@ -26,8 +26,6 @@ public static class RvmFacetGroupMatcher
     private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
     private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
 
-    private static long _iteratorCounter = 0;
-
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
     /// </summary>
@@ -125,7 +123,7 @@ public static class RvmFacetGroupMatcher
             $"of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
 
-        IReadOnlyList<Result> MatchGroup(RvmFacetGroup[] facetGroups)
+        (IReadOnlyList<Result> Result, long IterationCounter) MatchGroup(RvmFacetGroup[] facetGroups)
         {
             var result = new List<Result>();
 
@@ -137,13 +135,11 @@ public static class RvmFacetGroupMatcher
                 }
 
                 // return early so the group isn't logged to console
-                return result;
+                return (result, 0L);
             }
 
             var timer = Stopwatch.StartNew();
             var instancingResults = MatchGroups(facetGroups, out var iterationCounter);
-
-            Interlocked.Add(ref _iteratorCounter, iterationCounter);
 
             // post determine if group is adequate for instancing
             var templateCount = 0L;
@@ -199,14 +195,21 @@ public static class RvmFacetGroupMatcher
                 $"\tFound {instancedCount,5:N0} instances in {facetGroups.Length,6:N0} items ({fraction,7:P1})." +
                 $" TC: {templateCount,4:N0}, VC: {vertexCount,4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
 
-            return result;
+            return (result, iterationCounter);
         }
+
+        long iterationCounter = 0;
 
         var result =
             groupedFacetGroups
                 .OrderByDescending(facetGroups => facetGroups.Length)
                 .AsParallel()
-                .SelectMany(MatchGroup)
+                .SelectMany(x =>
+                {
+                    var result = MatchGroup(x);
+                    Interlocked.Add(ref iterationCounter, result.IterationCounter);
+                    return result.Result;
+                })
                 .ToArray();
 
         var templateCount = result.OfType<TemplateResult>().Count();
@@ -215,7 +218,7 @@ public static class RvmFacetGroupMatcher
         Console.WriteLine(
             $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
             $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
-        Console.WriteLine($"Total iteration count: {_iteratorCounter}");
+        Console.WriteLine($"Total iteration count: {iterationCounter}");
 
         if (result.Length != allFacetGroups.Length)
         {
