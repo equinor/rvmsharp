@@ -125,17 +125,19 @@ public static class RvmFacetGroupMatcher
             $"of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
 
-        IEnumerable<Result> MatchGroup(RvmFacetGroup[] facetGroups)
+        IReadOnlyList<Result> MatchGroup(RvmFacetGroup[] facetGroups)
         {
+            var result = new List<Result>();
+
             if (shouldInstance(facetGroups) is false)
             {
                 foreach (var facetGroup in facetGroups)
                 {
-                    yield return new NotInstancedResult(facetGroup);
+                    result.Add(new NotInstancedResult(facetGroup));
                 }
 
                 // return early so the group isn't logged to console
-                yield break;
+                return result;
             }
 
             var timer = Stopwatch.StartNew();
@@ -153,7 +155,7 @@ public static class RvmFacetGroupMatcher
                 {
                     foreach (var instanceResult in instancingGroup)
                     {
-                        yield return instanceResult;
+                        result.Add(instanceResult);
                     }
 
                     continue;
@@ -182,9 +184,9 @@ public static class RvmFacetGroupMatcher
                             }
                         }
 
-                        yield return shouldInstanceGroup
+                        result.Add(shouldInstanceGroup
                             ? instancedResult
-                            : new NotInstancedResult(instancedResult.FacetGroup);
+                            : new NotInstancedResult(instancedResult.FacetGroup));
                     }
                 }
             }
@@ -196,6 +198,8 @@ public static class RvmFacetGroupMatcher
             Console.WriteLine(
                 $"\tFound {instancedCount,5:N0} instances in {facetGroups.Length,6:N0} items ({fraction,7:P1})." +
                 $" TC: {templateCount,4:N0}, VC: {vertexCount,4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds,6:N} s.");
+
+            return result;
         }
 
         var result =
