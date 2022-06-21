@@ -11,22 +11,28 @@ using System.Numerics;
 [TestFixture]
 public class RvmBoxConverterTests
 {
+    const int _treeIndex = 1337;
+    private RvmBox _rvmBox;
+
+    [SetUp]
+    public void Setup()
+    {
+        _rvmBox = new RvmBox(
+            Version: 2,
+            Matrix: Matrix4x4.Identity,
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+            LengthX: 1,
+            LengthY: 1,
+            LengthZ: 1
+        );
+    }
 
     [Test]
-    public void ConvertRvmBoxToBox()
+    public void RvmBoxConverter_ReturnsBox()
     {
-        const int treeIndex = 1337;
+        var geometries = _rvmBox.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 
-        var transform = Matrix4x4.Identity; // No rotation, scale 1, position at 0
-
-        var rvmBox = new RvmBox(Version: 2,
-            transform,
-            new RvmBoundingBox(new Vector3(-1, -2, -3), new Vector3(1, 2, 3)),
-            LengthX: 2, LengthY: 4, LengthZ: 6);
-        var box = rvmBox.ConvertToRevealPrimitive(treeIndex, Color.Red).SingleOrDefault() as Box;
-
-        Assert.That(box, Is.Not.Null);
-        Assert.That(box, Is.TypeOf<Box>());
-        Assert.That(box.TreeIndex, Is.EqualTo(treeIndex));
+        Assert.That(geometries[0], Is.TypeOf<Box>());
+        Assert.That(geometries.Length, Is.EqualTo(1));
     }
 }

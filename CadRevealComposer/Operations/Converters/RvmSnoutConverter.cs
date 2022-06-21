@@ -78,14 +78,14 @@ public static class RvmSnoutConverter
     {
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
-        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         yield return new Cone(
             Angle: 0f,
             ArcAngle: 2f * MathF.PI,
             centerA,
             centerB,
-            localXAxis,
+            localToWorldXAxis,
             radiusA,
             radiusB,
             treeIndex,
@@ -211,7 +211,7 @@ public static class RvmSnoutConverter
         RvmBoundingBox bbox)
     {
         var diameter = 2f * radius;
-        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         var (planeRotationA, planeNormalA, planeSlopeA) = TranslateShearToSlope(rvmSnout.TopShearX, rvmSnout.TopShearY);
         var (planeRotationB, planeNormalB, planeSlopeB) = TranslateShearToSlope(rvmSnout.BottomShearX, rvmSnout.BottomShearY);
@@ -231,7 +231,7 @@ public static class RvmSnoutConverter
             ArcAngle: 2f * MathF.PI,
             extendedCenterA,
             extendedCenterB,
-            localXAxis,
+            localToWorldXAxis,
             planeA,
             planeB,
             radius,
@@ -293,20 +293,16 @@ public static class RvmSnoutConverter
         Color color,
         RvmBoundingBox bbox)
     {
-        // TODO: implement shear
-        // TODO: implement shear
-        // TODO: implement shear
-
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
-        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         yield return new Cone(
             Angle: 0f,
             ArcAngle: 2f * MathF.PI,
             centerA,
             centerB,
-            localXAxis,
+            localToWorldXAxis,
             radiusA,
             radiusB,
             treeIndex,

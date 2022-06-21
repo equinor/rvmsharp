@@ -29,8 +29,8 @@ public class BoxCadRevealPrimitiveTests
         var expectedDiagonal = 7.90086317; // Diagonal of scaled, rotated bounding box.
 
         RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
-
-        var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox).SingleOrDefault() as Box;
+        revealNode.Group = container;
+        var box = APrimitive.FromRvmPrimitive(revealNode, rvmBox).SingleOrDefault() as Box;
 
         Assert.That(box, Is.Not.Null);
         Assert.That(box.InstanceMatrix.Translation.X, Is.EqualTo(10));

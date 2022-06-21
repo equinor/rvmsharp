@@ -101,6 +101,7 @@ end {
         "*.i3d"
         "*.f3d"
         "*.ctm"
+        "*.glb"
     )
 
     foreach ($filter in $artifactStagingGlobs) {

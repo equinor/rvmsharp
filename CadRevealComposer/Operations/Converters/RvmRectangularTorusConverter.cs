@@ -26,14 +26,22 @@ public static class RvmRectangularTorusConverter
 
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
         var radiusOuter = rvmRectangularTorus.RadiusOuter * scale.X;
+
+        if (radiusOuter <= 0)
+        {
+            Console.WriteLine($"Rectangular Torus was removed, because outer radius was: {radiusOuter}");
+            yield break;
+        }
+
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
+
         var outerDiameter = radiusOuter * 2;
         var halfHeight = rvmRectangularTorus.Height / 2.0f * scale.Y;
 
         var centerA = position + normal * halfHeight;
         var centerB = position - normal * halfHeight;
 
-        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
         var arcAngle = rvmRectangularTorus.Angle;
 
         var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox();
@@ -43,7 +51,7 @@ public static class RvmRectangularTorusConverter
             arcAngle,
             centerA,
             centerB,
-            localXAxis,
+            localToWorldXAxis,
             radiusOuter,
             radiusOuter,
             treeIndex,
@@ -59,7 +67,7 @@ public static class RvmRectangularTorusConverter
                 arcAngle,
                 centerA,
                 centerB,
-                localXAxis,
+                localToWorldXAxis,
                 radiusInner,
                 radiusInner,
                 treeIndex,
@@ -77,7 +85,6 @@ public static class RvmRectangularTorusConverter
             Matrix4x4.CreateScale(outerDiameter)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
-
 
         yield return new GeneralRing(
             0f,
@@ -106,7 +113,7 @@ public static class RvmRectangularTorusConverter
         var isTorusSegment = !arcAngle.ApproximatelyEquals(2 * MathF.PI);
         if (isTorusSegment)
         {
-            var v1 = localXAxis;
+            var v1 = localToWorldXAxis;
 
             var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
             var v2 = Vector3.Transform(v1, q2);

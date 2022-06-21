@@ -34,7 +34,7 @@ public static class RvmCylinderConverter
         var radius = rvmCylinder.Radius * scale.X;
         var halfHeight = height / 2f;
         var diameter = 2f * radius;
-        var localXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         var normalA = normal;
         var normalB = -normal;
@@ -49,7 +49,7 @@ public static class RvmCylinderConverter
             ArcAngle: 2f * MathF.PI,
             centerA,
             centerB,
-            localXAxis,
+            localToWorldXAxis,
             radius,
             radius,
             treeIndex,

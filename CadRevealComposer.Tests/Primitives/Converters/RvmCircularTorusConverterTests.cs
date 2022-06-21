@@ -20,7 +20,7 @@ public class RvmCircularTorusConverterTests
         _rvmCircularTorus = new RvmCircularTorus(
             Version: 2,
             Matrix: Matrix4x4.Identity,
-            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One,Vector3.One ),
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
             Offset: 0f,
             Radius: 1,
             Angle: MathF.PI // 180 degrees
@@ -28,37 +28,24 @@ public class RvmCircularTorusConverterTests
     }
 
     [Test]
-    public void RvmCircularConverter_WhenAngleIs2Pi_ReturnsTorus()
+    public void RvmCircularConverter_WhenAngleIs2Pi_ReturnsTorusWithoutCaps()
     {
-        var torus = _rvmCircularTorus with {Angle = 2 * MathF.PI};
-        var primitive = torus.ConvertToRevealPrimitive(1337, Color.Red).SingleOrDefault();
-        Assert.That(primitive, Is.TypeOf<TorusSegment>());
+        var torus = _rvmCircularTorus with { Angle = 2 * MathF.PI };
+        var geometries = torus.ConvertToRevealPrimitive(1337, Color.Red).ToArray();
+
+        Assert.That(geometries[0], Is.TypeOf<TorusSegment>());
+        Assert.That(geometries.Count, Is.EqualTo(1));
     }
 
     [Test]
-    public void RvmCircularConverter_WhenNotCompleteAndNoConnections_ReturnsClosedTorusSegment()
+    public void RvmCircularConverter_WhenAngleIsLessThan2Pi_ReturnsTorusWithCaps()
     {
-        var angle = MathF.PI;
-        var torus = _rvmCircularTorus with {Angle = angle};
-        var primitive = torus.ConvertToRevealPrimitive(1337, Color.Red).SingleOrDefault();
-        Assert.That(primitive, Is.TypeOf<TorusSegment>());
+        var torus = _rvmCircularTorus with { Angle = MathF.PI };
+        var geometries = torus.ConvertToRevealPrimitive(1337, Color.Red).ToArray();
 
-        var closedTorusSegment = (TorusSegment) primitive;
-        Assert.That(closedTorusSegment.ArcAngle, Is.EqualTo(angle).Within(0.001));
-    }
-
-    [Test]
-    public void RvmCircularConverter_WhenNotCompleteAndHasConnection_ReturnsClosedTorusSegment()
-    {
-        var angle = MathF.PI;
-        var torus = _rvmCircularTorus with {Angle = angle};
-        torus.Connections[0] = new RvmConnection(torus, torus, 0, 0, Vector3.Zero, Vector3.UnitZ,
-            RvmConnection.ConnectionType.HasCircularSide);
-        var primitive = torus.ConvertToRevealPrimitive(1337, Color.Red).SingleOrDefault();
-
-        Assert.That(primitive, Is.TypeOf<TorusSegment>());
-
-        var closedTorusSegment = (TorusSegment) primitive;
-        Assert.That(closedTorusSegment.ArcAngle, Is.EqualTo(angle).Within(0.001));
+        Assert.That(geometries[0], Is.TypeOf<TorusSegment>());
+        Assert.That(geometries[1], Is.TypeOf<Circle>());
+        Assert.That(geometries[2], Is.TypeOf<Circle>());
+        Assert.That(geometries.Length, Is.EqualTo(3));
     }
 }

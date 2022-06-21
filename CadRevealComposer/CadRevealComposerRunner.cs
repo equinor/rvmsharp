@@ -72,24 +72,10 @@ public static class CadRevealComposerRunner
             .AsParallel()
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries.SelectMany(
-                primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
+                primitive => APrimitive.FromRvmPrimitive(x, primitive)))
             .ToArray();
 
-        var countCaps = geometries.Sum(g =>
-        {
-            return g switch
-            {
-                Circle => 1,
-                GeneralRing => 1,
-                Quad => 1,
-                Trapezium => 1,
-                _ => 0
-            };
-        });
-
-        Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}.");
-        Console.WriteLine($"Count all primitives: {geometries.Length:N0}");
-        Console.WriteLine($"Count cap primitives: {countCaps:N0}");
+        Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
         var facetGroupsWithEmbeddedProtoMeshes = geometries
@@ -210,7 +196,7 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
     {
-        var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(p.Geometries);
+        var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
 
         var sectorInfo = new SceneCreator.SectorInfo(
             p.SectorId,
@@ -218,8 +204,8 @@ public static class CadRevealComposerRunner
             p.Depth,
             p.Path,
             $"sector_{p.SectorId}.glb",
-            estimatedTriangleCount,
-            estimatedDrawCallCount,
+            EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
+            EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
             p.Geometries,
             p.BoundingBoxMin,
             p.BoundingBoxMax);

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Operations;
 using Primitives;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -24,14 +25,14 @@ public static class SceneCreator
         string Path,
         string Filename,
         long EstimatedTriangleCount,
-        long EstimatedDrawCallCount,
+        long EstimatedDrawCalls,
         IReadOnlyList<APrimitive> Geometries,
         Vector3 BoundingBoxMin,
         Vector3 BoundingBoxMax
     )
     {
         public long DownloadSize { get; init; }
-    };
+    }
 
     public static void ExportHierarchyDatabase(string databasePath, CadRevealNode[] allNodes)
     {
@@ -49,27 +50,32 @@ public static class SceneCreator
         ulong maxTreeIndex,
         CameraPositioning.CameraPosition cameraPosition)
     {
-        static Sector FromSector(SectorInfo sector)
+        Sector FromSector(SectorInfo sector)
         {
+            if (!sector.Geometries.Any())
+                throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
 
+            // TODO: Check if this may be the correct way to handle min and max diagonal values.
+            float maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
+            float minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
             return new Sector
             {
                 Id = sector.SectorId,
-                ParentId = sector.ParentSectorId.HasValue // FIXME: not needed anymore?
-                    ? sector.ParentSectorId.Value
-                    : -1,
+                ParentId = sector.ParentSectorId,
                 BoundingBox =
                     new BoundingBox(
                         Min: new BbVector3(sector.BoundingBoxMin.X, sector.BoundingBoxMin.Y, sector.BoundingBoxMin.Z),
                         Max: new BbVector3(sector.BoundingBoxMax.X, sector.BoundingBoxMax.Y, sector.BoundingBoxMax.Z)
                     ),
+                GeometryBoundingBox = null, // TODO: Implement Geometry and Subtree Bounding Box (Currently gracefully handled if null in reveal v9)
                 Depth = sector.Depth,
                 Path = sector.Path,
-                SectorFileName = sector.Filename,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
-                EstimatedDrawCallCount = sector.EstimatedDrawCallCount,
-                // FIXME diagonal data
-                DownloadSize = 1000, //FIXME: right size
+                EstimatedDrawCallCount = sector.EstimatedDrawCalls,
+                SectorFileName = sector.Filename,
+                MaxDiagonalLength = maxDiagonalLength,
+                MinDiagonalLength = minDiagonalLength,
+                DownloadSize = sector.DownloadSize
             };
         }
 
@@ -95,7 +101,7 @@ public static class SceneCreator
     {
         var filePath = Path.Join(outputDirectory, sector.Filename);
         using var gltfSectorFile = File.Create(filePath);
-        GltfWriter.WriteSector(sector.Geometries.ToArray(), gltfSectorFile);
+        GltfWriter.WriteSector(sector.Geometries, gltfSectorFile);
         gltfSectorFile.Flush(true);
     }
 }

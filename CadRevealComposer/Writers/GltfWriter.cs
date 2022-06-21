@@ -4,6 +4,7 @@ using Primitives;
 using SharpGLTF.IO;
 using SharpGLTF.Schema2;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -17,7 +18,7 @@ using System.Runtime.InteropServices;
 /// - Primitives are written with GLTF instancing extension. One GLTF node per type of primitive.
 /// - All triangle meshes written in one single GLTF mesh.
 /// - One GLTF node per instanced mesh.
-///  
+///
 /// https://github.com/KhronosGroup/glTF-Tutorials/tree/master/gltfTutorial
 /// GltfSectorParser.ts
 /// GltfSectorLoader.ts
@@ -26,11 +27,12 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class GltfWriter
 {
-    public static void WriteSector(APrimitive[] /* do NOT replace with IEnumerable */ primitives, Stream stream)
+    public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream outputStream)
     {
         if (!BitConverter.IsLittleEndian)
         {
-            throw new Exception("This code copies bytes directly from memory to output and is coded to work with machines having little endian.");
+            throw new Exception(
+                "This code copies bytes directly from memory to output and is coded to work with machines having little endian.");
         }
 
         var model = ModelRoot.CreateModel();
@@ -115,16 +117,17 @@ public static class GltfWriter
             WriteTrapeziums(trapeziums, model, scene);
         }
 
-        model.Asset.Copyright = "Equinor ASA";
-        model.WriteGLB(stream);
+        model.Asset.Copyright = $"Equinor ASA {DateTime.UtcNow.Year}";
+        model.Asset.Generator = "rvmsharp";
+
+        model.WriteGLB(outputStream);
     }
 
     private static void WriteInstancedMeshes(InstancedMesh[] meshes, ModelRoot model, Scene scene)
     {
-        // TODO: don't write single mesh
-        // TODO: don't write single mesh
-        // TODO: don't write single mesh
-        // TODO: don't write single mesh
+        // Remark: InstancedMesh.InstanceId is shared across Sectors, and that means that we can have InstancedMesh groups
+        // with only one item in this sector, but it will use the shared instance from another sector if already loaded from that sector.
+        // So small instance groups increases file size, but not memory use.
 
         var instanceMeshGroups = meshes.GroupBy(m => m.InstanceId);
 
@@ -797,6 +800,7 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, float value, ref int bufferPos)
     {
+        ThrowIfValueIsNotFinite(value);
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref value, 1));
         var target = buffer.Slice(bufferPos, sizeof(float));
         Debug.Assert(source.Length == target.Length);
@@ -832,6 +836,9 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, Vector3 vector, ref int bufferPos)
     {
+        ThrowIfValueIsNotFinite(vector.X);
+        ThrowIfValueIsNotFinite(vector.Y);
+        ThrowIfValueIsNotFinite(vector.Z);
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector3.cs
         // writes Vector3 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
@@ -844,6 +851,10 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, Vector4 vector, ref int bufferPos)
     {
+        ThrowIfValueIsNotFinite(vector.X);
+        ThrowIfValueIsNotFinite(vector.Y);
+        ThrowIfValueIsNotFinite(vector.Z);
+        ThrowIfValueIsNotFinite(vector.W);
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Vector4.cs
         // writes Vector4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vector, 1));
@@ -851,5 +862,24 @@ public static class GltfWriter
         Debug.Assert(source.Length == target.Length);
         source.CopyTo(target);
         bufferPos += sizeof(float) * 4;
+    }
+
+
+    /// <summary>
+    /// This guards from writing non-finite values of floats.
+    /// Will throw an ArgumentOutOfRangeException if input value is not finite.
+    ///
+    /// This is done to avoid this error coming when we try to serialize to gltf,
+    /// as we then do not have any stack trace to what primitive or other was trying
+    /// to write the non-finite number.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ThrowIfValueIsNotFinite(float value)
+    {
+        if (!float.IsFinite(value))
+        {
+            throw new ArgumentOutOfRangeException(nameof(value), value,
+                $"value was {value}, and cannot be serialized to gltf json.");
+        }
     }
 }

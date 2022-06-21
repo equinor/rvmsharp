@@ -41,9 +41,12 @@ public class RvmFile
     private static void AssignRecursive(IReadOnlyList<PdmsTextParser.PdmsNode> attributeNodes,
         IReadOnlyList<RvmNode> groups)
     {
-        //if (attributes.Count != groups.Count)
-        //    Console.Error.WriteLine("Length of attribute nodes does not match group length");
-        var rvmNodeNameLookup = groups.ToDictionary(x => x.Name, y => y);
+        if (!attributeNodes.Any()) // No need to keep recursing if there are no attributeNodes
+            return;
+
+        var rvmNodeNameLookup = groups
+            .Where(x => !string.IsNullOrEmpty(x.Name)) // Ignoring nodes with no name
+            .ToDictionary(x => x.Name, y => y);
 
         foreach (var attributeNode in attributeNodes)
         {
@@ -51,7 +54,8 @@ public class RvmFile
             {
                 foreach (var kvp in attributeNode.MetadataDict)
                     rvmNode.Attributes.Add(kvp.Key, kvp.Value);
-                AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
+                if (attributeNode.Children.Any())   //No need to keep recursing when the attributeNode has no children
+                    AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
             }
         }
     }
