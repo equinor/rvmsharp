@@ -75,6 +75,22 @@ public static class CadRevealComposerRunner
                 primitive => APrimitive.FromRvmPrimitive(x, primitive)))
             .ToArray();
 
+        var countCaps = geometries.Sum(g =>
+        {
+            return g switch
+            {
+                Circle => 1,
+                GeneralRing => 1,
+                Quad => 1,
+                Trapezium => 1,
+                _ => 0
+            };
+        });
+
+        Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}.");
+        Console.WriteLine($"Count all primitives: {geometries.Length:N0}");
+        Console.WriteLine($"Count cap primitives: {countCaps:N0}");
+
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
