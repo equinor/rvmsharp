@@ -50,7 +50,7 @@ public static class PrimitiveCapHelper
                 (RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCircularTorus a, RvmCircularTorus b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCircularTorus a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(otherPrimitive, a, b),
-                (RvmCircularTorus a, RvmSnout b) => true,
+                (RvmCircularTorus a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmCylinder a, RvmSphericalDish b) => true,
                 (RvmCylinder a, RvmEllipticalDish b) => true,
                 (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(otherPrimitive, a, b, offset2),
@@ -218,6 +218,42 @@ public static class PrimitiveCapHelper
         if (otherPrimitive.GetType() == typeof(RvmCylinder))
         {
             if (radiusCylinder >= radiusCircularTorus)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmPrimitive currentPrimitive,
+        RvmCircularTorus rvmCircularTorus,
+        RvmSnout rvmSnout,
+        uint rvmSnoutOffset)
+    {
+        rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
+        rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
+
+        var torusRadius = rvmCircularTorus.Radius * circularTorusScale.X;
+
+        var isSnoutCapTop = rvmSnoutOffset == 0;
+
+        var snoutRadius = isSnoutCapTop
+            ? rvmSnout.RadiusTop * snoutScale.X
+            : rvmSnout.RadiusBottom * snoutScale.X;
+
+        if (ReferenceEquals(currentPrimitive, rvmCircularTorus))
+        {
+            if (snoutRadius >= torusRadius)
+            {
+                return true;
+            }
+        }
+
+        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        {
+            if (torusRadius >= snoutRadius)
             {
                 return true;
             }
