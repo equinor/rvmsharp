@@ -45,10 +45,10 @@ public static class PrimitiveCapHelper
 
             var showCap = (prim1, prim2) switch
             {
-                (RvmBox a, RvmCylinder b) => true,
-                (RvmBox a, RvmSnout b) => true,
+                (RvmBox a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
+                (RvmBox a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCircularTorus a, RvmCircularTorus b) => true, // TODO: very common case
+                (RvmCircularTorus a, RvmCircularTorus b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCircularTorus a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(otherPrimitive, a, b),
                 (RvmCircularTorus a, RvmSnout b) => true,
                 (RvmCylinder a, RvmSphericalDish b) => true,
@@ -76,6 +76,69 @@ public static class PrimitiveCapHelper
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmPrimitive currentPrimitive,
+        RvmBox rvmBox,
+        RvmCylinder rvmCylinder)
+    {
+        rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
+        rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
+
+        var halfLengthX = rvmBox.LengthX * boxScale.X / 2.0f;
+        var halfLengthY = rvmBox.LengthY * boxScale.Y / 2.0f;
+        var halfLengthZ = rvmBox.LengthZ * boxScale.Z / 2.0f;
+
+        var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
+
+        // Only check for the cylinder, because a box does not have any caps
+        if (ReferenceEquals(currentPrimitive, rvmCylinder))
+        {
+            // TODO: Is it possible to find out which sides to compare too?
+            if (cylinderRadius < halfLengthX &&
+                cylinderRadius < halfLengthY &&
+                cylinderRadius < halfLengthZ)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmPrimitive currentPrimitive,
+        RvmBox rvmBox,
+        RvmSnout rvmSnout,
+        uint rvmSnoutOffset)
+    {
+        rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
+        rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
+
+        var halfLengthX = rvmBox.LengthX * boxScale.X / 2.0f;
+        var halfLengthY = rvmBox.LengthY * boxScale.Y / 2.0f;
+        var halfLengthZ = rvmBox.LengthZ * boxScale.Z / 2.0f;
+
+        var isSnoutCapTop = rvmSnoutOffset == 0;
+
+        var snoutRadius = isSnoutCapTop
+            ? rvmSnout.RadiusTop * snoutScale.X
+            : rvmSnout.RadiusBottom * snoutScale.X;
+
+        // Only check for the snout, because a box does not have any caps
+        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        {
+            // TODO: Is it possible to find out which sides to compare too?
+            if (snoutRadius < halfLengthX &&
+                snoutRadius < halfLengthY &&
+                snoutRadius < halfLengthZ)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmPrimitive currentPrimitive,
         RvmCylinder rvmCylinder1,
         RvmCylinder rvmCylinder2)
     {
@@ -95,6 +158,39 @@ public static class PrimitiveCapHelper
             radius1 >= radius2)
         {
             return true;
+        }
+
+        return false;
+    }
+
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmPrimitive currentPrimitive,
+        RvmCircularTorus rvmCircularTorus1,
+        RvmCircularTorus rvmCircularTorus2)
+    {
+        rvmCircularTorus1.Matrix.DecomposeAndNormalize(out var torusScale1, out _, out _);
+        rvmCircularTorus2.Matrix.DecomposeAndNormalize(out var torusScale2, out _, out _);
+
+        var radius1 = rvmCircularTorus1.Radius * torusScale1.X;
+        var radius2 = rvmCircularTorus2.Radius * torusScale2.X;
+
+        if (ReferenceEquals(currentPrimitive, rvmCircularTorus1))
+        {
+            if (radius2 >= radius1)
+            {
+                Console.WriteLine("##### REM;OVING");
+                return true;
+            }
+
+        }
+
+        if (ReferenceEquals(currentPrimitive, rvmCircularTorus2))
+        {
+            if (radius1 >= radius2)
+            {
+                Console.WriteLine("##### REM;OVING");
+                return true;
+            }
         }
 
         return false;
