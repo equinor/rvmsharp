@@ -49,21 +49,17 @@ public static class PrimitiveCapHelper
             var isCenterCapA = connection.Position.EqualsWithinTolerance(centerCapA, factor);
             var isCenterCapB = connection.Position.EqualsWithinTolerance(centerCapB, factor);
 
-            var otherPrimitive = ReferenceEquals(primitive, prim1)
-                ? prim2
-                : prim1;
-
             var showCap = (prim1, prim2) switch
             {
                 (RvmBox a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmBox a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCircularTorus a, RvmCircularTorus b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCircularTorus a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(otherPrimitive, a, b),
+                (RvmCircularTorus a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCircularTorus a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmCylinder a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCylinder a, RvmEllipticalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(otherPrimitive, a, b, offset2),
+                (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmCylinder a, RvmPyramid b) => true,
                 (RvmEllipticalDish a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmSnout a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset1, offset2),
@@ -102,7 +98,7 @@ public static class PrimitiveCapHelper
         // Only check for the cylinder, because a box does not have any caps
         if (ReferenceEquals(currentPrimitive, rvmCylinder))
         {
-            // TODO: Is it possible to find out which sides to compare too?
+            // TODO: Is it possible to find out which sides to compare with?
             if (cylinderRadius < halfLengthX &&
                 cylinderRadius < halfLengthY &&
                 cylinderRadius < halfLengthZ)
@@ -136,7 +132,7 @@ public static class PrimitiveCapHelper
         // Only check for the snout, because a box does not have any caps
         if (ReferenceEquals(currentPrimitive, rvmSnout))
         {
-            // TODO: Is it possible to find out which sides to compare too?
+            // TODO: Is it possible to find out which sides to compare with?
             if (snoutRadius < halfLengthX &&
                 snoutRadius < halfLengthY &&
                 snoutRadius < halfLengthZ)
@@ -205,7 +201,7 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive otherPrimitive,
+        RvmPrimitive currentPrimitive,
         RvmCircularTorus rvmCircularTorus,
         RvmCylinder rvmCylinder)
     {
@@ -215,17 +211,17 @@ public static class PrimitiveCapHelper
         var radiusCircularTorus = rvmCircularTorus.Radius * scaleCircularTorus.X;
         var radiusCylinder = rvmCylinder.Radius * scaleCylinder.X;
 
-        if (otherPrimitive.GetType() == typeof(RvmCircularTorus))
+        if (ReferenceEquals(currentPrimitive, rvmCircularTorus))
         {
-            if (radiusCircularTorus >= radiusCylinder)
+            if (radiusCylinder >= radiusCircularTorus)
             {
                 return true;
             }
         }
 
-        if (otherPrimitive.GetType() == typeof(RvmCylinder))
+        if (ReferenceEquals(currentPrimitive, rvmCylinder))
         {
-            if (radiusCylinder >= radiusCircularTorus)
+            if (radiusCircularTorus >= radiusCylinder)
             {
                 return true;
             }
@@ -329,7 +325,7 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive otherPrimitive,
+        RvmPrimitive currentPrimitive,
         RvmCylinder rvmCylinder,
         RvmSnout rvmSnout,
         uint rvmSnoutOffset)
@@ -344,19 +340,21 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutOffset == 0;
         var isSnoutCapBottom = rvmSnoutOffset == 1;
 
-        if (otherPrimitive.GetType() == typeof(RvmCylinder))
+        var snoutRadius = isSnoutCapTop
+            ? rvmSnout.RadiusTop * scaleSnout.X
+            : rvmSnout.RadiusBottom * scaleSnout.X;
+
+        if (ReferenceEquals(currentPrimitive, rvmCylinder))
         {
-            if (isSnoutCapTop && radiusCylinder >= radiusSnoutTop ||
-                isSnoutCapBottom && radiusCylinder >= radiusSnoutBottom)
+            if (snoutRadius >= radiusCylinder)
             {
                 return true;
             }
         }
 
-        if (otherPrimitive.GetType() == typeof(RvmSnout))
+        if (ReferenceEquals(currentPrimitive, rvmSnout))
         {
-            if (isSnoutCapTop && radiusSnoutTop >= radiusCylinder ||
-                isSnoutCapBottom && radiusSnoutBottom >= radiusCylinder)
+            if (radiusCylinder >= snoutRadius)
             {
                 return true;
             }
