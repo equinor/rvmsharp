@@ -7,10 +7,6 @@ using Utils;
 
 public static class PrimitiveCapHelper
 {
-    static PrimitiveCapHelper()
-    {
-    }
-
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
         return CalculateCapVisibility(primitive, capCenter, Vector3.Zero).showCapA;
@@ -19,7 +15,7 @@ public static class PrimitiveCapHelper
     public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
         Vector3 capCenterB)
     {
-        const float factor = 0.000_05f;
+        const float capDeterminationFactor = 0.000_05f;
 
         bool showCapA = true, showCapB = true;
 
@@ -46,8 +42,8 @@ public static class PrimitiveCapHelper
                 ? connection.ConnectionIndex2
                 : connection.ConnectionIndex1;
 
-            var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, factor);
-            var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, factor);
+            var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, capDeterminationFactor);
+            var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, capDeterminationFactor);
 
             var showCap = (prim1, prim2) switch
             {
@@ -60,7 +56,7 @@ public static class PrimitiveCapHelper
                 (RvmCylinder a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCylinder a, RvmEllipticalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
                 (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
-                (RvmCylinder a, RvmPyramid b) => true,
+                (RvmCylinder a, RvmPyramid b) => true, // TODO
                 (RvmEllipticalDish a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
                 (RvmSnout a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset1, offset2),
                 (RvmSnout a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset1),

@@ -81,8 +81,6 @@ public static class CadRevealComposerRunner
             {
                 Circle => 1,
                 GeneralRing => 1,
-                Quad => 1,
-                Trapezium => 1,
                 _ => 0
             };
         });
@@ -143,8 +141,6 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
-
-            
 
         Console.WriteLine("Start tessellate");
         var meshes = TessellateAndOutputInstanceMeshes(
