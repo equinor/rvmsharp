@@ -50,12 +50,17 @@ public static class RvmSphericalDishConverter
             bbBox
         );
 
-        yield return new Circle(
-            matrixCap,
-            -normal,
-            treeIndex,
-            color,
-            bbBox
-        );
+        var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmSphericalDish, position);
+
+        if (showCap)
+        {
+            yield return new Circle(
+                matrixCap,
+                -normal,
+                treeIndex,
+                color,
+                bbBox
+            );
+        }
     }
 }

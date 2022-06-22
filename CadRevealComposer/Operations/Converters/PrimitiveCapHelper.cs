@@ -11,6 +11,11 @@ public static class PrimitiveCapHelper
     {
     }
 
+    public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
+    {
+        return CalculateCapVisibility(primitive, capCenter, Vector3.Zero).showCapA;
+    }
+
     public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 centerCapA,
         Vector3 centerCapB)
     {
