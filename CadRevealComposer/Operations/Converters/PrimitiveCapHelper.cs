@@ -16,8 +16,8 @@ public static class PrimitiveCapHelper
         return CalculateCapVisibility(primitive, capCenter, Vector3.Zero).showCapA;
     }
 
-    public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 centerCapA,
-        Vector3 centerCapB)
+    public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
+        Vector3 capCenterB)
     {
         const float factor = 0.000_05f;
 
@@ -46,8 +46,8 @@ public static class PrimitiveCapHelper
                 ? connection.ConnectionIndex2
                 : connection.ConnectionIndex1;
 
-            var isCenterCapA = connection.Position.EqualsWithinTolerance(centerCapA, factor);
-            var isCenterCapB = connection.Position.EqualsWithinTolerance(centerCapB, factor);
+            var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, factor);
+            var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, factor);
 
             var showCap = (prim1, prim2) switch
             {
@@ -67,12 +67,12 @@ public static class PrimitiveCapHelper
                 _ => true
             };
 
-            if (showCap is false && isCenterCapA)
+            if (showCap is false && isCapCenterA)
             {
                 showCapA = false;
             }
 
-            if (showCap is false && isCenterCapB)
+            if (showCap is false && isCapCenterB)
             {
                 showCapB = false;
             }
@@ -149,20 +149,20 @@ public static class PrimitiveCapHelper
         RvmCylinder rvmCylinder1,
         RvmCylinder rvmCylinder2)
     {
-        rvmCylinder1.Matrix.DecomposeAndNormalize(out var scale1, out _, out _);
-        rvmCylinder2.Matrix.DecomposeAndNormalize(out var scale2, out _, out _);
+        rvmCylinder1.Matrix.DecomposeAndNormalize(out var cylinderScale1, out _, out _);
+        rvmCylinder2.Matrix.DecomposeAndNormalize(out var cylinderScale2, out _, out _);
 
-        var radius1 = rvmCylinder1.Radius * scale1.X;
-        var radius2 = rvmCylinder2.Radius * scale2.X;
+        var cylinderRadius1 = rvmCylinder1.Radius * cylinderScale1.X;
+        var cylinderRadius2 = rvmCylinder2.Radius * cylinderScale2.X;
 
         if (ReferenceEquals(currentPrimitive, rvmCylinder1) &&
-            radius2 >= radius1)
+            cylinderRadius2 >= cylinderRadius1)
         {
             return true;
         }
 
         if (ReferenceEquals(currentPrimitive, rvmCylinder2) &&
-            radius1 >= radius2)
+            cylinderRadius1 >= cylinderRadius2)
         {
             return true;
         }
@@ -178,12 +178,12 @@ public static class PrimitiveCapHelper
         rvmCircularTorus1.Matrix.DecomposeAndNormalize(out var torusScale1, out _, out _);
         rvmCircularTorus2.Matrix.DecomposeAndNormalize(out var torusScale2, out _, out _);
 
-        var radius1 = rvmCircularTorus1.Radius * torusScale1.X;
-        var radius2 = rvmCircularTorus2.Radius * torusScale2.X;
+        var torusRadius1 = rvmCircularTorus1.Radius * torusScale1.X;
+        var torusRadius2 = rvmCircularTorus2.Radius * torusScale2.X;
 
         if (ReferenceEquals(currentPrimitive, rvmCircularTorus1))
         {
-            if (radius2 >= radius1)
+            if (torusRadius2 >= torusRadius1)
             {
                 return true;
             }
@@ -191,7 +191,7 @@ public static class PrimitiveCapHelper
 
         if (ReferenceEquals(currentPrimitive, rvmCircularTorus2))
         {
-            if (radius1 >= radius2)
+            if (torusRadius1 >= torusRadius2)
             {
                 return true;
             }
@@ -205,15 +205,15 @@ public static class PrimitiveCapHelper
         RvmCircularTorus rvmCircularTorus,
         RvmCylinder rvmCylinder)
     {
-        rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scaleCircularTorus, out _, out _);
-        rvmCylinder.Matrix.DecomposeAndNormalize(out var scaleCylinder, out _, out _);
+        rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
+        rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
 
-        var radiusCircularTorus = rvmCircularTorus.Radius * scaleCircularTorus.X;
-        var radiusCylinder = rvmCylinder.Radius * scaleCylinder.X;
+        var circularTorusRadius = rvmCircularTorus.Radius * circularTorusScale.X;
+        var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
         if (ReferenceEquals(currentPrimitive, rvmCircularTorus))
         {
-            if (radiusCylinder >= radiusCircularTorus)
+            if (cylinderRadius >= circularTorusRadius)
             {
                 return true;
             }
@@ -221,7 +221,7 @@ public static class PrimitiveCapHelper
 
         if (ReferenceEquals(currentPrimitive, rvmCylinder))
         {
-            if (radiusCircularTorus >= radiusCylinder)
+            if (circularTorusRadius >= cylinderRadius)
             {
                 return true;
             }
@@ -330,23 +330,19 @@ public static class PrimitiveCapHelper
         RvmSnout rvmSnout,
         uint rvmSnoutOffset)
     {
-        rvmCylinder.Matrix.DecomposeAndNormalize(out var scaleCylinder, out _, out _);
-        rvmSnout.Matrix.DecomposeAndNormalize(out var scaleSnout, out _, out _);
+        rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
+        rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
 
-        var radiusCylinder = rvmCylinder.Radius * scaleCylinder.X;
-        var radiusSnoutTop = rvmSnout.RadiusTop * scaleSnout.X;
-        var radiusSnoutBottom = rvmSnout.RadiusBottom * scaleSnout.X;
+        var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
         var isSnoutCapTop = rvmSnoutOffset == 0;
-        var isSnoutCapBottom = rvmSnoutOffset == 1;
-
         var snoutRadius = isSnoutCapTop
-            ? rvmSnout.RadiusTop * scaleSnout.X
-            : rvmSnout.RadiusBottom * scaleSnout.X;
+            ? rvmSnout.RadiusTop * snoutScale.X
+            : rvmSnout.RadiusBottom * snoutScale.X;
 
         if (ReferenceEquals(currentPrimitive, rvmCylinder))
         {
-            if (snoutRadius >= radiusCylinder)
+            if (snoutRadius >= cylinderRadius)
             {
                 return true;
             }
@@ -354,7 +350,7 @@ public static class PrimitiveCapHelper
 
         if (ReferenceEquals(currentPrimitive, rvmSnout))
         {
-            if (radiusCylinder >= snoutRadius)
+            if (cylinderRadius >= snoutRadius)
             {
                 return true;
             }
@@ -403,25 +399,22 @@ public static class PrimitiveCapHelper
         uint rvmSnoutOffset1,
         uint rvmSnoutOffset2)
     {
-        rvmSnout1.Matrix.DecomposeAndNormalize(out var scaleSnout1, out _, out _);
-        rvmSnout2.Matrix.DecomposeAndNormalize(out var scaleSnout2, out _, out _);
-
-        var radiusSnoutTop1 = rvmSnout1.RadiusTop * scaleSnout1.X;
-        var radiusSnoutBottom1 = rvmSnout1.RadiusBottom * scaleSnout1.X;
-        var radiusSnoutTop2 = rvmSnout2.RadiusTop * scaleSnout2.X;
-        var radiusSnoutBottom2 = rvmSnout2.RadiusBottom * scaleSnout2.X;
+        rvmSnout1.Matrix.DecomposeAndNormalize(out var snoutScale1, out _, out _);
+        rvmSnout2.Matrix.DecomposeAndNormalize(out var snoutScale2, out _, out _);
 
         var isSnoutCapTop1 = rvmSnoutOffset1 == 0;
-        var isSnoutCapBottom1 = rvmSnoutOffset1 == 1;
+        var snoutRadius1 = isSnoutCapTop1
+            ? rvmSnout1.RadiusTop * snoutScale1.X
+            : rvmSnout1.RadiusBottom * snoutScale1.X;
+
         var isSnoutCapTop2 = rvmSnoutOffset2 == 0;
-        var isSnoutCapBottom2 = rvmSnoutOffset2 == 1;
+        var snoutRadius2 = isSnoutCapTop2
+            ? rvmSnout2.RadiusTop * snoutScale2.X
+            : rvmSnout2.RadiusBottom * snoutScale2.X;
 
         if (ReferenceEquals(currentPrimitive, rvmSnout1))
         {
-            if (isSnoutCapTop1 && isSnoutCapTop2 && radiusSnoutTop2 >= radiusSnoutTop1 ||
-                isSnoutCapTop1 && isSnoutCapBottom2 && radiusSnoutTop2 >= radiusSnoutBottom1 ||
-                isSnoutCapBottom1 && isSnoutCapTop2 && radiusSnoutBottom2 >= radiusSnoutTop1 ||
-                isSnoutCapBottom1 && isSnoutCapBottom2 && radiusSnoutBottom2 >= radiusSnoutBottom1)
+            if (snoutRadius2 >= snoutRadius1)
             {
                 return true;
             }
@@ -429,10 +422,7 @@ public static class PrimitiveCapHelper
 
         if (ReferenceEquals(currentPrimitive, rvmSnout2))
         {
-            if (isSnoutCapTop2 && isSnoutCapTop1 && radiusSnoutTop1 >= radiusSnoutTop2 ||
-                isSnoutCapTop2 && isSnoutCapBottom1 && radiusSnoutTop1 >= radiusSnoutBottom2 ||
-                isSnoutCapBottom2 && isSnoutCapTop1 && radiusSnoutBottom1 >= radiusSnoutTop2 ||
-                isSnoutCapBottom2 && isSnoutCapBottom1 && radiusSnoutBottom1 >= radiusSnoutBottom2)
+            if (snoutRadius1 >= snoutRadius2)
             {
                 return true;
             }
