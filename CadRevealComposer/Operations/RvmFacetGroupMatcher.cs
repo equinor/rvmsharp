@@ -23,8 +23,7 @@ public static class RvmFacetGroupMatcher
         (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template,
             Transform);
 
-    private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
-    private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
+    private const int TemplateCleanupInterval = 500; // Arbitrarily chosen number
 
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
@@ -42,6 +41,7 @@ public static class RvmFacetGroupMatcher
         public RvmFacetGroup Template { get; set; }
         public Matrix4x4 Transform { get; set; }
         public int MatchCount { get; set; }
+        public int MatchAttempts { get; set; }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -140,7 +140,7 @@ public static class RvmFacetGroupMatcher
             }
 
             var timer = Stopwatch.StartNew();
-            var instancingResults = MatchGroups(facetGroups, out var iterationCounter);
+            var instancingResults = MatchFacetGroups(facetGroups, out var iterationCounter);
 
             // post determine if group is adequate for instancing
             var templateCount = 0L;
@@ -229,7 +229,7 @@ public static class RvmFacetGroupMatcher
         return result;
     }
 
-    private static List<Result> MatchGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
+    private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
     {
         static void SwapItemData(TemplateItem a, TemplateItem b)
         {
@@ -237,26 +237,31 @@ public static class RvmFacetGroupMatcher
             var aTemplate = a.Template;
             var aTransform = a.Transform;
             var aMatchCount = a.MatchCount;
+            var aMatchAttempts = a.MatchAttempts;
 
             a.Original = b.Original;
             a.Template = b.Template;
             a.Transform = b.Transform;
             a.MatchCount = b.MatchCount;
+            a.MatchAttempts = b.MatchAttempts;
 
             b.Original = aOriginal;
             b.Template = aTemplate;
             b.Transform = aTransform;
             b.MatchCount = aMatchCount;
+            b.MatchAttempts = aMatchAttempts;
         }
 
         var result = new List<Result>();
-        var templates = new List<TemplateItem>(); // sorted high to low by explicit code
+        var templateCandidates = new List<TemplateItem>(); // sorted high to low by explicit code
 
         var iterCounter = 0L;
         var matchingTimer = Stopwatch.StartNew();
         var target = TimeSpan.FromMinutes(5);
+        var cleanupIntervalCounter = 0;
         foreach (var facetGroup in facetGroups)
         {
+            cleanupIntervalCounter++;
             if (matchingTimer.Elapsed > target)
             {
                 var groupKey = CalculateKey(facetGroup);
@@ -270,9 +275,10 @@ public static class RvmFacetGroupMatcher
             var matchFoundFromPreviousTemplates = false;
             var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
 
-            for (var i = 0; i < templates.Count; i++)
+            for (var i = 0; i < templateCandidates.Count; i++)
             {
-                var item = templates[i];
+                var item = templateCandidates[i];
+                item.MatchAttempts++;
                 iterCounter++;
                 if (!Match(item.Template, bakedFacetGroup, out var transform))
                 {
@@ -285,14 +291,14 @@ public static class RvmFacetGroupMatcher
                 // sort template list descending by match count
                 var templateMatchCount = item.MatchCount;
                 var j = i;
-                while (j - 1 >= 0 && templateMatchCount > templates[j - 1].MatchCount)
+                while (j - 1 >= 0 && templateMatchCount > templateCandidates[j - 1].MatchCount)
                 {
                     j--;
                 }
 
                 if (j != i) // swap items
                 {
-                    SwapItemData(item, templates[j]);
+                    SwapItemData(item, templateCandidates[j]);
                 }
 
                 matchFoundFromPreviousTemplates = true;
@@ -307,19 +313,17 @@ public static class RvmFacetGroupMatcher
             var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
 
             // To avoid comparing with too many templates, making the worst case O(N^2),
-            // we remove the templates with the least number of matches after reaching the threshold
-            if (templates.Count > TemplateCleanupThreshold)
+            // we remove the templates with the least number of matches every once in a while
+            if (cleanupIntervalCounter > TemplateCleanupInterval)
             {
-                result.AddRange(templates
-                    .GetRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1)
-                    .Select(x => new NotInstancedResult(x.Original)));
-                templates.RemoveRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1);
+                CleanupTemplateCandidates(templateCandidates, result, facetGroups.Length);
+                cleanupIntervalCounter = 0;
             }
 
-            templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
+            templateCandidates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
         }
 
-        foreach (var template in templates)
+        foreach (var template in templateCandidates)
         {
             Result r = template.MatchCount > 0
                 ? new TemplateResult(template.Original, template.Template, template.Transform)
@@ -330,6 +334,28 @@ public static class RvmFacetGroupMatcher
 
         iterationCounter = iterCounter;
         return result;
+    }
+
+    private static void CleanupTemplateCandidates(List<TemplateItem> templateCandidates, List<Result> result,
+        int facetGroupsLength)
+    {
+        // Give up on templates that have had X attempts, but less than Y% matches.
+        var templatesToGiveUpOn = templateCandidates
+            .Where(x =>
+                    x.MatchAttempts > Math.Max(500, Math.Min(facetGroupsLength / 300, 3000))
+                    && (double)x.MatchCount / (x.MatchAttempts) < 0.001 // If match count is low we discard it
+            )
+            .ToHashSet();
+
+        if (templatesToGiveUpOn.Any())
+        {
+            // Console.WriteLine("Gave up on " + templatesToGiveUpOn.Count);
+
+
+            result.AddRange(templatesToGiveUpOn
+                .Select(x => new NotInstancedResult(x.Original)));
+            templateCandidates.RemoveAll(x => templatesToGiveUpOn.Contains(x));
+        }
     }
 
     /// <summary>

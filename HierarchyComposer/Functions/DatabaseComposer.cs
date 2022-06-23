@@ -70,6 +70,7 @@ public class DatabaseComposer
         var nodes = inputNodes.Select(inputNode => new Node
         {
             Id = inputNode.NodeId,
+            EndId = inputNode.EndId,
             RefNoDb = inputNode.RefNoDb,
             RefNoSequence = inputNode.RefNoSequence,
             Name = inputNode.Name,
