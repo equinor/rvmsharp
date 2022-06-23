@@ -9,6 +9,8 @@ public class Node
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public uint Id { get; init; }
 
+    public uint EndId { get; init; }
+
     public int? RefNoDb { get; init; }
     public int? RefNoSequence { get; init; }
 
@@ -29,9 +31,11 @@ public class Node
 
     public static void RawInsertBatch(SQLiteCommand command, IEnumerable<Node> nodes)
     {
-        command.CommandText = "INSERT INTO Nodes (Id, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
+        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
         var nodeIdParameter = command.CreateParameter();
         nodeIdParameter.ParameterName = "$Id";
+        var nodeEndIdParameter = command.CreateParameter();
+        nodeEndIdParameter.ParameterName = "$EndId";
         var refNoDbParameter = command.CreateParameter();
         refNoDbParameter.ParameterName = "$RefNoDb";
         var refNoSequenceParameter = command.CreateParameter();
@@ -52,6 +56,7 @@ public class Node
         command.Parameters.AddRange(new[]
         {
             nodeIdParameter,
+            nodeEndIdParameter,
             refNoDbParameter,
             refNoSequenceParameter,
             nameParameter,
@@ -65,6 +70,7 @@ public class Node
         foreach (Node node in nodes)
         {
             nodeIdParameter.Value = node.Id;
+            nodeEndIdParameter.Value = node.EndId;
             refNoDbParameter.Value = node.RefNoDb;
             refNoSequenceParameter.Value = node.RefNoSequence;
             nameParameter.Value = node.Name;
