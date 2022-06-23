@@ -64,6 +64,7 @@ public static class HierarchyComposerConverter
         return new HierarchyNode
         {
             NodeId = ConvertUlongToUintOrThrowIfTooLarge(revealNode.TreeIndex),
+            EndId = ConvertUlongToUintOrThrowIfTooLarge(GetLastIndexInChildrenIncludingSelf(revealNode)),
             RefNoDb = maybeRefNo?.DbNo,
             RefNoSequence = maybeRefNo?.SequenceNo,
             Name = rvmNode.Name,
@@ -76,6 +77,26 @@ public static class HierarchyComposerConverter
             AABB = aabb,
             OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo
         };
+    }
+
+
+    /// <summary>
+    /// Finds the last index of this node or its children. Including its own index.
+    /// Assumes children are sorted by index
+    /// </summary>
+    private static ulong GetLastIndexInChildrenIncludingSelf(CadRevealNode node)
+    {
+        while (true)
+        {
+            if (node.Children == null || node.Children.Length == 0)
+            {
+                return node.TreeIndex;
+            }
+
+            var lastChild = node.Children[^1];
+
+            node = lastChild;
+        }
     }
 
     /// <summary>
