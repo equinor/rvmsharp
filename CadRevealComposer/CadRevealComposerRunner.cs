@@ -171,32 +171,32 @@ public static class CadRevealComposerRunner
         }
 
         /// DEBUG
-        for (int i = 0; i < sectors.Length; i++)
-        {
-            Color color = Color.Red;
+        //for (int i = 0; i < sectors.Length; i++)
+        //{
+        //    Color color = Color.Red;
 
-            color = sectors[i].Depth switch
-            {
-                0 => Color.Green,
-                1 => Color.Blue,
-                2 => Color.Yellow,
-                3 => Color.Pink,
-                4 => Color.Purple,
-                5 => Color.Yellow,
-                6 => Color.Red,
-                7 => Color.Beige,
-                8 => Color.Brown,
-                9 => Color.Black,
-                10 => Color.White,
-                _ => color = Color.Azure
-            };
+        //    color = sectors[i].Depth switch
+        //    {
+        //        0 => Color.Green,
+        //        1 => Color.Blue,
+        //        2 => Color.Yellow,
+        //        3 => Color.Pink,
+        //        4 => Color.Purple,
+        //        5 => Color.Yellow,
+        //        6 => Color.Red,
+        //        7 => Color.Beige,
+        //        8 => Color.Brown,
+        //        9 => Color.Black,
+        //        10 => Color.White,
+        //        _ => color = Color.Azure
+        //    };
 
 
 
-            var newGeometries = sectors[i].Geometries.Select(prop => prop with { Color = color }).ToArray();
+        //    var newGeometries = sectors[i].Geometries.Select(prop => prop with { Color = color }).ToArray();
 
-            sectors[i] = sectors[i] with { Geometries = newGeometries }; 
-        }
+        //    sectors[i] = sectors[i] with { Geometries = newGeometries }; 
+        //}
         /// dEBUG
 
         var sectorInfos = sectors

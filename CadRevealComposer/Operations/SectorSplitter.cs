@@ -35,6 +35,7 @@ public static class SectorSplitter
         Vector3 BoundingBoxMax,
         float Diagonal);
 
+    // Used when using zones is set
     public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
@@ -77,6 +78,7 @@ public static class SectorSplitter
         yield return CreateRootSector(0, allGeometries);
     }
 
+    // Default sector splitter
     public static IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
@@ -99,18 +101,115 @@ public static class SectorSplitter
             .ToArray();
 
 
-        var sectors = SplitIntoSectorsRecursive(
-            nodes,
-            StartDepth,
-            "",
-            null,
-            sectorIdGenerator).ToArray();
+        //var sectors = SplitIntoSectorsRecursive(
+        //    nodes,
+        //    StartDepth,
+        //    "",
+        //    null,
+        //    sectorIdGenerator).ToArray();
+
+        var sectors = SplitIntoUniformSectors(nodes, StartDepth, sectorIdGenerator).ToArray();
 
         foreach (var sector in sectors)
         {
             yield return sector;
         }
     }
+
+    private static IEnumerable<ProtoSector> SplitIntoUniformSectors(
+        Node[] nodes,
+        int depth,
+        SequentialIdGenerator sectorIdGenerator)
+    {
+        // Parent
+
+        var nodesByBudget = GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget).ToList();
+        var remainingNodes = nodes.Except(nodesByBudget).ToArray();
+
+        var parentSectorId = (uint)sectorIdGenerator.GetNextId();
+        var parentPath = $"/{parentSectorId}";
+
+        var geometries = nodesByBudget.SelectMany(n => n.Geometries).ToArray();
+
+        Console.WriteLine($"Sector done: {parentSectorId}");
+        yield return new ProtoSector(
+            parentSectorId,
+            null,
+            0,
+            parentPath,
+            geometries,
+            nodesByBudget.GetBoundingBoxMin(),
+            nodesByBudget.GetBoundingBoxMax()
+        );
+
+
+        // Children
+        const float sectorWidth = 10.0f;
+        const float sectorHeight = 10.0f;
+        const float sectorDepth = 10.0f;
+
+        var bbMin = nodes.GetBoundingBoxMin();
+        var bbMax = nodes.GetBoundingBoxMax();
+
+        var sectorsBBs = new List<(Vector3, Vector3)>();
+
+        int numberOfSectorsOnWidth = (int)((bbMax.X - bbMin.X) / sectorWidth + 1);
+        int numberOfSectorsOnHeight = (int)((bbMax.Y - bbMin.Y) / sectorHeight + 1);
+        int numberOfSectorsOnDepth = (int)((bbMax.Z - bbMin.Z) / sectorDepth + 1);
+
+        int totalNumberOfSectors = numberOfSectorsOnWidth * numberOfSectorsOnHeight * numberOfSectorsOnDepth;
+
+        Console.WriteLine($"Width: {numberOfSectorsOnWidth} - Height: {numberOfSectorsOnHeight} - Depth: {numberOfSectorsOnDepth}");
+        Console.WriteLine($"Total Sectors: {totalNumberOfSectors}");
+
+        for (int k = 0; k < numberOfSectorsOnDepth; k++)
+        {
+            for (int j = 0; j < numberOfSectorsOnHeight; j++)
+            {
+                for (int i = 0; i < numberOfSectorsOnWidth; i++)
+                {
+                    var nodesInSector = new List<Node>();
+
+                    var sectorBBMin = new Vector3(i * sectorWidth, j * sectorHeight, k * sectorDepth);
+                    var sectorBBMax = new Vector3((i + 1) * sectorWidth, (j + 1) * sectorHeight, (k + 1) * sectorDepth);
+
+                    foreach (var node in remainingNodes)
+                    {
+                        var nodeMidPoint = (node.BoundingBoxMax + node.BoundingBoxMin) / 2f;
+
+                        if (nodeMidPoint.X > sectorBBMin.X && nodeMidPoint.X < sectorBBMax.X &&
+                            nodeMidPoint.Y > sectorBBMin.Y && nodeMidPoint.Y < sectorBBMax.Y &&
+                            nodeMidPoint.Z > sectorBBMin.Z && nodeMidPoint.Z < sectorBBMax.Z)
+                        {
+                            nodesInSector.Add(node);
+                        }
+                    }
+
+                    if (nodesInSector.Count == 0)
+                        continue;
+
+                    remainingNodes = remainingNodes.Except(nodesInSector).ToArray();
+
+                    var childSectorId = (uint)sectorIdGenerator.GetNextId();
+                    var childPath = $"{parentPath}/{childSectorId}";
+
+                    var childGeometries = nodesInSector.SelectMany(n => n.Geometries).ToArray();
+
+                    Console.WriteLine($"Sector done: {childPath} - {sectorBBMin} - {sectorBBMax}");
+                    yield return new ProtoSector(
+                        childSectorId,
+                        parentSectorId,
+                        1,
+                        childPath,
+                        childGeometries,
+                        sectorBBMin,
+                        sectorBBMax
+                    );
+                }
+            }
+        }
+    }
+
 
     private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
         Node[] nodes,
