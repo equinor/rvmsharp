@@ -135,7 +135,7 @@ public static class SectorSplitter
         yield return new ProtoSector(
             parentSectorId,
             null,
-            0,
+            1,
             parentPath,
             geometries,
             nodesByBudget.GetBoundingBoxMin(),
@@ -219,7 +219,7 @@ public static class SectorSplitter
                     yield return new ProtoSector(
                         childSectorId,
                         parentSectorId,
-                        1,
+                        2,
                         childPath,
                         childGeometries,
                         sectorBBMin,
