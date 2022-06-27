@@ -144,9 +144,9 @@ public static class SectorSplitter
 
 
         // Children
-        const float sectorWidth = 10.0f;
-        const float sectorHeight = 10.0f;
-        const float sectorDepth = 10.0f;
+        const int sectorWidth = 10;
+        const int sectorHeight = 10;
+        const int sectorDepth = 10;
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
@@ -157,45 +157,65 @@ public static class SectorSplitter
         int numberOfSectorsOnHeight = (int)((bbMax.Y - bbMin.Y) / sectorHeight + 1);
         int numberOfSectorsOnDepth = (int)((bbMax.Z - bbMin.Z) / sectorDepth + 1);
 
-        int totalNumberOfSectors = numberOfSectorsOnWidth * numberOfSectorsOnHeight * numberOfSectorsOnDepth;
+        var widthDic = new Dictionary<int, Dictionary<int, Dictionary<int, List<Node>>>>();
 
-        Console.WriteLine($"Width: {numberOfSectorsOnWidth} - Height: {numberOfSectorsOnHeight} - Depth: {numberOfSectorsOnDepth}");
-        Console.WriteLine($"Total Sectors: {totalNumberOfSectors}");
+        for (int i = 0; i < numberOfSectorsOnWidth; i++)
+        {
+            var heightDic = new Dictionary<int, Dictionary<int, List<Node>>>();
+            for (int j = 0; j < numberOfSectorsOnHeight; j++)
+            {
+                var depthDic = new Dictionary<int, List<Node>>();
+                for (int k = 0; k < numberOfSectorsOnDepth; k++)
+                {
+                    depthDic.Add(k, new List<Node>());
 
-        for (int k = 0; k < numberOfSectorsOnDepth; k++)
+                }
+                heightDic.Add(j, depthDic);
+            }
+            widthDic.Add(i, heightDic);
+        }
+
+        foreach (var node in remainingNodes)
+        {
+            var nodeMidPoint = (node.BoundingBoxMax + node.BoundingBoxMin) / 2f;
+
+            int nodeWidthKey = (int)(nodeMidPoint.X - bbMin.X) / sectorWidth;
+            int nodeHeightKey = (int)(nodeMidPoint.Y - bbMin.Y) / sectorHeight;
+            int nodeDepthKey = (int)(nodeMidPoint.Z - bbMin.Z) / sectorDepth;
+
+            widthDic[nodeWidthKey][nodeHeightKey][nodeDepthKey].Add(node);
+        }
+
+        for (int i = 0; i < numberOfSectorsOnWidth; i++)
         {
             for (int j = 0; j < numberOfSectorsOnHeight; j++)
             {
-                for (int i = 0; i < numberOfSectorsOnWidth; i++)
+                for (int k = 0; k < numberOfSectorsOnDepth; k++)
                 {
-                    var nodesInSector = new List<Node>();
-
-                    var sectorBBMin = new Vector3(i * sectorWidth, j * sectorHeight, k * sectorDepth);
-                    var sectorBBMax = new Vector3((i + 1) * sectorWidth, (j + 1) * sectorHeight, (k + 1) * sectorDepth);
-
-                    foreach (var node in remainingNodes)
-                    {
-                        var nodeMidPoint = (node.BoundingBoxMax + node.BoundingBoxMin) / 2f;
-
-                        if (nodeMidPoint.X > sectorBBMin.X && nodeMidPoint.X < sectorBBMax.X &&
-                            nodeMidPoint.Y > sectorBBMin.Y && nodeMidPoint.Y < sectorBBMax.Y &&
-                            nodeMidPoint.Z > sectorBBMin.Z && nodeMidPoint.Z < sectorBBMax.Z)
-                        {
-                            nodesInSector.Add(node);
-                        }
-                    }
-
-                    if (nodesInSector.Count == 0)
+                    var sectorNodes = widthDic[i][j][k];
+                    if (sectorNodes.Count == 0)
                         continue;
-
-                    remainingNodes = remainingNodes.Except(nodesInSector).ToArray();
 
                     var childSectorId = (uint)sectorIdGenerator.GetNextId();
                     var childPath = $"{parentPath}/{childSectorId}";
+                    var childGeometries = sectorNodes.SelectMany(n => n.Geometries).ToArray();
 
-                    var childGeometries = nodesInSector.SelectMany(n => n.Geometries).ToArray();
 
-                    Console.WriteLine($"Sector done: {childPath} - {sectorBBMin} - {sectorBBMax}");
+                    float sectorBBMinX = bbMin.X + i * sectorWidth;
+                    float sectorBBMinY = bbMin.Y + j * sectorHeight;
+                    float sectorBBminZ = bbMin.Z + k * sectorDepth;
+
+                    var sectorBBMin = new Vector3(
+                        sectorBBMinX,
+                        sectorBBMinY,
+                        sectorBBminZ);
+
+                    var sectorBBMax = new Vector3(
+                        sectorBBMinX + sectorWidth,
+                        sectorBBMinY + sectorHeight,
+                        sectorBBminZ + sectorDepth);
+
+                    Console.WriteLine($"Sector done: {childPath}");
                     yield return new ProtoSector(
                         childSectorId,
                         parentSectorId,
@@ -205,6 +225,7 @@ public static class SectorSplitter
                         sectorBBMin,
                         sectorBBMax
                     );
+
                 }
             }
         }
