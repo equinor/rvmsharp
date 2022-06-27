@@ -9,6 +9,7 @@ using Model;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -79,8 +80,7 @@ public class DatabaseComposer
                 inputNode.PDMSData.Select(kvp =>
                         new NodePDMSEntry
                         {
-                            NodeId = inputNode.NodeId,
-                            PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+                            NodeId = inputNode.NodeId, PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
                         })
                     .ToList(),
             AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
@@ -157,12 +157,21 @@ public class DatabaseComposer
             cmd.ExecuteNonQuery();
             cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoDb, RefNoSequence)";
             cmd.ExecuteNonQuery();
-
-            // Optimize the database. Actual performance gains of this have not been tested.
-            cmd.CommandText = "pragma optimize";
-            cmd.ExecuteNonQuery();
             transaction.Commit();
         });
+
+        MopTimer.RunAndMeasure("Optimizing Database", _logger, () =>
+            {
+                // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
+                using var cmd = new SQLiteCommand(connection);
+                // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
+                cmd.CommandText = "pragma analyze";
+                cmd.ExecuteNonQuery();
+                // Optimize the database. Actual performance gains of this have not been checked.
+                cmd.CommandText = "pragma optimize";
+                cmd.ExecuteNonQuery();
+            }
+        );
 
         // ReSharper restore AccessToDisposedClosure
         sqliteComposeTimer.LogCompletion();
