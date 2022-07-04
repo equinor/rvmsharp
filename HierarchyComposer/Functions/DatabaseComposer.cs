@@ -174,6 +174,13 @@ public class DatabaseComposer
             // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
             vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
             vacuumCmds.ExecuteNonQuery();
+
+            // Analyze only a subset of the data when doing optimize queries.
+            // See more at:  https://sqlite.org/pragma.html#pragma_analysis_limit
+            // Recommended values are between 100-1000.
+            vacuumCmds.CommandText = "PRAGMA analysis_limit = 1000";
+            vacuumCmds.ExecuteNonQuery();
+
             // FUTURE: Consider if we should disable VACUUM in dev builds if its too slow, its not really needed there.
             Console.WriteLine(
                 $"VACUUM finished in {timer.Elapsed}. Reduced size from {pageCountBeforeVacuum} to {pageCountAfterVacuum}");
