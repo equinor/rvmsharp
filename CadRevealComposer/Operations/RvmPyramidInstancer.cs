@@ -29,12 +29,15 @@ public static class RvmPyramidInstancer
     {
         var templateLibrary = new List<TemplateInfo>();
 
-        foreach (var protoPyramid in protoPyramids)
+        //foreach (var protoPyramid in protoPyramids)
+        for (int i = 0; i < protoPyramids.Length; i++)
         {
-            var rvmPyramid = protoPyramid.Pyramid;
+            var rvmPyramid = protoPyramids[i].Pyramid;
             var matchFound = false;
-            foreach (var template in templateLibrary)
+            //foreach (var template in templateLibrary)
+            for(int iLib=0; iLib < templateLibrary.Count;iLib++)
             {
+                var template = templateLibrary[iLib];
                 var rvmPyramidTemplate = template.Template;
                 var isMatch = RvmPyramidMatcher.Match(rvmPyramidTemplate, rvmPyramid, out var transform);
                 if (!isMatch)
@@ -43,7 +46,7 @@ public static class RvmPyramidInstancer
                 }
 
                 var newTransform = transform * rvmPyramid.Matrix;
-                template.Add(protoPyramid, newTransform);
+                template.Add(protoPyramids[i], newTransform);
                 matchFound = true;
                 break;
             }
@@ -54,12 +57,14 @@ public static class RvmPyramidInstancer
             }
 
             var newTemplate = rvmPyramid with { Matrix = Matrix4x4.Identity };
-            templateLibrary.Add(new TemplateInfo(protoPyramid, newTemplate, rvmPyramid.Matrix));
+            templateLibrary.Add(new TemplateInfo(protoPyramids[i], newTemplate, rvmPyramid.Matrix));
         }
 
         var result = new List<Result>(protoPyramids.Length);
-        foreach (var template in templateLibrary)
+        //foreach (var template in templateLibrary)
+        for(int i=0;i<templateLibrary.Count;i++)
         {
+            var template = templateLibrary[i];
             if (template.Matches is null)
             {
                 result.Add(new NotInstancedResult(template.Pyramid));

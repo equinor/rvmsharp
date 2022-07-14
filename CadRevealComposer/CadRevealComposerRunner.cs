@@ -21,7 +21,7 @@ using Utils;
 
 public static class CadRevealComposerRunner
 {
-    public static void Process(
+    public static async Task ProcessAsync(
         DirectoryInfo inputRvmFolderPath,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -31,17 +31,13 @@ public static class CadRevealComposerRunner
 
         Console.WriteLine("Reading RvmData");
         var rvmTimer = Stopwatch.StartNew();
-
-        var teamCityReadRvmFilesLogBlock = new TeamCityLogBlock("Reading Rvm Files");
         var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
         {
             Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
         });
-
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
+        var rvmStore = await Workload.ReadRvmDataAsync(workload, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
-        teamCityReadRvmFilesLogBlock.CloseBlock();
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
 
@@ -64,10 +60,9 @@ public static class CadRevealComposerRunner
         var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
         stopwatch.Restart();
-
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
-            var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
             SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
             Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
         });
@@ -132,7 +127,7 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-
+            
 
         Console.WriteLine("Start tessellate");
         var meshes = TessellateAndOutputInstanceMeshes(
@@ -157,8 +152,8 @@ public static class CadRevealComposerRunner
             var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
             Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
             stopwatch.Restart();
-
-            sectors = SectorSplitter.SplitIntoSectors(zones)
+            
+            sectors = SectorSplitter.SplitIntoSectors(zones,geometriesIncludingMeshes.GetBoundingBoxMin(),geometriesIncludingMeshes.GetBoundingBoxMax(), composerParameters.UseEmptyRootSector)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -166,7 +161,7 @@ public static class CadRevealComposerRunner
         }
         else
         {
-            sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)
+            sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes, composerParameters.UseEmptyRootSector)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -174,8 +169,9 @@ public static class CadRevealComposerRunner
         }
 
         var sectorInfos = sectors
+            .AsParallel()
             .Select(s => SerializeSector(s, outputDirectory.FullName))
-            .ToArray();
+            .ToHashSet();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -188,6 +184,13 @@ public static class CadRevealComposerRunner
             outputDirectory,
             treeIndexGenerator.CurrentMaxGeneratedIndex,
             cameraPosition);
+
+        //SceneCreator.WriteZonesSceneFiles(
+        //    sectorsWithDownloadSize,
+        //    modelParameters,
+        //    outputDirectory,
+        //    treeIndexGenerator.CurrentMaxGeneratedIndex,
+        //    cameraPosition);
 
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -207,7 +210,7 @@ public static class CadRevealComposerRunner
             p.ParentSectorId,
             p.Depth,
             p.Path,
-            $"sector_{p.SectorId}.glb",
+            p.Geometries!=null?$"sector_{p.SectorId}.glb":null,
             EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
             EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
             p.Geometries,
@@ -222,6 +225,14 @@ public static class CadRevealComposerRunner
     {
         foreach (var sector in sectors)
         {
+            if(string.IsNullOrEmpty(sector.Filename))
+            {
+                yield return sector with
+                {
+                    DownloadSize = 0
+                };
+                continue;
+            }
             var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
             yield return sector with
             {
@@ -234,9 +245,11 @@ public static class CadRevealComposerRunner
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult)
     {
-        static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
+        static TriangleMesh? TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
             var mesh = Tessellate(p.RvmPrimitive);
+            if (mesh.Triangles.Length==0)
+                return null;
             return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
 
@@ -244,7 +257,7 @@ public static class CadRevealComposerRunner
             .OfType<RvmFacetGroupMatcher.NotInstancedResult>()
             .Select(result => ((RvmFacetGroupWithProtoMesh)result.FacetGroup).ProtoMesh)
             .Cast<ProtoMesh>()
-            .ToArray();
+            .ToArray(); 
 
         var pyramidsNotInstanced = pyramidInstancingResult
             .OfType<RvmPyramidInstancer.NotInstancedResult>()
@@ -285,14 +298,49 @@ public static class CadRevealComposerRunner
 
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
+
+        //var triangleMeshes = facetGroupsNotInstanced
+        //    .Concat(pyramidsNotInstanced)
+        //    .AsParallel()
+        //    .Select(TessellateAndCreateTriangleMesh)
+        //    .OfType<TriangleMesh>()// ignore empty meshes
+        //    .ToHashSet();
+
+        //var someMeshes = facetGroupsNotInstanced
+        //    .Concat(pyramidsNotInstanced);
+
+/*      
+        var triangleMeshes = new List<TriangleMesh>();
+        var options = new ParallelOptions { MaxDegreeOfParallelism = 16 };
+        var result = Parallel.ForEach(facetGroupsNotInstanced , options, mesh => {
+            var t = TessellateAndCreateTriangleMesh(mesh);
+            if (t != null)
+            {
+                triangleMeshes.Add(t);
+            }
+         });
+        var result2 = Parallel.ForEach(pyramidsNotInstanced, options, mesh => {
+            var t = TessellateAndCreateTriangleMesh(mesh);
+            if (t != null)
+            {
+                triangleMeshes.Add(t);
+            }
+        });
+
+        Console.WriteLine($"Tessellated {triangleMeshes.Count:N0} triangle meshes in {stopwatch.Elapsed}");
+  */      
+
+
+        //.AsParallel();
+        
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
-            .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes
+            .WhereNotNull() // ignore empty meshes
             .ToArray();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
-
+        
         return instancedMeshes
             .Cast<APrimitive>()
             .Concat(triangleMeshes)
@@ -311,21 +359,21 @@ public static class CadRevealComposerRunner
             mesh = Mesh.Empty;
         }
 
-        if (mesh.Vertices.Length == 0)
-        {
-            if (primitive is RvmFacetGroup f)
-            {
-                Console.WriteLine($"WARNING: Could not tessellate facet group! Polygon count: {f.Polygons.Length}");
-            }
-            else if (primitive is RvmPyramid)
-            {
-                Console.WriteLine("WARNING: Could not tessellate pyramid!");
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-        }
+        //if (mesh.Vertices.Length == 0)
+        //{
+        //    if (primitive is RvmFacetGroup f)
+        //    {
+        //        Console.WriteLine($"WARNING: Could not tessellate facet group! Polygon count: {f.Polygons.Length}");
+        //    }
+        //    else if (primitive is RvmPyramid)
+        //    {
+        //        Console.WriteLine("WARNING: Could not tessellate pyramid!");
+        //    }
+        //    else
+        //    {
+        //        throw new NotImplementedException();
+        //    }
+        //}
 
         return mesh;
     }

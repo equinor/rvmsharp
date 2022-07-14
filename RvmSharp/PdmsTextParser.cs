@@ -2,6 +2,7 @@
 
 using BatchUtils;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,7 +12,7 @@ public static class PdmsTextParser
 {
     public record PdmsNode(
         string Name,
-        Dictionary<string, string> MetadataDict,
+        ConcurrentDictionary<string, string> MetadataDict,
         PdmsNode? Parent,
         List<PdmsNode> Children);
 
@@ -43,6 +44,7 @@ public static class PdmsTextParser
     public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, IStringInternPool? stringInternPool)
     {
 
+
         var pdmsNodes = new List<PdmsNode>();
 
         using (var reader = new StatefulReader(pdmsTxtFilePath))
@@ -68,7 +70,7 @@ public static class PdmsTextParser
                     var pdmsNode = new PdmsNode
                     (
                         Name: trimmedLine[newItemSeparatorLength..].Trim().ToString(),
-                        MetadataDict: new Dictionary<string, string>(),
+                        MetadataDict: new ConcurrentDictionary<string, string>(),
                         Parent: currentPdmsNode,
                         Children: new List<PdmsNode>()
                     );
@@ -107,9 +109,12 @@ public static class PdmsTextParser
                             var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
                             if (stringInternPool  != null)
                             {
-                                var keyInterned = stringInternPool.Intern(key);
-                                var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+                                    //var keyInterned = stringInternPool.Intern(key);
+                                    //var valueInterned = stringInternPool.Intern(StripQuotes(value));
+                                    var keyInterned = String.Intern(key.ToString());
+                                    var valueInterned = String.Intern(StripQuotes(value).ToString());
+
+                                    currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
                             } else
                             {
                                 currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
@@ -120,9 +125,31 @@ public static class PdmsTextParser
                 }
             }
         }
-
+        //var distinctKeys = new List<string>();
+        //var metdataCount = CountMetadata(pdmsNodes,distinctKeys);
+        //Console.WriteLine($"{pdmsTxtFilePath} - {metdataCount} - {distinctKeys.Count}");
         return pdmsNodes;
     }
+
+    private static int CountMetadata(List<PdmsNode> nodes,List<string> distinctKeys)
+    {
+        var count = 0;
+        nodes.ForEach(node => {
+            foreach(var item in node.MetadataDict)
+            {
+                if(!distinctKeys.Contains(item.Key))
+                {
+                    distinctKeys.Add(item.Key);
+                }
+            }
+            count+=node.MetadataDict.Count;
+            
+            if(node.Children != null)
+                count+=CountMetadata(node.Children,distinctKeys);
+        });
+        return count;
+    }
+
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsExcludedAttribute(ReadOnlySpan<char> attributeName, IReadOnlyList<string> attributesToExclude)

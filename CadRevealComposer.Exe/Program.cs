@@ -19,9 +19,10 @@ public static class Program
         Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
+        var arg = Parser.Default.ParseArguments<CommandLineOptions>(args);
 
         var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
-            .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
+            .MapResult(RunOptionsAndReturnExitCodeAsync, HandleParseError);
         Environment.Exit(result);
     }
 
@@ -32,7 +33,7 @@ public static class Program
         return -1;
     }
 
-    private static int RunOptionsAndReturnExitCode(CommandLineOptions options)
+    private static int RunOptionsAndReturnExitCodeAsync(CommandLineOptions options)
     {
         var timer = Stopwatch.StartNew();
         CommandLineOptions.AssertValidOptions(options);
@@ -51,7 +52,8 @@ public static class Program
             Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
             options.NoInstancing,
             options.SingleSector,
-            options.SplitIntoZones);
+            options.SplitIntoZones,
+            options.UseEmptyRootSector);
 
         if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
         {
@@ -59,9 +61,9 @@ public static class Program
             return 1;
         }
 
-        CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
-
+        CadRevealComposerRunner.ProcessAsync(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters).Wait();
         Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
         return Success;
+
     }
 }

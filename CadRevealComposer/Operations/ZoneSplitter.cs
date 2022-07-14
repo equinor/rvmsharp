@@ -169,7 +169,7 @@ public static class ZoneSplitter
         // group cells into zones
         // NOTE: start grouping cells with a higher node count, and go lower
         var zonesInternal = new List<ZoneInternal>();
-        var minNodeCountInCellList = new[] { 10, 7, 3, 1 };
+        var minNodeCountInCellList = new[] { 10946,6765,4181,2584,1597,987,610,377,233,144,89,55, 34, 21, 13,8,5,3,2,1 }; // Fibonacci sequence for zone splitting
         foreach (var minNodeCountInCell in minNodeCountInCellList)
         {
             while (grid.Cells.Any(cell => cell.IsProcessed is false))
@@ -214,6 +214,10 @@ public static class ZoneSplitter
             var primitives = nodesContainedWithinZone
                 .SelectMany(n => n.Primitives)
                 .ToArray();
+            if(primitives.Length==0)
+            {
+                Console.WriteLine($"Warning - Zone with no primitives detected");
+            }
             return new Zone(primitives);
         }
 
@@ -233,7 +237,7 @@ public static class ZoneSplitter
         var rootZone = new RootZone(primitivesWithoutZone);
         zones.Add(rootZone);
 
-        return zones.ToArray();
+        return zones.Where(z=>z.Primitives.Length>0).ToArray();
     }
 
     /// <summary>

@@ -7,7 +7,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 using Utils;
 
 public static class RvmFacetGroupMatcher
@@ -46,7 +48,7 @@ public static class RvmFacetGroupMatcher
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup facetGroup, bool centerMesh,
+    private static RvmFacetGroup BakeTransformAndCenter(RvmFacetGroup facetGroup, bool centerMesh, bool doTranslation,
         out Matrix4x4 translationMatrix)
     {
         var originalMatrix = facetGroup.Matrix;
@@ -72,7 +74,8 @@ public static class RvmFacetGroupMatcher
         {
             var groupCenter = minBounds + extents;
             var centerOffsetMatrix = Matrix4x4.CreateTranslation(-groupCenter);
-            translationMatrix = Matrix4x4.CreateTranslation(groupCenter);
+            if (doTranslation)
+                translationMatrix = Matrix4x4.CreateTranslation(groupCenter);
 
             minBounds = -extents;
             maxBounds = extents;
@@ -142,7 +145,6 @@ public static class RvmFacetGroupMatcher
 
             var timer = Stopwatch.StartNew();
             var instancingResults = MatchFacetGroups(facetGroups, out var iterationCounter);
-
             // post determine if group is adequate for instancing
             var templateCount = 0L;
             var instancedCount = 0L;
@@ -161,8 +163,8 @@ public static class RvmFacetGroupMatcher
 
                 // is instanced
                 var instanceGroups = instancingGroup
-                    .OfType<InstancedResult>()
-                    .GroupBy(r => r.Template);
+                   .OfType<InstancedResult>()
+                   .GroupBy(r => r.Template);
 
                 foreach (var instanceGroup in instanceGroups)
                 {
@@ -189,8 +191,8 @@ public static class RvmFacetGroupMatcher
                 }
             }
 
-            var vertexCount = facetGroups
-                .First()
+            var vertexCount = facetGroups[0]
+                //.First()
                 .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
             var fraction = instancedCount / (float)facetGroups.Length;
             Console.WriteLine(
@@ -201,11 +203,11 @@ public static class RvmFacetGroupMatcher
         }
 
         long iterationCounter = 0;
-
         var result =
             groupedFacetGroups
                 .OrderByDescending(facetGroups => facetGroups.Length)
                 .AsParallel()
+                .AsOrdered()
                 .SelectMany(x =>
                 {
                     var result = MatchGroup(x);
@@ -216,7 +218,9 @@ public static class RvmFacetGroupMatcher
 
         var templateCount = result.OfType<TemplateResult>().Count();
         var instancedCount = result.OfType<InstancedResult>().Count();
+        var notInstancedCount = result.OfType<NotInstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
+        var allTypes = result.Select(r => r.GetType()).Distinct().ToArray();
         Console.WriteLine(
             $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
             $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
@@ -254,57 +258,50 @@ public static class RvmFacetGroupMatcher
         }
 
         var result = new List<Result>();
-        var templateCandidates = new List<TemplateItem>(); // sorted high to low by explicit code
-
+        //var templates = new List<TemplateItem>(); // sorted high to low by explicit code
+        var templateCandidates = new TemplateItem[5001];
         var iterCounter = 0L;
-        var matchingTimer = Stopwatch.StartNew();
-        var target = TimeSpan.FromMinutes(5);
-        var cleanupIntervalCounter = 0;
-        foreach (var facetGroup in facetGroups)
+        var templatesCounter = 0;
+        var discardedCounter = 0;
+        for (int f = 0; f < facetGroups.Length; f++)
         {
-            cleanupIntervalCounter++;
-            if (matchingTimer.Elapsed > target)
-            {
-                var groupKey = CalculateKey(facetGroup);
-                var vertexCount = facetGroups
-                    .First()
-                    .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
-                Console.WriteLine(
-                    $"Grouping with {vertexCount} vertices taking a long time. More than {(int)target.TotalMinutes} minutes. Group key is: {groupKey}");
-                target += TimeSpan.FromMinutes(5);
-            }
-
+            var facetGroup = facetGroups[f];
             var matchFoundFromPreviousTemplates = false;
-            var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
+            var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, false, out _);
 
-            for (var i = 0; i < templateCandidates.Count; i++)
+            //for (var i = 0; i < templates.Count; i++)
+            
+            for (var i = 0; i < templatesCounter; i++)
             {
-                var item = templateCandidates[i];
-                item.MatchAttempts++;
+                //var item = templates[i];
                 iterCounter++;
-                if (!Match(item.Template, bakedFacetGroup, out var transform))
+                if (!Match(templateCandidates[i].Template, bakedFacetGroup, out var transform))
                 {
                     continue;
                 }
 
-                result.Add(new InstancedResult(facetGroup, item.Template, transform));
-                item.MatchCount++;
+                result.Add(new InstancedResult(facetGroups[f], templateCandidates[i].Template, transform));
+                templateCandidates[i].MatchCount++;
 
                 // sort template list descending by match count
-                var templateMatchCount = item.MatchCount;
+                var templateMatchCount = templateCandidates[i].MatchCount;
                 var j = i;
-                while (j - 1 >= 0 && templateMatchCount > templateCandidates[j - 1].MatchCount)
-                {
-                    j--;
-                }
+                    while (j - 1 >= 0 && templateMatchCount > templateCandidates[j - 1].MatchCount)
+                    {
+                        j--;
+                    }
 
-                if (j != i) // swap items
-                {
-                    SwapItemData(item, templateCandidates[j]);
-                }
+                    if (j != i) // swap items
+                    {
+                    //var tempitem = templates[j];
+                    //templates[j] = item;
+                    //templates[i] = tempitem;
 
-                matchFoundFromPreviousTemplates = true;
-                break;
+                        SwapItemData(templateCandidates[i], templateCandidates[j]);
+                    }
+
+                    matchFoundFromPreviousTemplates = true;
+                    break;
             }
 
             if (matchFoundFromPreviousTemplates)
@@ -312,32 +309,66 @@ public static class RvmFacetGroupMatcher
                 continue;
             }
 
-            var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
+            var newTemplate = BakeTransformAndCenter(facetGroup, true, true, out var newTransform);
 
             // To avoid comparing with too many templates, making the worst case O(N^2),
             // we remove the templates with the least number of matches after reaching the threshold
-            if (templateCandidates.Count > TemplateCleanupThreshold)
+            /*
+                        if (templates.Length > TemplateCleanupThreshold)
+                        {
+                            result.AddRange(templates
+                                .GetRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1)
+                                .Select(x => new NotInstancedResult(x.Original)));
+                            templates.RemoveRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1);
+                        }
+            */
+            //New restructuring of counter...
+            
+            if (templatesCounter == templateCandidates.Length)
             {
-                result.AddRange(templateCandidates
-                    .GetRange(TemplateCleanupNumberToKeep, templateCandidates.Count - TemplateCleanupNumberToKeep - 1)
-                    .Select(x => new NotInstancedResult(x.Original)));
-                templateCandidates.RemoveRange(TemplateCleanupNumberToKeep,
-                    templateCandidates.Count - TemplateCleanupNumberToKeep - 1);
+                templatesCounter = templateCandidates.Length - 500;
+                for (var cc = templatesCounter ; cc < templateCandidates.Length; cc++)
+                {
+                    if (templateCandidates[cc] != null && templateCandidates[cc].MatchCount > 2)
+                    {
+                        Console.WriteLine($"Warning, clearing out template with {templateCandidates[cc].MatchCount} matches.");
+                    }
+                    if (templateCandidates[cc] != null)
+                    {
+                        result.Add(new NotInstancedResult(templateCandidates[cc].Original));
+                        discardedCounter++;
+
+                        templateCandidates[cc] = null;  // Clearing out the last templates
+                    }
+                }
+                Console.WriteLine("NOTE: TemplateCounter maxed out, adjusting....");
             }
 
-            templateCandidates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
-        }
-
-        foreach (var template in templateCandidates)
+            //templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
+            templateCandidates[templatesCounter] = new TemplateItem(facetGroup, newTemplate, newTransform);
+            templatesCounter++;
+        };
+        //Console.WriteLine($"Total discarded: {discardedCounter}");
+        foreach (var template in templateCandidates.Take(templatesCounter)) 
+        {
+            //if (template == null)
+            //    break;
+            Result r = template.MatchCount > 0
+                ? new TemplateResult(template.Original, template.Template, template.Transform)
+                : new NotInstancedResult(template.Original);
+            result.Add(r);
+        };
+        /*
+        foreach (var template in CollectionsMarshal.AsSpan(templates))
         {
             Result r = template.MatchCount > 0
                 ? new TemplateResult(template.Original, template.Template, template.Transform)
                 : new NotInstancedResult(template.Original);
-
             result.Add(r);
-        }
-
+        };
+        */
         iterationCounter = iterCounter;
+        
         return result;
     }
 

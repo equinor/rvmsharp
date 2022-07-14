@@ -11,7 +11,7 @@ public static class JsonUtils
         using var stream = File.Create(filename);
         using var writer = new StreamWriter(stream);
         using var jsonWriter = new JsonTextWriter(writer);
-        var jsonSerializer = new JsonSerializer { Formatting = formatting };
+        var jsonSerializer = new JsonSerializer { Formatting = formatting, NullValueHandling = NullValueHandling.Ignore };
         jsonSerializer.Serialize(jsonWriter, obj);
     }
 

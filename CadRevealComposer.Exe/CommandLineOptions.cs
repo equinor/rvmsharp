@@ -52,6 +52,9 @@ public class CommandLineOptions
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
 
+    [Option(longName: "UseEmptyRootSector", Required = false, HelpText = "Use empty root sector.")]
+    public bool UseEmptyRootSector { get; init; }
+
     [Option(
          longName: "InstancingThreshold",
          shortName: 't',
@@ -66,6 +69,7 @@ public class CommandLineOptions
     {
         // Validate DataAttributes
         Validator.ValidateObject(options, new ValidationContext(options), true);
+
 
         if (!options.InputDirectory.Exists)
         {

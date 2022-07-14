@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Use methods provided here to manually extract and inspect data
@@ -69,10 +70,10 @@ public class FacetGroupHelpers
 
     [Explicit(ExplicitReason)]
     [Test]
-    public void ExportAllUnmatchedFacetGroupsAsObjs()
+    public async Task ExportAllUnmatchedFacetGroupsAsObjsAsync()
     {
         var workload = Workload.CollectWorkload(new[] { @"d:\Models\hda\rvm20210126" });
-        var rvmStore = Workload.ReadRvmData(workload);
+        var rvmStore = await Workload.ReadRvmDataAsync(workload);
         var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
         var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 

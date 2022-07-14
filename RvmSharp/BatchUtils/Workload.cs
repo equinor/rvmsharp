@@ -4,9 +4,11 @@ using Containers;
 using Operations;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 public static class Workload
 {
@@ -31,11 +33,11 @@ public static class Workload
                 .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
 
         var workload = (from filePair in inputFiles
-            select filePair.ToArray()
+                        select filePair.ToArray()
             into filePairStatic
-            let rvmFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".rvm"))
-            let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
-            select (rvmFilename, txtFilename)).ToArray();
+                        let rvmFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".rvm"))
+                        let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
+                        select (rvmFilename, txtFilename)).ToArray();
 
         var result = new List<(string, string?)>();
         foreach ((string? rvmFilename, string? txtFilename) in workload)
@@ -50,7 +52,7 @@ public static class Workload
         return result.ToArray();
     }
 
-    public static RvmStore ReadRvmData(
+    public static async Task<RvmStore> ReadRvmDataAsync(
         IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
         IStringInternPool? stringInternPool = null)
@@ -58,31 +60,53 @@ public static class Workload
         var progress = 0;
         var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
-        RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
+        async Task<RvmFile> ParseRvmFileAsync((string rvmFilename, string? txtFilename) filePair)
         {
             (string rvmFilename, string? txtFilename) = filePair;
-            using var stream = File.OpenRead(rvmFilename);
-            var rvmFile = RvmParser.ReadRvm(stream);
+            //using var stream = File.OpenRead(rvmFilename);
+            var bytes = await File.ReadAllBytesAsync(rvmFilename);
+            using var _ms = new MemoryStream(bytes, 0, bytes.Length, false, false);
+            var rvmFile = RvmParser.ReadRvm(_ms);
+            //var rvmFile = RvmParser.ReadRvm(stream);
             if (!string.IsNullOrEmpty(txtFilename))
             {
                 rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
+                //Console.WriteLine($"{txtFilename} - {stringInternPool?.Added}");
             }
-
             progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
             return rvmFile;
         }
+        var filesTimer = Stopwatch.StartNew();
 
-        var rvmFiles = workload
-            .AsParallel()
-            .AsOrdered()
-            .Select(ParseRvmFile)
-            .ToArray();
+        var rvmFiles = new List<RvmFile>();
+        await Parallel.ForEachAsync(workload,
+            new ParallelOptions { MaxDegreeOfParallelism = Convert.ToInt32(Math.Ceiling((Environment.ProcessorCount * 1) * 2.0)) }
+            ,
+            async (filePair,cancellationToken) =>
+            {
+                var res = await ParseRvmFileAsync(filePair);
+                
+                lock (rvmFiles)
+                {
+                    rvmFiles.Add(res);
+                }
+            }
+        );
 
+        //var rvmFiles = workload
+        //    .AsParallel()
+        //    .WithDegreeOfParallelism(40)
+        //    .WithMergeOptions(ParallelMergeOptions.NotBuffered)
+        //    .WithExecutionMode(ParallelExecutionMode.ForceParallelism)
+        //    //.AsOrdered() //- 4605360 disabled
+        //    .Select(ParseRvmFile)
+        //    .ToArray();
         if (stringInternPool != null)
         {
             Console.WriteLine(
                 $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
         }
+        Console.WriteLine($"Files parsed in {filesTimer.Elapsed}");
 
         var rvmStore = new RvmStore();
         rvmStore.RvmFiles.AddRange(rvmFiles);
