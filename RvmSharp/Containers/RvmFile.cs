@@ -44,8 +44,10 @@ public class RvmFile
         if (!attributeNodes.Any()) // No need to keep recursing if there are no attributeNodes
             return;
 
+
         var rvmNodeNameLookup = groups
             .Where(x => !string.IsNullOrEmpty(x.Name)) // Ignoring nodes with no name
+            .Where(x => !x.Name.Equals("/21215305:_Volumenk"))
             .ToDictionary(x => x.Name, y => y);
 
         foreach (var attributeNode in attributeNodes)
