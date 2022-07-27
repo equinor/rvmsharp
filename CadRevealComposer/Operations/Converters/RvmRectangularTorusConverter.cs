@@ -38,7 +38,8 @@ public static class RvmRectangularTorusConverter
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
 
         var outerDiameter = radiusOuter * 2;
-        var halfHeight = rvmRectangularTorus.Height / 2.0f * scale.Y;
+        var height = rvmRectangularTorus.Height * scale.Y;
+        var halfHeight = height / 2.0f;
 
         var centerA = position + normal * halfHeight;
         var centerB = position - normal * halfHeight;
@@ -120,44 +121,28 @@ public static class RvmRectangularTorusConverter
             var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
             var v2 = Vector3.Transform(v1, q2);
 
-            var vertex1InnerBottom = centerA + v1 * radiusInner;
-            var vertex1InnerTop = centerB + v1 * radiusInner;
-            var vertex1OuterBottom = centerA + v1 * radiusOuter;
-            var vertex1OuterTop = centerB + v1 * radiusOuter;
-
-            var vertex2InnerBottom = centerA + v2 * radiusInner;
-            var vertex2InnerTop = centerB + v2 * radiusInner;
-            var vertex2OuterBottom = centerA + v2 * radiusOuter;
-            var vertex2OuterTop = centerB + v2 * radiusOuter;
-
-            var centerQuadA = (vertex1InnerBottom + vertex1OuterTop) / 2f;
-            var centerQuadB = (vertex2InnerBottom + vertex2OuterTop) / 2f;
+            var centerQuadA = (centerA + centerB + v1 * (radiusInner + radiusOuter)) / 2.0f;
+            var centerQuadB = (centerA + centerB + v2 * (radiusInner + radiusOuter)) / 2.0f;
 
             var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
             var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
-
             var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
-
             var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
             var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
 
-            var scaleQuadA = new Vector3(
-                Vector3.Distance(vertex1InnerBottom, vertex1InnerTop),
-                Vector3.Distance(vertex1InnerBottom, vertex1OuterBottom),
-                0);
-
-            var scaleQuadB = new Vector3(
-                Vector3.Distance(vertex2InnerBottom, vertex2InnerTop),
-                Vector3.Distance(vertex2InnerBottom, vertex2OuterBottom),
-                0);
+            var scaleQuad = new Vector3(
+                height,
+                radiusOuter - radiusInner,
+                0
+            );
 
             var quadMatrixA =
-                Matrix4x4.CreateScale(scaleQuadA)
+                Matrix4x4.CreateScale(scaleQuad)
                 * Matrix4x4.CreateFromQuaternion(rotationQuadA)
                 * Matrix4x4.CreateTranslation(centerQuadA);
 
             var quadMatrixB =
-                Matrix4x4.CreateScale(scaleQuadB)
+                Matrix4x4.CreateScale(scaleQuad)
                 * Matrix4x4.CreateFromQuaternion(rotationQuadB)
                 * Matrix4x4.CreateTranslation(centerQuadB);
 
