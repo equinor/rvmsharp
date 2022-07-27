@@ -16,8 +16,6 @@ public static class RvmRectangularTorusConverter
         ulong treeIndex,
         Color color)
     {
-        color = Color.White;
-
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
