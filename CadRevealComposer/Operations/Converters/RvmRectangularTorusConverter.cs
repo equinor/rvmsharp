@@ -16,6 +16,8 @@ public static class RvmRectangularTorusConverter
         ulong treeIndex,
         Color color)
     {
+        color = Color.White;
+
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
@@ -128,21 +130,46 @@ public static class RvmRectangularTorusConverter
             var vertex2OuterBottom = centerA + v2 * radiusOuter;
             var vertex2OuterTop = centerB + v2 * radiusOuter;
 
-            yield return new Trapezium(
-                vertex1InnerTop,
-                vertex1OuterTop,
-                vertex1InnerBottom,
-                vertex1OuterBottom,
+            var centerQuadA = (vertex1InnerBottom + vertex1OuterTop) / 2f;
+            var centerQuadB = (vertex2InnerBottom + vertex2OuterTop) / 2f;
+
+            var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+            var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
+
+            var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
+
+            var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
+            var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
+
+            var scaleQuadA = new Vector3(
+                Vector3.Distance(vertex1InnerBottom, vertex1InnerTop),
+                Vector3.Distance(vertex1InnerBottom, vertex1OuterBottom),
+                0);
+
+            var scaleQuadB = new Vector3(
+                Vector3.Distance(vertex2InnerBottom, vertex2InnerTop),
+                Vector3.Distance(vertex2InnerBottom, vertex2OuterBottom),
+                0);
+
+            var quadMatrixA =
+                Matrix4x4.CreateScale(scaleQuadA)
+                * Matrix4x4.CreateFromQuaternion(rotationQuadA)
+                * Matrix4x4.CreateTranslation(centerQuadA);
+
+            var quadMatrixB =
+                Matrix4x4.CreateScale(scaleQuadB)
+                * Matrix4x4.CreateFromQuaternion(rotationQuadB)
+                * Matrix4x4.CreateTranslation(centerQuadB);
+
+            yield return new Quad(
+                quadMatrixA,
                 treeIndex,
                 color,
                 bbBox
             );
 
-            yield return new Trapezium(
-                vertex2OuterTop,
-                vertex2InnerTop,
-                vertex2OuterBottom,
-                vertex2InnerBottom,
+            yield return new Quad(
+                quadMatrixB,
                 treeIndex,
                 color,
                 bbBox
