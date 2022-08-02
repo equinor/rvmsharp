@@ -11,6 +11,8 @@ using Utils;
 
 public static class RvmBoxConverter
 {
+    private static int QuadInsteadThreshold = 3; // Number of large enough connections before using quad instead
+
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmBox rvmBox,
         ulong treeIndex,
@@ -23,153 +25,165 @@ public static class RvmBoxConverter
 
         var bbBox = rvmBox.CalculateAxisAlignedBoundingBox();
 
-        var connections = rvmBox.Connections.WhereNotNull();
-
-        //if (connections != null)
-        //{
-        //    int count = 0;
-        //    foreach (var connection in connections)
-        //    {
-        //        count++;
-        //    }
-
-            //if (count >= 2)
-            //{
-            //    //var boxConnections = connections.Where(x => string.Equals(x.GetType(), "RvmBox"));
-
-            //    //if (boxConnections.Count() >= 2)
-            //    //    color = Color.Red;
-            //}
-
-            //if (count > 0)
-            //{
-
-            //}
-
-
-
-            //if (count == 1)
-            //{
-            //    color = Color.Red;
-            //}
-            //else if (count == 2)
-            //{
-            //    color = Color.Blue;
-            //}
-            //else if (count >= 3)
-            //{
-            //    color = Color.Green;
-            //}
-
-            //Console.WriteLine($"#######################Found connection: {count}");
-        //}
-
         var unitBoxScale = Vector3.Multiply(
             scale,
             new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
 
-        //var matrix =
-        //    Matrix4x4.CreateScale(unitBoxScale)
-        //    * Matrix4x4.CreateFromQuaternion(rotation)
-        //    * Matrix4x4.CreateTranslation(position);
+        var connections = rvmBox.Connections.WhereNotNull();
 
-        //yield return new Box(
-        //    matrix,
-        //    treeIndex,
-        //    color,
-        //    rvmBox.CalculateAxisAlignedBoundingBox());
+        var connectionDirections = new List<Vector3>();
 
-        var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
-        var halfPiAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2f);
+        foreach (var connection in connections)
+        {
 
-        var (normal, _) = rotation.DecomposeQuaternion();
+            if (connection.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide))
+            {
+                Console.WriteLine("najksndajk");
+            }
+            else
+            {
+                Console.WriteLine("najksndajk");
 
-        var newPositionUp = position + normal * unitBoxScale.Z / 2.0f;
-        var newPositionDown = position - normal * unitBoxScale.Z / 2.0f;
+            }
 
-        var newRotationFrontAndBack = rotation * halfPiAroundY;
-        var (normalFront, _) = newRotationFrontAndBack.DecomposeQuaternion();
-        var newPositionFront = position + normalFront * unitBoxScale.X / 2.0f;
-        var newPostionBack = position - normalFront * unitBoxScale.X / 2.0f;
+            connectionDirections.Add(connection.Direction);
+        }
 
-        var newRotationRightAndLeft = rotation * halfPiAroundX;
-        var (normalRight, _) = newRotationRightAndLeft.DecomposeQuaternion();
-        var newPositionRight = position + normalRight * unitBoxScale.Y / 2.0f;
-        var newPositionLeft = position - normalRight * unitBoxScale.Y / 2.0f;
+        if (connections.Count() >= QuadInsteadThreshold)
+        {
+            var matrix =
+                Matrix4x4.CreateScale(unitBoxScale)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(position);
 
-        // Up
-        var quadMatrix1 =
-            Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Y, 0))
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(newPositionUp);
+            yield return new Box(
+                matrix,
+                treeIndex,
+                color,
+                rvmBox.CalculateAxisAlignedBoundingBox());
+        }
+        else
+        {
+            var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+            var halfPiAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2f);
 
-        // Down
-        var quadMatrix2 =
-            Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Y, 0))
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(newPositionDown);
+            var (normal, _) = rotation.DecomposeQuaternion();
 
-        // Front
-        var quadMatrix3 =
-            Matrix4x4.CreateScale(new Vector3(unitBoxScale.Z, unitBoxScale.Y, 0))
-            * Matrix4x4.CreateFromQuaternion(newRotationFrontAndBack)
-            * Matrix4x4.CreateTranslation(newPositionFront);
+            var newPositionUp = position + normal * unitBoxScale.Z / 2.0f;
+            var newPositionDown = position - normal * unitBoxScale.Z / 2.0f;
 
-        // Back
-        var quadMatrix4 =
-            Matrix4x4.CreateScale(new Vector3(unitBoxScale.Z, unitBoxScale.Y, 0))
-            * Matrix4x4.CreateFromQuaternion(newRotationFrontAndBack)
-            * Matrix4x4.CreateTranslation(newPostionBack);
+            var newRotationFrontAndBack = rotation * halfPiAroundY;
+            var (normalFront, _) = newRotationFrontAndBack.DecomposeQuaternion();
+            var newPositionFront = position + normalFront * unitBoxScale.X / 2.0f;
+            var newPostionBack = position - normalFront * unitBoxScale.X / 2.0f;
 
-        // Right        
-        var quadMatrix5 =
-            Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Z, 0))
-            * Matrix4x4.CreateFromQuaternion(newRotationRightAndLeft)
-            * Matrix4x4.CreateTranslation(newPositionRight);
+            var newRotationRightAndLeft = rotation * halfPiAroundX;
+            var (normalRight, _) = newRotationRightAndLeft.DecomposeQuaternion();
+            var newPositionRight = position + normalRight * unitBoxScale.Y / 2.0f;
+            var newPositionLeft = position - normalRight * unitBoxScale.Y / 2.0f;
 
-        // Left
-        var quadMatrix6 =
-            Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Z, 0))
-            * Matrix4x4.CreateFromQuaternion(newRotationRightAndLeft)
-            * Matrix4x4.CreateTranslation(newPositionLeft);
+            // Up
+            var quadMatrix1 =
+                Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Y, 0))
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(newPositionUp);
 
-        color = Color.Red;
+            // Down
+            var quadMatrix2 =
+                Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Y, 0))
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(newPositionDown);
 
-        yield return new Quad(
-            quadMatrix1,
-            treeIndex,
-            color,
-            bbBox);
+            // Front
+            var quadMatrix3 =
+                Matrix4x4.CreateScale(new Vector3(unitBoxScale.Z, unitBoxScale.Y, 0))
+                * Matrix4x4.CreateFromQuaternion(newRotationFrontAndBack)
+                * Matrix4x4.CreateTranslation(newPositionFront);
 
-        yield return new Quad(
-            quadMatrix2,
-            treeIndex,
-            color,
-            bbBox);
+            // Back
+            var quadMatrix4 =
+                Matrix4x4.CreateScale(new Vector3(unitBoxScale.Z, unitBoxScale.Y, 0))
+                * Matrix4x4.CreateFromQuaternion(newRotationFrontAndBack)
+                * Matrix4x4.CreateTranslation(newPostionBack);
 
-        yield return new Quad(
-            quadMatrix3,
-            treeIndex,
-            color,
-            bbBox);
+            // Right        
+            var quadMatrix5 =
+                Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Z, 0))
+                * Matrix4x4.CreateFromQuaternion(newRotationRightAndLeft)
+                * Matrix4x4.CreateTranslation(newPositionRight);
 
-        yield return new Quad(
-            quadMatrix4,
-            treeIndex,
-            color,
-            bbBox);
+            // Left
+            var quadMatrix6 =
+                Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Z, 0))
+                * Matrix4x4.CreateFromQuaternion(newRotationRightAndLeft)
+                * Matrix4x4.CreateTranslation(newPositionLeft);
 
-        yield return new Quad(
-            quadMatrix5,
-            treeIndex,
-            color,
-            bbBox);
+            color = Color.Red;
 
-        yield return new Quad(
-            quadMatrix6,
-            treeIndex,
-            color,
-            bbBox);
+            bool up = false;
+            bool down = false;
+            bool front = false;
+            bool back = false;
+            bool right = false;
+            bool left = false;
 
+            foreach (var direction in connectionDirections)
+            {
+                if (direction.EqualsWithinTolerance(normal, 0.1f))
+                    up = true;
+                else if (direction.EqualsWithinTolerance(-normal, 0.1f))
+                    down = true;
+                else if (direction.EqualsWithinTolerance(normalFront, 0.1f))
+                    front = true;
+                else if (direction.EqualsWithinTolerance(-normalFront, 0.1f))
+                    back = true;
+                else if (direction.EqualsWithinTolerance(normalRight, 0.1f))
+                    right = true;
+                else if (direction.EqualsWithinTolerance(-normalRight, 0.1f))
+                    left = true;
+            }
+
+            // Up 
+            yield return new Quad(
+                quadMatrix1,
+                treeIndex,
+                up ? color : Color.Green,
+                bbBox);
+
+            // Down
+            yield return new Quad(
+                quadMatrix2,
+                treeIndex,
+                down ? color : Color.Green,
+                bbBox);
+
+            // Front
+            yield return new Quad(
+                quadMatrix3,
+                treeIndex,
+                front ? color : Color.Green,
+                bbBox);
+
+            // Back
+            yield return new Quad(
+                quadMatrix4,
+                treeIndex,
+                back ? color : Color.Green,
+                bbBox);
+
+            // Right
+            yield return new Quad(
+                quadMatrix5,
+                treeIndex,
+                right ? color : Color.Green,
+                bbBox);
+
+            // Left
+            yield return new Quad(
+                quadMatrix6,
+                treeIndex,
+                left ? color : Color.Green,
+                bbBox);
+        }
     }
 }
