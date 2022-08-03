@@ -35,18 +35,23 @@ public static class RvmBoxConverter
 
         foreach (var connection in connections)
         {
+            var temp = MathF.Min(rvmBox.LengthX * unitBoxScale.X, rvmBox.LengthY * unitBoxScale.Y);
+            var smallestBoxSide = MathF.Min(temp, rvmBox.LengthZ * unitBoxScale.Z);
 
-            if (connection.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide))
+            if (connection.HasConnectionType(RvmConnection.ConnectionType.HasCircularSide))
             {
-                Console.WriteLine("najksndajk");
+                if ()
+                {
+                    connectionDirections.Add(connection.Direction);
+                }
             }
             else
             {
-                Console.WriteLine("najksndajk");
-
+                if ()
+                {
+                    connectionDirections.Add(connection.Direction);
+                }
             }
-
-            connectionDirections.Add(connection.Direction);
         }
 
         if (connections.Count() >= QuadInsteadThreshold)
@@ -64,6 +69,8 @@ public static class RvmBoxConverter
         }
         else
         {
+            color = Color.Red;
+
             var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
             var halfPiAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI / 2f);
 
@@ -106,7 +113,7 @@ public static class RvmBoxConverter
                 * Matrix4x4.CreateFromQuaternion(newRotationFrontAndBack)
                 * Matrix4x4.CreateTranslation(newPostionBack);
 
-            // Right        
+            // Right
             var quadMatrix5 =
                 Matrix4x4.CreateScale(new Vector3(unitBoxScale.X, unitBoxScale.Z, 0))
                 * Matrix4x4.CreateFromQuaternion(newRotationRightAndLeft)
@@ -129,21 +136,21 @@ public static class RvmBoxConverter
 
             foreach (var direction in connectionDirections)
             {
-                if (direction.EqualsWithinTolerance(normal, 0.1f))
+                if (direction.EqualsWithinTolerance(-normal, 0.1f))
                     up = true;
-                else if (direction.EqualsWithinTolerance(-normal, 0.1f))
+                else if (direction.EqualsWithinTolerance(normal, 0.1f))
                     down = true;
-                else if (direction.EqualsWithinTolerance(normalFront, 0.1f))
-                    front = true;
                 else if (direction.EqualsWithinTolerance(-normalFront, 0.1f))
+                    front = true;
+                else if (direction.EqualsWithinTolerance(normalFront, 0.1f))
                     back = true;
-                else if (direction.EqualsWithinTolerance(normalRight, 0.1f))
-                    right = true;
                 else if (direction.EqualsWithinTolerance(-normalRight, 0.1f))
+                    right = true;
+                else if (direction.EqualsWithinTolerance(normalRight, 0.1f))
                     left = true;
             }
 
-            // Up 
+            // Up
             yield return new Quad(
                 quadMatrix1,
                 treeIndex,
