@@ -64,8 +64,8 @@ internal class RvmRectangularTorusConverterTests
         Assert.That(geometries[1], Is.TypeOf<Cone>());
         Assert.That(geometries[2], Is.TypeOf<GeneralRing>());
         Assert.That(geometries[3], Is.TypeOf<GeneralRing>());
-        Assert.That(geometries[4], Is.TypeOf<Trapezium>());
-        Assert.That(geometries[5], Is.TypeOf<Trapezium>());
+        Assert.That(geometries[4], Is.TypeOf<Quad>());
+        Assert.That(geometries[5], Is.TypeOf<Quad>());
         Assert.That(geometries.Length, Is.EqualTo(6));
     }
 
