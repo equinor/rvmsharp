@@ -47,7 +47,7 @@ public class RvmFile
 
         var rvmNodeNameLookup = groups
             .Where(x => !string.IsNullOrEmpty(x.Name)) // Ignoring nodes with no name
-            .Where(x => !x.Name.Equals("/21215305:_Volumenk"))
+            .Where(x => !x.Name.Equals("/21215305:_Volumenk")) // Special case for Grane + Breidablikk
             .ToDictionary(x => x.Name, y => y);
 
         foreach (var attributeNode in attributeNodes)
