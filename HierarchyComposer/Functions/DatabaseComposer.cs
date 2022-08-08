@@ -9,6 +9,7 @@ using Model;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -30,8 +31,9 @@ public class DatabaseComposer
         var connectionStringBuilder = new SqliteConnectionStringBuilder
         {
             DataSource = outputDatabaseFullPath,
-            Pooling = false, // We do not need pooling yet, and the tests fail as the database is not fully closed until the app exits when pooling is enabled.
-            Mode = SqliteOpenMode.ReadWriteCreate
+            Pooling =
+                false, // We do not need pooling yet, and the tests fail as the database is not fully closed until the app exits when pooling is enabled.
+            Mode = SqliteOpenMode.ReadWriteCreate,
         };
         var connectionString = connectionStringBuilder.ToString();
 
@@ -70,13 +72,17 @@ public class DatabaseComposer
         var nodes = inputNodes.Select(inputNode => new Node
         {
             Id = inputNode.NodeId,
+            EndId = inputNode.EndId,
             RefNoDb = inputNode.RefNoDb,
             RefNoSequence = inputNode.RefNoSequence,
             Name = inputNode.Name,
             HasMesh = inputNode.HasMesh,
             NodePDMSEntry =
                 inputNode.PDMSData.Select(kvp =>
-                        new NodePDMSEntry { NodeId = inputNode.NodeId, PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id })
+                        new NodePDMSEntry
+                        {
+                            NodeId = inputNode.NodeId, PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+                        })
                     .ToList(),
             AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
             DiagnosticInfo = inputNode.OptionalDiagnosticInfo
@@ -96,14 +102,14 @@ public class DatabaseComposer
 
         using var connection = new SQLiteConnection(connectionString);
         connection.Open();
-        using var cmd = new SQLiteCommand(connection);
 
         // ReSharper disable AccessToDisposedClosure
         MopTimer.RunAndMeasure("Insert PDMSEntries", _logger, () =>
         {
             using var transaction = connection.BeginTransaction();
-            foreach (var pdmsEntry in pdmsEntries.Values)
-                pdmsEntry.RawInsert(cmd);
+
+            using var cmd = new SQLiteCommand(connection);
+            PDMSEntry.RawInsertBatch(cmd, pdmsEntries.Values);
 
             transaction.Commit();
         });
@@ -111,8 +117,9 @@ public class DatabaseComposer
         MopTimer.RunAndMeasure("Insert NodePDMSEntries", _logger, () =>
         {
             using var transaction = connection.BeginTransaction();
-            foreach (var nodePdmsEntry in nodePdmsEntries)
-                nodePdmsEntry.RawInsert(cmd);
+
+            using var cmd = new SQLiteCommand(connection);
+            NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
 
             transaction.Commit();
         });
@@ -120,8 +127,8 @@ public class DatabaseComposer
         MopTimer.RunAndMeasure("Insert AABBs", _logger, () =>
         {
             using var transaction = connection.BeginTransaction();
-            foreach (var aabb in aabbs.Values)
-                aabb.RawInsert(cmd);
+            using var cmd = new SQLiteCommand(connection);
+            AABB.RawInsertBatch(cmd, aabbs.Values);
 
             transaction.Commit();
         });
@@ -130,8 +137,8 @@ public class DatabaseComposer
         MopTimer.RunAndMeasure("Insert Nodes", _logger, () =>
         {
             using var transaction = connection.BeginTransaction();
-            foreach (var node in nodes.Values)
-                node.RawInsert(cmd);
+            using var cmd = new SQLiteCommand(connection);
+            Node.RawInsertBatch(cmd, nodes.Values);
 
             transaction.Commit();
         });
@@ -139,6 +146,7 @@ public class DatabaseComposer
         MopTimer.RunAndMeasure("Creating indexes", _logger, () =>
         {
             using var transaction = connection.BeginTransaction();
+            using var cmd = new SQLiteCommand(connection);
             cmd.CommandText =
                 "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
             cmd.ExecuteNonQuery();
@@ -147,10 +155,53 @@ public class DatabaseComposer
             cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
             cmd.ExecuteNonQuery();
             cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
+            cmd.ExecuteNonQuery();
             cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoDb, RefNoSequence)";
             cmd.ExecuteNonQuery();
-
             transaction.Commit();
+        });
+
+        MopTimer.RunAndMeasure("Optimizing Database", _logger, () =>
+            {
+                // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
+                using var cmd = new SQLiteCommand(connection);
+                // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
+                cmd.CommandText = "pragma analyze";
+                cmd.ExecuteNonQuery();
+                // Optimize the database. Actual performance gains of this have not been checked.
+                cmd.CommandText = "pragma optimize";
+                cmd.ExecuteNonQuery();
+            }
+        );
+
+        MopTimer.RunAndMeasure("VACUUM Database", _logger, () =>
+        {
+            // Vacuum completely recreates the database but removes all "Extra Data" from it.
+            // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
+            using var vacuumCmds = new SQLiteCommand(connection);
+
+            vacuumCmds.CommandText = "PRAGMA page_count";
+            var pageCountBeforeVacuum = (Int64) vacuumCmds.ExecuteScalar();
+            var timer = Stopwatch.StartNew();
+            // Vacuum the database. This is quite slow!
+            vacuumCmds.CommandText = "VACUUM";
+            vacuumCmds.ExecuteNonQuery();
+            vacuumCmds.CommandText = "PRAGMA page_count";
+            var pageCountAfterVacuum = (Int64) vacuumCmds.ExecuteScalar();
+
+            // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
+            vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
+            vacuumCmds.ExecuteNonQuery();
+
+            // Analyze only a subset of the data when doing optimize queries.
+            // See more at:  https://sqlite.org/pragma.html#pragma_analysis_limit
+            // Recommended values are between 100-1000.
+            vacuumCmds.CommandText = "PRAGMA analysis_limit = 1000";
+            vacuumCmds.ExecuteNonQuery();
+
+            // FUTURE: Consider if we should disable VACUUM in dev builds if its too slow, its not really needed there.
+            Console.WriteLine(
+                $"VACUUM finished in {timer.Elapsed}. Reduced size from {pageCountBeforeVacuum} to {pageCountAfterVacuum}");
         });
 
         // ReSharper restore AccessToDisposedClosure
