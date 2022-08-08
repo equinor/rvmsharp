@@ -387,7 +387,6 @@ public static class PrimitiveCapHelper
         return false;
     }
 
-
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmPrimitive currentPrimitive,
         RvmSnout rvmSnout1,
