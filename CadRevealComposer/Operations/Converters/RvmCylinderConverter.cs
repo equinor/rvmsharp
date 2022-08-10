@@ -28,7 +28,7 @@ public static class RvmCylinderConverter
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
-        var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox();
+        var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
 
         var height = rvmCylinder.Height * scale.Z;
         var radius = rvmCylinder.Radius * scale.X;

@@ -866,6 +866,9 @@ public static class GltfWriter
 
 
     /// <summary>
+    /// From Gltf v2 spec: (https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#accessor-data-types)
+    /// > Values of NaN, +Infinity, and -Infinity MUST NOT be present.
+    ///
     /// This guards from writing non-finite values of floats.
     /// Will throw an ArgumentOutOfRangeException if input value is not finite.
     ///

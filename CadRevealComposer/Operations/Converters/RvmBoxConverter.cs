@@ -33,6 +33,6 @@ public static class RvmBoxConverter
             matrix,
             treeIndex,
             color,
-            rvmBox.CalculateAxisAlignedBoundingBox());
+            rvmBox.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox());
     }
 }

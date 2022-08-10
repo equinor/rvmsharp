@@ -4,6 +4,7 @@ using Primitives;
 using RvmSharp.Primitives;
 using System.Collections.Generic;
 using System.Drawing;
+using Utils;
 
 public static class RvmFacetGroupConverter
 {
@@ -16,6 +17,6 @@ public static class RvmFacetGroupConverter
             rvmFacetGroup,
             treeIndex,
             color,
-            rvmFacetGroup.CalculateAxisAlignedBoundingBox());
+            rvmFacetGroup.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox());
     }
 }

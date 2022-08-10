@@ -12,6 +12,7 @@
 
     <ItemGroup>
 	    <PackageReference Include="Ben.StringIntern" Version="0.1.8" />
+	    <PackageReference Include="JetBrains.Profiler.Api" Version="1.2.0" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
         <PackageReference Include="SharpGLTF.Core" Version="1.0.0-alpha0025" />
 	    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />

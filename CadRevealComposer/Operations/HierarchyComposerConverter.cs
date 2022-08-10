@@ -44,7 +44,7 @@ public static class HierarchyComposerConverter
         var maybeRefNo = maybeRefNoString != null ? RefNo.Parse(maybeRefNoString) : null;
 
         var boundingBox = revealNode.BoundingBoxAxisAligned;
-        bool hasMesh = revealNode.RvmGeometries.Any();
+        bool hasMesh = revealNode.Geometries.Any();
         AABB? aabb = null;
         if (boundingBox != null)
         {
