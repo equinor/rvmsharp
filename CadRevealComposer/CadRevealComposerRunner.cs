@@ -61,27 +61,32 @@ public static class CadRevealComposerRunner
 
         var total = Stopwatch.StartNew();
         var stopwatch = Stopwatch.StartNew();
-        var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
+        var allNodes =
+            RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
+        ProcessNodes(allNodes, outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
+    }
+
+    public static void ProcessNodes(CadRevealNode[] allNodes, DirectoryInfo outputDirectory,
+        ModelParameters modelParameters,
+        ComposerParameters composerParameters, TreeIndexGenerator treeIndexGenerator)
+    {
+        var totalTimeElapsed = Stopwatch.StartNew();
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
             SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
             Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
         });
-
         var geometries = allNodes
             .AsParallel()
             .AsOrdered()
-            .SelectMany(x => x.RvmGeometries.SelectMany(
-                primitive => APrimitive.FromRvmPrimitive(x, primitive)))
+            .SelectMany(x => x.Geometries)
             .ToArray();
 
-        Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
-        stopwatch.Restart();
-
+        var stopwatch = Stopwatch.StartNew();
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
             .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
@@ -195,7 +200,7 @@ public static class CadRevealComposerRunner
         Task.WaitAll(exportHierarchyDatabaseTask);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-        Console.WriteLine($"Convert completed in {total.Elapsed}");
+        Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
     private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)

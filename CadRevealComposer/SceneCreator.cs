@@ -65,14 +65,14 @@ public static class SceneCreator
                 Id = sector.SectorId,
                 ParentId = sector.ParentSectorId,
                 SubtreeBoundingBox =
-                    new BoundingBox(
-                        Min: new BbVector3(sector.SubtreeBoundingBoxMin.X, sector.SubtreeBoundingBoxMin.Y, sector.SubtreeBoundingBoxMin.Z),
-                        Max: new BbVector3(sector.SubtreeBoundingBoxMax.X, sector.SubtreeBoundingBoxMax.Y, sector.SubtreeBoundingBoxMax.Z)
+                    new SerializableBoundingBox(
+                        Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBoxMin),
+                        Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBoxMax)
                     ),
                 GeometryBoundingBox =
-                    new BoundingBox(
-                        Min: new BbVector3(sector.GeometryBoundingBoxMin.X, sector.GeometryBoundingBoxMin.Y, sector.GeometryBoundingBoxMin.Z),
-                        Max: new BbVector3(sector.GeometryBoundingBoxMax.X, sector.GeometryBoundingBoxMax.Y, sector.GeometryBoundingBoxMax.Z)
+                    new SerializableBoundingBox(
+                        Min: SerializableVector3.FromVector3(sector.GeometryBoundingBoxMin),
+                        Max: SerializableVector3.FromVector3(sector.GeometryBoundingBoxMax)
                     ),
                 Depth = sector.Depth,
                 Path = sector.Path,

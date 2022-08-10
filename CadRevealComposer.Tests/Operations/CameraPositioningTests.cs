@@ -43,5 +43,5 @@ public class CameraPositioningTests
     }
 
     private record TestPrimitiveWithBoundingBox(Vector3 Min, Vector3 Max)
-        : APrimitive(int.MaxValue, Color.Red, new RvmBoundingBox(Min, Max));
+        : APrimitive(int.MaxValue, Color.Red, new BoundingBox(Min, Max));
 }

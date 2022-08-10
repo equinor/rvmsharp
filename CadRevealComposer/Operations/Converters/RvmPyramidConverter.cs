@@ -33,7 +33,7 @@ public static class RvmPyramidConverter
                 matrix,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox());
+                rvmPyramid.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox());
         }
         else
         {
@@ -41,7 +41,7 @@ public static class RvmPyramidConverter
                 rvmPyramid,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox());
+                rvmPyramid.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox());
         }
     }
 

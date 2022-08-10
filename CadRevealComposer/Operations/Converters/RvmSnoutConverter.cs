@@ -25,14 +25,14 @@ public static class RvmSnoutConverter
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
-        var bbox = rvmSnout.CalculateAxisAlignedBoundingBox();
+        var bbox = rvmSnout.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
 
         var height = scale.Z * MathF.Sqrt(
             rvmSnout.Height * rvmSnout.Height +
             rvmSnout.OffsetX * rvmSnout.OffsetX +
             rvmSnout.OffsetY * rvmSnout.OffsetY);
         var halfHeight = 0.5f * height;
-        
+
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
@@ -73,7 +73,7 @@ public static class RvmSnoutConverter
         float radiusB,
         ulong treeIndex,
         Color color,
-        RvmBoundingBox bbox)
+        BoundingBox bbox)
     {
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
@@ -130,7 +130,7 @@ public static class RvmSnoutConverter
         float height,
         ulong treeIndex,
         Color color,
-        RvmBoundingBox bbox)
+        BoundingBox bbox)
     {
         var halfHeight = height / 2f;
         var diameterA = 2f * radiusA;
@@ -191,7 +191,7 @@ public static class RvmSnoutConverter
         float height,
         ulong treeIndex,
         Color color,
-        RvmBoundingBox bbox)
+        BoundingBox bbox)
     {
         var diameter = 2f * radius;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
@@ -265,7 +265,7 @@ public static class RvmSnoutConverter
         float radiusB,
         ulong treeIndex,
         Color color,
-        RvmBoundingBox bbox)
+        BoundingBox bbox)
     {
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;

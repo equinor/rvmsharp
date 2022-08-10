@@ -33,6 +33,6 @@ public static class RvmSphereConverter
             normal,
             treeIndex,
             color,
-            rvmSphere.CalculateAxisAlignedBoundingBox());
+            rvmSphere.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox());
     }
 }

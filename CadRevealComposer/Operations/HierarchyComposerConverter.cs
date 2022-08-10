@@ -53,7 +53,7 @@ public static class HierarchyComposerConverter
         }
 
         var boundingBox = revealNode.BoundingBoxAxisAligned;
-        bool hasMesh = revealNode.RvmGeometries.Any();
+        bool hasMesh = revealNode.Geometries.Any();
         AABB? aabb = null;
         if (boundingBox != null)
         {

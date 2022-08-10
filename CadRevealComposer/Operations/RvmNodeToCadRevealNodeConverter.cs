@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Operations;
 
 using IdProviders;
+using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Linq;
@@ -50,11 +51,15 @@ public static class RvmNodeToCadRevealNodeConverter
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
         }
 
-        newNode.RvmGeometries = rvmGeometries;
+        newNode.Geometries = rvmGeometries.SelectMany(primitive => APrimitive.FromRvmPrimitive(newNode, primitive)).ToArray();
         newNode.Children = childrenCadNodes;
 
         var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
-            .Select(x => x.CalculateAxisAlignedBoundingBox()).ToArray();
+            .Select(x =>
+            {
+                var rvmAabb= x.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+                return new BoundingBox(rvmAabb.Min, rvmAabb.Max);
+            }).ToArray();
         var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned)
             .WhereNotNull();
 

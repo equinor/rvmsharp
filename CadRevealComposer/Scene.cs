@@ -3,6 +3,7 @@
 using Configuration;
 using Newtonsoft.Json;
 using System;
+using System.Numerics;
 
 public class Scene
 {
@@ -44,13 +45,13 @@ public class Sector
     /// <summary>
     /// Bounding box which includes the sector's own geometry and all children's geometry
     /// </summary>
-    [JsonProperty("boundingBox")] public BoundingBox SubtreeBoundingBox { get; set; } = null!;
+    [JsonProperty("boundingBox")] public SerializableBoundingBox SubtreeBoundingBox { get; set; } = null!;
 
     /// <summary>
     /// Bounding box which includes the sector's own geometry
     /// </summary>
     [JsonProperty("geometryBoundingBox")]
-    public BoundingBox? GeometryBoundingBox { get; set; }
+    public SerializableBoundingBox? GeometryBoundingBox { get; set; }
 
     #region GltfSceneSectorMetadata
 
@@ -62,14 +63,20 @@ public class Sector
     #endregion
 }
 
-public record BoundingBox(
-    [property: JsonProperty("min")] BbVector3 Min,
-    [property: JsonProperty("max")] BbVector3 Max
+public record SerializableBoundingBox(
+    [property: JsonProperty("min")] SerializableVector3 Min,
+    [property: JsonProperty("max")] SerializableVector3 Max
 );
 
-public record BbVector3
+public record SerializableVector3
 (
     [property: JsonProperty("x")] float X,
     [property: JsonProperty("y")] float Y,
     [property: JsonProperty("z")] float Z
-);
+)
+{
+    public static SerializableVector3 FromVector3(Vector3 vector3)
+    {
+        return new SerializableVector3(vector3.X, vector3.Y, vector3.Z);
+    }
+};

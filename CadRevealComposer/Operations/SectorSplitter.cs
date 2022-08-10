@@ -272,7 +272,7 @@ public static class SectorSplitter
         }
     }
 
-    private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
+    private static int CalculateVoxelKeyForGeometry(BoundingBox geometryBoundingBox, Vector3 bbMidPoint)
     {
         return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y, geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
         {

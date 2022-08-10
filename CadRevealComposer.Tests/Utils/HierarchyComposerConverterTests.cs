@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Operations;
+using CadRevealComposer.Primitives;
 using NUnit.Framework;
 using RvmSharp.Primitives;
 using System;
@@ -18,14 +19,14 @@ public class HierarchyComposerConverterTests
         {
             TreeIndex = 2,
             Children = Array.Empty<CadRevealNode>(),
-            BoundingBoxAxisAligned = new RvmBoundingBox(-Vector3.One, Vector3.One),
+            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
             Group = new RvmNode(2, "NodeName", Vector3.Zero, 0)
             {
                 Attributes = { { "RefNo", "=123/322" }, { "Tag", "VG23-0001" } }
             },
             NodeId = 1337,
             Parent = null,
-            RvmGeometries = Array.Empty<RvmPrimitive>(),
+            Geometries = Array.Empty<APrimitive>(),
             OptionalDiagnosticInfo = arrangedJson
         };
 
@@ -33,14 +34,14 @@ public class HierarchyComposerConverterTests
         {
             TreeIndex = 1,
             Children = new[] { node2 },
-            BoundingBoxAxisAligned = new RvmBoundingBox(-Vector3.One, Vector3.One),
+            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
             Group = new RvmNode(2, "RootNode", Vector3.Zero, 0)
             {
                 Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } }
             },
             NodeId = 9001,
             Parent = null,
-            RvmGeometries = Array.Empty<RvmPrimitive>(),
+            Geometries = Array.Empty<APrimitive>(),
             OptionalDiagnosticInfo = arrangedJson
         };
 
@@ -74,14 +75,14 @@ public class HierarchyComposerConverterTests
         {
             TreeIndex = uint.MaxValue + 1L,
             Children = Array.Empty<CadRevealNode>(),
-            BoundingBoxAxisAligned = new RvmBoundingBox(-Vector3.One, Vector3.One),
+            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
             Group = new RvmNode(2, "RootNode", Vector3.Zero, 0)
             {
                 Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } }
             },
             NodeId = 9001,
             Parent = null,
-            RvmGeometries = Array.Empty<RvmPrimitive>()
+            Geometries = Array.Empty<APrimitive>()
         };
 
         var nodes = new[]

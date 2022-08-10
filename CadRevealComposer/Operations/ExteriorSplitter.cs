@@ -183,7 +183,7 @@ public static class ExteriorSplitter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static (bool Hit, float Distance) MatchBoundingBox(RvmBoundingBox boundingBox, Bounds rayBounds, Ray ray)
+    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, Bounds rayBounds, Ray ray)
     {
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);

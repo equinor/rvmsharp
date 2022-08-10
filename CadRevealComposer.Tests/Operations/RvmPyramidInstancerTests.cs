@@ -27,9 +27,9 @@ public class RvmPyramidInstancerTests
         // Mark: These two input pyramids will be identical as they are Records with identical values.
         ProtoMeshFromPyramid[] protoPyramids = new[]
         {
-            new ProtoMeshFromPyramid(rvmPyramid, 0, Color.Red, new RvmBoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromPyramid(rvmPyramid,0, Color.Red, new RvmBoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromPyramid(rvmPyramidNotMatching,0, Color.Red, new RvmBoundingBox(Vector3.One, Vector3.One))
+            new ProtoMeshFromPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
+            new ProtoMeshFromPyramid(rvmPyramid,0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
+            new ProtoMeshFromPyramid(rvmPyramidNotMatching,0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
         };
 
         var res =
@@ -71,7 +71,7 @@ public class RvmPyramidInstancerTests
             }; // Change proportions of a dimension (Should not match)
 
         var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }
-            .Select(rvmPyramid => new ProtoMeshFromPyramid(rvmPyramid, 0, Color.Red, new RvmBoundingBox(Vector3.One, Vector3.One)))
+            .Select(rvmPyramid => new ProtoMeshFromPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)))
             .ToArray();
 
         Assert.That(rvmPyramidA, Is.Not.EqualTo(rvmPyramidAHalfScaled));
