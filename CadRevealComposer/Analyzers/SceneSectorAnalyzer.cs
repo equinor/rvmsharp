@@ -67,6 +67,18 @@ public class SceneSectorAnalyzer
         }
     }
 
+    public static (string sectorId, Sector sector)[] CalculateAllSectorsList(Sector[] data)
+    {
+        var sectorTree = GenerateSectorTree(data);
+
+        var allSectorsById = data.ToDictionary(k => k.Id.ToString(), v => v);
+
+        var allSectorsList = allSectorsById.Select(sec => (sec.Key, sec.Value));
+
+        //var costPerLeaf = leafs.Select(leaf => calculateMinimumCostForNode(leaf.Self, allSectorsById));
+        return allSectorsList.ToArray();
+    }
+
     public static (string sectorId, Sector sector)[][] CalculateMinimumCostForLeafs(Sector[] data)
     {
         var sectorTree = GenerateSectorTree(data);
@@ -83,13 +95,13 @@ public class SceneSectorAnalyzer
     {
         var cost = new List<(string, Sector)>();
         cost.Add((leafSector.Id.ToString(), leafSector));
-        var parentId = leafSector.ParentId;
+        var parentId = leafSector.ParentId ?? -1;
         while (parentId != -1)
         {
             var parentSector = allSectorsById[parentId];
 
             cost.Add((parentSector.Id.ToString(), parentSector));
-            parentId = parentSector.ParentId;
+            parentId = parentSector.ParentId ?? -1;
         }
         cost.Reverse();
         return cost.ToArray();

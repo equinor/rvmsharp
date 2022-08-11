@@ -56,9 +56,20 @@ public class Sector
     [JsonProperty("minDiagonalLength")] public float MinDiagonalLength { get; set; } = 1;
     [JsonProperty("maxDiagonalLength")] public float MaxDiagonalLength { get; set; } = 1;
     [JsonProperty("downloadSize")] public long DownloadSize { get; set; }
-
+    [JsonProperty("indexFile")] public IndexFile IndexFile { get; set; } = null!;
+    [JsonProperty("facesFile")] public FacesFile FacesFile { get; set; } = null!;
     #endregion
 }
+
+public record IndexFile(
+    [property: JsonProperty("fileName")] string FileName,
+    [property: JsonProperty("downloadSize")] long DownloadSize
+);
+
+public record FacesFile(
+    [property: JsonProperty("fileName")] string FileName,
+    [property: JsonProperty("downloadSize")] long DownloadSize
+);
 
 public record BoundingBox(
     [property: JsonProperty("min")] BbVector3 Min,
