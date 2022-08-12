@@ -92,12 +92,11 @@ public abstract record APrimitive(
             case RvmCylinder rvmCylinder:
                 {
                     var height = rvmCylinder.Height * scale.Z;
-                    // TODO: if scale is not uniform on X,Y, we should create something else
-                    var radius = rvmCylinder.Radius * scale.X;
-                    if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
+                    var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y); // Choose max as a fallback for cylinders with non-uniform x and y scale
+                    if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
                     {
+                        Console.WriteLine("Removing cylinder with non-uniform X and Y scale: Not supported");
                         return null;
-                        throw new Exception("Not implemented!");
                     }
 
                     return new ClosedCylinder
@@ -183,7 +182,6 @@ public abstract record APrimitive(
                         ArcAngle: rvmRectangularTorus.Angle);
                 }
             default:
-                return null;
                 throw new InvalidOperationException();
         }
     }
