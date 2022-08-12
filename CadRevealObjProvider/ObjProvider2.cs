@@ -1,8 +1,8 @@
 ﻿namespace CadRevealObjProvider;
 
 using CadRevealComposer;
-using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
 using ObjLoader.Loader.Data.Elements;
 using ObjLoader.Loader.Data.VertexData;
@@ -11,18 +11,18 @@ using RvmSharp.Tessellation;
 using System.Drawing;
 using System.Numerics;
 
-public class ObjProvider
+public class ObjProvider2 : IModelFormatProvider
 {
-    public void ParseFiles(string[] filesToParse)
+    public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
     {
         var objLoaderFactory = new ObjLoaderFactory();
 
         var objLoader = objLoaderFactory.Create();
 
-        var meshes = new List<ObjMesh?>();
-        foreach (string filePath in filesToParse)
+        var meshes = new List<ObjMesh>();
+        foreach (FileInfo filePath in filesToParse.Where(x => x.Extension.Equals(".obj", StringComparison.OrdinalIgnoreCase)))
         {
-            using var objFileStream = new FileStream(filePath, FileMode.Open);
+            using var objFileStream = filePath.OpenRead();
             var result = objLoader.Load(objFileStream);
             foreach (Group group in result.Groups)
             {
@@ -33,37 +33,25 @@ public class ObjProvider
             }
         }
 
-        // TODO: Create CadRevealNodes for each mesh/group
-
-        var nodeIdGenerator = new SequentialIdGenerator();
-        var treeIndexGenerator = new TreeIndexGenerator();
-
         var nodes = new List<CadRevealNode>();
-        foreach (ObjMesh? meshGroup in meshes)
+        foreach (ObjMesh meshGroup in meshes)
         {
             var treeIndex = treeIndexGenerator.GetNextId();
             nodes.Add(new CadRevealNode()
             {
                 BoundingBoxAxisAligned = meshGroup.CalculateBoundingBox(),
                 Children = null,
-                Group = null,
-                NodeId = nodeIdGenerator.GetNextId(),
                 TreeIndex = treeIndex,
                 Parent = null,
+                Name = meshGroup.Name,
                 Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
             });
         }
 
-
-        CadRevealComposerRunner.ProcessNodes(
-            nodes.ToArray(),
-            new DirectoryInfo(@"C:\Users\nhals\GitRepos\CogniteReveal\examples\public\primitives"),
-            new ModelParameters(new ProjectId(0), new ModelId(0), new RevisionId(0), new InstancingThreshold(300)),
-            new ComposerParameters(false, false, false),
-            treeIndexGenerator);
+        return nodes;
     }
 
-    public APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh? mesh, ulong treeIndex)
+    public APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
     {
         return new APrimitive[]
         {
@@ -75,7 +63,7 @@ public class ObjProvider
 
     public record ObjMesh
     {
-        public string Name { get; init; }
+        public string Name { get; init; } = "";
         public const int FaceSize = 3;
         public uint[] Triangles { get; init; }
         public Vector3[] Vertices { get; init; }
@@ -158,4 +146,5 @@ public class ObjProvider
     {
         return new Vector3(x.X, x.Y, x.Z);
     }
+
 }
