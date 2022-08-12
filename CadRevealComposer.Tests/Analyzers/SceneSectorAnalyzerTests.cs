@@ -12,12 +12,12 @@ using System.IO;
 [TestFixture]
 public class SceneSectorAnalyzerTests
 {
-    Scene scene;
+    Scene scene,scene_v9;
 
     [OneTimeSetUp]
     public void OneTimeSetup()
     {
-        scene = TestSampleLoader.LoadTestJson<Scene>("scene_hda_v8.json");
+        scene = TestSampleLoader.LoadTestJson<Scene>("scene_hda_v8.json"); 
     }
 
     [Test]
@@ -49,6 +49,14 @@ public class SceneSectorAnalyzerTests
         Assert.That(result.AverageEstimatedDrawcallCount, Is.EqualTo(184.6).Within(0.1));
     }
 
+    [Test,Explicit("Requires a scene of v9 format in order to run properly")]
+    public void AnalyzeSectors_Returns_V9Analytics_AsResult()
+    {
+        Assert.That(scene.Version, Is.EqualTo(9));  // Either supply a v9 scene here or load locally below...
+        scene_v9 = TestSampleLoader.LoadTestJson<Scene>("scene_mar_v9_ez.json");
+        var result = SceneSectorAnalyzer.SceneAnalyisAsStringBuilderCsv(scene_v9);
+        File.WriteAllText(@"scene_v9.csv", WriteCsvToString(result));
+    }
 
     public record SectorCsvData(string Path, long SumEstimatedTriangleCount, long SumDownloadSize, string Parts, int Depth);
 
@@ -56,7 +64,7 @@ public class SceneSectorAnalyzerTests
     public void AnalyzeSectors_Returns_SumOfSectorCosts_ByPath()
     {
         (string sectorId, Sector sector)[][] results = SceneSectorAnalyzer.CalculateMinimumCostForLeafs(scene.Sectors);
-
+        Assert.That(scene.Version, Is.EqualTo(8));
         var output = new List<string>();
         var rows = new List<SectorCsvData>();
         foreach (var result in results)
@@ -73,8 +81,8 @@ public class SceneSectorAnalyzerTests
             output.Add(line);
         }
 
-        File.WriteAllText(@"C:\Users\VES\Documents\Projects\RvmSharp\TestData\sceneDebug.txt", string.Join(Environment.NewLine, output));
-        File.WriteAllText(@"C:\Users\VES\Documents\Projects\RvmSharp\TestData\sceneDebug.csv", WriteCsvToString(rows));
+        File.WriteAllText(@"d:\dev\models\sceneDebug.txt", string.Join(Environment.NewLine, output));
+        File.WriteAllText(@"d:\dev\models\sceneDebug.csv", WriteCsvToString(rows));
 
         Assert.That(results, Has.Exactly(103).Items);
 
@@ -131,7 +139,7 @@ public class SceneSectorAnalyzerTests
     {
         var sb = new StringBuilder();
 
-        var properties = typeof(SectorCsvData).GetProperties();
+        var properties = typeof(T).GetProperties();
         sb.AppendLine(string.Join(';', properties.Select(x => x.Name).ToArray()));
 
         foreach (var row in rows)
