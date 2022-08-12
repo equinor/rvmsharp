@@ -20,10 +20,10 @@ public static class RvmCylinderConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        // TODO: if scale is not uniform on X,Y, we should create something else
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
+
+        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
         {
-            throw new Exception("Non uniform X,Y scale is not implemented.");
+            Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
         }
 
         var (normal, _) = rotation.DecomposeQuaternion();
@@ -31,7 +31,7 @@ public static class RvmCylinderConverter
         var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox();
 
         var height = rvmCylinder.Height * scale.Z;
-        var radius = rvmCylinder.Radius * scale.X;
+        var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y); // // Choose max as a fallback for cylinders with non-uniform x and y scale
         var halfHeight = height / 2f;
         var diameter = 2f * radius;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
