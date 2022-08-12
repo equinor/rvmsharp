@@ -182,6 +182,7 @@ public abstract record APrimitive(
                         ArcAngle: rvmRectangularTorus.Angle);
                 }
             default:
+                return null;
                 throw new InvalidOperationException();
         }
     }
