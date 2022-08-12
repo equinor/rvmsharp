@@ -96,6 +96,7 @@ public abstract record APrimitive(
                     var radius = rvmCylinder.Radius * scale.X;
                     if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
                     {
+                        return null;
                         throw new Exception("Not implemented!");
                     }
 
