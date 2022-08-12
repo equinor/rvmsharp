@@ -71,9 +71,15 @@ public abstract record APrimitive(
     // TODO: this code must be refactored, it does not belong in this namespace
     public static APrimitive? FromRvmPrimitive(
         CadRevealNode revealNode,
-        RvmNode rvmNode,
         RvmPrimitive rvmPrimitive)
     {
+        var rvmNode = revealNode.Group as RvmNode;
+        if (rvmNode == null)
+        {
+            Console.WriteLine($"The RvmGroup for Node {revealNode.NodeId} was null. Returning null.");
+            return null;
+        }
+
         PrimitiveCounter.pc++;
         var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
         (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
@@ -92,6 +98,7 @@ public abstract record APrimitive(
                     {
                         throw new Exception("Not implemented!");
                     }
+
                     return new ClosedCylinder
                     (
                         commonPrimitiveProperties,
