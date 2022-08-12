@@ -36,7 +36,7 @@ public static class SceneCreator
         public long DownloadSize { get; init; }
     }
 
-    public static void ExportHierarchyDatabase(string databasePath, CadRevealNode[] allNodes)
+    public static void ExportHierarchyDatabase(string databasePath, IReadOnlyList<CadRevealNode> allNodes)
     {
         var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 

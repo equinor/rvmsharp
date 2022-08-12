@@ -23,6 +23,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealObjProvider", "Cad
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealObjProvider.Tests", "CadRevealObjProvider.Tests\CadRevealObjProvider.Tests.csproj", "{D43D094C-F4C2-4E86-902E-F6400B492127}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealRvmProvider", "CadRevealRvmProvider\CadRevealRvmProvider.csproj", "{539882B9-8650-45F0-9BC9-3E7E7D335285}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealRvmProvider.Tests", "CadRevealRvmProvider.Tests\CadRevealRvmProvider.Tests.csproj", "{D4E1FCCE-C216-4797-9998-463547165C24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +73,14 @@ Global
 		{D43D094C-F4C2-4E86-902E-F6400B492127}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D43D094C-F4C2-4E86-902E-F6400B492127}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D43D094C-F4C2-4E86-902E-F6400B492127}.Release|Any CPU.Build.0 = Release|Any CPU
+		{539882B9-8650-45F0-9BC9-3E7E7D335285}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{539882B9-8650-45F0-9BC9-3E7E7D335285}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{539882B9-8650-45F0-9BC9-3E7E7D335285}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{539882B9-8650-45F0-9BC9-3E7E7D335285}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D4E1FCCE-C216-4797-9998-463547165C24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D4E1FCCE-C216-4797-9998-463547165C24}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4E1FCCE-C216-4797-9998-463547165C24}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D4E1FCCE-C216-4797-9998-463547165C24}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
