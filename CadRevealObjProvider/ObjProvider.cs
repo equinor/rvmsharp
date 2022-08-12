@@ -1,0 +1,161 @@
+﻿namespace CadRevealObjProvider;
+
+using CadRevealComposer;
+using CadRevealComposer.Configuration;
+using CadRevealComposer.IdProviders;
+using CadRevealComposer.Primitives;
+using ObjLoader.Loader.Data.Elements;
+using ObjLoader.Loader.Data.VertexData;
+using ObjLoader.Loader.Loaders;
+using RvmSharp.Tessellation;
+using System.Drawing;
+using System.Numerics;
+
+public class ObjProvider
+{
+    public void ParseFiles(string[] filesToParse)
+    {
+        var objLoaderFactory = new ObjLoaderFactory();
+
+        var objLoader = objLoaderFactory.Create();
+
+        var meshes = new List<ObjMesh?>();
+        foreach (string filePath in filesToParse)
+        {
+            using var objFileStream = new FileStream(filePath, FileMode.Open);
+            var result = objLoader.Load(objFileStream);
+            foreach (Group group in result.Groups)
+            {
+                var mesh = ReadMeshFromGroup(group, result);
+                if(mesh == null)
+                    continue;
+                meshes.Add(mesh);
+            }
+        }
+
+        // TODO: Create CadRevealNodes for each mesh/group
+
+        var nodeIdGenerator = new SequentialIdGenerator();
+        var treeIndexGenerator = new TreeIndexGenerator();
+
+        var nodes = new List<CadRevealNode>();
+        foreach (ObjMesh? meshGroup in meshes)
+        {
+            var treeIndex = treeIndexGenerator.GetNextId();
+            nodes.Add(new CadRevealNode()
+            {
+                BoundingBoxAxisAligned = meshGroup.CalculateBoundingBox(),
+                Children = null,
+                Group = null,
+                NodeId = nodeIdGenerator.GetNextId(),
+                TreeIndex = treeIndex,
+                Parent = null,
+                Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
+            });
+        }
+
+
+        CadRevealComposerRunner.ProcessNodes(
+            nodes.ToArray(),
+            new DirectoryInfo(@"C:\Users\nhals\GitRepos\CogniteReveal\examples\public\primitives"),
+            new ModelParameters(new ProjectId(0), new ModelId(0), new RevisionId(0), new InstancingThreshold(300)),
+            new ComposerParameters(false, false, false),
+            treeIndexGenerator);
+    }
+
+    public APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh? mesh, ulong treeIndex)
+    {
+        return new APrimitive[]
+        {
+            new TriangleMesh(new Mesh(mesh.Vertices, mesh.Normals, mesh.Triangles, 0), treeIndex,
+                Color.Magenta /* TODO: Add color support */,
+                mesh.CalculateBoundingBox())
+        };
+    }
+
+    public record ObjMesh
+    {
+        public string Name { get; init; }
+        public const int FaceSize = 3;
+        public uint[] Triangles { get; init; }
+        public Vector3[] Vertices { get; init; }
+
+        public Vector3[] Normals { get; init; }
+        // public int[] ColorIndices { get; set; }
+        // public Color[] Colors { get; set; }
+
+        public BoundingBox CalculateBoundingBox()
+        {
+            var rotatedBox = Vertices;
+            var min = rotatedBox.Aggregate(Vector3.Min);
+            var max = rotatedBox.Aggregate(Vector3.Max);
+            return new BoundingBox(Min: min, Max: max);
+        }
+    }
+
+    record VertexData(
+        Vector3 Vertex,
+        Vector3 Normal
+    );
+
+    public ObjMesh? ReadMeshFromGroup(Group group, LoadResult result)
+    {
+        var vertexIndices = new List<int>();
+        var normalIndices = new List<int>();
+
+        var index = 0u;
+        var vertexData = new List<VertexData>();
+        var triangles = new List<uint>();
+        foreach (Face groupFace in group.Faces)
+        {
+            Vector3? generatedNormal = null;
+            if (groupFace[0].NormalIndex == 0)
+            {
+                // Calculate/Generate normal for face
+                var p1 = ToVector3(result.Vertices[groupFace[0].VertexIndex-1]);
+                var p2 = ToVector3(result.Vertices[groupFace[1].VertexIndex-1]);
+                var p3 = ToVector3(result.Vertices[groupFace[2].VertexIndex-1]);
+
+                // Calculate normals =
+                var u = p2 - p1;
+                var v = p3 - p1;
+
+                generatedNormal = Vector3.Cross(u, v);
+                generatedNormal = Vector3.Normalize(generatedNormal.Value);
+            }
+
+
+            var i1 = groupFace[0];
+            vertexData.Add(new VertexData(ToVector3(result.Vertices[i1.VertexIndex -1]),  generatedNormal ?? ToVector3(result.Normals[i1.NormalIndex -1])));
+            triangles.Add(index++);
+            var i2 = groupFace[1];
+            vertexData.Add(new VertexData(ToVector3(result.Vertices[i2.VertexIndex -1]),   generatedNormal ?? ToVector3(result.Normals[i2.NormalIndex -1])));
+            triangles.Add(index++);
+            var i3 = groupFace[2];
+            vertexData.Add(new VertexData(ToVector3(result.Vertices[i3.VertexIndex -1]),  generatedNormal ?? ToVector3(result.Normals[i3.NormalIndex -1])));
+            triangles.Add(index++);
+        }
+
+
+        var mesh = new ObjMesh()
+        {
+            Name = group.Name,
+            Normals = vertexData.Select(x => x.Normal).ToArray(),
+            Vertices = vertexData.Select(x => x.Vertex).ToArray(),
+            Triangles = triangles.ToArray()
+        };
+
+        if (mesh.Vertices.Length == 0)
+            return null;
+        return mesh;
+    }
+
+    private Vector3 ToVector3(Vertex x)
+    {
+        return new Vector3(x.X, x.Y, x.Z);
+    }
+    private Vector3 ToVector3(Normal x)
+    {
+        return new Vector3(x.X, x.Y, x.Z);
+    }
+}
