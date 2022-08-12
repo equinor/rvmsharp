@@ -95,8 +95,7 @@ public abstract record APrimitive(
                     var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y); // Choose max as a fallback for cylinders with non-uniform x and y scale
                     if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
                     {
-                        Console.WriteLine("Removing cylinder with non-uniform X and Y scale: Not supported");
-                        return null;
+                        Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
                     }
 
                     return new ClosedCylinder

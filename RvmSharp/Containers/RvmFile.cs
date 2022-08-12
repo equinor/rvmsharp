@@ -43,7 +43,9 @@ public class RvmFile
     {
         //if (attributes.Count != groups.Count)
         //    Console.Error.WriteLine("Length of attribute nodes does not match group length");
-        var rvmNodeNameLookup = groups.ToDictionary(x => x.Name, y => y);
+        var rvmNodeNameLookup = groups
+            .Where(x => !string.IsNullOrEmpty(x.Name)) // Ignoring nodes with no name
+            .ToDictionary(x => x.Name, y => y);
 
         foreach (var attributeNode in attributeNodes)
         {

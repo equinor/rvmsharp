@@ -155,9 +155,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
-
-
-
+        
         var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
 
         Console.WriteLine("Start tessellate");
