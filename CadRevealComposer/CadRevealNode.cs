@@ -1,14 +1,13 @@
 namespace CadRevealComposer;
 
 using Primitives;
-using RvmSharp.Containers;
-using RvmSharp.Primitives;
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 public record BoundingBox(Vector3 Min, Vector3 Max)
 {
-    /// RvmBoundingBox
+    /// <summary>
     /// Calculate the diagonal size (distance between "min" and "max")
     /// </summary>
     public float Diagonal => Vector3.Distance(Min, Max);
@@ -21,6 +20,7 @@ public record BoundingBox(Vector3 Min, Vector3 Max)
 
     /// <summary>
     /// Helper method to calculate the Extent of the bounding box.
+    /// Extents gives the size in X, Y, and Z dimensions.
     /// Can be used together with <see cref="Center"/>
     /// </summary>
     public Vector3 Extents => (Max - Min);
@@ -38,12 +38,12 @@ public record BoundingBox(Vector3 Min, Vector3 Max)
 
 public class CadRevealNode
 {
-    public ulong NodeId;
-
     public ulong TreeIndex;
+    public string? Name { get; init; }
 
     // TODO support Store, Model, File and maybe not RVM
-    public RvmGroup? Group; // PDMS inside, children inside
+    // public RvmGroup? Group; // PDMS inside, children inside
+    public Dictionary<string, string> Attributes = new Dictionary<string, string>();
     public CadRevealNode? Parent;
     public CadRevealNode[]? Children;
 
@@ -61,4 +61,5 @@ public class CadRevealNode
     /// This optional value is exported to the Hierarchy database and can be used for any debug info for the 3D model.
     /// </summary>
     public string? OptionalDiagnosticInfo;
+
 }

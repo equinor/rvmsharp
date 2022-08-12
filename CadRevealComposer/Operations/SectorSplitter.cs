@@ -2,7 +2,6 @@ namespace CadRevealComposer.Operations;
 
 using IdProviders;
 using Primitives;
-using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;

@@ -1,12 +1,10 @@
 namespace CadRevealComposer;
 
-using Ben.Collections.Specialized;
 using Configuration;
 using IdProviders;
+using ModelFormatProvider;
 using Operations;
 using Primitives;
-using RvmSharp.BatchUtils;
-using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System;
@@ -17,59 +15,32 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Utils;
 
 public static class CadRevealComposerRunner
 {
     public static void Process(
-        DirectoryInfo inputRvmFolderPath,
+        DirectoryInfo inputFolderPath,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
-        ComposerParameters composerParameters)
+        ComposerParameters composerParameters,
+        IReadOnlyList<IModelFormatProvider> modelFormatProviders)
     {
-        var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
-
-        Console.WriteLine("Reading RvmData");
-        var rvmTimer = Stopwatch.StartNew();
-
-        var teamCityReadRvmFilesLogBlock = new TeamCityLogBlock("Reading Rvm Files");
-        var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+        List<CadRevealNode> nodesToProcess = new List<CadRevealNode>();
+        var treeIndexGenerator = new TreeIndexGenerator();
+        foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
-            Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
-        });
+            var timer = Stopwatch.StartNew();
+            IReadOnlyList<CadRevealNode> cadRevealNodes =
+                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator);
+            nodesToProcess.AddRange(cadRevealNodes);
+            Console.WriteLine(
+                $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
+        }
 
-        var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
-        var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
-        teamCityReadRvmFilesLogBlock.CloseBlock();
-        Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
-
-        ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
+        ProcessNodes(nodesToProcess, outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
     }
 
-    public static void ProcessRvmStore(
-        RvmStore rvmStore,
-        DirectoryInfo outputDirectory,
-        ModelParameters modelParameters,
-        ComposerParameters composerParameters)
-    {
-        TreeIndexGenerator treeIndexGenerator = new();
-        NodeIdProvider nodeIdGenerator = new();
-
-        Console.WriteLine("Generating i3d");
-
-        var total = Stopwatch.StartNew();
-        var stopwatch = Stopwatch.StartNew();
-        var allNodes =
-            RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
-        Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
-        stopwatch.Restart();
-
-        ProcessNodes(allNodes, outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
-    }
-
-    public static void ProcessNodes(CadRevealNode[] allNodes, DirectoryInfo outputDirectory,
+    public static void ProcessNodes(IReadOnlyList<CadRevealNode> allNodes, DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters, TreeIndexGenerator treeIndexGenerator)
     {
@@ -89,7 +60,8 @@ public static class CadRevealComposerRunner
         var stopwatch = Stopwatch.StartNew();
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
-            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
+                p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
             .Cast<RvmFacetGroup>()
             .ToArray();
 
@@ -111,38 +83,10 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-        var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
-        // We have models where several pyramids on the same "part" are completely identical.
-        var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
-        if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
-        {
-            var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
-            Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
-        }
-        RvmPyramidInstancer.Result[] pyramidInstancingResult;
-        if (composerParameters.NoInstancing)
-        {
-            pyramidInstancingResult = uniqueProtoMeshesFromPyramid
-                .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
-                .OfType<RvmPyramidInstancer.Result>()
-                .ToArray();
-            Console.WriteLine("Pyramid instancing disabled.");
-        }
-        else
-        {
-            pyramidInstancingResult = RvmPyramidInstancer.Process(
-                uniqueProtoMeshesFromPyramid,
-                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
-            Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
-
-
-
         Console.WriteLine("Start tessellate");
         var meshes = TessellateAndOutputInstanceMeshes(
-            facetGroupInstancingResult,
-            pyramidInstancingResult);
+            facetGroupInstancingResult
+        );
 
         var geometriesIncludingMeshes = geometries
             .Where(g => g is not ProtoMesh)
@@ -223,21 +167,18 @@ public static class CadRevealComposerRunner
         return sectorInfo;
     }
 
-    private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
+    private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
+        IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
     {
         foreach (var sector in sectors)
         {
             var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-            yield return sector with
-            {
-                DownloadSize = new FileInfo(filepath).Length
-            };
+            yield return sector with { DownloadSize = new FileInfo(filepath).Length };
         }
     }
 
     private static APrimitive[] TessellateAndOutputInstanceMeshes(
-        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
-        RvmPyramidInstancer.Result[] pyramidInstancingResult)
+        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult)
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
@@ -251,32 +192,23 @@ public static class CadRevealComposerRunner
             .Cast<ProtoMesh>()
             .ToArray();
 
-        var pyramidsNotInstanced = pyramidInstancingResult
-            .OfType<RvmPyramidInstancer.NotInstancedResult>()
-            .Select(result => result.Pyramid)
-            .Cast<ProtoMesh>()
-            .ToArray();
 
         var facetGroupInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
-            .ToArray();
-
-        var pyramidsInstanced = pyramidInstancingResult
-            .OfType<RvmPyramidInstancer.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)x.Pyramid, x.Transform))
+            .GroupBy(result => (RvmPrimitive)result.Template,
+                x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
             .ToArray();
 
         // tessellate instanced geometries
         var stopwatch = Stopwatch.StartNew();
         var meshes = facetGroupInstanced
-            .Concat(pyramidsInstanced)
             .AsParallel()
             .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key)))
             .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
-        Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
+        Console.WriteLine(
+            $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
 
         var instancedMeshes = meshes
             .SelectMany((group, index) => group.InstanceGroup.Select(item => new InstancedMesh(
@@ -291,7 +223,6 @@ public static class CadRevealComposerRunner
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
         var triangleMeshes = facetGroupsNotInstanced
-            .Concat(pyramidsNotInstanced)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes

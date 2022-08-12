@@ -1,11 +1,7 @@
 namespace CadRevealComposer.Primitives;
 
-using Operations.Converters;
-using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
@@ -21,12 +17,6 @@ public sealed record ProtoMeshFromFacetGroup(
     ulong TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
-
-public sealed record ProtoMeshFromPyramid(
-    RvmPyramid Pyramid,
-    ulong TreeIndex,
-    Color Color,
-    BoundingBox AxisAlignedBoundingBox) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
 
 // Reveal GLTF model
 public sealed record Box(
@@ -141,46 +131,4 @@ public sealed record TriangleMesh(
     Color Color,
     BoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
-public abstract record APrimitive(ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-{
-    public static IEnumerable<APrimitive> FromRvmPrimitive(
-            CadRevealNode revealNode,
-            RvmPrimitive rvmPrimitive)
-    {
-        var rvmNode = revealNode.Group as RvmNode;
-        if (rvmNode == null)
-        {
-            Console.WriteLine($"The RvmGroup for Node {revealNode.NodeId} was invalid: {revealNode.Group?.GetType()}. Returning empty array.");
-            return Array.Empty<APrimitive>();
-        }
-
-        switch (rvmPrimitive)
-        {
-            case RvmBox rvmBox:
-                return rvmBox.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmCylinder rvmCylinder:
-                return rvmCylinder.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmEllipticalDish rvmEllipticalDish:
-                return rvmEllipticalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmFacetGroup rvmFacetGroup:
-                return rvmFacetGroup.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmLine:
-                // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
-                return Array.Empty<APrimitive>();
-            case RvmPyramid rvmPyramid:
-                return rvmPyramid.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmCircularTorus circularTorus:
-                return circularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmSphere rvmSphere:
-                return rvmSphere.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmSphericalDish rvmSphericalDish:
-                return rvmSphericalDish.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmSnout rvmSnout:
-                return rvmSnout.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            case RvmRectangularTorus rvmRectangularTorus:
-                return rvmRectangularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
-            default:
-                throw new ArgumentOutOfRangeException(nameof(rvmPrimitive), rvmPrimitive, nameof(rvmPrimitive));
-        }
-    }
-}
+public abstract record APrimitive(ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox);
