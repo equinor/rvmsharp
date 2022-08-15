@@ -7,9 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using Utils;
 
 public static class RvmFacetGroupMatcher
@@ -27,6 +25,7 @@ public static class RvmFacetGroupMatcher
 
     private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
     private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
+    private const int TemplateCleanupNumberToDiscard = 500; // Arbitrarily chosen number
 
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
@@ -192,7 +191,6 @@ public static class RvmFacetGroupMatcher
             }
 
             var vertexCount = facetGroups[0]
-                //.First()
                 .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
             var fraction = instancedCount / (float)facetGroups.Length;
             Console.WriteLine(
@@ -258,8 +256,7 @@ public static class RvmFacetGroupMatcher
         }
 
         var result = new List<Result>();
-        //var templates = new List<TemplateItem>(); // sorted high to low by explicit code
-        var templateCandidates = new TemplateItem[5001];
+        var templateCandidates = new TemplateItem[TemplateCleanupThreshold+1];  //Magic number chosen by sorcery, seems to be a reasonable size
         var iterCounter = 0L;
         var templatesCounter = 0;
         var discardedCounter = 0;
@@ -269,11 +266,8 @@ public static class RvmFacetGroupMatcher
             var matchFoundFromPreviousTemplates = false;
             var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, false, out _);
 
-            //for (var i = 0; i < templates.Count; i++)
-            
             for (var i = 0; i < templatesCounter; i++)
             {
-                //var item = templates[i];
                 iterCounter++;
                 if (!Match(templateCandidates[i].Template, bakedFacetGroup, out var transform))
                 {
@@ -293,10 +287,6 @@ public static class RvmFacetGroupMatcher
 
                     if (j != i) // swap items
                     {
-                    //var tempitem = templates[j];
-                    //templates[j] = item;
-                    //templates[i] = tempitem;
-
                         SwapItemData(templateCandidates[i], templateCandidates[j]);
                     }
 
@@ -326,7 +316,7 @@ public static class RvmFacetGroupMatcher
             
             if (templatesCounter == templateCandidates.Length)
             {
-                templatesCounter = templateCandidates.Length - 500;
+                templatesCounter = templateCandidates.Length - TemplateCleanupNumberToDiscard;
                 for (var cc = templatesCounter ; cc < templateCandidates.Length; cc++)
                 {
                     if (templateCandidates[cc] != null && templateCandidates[cc].MatchCount > 2)
@@ -344,29 +334,16 @@ public static class RvmFacetGroupMatcher
                 Console.WriteLine("NOTE: TemplateCounter maxed out, adjusting....");
             }
 
-            //templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
             templateCandidates[templatesCounter] = new TemplateItem(facetGroup, newTemplate, newTransform);
             templatesCounter++;
         };
-        //Console.WriteLine($"Total discarded: {discardedCounter}");
         foreach (var template in templateCandidates.Take(templatesCounter)) 
         {
-            //if (template == null)
-            //    break;
             Result r = template.MatchCount > 0
                 ? new TemplateResult(template.Original, template.Template, template.Transform)
                 : new NotInstancedResult(template.Original);
             result.Add(r);
         };
-        /*
-        foreach (var template in CollectionsMarshal.AsSpan(templates))
-        {
-            Result r = template.MatchCount > 0
-                ? new TemplateResult(template.Original, template.Template, template.Transform)
-                : new NotInstancedResult(template.Original);
-            result.Add(r);
-        };
-        */
         iterationCounter = iterCounter;
         
         return result;

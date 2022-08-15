@@ -63,15 +63,12 @@ public static class Workload
         async Task<RvmFile> ParseRvmFileAsync((string rvmFilename, string? txtFilename) filePair)
         {
             (string rvmFilename, string? txtFilename) = filePair;
-            //using var stream = File.OpenRead(rvmFilename);
             var bytes = await File.ReadAllBytesAsync(rvmFilename);
             using var _ms = new MemoryStream(bytes, 0, bytes.Length, false, false);
             var rvmFile = RvmParser.ReadRvm(_ms);
-            //var rvmFile = RvmParser.ReadRvm(stream);
             if (!string.IsNullOrEmpty(txtFilename))
             {
                 rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
-                //Console.WriteLine($"{txtFilename} - {stringInternPool?.Added}");
             }
             progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
             return rvmFile;
@@ -93,14 +90,6 @@ public static class Workload
             }
         );
 
-        //var rvmFiles = workload
-        //    .AsParallel()
-        //    .WithDegreeOfParallelism(40)
-        //    .WithMergeOptions(ParallelMergeOptions.NotBuffered)
-        //    .WithExecutionMode(ParallelExecutionMode.ForceParallelism)
-        //    //.AsOrdered() //- 4605360 disabled
-        //    .Select(ParseRvmFile)
-        //    .ToArray();
         if (stringInternPool != null)
         {
             Console.WriteLine(

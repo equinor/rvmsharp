@@ -109,8 +109,6 @@ public static class PdmsTextParser
                             var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
                             if (stringInternPool  != null)
                             {
-                                    //var keyInterned = stringInternPool.Intern(key);
-                                    //var valueInterned = stringInternPool.Intern(StripQuotes(value));
                                     var keyInterned = String.Intern(key.ToString());
                                     var valueInterned = String.Intern(StripQuotes(value).ToString());
 
@@ -125,9 +123,6 @@ public static class PdmsTextParser
                 }
             }
         }
-        //var distinctKeys = new List<string>();
-        //var metdataCount = CountMetadata(pdmsNodes,distinctKeys);
-        //Console.WriteLine($"{pdmsTxtFilePath} - {metdataCount} - {distinctKeys.Count}");
         return pdmsNodes;
     }
 

@@ -106,11 +106,6 @@ public static class SectorSplitter
                         .ToArray();
     }
 
-    //public static IEnumerable<ProtoSector> SplitIntoOcTree(APrimitive[] allGeometries)
-    //{
-
-    //}
-
 
     public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
     {
@@ -220,17 +215,13 @@ public static class SectorSplitter
 
             isLeaf = subVoxelNodes.Length == 0;
         }
-        //if(parentPath != null && parentPath.Length>0)
+
         var path = $"{parentPath}{sectorId}/";
         if (recursiveDepth == 0)
             path = $"{sectorId}/";
         if (isLeaf)
         {
             var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
-            if (geometries.Length == 0)
-            {
-                Console.WriteLine("OMG");
-            }
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
@@ -252,10 +243,6 @@ public static class SectorSplitter
 
                 parentPathForChildren = path;
                 parentSectorIdForChildren = sectorId;
-                if(geometries.Length==0)
-                {
-                    Console.WriteLine("OMG");
-                }
                 yield return new ProtoSector(
                     sectorId,
                     parentSectorId,
@@ -355,8 +342,6 @@ public static class SectorSplitter
 
     private static ProtoSector CreateEmptyRootSector(uint sectorId, Vector3 bbMin, Vector3 bbMax)
     {
-        //var bbMin = geometries.GetBoundingBoxMin();
-        //var bbMax = geometries.GetBoundingBoxMax();
         return new ProtoSector(
             sectorId,
             ParentSectorId: 0,
@@ -421,10 +406,6 @@ public static class SectorSplitter
             var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount) ? existingCount : 0;
             voxelKeyAndUsageCount[voxelKey] = count + 1;
         }
-        //if(voxelKeyAndUsageCount.Count>1)
-        //{
-        //    Console.WriteLine($"Multiple voxelkeys ({voxelKeyAndUsageCount.Count}");
-        //}
         // Return the voxel key where most of the node's geometries lie
         return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
     }

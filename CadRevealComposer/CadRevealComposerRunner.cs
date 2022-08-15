@@ -171,7 +171,7 @@ public static class CadRevealComposerRunner
         var sectorInfos = sectors
             .AsParallel()
             .Select(s => SerializeSector(s, outputDirectory.FullName))
-            .ToHashSet();
+            .ToArray();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -184,13 +184,6 @@ public static class CadRevealComposerRunner
             outputDirectory,
             treeIndexGenerator.CurrentMaxGeneratedIndex,
             cameraPosition);
-
-        //SceneCreator.WriteZonesSceneFiles(
-        //    sectorsWithDownloadSize,
-        //    modelParameters,
-        //    outputDirectory,
-        //    treeIndexGenerator.CurrentMaxGeneratedIndex,
-        //    cameraPosition);
 
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -257,7 +250,7 @@ public static class CadRevealComposerRunner
             .OfType<RvmFacetGroupMatcher.NotInstancedResult>()
             .Select(result => ((RvmFacetGroupWithProtoMesh)result.FacetGroup).ProtoMesh)
             .Cast<ProtoMesh>()
-            .ToArray(); 
+            .ToArray();
 
         var pyramidsNotInstanced = pyramidInstancingResult
             .OfType<RvmPyramidInstancer.NotInstancedResult>()
@@ -299,39 +292,6 @@ public static class CadRevealComposerRunner
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
 
-        //var triangleMeshes = facetGroupsNotInstanced
-        //    .Concat(pyramidsNotInstanced)
-        //    .AsParallel()
-        //    .Select(TessellateAndCreateTriangleMesh)
-        //    .OfType<TriangleMesh>()// ignore empty meshes
-        //    .ToHashSet();
-
-        //var someMeshes = facetGroupsNotInstanced
-        //    .Concat(pyramidsNotInstanced);
-
-/*      
-        var triangleMeshes = new List<TriangleMesh>();
-        var options = new ParallelOptions { MaxDegreeOfParallelism = 16 };
-        var result = Parallel.ForEach(facetGroupsNotInstanced , options, mesh => {
-            var t = TessellateAndCreateTriangleMesh(mesh);
-            if (t != null)
-            {
-                triangleMeshes.Add(t);
-            }
-         });
-        var result2 = Parallel.ForEach(pyramidsNotInstanced, options, mesh => {
-            var t = TessellateAndCreateTriangleMesh(mesh);
-            if (t != null)
-            {
-                triangleMeshes.Add(t);
-            }
-        });
-
-        Console.WriteLine($"Tessellated {triangleMeshes.Count:N0} triangle meshes in {stopwatch.Elapsed}");
-  */      
-
-
-        //.AsParallel();
         
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
@@ -358,22 +318,6 @@ public static class CadRevealComposerRunner
         {
             mesh = Mesh.Empty;
         }
-
-        //if (mesh.Vertices.Length == 0)
-        //{
-        //    if (primitive is RvmFacetGroup f)
-        //    {
-        //        Console.WriteLine($"WARNING: Could not tessellate facet group! Polygon count: {f.Polygons.Length}");
-        //    }
-        //    else if (primitive is RvmPyramid)
-        //    {
-        //        Console.WriteLine("WARNING: Could not tessellate pyramid!");
-        //    }
-        //    else
-        //    {
-        //        throw new NotImplementedException();
-        //    }
-        //}
 
         return mesh;
     }

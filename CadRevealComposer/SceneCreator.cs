@@ -57,10 +57,7 @@ public static class SceneCreator
             var isEmptyNode = (sector.Geometries == null || !sector.Geometries.Any());
             if (!isRootNode && (sector.Geometries==null || !sector.Geometries.Any()) )    //This should not happen any more?
             {
-                Console.WriteLine($"WARNING! Sector {sector.SectorId} contains Zero geometries. This MAY cause issues in Reveal. WARNING!: {sector}");
                 isEmptyNode = true;
-                //throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
-
             }
 
             // TODO: Check if this may be the correct way to handle min and max diagonal values.

@@ -29,12 +29,10 @@ public static class RvmPyramidInstancer
     {
         var templateLibrary = new List<TemplateInfo>();
 
-        //foreach (var protoPyramid in protoPyramids)
         for (int i = 0; i < protoPyramids.Length; i++)
         {
             var rvmPyramid = protoPyramids[i].Pyramid;
             var matchFound = false;
-            //foreach (var template in templateLibrary)
             for(int iLib=0; iLib < templateLibrary.Count;iLib++)
             {
                 var template = templateLibrary[iLib];
@@ -61,7 +59,6 @@ public static class RvmPyramidInstancer
         }
 
         var result = new List<Result>(protoPyramids.Length);
-        //foreach (var template in templateLibrary)
         for(int i=0;i<templateLibrary.Count;i++)
         {
             var template = templateLibrary[i];

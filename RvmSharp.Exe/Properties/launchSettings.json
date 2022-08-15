@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RvmSharp.Exe": {
+      "commandName": "Project",
+      "commandLineArgs": "-i \"D:\\dev\\repos\\models\\GDR-PRO-BRE\" -o \"D:\\dev\\repos\\models\\output\\gdr-pro-bre\""
+    }
+  }
+}
