@@ -256,7 +256,7 @@ public static class RvmFacetGroupMatcher
         }
 
         var result = new List<Result>();
-        var templateCandidates = new TemplateItem[TemplateCleanupThreshold+1];  //Magic number chosen by sorcery, seems to be a reasonable size
+        TemplateItem[] templateCandidates = new TemplateItem[TemplateCleanupThreshold+1];  //Magic number chosen by sorcery, seems to be a reasonable size
         var iterCounter = 0L;
         var templatesCounter = 0;
         var discardedCounter = 0;
@@ -269,6 +269,7 @@ public static class RvmFacetGroupMatcher
             for (var i = 0; i < templatesCounter; i++)
             {
                 iterCounter++;
+
                 if (!Match(templateCandidates[i].Template, bakedFacetGroup, out var transform))
                 {
                     continue;
@@ -328,7 +329,7 @@ public static class RvmFacetGroupMatcher
                         result.Add(new NotInstancedResult(templateCandidates[cc].Original));
                         discardedCounter++;
 
-                        templateCandidates[cc] = null;  // Clearing out the last templates
+                        templateCandidates[cc] = null!;  // Clearing out the last templates
                     }
                 }
                 Console.WriteLine("NOTE: TemplateCounter maxed out, adjusting....");

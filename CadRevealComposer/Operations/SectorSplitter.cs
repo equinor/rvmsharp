@@ -255,8 +255,8 @@ public static class SectorSplitter
             }
 
             // Testing more splitting...
-            ImmutableList<IGrouping<int, Node>> voxels = null;
-            ImmutableList<IGrouping<int, Node>> voxels2 = null;
+            ImmutableList<IGrouping<int, Node>> voxels = null!;
+            ImmutableList<IGrouping<int, Node>> voxels2 = null!;
             if (recursiveDepth == 0)
             {
                 var part1 = subVoxelNodes.Where(n => n.BoundingBoxMax.X < bbMidPoint.X).ToArray();
@@ -293,7 +293,7 @@ public static class SectorSplitter
                     var sectors = SplitIntoSectorsRecursive(
                         voxelGroup.ToArray(),
                         recursiveDepth + 1,
-                        parentPathForChildren,
+                        parentPathForChildren!,
                         parentSectorIdForChildren,
                         sectorIdGenerator);
                     foreach (var sector in sectors)
@@ -314,7 +314,7 @@ public static class SectorSplitter
                 var sectors = SplitIntoSectorsRecursive(
                     voxelGroup.ToArray(),
                     recursiveDepth + 1,
-                    parentPathForChildren,
+                    parentPathForChildren!,
                     parentSectorIdForChildren,
                     sectorIdGenerator);
                 foreach (var sector in sectors)
@@ -347,7 +347,7 @@ public static class SectorSplitter
             ParentSectorId: 0,
             StartDepth,
             $"{sectorId}/",
-            null,
+            null!,
             bbMin,
             bbMax
         );

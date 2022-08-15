@@ -65,8 +65,8 @@ public static class SceneCreator
             float minDiagonalLength = 0;
             if (!isEmptyNode)
             {
-                maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
-                minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
+                maxDiagonalLength = sector.Geometries!.Max(x => x.AxisAlignedBoundingBox.Diagonal);
+                minDiagonalLength = sector.Geometries!.Min(x => x.AxisAlignedBoundingBox.Diagonal);
             }
 
             return new Sector
