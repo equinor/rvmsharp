@@ -155,7 +155,7 @@ public static class ExteriorSplitter
         var exteriorNodeSet = CreateRays(bbMin, bbMax)
             .AsParallel()
             .SelectMany(TraceRay)
-            .ToArray();
+            .ToHashSet();
 
         var exterior = exteriorNodeSet
             .SelectMany(n => n.Primitives.Select(p => p.OriginalPrimitive))
