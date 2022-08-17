@@ -64,7 +64,7 @@ Invoke from IDE
 
 Invoke from CLI
 ```cli
-dotnet run -c Release --project "C:\Equinor\rvmsharp\CadRevealComposer.exe" -i "C:\Equinor\huldra\rvm" -o "C:\Equinor\reveal\examples\public\primitives" --ProjectId 10000 --ModelId 1 --RevisionId 0
+dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.exe" -i $AFolderWithRvmAndTxtFiles -o $OutputDirectory --ProjectId 1 --ModelId 1 --RevisionId 1
 ```
 
 ## Example Data
