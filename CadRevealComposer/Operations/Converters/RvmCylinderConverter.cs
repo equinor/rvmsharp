@@ -30,10 +30,29 @@ public static class RvmCylinderConverter
 
         var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox();
 
-        var height = rvmCylinder.Height * scale.Z;
-        var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y); // // Choose max as a fallback for cylinders with non-uniform x and y scale
-        var halfHeight = height / 2f;
+        /*
+        * One case of non-uniform XY-scale on a cylinder on JSB (JS P2) was throwing an exception. Since this was the only case,
+        * it was assumed that this was an error in incoming data.
+        *
+        * To fix this specific case the largest from X and Y is chosen as the scale. Other cases with non-uniform scales should still throw an exception.
+        *
+        * https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/72816/
+        */
+        var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y);
+
+        if (scale.X != 0 && scale.Y == 0)
+        {
+            Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
+        }
+        else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
+        {
+            throw new Exception("Cylinders with non-uniform scale is not implemented!");
+        }
+
         var diameter = 2f * radius;
+        var height = rvmCylinder.Height * scale.Z;
+        var halfHeight = height / 2f;
+
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         var normalA = normal;
