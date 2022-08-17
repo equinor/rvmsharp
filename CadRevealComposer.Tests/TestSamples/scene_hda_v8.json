@@ -1,0 +1,4729 @@
+{
+  "version": 8,
+  "projectId": 10000,
+  "modelId": 1,
+  "revisionId": 2,
+  "subRevisionId": -1,
+  "maxTreeIndex": 327510,
+  "unit": "Meters",
+  "sectors": [
+    {
+      "id": 0,
+      "parentId": -1,
+      "path": "0",
+      "depth": 1,
+      "boundingBox": {
+        "min": {
+          "x": -0.05000000074505806,
+          "y": -0.05000000074505806,
+          "z": -125.13714599609375
+        },
+        "max": {
+          "x": 291.99700927734375,
+          "y": 336.97711181640625,
+          "z": 83.74740600585938
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_0.i3d",
+        "downloadSize": 702126,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_1.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 2.5,
+        "facesCount": 2442,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_0.f3d",
+        "downloadSize": 75726
+      },
+      "estimatedTriangleCount": 110693,
+      "estimatedDrawCallCount": 322
+    },
+    {
+      "id": 1,
+      "parentId": 0,
+      "path": "0/1",
+      "depth": 2,
+      "boundingBox": {
+        "min": {
+          "x": -36.5111083984375,
+          "y": 167.55105590820312,
+          "z": -82.74419403076172
+        },
+        "max": {
+          "x": 242.67239379882812,
+          "y": 416.7546691894531,
+          "z": 159.56640625
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_1.i3d",
+        "downloadSize": 1128472,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_2.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 2.5,
+        "facesCount": 2411,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_1.f3d",
+        "downloadSize": 135927
+      },
+      "estimatedTriangleCount": 241071,
+      "estimatedDrawCallCount": 645
+    },
+    {
+      "id": 2,
+      "parentId": 1,
+      "path": "0/1/2",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 106.0999984741211,
+          "y": 292.1550598144531,
+          "z": 38.41227722167969
+        },
+        "max": {
+          "x": 141.56100463867188,
+          "y": 313.4020080566406,
+          "z": 56.729881286621094
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_2.i3d",
+        "downloadSize": 712979,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_3.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.3663520812988281,
+        "facesCount": 23873,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_2.f3d",
+        "downloadSize": 278589
+      },
+      "estimatedTriangleCount": 156995,
+      "estimatedDrawCallCount": 521
+    },
+    {
+      "id": 3,
+      "parentId": 2,
+      "path": "0/1/2/3",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 125.92350769042969,
+          "y": 303.5565185546875,
+          "z": 47.58749771118164
+        },
+        "max": {
+          "x": 130.6237030029297,
+          "y": 310.49072265625,
+          "z": 56.729881286621094
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_3.i3d",
+        "downloadSize": 18367,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_4.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 877,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_3.f3d",
+        "downloadSize": 13905
+      },
+      "estimatedTriangleCount": 6198,
+      "estimatedDrawCallCount": 11
+    },
+    {
+      "id": 4,
+      "parentId": 2,
+      "path": "0/1/2/4",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 124.00856018066406,
+          "y": 302.8650207519531,
+          "z": 38.42300033569336
+        },
+        "max": {
+          "x": 130.7802734375,
+          "y": 311.1778869628906,
+          "z": 47.3125
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_4.i3d",
+        "downloadSize": 59058,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_5.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.13543426990509033,
+        "facesCount": 1410,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_4.f3d",
+        "downloadSize": 20646
+      },
+      "estimatedTriangleCount": 13260,
+      "estimatedDrawCallCount": 36
+    },
+    {
+      "id": 5,
+      "parentId": 2,
+      "path": "0/1/2/5",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 123.8479995727539,
+          "y": 292.1570129394531,
+          "z": 47.57688522338867
+        },
+        "max": {
+          "x": 141.56100463867188,
+          "y": 301.1484069824219,
+          "z": 54.69940185546875
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_5.i3d",
+        "downloadSize": 228579,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_6.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.14245033264160156,
+        "facesCount": 3851,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_5.f3d",
+        "downloadSize": 59343
+      },
+      "estimatedTriangleCount": 55726,
+      "estimatedDrawCallCount": 315
+    },
+    {
+      "id": 6,
+      "parentId": 2,
+      "path": "0/1/2/6",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 123.84266662597656,
+          "y": 292.1590576171875,
+          "z": 38.415000915527344
+        },
+        "max": {
+          "x": 141.3360137939453,
+          "y": 302.64752197265625,
+          "z": 47.570499420166016
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_6.i3d",
+        "downloadSize": 687646,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_7.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.18310996890068054,
+        "facesCount": 10565,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_6.f3d",
+        "downloadSize": 164025
+      },
+      "estimatedTriangleCount": 188172,
+      "estimatedDrawCallCount": 870
+    },
+    {
+      "id": 7,
+      "parentId": 6,
+      "path": "0/1/2/6/7",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 132.73500061035156,
+          "y": 297.4100036621094,
+          "z": 42.999000549316406
+        },
+        "max": {
+          "x": 141.1009979248047,
+          "y": 301.6340026855469,
+          "z": 47.570499420166016
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_7.i3d",
+        "downloadSize": 38746,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_8.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 196,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_7.f3d",
+        "downloadSize": 9072
+      },
+      "estimatedTriangleCount": 11706,
+      "estimatedDrawCallCount": 33
+    },
+    {
+      "id": 8,
+      "parentId": 6,
+      "path": "0/1/2/6/8",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 132.76625061035156,
+          "y": 297.5147399902344,
+          "z": 38.415000915527344
+        },
+        "max": {
+          "x": 141.3360137939453,
+          "y": 301.69000244140625,
+          "z": 42.97500228881836
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_8.i3d",
+        "downloadSize": 30632,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_9.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 154,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_8.f3d",
+        "downloadSize": 5118
+      },
+      "estimatedTriangleCount": 9228,
+      "estimatedDrawCallCount": 36
+    },
+    {
+      "id": 9,
+      "parentId": 6,
+      "path": "0/1/2/6/9",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 132.66200256347656,
+          "y": 292.1880187988281,
+          "z": 42.999000549316406
+        },
+        "max": {
+          "x": 140.73800659179688,
+          "y": 297.3981018066406,
+          "z": 47.5260009765625
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_9.i3d",
+        "downloadSize": 53816,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_10.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 261,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_9.f3d",
+        "downloadSize": 14361
+      },
+      "estimatedTriangleCount": 17148,
+      "estimatedDrawCallCount": 60
+    },
+    {
+      "id": 10,
+      "parentId": 6,
+      "path": "0/1/2/6/10",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 132.7688751220703,
+          "y": 292.31103515625,
+          "z": 38.42499923706055
+        },
+        "max": {
+          "x": 139.9533233642578,
+          "y": 297.3981018066406,
+          "z": 42.88700485229492
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_10.i3d",
+        "downloadSize": 31542,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_11.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 149,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_10.f3d",
+        "downloadSize": 6105
+      },
+      "estimatedTriangleCount": 6798,
+      "estimatedDrawCallCount": 51
+    },
+    {
+      "id": 11,
+      "parentId": 6,
+      "path": "0/1/2/6/11",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 124.16475677490234,
+          "y": 297.4075927734375,
+          "z": 43.018001556396484
+        },
+        "max": {
+          "x": 132.5165557861328,
+          "y": 302.64752197265625,
+          "z": 47.56026840209961
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_11.i3d",
+        "downloadSize": 49155,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_12.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 295,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_11.f3d",
+        "downloadSize": 14499
+      },
+      "estimatedTriangleCount": 18444,
+      "estimatedDrawCallCount": 23
+    },
+    {
+      "id": 12,
+      "parentId": 6,
+      "path": "0/1/2/6/12",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 123.9559555053711,
+          "y": 297.4250183105469,
+          "z": 38.43693923950195
+        },
+        "max": {
+          "x": 132.07598876953125,
+          "y": 302.2480163574219,
+          "z": 42.98500061035156
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_12.i3d",
+        "downloadSize": 30498,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_13.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 122,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_12.f3d",
+        "downloadSize": 4998
+      },
+      "estimatedTriangleCount": 8600,
+      "estimatedDrawCallCount": 44
+    },
+    {
+      "id": 13,
+      "parentId": 6,
+      "path": "0/1/2/6/13",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 123.86229705810547,
+          "y": 292.1600036621094,
+          "z": 42.999000549316406
+        },
+        "max": {
+          "x": 132.48049926757812,
+          "y": 297.3738708496094,
+          "z": 47.454288482666016
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_13.i3d",
+        "downloadSize": 42745,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_14.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 163,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_13.f3d",
+        "downloadSize": 9663
+      },
+      "estimatedTriangleCount": 15094,
+      "estimatedDrawCallCount": 80
+    },
+    {
+      "id": 14,
+      "parentId": 6,
+      "path": "0/1/2/6/14",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 123.99150848388672,
+          "y": 292.45050048828125,
+          "z": 38.42499923706055
+        },
+        "max": {
+          "x": 130.8511199951172,
+          "y": 297.280029296875,
+          "z": 42.96500015258789
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_14.i3d",
+        "downloadSize": 36044,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_15.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 163,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_14.f3d",
+        "downloadSize": 8775
+      },
+      "estimatedTriangleCount": 15472,
+      "estimatedDrawCallCount": 112
+    },
+    {
+      "id": 15,
+      "parentId": 2,
+      "path": "0/1/2/15",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 121.17801666259766,
+          "y": 303.4073791503906,
+          "z": 47.59000015258789
+        },
+        "max": {
+          "x": 121.86701202392578,
+          "y": 303.9330139160156,
+          "z": 49.52499771118164
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_15.i3d",
+        "downloadSize": 2437,
+        "peripheralFiles": [
+          "mesh_16.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 71,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_15.f3d",
+        "downloadSize": 1275
+      },
+      "estimatedTriangleCount": 270,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 16,
+      "parentId": 2,
+      "path": "0/1/2/16",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 113.68781280517578,
+          "y": 302.8418273925781,
+          "z": 38.41679763793945
+        },
+        "max": {
+          "x": 123.77900695800781,
+          "y": 311.8949890136719,
+          "z": 46.73390197753906
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_16.i3d",
+        "downloadSize": 143597,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_17.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16634207963943481,
+        "facesCount": 2314,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_16.f3d",
+        "downloadSize": 39414
+      },
+      "estimatedTriangleCount": 33962,
+      "estimatedDrawCallCount": 143
+    },
+    {
+      "id": 17,
+      "parentId": 2,
+      "path": "0/1/2/17",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 111.29610443115234,
+          "y": 292.16400146484375,
+          "z": 47.57749938964844
+        },
+        "max": {
+          "x": 123.79100036621094,
+          "y": 302.0809326171875,
+          "z": 51.26499938964844
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_17.i3d",
+        "downloadSize": 90891,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_18.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 4983,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_17.f3d",
+        "downloadSize": 56931
+      },
+      "estimatedTriangleCount": 24714,
+      "estimatedDrawCallCount": 125
+    },
+    {
+      "id": 18,
+      "parentId": 2,
+      "path": "0/1/2/18",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 106.0999984741211,
+          "y": 292.1550598144531,
+          "z": 38.41227722167969
+        },
+        "max": {
+          "x": 123.82952117919922,
+          "y": 302.4612121582031,
+          "z": 47.57099914550781
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_18.i3d",
+        "downloadSize": 674459,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_19.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.18317443132400513,
+        "facesCount": 8443,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_18.f3d",
+        "downloadSize": 136575
+      },
+      "estimatedTriangleCount": 167256,
+      "estimatedDrawCallCount": 582
+    },
+    {
+      "id": 19,
+      "parentId": 18,
+      "path": "0/1/2/18/19",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 116.07499694824219,
+          "y": 297.3770751953125,
+          "z": 43.018001556396484
+        },
+        "max": {
+          "x": 123.82952117919922,
+          "y": 302.2426452636719,
+          "z": 47.57069778442383
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_19.i3d",
+        "downloadSize": 53535,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_20.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 213,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_19.f3d",
+        "downloadSize": 12681
+      },
+      "estimatedTriangleCount": 23648,
+      "estimatedDrawCallCount": 41
+    },
+    {
+      "id": 20,
+      "parentId": 18,
+      "path": "0/1/2/18/20",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 114.99400329589844,
+          "y": 297.320556640625,
+          "z": 38.435001373291016
+        },
+        "max": {
+          "x": 123.30500030517578,
+          "y": 302.25,
+          "z": 42.967002868652344
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_20.i3d",
+        "downloadSize": 39796,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_21.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 144,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_20.f3d",
+        "downloadSize": 6708
+      },
+      "estimatedTriangleCount": 14326,
+      "estimatedDrawCallCount": 91
+    },
+    {
+      "id": 21,
+      "parentId": 18,
+      "path": "0/1/2/18/21",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 115.4463119506836,
+          "y": 292.1550598144531,
+          "z": 43.000003814697266
+        },
+        "max": {
+          "x": 123.8093032836914,
+          "y": 297.2795104980469,
+          "z": 47.56399917602539
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_21.i3d",
+        "downloadSize": 546763,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_22.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 1850,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_21.f3d",
+        "downloadSize": 130830
+      },
+      "estimatedTriangleCount": 124194,
+      "estimatedDrawCallCount": 184
+    },
+    {
+      "id": 22,
+      "parentId": 18,
+      "path": "0/1/2/18/22",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 115.11300659179688,
+          "y": 292.24700927734375,
+          "z": 38.429847717285156
+        },
+        "max": {
+          "x": 123.57923889160156,
+          "y": 297.26800537109375,
+          "z": 42.900657653808594
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_22.i3d",
+        "downloadSize": 55909,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_23.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 285,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_22.f3d",
+        "downloadSize": 11673
+      },
+      "estimatedTriangleCount": 26630,
+      "estimatedDrawCallCount": 110
+    },
+    {
+      "id": 23,
+      "parentId": 18,
+      "path": "0/1/2/18/23",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 113.73181915283203,
+          "y": 297.36248779296875,
+          "z": 43.000003814697266
+        },
+        "max": {
+          "x": 114.16749572753906,
+          "y": 297.5,
+          "z": 44.179500579833984
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_23.i3d",
+        "downloadSize": 6592,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_24.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 1,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_23.f3d",
+        "downloadSize": 357
+      },
+      "estimatedTriangleCount": 160,
+      "estimatedDrawCallCount": 6
+    },
+    {
+      "id": 24,
+      "parentId": 18,
+      "path": "0/1/2/18/24",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 113.89302825927734,
+          "y": 297.4029846191406,
+          "z": 42.72100067138672
+        },
+        "max": {
+          "x": 114.38250732421875,
+          "y": 297.61602783203125,
+          "z": 42.967002868652344
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_24.i3d",
+        "downloadSize": 3152,
+        "peripheralFiles": [
+          "mesh_25.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 7,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_24.f3d",
+        "downloadSize": 195
+      },
+      "estimatedTriangleCount": 480,
+      "estimatedDrawCallCount": 1
+    },
+    {
+      "id": 25,
+      "parentId": 18,
+      "path": "0/1/2/18/25",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 110.94200897216797,
+          "y": 292.1820068359375,
+          "z": 42.993553161621094
+        },
+        "max": {
+          "x": 114.78300476074219,
+          "y": 297.302490234375,
+          "z": 46.81200408935547
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_25.i3d",
+        "downloadSize": 19517,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_26.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 105,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_25.f3d",
+        "downloadSize": 4701
+      },
+      "estimatedTriangleCount": 4692,
+      "estimatedDrawCallCount": 43
+    },
+    {
+      "id": 26,
+      "parentId": 18,
+      "path": "0/1/2/18/26",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 111.33643341064453,
+          "y": 292.7609558105469,
+          "z": 39.725685119628906
+        },
+        "max": {
+          "x": 114.92750549316406,
+          "y": 297.26446533203125,
+          "z": 42.97500228881836
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_26.i3d",
+        "downloadSize": 16734,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_27.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 96,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_26.f3d",
+        "downloadSize": 3828
+      },
+      "estimatedTriangleCount": 6360,
+      "estimatedDrawCallCount": 33
+    },
+    {
+      "id": 27,
+      "parentId": 1,
+      "path": "0/1/27",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 103.0820083618164,
+          "y": 292.15350341796875,
+          "z": 17.25580406188965
+        },
+        "max": {
+          "x": 141.15000915527344,
+          "y": 315.5205993652344,
+          "z": 38.41019821166992
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_27.i3d",
+        "downloadSize": 737583,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_28.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.4230878949165344,
+        "facesCount": 47771,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_27.f3d",
+        "downloadSize": 517023
+      },
+      "estimatedTriangleCount": 154494,
+      "estimatedDrawCallCount": 367
+    },
+    {
+      "id": 28,
+      "parentId": 27,
+      "path": "0/1/27/28",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.36499786376953,
+          "y": 303.8500061035156,
+          "z": 27.96500015258789
+        },
+        "max": {
+          "x": 128.82382202148438,
+          "y": 310.70098876953125,
+          "z": 38.31808090209961
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_28.i3d",
+        "downloadSize": 33988,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_29.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.12917648255825043,
+        "facesCount": 2375,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_28.f3d",
+        "downloadSize": 25923
+      },
+      "estimatedTriangleCount": 7432,
+      "estimatedDrawCallCount": 32
+    },
+    {
+      "id": 29,
+      "parentId": 27,
+      "path": "0/1/27/29",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.3219985961914,
+          "y": 303.91650390625,
+          "z": 24.045001983642578
+        },
+        "max": {
+          "x": 127.24415588378906,
+          "y": 310.48699951171875,
+          "z": 27.820999145507812
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_29.i3d",
+        "downloadSize": 26109,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_30.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 3087,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_29.f3d",
+        "downloadSize": 31299
+      },
+      "estimatedTriangleCount": 4428,
+      "estimatedDrawCallCount": 74
+    },
+    {
+      "id": 30,
+      "parentId": 27,
+      "path": "0/1/27/30",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.12200927734375,
+          "y": 292.15350341796875,
+          "z": 27.847002029418945
+        },
+        "max": {
+          "x": 141.125,
+          "y": 303.83502197265625,
+          "z": 38.41019821166992
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_30.i3d",
+        "downloadSize": 608292,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_31.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.21126392483711243,
+        "facesCount": 11633,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_30.f3d",
+        "downloadSize": 161781
+      },
+      "estimatedTriangleCount": 157515,
+      "estimatedDrawCallCount": 633
+    },
+    {
+      "id": 31,
+      "parentId": 30,
+      "path": "0/1/27/30/31",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 131.71629333496094,
+          "y": 298.03094482421875,
+          "z": 35.07720184326172
+        },
+        "max": {
+          "x": 141.1208038330078,
+          "y": 301.9110107421875,
+          "z": 38.3900032043457
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_31.i3d",
+        "downloadSize": 26620,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_32.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 117,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_31.f3d",
+        "downloadSize": 3729
+      },
+      "estimatedTriangleCount": 6088,
+      "estimatedDrawCallCount": 14
+    },
+    {
+      "id": 32,
+      "parentId": 30,
+      "path": "0/1/27/30/32",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 131.6409149169922,
+          "y": 292.1734924316406,
+          "z": 35.87805938720703
+        },
+        "max": {
+          "x": 141.1208038330078,
+          "y": 297.4358215332031,
+          "z": 38.41019821166992
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_32.i3d",
+        "downloadSize": 31627,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_33.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 255,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_32.f3d",
+        "downloadSize": 7419
+      },
+      "estimatedTriangleCount": 12112,
+      "estimatedDrawCallCount": 30
+    },
+    {
+      "id": 33,
+      "parentId": 30,
+      "path": "0/1/27/30/33",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 122.4343032836914,
+          "y": 298.0239562988281,
+          "z": 33.21200180053711
+        },
+        "max": {
+          "x": 131.4980010986328,
+          "y": 303.82501220703125,
+          "z": 38.35249710083008
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_33.i3d",
+        "downloadSize": 40100,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_34.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10280990600585938,
+        "facesCount": 274,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_33.f3d",
+        "downloadSize": 8142
+      },
+      "estimatedTriangleCount": 9540,
+      "estimatedDrawCallCount": 42
+    },
+    {
+      "id": 34,
+      "parentId": 30,
+      "path": "0/1/27/30/34",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 122.42264556884766,
+          "y": 298.0291748046875,
+          "z": 27.975000381469727
+        },
+        "max": {
+          "x": 130.25706481933594,
+          "y": 303.82501220703125,
+          "z": 33.12800216674805
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_34.i3d",
+        "downloadSize": 26283,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_35.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.1030600368976593,
+        "facesCount": 239,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_34.f3d",
+        "downloadSize": 7707
+      },
+      "estimatedTriangleCount": 6848,
+      "estimatedDrawCallCount": 70
+    },
+    {
+      "id": 35,
+      "parentId": 30,
+      "path": "0/1/27/30/35",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 122.12200927734375,
+          "y": 292.18499755859375,
+          "z": 33.3680534362793
+        },
+        "max": {
+          "x": 131.4990997314453,
+          "y": 297.9557189941406,
+          "z": 38.375
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_35.i3d",
+        "downloadSize": 100398,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_36.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10013893246650696,
+        "facesCount": 497,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_35.f3d",
+        "downloadSize": 18837
+      },
+      "estimatedTriangleCount": 36016,
+      "estimatedDrawCallCount": 52
+    },
+    {
+      "id": 36,
+      "parentId": 30,
+      "path": "0/1/27/30/36",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 122.46099853515625,
+          "y": 292.15350341796875,
+          "z": 27.85500144958496
+        },
+        "max": {
+          "x": 127.62600708007812,
+          "y": 297.9523010253906,
+          "z": 32.96598815917969
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_36.i3d",
+        "downloadSize": 19772,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_37.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10221973061561584,
+        "facesCount": 197,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_36.f3d",
+        "downloadSize": 8241
+      },
+      "estimatedTriangleCount": 6284,
+      "estimatedDrawCallCount": 11
+    },
+    {
+      "id": 37,
+      "parentId": 27,
+      "path": "0/1/27/37",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.1266860961914,
+          "y": 292.1999816894531,
+          "z": 20.89999771118164
+        },
+        "max": {
+          "x": 133.97654724121094,
+          "y": 303.82501220703125,
+          "z": 27.830001831054688
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_37.i3d",
+        "downloadSize": 106096,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_38.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.13860008120536804,
+        "facesCount": 7737,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_37.f3d",
+        "downloadSize": 98469
+      },
+      "estimatedTriangleCount": 31344,
+      "estimatedDrawCallCount": 155
+    },
+    {
+      "id": 38,
+      "parentId": 27,
+      "path": "0/1/27/38",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.08999633789062,
+          "y": 303.8370666503906,
+          "z": 27.83300018310547
+        },
+        "max": {
+          "x": 122.11499786376953,
+          "y": 312.77069091796875,
+          "z": 38.410003662109375
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_38.i3d",
+        "downloadSize": 740975,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_39.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.17867249250411987,
+        "facesCount": 23358,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_38.f3d",
+        "downloadSize": 395994
+      },
+      "estimatedTriangleCount": 237565,
+      "estimatedDrawCallCount": 745
+    },
+    {
+      "id": 39,
+      "parentId": 38,
+      "path": "0/1/27/38/39",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 113.0719985961914,
+          "y": 308.5569763183594,
+          "z": 33.23250198364258
+        },
+        "max": {
+          "x": 122.01435089111328,
+          "y": 311.89501953125,
+          "z": 38.37649917602539
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_39.i3d",
+        "downloadSize": 4062,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_39.f3d",
+        "downloadSize": 3564
+      },
+      "estimatedTriangleCount": 1042,
+      "estimatedDrawCallCount": 5
+    },
+    {
+      "id": 40,
+      "parentId": 38,
+      "path": "0/1/27/38/40",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.619873046875,
+          "y": 308.3226623535156,
+          "z": 27.8560791015625
+        },
+        "max": {
+          "x": 120.12734985351562,
+          "y": 311.9029846191406,
+          "z": 32.97275924682617
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_40.i3d",
+        "downloadSize": 7273,
+        "peripheralFiles": [
+          "mesh_40.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_40.f3d",
+        "downloadSize": 6612
+      },
+      "estimatedTriangleCount": 1698,
+      "estimatedDrawCallCount": 6
+    },
+    {
+      "id": 41,
+      "parentId": 38,
+      "path": "0/1/27/38/41",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 113.69340515136719,
+          "y": 303.8854064941406,
+          "z": 33.12849807739258
+        },
+        "max": {
+          "x": 122.03600311279297,
+          "y": 308.2940979003906,
+          "z": 38.36249923706055
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_41.i3d",
+        "downloadSize": 3380,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_41.f3d",
+        "downloadSize": 3084
+      },
+      "estimatedTriangleCount": 948,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 42,
+      "parentId": 38,
+      "path": "0/1/27/38/42",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.81149291992188,
+          "y": 303.914306640625,
+          "z": 27.83300018310547
+        },
+        "max": {
+          "x": 120.43170166015625,
+          "y": 308.2704772949219,
+          "z": 32.97275924682617
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_42.i3d",
+        "downloadSize": 7159,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_42.f3d",
+        "downloadSize": 7332
+      },
+      "estimatedTriangleCount": 1500,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 43,
+      "parentId": 38,
+      "path": "0/1/27/38/43",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.49749755859375,
+          "y": 308.6815185546875,
+          "z": 33.319000244140625
+        },
+        "max": {
+          "x": 112.36499786376953,
+          "y": 311.8023376464844,
+          "z": 36.73299789428711
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_43.i3d",
+        "downloadSize": 5984,
+        "peripheralFiles": [
+          "mesh_41.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_43.f3d",
+        "downloadSize": 4764
+      },
+      "estimatedTriangleCount": 1130,
+      "estimatedDrawCallCount": 5
+    },
+    {
+      "id": 44,
+      "parentId": 38,
+      "path": "0/1/27/38/44",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.08999633789062,
+          "y": 308.3482971191406,
+          "z": 27.83650016784668
+        },
+        "max": {
+          "x": 112.56200408935547,
+          "y": 311.4456787109375,
+          "z": 32.98249816894531
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_44.i3d",
+        "downloadSize": 7663,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_44.f3d",
+        "downloadSize": 8796
+      },
+      "estimatedTriangleCount": 1840,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 45,
+      "parentId": 38,
+      "path": "0/1/27/38/45",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.84249877929688,
+          "y": 304.113525390625,
+          "z": 33.28949737548828
+        },
+        "max": {
+          "x": 111.88270568847656,
+          "y": 307.40557861328125,
+          "z": 35.31435012817383
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_45.i3d",
+        "downloadSize": 3117,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_45.f3d",
+        "downloadSize": 3636
+      },
+      "estimatedTriangleCount": 672,
+      "estimatedDrawCallCount": 3
+    },
+    {
+      "id": 46,
+      "parentId": 38,
+      "path": "0/1/27/38/46",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 104.63629913330078,
+          "y": 303.8710021972656,
+          "z": 27.836000442504883
+        },
+        "max": {
+          "x": 112.47266387939453,
+          "y": 308.2662353515625,
+          "z": 33.11600112915039
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_46.i3d",
+        "downloadSize": 5419,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_46.f3d",
+        "downloadSize": 5364
+      },
+      "estimatedTriangleCount": 1186,
+      "estimatedDrawCallCount": 5
+    },
+    {
+      "id": 47,
+      "parentId": 27,
+      "path": "0/1/27/47",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.0820083618164,
+          "y": 303.8379821777344,
+          "z": 17.25580406188965
+        },
+        "max": {
+          "x": 122.00000762939453,
+          "y": 315.5205993652344,
+          "z": 27.832998275756836
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_47.i3d",
+        "downloadSize": 362424,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_42.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.21154388785362244,
+        "facesCount": 8816,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_47.f3d",
+        "downloadSize": 178284
+      },
+      "estimatedTriangleCount": 105892,
+      "estimatedDrawCallCount": 562
+    },
+    {
+      "id": 48,
+      "parentId": 27,
+      "path": "0/1/27/48",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.09259796142578,
+          "y": 292.1549377441406,
+          "z": 27.83300018310547
+        },
+        "max": {
+          "x": 122.11000061035156,
+          "y": 303.83599853515625,
+          "z": 38.41010284423828
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_48.i3d",
+        "downloadSize": 785303,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_43.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.2115420550107956,
+        "facesCount": 24233,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_48.f3d",
+        "downloadSize": 324933
+      },
+      "estimatedTriangleCount": 203450,
+      "estimatedDrawCallCount": 780
+    },
+    {
+      "id": 49,
+      "parentId": 48,
+      "path": "0/1/27/48/49",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.9290542602539,
+          "y": 298.06500244140625,
+          "z": 33.132999420166016
+        },
+        "max": {
+          "x": 122.07500457763672,
+          "y": 303.83447265625,
+          "z": 38.41010284423828
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_49.i3d",
+        "downloadSize": 91051,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_44.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10554207116365433,
+        "facesCount": 912,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_49.f3d",
+        "downloadSize": 27492
+      },
+      "estimatedTriangleCount": 28128,
+      "estimatedDrawCallCount": 158
+    },
+    {
+      "id": 50,
+      "parentId": 48,
+      "path": "0/1/27/48/50",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.67372131347656,
+          "y": 297.99761962890625,
+          "z": 27.835498809814453
+        },
+        "max": {
+          "x": 122.0881118774414,
+          "y": 303.83349609375,
+          "z": 33.11249923706055
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_50.i3d",
+        "downloadSize": 91282,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_45.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10554000735282898,
+        "facesCount": 1463,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_50.f3d",
+        "downloadSize": 47355
+      },
+      "estimatedTriangleCount": 27836,
+      "estimatedDrawCallCount": 75
+    },
+    {
+      "id": 51,
+      "parentId": 48,
+      "path": "0/1/27/48/51",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.63999938964844,
+          "y": 292.1549377441406,
+          "z": 33.183998107910156
+        },
+        "max": {
+          "x": 122.11000061035156,
+          "y": 297.9449462890625,
+          "z": 38.391502380371094
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_51.i3d",
+        "downloadSize": 113183,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_46.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10415008664131165,
+        "facesCount": 1397,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_51.f3d",
+        "downloadSize": 38193
+      },
+      "estimatedTriangleCount": 38472,
+      "estimatedDrawCallCount": 163
+    },
+    {
+      "id": 52,
+      "parentId": 48,
+      "path": "0/1/27/48/52",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.6030044555664,
+          "y": 292.1549987792969,
+          "z": 27.833208084106445
+        },
+        "max": {
+          "x": 122.0570068359375,
+          "y": 297.9950256347656,
+          "z": 32.96598815917969
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_52.i3d",
+        "downloadSize": 82965,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_47.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10265560448169708,
+        "facesCount": 1621,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_52.f3d",
+        "downloadSize": 57033
+      },
+      "estimatedTriangleCount": 28350,
+      "estimatedDrawCallCount": 56
+    },
+    {
+      "id": 53,
+      "parentId": 48,
+      "path": "0/1/27/48/53",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.12500762939453,
+          "y": 298.04400634765625,
+          "z": 33.134498596191406
+        },
+        "max": {
+          "x": 112.5199966430664,
+          "y": 303.57501220703125,
+          "z": 38.373897552490234
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_53.i3d",
+        "downloadSize": 44534,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_48.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10478797554969788,
+        "facesCount": 674,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_53.f3d",
+        "downloadSize": 21294
+      },
+      "estimatedTriangleCount": 12434,
+      "estimatedDrawCallCount": 59
+    },
+    {
+      "id": 54,
+      "parentId": 48,
+      "path": "0/1/27/48/54",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.10457611083984,
+          "y": 298.00701904296875,
+          "z": 27.83300018310547
+        },
+        "max": {
+          "x": 112.5970458984375,
+          "y": 303.83001708984375,
+          "z": 33.117000579833984
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_54.i3d",
+        "downloadSize": 115375,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_49.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10568001121282578,
+        "facesCount": 1487,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_54.f3d",
+        "downloadSize": 59211
+      },
+      "estimatedTriangleCount": 45174,
+      "estimatedDrawCallCount": 154
+    },
+    {
+      "id": 55,
+      "parentId": 48,
+      "path": "0/1/27/48/55",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.13500213623047,
+          "y": 292.1549377441406,
+          "z": 33.1414909362793
+        },
+        "max": {
+          "x": 112.59000396728516,
+          "y": 297.9699401855469,
+          "z": 37.95000076293945
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_55.i3d",
+        "downloadSize": 70941,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_50.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 1210,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_55.f3d",
+        "downloadSize": 27894
+      },
+      "estimatedTriangleCount": 17817,
+      "estimatedDrawCallCount": 59
+    },
+    {
+      "id": 56,
+      "parentId": 48,
+      "path": "0/1/27/48/56",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.09259796142578,
+          "y": 292.1549987792969,
+          "z": 27.83650016784668
+        },
+        "max": {
+          "x": 112.59947967529297,
+          "y": 297.9900207519531,
+          "z": 33.117000579833984
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_56.i3d",
+        "downloadSize": 114616,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_51.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10561000555753708,
+        "facesCount": 1632,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_56.f3d",
+        "downloadSize": 58188
+      },
+      "estimatedTriangleCount": 37616,
+      "estimatedDrawCallCount": 101
+    },
+    {
+      "id": 57,
+      "parentId": 27,
+      "path": "0/1/27/57",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.0820083618164,
+          "y": 292.1600036621094,
+          "z": 19.78775978088379
+        },
+        "max": {
+          "x": 122.10862731933594,
+          "y": 303.8330383300781,
+          "z": 27.83300018310547
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_57.i3d",
+        "downloadSize": 763276,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_52.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16090480983257294,
+        "facesCount": 25642,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_57.f3d",
+        "downloadSize": 403326
+      },
+      "estimatedTriangleCount": 230584,
+      "estimatedDrawCallCount": 744
+    },
+    {
+      "id": 58,
+      "parentId": 57,
+      "path": "0/1/27/57/58",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.59700775146484,
+          "y": 298.0140075683594,
+          "z": 23.897499084472656
+        },
+        "max": {
+          "x": 121.04331970214844,
+          "y": 303.7610168457031,
+          "z": 27.823999404907227
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_58.i3d",
+        "downloadSize": 11578,
+        "peripheralFiles": [
+          "mesh_53.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_58.f3d",
+        "downloadSize": 7500
+      },
+      "estimatedTriangleCount": 2914,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 59,
+      "parentId": 57,
+      "path": "0/1/27/57/59",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.980712890625,
+          "y": 299.0865173339844,
+          "z": 21.684999465942383
+        },
+        "max": {
+          "x": 117.69850158691406,
+          "y": 301.7235107421875,
+          "z": 23.77239227294922
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_59.i3d",
+        "downloadSize": 2056,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_59.f3d",
+        "downloadSize": 1788
+      },
+      "estimatedTriangleCount": 836,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 60,
+      "parentId": 57,
+      "path": "0/1/27/57/60",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.59847259521484,
+          "y": 292.1619873046875,
+          "z": 23.819000244140625
+        },
+        "max": {
+          "x": 122.05999755859375,
+          "y": 297.9320068359375,
+          "z": 27.829999923706055
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_60.i3d",
+        "downloadSize": 18884,
+        "peripheralFiles": [
+          "mesh_54.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 4,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_60.f3d",
+        "downloadSize": 14160
+      },
+      "estimatedTriangleCount": 5222,
+      "estimatedDrawCallCount": 5
+    },
+    {
+      "id": 61,
+      "parentId": 57,
+      "path": "0/1/27/57/61",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.72000122070312,
+          "y": 292.33551025390625,
+          "z": 21.69099998474121
+        },
+        "max": {
+          "x": 119.91500091552734,
+          "y": 296.5247802734375,
+          "z": 23.779499053955078
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_61.i3d",
+        "downloadSize": 15498,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_55.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_61.f3d",
+        "downloadSize": 4788
+      },
+      "estimatedTriangleCount": 3228,
+      "estimatedDrawCallCount": 16
+    },
+    {
+      "id": 62,
+      "parentId": 57,
+      "path": "0/1/27/57/62",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.0820083618164,
+          "y": 298.00299072265625,
+          "z": 23.877222061157227
+        },
+        "max": {
+          "x": 112.47200012207031,
+          "y": 303.7352600097656,
+          "z": 27.83099937438965
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_62.i3d",
+        "downloadSize": 29388,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_56.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 1,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_62.f3d",
+        "downloadSize": 17709
+      },
+      "estimatedTriangleCount": 7348,
+      "estimatedDrawCallCount": 21
+    },
+    {
+      "id": 63,
+      "parentId": 57,
+      "path": "0/1/27/57/63",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 104.4520034790039,
+          "y": 299.9800109863281,
+          "z": 19.80002212524414
+        },
+        "max": {
+          "x": 108.26399993896484,
+          "y": 303.28350830078125,
+          "z": 23.7135009765625
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_63.i3d",
+        "downloadSize": 1067,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_63.f3d",
+        "downloadSize": 1092
+      },
+      "estimatedTriangleCount": 216,
+      "estimatedDrawCallCount": 3
+    },
+    {
+      "id": 64,
+      "parentId": 57,
+      "path": "0/1/27/57/64",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.08375549316406,
+          "y": 292.2029724121094,
+          "z": 24.03999900817871
+        },
+        "max": {
+          "x": 112.4155044555664,
+          "y": 297.98834228515625,
+          "z": 27.83099937438965
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_64.i3d",
+        "downloadSize": 23711,
+        "peripheralFiles": [
+          "mesh_57.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_64.f3d",
+        "downloadSize": 21756
+      },
+      "estimatedTriangleCount": 8944,
+      "estimatedDrawCallCount": 5
+    },
+    {
+      "id": 65,
+      "parentId": 57,
+      "path": "0/1/27/57/65",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 104.99024963378906,
+          "y": 296.1511535644531,
+          "z": 22.671607971191406
+        },
+        "max": {
+          "x": 105.30975341796875,
+          "y": 296.4584045410156,
+          "z": 23.7135009765625
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_65.i3d",
+        "downloadSize": 688,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 0,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_65.f3d",
+        "downloadSize": 684
+      },
+      "estimatedTriangleCount": 108,
+      "estimatedDrawCallCount": 2
+    },
+    {
+      "id": 66,
+      "parentId": 1,
+      "path": "0/1/66",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 103.9315414428711,
+          "y": 267.5510559082031,
+          "z": 38.412200927734375
+        },
+        "max": {
+          "x": 141.52999877929688,
+          "y": 292.1514892578125,
+          "z": 59.566402435302734
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_66.i3d",
+        "downloadSize": 782115,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_58.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.423084020614624,
+        "facesCount": 13202,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_66.f3d",
+        "downloadSize": 200310
+      },
+      "estimatedTriangleCount": 173406,
+      "estimatedDrawCallCount": 1066
+    },
+    {
+      "id": 67,
+      "parentId": 66,
+      "path": "0/1/66/67",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.84850311279297,
+          "y": 280.0559997558594,
+          "z": 49.086761474609375
+        },
+        "max": {
+          "x": 141.52999877929688,
+          "y": 292.1283264160156,
+          "z": 55.50116729736328
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_67.i3d",
+        "downloadSize": 12480,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_59.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.1282881200313568,
+        "facesCount": 51,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_67.f3d",
+        "downloadSize": 2223
+      },
+      "estimatedTriangleCount": 1358,
+      "estimatedDrawCallCount": 12
+    },
+    {
+      "id": 68,
+      "parentId": 66,
+      "path": "0/1/66/68",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.78650665283203,
+          "y": 280.2715148925781,
+          "z": 38.42910385131836
+        },
+        "max": {
+          "x": 141.3280029296875,
+          "y": 292.0680236816406,
+          "z": 48.63999938964844
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_68.i3d",
+        "downloadSize": 210882,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_60.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.20421791076660156,
+        "facesCount": 351,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_68.f3d",
+        "downloadSize": 30387
+      },
+      "estimatedTriangleCount": 72270,
+      "estimatedDrawCallCount": 298
+    },
+    {
+      "id": 69,
+      "parentId": 66,
+      "path": "0/1/66/69",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 124.94200897216797,
+          "y": 267.5510559082031,
+          "z": 49.5328483581543
+        },
+        "max": {
+          "x": 134.703125,
+          "y": 279.51025390625,
+          "z": 59.16909408569336
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_69.i3d",
+        "downloadSize": 48833,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_61.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.19272491335868835,
+        "facesCount": 27,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_69.f3d",
+        "downloadSize": 16575
+      },
+      "estimatedTriangleCount": 8888,
+      "estimatedDrawCallCount": 50
+    },
+    {
+      "id": 70,
+      "parentId": 66,
+      "path": "0/1/66/70",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 123.34178161621094,
+          "y": 271.3732604980469,
+          "z": 38.90681838989258
+        },
+        "max": {
+          "x": 130.3918914794922,
+          "y": 279.72210693359375,
+          "z": 48.0180778503418
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_70.i3d",
+        "downloadSize": 41485,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_62.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.14100219309329987,
+        "facesCount": 81,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_70.f3d",
+        "downloadSize": 13989
+      },
+      "estimatedTriangleCount": 7112,
+      "estimatedDrawCallCount": 23
+    },
+    {
+      "id": 71,
+      "parentId": 66,
+      "path": "0/1/66/71",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 111.35800170898438,
+          "y": 289.968994140625,
+          "z": 49.32350158691406
+        },
+        "max": {
+          "x": 121.61500549316406,
+          "y": 292.1514892578125,
+          "z": 51.44000244140625
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_71.i3d",
+        "downloadSize": 11258,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_63.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 77,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_71.f3d",
+        "downloadSize": 2865
+      },
+      "estimatedTriangleCount": 3090,
+      "estimatedDrawCallCount": 11
+    },
+    {
+      "id": 72,
+      "parentId": 66,
+      "path": "0/1/66/72",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 106.0999984741211,
+          "y": 280.83721923828125,
+          "z": 38.412200927734375
+        },
+        "max": {
+          "x": 122.72599792480469,
+          "y": 292.1490173339844,
+          "z": 48.897003173828125
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_72.i3d",
+        "downloadSize": 268728,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_64.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.20969603955745697,
+        "facesCount": 296,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_72.f3d",
+        "downloadSize": 47652
+      },
+      "estimatedTriangleCount": 80388,
+      "estimatedDrawCallCount": 311
+    },
+    {
+      "id": 73,
+      "parentId": 66,
+      "path": "0/1/66/73",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 113.08999633789062,
+          "y": 277.625,
+          "z": 48.31399917602539
+        },
+        "max": {
+          "x": 113.19000244140625,
+          "y": 277.7249755859375,
+          "z": 48.413997650146484
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_73.i3d",
+        "downloadSize": 213,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 1,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_73.f3d",
+        "downloadSize": 117
+      },
+      "estimatedTriangleCount": 12,
+      "estimatedDrawCallCount": 1
+    },
+    {
+      "id": 74,
+      "parentId": 1,
+      "path": "0/1/74",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 103.08088684082031,
+          "y": 272.93798828125,
+          "z": 21.21500015258789
+        },
+        "max": {
+          "x": 141.15000915527344,
+          "y": 292.15264892578125,
+          "z": 38.409000396728516
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_74.i3d",
+        "downloadSize": 741475,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_65.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.3438799977302551,
+        "facesCount": 55815,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_74.f3d",
+        "downloadSize": 583683
+      },
+      "estimatedTriangleCount": 163139,
+      "estimatedDrawCallCount": 337
+    },
+    {
+      "id": 75,
+      "parentId": 74,
+      "path": "0/1/74/75",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.11880493164062,
+          "y": 282.625,
+          "z": 29.986665725708008
+        },
+        "max": {
+          "x": 141.125,
+          "y": 292.14300537109375,
+          "z": 38.404563903808594
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_75.i3d",
+        "downloadSize": 297137,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_66.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.1683579683303833,
+        "facesCount": 7772,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_75.f3d",
+        "downloadSize": 114000
+      },
+      "estimatedTriangleCount": 79450,
+      "estimatedDrawCallCount": 219
+    },
+    {
+      "id": 76,
+      "parentId": 74,
+      "path": "0/1/74/76",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.11680603027344,
+          "y": 282.54998779296875,
+          "z": 23.82436180114746
+        },
+        "max": {
+          "x": 127.38987731933594,
+          "y": 292.07501220703125,
+          "z": 29.78333282470703
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_76.i3d",
+        "downloadSize": 89759,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_67.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10546142607927322,
+        "facesCount": 6749,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_76.f3d",
+        "downloadSize": 83937
+      },
+      "estimatedTriangleCount": 22384,
+      "estimatedDrawCallCount": 50
+    },
+    {
+      "id": 77,
+      "parentId": 74,
+      "path": "0/1/74/77",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.44190979003906,
+          "y": 273.1295471191406,
+          "z": 33.82994079589844
+        },
+        "max": {
+          "x": 131.95248413085938,
+          "y": 282.4406433105469,
+          "z": 38.17107391357422
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_77.i3d",
+        "downloadSize": 27533,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_68.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 1732,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_77.f3d",
+        "downloadSize": 20160
+      },
+      "estimatedTriangleCount": 4038,
+      "estimatedDrawCallCount": 43
+    },
+    {
+      "id": 78,
+      "parentId": 74,
+      "path": "0/1/74/78",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 122.14550018310547,
+          "y": 281.4230041503906,
+          "z": 25.000001907348633
+        },
+        "max": {
+          "x": 123.6550064086914,
+          "y": 282.3500061035156,
+          "z": 29.562999725341797
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_78.i3d",
+        "downloadSize": 14752,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_69.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 192,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_78.f3d",
+        "downloadSize": 3132
+      },
+      "estimatedTriangleCount": 2138,
+      "estimatedDrawCallCount": 8
+    },
+    {
+      "id": 79,
+      "parentId": 74,
+      "path": "0/1/74/79",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.10079193115234,
+          "y": 282.5467834472656,
+          "z": 29.812000274658203
+        },
+        "max": {
+          "x": 122.11392211914062,
+          "y": 292.15264892578125,
+          "z": 38.400001525878906
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_79.i3d",
+        "downloadSize": 733561,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_70.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.17176002264022827,
+        "facesCount": 20523,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_79.f3d",
+        "downloadSize": 291639
+      },
+      "estimatedTriangleCount": 203212,
+      "estimatedDrawCallCount": 901
+    },
+    {
+      "id": 80,
+      "parentId": 79,
+      "path": "0/1/74/79/80",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.67030334472656,
+          "y": 287.3711853027344,
+          "z": 34.10601043701172
+        },
+        "max": {
+          "x": 122.100341796875,
+          "y": 292.127197265625,
+          "z": 38.36499786376953
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_80.i3d",
+        "downloadSize": 33123,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_71.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 145,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_80.f3d",
+        "downloadSize": 13173
+      },
+      "estimatedTriangleCount": 12874,
+      "estimatedDrawCallCount": 24
+    },
+    {
+      "id": 81,
+      "parentId": 79,
+      "path": "0/1/74/79/81",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.64700317382812,
+          "y": 287.3589782714844,
+          "z": 29.8125
+        },
+        "max": {
+          "x": 121.94700622558594,
+          "y": 292.15264892578125,
+          "z": 34.10599899291992
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_81.i3d",
+        "downloadSize": 30990,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_72.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 307,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_81.f3d",
+        "downloadSize": 16695
+      },
+      "estimatedTriangleCount": 10892,
+      "estimatedDrawCallCount": 10
+    },
+    {
+      "id": 82,
+      "parentId": 79,
+      "path": "0/1/74/79/82",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 113.24300384521484,
+          "y": 282.6650085449219,
+          "z": 34.108001708984375
+        },
+        "max": {
+          "x": 122.11392211914062,
+          "y": 287.32000732421875,
+          "z": 38.15114974975586
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_82.i3d",
+        "downloadSize": 32125,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_73.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 235,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_82.f3d",
+        "downloadSize": 14895
+      },
+      "estimatedTriangleCount": 8658,
+      "estimatedDrawCallCount": 15
+    },
+    {
+      "id": 83,
+      "parentId": 79,
+      "path": "0/1/74/79/83",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 112.84849548339844,
+          "y": 282.5467834472656,
+          "z": 29.812000274658203
+        },
+        "max": {
+          "x": 121.94700622558594,
+          "y": 287.34698486328125,
+          "z": 34.08400344848633
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_83.i3d",
+        "downloadSize": 36710,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_74.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 279,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_83.f3d",
+        "downloadSize": 18315
+      },
+      "estimatedTriangleCount": 10272,
+      "estimatedDrawCallCount": 13
+    },
+    {
+      "id": 84,
+      "parentId": 79,
+      "path": "0/1/74/79/84",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.28500366210938,
+          "y": 287.375,
+          "z": 34.113243103027344
+        },
+        "max": {
+          "x": 112.36394500732422,
+          "y": 291.84197998046875,
+          "z": 38.13119125366211
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_84.i3d",
+        "downloadSize": 26273,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_75.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 121,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_84.f3d",
+        "downloadSize": 5973
+      },
+      "estimatedTriangleCount": 8352,
+      "estimatedDrawCallCount": 15
+    },
+    {
+      "id": 85,
+      "parentId": 79,
+      "path": "0/1/74/79/85",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.10079193115234,
+          "y": 287.4252624511719,
+          "z": 29.81300163269043
+        },
+        "max": {
+          "x": 112.5719985961914,
+          "y": 292.1514892578125,
+          "z": 34.10124969482422
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_85.i3d",
+        "downloadSize": 44118,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_76.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 357,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_85.f3d",
+        "downloadSize": 28881
+      },
+      "estimatedTriangleCount": 16368,
+      "estimatedDrawCallCount": 13
+    },
+    {
+      "id": 86,
+      "parentId": 79,
+      "path": "0/1/74/79/86",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.1259994506836,
+          "y": 282.635009765625,
+          "z": 34.107391357421875
+        },
+        "max": {
+          "x": 112.42050170898438,
+          "y": 287.33502197265625,
+          "z": 38.17500305175781
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_86.i3d",
+        "downloadSize": 28602,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_77.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 213,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_86.f3d",
+        "downloadSize": 15249
+      },
+      "estimatedTriangleCount": 9048,
+      "estimatedDrawCallCount": 13
+    },
+    {
+      "id": 87,
+      "parentId": 79,
+      "path": "0/1/74/79/87",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 103.15442657470703,
+          "y": 282.55499267578125,
+          "z": 29.81300163269043
+        },
+        "max": {
+          "x": 111.95000457763672,
+          "y": 287.2831726074219,
+          "z": 34.10074996948242
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_87.i3d",
+        "downloadSize": 29393,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_78.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 219,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_87.f3d",
+        "downloadSize": 20727
+      },
+      "estimatedTriangleCount": 11804,
+      "estimatedDrawCallCount": 17
+    },
+    {
+      "id": 88,
+      "parentId": 74,
+      "path": "0/1/74/88",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.08088684082031,
+          "y": 282.5469970703125,
+          "z": 21.553001403808594
+        },
+        "max": {
+          "x": 122.110595703125,
+          "y": 292.1524963378906,
+          "z": 29.812000274658203
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_88.i3d",
+        "downloadSize": 550277,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_79.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16517998278141022,
+        "facesCount": 16726,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_88.f3d",
+        "downloadSize": 337914
+      },
+      "estimatedTriangleCount": 175182,
+      "estimatedDrawCallCount": 538
+    },
+    {
+      "id": 89,
+      "parentId": 74,
+      "path": "0/1/74/89",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.0844955444336,
+          "y": 276.86798095703125,
+          "z": 29.812000274658203
+        },
+        "max": {
+          "x": 122.07684326171875,
+          "y": 282.5452880859375,
+          "z": 38.409000396728516
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_89.i3d",
+        "downloadSize": 156189,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_80.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.11354614049196243,
+        "facesCount": 9803,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_89.f3d",
+        "downloadSize": 130335
+      },
+      "estimatedTriangleCount": 42234,
+      "estimatedDrawCallCount": 131
+    },
+    {
+      "id": 90,
+      "parentId": 74,
+      "path": "0/1/74/90",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 103.08329772949219,
+          "y": 275.125,
+          "z": 23.621000289916992
+        },
+        "max": {
+          "x": 122.08899688720703,
+          "y": 282.5374755859375,
+          "z": 29.810001373291016
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_90.i3d",
+        "downloadSize": 201275,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_81.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.1237800195813179,
+        "facesCount": 13470,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_90.f3d",
+        "downloadSize": 187410
+      },
+      "estimatedTriangleCount": 57852,
+      "estimatedDrawCallCount": 255
+    },
+    {
+      "id": 91,
+      "parentId": 1,
+      "path": "0/1/91",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 63.62889099121094,
+          "y": 292.1734313964844,
+          "z": 38.41999816894531
+        },
+        "max": {
+          "x": 84.0050277709961,
+          "y": 312.4809265136719,
+          "z": 41.718727111816406
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_91.i3d",
+        "downloadSize": 84441,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_82.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 30579,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_91.f3d",
+        "downloadSize": 296127
+      },
+      "estimatedTriangleCount": 23706,
+      "estimatedDrawCallCount": 73
+    },
+    {
+      "id": 92,
+      "parentId": 1,
+      "path": "0/1/92",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 63.76747512817383,
+          "y": 292.1545104980469,
+          "z": 18.687541961669922
+        },
+        "max": {
+          "x": 103.08050537109375,
+          "y": 316.7546691894531,
+          "z": 38.40996551513672
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_92.i3d",
+        "downloadSize": 662491,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_83.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.394448459148407,
+        "facesCount": 64598,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_92.f3d",
+        "downloadSize": 659178
+      },
+      "estimatedTriangleCount": 146478,
+      "estimatedDrawCallCount": 387
+    },
+    {
+      "id": 93,
+      "parentId": 92,
+      "path": "0/1/92/93",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.432373046875,
+          "y": 304.45501708984375,
+          "z": 28.549999237060547
+        },
+        "max": {
+          "x": 103.08050537109375,
+          "y": 313.93499755859375,
+          "z": 38.305999755859375
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_93.i3d",
+        "downloadSize": 443845,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_84.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.18959960341453552,
+        "facesCount": 19185,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_93.f3d",
+        "downloadSize": 296613
+      },
+      "estimatedTriangleCount": 124332,
+      "estimatedDrawCallCount": 594
+    },
+    {
+      "id": 94,
+      "parentId": 92,
+      "path": "0/1/92/94",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.46904754638672,
+          "y": 304.4595031738281,
+          "z": 18.687541961669922
+        },
+        "max": {
+          "x": 103.07986450195312,
+          "y": 313.75177001953125,
+          "z": 28.54843521118164
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_94.i3d",
+        "downloadSize": 647377,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_85.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.18584533035755157,
+        "facesCount": 27801,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_94.f3d",
+        "downloadSize": 393549
+      },
+      "estimatedTriangleCount": 169920,
+      "estimatedDrawCallCount": 902
+    },
+    {
+      "id": 95,
+      "parentId": 92,
+      "path": "0/1/92/95",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.44100189208984,
+          "y": 292.1549987792969,
+          "z": 28.549741744995117
+        },
+        "max": {
+          "x": 103.07500457763672,
+          "y": 304.45001220703125,
+          "z": 38.17000198364258
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_95.i3d",
+        "downloadSize": 593102,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_86.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.19240520894527435,
+        "facesCount": 23302,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_95.f3d",
+        "downloadSize": 380994
+      },
+      "estimatedTriangleCount": 174593,
+      "estimatedDrawCallCount": 629
+    },
+    {
+      "id": 96,
+      "parentId": 92,
+      "path": "0/1/92/96",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.44705200195312,
+          "y": 292.1659851074219,
+          "z": 21.450000762939453
+        },
+        "max": {
+          "x": 103.08000183105469,
+          "y": 304.4540100097656,
+          "z": 28.54641342163086
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_96.i3d",
+        "downloadSize": 745895,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_87.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.14192825555801392,
+        "facesCount": 50988,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_96.f3d",
+        "downloadSize": 606336
+      },
+      "estimatedTriangleCount": 210024,
+      "estimatedDrawCallCount": 669
+    },
+    {
+      "id": 97,
+      "parentId": 96,
+      "path": "0/1/92/96/97",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 93.32249450683594,
+          "y": 298.35498046875,
+          "z": 24.999000549316406
+        },
+        "max": {
+          "x": 103.03934478759766,
+          "y": 304.41619873046875,
+          "z": 28.511934280395508
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_97.i3d",
+        "downloadSize": 40133,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_88.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 10,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_97.f3d",
+        "downloadSize": 31038
+      },
+      "estimatedTriangleCount": 11918,
+      "estimatedDrawCallCount": 15
+    },
+    {
+      "id": 98,
+      "parentId": 96,
+      "path": "0/1/92/96/98",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 96.5770034790039,
+          "y": 298.62030029296875,
+          "z": 24.27199935913086
+        },
+        "max": {
+          "x": 103.07360076904297,
+          "y": 304.3575134277344,
+          "z": 24.994001388549805
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_98.i3d",
+        "downloadSize": 36410,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_89.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 2,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_98.f3d",
+        "downloadSize": 7854
+      },
+      "estimatedTriangleCount": 8536,
+      "estimatedDrawCallCount": 133
+    },
+    {
+      "id": 99,
+      "parentId": 96,
+      "path": "0/1/92/96/99",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 93.75760650634766,
+          "y": 292.7879943847656,
+          "z": 24.998849868774414
+        },
+        "max": {
+          "x": 103.06200408935547,
+          "y": 298.2929992675781,
+          "z": 28.496002197265625
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_99.i3d",
+        "downloadSize": 24946,
+        "peripheralFiles": [
+          "mesh_90.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 3,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_99.f3d",
+        "downloadSize": 21999
+      },
+      "estimatedTriangleCount": 7648,
+      "estimatedDrawCallCount": 5
+    },
+    {
+      "id": 100,
+      "parentId": 96,
+      "path": "0/1/92/96/100",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 96.59829711914062,
+          "y": 292.22991943359375,
+          "z": 21.862001419067383
+        },
+        "max": {
+          "x": 103.07360076904297,
+          "y": 297.9726867675781,
+          "z": 24.989999771118164
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_100.i3d",
+        "downloadSize": 16146,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_91.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 9,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_100.f3d",
+        "downloadSize": 6885
+      },
+      "estimatedTriangleCount": 4300,
+      "estimatedDrawCallCount": 7
+    },
+    {
+      "id": 101,
+      "parentId": 96,
+      "path": "0/1/92/96/101",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 86.79549407958984,
+          "y": 298.3113098144531,
+          "z": 24.999500274658203
+        },
+        "max": {
+          "x": 93.13300323486328,
+          "y": 304.4045104980469,
+          "z": 28.54641342163086
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_101.i3d",
+        "downloadSize": 23153,
+        "peripheralFiles": [
+          "mesh_92.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 14,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_101.f3d",
+        "downloadSize": 10722
+      },
+      "estimatedTriangleCount": 6380,
+      "estimatedDrawCallCount": 6
+    },
+    {
+      "id": 102,
+      "parentId": 96,
+      "path": "0/1/92/96/102",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 89.48929595947266,
+          "y": 299.999267578125,
+          "z": 22.29949951171875
+        },
+        "max": {
+          "x": 92.86000061035156,
+          "y": 304.375,
+          "z": 24.81438636779785
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_102.i3d",
+        "downloadSize": 11546,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_93.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 10,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_102.f3d",
+        "downloadSize": 2886
+      },
+      "estimatedTriangleCount": 1744,
+      "estimatedDrawCallCount": 22
+    },
+    {
+      "id": 103,
+      "parentId": 96,
+      "path": "0/1/92/96/103",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 88.67485809326172,
+          "y": 292.5625,
+          "z": 24.999500274658203
+        },
+        "max": {
+          "x": 93.13300323486328,
+          "y": 298.3089904785156,
+          "z": 28.514999389648438
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_103.i3d",
+        "downloadSize": 10683,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_94.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 5,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_103.f3d",
+        "downloadSize": 3801
+      },
+      "estimatedTriangleCount": 1980,
+      "estimatedDrawCallCount": 6
+    },
+    {
+      "id": 104,
+      "parentId": 96,
+      "path": "0/1/92/96/104",
+      "depth": 5,
+      "boundingBox": {
+        "min": {
+          "x": 90.15950012207031,
+          "y": 292.60235595703125,
+          "z": 23.897499084472656
+        },
+        "max": {
+          "x": 92.35250091552734,
+          "y": 298.05499267578125,
+          "z": 24.54250144958496
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_104.i3d",
+        "downloadSize": 950,
+        "peripheralFiles": []
+      },
+      "facesFile": {
+        "quadSize": 0.10000000149011612,
+        "facesCount": 2,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_104.f3d",
+        "downloadSize": 702
+      },
+      "estimatedTriangleCount": 340,
+      "estimatedDrawCallCount": 4
+    },
+    {
+      "id": 105,
+      "parentId": 92,
+      "path": "0/1/92/105",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 64.74000549316406,
+          "y": 304.4850158691406,
+          "z": 28.549999237060547
+        },
+        "max": {
+          "x": 83.41799926757812,
+          "y": 316.5845031738281,
+          "z": 38.40996551513672
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_105.i3d",
+        "downloadSize": 401729,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_95.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.19719932973384857,
+        "facesCount": 18878,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_105.f3d",
+        "downloadSize": 274674
+      },
+      "estimatedTriangleCount": 112800,
+      "estimatedDrawCallCount": 521
+    },
+    {
+      "id": 106,
+      "parentId": 92,
+      "path": "0/1/92/106",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 65.472900390625,
+          "y": 304.510009765625,
+          "z": 22.21571159362793
+        },
+        "max": {
+          "x": 83.41899871826172,
+          "y": 316.7546691894531,
+          "z": 28.54733657836914
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_106.i3d",
+        "downloadSize": 246281,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_96.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.12663249671459198,
+        "facesCount": 30504,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_106.f3d",
+        "downloadSize": 312516
+      },
+      "estimatedTriangleCount": 55350,
+      "estimatedDrawCallCount": 178
+    },
+    {
+      "id": 107,
+      "parentId": 92,
+      "path": "0/1/92/107",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 63.94600296020508,
+          "y": 292.1545104980469,
+          "z": 28.549999237060547
+        },
+        "max": {
+          "x": 83.42330169677734,
+          "y": 304.4493713378906,
+          "z": 38.39999771118164
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_107.i3d",
+        "downloadSize": 386243,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_97.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.19699996709823608,
+        "facesCount": 14765,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_107.f3d",
+        "downloadSize": 261537
+      },
+      "estimatedTriangleCount": 117142,
+      "estimatedDrawCallCount": 344
+    },
+    {
+      "id": 108,
+      "parentId": 92,
+      "path": "0/1/92/108",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 66.69800567626953,
+          "y": 292.18634033203125,
+          "z": 23.105043411254883
+        },
+        "max": {
+          "x": 83.41969299316406,
+          "y": 304.4519958496094,
+          "z": 28.54599952697754
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_108.i3d",
+        "downloadSize": 231177,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_98.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.10881911963224411,
+        "facesCount": 72732,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_108.f3d",
+        "downloadSize": 695256
+      },
+      "estimatedTriangleCount": 53054,
+      "estimatedDrawCallCount": 135
+    },
+    {
+      "id": 109,
+      "parentId": 1,
+      "path": "0/1/109",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 63.4888916015625,
+          "y": 275.3501281738281,
+          "z": 38.41400146484375
+        },
+        "max": {
+          "x": 100.1500015258789,
+          "y": 291.8420104980469,
+          "z": 56.97500228881836
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_109.i3d",
+        "downloadSize": 216019,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_99.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.3298376500606537,
+        "facesCount": 6144,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_109.f3d",
+        "downloadSize": 98844
+      },
+      "estimatedTriangleCount": 49644,
+      "estimatedDrawCallCount": 154
+    },
+    {
+      "id": 110,
+      "parentId": 1,
+      "path": "0/1/110",
+      "depth": 3,
+      "boundingBox": {
+        "min": {
+          "x": 63.78756332397461,
+          "y": 271.698974609375,
+          "z": 21.450000762939453
+        },
+        "max": {
+          "x": 103.08050537109375,
+          "y": 292.1514892578125,
+          "z": 38.409000396728516
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_110.i3d",
+        "downloadSize": 637708,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_100.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.33917999267578125,
+        "facesCount": 79639,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_110.f3d",
+        "downloadSize": 806187
+      },
+      "estimatedTriangleCount": 159412,
+      "estimatedDrawCallCount": 504
+    },
+    {
+      "id": 111,
+      "parentId": 110,
+      "path": "0/1/110/111",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.44100189208984,
+          "y": 281.9375,
+          "z": 29.93000030517578
+        },
+        "max": {
+          "x": 103.07730102539062,
+          "y": 292.1499938964844,
+          "z": 38.40250015258789
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_111.i3d",
+        "downloadSize": 511569,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_101.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16944999992847443,
+        "facesCount": 21170,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_111.f3d",
+        "downloadSize": 370230
+      },
+      "estimatedTriangleCount": 155015,
+      "estimatedDrawCallCount": 380
+    },
+    {
+      "id": 112,
+      "parentId": 110,
+      "path": "0/1/110/112",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.44950103759766,
+          "y": 281.927001953125,
+          "z": 21.46900177001953
+        },
+        "max": {
+          "x": 103.08050537109375,
+          "y": 292.1514892578125,
+          "z": 29.929500579833984
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_112.i3d",
+        "downloadSize": 657520,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_102.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16920997202396393,
+        "facesCount": 30848,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_112.f3d",
+        "downloadSize": 484644
+      },
+      "estimatedTriangleCount": 194130,
+      "estimatedDrawCallCount": 732
+    },
+    {
+      "id": 113,
+      "parentId": 110,
+      "path": "0/1/110/113",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.44284057617188,
+          "y": 275.8775939941406,
+          "z": 29.943967819213867
+        },
+        "max": {
+          "x": 103.05000305175781,
+          "y": 281.9225158691406,
+          "z": 38.409000396728516
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_113.i3d",
+        "downloadSize": 238638,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_103.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.12089844048023224,
+        "facesCount": 15097,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_113.f3d",
+        "downloadSize": 186285
+      },
+      "estimatedTriangleCount": 60826,
+      "estimatedDrawCallCount": 301
+    },
+    {
+      "id": 114,
+      "parentId": 110,
+      "path": "0/1/110/114",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 83.44284057617188,
+          "y": 276.0060119628906,
+          "z": 23.499500274658203
+        },
+        "max": {
+          "x": 103.07470703125,
+          "y": 281.92437744140625,
+          "z": 29.925249099731445
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_114.i3d",
+        "downloadSize": 220953,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_104.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.11836730688810349,
+        "facesCount": 23226,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_114.f3d",
+        "downloadSize": 263166
+      },
+      "estimatedTriangleCount": 57340,
+      "estimatedDrawCallCount": 246
+    },
+    {
+      "id": 115,
+      "parentId": 110,
+      "path": "0/1/110/115",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 64.4209976196289,
+          "y": 281.9278259277344,
+          "z": 29.932531356811523
+        },
+        "max": {
+          "x": 83.43000030517578,
+          "y": 292.14984130859375,
+          "z": 38.39500045776367
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_115.i3d",
+        "downloadSize": 276888,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_105.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16924938559532166,
+        "facesCount": 12075,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_115.f3d",
+        "downloadSize": 170151
+      },
+      "estimatedTriangleCount": 73221,
+      "estimatedDrawCallCount": 169
+    },
+    {
+      "id": 116,
+      "parentId": 110,
+      "path": "0/1/110/116",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 63.78756332397461,
+          "y": 281.93768310546875,
+          "z": 23.53822898864746
+        },
+        "max": {
+          "x": 83.42499542236328,
+          "y": 292.1249084472656,
+          "z": 29.924999237060547
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_116.i3d",
+        "downloadSize": 225386,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_106.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.12773540616035461,
+        "facesCount": 26213,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_116.f3d",
+        "downloadSize": 277257
+      },
+      "estimatedTriangleCount": 46638,
+      "estimatedDrawCallCount": 249
+    },
+    {
+      "id": 117,
+      "parentId": 110,
+      "path": "0/1/110/117",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 66.47777557373047,
+          "y": 271.698974609375,
+          "z": 29.954999923706055
+        },
+        "max": {
+          "x": 83.4339828491211,
+          "y": 281.9200134277344,
+          "z": 38.406497955322266
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_117.i3d",
+        "downloadSize": 165757,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_107.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.16902996599674225,
+        "facesCount": 8008,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_117.f3d",
+        "downloadSize": 97140
+      },
+      "estimatedTriangleCount": 42070,
+      "estimatedDrawCallCount": 317
+    },
+    {
+      "id": 118,
+      "parentId": 110,
+      "path": "0/1/110/118",
+      "depth": 4,
+      "boundingBox": {
+        "min": {
+          "x": 68.2249984741211,
+          "y": 274.2650146484375,
+          "z": 23.74546241760254
+        },
+        "max": {
+          "x": 83.25717163085938,
+          "y": 281.9170227050781,
+          "z": 29.874000549316406
+        }
+      },
+      "indexFile": {
+        "fileName": "sector_118.i3d",
+        "downloadSize": 90197,
+        "peripheralFiles": [
+          "mesh_0.ctm",
+          "mesh_108.ctm"
+        ]
+      },
+      "facesFile": {
+        "quadSize": 0.12257076054811478,
+        "facesCount": 7395,
+        "recursiveCoverageFactors": null,
+        "coverageFactors": {
+          "yz": 0.10000000149011612,
+          "xz": 0.10000000149011612,
+          "xy": 0.10000000149011612
+        },
+        "fileName": "sector_118.f3d",
+        "downloadSize": 85455
+      },
+      "estimatedTriangleCount": 21974,
+      "estimatedDrawCallCount": 160
+    }
+  ]
+}
