@@ -13,7 +13,7 @@ public class BoxCadRevealPrimitiveTests
     [DefaultFloatingPointTolerance(0.0001)]
     public void FromBoxPrimitive_WhenTested_CreatesNewPrimitive()
     {
-        CadRevealNode revealNode = new CadRevealNode();
+        CadRevealNode revealNode = new CadRevealNode { Group = new RvmNode(1, "test", Vector3.Zero, 1) };
         RvmNode container = new RvmNode(2, "Name", Vector3.One, 2);
 
         var center = new Vector3(10, 0, 0);
@@ -29,7 +29,7 @@ public class BoxCadRevealPrimitiveTests
 
         RvmBox rvmBox = new RvmBox(2, matrix, boundingBox, 2, 2, 2);
 
-        var box = APrimitive.FromRvmPrimitive(revealNode, container, rvmBox) as Box;
+        var box = APrimitive.FromRvmPrimitive(revealNode, rvmBox) as Box;
 
         Assert.That(box, Is.Not.Null);
         Assert.That(box.CenterX, Is.EqualTo(10));

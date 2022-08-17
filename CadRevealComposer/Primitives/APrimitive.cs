@@ -71,9 +71,15 @@ public abstract record APrimitive(
     // TODO: this code must be refactored, it does not belong in this namespace
     public static APrimitive? FromRvmPrimitive(
         CadRevealNode revealNode,
-        RvmNode rvmNode,
         RvmPrimitive rvmPrimitive)
     {
+        var rvmNode = revealNode.Group as RvmNode;
+        if (rvmNode == null)
+        {
+            Console.WriteLine($"The RvmGroup for Node {revealNode.NodeId} was null. Returning null.");
+            return null;
+        }
+
         PrimitiveCounter.pc++;
         var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
         (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
@@ -86,12 +92,27 @@ public abstract record APrimitive(
             case RvmCylinder rvmCylinder:
                 {
                     var height = rvmCylinder.Height * scale.Z;
-                    // TODO: if scale is not uniform on X,Y, we should create something else
-                    var radius = rvmCylinder.Radius * scale.X;
-                    if (!scale.X.ApproximatelyEquals(scale.Y, 0.001))
+
+                    /*
+                     * One case of non-uniform XY-scale on a cylinder on JSB (JS P2) was throwing an exception. Since this was the only case,
+                     * it was assumed that this was an error in incoming data.
+                     *
+                     * To fix this specific case the largest from X and Y is chosen as the scale. Other cases with non-uniform scales should still throw an exception.
+                     *
+                     * https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/72816/
+                     */
+
+                    var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y);
+
+                    if (scale.X != 0 && scale.Y == 0)
                     {
-                        throw new Exception("Not implemented!");
+                        Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
                     }
+                    else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
+                    {
+                        throw new Exception("Cylinders with non-uniform scale is not implemented!");
+                    }
+
                     return new ClosedCylinder
                     (
                         commonPrimitiveProperties,

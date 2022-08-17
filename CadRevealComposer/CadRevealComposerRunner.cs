@@ -99,7 +99,7 @@ public static class CadRevealComposerRunner
             .AsOrdered()
             .SelectMany(x => x.RvmGeometries
                 .Where(IsValidGeometry)
-                .Select(primitive => APrimitive.FromRvmPrimitive(x, x.Group as RvmNode ?? throw new InvalidOperationException(), primitive)))
+                .Select(primitive => APrimitive.FromRvmPrimitive(x, primitive)))
             .WhereNotNull()
             .ToArray();
 
@@ -155,9 +155,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
-
-            
-
+        
         var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
 
         Console.WriteLine("Start tessellate");
