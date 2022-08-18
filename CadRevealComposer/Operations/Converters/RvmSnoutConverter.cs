@@ -32,7 +32,7 @@ public static class RvmSnoutConverter
             rvmSnout.OffsetX * rvmSnout.OffsetX +
             rvmSnout.OffsetY * rvmSnout.OffsetY);
         var halfHeight = 0.5f * height;
-        
+
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
@@ -50,18 +50,21 @@ public static class RvmSnoutConverter
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
             if (isCylinderShaped)
             {
-                return CylinderWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, height, treeIndex, color, bbox);
+                return CylinderWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, height, treeIndex,
+                    Color.Red, bbox);
             }
 
-            return ConeWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+            return ConeWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, Color.Blue,
+                bbox);
         }
 
         if (IsEccentric(rvmSnout))
         {
-            return EccentricCone(rvmSnout, scale, rotation, position, normal, radiusA, radiusB, height, treeIndex, color, bbox);
+            return EccentricCone(rvmSnout, scale, rotation, position, normal, radiusA, radiusB, height, treeIndex,
+                Color.White, bbox);
         }
 
-        return Cone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+        return Cone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, Color.White, bbox);
     }
 
     private static IEnumerable<APrimitive> Cone(
@@ -163,7 +166,8 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, eccentricCenterA, eccentricCenterB);
+        var (showCapA, showCapB) =
+            PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, eccentricCenterA, eccentricCenterB);
 
         if (showCapA)
         {
@@ -214,7 +218,15 @@ public static class RvmSnoutConverter
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         var (planeRotationA, planeNormalA, planeSlopeA) = TranslateShearToSlope(rvmSnout.TopShearX, rvmSnout.TopShearY);
-        var (planeRotationB, planeNormalB, planeSlopeB) = TranslateShearToSlope(rvmSnout.BottomShearX, rvmSnout.BottomShearY);
+        var (planeRotationB, planeNormalB, planeSlopeB) =
+            TranslateShearToSlope(rvmSnout.BottomShearX, rvmSnout.BottomShearY);
+
+        var capAShortestSide = diameter;
+        var capALongestSide = planeSlopeA != 0 ? diameter / MathF.Cos(planeSlopeA) : diameter;
+
+        var capBShortestSide = diameter;
+        var capBLongestSide = planeSlopeB != 0 ? diameter / MathF.Cos(planeSlopeB) : diameter;
+
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
         var extendedHeightA = MathF.Tan(planeSlopeA) * radius;
@@ -245,7 +257,8 @@ public static class RvmSnoutConverter
         if (showCapA)
         {
             var matrixCapA =
-                Matrix4x4.CreateScale(diameter)
+                // Matrix4x4.CreateScale(diameter)
+                Matrix4x4.CreateScale(new Vector3(capAShortestSide, capALongestSide, 0))
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
                 * Matrix4x4.CreateTranslation(centerA);
 
@@ -264,7 +277,8 @@ public static class RvmSnoutConverter
         if (showCapB)
         {
             var matrixCapB =
-                Matrix4x4.CreateScale(diameter)
+                // Matrix4x4.CreateScale(diameter)
+                Matrix4x4.CreateScale(new Vector3(capBShortestSide, capBLongestSide, 0))
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
                 * Matrix4x4.CreateTranslation(centerB);
 
@@ -353,16 +367,16 @@ public static class RvmSnoutConverter
 
     private static bool IsEccentric(RvmSnout rvmSnout)
     {
-        return rvmSnout.OffsetX is > 0f or < 0f ||
-               rvmSnout.OffsetY is > 0f or < 0f;
+        return rvmSnout.OffsetX != 0 ||
+               rvmSnout.OffsetY != 0;
     }
 
     private static bool HasShear(RvmSnout rvmSnout)
     {
-        return rvmSnout.BottomShearX is > 0f or < 0f ||
-               rvmSnout.BottomShearY is > 0f or < 0f ||
-               rvmSnout.TopShearX is > 0f or < 0f ||
-               rvmSnout.TopShearY is > 0f or < 0f;
+        return rvmSnout.BottomShearX != 0 ||
+               rvmSnout.BottomShearY != 0 ||
+               rvmSnout.TopShearX != 0 ||
+               rvmSnout.TopShearY != 0;
     }
 
     private static (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)
