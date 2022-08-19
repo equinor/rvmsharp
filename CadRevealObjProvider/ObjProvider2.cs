@@ -4,10 +4,13 @@ using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Tessellation;
 using ObjLoader.Loader.Data.Elements;
 using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Loaders;
-using RvmSharp.Tessellation;
+
+using CadRevealComposer.Configuration;
+
 using System.Drawing;
 using System.Numerics;
 
@@ -51,7 +54,12 @@ public class ObjProvider2 : IModelFormatProvider
         return nodes;
     }
 
-    public APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
+    public APrimitive[] ProcessGeometries(APrimitive[] geometries,
+        ComposerParameters composerParameters,
+        ModelParameters modelParameters)
+    { return geometries; }
+
+        public APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
     {
         return new APrimitive[]
         {

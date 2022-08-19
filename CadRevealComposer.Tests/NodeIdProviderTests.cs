@@ -1,6 +1,6 @@
-﻿namespace CadRevealComposer.Tests;
+﻿namespace CadRevealRvmProvider.Tests;
 
-using IdProviders;
+using CadRevealComposer.IdProviders;
 using NUnit.Framework;
 
 [TestFixture]

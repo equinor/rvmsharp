@@ -1,4 +1,4 @@
-namespace CadRevealComposer.Utils;
+namespace CadRevealRvmProvider.Utils;
 
 using Ben.Collections.Specialized;
 using RvmSharp.BatchUtils;

@@ -1,6 +1,6 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using Primitives;
+using RvmSharp.Primitives;
 using System;
 using System.Numerics;
 

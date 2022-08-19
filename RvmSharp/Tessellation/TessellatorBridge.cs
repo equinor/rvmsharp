@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using static RvmSharp.Primitives.RvmFacetGroup;
-using Primitives;
+using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -14,7 +14,7 @@ public static class TessellatorBridge
 {
     private const float MinimumThreshold = 1e-7f;
 
-    public static (Mesh, Color)[] Tessellate(RvmNode group, float tolerance)
+    public static (RvmMesh, Color)[] Tessellate(RvmNode group, float tolerance)
     {
         var meshes = group.Children.OfType<RvmPrimitive>().Select(primitive =>
         {
@@ -37,7 +37,7 @@ public static class TessellatorBridge
         return meshes.ToArray();
     }
 
-    public static Mesh? Tessellate(RvmPrimitive primitive, float tolerance)
+    public static RvmMesh? Tessellate(RvmPrimitive primitive, float tolerance)
     {
         if (!Matrix4x4.Decompose(primitive.Matrix, out var scale, out _, out _))
         {
@@ -59,7 +59,7 @@ public static class TessellatorBridge
     /// <param name="tolerance">The accepted tolerance. Used in combination with scale for some primitives.</param>
     /// <returns>Tessellated Mesh (Or null, if we cannot tessellate it.)</returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static Mesh? TessellateWithoutApplyingMatrix(RvmPrimitive primitive, float scale, float tolerance)
+    public static RvmMesh? TessellateWithoutApplyingMatrix(RvmPrimitive primitive, float scale, float tolerance)
     {
         switch (primitive)
         {
@@ -103,7 +103,7 @@ public static class TessellatorBridge
         }
     }
 
-    private static Mesh Tessellate(RvmPyramid pyramid)
+    private static RvmMesh Tessellate(RvmPyramid pyramid)
     {
         var bx = 0.5f * pyramid.BottomX;
         var by = 0.5f * pyramid.BottomY;
@@ -229,10 +229,10 @@ public static class TessellatorBridge
         if (arrayPosition != 3 * 2 * capCount || o != vertices.Length / 3)
             throw new Exception();
 
-        return new Mesh(vertices, normals, indices, error);
+        return new RvmMesh(vertices, normals, indices, error);
     }
 
-    private static Mesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
+    private static RvmMesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
     {
         var segments = TessellationHelpers.SagittaBasedSegmentCount(rectangularTorus.Angle,
             rectangularTorus.RadiusOuter, scale, tolerance);
@@ -393,10 +393,10 @@ public static class TessellatorBridge
         if (o != vertices_n || l != 3 * triangles_n)
             throw new Exception();
 
-        return new Mesh(vertices, normals, indices, error);
+        return new RvmMesh(vertices, normals, indices, error);
     }
 
-    private static Mesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
+    private static RvmMesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
     {
         var segments_l = TessellationHelpers.SagittaBasedSegmentCount(circularTorus.Angle,
             circularTorus.Offset + circularTorus.Radius,
@@ -566,10 +566,10 @@ public static class TessellatorBridge
         Debug.Assert(l == 3 * triangles_n);
         Debug.Assert(o == vertices_n);
 
-        return new Mesh(vertices, normals, indices, error);
+        return new RvmMesh(vertices, normals, indices, error);
     }
 
-    private static Mesh Tessellate(RvmBox box)
+    private static RvmMesh Tessellate(RvmBox box)
     {
         var xp = 0.5f * box.LengthX;
         var xm = -xp;
@@ -654,7 +654,7 @@ public static class TessellatorBridge
                 o += 4;
             }
 
-            var tri = new Mesh(vertices, normals, indices, 0.0f);
+            var tri = new RvmMesh(vertices, normals, indices, 0.0f);
 
             if (!(i_v == 3 * vertices_n) ||
                 !(i_p == 3 * triangles_n) ||
@@ -666,10 +666,10 @@ public static class TessellatorBridge
             return tri;
         }
 
-        return new Mesh(new float[0], new float[0], new int[0], 0);
+        return new RvmMesh(new float[0], new float[0], new int[0], 0);
     }
 
-    private static Mesh Tessellate(RvmFacetGroup facetGroup)
+    private static RvmMesh Tessellate(RvmFacetGroup facetGroup)
     {
         var vertices = new List<Vector3>();
         var normals = new List<Vector3>();
@@ -709,10 +709,10 @@ public static class TessellatorBridge
                 throw new Exception();
         }
 
-        return new Mesh(vertices.ToArray(), normals.ToArray(), indices.Select(x => (uint)x).ToArray(), 0);
+        return new RvmMesh(vertices.ToArray(), normals.ToArray(), indices.Select(x => (uint)x).ToArray(), 0);
     }
 
-    private static Mesh TessellateCylinder(RvmCylinder cylinder, float scale, float tolerance)
+    private static RvmMesh TessellateCylinder(RvmCylinder cylinder, float scale, float tolerance)
     {
         //if (cullTiny && cy.radius*scale < tolerance) {
         //  tri.error = cy.radius * scale;
@@ -841,10 +841,10 @@ public static class TessellatorBridge
         Debug.Assert(l == triangles_n * 3);
         Debug.Assert(o == vertCount);
 
-        return new Mesh(vertices, normals, indices.Select(x => (uint)x).ToArray(), error);
+        return new RvmMesh(vertices, normals, indices.Select(x => (uint)x).ToArray(), error);
     }
 
-    private static Mesh Tessellate(RvmSnout snout, float scale, float tolerance)
+    private static RvmMesh Tessellate(RvmSnout snout, float scale, float tolerance)
     {
         var radius_max = Math.Max(snout.RadiusBottom, snout.RadiusTop);
         var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
@@ -998,10 +998,10 @@ public static class TessellatorBridge
         Debug.Assert(l == triangles_n * 3);
         Debug.Assert(o == vertices_n);
 
-        return new Mesh(vertices, normals, indices, error);
+        return new RvmMesh(vertices, normals, indices, error);
     }
 
-    private static Mesh Tessellate(RvmPrimitive sphereBasedPrimitive, float radius, float arc, float shift_z,
+    private static RvmMesh Tessellate(RvmPrimitive sphereBasedPrimitive, float radius, float arc, float shift_z,
         float scale_z, float scale, float tolerance)
     {
         var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
@@ -1133,7 +1133,7 @@ public static class TessellatorBridge
             o_c = o_n;
         }
 
-        return new Mesh(vertices, normals, indices.ToArray(), error);
+        return new RvmMesh(vertices, normals, indices.ToArray(), error);
     }
 
     private static int TessellateCircle(int[] indices, int l, int[] t, int[] src, int N)

@@ -1,22 +1,8 @@
 namespace CadRevealComposer.Primitives;
 
-using RvmSharp.Primitives;
-using RvmSharp.Tessellation;
 using System.Drawing;
 using System.Numerics;
-
-// instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
-public abstract record ProtoMesh(
-    RvmPrimitive RvmPrimitive,
-    ulong TreeIndex,
-    Color Color,
-    BoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
-
-public sealed record ProtoMeshFromFacetGroup(
-    RvmFacetGroup FacetGroup,
-    ulong TreeIndex,
-    Color Color,
-    BoundingBox AxisAlignedBoundingBox) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
+using CadRevealComposer.Tessellation;
 
 // Reveal GLTF model
 public sealed record Box(
