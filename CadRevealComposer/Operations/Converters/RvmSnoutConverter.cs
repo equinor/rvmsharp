@@ -39,12 +39,12 @@ public static class RvmSnoutConverter
         var centerA = position + normal * halfHeight;
         var centerB = position - normal * halfHeight;
 
-        if (HasShear(rvmSnout))
+        if (rvmSnout.HasShear())
         {
-            if (IsEccentric(rvmSnout))
+            if (rvmSnout.IsEccentric())
             {
                 throw new NotImplementedException(
-                    "Eccentric snout primitive is missing from CadReveal");
+                    "Eccentric snout with shear primitive is missing from CadReveal");
             }
 
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
@@ -58,7 +58,7 @@ public static class RvmSnoutConverter
                 "Cone with shear primitive is missing from CadReveal");
         }
 
-        if (IsEccentric(rvmSnout))
+        if (rvmSnout.IsEccentric())
         {
             return EccentricCone(rvmSnout, scale, rotation, position, normal, radiusA, radiusB, height, treeIndex,
                 color, bbox);
@@ -217,16 +217,11 @@ public static class RvmSnoutConverter
         var diameter = 2f * radius;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
-        var (planeRotationA, planeNormalA, planeSlopeA) = TranslateShearToSlope(rvmSnout.TopShearX, rvmSnout.TopShearY);
-        var (planeRotationB, planeNormalB, planeSlopeB) =
-            TranslateShearToSlope(rvmSnout.BottomShearX, rvmSnout.BottomShearY);
+        var (planeRotationA, planeNormalA, planeSlopeA) = rvmSnout.GetTopSlope();
+        var (planeRotationB, planeNormalB, planeSlopeB) = rvmSnout.GetBottomSlope();
 
-        var capAShortestSide = diameter;
-        var capALongestSide = planeSlopeA != 0 ? diameter / MathF.Cos(planeSlopeA) : diameter;
-
-        var capBShortestSide = diameter;
-        var capBLongestSide = planeSlopeB != 0 ? diameter / MathF.Cos(planeSlopeB) : diameter;
-
+        var (semiMinorAxisA, semiMajorAxisA) = rvmSnout.GetTopRadii();
+        var (semiMinorAxisB, semiMajorAxisB) = rvmSnout.GetBottomRadii();
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
         var extendedHeightA = MathF.Tan(planeSlopeA) * radius;
@@ -258,7 +253,7 @@ public static class RvmSnoutConverter
         {
             var matrixCapA =
                 // Matrix4x4.CreateScale(diameter)
-                Matrix4x4.CreateScale(new Vector3(capAShortestSide, capALongestSide, 0))
+                Matrix4x4.CreateScale(new Vector3(semiMinorAxisA, semiMajorAxisA, 0))
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
                 * Matrix4x4.CreateTranslation(centerA);
 
@@ -278,7 +273,7 @@ public static class RvmSnoutConverter
         {
             var matrixCapB =
                 // Matrix4x4.CreateScale(diameter)
-                Matrix4x4.CreateScale(new Vector3(capBShortestSide, capBLongestSide, 0))
+                Matrix4x4.CreateScale(new Vector3(semiMinorAxisB, semiMajorAxisB, 0))
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
                 * Matrix4x4.CreateTranslation(centerB);
 
@@ -293,30 +288,5 @@ public static class RvmSnoutConverter
                 bbox // use same bbox as RVM source
             );
         }
-    }
-
-    private static bool IsEccentric(RvmSnout rvmSnout)
-    {
-        return rvmSnout.OffsetX != 0 ||
-               rvmSnout.OffsetY != 0;
-    }
-
-    private static bool HasShear(RvmSnout rvmSnout)
-    {
-        return rvmSnout.BottomShearX != 0 ||
-               rvmSnout.BottomShearY != 0 ||
-               rvmSnout.TopShearX != 0 ||
-               rvmSnout.TopShearY != 0;
-    }
-
-    private static (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)
-    {
-        var rotationAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -shearX);
-        var rotationAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, shearY);
-        var rotation = rotationAroundX * rotationAroundY;
-        var normal = Vector3.Transform(Vector3.UnitZ, rotation);
-        var slope = MathF.PI / 2f - MathF.Atan2(normal.Z, MathF.Sqrt(normal.X * normal.X + normal.Y * normal.Y));
-
-        return (rotation, normal, slope);
     }
 }

@@ -1,6 +1,5 @@
 ﻿namespace CadRevealComposer.Operations.Converters;
 
-using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Numerics;
@@ -135,8 +134,8 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutOffset == 0;
 
         var snoutRadius = isSnoutCapTop
-            ? rvmSnout.RadiusTop * snoutScale.X
-            : rvmSnout.RadiusBottom * snoutScale.X;
+            ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMinorAxis * snoutScale.X;
 
         // Only check for the snout, because a box does not have any caps
         if (!isPrim1CurrentPrimitive)
@@ -253,20 +252,24 @@ public static class PrimitiveCapHelper
 
         var isSnoutCapTop = rvmSnoutOffset == 0;
 
-        var snoutRadius = isSnoutCapTop
-            ? rvmSnout.RadiusTop * snoutScale.X
-            : rvmSnout.RadiusBottom * snoutScale.X;
+        var semiMinorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMinorAxis * snoutScale.X;
+
+        var semiMajorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMajorAxis * snoutScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
-            if (snoutRadius >= torusRadius)
+            if (semiMinorRadius >= torusRadius)
             {
                 return true;
             }
         }
         else
         {
-            if (torusRadius >= snoutRadius)
+            if (torusRadius >= semiMajorRadius)
             {
                 return true;
             }
@@ -345,20 +348,25 @@ public static class PrimitiveCapHelper
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
         var isSnoutCapTop = rvmSnoutOffset == 0;
-        var snoutRadius = isSnoutCapTop
-            ? rvmSnout.RadiusTop * snoutScale.X
-            : rvmSnout.RadiusBottom * snoutScale.X;
+
+        var semiMinorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMinorAxis * snoutScale.X;
+
+        var semiMajorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMajorAxis * snoutScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
-            if (snoutRadius >= cylinderRadius)
+            if (semiMinorRadius >= cylinderRadius)
             {
                 return true;
             }
         }
         else
         {
-            if (cylinderRadius >= snoutRadius)
+            if (cylinderRadius >= semiMajorRadius)
             {
                 return true;
             }
@@ -379,20 +387,25 @@ public static class PrimitiveCapHelper
         var ellipticalDishRadius = rvmEllipticalDish.BaseRadius * ellipticalDishScale.X;
 
         var isSnoutCapTop = rvmSnoutOffset == 0;
-        var snoutRadius = isSnoutCapTop
-            ? rvmSnout.RadiusTop * snoutScale.X
-            : rvmSnout.RadiusBottom * snoutScale.X;
+
+        var semiMinorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMinorAxis * snoutScale.X;
+
+        var semiMajorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMajorAxis * snoutScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
-            if (snoutRadius >= ellipticalDishRadius)
+            if (semiMinorRadius >= ellipticalDishRadius)
             {
                 return true;
             }
         }
         else
         {
-            if (ellipticalDishRadius >= snoutRadius)
+            if (ellipticalDishRadius >= semiMajorRadius)
             {
                 return true;
             }
@@ -412,25 +425,36 @@ public static class PrimitiveCapHelper
         rvmSnout2.Matrix.DecomposeAndNormalize(out var snoutScale2, out _, out _);
 
         var isSnoutCapTop1 = rvmSnoutOffset1 == 0;
-        var snoutRadius1 = isSnoutCapTop1
-            ? rvmSnout1.RadiusTop * snoutScale1.X
-            : rvmSnout1.RadiusBottom * snoutScale1.X;
+
+        var semiMinorAxis1 = isSnoutCapTop1
+            ? rvmSnout1.GetTopRadii().semiMinorAxis * snoutScale1.X
+            : rvmSnout1.GetBottomRadii().semiMinorAxis * snoutScale1.X;
+
+        var semiMajorAxis1 = isSnoutCapTop1
+            ? rvmSnout1.GetTopRadii().semiMajorAxis * snoutScale1.X
+            : rvmSnout1.GetBottomRadii().semiMajorAxis * snoutScale1.X;
 
         var isSnoutCapTop2 = rvmSnoutOffset2 == 0;
-        var snoutRadius2 = isSnoutCapTop2
-            ? rvmSnout2.RadiusTop * snoutScale2.X
-            : rvmSnout2.RadiusBottom * snoutScale2.X;
 
+        var semiMinorAxis2 = isSnoutCapTop2
+            ? rvmSnout2.GetTopRadii().semiMinorAxis * snoutScale2.X
+            : rvmSnout2.GetBottomRadii().semiMinorAxis * snoutScale2.X;
+
+        var semiMajorAxis2 = isSnoutCapTop1
+            ? rvmSnout2.GetTopRadii().semiMajorAxis * snoutScale2.X
+            : rvmSnout2.GetBottomRadii().semiMajorAxis * snoutScale2.X;
+
+        // TODO This can give false positives. Need to check that the major axis aligns the other major axis
         if (isPrim1CurrentPrimitive)
         {
-            if (snoutRadius2 >= snoutRadius1)
+            if (semiMajorAxis2 >= semiMajorAxis1 && semiMinorAxis2 >= semiMinorAxis1)
             {
                 return true;
             }
         }
         else
         {
-            if (snoutRadius1 >= snoutRadius2)
+            if (semiMajorAxis1 >= semiMajorAxis2 && semiMinorAxis1 >= semiMajorAxis1)
             {
                 return true;
             }
@@ -449,22 +473,27 @@ public static class PrimitiveCapHelper
         rvmSphericalDish.Matrix.DecomposeAndNormalize(out var sphericalDishScale, out _, out _);
 
         var isSnoutCapTop = rvmSnoutOffset == 0;
-        var snoutRadius = isSnoutCapTop
-            ? rvmSnout.RadiusTop * snoutScale.X
-            : rvmSnout.RadiusBottom * snoutScale.X;
+
+        var semiMinorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMinorAxis * snoutScale.X;
+
+        var semiMajorRadius = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMajorAxis * snoutScale.X;
 
         var sphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
-            if (sphericalDishRadius >= snoutRadius)
+            if (sphericalDishRadius >= semiMajorRadius)
             {
                 return true;
             }
         }
         else
         {
-            if (snoutRadius >= sphericalDishRadius)
+            if (semiMinorRadius >= sphericalDishRadius)
             {
                 return true;
             }
