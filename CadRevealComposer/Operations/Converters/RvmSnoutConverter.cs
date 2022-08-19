@@ -44,27 +44,27 @@ public static class RvmSnoutConverter
             if (IsEccentric(rvmSnout))
             {
                 throw new NotImplementedException(
-                    "This type of primitive is missing from CadReveal, should convert to mesh?");
+                    "Eccentric snout primitive is missing from CadReveal");
             }
 
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
             if (isCylinderShaped)
             {
                 return CylinderWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, height, treeIndex,
-                    Color.Red, bbox);
+                    color, bbox);
             }
 
-            return ConeWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, Color.Blue,
-                bbox);
+            throw new NotImplementedException(
+                "Cone with shear primitive is missing from CadReveal");
         }
 
         if (IsEccentric(rvmSnout))
         {
             return EccentricCone(rvmSnout, scale, rotation, position, normal, radiusA, radiusB, height, treeIndex,
-                Color.White, bbox);
+                color, bbox);
         }
 
-        return Cone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, Color.White, bbox);
+        return Cone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
     }
 
     private static IEnumerable<APrimitive> Cone(
@@ -280,76 +280,6 @@ public static class RvmSnoutConverter
                 // Matrix4x4.CreateScale(diameter)
                 Matrix4x4.CreateScale(new Vector3(capBShortestSide, capBLongestSide, 0))
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
-                * Matrix4x4.CreateTranslation(centerB);
-
-            yield return new GeneralRing(
-                Angle: 0f,
-                ArcAngle: 2f * MathF.PI,
-                matrixCapB,
-                -normal,
-                Thickness: 1f,
-                treeIndex,
-                color,
-                bbox // use same bbox as RVM source
-            );
-        }
-    }
-
-    private static IEnumerable<APrimitive> ConeWithShear(
-        RvmSnout rvmSnout,
-        Quaternion rotation,
-        Vector3 centerA,
-        Vector3 centerB,
-        Vector3 normal,
-        float radiusA,
-        float radiusB,
-        ulong treeIndex,
-        Color color,
-        RvmBoundingBox bbox)
-    {
-        var diameterA = 2f * radiusA;
-        var diameterB = 2f * radiusB;
-        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
-
-        yield return new Cone(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox
-        );
-
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
-
-        if (showCapA)
-        {
-            var matrixCapA =
-                Matrix4x4.CreateScale(diameterA)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerA);
-
-            yield return new GeneralRing(
-                Angle: 0f,
-                ArcAngle: 2f * MathF.PI,
-                matrixCapA,
-                normal,
-                Thickness: 1f,
-                treeIndex,
-                color,
-                bbox // use same bbox as RVM source
-            );
-        }
-
-        if (showCapB)
-        {
-            var matrixCapB =
-                Matrix4x4.CreateScale(diameterB)
-                * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerB);
 
             yield return new GeneralRing(
