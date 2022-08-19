@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Operations.Converters;
 
+using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Numerics;
@@ -15,7 +16,7 @@ public static class PrimitiveCapHelper
     public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
         Vector3 capCenterB)
     {
-        const float capDeterminationFactor = 0.000_05f;
+        const float connectionDistanceTolerance = 0.000_05f;
 
         bool showCapA = true, showCapB = true;
 
@@ -34,32 +35,44 @@ public static class PrimitiveCapHelper
                 ? connection.Primitive2
                 : connection.Primitive1;
 
-            var offset1 = isSorted
+            var connectionIndex1 = isSorted
                 ? connection.ConnectionIndex1
                 : connection.ConnectionIndex2;
 
-            var offset2 = isSorted
+            var connectionIndex2 = isSorted
                 ? connection.ConnectionIndex2
                 : connection.ConnectionIndex1;
 
-            var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, capDeterminationFactor);
-            var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, capDeterminationFactor);
+            var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, connectionDistanceTolerance);
+            var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, connectionDistanceTolerance);
+
+            var isPrim1CurrentPrimitive = ReferenceEquals(primitive, prim1);
 
             var showCap = (prim1, prim2) switch
             {
-                (RvmBox a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmBox a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
-                (RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCircularTorus a, RvmCircularTorus b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCircularTorus a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCircularTorus a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
-                (RvmCylinder a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCylinder a, RvmEllipticalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b),
-                (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
+                (RvmBox a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                (RvmBox a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
+                    isPrim1CurrentPrimitive),
+                (RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                (RvmCircularTorus a, RvmCircularTorus b) => !OtherPrimitiveHasLargerOrEqualCap(a, b,
+                    isPrim1CurrentPrimitive),
+                (RvmCircularTorus a, RvmCylinder b) =>
+                    !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                (RvmCircularTorus a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
+                    isPrim1CurrentPrimitive),
+                (RvmCylinder a, RvmSphericalDish b) =>
+                    !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                (RvmCylinder a, RvmEllipticalDish b) => !OtherPrimitiveHasLargerOrEqualCap(a, b,
+                    isPrim1CurrentPrimitive),
+                (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
+                    isPrim1CurrentPrimitive),
                 (RvmCylinder a, RvmPyramid b) => true, // TODO
-                (RvmEllipticalDish a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset2),
-                (RvmSnout a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset1, offset2),
-                (RvmSnout a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(primitive, a, b, offset1),
+                (RvmEllipticalDish a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
+                    isPrim1CurrentPrimitive),
+                (RvmSnout a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1, connectionIndex2,
+                    isPrim1CurrentPrimitive),
+                (RvmSnout a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1,
+                    isPrim1CurrentPrimitive),
                 _ => true
             };
 
@@ -78,9 +91,9 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmBox rvmBox,
-        RvmCylinder rvmCylinder)
+        RvmCylinder rvmCylinder,
+        bool isPrim1CurrentPrimitive)
     {
         rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
@@ -92,7 +105,7 @@ public static class PrimitiveCapHelper
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
         // Only check for the cylinder, because a box does not have any caps
-        if (ReferenceEquals(currentPrimitive, rvmCylinder))
+        if (!isPrim1CurrentPrimitive)
         {
             // TODO: Is it possible to find out which sides to compare with?
             if (cylinderRadius < halfLengthX &&
@@ -107,10 +120,10 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmBox rvmBox,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset)
+        uint rvmSnoutOffset,
+        bool isPrim1CurrentPrimitive)
     {
         rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -126,7 +139,7 @@ public static class PrimitiveCapHelper
             : rvmSnout.RadiusBottom * snoutScale.X;
 
         // Only check for the snout, because a box does not have any caps
-        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        if (!isPrim1CurrentPrimitive)
         {
             // TODO: Is it possible to find out which sides to compare with?
             if (snoutRadius < halfLengthX &&
@@ -141,9 +154,9 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmCylinder rvmCylinder1,
-        RvmCylinder rvmCylinder2)
+        RvmCylinder rvmCylinder2,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCylinder1.Matrix.DecomposeAndNormalize(out var cylinderScale1, out _, out _);
         rvmCylinder2.Matrix.DecomposeAndNormalize(out var cylinderScale2, out _, out _);
@@ -151,25 +164,28 @@ public static class PrimitiveCapHelper
         var cylinderRadius1 = rvmCylinder1.Radius * cylinderScale1.X;
         var cylinderRadius2 = rvmCylinder2.Radius * cylinderScale2.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCylinder1) &&
-            cylinderRadius2 >= cylinderRadius1)
+        if (isPrim1CurrentPrimitive)
         {
-            return true;
+            if (cylinderRadius2 >= cylinderRadius1)
+            {
+                return true;
+            }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmCylinder2) &&
-            cylinderRadius1 >= cylinderRadius2)
+        else
         {
-            return true;
+            if (cylinderRadius1 >= cylinderRadius2)
+            {
+                return true;
+            }
         }
 
         return false;
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmCircularTorus rvmCircularTorus1,
-        RvmCircularTorus rvmCircularTorus2)
+        RvmCircularTorus rvmCircularTorus2,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCircularTorus1.Matrix.DecomposeAndNormalize(out var torusScale1, out _, out _);
         rvmCircularTorus2.Matrix.DecomposeAndNormalize(out var torusScale2, out _, out _);
@@ -177,15 +193,14 @@ public static class PrimitiveCapHelper
         var torusRadius1 = rvmCircularTorus1.Radius * torusScale1.X;
         var torusRadius2 = rvmCircularTorus2.Radius * torusScale2.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCircularTorus1))
+        if (isPrim1CurrentPrimitive)
         {
             if (torusRadius2 >= torusRadius1)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmCircularTorus2))
+        else
         {
             if (torusRadius1 >= torusRadius2)
             {
@@ -197,9 +212,9 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmCircularTorus rvmCircularTorus,
-        RvmCylinder rvmCylinder)
+        RvmCylinder rvmCylinder,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
@@ -207,15 +222,14 @@ public static class PrimitiveCapHelper
         var circularTorusRadius = rvmCircularTorus.Radius * circularTorusScale.X;
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCircularTorus))
+        if (isPrim1CurrentPrimitive)
         {
             if (cylinderRadius >= circularTorusRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmCylinder))
+        else
         {
             if (circularTorusRadius >= cylinderRadius)
             {
@@ -227,10 +241,10 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmCircularTorus rvmCircularTorus,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset)
+        uint rvmSnoutOffset,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -243,15 +257,14 @@ public static class PrimitiveCapHelper
             ? rvmSnout.RadiusTop * snoutScale.X
             : rvmSnout.RadiusBottom * snoutScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCircularTorus))
+        if (isPrim1CurrentPrimitive)
         {
             if (snoutRadius >= torusRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        else
         {
             if (torusRadius >= snoutRadius)
             {
@@ -263,9 +276,9 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmCylinder rvmCylinder,
-        RvmSphericalDish rvmSphericalDish)
+        RvmSphericalDish rvmSphericalDish,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmSphericalDish.Matrix.DecomposeAndNormalize(out var sphericalDishScale, out _, out _);
@@ -273,15 +286,14 @@ public static class PrimitiveCapHelper
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
         var rvmSphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCylinder))
+        if (isPrim1CurrentPrimitive)
         {
             if (rvmSphericalDishRadius >= cylinderRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmSphericalDish))
+        else
         {
             if (cylinderRadius >= rvmSphericalDishRadius)
             {
@@ -292,8 +304,10 @@ public static class PrimitiveCapHelper
         return false;
     }
 
-    private static bool OtherPrimitiveHasLargerOrEqualCap(RvmPrimitive currentPrimitive, RvmCylinder rvmCylinder,
-        RvmEllipticalDish rvmEllipticalDish)
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmCylinder rvmCylinder,
+        RvmEllipticalDish rvmEllipticalDish,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var ellipticalDishScale, out _, out _);
@@ -301,15 +315,14 @@ public static class PrimitiveCapHelper
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
         var ellipticalDishRadius = rvmEllipticalDish.BaseRadius * ellipticalDishScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCylinder))
+        if (isPrim1CurrentPrimitive)
         {
             if (ellipticalDishRadius >= cylinderRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmEllipticalDish))
+        else
         {
             if (cylinderRadius >= ellipticalDishRadius)
             {
@@ -321,10 +334,10 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmCylinder rvmCylinder,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset)
+        uint rvmSnoutOffset,
+        bool isPrim1CurrentPrimitive)
     {
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -336,15 +349,14 @@ public static class PrimitiveCapHelper
             ? rvmSnout.RadiusTop * snoutScale.X
             : rvmSnout.RadiusBottom * snoutScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmCylinder))
+        if (isPrim1CurrentPrimitive)
         {
             if (snoutRadius >= cylinderRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        else
         {
             if (cylinderRadius >= snoutRadius)
             {
@@ -355,8 +367,11 @@ public static class PrimitiveCapHelper
         return false;
     }
 
-    private static bool OtherPrimitiveHasLargerOrEqualCap(RvmPrimitive currentPrimitive,
-        RvmEllipticalDish rvmEllipticalDish, RvmSnout rvmSnout, uint rvmSnoutOffset)
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmEllipticalDish rvmEllipticalDish,
+        RvmSnout rvmSnout,
+        uint rvmSnoutOffset,
+        bool isPrim1CurrentPrimitive)
     {
         rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var ellipticalDishScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -368,17 +383,16 @@ public static class PrimitiveCapHelper
             ? rvmSnout.RadiusTop * snoutScale.X
             : rvmSnout.RadiusBottom * snoutScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        if (isPrim1CurrentPrimitive)
         {
-            if (ellipticalDishRadius >= snoutRadius)
+            if (snoutRadius >= ellipticalDishRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmEllipticalDish))
+        else
         {
-            if (snoutRadius >= ellipticalDishRadius)
+            if (ellipticalDishRadius >= snoutRadius)
             {
                 return true;
             }
@@ -388,11 +402,11 @@ public static class PrimitiveCapHelper
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
-        RvmPrimitive currentPrimitive,
         RvmSnout rvmSnout1,
         RvmSnout rvmSnout2,
         uint rvmSnoutOffset1,
-        uint rvmSnoutOffset2)
+        uint rvmSnoutOffset2,
+        bool isPrim1CurrentPrimitive)
     {
         rvmSnout1.Matrix.DecomposeAndNormalize(out var snoutScale1, out _, out _);
         rvmSnout2.Matrix.DecomposeAndNormalize(out var snoutScale2, out _, out _);
@@ -407,15 +421,14 @@ public static class PrimitiveCapHelper
             ? rvmSnout2.RadiusTop * snoutScale2.X
             : rvmSnout2.RadiusBottom * snoutScale2.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmSnout1))
+        if (isPrim1CurrentPrimitive)
         {
             if (snoutRadius2 >= snoutRadius1)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmSnout2))
+        else
         {
             if (snoutRadius1 >= snoutRadius2)
             {
@@ -426,8 +439,11 @@ public static class PrimitiveCapHelper
         return false;
     }
 
-    private static bool OtherPrimitiveHasLargerOrEqualCap(RvmPrimitive currentPrimitive, RvmSnout rvmSnout,
-        RvmSphericalDish rvmSphericalDish, uint rvmSnoutOffset)
+    private static bool OtherPrimitiveHasLargerOrEqualCap(
+        RvmSnout rvmSnout,
+        RvmSphericalDish rvmSphericalDish,
+        uint rvmSnoutOffset,
+        bool isPrim1CurrentPrimitive)
     {
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
         rvmSphericalDish.Matrix.DecomposeAndNormalize(out var sphericalDishScale, out _, out _);
@@ -439,15 +455,14 @@ public static class PrimitiveCapHelper
 
         var sphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 
-        if (ReferenceEquals(currentPrimitive, rvmSnout))
+        if (isPrim1CurrentPrimitive)
         {
             if (sphericalDishRadius >= snoutRadius)
             {
                 return true;
             }
         }
-
-        if (ReferenceEquals(currentPrimitive, rvmSphericalDish))
+        else
         {
             if (snoutRadius >= sphericalDishRadius)
             {
