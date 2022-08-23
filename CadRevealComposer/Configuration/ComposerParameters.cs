@@ -4,4 +4,5 @@ public record ComposerParameters(
     string Mesh2CtmToolPath,
     bool NoInstancing,
     bool SingleSector,
-    bool SplitIntoZones);
+    bool SplitIntoZones,
+    bool UseEmptyRootSector);

@@ -52,6 +52,9 @@ public class CommandLineOptions
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
 
+    [Option(longName: "UseEmptyRootSector", shortName: 'e', Required = false, HelpText = "Use empty Root Sector as topnode for sectors/zones.")]
+    public bool UseEmptyRootSector { get; init; }
+
     [Option(
          longName: "InstancingThreshold",
          shortName: 't',

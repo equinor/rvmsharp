@@ -54,6 +54,8 @@ public static class CadRevealComposerRunner
         NodeIdProvider nodeIdGenerator = new();
 
         Console.WriteLine("Generating i3d");
+        Console.WriteLine($"Split into Zones: {composerParameters.SplitIntoZones}");
+        Console.WriteLine($"Use empty root sector: {composerParameters.UseEmptyRootSector}");
 
         var total = Stopwatch.StartNew();
         var stopwatch = Stopwatch.StartNew();
@@ -154,7 +156,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
-            sectors = SectorSplitter.SplitIntoSectors(zones)
+            sectors = SectorSplitter.SplitIntoSectors(zones, composerParameters.UseEmptyRootSector)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -218,6 +220,14 @@ public static class CadRevealComposerRunner
     {
         foreach (var sector in sectors)
         {
+            if (string.IsNullOrEmpty(sector.Filename))
+            {
+                yield return sector with
+                {
+                    DownloadSize = 0
+                };
+                continue;
+            }
             var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
             yield return sector with
             {
@@ -230,9 +240,11 @@ public static class CadRevealComposerRunner
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult)
     {
-        static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
+        static TriangleMesh? TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
             var mesh = Tessellate(p.RvmPrimitive);
+            if (mesh.Triangles.Length == 0)
+                return null;
             return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
 
@@ -285,6 +297,7 @@ public static class CadRevealComposerRunner
             .Concat(pyramidsNotInstanced)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
+            .WhereNotNull()
             .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");

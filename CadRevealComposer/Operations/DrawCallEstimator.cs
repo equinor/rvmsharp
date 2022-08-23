@@ -67,6 +67,8 @@ public static class DrawCallEstimator
 
     public static (long EstimatedTriangleCount, int EstimatedDrawCalls) Estimate(APrimitive[] geometry)
     {
+        if (geometry == null || !geometry.Any())
+            return (0, 0);
         var renderPrimitives = geometry.SelectMany(g => g.GetRenderPrimitives()).ToArray();
         var estimatedPrimitiveDrawCallCount = renderPrimitives.Distinct().Count();
         var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();

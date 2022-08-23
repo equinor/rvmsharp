@@ -18,8 +18,20 @@ using Utils;
 /// </summary>
 public static class ZoneSplitter
 {
-    public record Zone(APrimitive[] Primitives);
-    public record RootZone(APrimitive[] Primitives) : Zone(Primitives);
+    public record Zone(APrimitive[] Primitives,
+        Vector3 ZoneBoundingBoxMin,
+        Vector3 ZoneBoundingBoxMax,
+        Vector3 SceneBoundingBoxMin,
+        Vector3 SceneBoundingBoxMax
+
+        );
+    public record RootZone(APrimitive[] Primitives,
+        Vector3 SceneBoundingBoxMin,
+        Vector3 SceneBoundingBoxMax) : Zone(Primitives,
+                    SceneBoundingBoxMin,
+                    SceneBoundingBoxMax,
+                    SceneBoundingBoxMin,
+                    SceneBoundingBoxMax);
 
     private record ZoneInternal(Cell[] Cells, int MinNodeCount);
 
@@ -165,11 +177,13 @@ public static class ZoneSplitter
     public static Zone[] SplitIntoZones(APrimitive[] primitives, DirectoryInfo outputDirectory)
     {
         var grid = Grid.Create(primitives);
+        var sceneBoundingBoxMin = primitives.GetBoundingBoxMin();
+        var sceneBoundingBoxMax = primitives.GetBoundingBoxMax();
 
         // group cells into zones
         // NOTE: start grouping cells with a higher node count, and go lower
         var zonesInternal = new List<ZoneInternal>();
-        var minNodeCountInCellList = new[] { 10, 7, 3, 1 };
+        var minNodeCountInCellList = new[] { 10946, 6765, 4181, 2584, 1597, 987, 610, 377, 233, 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1 }; // Fibonacci sequence for zone splitting
         foreach (var minNodeCountInCell in minNodeCountInCellList)
         {
             while (grid.Cells.Any(cell => cell.IsProcessed is false))
@@ -202,7 +216,7 @@ public static class ZoneSplitter
             WriteZoneBitmap(stream, zonesInternal, grid.GridSizeX, grid.GridSizeY);
         }
 
-        static Zone ConvertToZone(ZoneInternal zone)
+        Zone ConvertToZone(ZoneInternal zone)
         {
             // A node may be placed into multiple cells, hence the use of Distinct().
             // Let's filter out the nodes which extends beyond the zone.
@@ -214,7 +228,7 @@ public static class ZoneSplitter
             var primitives = nodesContainedWithinZone
                 .SelectMany(n => n.Primitives)
                 .ToArray();
-            return new Zone(primitives);
+            return new Zone(primitives, primitives.GetBoundingBoxMin(), primitives.GetBoundingBoxMax(), sceneBoundingBoxMin, sceneBoundingBoxMax);
         }
 
         var zones = zonesInternal
@@ -230,10 +244,10 @@ public static class ZoneSplitter
             .ToArray();
 
         Console.WriteLine($"Root sector has {nodesWithoutZone.Length:N0} nodes and {primitivesWithoutZone.Length:N0} geometries.");
-        var rootZone = new RootZone(primitivesWithoutZone);
+        var rootZone = new RootZone(primitivesWithoutZone, primitives.GetBoundingBoxMin(), primitives.GetBoundingBoxMax());
         zones.Add(rootZone);
 
-        return zones.ToArray();
+        return zones.Where(z => z.Primitives.Length > 0).ToArray(); //No need to keep empty zones...
     }
 
     /// <summary>

@@ -35,34 +35,69 @@ public static class SectorSplitter
         Vector3 BoundingBoxMax,
         float Diagonal);
 
-    public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones)
+    public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones, bool createEmptyRootSector=false)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
-        foreach (var zone in zones)
+        if (createEmptyRootSector)
         {
-            var nodes = zone.Primitives
-                .GroupBy(p => p.TreeIndex)
-                .Select(g =>
+            var rootSector = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), zones.First().AreaBoundingBoxMin, zones.First().AreaBoundingBoxMax);
+            yield return rootSector; // Root sector, containing no nodes
+            var rootZone = zones.FirstOrDefault(z => z is ZoneSplitter.RootZone);
+            if (rootZone != null)
+            {
+                var nodes = GetNodesInZone(rootZone);
+                var rootSectorLevel2 = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), rootZone.AreaBoundingBoxMin, rootZone.AreaBoundingBoxMax);
+                yield return rootSectorLevel2; // Root sector, containing no nodes
+
+                var sectors = SplitIntoSectorsRecursive(
+                    nodes,
+                    StartDepth + 1,
+                    $"0/",
+                    0,
+                    sectorIdGenerator).ToArray();
+
+                foreach (var sector in sectors)
                 {
-                    var geometries = g.ToArray();
-                    var boundingBoxMin = geometries.GetBoundingBoxMin();
-                    var boundingBoxMax = geometries.GetBoundingBoxMax();
-                    return new Node(
-                        g.Key,
-                        geometries,
-                        geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                        boundingBoxMin,
-                        boundingBoxMax,
-                        Vector3.Distance(boundingBoxMin, boundingBoxMax));
-                })
-                .ToArray();
+                    yield return sector;
+                }
+
+            }
+        }
+        else
+        {
+            var rootZone = zones.FirstOrDefault(z => z is ZoneSplitter.RootZone);
+            if (rootZone == null)
+            {
+                Console.WriteLine("WARNING: RootZone is missing."); //Consider throwing if this hits?
+            }
+            else
+            {
+                var nodes = GetNodesInZone(rootZone);
+
+                var sectors = SplitIntoSectorsRecursive(
+                    nodes,
+                    StartDepth,
+                    "",
+                    null,
+                    sectorIdGenerator).ToArray();
+
+                foreach (var sector in sectors)
+                {
+                    yield return sector;
+                }
+
+            }
+        }
+        foreach (var zone in zones.Where(z => z is not ZoneSplitter.RootZone))
+        {
+            var nodes = GetNodesInZone(zone);
 
             var sectors = SplitIntoSectorsRecursive(
                 nodes,
-                StartDepth,
-                "",
-                null,
+                StartDepth + 1,
+                "0/",
+                0,
                 sectorIdGenerator).ToArray();
 
             foreach (var sector in sectors)
@@ -72,6 +107,38 @@ public static class SectorSplitter
         }
     }
 
+    private static ProtoSector CreateEmptyRootSector(uint sectorId, Vector3 bbMin, Vector3 bbMax)
+    {
+        return new ProtoSector(
+            sectorId,
+            ParentSectorId: null,
+            StartDepth,
+            $"{sectorId}/",
+            null!,
+            bbMin,
+            bbMax
+        );
+
+    }
+    private static Node[] GetNodesInZone(ZoneSplitter.Zone zone)
+    {
+        return zone.Primitives
+                        .GroupBy(p => p.TreeIndex)
+                        .Select(g =>
+                        {
+                            var geometries = g.ToArray();
+                            var boundingBoxMin = geometries.GetBoundingBoxMin();
+                            var boundingBoxMax = geometries.GetBoundingBoxMax();
+                            return new Node(
+                                g.Key,
+                                geometries,
+                                geometries.Sum(DrawCallEstimator.EstimateByteSize),
+                                boundingBoxMin,
+                                boundingBoxMax,
+                                Vector3.Distance(boundingBoxMin, boundingBoxMax));
+                        })
+                        .ToArray();
+    }
     public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
     {
         yield return CreateRootSector(0, allGeometries);
