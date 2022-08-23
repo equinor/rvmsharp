@@ -25,14 +25,17 @@ static internal class RvmStoreToCadRevealNodesConverter
                     treeIndexGenerator))
             .ToArray();
 
-        rootNode.BoundingBoxAxisAligned = rootNode.Children
+        if(rootNode.BoundingBoxAxisAligned != null)
+        {
+            rootNode.BoundingBoxAxisAligned = rootNode.Children
             .Select(x => x.BoundingBoxAxisAligned)
             .WhereNotNull()
             .ToArray().Aggregate((a, b) => a.Encapsulate(b));
 
-        Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
-            "Root node has no bounding box. Are there any meshes in the input?");
-
+            Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
+                "Root RVM node has no bounding box. Are there any meshes in the input?");
+        }
+        
         var allNodes = GetAllNodesFlat(rootNode).ToArray();
         return allNodes;
     }

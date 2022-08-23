@@ -32,9 +32,13 @@ public static class CadRevealComposerRunner
             var timer = Stopwatch.StartNew();
             IReadOnlyList<CadRevealNode> cadRevealNodes =
                 modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator);
-            nodesToProcess.AddRange(cadRevealNodes);
-            Console.WriteLine(
-                $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
+            if(cadRevealNodes != null)
+            {
+                nodesToProcess.AddRange(cadRevealNodes);
+                Console.WriteLine(
+                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
+            }
+            
         }
 
         ProcessNodes(nodesToProcess, outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
