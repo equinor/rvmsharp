@@ -41,13 +41,13 @@ public static class SectorSplitter
 
         if (createEmptyRootSector)
         {
-            var rootSector = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), zones.First().AreaBoundingBoxMin, zones.First().AreaBoundingBoxMax);
+            var rootSector = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), zones.First().SceneBoundingBoxMin, zones.First().SceneBoundingBoxMax);
             yield return rootSector; // Root sector, containing no nodes
             var rootZone = zones.FirstOrDefault(z => z is ZoneSplitter.RootZone);
             if (rootZone != null)
             {
                 var nodes = GetNodesInZone(rootZone);
-                var rootSectorLevel2 = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), rootZone.AreaBoundingBoxMin, rootZone.AreaBoundingBoxMax);
+                var rootSectorLevel2 = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), rootZone.SceneBoundingBoxMin, rootZone.SceneBoundingBoxMax);
                 yield return rootSectorLevel2; // Root sector, containing no nodes
 
                 var sectors = SplitIntoSectorsRecursive(
