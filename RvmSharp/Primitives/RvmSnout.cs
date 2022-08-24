@@ -68,6 +68,17 @@ public record RvmSnout(
         var normal = Vector3.Transform(Vector3.UnitZ, rotation);
         var slope = MathF.PI / 2f - MathF.Atan2(normal.Z, MathF.Sqrt(normal.X * normal.X + normal.Y * normal.Y));
 
+        float rotZAmount = 0;
+
+        if (shearX != 0 || shearY != 0)
+        {
+            rotZAmount = (shearX / (shearX + shearY)) * MathF.PI / 2;
+        }
+
+        Quaternion rotationAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, rotZAmount);
+
+        rotation *= rotationAroundZ;
+
         return (rotation, normal, slope);
     }
 };

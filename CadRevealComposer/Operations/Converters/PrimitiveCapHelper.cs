@@ -69,7 +69,7 @@ public static class PrimitiveCapHelper
                 (RvmEllipticalDish a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
                     isPrim1CurrentPrimitive),
                 (RvmSnout a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1, connectionIndex2,
-                    isPrim1CurrentPrimitive),
+                    isPrim1CurrentPrimitive), // TODO
                 (RvmSnout a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1,
                     isPrim1CurrentPrimitive),
                 _ => true
@@ -444,17 +444,20 @@ public static class PrimitiveCapHelper
             ? rvmSnout2.GetTopRadii().semiMajorAxis * snoutScale2.X
             : rvmSnout2.GetBottomRadii().semiMajorAxis * snoutScale2.X;
 
-        // TODO This can give false positives. Need to check that the major axis aligns the other major axis
+        // TODO:
+        // This test can be optimized by comparing the major axii and minor axii
+        // This will however require that we are able to check that the major axii of
+        // one primitive aligns the the major axii of the other
         if (isPrim1CurrentPrimitive)
         {
-            if (semiMajorAxis2 >= semiMajorAxis1 && semiMinorAxis2 >= semiMinorAxis1)
+            if (semiMinorAxis2 >= semiMajorAxis1 && semiMinorAxis2 >= semiMinorAxis1)
             {
                 return true;
             }
         }
         else
         {
-            if (semiMajorAxis1 >= semiMajorAxis2 && semiMinorAxis1 >= semiMajorAxis1)
+            if (semiMinorAxis1 >= semiMajorAxis2 && semiMinorAxis1 >= semiMajorAxis1)
             {
                 return true;
             }

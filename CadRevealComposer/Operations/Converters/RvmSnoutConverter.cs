@@ -50,8 +50,17 @@ public static class RvmSnoutConverter
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
             if (isCylinderShaped)
             {
-                return CylinderWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, height, treeIndex,
-                    color, bbox);
+                return CylinderWithShear(
+                    rvmSnout,
+                    rotation,
+                    centerA,
+                    centerB,
+                    normal,
+                    height,
+                    scale,
+                    treeIndex,
+                    color,
+                    bbox);
             }
 
             throw new NotImplementedException(
@@ -60,8 +69,18 @@ public static class RvmSnoutConverter
 
         if (rvmSnout.IsEccentric())
         {
-            return EccentricCone(rvmSnout, scale, rotation, position, normal, radiusA, radiusB, height, treeIndex,
-                color, bbox);
+            return EccentricCone(
+                rvmSnout,
+                scale,
+                rotation,
+                position,
+                normal,
+                radiusA,
+                radiusB,
+                height,
+                treeIndex,
+                color,
+                bbox);
         }
 
         return Cone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
@@ -208,24 +227,28 @@ public static class RvmSnoutConverter
         Vector3 centerA,
         Vector3 centerB,
         Vector3 normal,
-        float radius,
         float height,
+        Vector3 scale,
         ulong treeIndex,
         Color color,
         RvmBoundingBox bbox)
     {
-        var diameter = 2f * radius;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         var (planeRotationA, planeNormalA, planeSlopeA) = rvmSnout.GetTopSlope();
         var (planeRotationB, planeNormalB, planeSlopeB) = rvmSnout.GetBottomSlope();
 
-        var (semiMinorAxisA, semiMajorAxisA) = rvmSnout.GetTopRadii();
-        var (semiMinorAxisB, semiMajorAxisB) = rvmSnout.GetBottomRadii();
+        (var semiMinorAxisA, var semiMajorAxisA) = rvmSnout.GetTopRadii();
+        (var semiMinorAxisB, var semiMajorAxisB) = rvmSnout.GetBottomRadii();
+
+        semiMinorAxisA *= scale.X;
+        semiMajorAxisA *= scale.X;
+        semiMinorAxisB *= scale.X;
+        semiMajorAxisB *= scale.X;
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
-        var extendedHeightA = MathF.Tan(planeSlopeA) * radius;
-        var extendedHeightB = MathF.Tan(planeSlopeB) * radius;
+        var extendedHeightA = MathF.Tan(planeSlopeA) * semiMinorAxisA;
+        var extendedHeightB = MathF.Tan(planeSlopeB) * semiMinorAxisB;
 
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
@@ -241,7 +264,7 @@ public static class RvmSnoutConverter
             localToWorldXAxis,
             planeA,
             planeB,
-            radius,
+            semiMinorAxisA,
             treeIndex,
             color,
             bbox
@@ -252,8 +275,7 @@ public static class RvmSnoutConverter
         if (showCapA)
         {
             var matrixCapA =
-                // Matrix4x4.CreateScale(diameter)
-                Matrix4x4.CreateScale(new Vector3(semiMinorAxisA, semiMajorAxisA, 0))
+                Matrix4x4.CreateScale(new Vector3(semiMinorAxisA, semiMajorAxisA, 0) * 2.0f)
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
                 * Matrix4x4.CreateTranslation(centerA);
 
@@ -272,8 +294,7 @@ public static class RvmSnoutConverter
         if (showCapB)
         {
             var matrixCapB =
-                // Matrix4x4.CreateScale(diameter)
-                Matrix4x4.CreateScale(new Vector3(semiMinorAxisB, semiMajorAxisB, 0))
+                Matrix4x4.CreateScale(new Vector3(semiMinorAxisB, semiMajorAxisB, 0) * 2.0f)
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
                 * Matrix4x4.CreateTranslation(centerB);
 
