@@ -50,7 +50,7 @@ public static class RvmSnoutConverter
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
             if (isCylinderShaped)
             {
-                return CylinderWithShear(
+                return CreateCylinderWithShear(
                     rvmSnout,
                     rotation,
                     centerA,
@@ -69,7 +69,7 @@ public static class RvmSnoutConverter
 
         if (rvmSnout.IsEccentric())
         {
-            return EccentricCone(
+            return CreateEccentricCone(
                 rvmSnout,
                 scale,
                 rotation,
@@ -83,10 +83,20 @@ public static class RvmSnoutConverter
                 bbox);
         }
 
-        return Cone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+        return CreateCone(
+            rvmSnout,
+            rotation,
+            centerA,
+            centerB,
+            normal,
+            radiusA,
+            radiusB,
+            treeIndex,
+            color,
+            bbox);
     }
 
-    private static IEnumerable<APrimitive> Cone(
+    private static IEnumerable<APrimitive> CreateCone(
         RvmSnout rvmSnout,
         Quaternion rotation,
         Vector3 centerA,
@@ -150,7 +160,7 @@ public static class RvmSnoutConverter
         }
     }
 
-    private static IEnumerable<APrimitive> EccentricCone(
+    private static IEnumerable<APrimitive> CreateEccentricCone(
         RvmSnout rvmSnout,
         Vector3 scale,
         Quaternion rotation,
@@ -221,7 +231,7 @@ public static class RvmSnoutConverter
         }
     }
 
-    private static IEnumerable<APrimitive> CylinderWithShear(
+    private static IEnumerable<APrimitive> CreateCylinderWithShear(
         RvmSnout rvmSnout,
         Quaternion rotation,
         Vector3 centerA,

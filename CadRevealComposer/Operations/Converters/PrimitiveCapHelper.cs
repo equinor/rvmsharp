@@ -15,7 +15,7 @@ public static class PrimitiveCapHelper
     public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
         Vector3 capCenterB)
     {
-        const float connectionDistanceTolerance = 0.000_05f;
+        const float connectionDistanceTolerance = 0.000_05f; // Arbitrary value
 
         bool showCapA = true, showCapB = true;
 
@@ -65,11 +65,10 @@ public static class PrimitiveCapHelper
                     isPrim1CurrentPrimitive),
                 (RvmCylinder a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
                     isPrim1CurrentPrimitive),
-                (RvmCylinder a, RvmPyramid b) => true, // TODO
                 (RvmEllipticalDish a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2,
                     isPrim1CurrentPrimitive),
                 (RvmSnout a, RvmSnout b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1, connectionIndex2,
-                    isPrim1CurrentPrimitive), // TODO
+                    isPrim1CurrentPrimitive), // TODO User story: #77874
                 (RvmSnout a, RvmSphericalDish b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1,
                     isPrim1CurrentPrimitive),
                 _ => true
@@ -121,7 +120,7 @@ public static class PrimitiveCapHelper
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmBox rvmBox,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset,
+        uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
         rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
@@ -131,19 +130,19 @@ public static class PrimitiveCapHelper
         var halfLengthY = rvmBox.LengthY * boxScale.Y / 2.0f;
         var halfLengthZ = rvmBox.LengthZ * boxScale.Z / 2.0f;
 
-        var isSnoutCapTop = rvmSnoutOffset == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
-        var snoutRadius = isSnoutCapTop
-            ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
-            : rvmSnout.GetBottomRadii().semiMinorAxis * snoutScale.X;
+        var snoutMajorAxis = isSnoutCapTop
+            ? rvmSnout.GetTopRadii().semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomRadii().semiMajorAxis * snoutScale.X;
 
         // Only check for the snout, because a box does not have any caps
         if (!isPrim1CurrentPrimitive)
         {
             // TODO: Is it possible to find out which sides to compare with?
-            if (snoutRadius < halfLengthX &&
-                snoutRadius < halfLengthY &&
-                snoutRadius < halfLengthZ)
+            if (snoutMajorAxis < halfLengthX &&
+                snoutMajorAxis < halfLengthY &&
+                snoutMajorAxis < halfLengthZ)
             {
                 return true;
             }
@@ -242,7 +241,7 @@ public static class PrimitiveCapHelper
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmCircularTorus rvmCircularTorus,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset,
+        uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
         rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
@@ -250,7 +249,7 @@ public static class PrimitiveCapHelper
 
         var torusRadius = rvmCircularTorus.Radius * circularTorusScale.X;
 
-        var isSnoutCapTop = rvmSnoutOffset == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
@@ -339,7 +338,7 @@ public static class PrimitiveCapHelper
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmCylinder rvmCylinder,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset,
+        uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
@@ -347,7 +346,7 @@ public static class PrimitiveCapHelper
 
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
-        var isSnoutCapTop = rvmSnoutOffset == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
@@ -378,7 +377,7 @@ public static class PrimitiveCapHelper
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmEllipticalDish rvmEllipticalDish,
         RvmSnout rvmSnout,
-        uint rvmSnoutOffset,
+        uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
         rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var ellipticalDishScale, out _, out _);
@@ -386,7 +385,7 @@ public static class PrimitiveCapHelper
 
         var ellipticalDishRadius = rvmEllipticalDish.BaseRadius * ellipticalDishScale.X;
 
-        var isSnoutCapTop = rvmSnoutOffset == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
@@ -417,14 +416,14 @@ public static class PrimitiveCapHelper
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmSnout rvmSnout1,
         RvmSnout rvmSnout2,
-        uint rvmSnoutOffset1,
-        uint rvmSnoutOffset2,
+        uint rvmSnoutCapIndex1,
+        uint rvmSnoutCapIndex2,
         bool isPrim1CurrentPrimitive)
     {
         rvmSnout1.Matrix.DecomposeAndNormalize(out var snoutScale1, out _, out _);
         rvmSnout2.Matrix.DecomposeAndNormalize(out var snoutScale2, out _, out _);
 
-        var isSnoutCapTop1 = rvmSnoutOffset1 == 0;
+        var isSnoutCapTop1 = rvmSnoutCapIndex1 == 0;
 
         var semiMinorAxis1 = isSnoutCapTop1
             ? rvmSnout1.GetTopRadii().semiMinorAxis * snoutScale1.X
@@ -434,7 +433,7 @@ public static class PrimitiveCapHelper
             ? rvmSnout1.GetTopRadii().semiMajorAxis * snoutScale1.X
             : rvmSnout1.GetBottomRadii().semiMajorAxis * snoutScale1.X;
 
-        var isSnoutCapTop2 = rvmSnoutOffset2 == 0;
+        var isSnoutCapTop2 = rvmSnoutCapIndex2 == 0;
 
         var semiMinorAxis2 = isSnoutCapTop2
             ? rvmSnout2.GetTopRadii().semiMinorAxis * snoutScale2.X
@@ -444,7 +443,7 @@ public static class PrimitiveCapHelper
             ? rvmSnout2.GetTopRadii().semiMajorAxis * snoutScale2.X
             : rvmSnout2.GetBottomRadii().semiMajorAxis * snoutScale2.X;
 
-        // TODO:
+        // TODO User story: #77874
         // This test can be optimized by comparing the major axii and minor axii
         // This will however require that we are able to check that the major axii of
         // one primitive aligns the the major axii of the other
@@ -469,13 +468,13 @@ public static class PrimitiveCapHelper
     private static bool OtherPrimitiveHasLargerOrEqualCap(
         RvmSnout rvmSnout,
         RvmSphericalDish rvmSphericalDish,
-        uint rvmSnoutOffset,
+        uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
         rvmSphericalDish.Matrix.DecomposeAndNormalize(out var sphericalDishScale, out _, out _);
 
-        var isSnoutCapTop = rvmSnoutOffset == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopRadii().semiMinorAxis * snoutScale.X
