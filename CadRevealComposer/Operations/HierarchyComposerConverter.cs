@@ -41,7 +41,16 @@ public static class HierarchyComposerConverter
             return null;
 
         var maybeRefNoString = rvmNode.Attributes.GetValueOrNull("RefNo");
-        var maybeRefNo = maybeRefNoString != null ? RefNo.Parse(maybeRefNoString) : null;
+
+        RefNo? maybeRefNo = null;
+        if (!string.IsNullOrWhiteSpace(maybeRefNoString)
+            &&
+            // TEMP: 2022-08-25 Ignore ILTUBOF RefNos instead of actually handling them, as the database does not yet support representing this.
+            !maybeRefNoString.Trim().StartsWith("ILTUBOF", StringComparison.OrdinalIgnoreCase)
+           )
+        {
+            maybeRefNo = RefNo.Parse(maybeRefNoString);
+        }
 
         var boundingBox = revealNode.BoundingBoxAxisAligned;
         bool hasMesh = revealNode.RvmGeometries.Any();
