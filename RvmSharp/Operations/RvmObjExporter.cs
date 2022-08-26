@@ -30,12 +30,12 @@ public static class RvmObjExporter
 
         using var objExporter = new ObjExporter(outputFilename);
         Color? previousColor = null;
-        foreach ((string objectName, (Mesh, Color)[] primitives) in meshes)
+        foreach ((string objectName, (RvmMesh, Color)[] primitives) in meshes)
         {
             objExporter.StartObject(objectName);
             objExporter.StartGroup(objectName);
 
-            foreach ((Mesh? mesh, Color color) in primitives)
+            foreach ((RvmMesh? mesh, Color color) in primitives)
             {
                 if (previousColor != color)
                     objExporter.StartMaterial(color);

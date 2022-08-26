@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Tests.Utils;
+﻿namespace CadRevealRvmProvider.Tests.Utils;
 
 using Newtonsoft.Json;
 using NUnit.Framework;

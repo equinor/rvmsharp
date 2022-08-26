@@ -1,11 +1,17 @@
 ﻿namespace CadRevealRvmProvider;
 
+using Operations;
+using Utils;
+using Tessellation;
 using Ben.Collections.Specialized;
 using CadRevealComposer;
+using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.BatchUtils;
+using RvmSharp.Primitives;
 using System.Diagnostics;
 
 public class RvmProvider : IModelFormatProvider
@@ -38,6 +44,50 @@ public class RvmProvider : IModelFormatProvider
         return nodes;
     }
 
+    public APrimitive[] ProcessGeometries(APrimitive[] geometries,
+        ComposerParameters composerParameters,
+        ModelParameters modelParameters)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var facetGroupsWithEmbeddedProtoMeshes = geometries
+            .OfType<ProtoMeshFromFacetGroup>()
+            .Select(p => new RvmTessellator.RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
+                p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+            .Cast<RvmFacetGroup>()
+            .ToArray();
 
+        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
+        if (composerParameters.NoInstancing)
+        {
+            facetGroupInstancingResult = facetGroupsWithEmbeddedProtoMeshes
+                .Select(x => new RvmFacetGroupMatcher.NotInstancedResult(x))
+                .Cast<RvmFacetGroupMatcher.Result>()
+                .ToArray();
+            Console.WriteLine("Facet group instancing disabled.");
+        }
+        else
+        {
+            facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
+                facetGroupsWithEmbeddedProtoMeshes,
+                facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value);
+            Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
+            stopwatch.Restart();
+        }
+
+        Console.WriteLine("Start tessellate");
+        var meshes = RvmTessellator.TessellateAndOutputInstanceMeshes(
+            facetGroupInstancingResult
+        );
+
+        var geometriesIncludingMeshes = geometries
+            .Where(g => g is not ProtoMesh)
+            .Concat(meshes)
+            .ToArray();
+
+        Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
+        stopwatch.Restart();
+
+        return geometriesIncludingMeshes;
+    }
 
 }

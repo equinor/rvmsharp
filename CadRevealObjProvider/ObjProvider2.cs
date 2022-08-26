@@ -1,13 +1,14 @@
 ﻿namespace CadRevealObjProvider;
 
 using CadRevealComposer;
+using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Tessellation;
 using ObjLoader.Loader.Data.Elements;
 using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Loaders;
-using RvmSharp.Tessellation;
 using System.Drawing;
 using System.Numerics;
 
@@ -16,9 +17,7 @@ public class ObjProvider2 : IModelFormatProvider
     public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
     {
         var objLoaderFactory = new ObjLoaderFactory();
-
         var objLoader = objLoaderFactory.Create();
-
         var meshes = new List<ObjMesh>();
         foreach (FileInfo filePath in filesToParse.Where(x => x.Extension.Equals(".obj", StringComparison.OrdinalIgnoreCase)))
         {
@@ -27,12 +26,11 @@ public class ObjProvider2 : IModelFormatProvider
             foreach (Group group in result.Groups)
             {
                 var mesh = ReadMeshFromGroup(group, result);
-                if(mesh == null)
+                if (mesh == null)
                     continue;
                 meshes.Add(mesh);
             }
         }
-
         var nodes = new List<CadRevealNode>();
         foreach (ObjMesh meshGroup in meshes)
         {
@@ -47,7 +45,6 @@ public class ObjProvider2 : IModelFormatProvider
                 Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
             });
         }
-
         return nodes;
     }
 
@@ -59,6 +56,13 @@ public class ObjProvider2 : IModelFormatProvider
                 Color.Magenta /* TODO: Add color support */,
                 mesh.CalculateBoundingBox())
         };
+    }
+
+    public APrimitive[] ProcessGeometries(APrimitive[] geometries,
+        ComposerParameters composerParameters,
+        ModelParameters modelParameters)
+    {
+        return geometries;
     }
 
     public record ObjMesh

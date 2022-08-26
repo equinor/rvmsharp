@@ -85,7 +85,7 @@ public sealed class ObjExporter : IDisposable
     /// Add a mesh to the current Object.
     /// </summary>
     /// <param name="mesh">The mesh to serialize</param>
-    public void WriteMesh(Mesh mesh)
+    public void WriteMesh(RvmMesh mesh)
     {
         foreach (var vertex in mesh.Vertices)
         {

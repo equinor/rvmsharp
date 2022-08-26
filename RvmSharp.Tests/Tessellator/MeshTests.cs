@@ -10,7 +10,7 @@ public class MeshTests
 {
     static readonly RvmBoundingBox BoundingBoxUnused = new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
 
-    private static Mesh GenerateNewStandardMeshForTest()
+    private static RvmMesh GenerateNewStandardMeshForTest()
     {
         // Arbitrary mesh
         int toleranceUnusedForPyramid = -1;

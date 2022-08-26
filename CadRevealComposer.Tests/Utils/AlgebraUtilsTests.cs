@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Tests.Utils;
+﻿namespace CadRevealProvider.Tests.Utils;
 
 using CadRevealComposer.Utils;
 using NUnit.Framework;

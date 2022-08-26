@@ -2,7 +2,7 @@ namespace CadRevealComposer.Operations;
 
 using AlgebraExtensions;
 using Primitives;
-using RvmSharp.Tessellation;
+using Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Linq;

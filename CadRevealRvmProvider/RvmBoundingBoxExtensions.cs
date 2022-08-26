@@ -1,5 +1,6 @@
-﻿namespace CadRevealComposer.Utils;
+﻿namespace CadRevealRvmProvider;
 
+using CadRevealComposer;
 using RvmSharp.Primitives;
 
 public static class RvmBoundingBoxExtensions
