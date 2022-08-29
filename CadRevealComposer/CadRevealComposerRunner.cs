@@ -152,18 +152,6 @@ public static class CadRevealComposerRunner
         {
             sectors = SectorSplitter.CreateSingleSector(geometriesIncludingMeshes).ToArray();
         }
-        else if (composerParameters.SplitIntoZones)
-        {
-            var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            sectors = SectorSplitter.SplitIntoSectors(zones)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
         else
         {
             sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)

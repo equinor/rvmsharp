@@ -35,43 +35,6 @@ public static class SectorSplitter
         Vector3 BoundingBoxMax,
         float Diagonal);
 
-    public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones)
-    {
-        var sectorIdGenerator = new SequentialIdGenerator();
-
-        foreach (var zone in zones)
-        {
-            var nodes = zone.Primitives
-                .GroupBy(p => p.TreeIndex)
-                .Select(g =>
-                {
-                    var geometries = g.ToArray();
-                    var boundingBoxMin = geometries.GetBoundingBoxMin();
-                    var boundingBoxMax = geometries.GetBoundingBoxMax();
-                    return new Node(
-                        g.Key,
-                        geometries,
-                        geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                        boundingBoxMin,
-                        boundingBoxMax,
-                        Vector3.Distance(boundingBoxMin, boundingBoxMax));
-                })
-                .ToArray();
-
-            var sectors = SplitIntoSectorsRecursive(
-                nodes,
-                StartDepth,
-                "",
-                null,
-                sectorIdGenerator).ToArray();
-
-            foreach (var sector in sectors)
-            {
-                yield return sector;
-            }
-        }
-    }
-
     public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
     {
         yield return CreateRootSector(0, allGeometries);
@@ -99,11 +62,15 @@ public static class SectorSplitter
             .ToArray();
 
 
-        var sectors = SplitIntoSectorsRecursive(
+        //var sectors = SplitIntoSectorsRecursive(
+        //    nodes,
+        //    StartDepth,
+        //    "",
+        //    null,
+        //    sectorIdGenerator).ToArray();
+
+        var sectors = SplitIntoUniformSectors(
             nodes,
-            StartDepth,
-            "",
-            null,
             sectorIdGenerator).ToArray();
 
         foreach (var sector in sectors)
@@ -111,6 +78,103 @@ public static class SectorSplitter
             yield return sector;
         }
     }
+
+
+    private static IEnumerable<ProtoSector> SplitIntoUniformSectors(
+        Node[] nodes,
+        SequentialIdGenerator sectorIdGenerator)
+    {
+        if (nodes.Length == 0)
+        {
+            yield break;
+        }
+
+        var bbMin = nodes.GetBoundingBoxMin();
+        var bbMax = nodes.GetBoundingBoxMax();
+
+        // Root sector
+        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        var rootSectorPath = $"/{rootSectorId}";
+
+        yield return new ProtoSector(
+            rootSectorId,
+            null,
+            0,
+            rootSectorPath,
+            Array.Empty<APrimitive>(),
+            bbMin,
+            bbMax
+            );
+
+        // All the other sectors
+        int sectorSideSize = 10; // Size of box, assume cubes
+
+        var xSize = bbMax.X - bbMin.X;
+        var ySize = bbMax.Y - bbMin.Y;
+        var zSize = bbMax.Z - bbMin.Z;
+
+        var numberOfBoxesOnX = (int)(xSize / sectorSideSize) + 1;
+        var numberOfBoxesOnY = (int)(ySize / sectorSideSize) + 1;
+        var numberOfBoxesOnZ = (int)(zSize / sectorSideSize) + 1;
+
+        var xDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<Node>>>>();
+
+        for (int x = 0; x < numberOfBoxesOnX; x++)
+        {
+            xDict.Add(x, new Dictionary<int, Dictionary<int, List<Node>>>());
+
+            for (int y = 0; y < numberOfBoxesOnY; y++)
+            {
+                var yDict = xDict[x];
+                yDict.Add(y, new Dictionary<int, List<Node>>());
+
+                for (int z = 0; z < numberOfBoxesOnZ; z++)
+                {
+                    var zDict = yDict[y];
+                    zDict.Add(z, new List<Node>());
+                }
+            }
+        }
+
+        foreach (var node in nodes)
+        {
+            var center = (node.BoundingBoxMax + node.BoundingBoxMin) / 2.0f;
+
+            var xMapped = (int)((center.X - bbMin.X) / sectorSideSize);
+            var yMapped = (int)((center.Y - bbMin.Y) / sectorSideSize);
+            var zMapped = (int)((center.Z - bbMin.Z) / sectorSideSize);
+
+            xDict[xMapped][yMapped][zMapped].Add(node);
+        }
+
+        for (int x = 0; x < numberOfBoxesOnX; x++)
+        {
+            for (int y = 0; y < numberOfBoxesOnY; y++)
+            {
+                for (int z = 0; z < numberOfBoxesOnZ; z++)
+                {
+                    var sectorId = (uint)sectorIdGenerator.GetNextId();
+                    var path = $"{rootSectorPath}/{sectorId}";
+
+                    var geometries = xDict[x][y][z].SelectMany(n => n.Geometries).ToArray();
+
+                    if (geometries.Length == 0)
+                        continue;
+
+                    yield return new ProtoSector(
+                    sectorId,
+                    rootSectorId,
+                    1,
+                    path,
+                    geometries,
+                    geometries.GetBoundingBoxMin(),
+                    geometries.GetBoundingBoxMax()
+                    );
+                }
+            }
+        }
+    }
+
 
     private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
         Node[] nodes,

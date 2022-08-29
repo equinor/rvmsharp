@@ -52,12 +52,27 @@ public static class SceneCreator
     {
         Sector FromSector(SectorInfo sector)
         {
-            if (!sector.Geometries.Any())
-                throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+            float minDiagonalLength;
+            float maxDiagonalLength;            
+
+            if (sector.Depth == 0) // Root sector
+            {
+                minDiagonalLength = 0;
+                maxDiagonalLength = 0;
+            }
+            else
+            {
+                if (!sector.Geometries.Any())
+                    throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+
+                minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
+                maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
+            }
+
+
 
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
-            float maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
-            float minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
+            
             return new Sector
             {
                 Id = sector.SectorId,
