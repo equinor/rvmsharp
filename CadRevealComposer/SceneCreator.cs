@@ -10,6 +10,7 @@ using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -53,9 +54,9 @@ public static class SceneCreator
         Sector FromSector(SectorInfo sector)
         {
             float minDiagonalLength;
-            float maxDiagonalLength;            
+            float maxDiagonalLength;
 
-            if (sector.Depth == 0) // Root sector
+            if (sector.Depth is 0 or 1) // Root sector
             {
                 minDiagonalLength = 0;
                 maxDiagonalLength = 0;
@@ -69,10 +70,8 @@ public static class SceneCreator
                 maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
             }
 
-
-
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
-            
+
             return new Sector
             {
                 Id = sector.SectorId,

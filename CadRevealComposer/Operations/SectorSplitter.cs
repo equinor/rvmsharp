@@ -12,7 +12,16 @@ using Utils;
 
 public static class SectorSplitter
 {
-    private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
+    private const int MainVoxel = 0,
+        SubVoxelA = 1,
+        SubVoxelB = 2,
+        SubVoxelC = 3,
+        SubVoxelD = 4,
+        SubVoxelE = 5,
+        SubVoxelF = 6,
+        SubVoxelG = 7,
+        SubVoxelH = 8;
+
     private const int StartDepth = 0;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
@@ -104,7 +113,7 @@ public static class SectorSplitter
             Array.Empty<APrimitive>(),
             bbMin,
             bbMax
-            );
+        );
 
         // All the other sectors
         int sectorSideSize = 10; // Size of box, assume cubes
@@ -162,19 +171,91 @@ public static class SectorSplitter
                         continue;
 
                     yield return new ProtoSector(
-                    sectorId,
-                    rootSectorId,
-                    1,
-                    path,
-                    geometries,
-                    geometries.GetBoundingBoxMin(),
-                    geometries.GetBoundingBoxMax()
+                        sectorId,
+                        rootSectorId,
+                        1,
+                        path,
+                        Array.Empty<APrimitive>(),
+                        geometries.GetBoundingBoxMin(),
+                        geometries.GetBoundingBoxMax()
                     );
+
+                    var smallSizeThreshold = 1.0f;
+                    var mediumSizeThreshold = 3.0f;
+
+                    var smallGeometryList = new List<APrimitive>();
+                    var mediumGeometryList = new List<APrimitive>();
+                    var largeGeometryList = new List<APrimitive>();
+
+                    foreach (var geometry in geometries)
+                    {
+                        if (geometry.AxisAlignedBoundingBox.Diagonal < smallSizeThreshold)
+                        {
+                            smallGeometryList.Add(geometry);
+                        }
+                        else if (geometry.AxisAlignedBoundingBox.Diagonal < mediumSizeThreshold)
+                        {
+                            mediumGeometryList.Add(geometry);
+                        }
+                        else
+                        {
+                            largeGeometryList.Add(geometry);
+                        }
+                    }
+
+                    var smallGeometryArray = smallGeometryList.ToArray();
+                    var mediumGeometryArray = mediumGeometryList.ToArray();
+                    var largeGeometryArray = largeGeometryList.ToArray();
+
+                    var smallChildSectorId = (uint)sectorIdGenerator.GetNextId();
+                    var smallChildPath = $"{rootSectorPath}/{sectorId}/{smallChildSectorId}";
+                    var mediumChildSectorId = (uint)sectorIdGenerator.GetNextId();
+                    var mediumChildPath = $"{rootSectorPath}/{sectorId}/{mediumChildSectorId}";
+                    var largeChildSectorId = (uint)sectorIdGenerator.GetNextId();
+                    var largeChildPath = $"{rootSectorPath}/{sectorId}/{largeChildSectorId}";
+
+                    if (smallGeometryArray.Length > 0)
+                    {
+                        yield return new ProtoSector(
+                            smallChildSectorId,
+                            sectorId,
+                            2,
+                            smallChildPath,
+                            smallGeometryArray,
+                            smallGeometryArray.GetBoundingBoxMin(),
+                            smallGeometryArray.GetBoundingBoxMax()
+                        );
+                    }
+
+                    if (mediumGeometryArray.Length > 0)
+                    {
+                        yield return new ProtoSector(
+                            mediumChildSectorId,
+                            sectorId,
+                            2,
+                            mediumChildPath,
+                            mediumGeometryArray,
+                            mediumGeometryArray.GetBoundingBoxMin(),
+                            mediumGeometryArray.GetBoundingBoxMax()
+                        );
+                    }
+
+                    if (largeGeometryArray.Length > 0)
+                    {
+                        yield return new ProtoSector(
+                            largeChildSectorId,
+                            sectorId,
+                            2,
+                            largeChildPath,
+                            largeGeometryArray,
+                            largeGeometryArray.GetBoundingBoxMin(),
+                            largeGeometryArray.GetBoundingBoxMax()
+                        );
+                    }
                 }
             }
         }
     }
-
 
     private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
         Node[] nodes,
@@ -183,7 +264,6 @@ public static class SectorSplitter
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator)
     {
-
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
          * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
          * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
@@ -213,7 +293,8 @@ public static class SectorSplitter
         {
             // fill main voxel according to budget
             long estimatedByteSize = 0;
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
+            var additionalMainVoxelNodesByBudget =
+                GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
 
@@ -269,7 +350,8 @@ public static class SectorSplitter
             {
                 if (voxelGroup.Key == MainVoxel)
                 {
-                    throw new Exception("Main voxel should not appear here. Main voxel should be processed separately.");
+                    throw new Exception(
+                        "Main voxel should not appear here. Main voxel should be processed separately.");
                 }
 
                 var sectors = SplitIntoSectorsRecursive(
@@ -308,7 +390,10 @@ public static class SectorSplitter
             .OrderByDescending(x =>
                 {
                     var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
-                    var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
+                    var weightFactor =
+                        isTriangleMesh
+                            ? 1
+                            : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
 
                     return x.Diagonal / (x.EstimatedByteSize * weightFactor);
                 }
@@ -330,17 +415,18 @@ public static class SectorSplitter
 
     private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
     {
-        return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y, geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
-        {
-            (false, false, false) => SubVoxelA,
-            (false, false, true) => SubVoxelB,
-            (false, true, false) => SubVoxelC,
-            (false, true, true) => SubVoxelD,
-            (true, false, false) => SubVoxelE,
-            (true, false, true) => SubVoxelF,
-            (true, true, false) => SubVoxelG,
-            (true, true, true) => SubVoxelH
-        };
+        return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
+                geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
+            {
+                (false, false, false) => SubVoxelA,
+                (false, false, true) => SubVoxelB,
+                (false, true, false) => SubVoxelC,
+                (false, true, true) => SubVoxelD,
+                (true, false, false) => SubVoxelE,
+                (true, false, true) => SubVoxelF,
+                (true, true, false) => SubVoxelG,
+                (true, true, true) => SubVoxelH
+            };
     }
 
     private static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
@@ -361,7 +447,8 @@ public static class SectorSplitter
     private static Vector3 GetBoundingBoxMin(this IReadOnlyCollection<Node> nodes)
     {
         if (!nodes.Any())
-            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty", nameof(nodes));
+            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
+                nameof(nodes));
 
         return nodes.Select(p => p.BoundingBoxMin).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
     }
@@ -369,7 +456,8 @@ public static class SectorSplitter
     private static Vector3 GetBoundingBoxMax(this IReadOnlyCollection<Node> nodes)
     {
         if (!nodes.Any())
-            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty", nameof(nodes));
+            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
+                nameof(nodes));
 
         return nodes.Select(p => p.BoundingBoxMax).Aggregate(new Vector3(float.MinValue), Vector3.Max);
     }
