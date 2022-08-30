@@ -56,15 +56,15 @@ public static class SceneCreator
             float minDiagonalLength;
             float maxDiagonalLength;
 
-            if (sector.Depth is 0 or 1) // Root sector
+            if (!sector.Geometries.Any())
             {
                 minDiagonalLength = 0;
                 maxDiagonalLength = 0;
             }
             else
             {
-                if (!sector.Geometries.Any())
-                    throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+                // if (!sector.Geometries.Any())
+                //     throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
 
                 minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
                 maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
@@ -81,7 +81,8 @@ public static class SceneCreator
                         Min: new BbVector3(sector.BoundingBoxMin.X, sector.BoundingBoxMin.Y, sector.BoundingBoxMin.Z),
                         Max: new BbVector3(sector.BoundingBoxMax.X, sector.BoundingBoxMax.Y, sector.BoundingBoxMax.Z)
                     ),
-                GeometryBoundingBox = null, // TODO: Implement Geometry and Subtree Bounding Box (Currently gracefully handled if null in reveal v9)
+                GeometryBoundingBox =
+                    null, // TODO: Implement Geometry and Subtree Bounding Box (Currently gracefully handled if null in reveal v9)
                 Depth = sector.Depth,
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,

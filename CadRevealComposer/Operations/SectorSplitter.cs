@@ -88,7 +88,6 @@ public static class SectorSplitter
         }
     }
 
-
     private static IEnumerable<ProtoSector> SplitIntoUniformSectors(
         Node[] nodes,
         SequentialIdGenerator sectorIdGenerator)
@@ -162,23 +161,10 @@ public static class SectorSplitter
             {
                 for (int z = 0; z < numberOfBoxesOnZ; z++)
                 {
-                    var sectorId = (uint)sectorIdGenerator.GetNextId();
-                    var path = $"{rootSectorPath}/{sectorId}";
-
                     var geometries = xDict[x][y][z].SelectMany(n => n.Geometries).ToArray();
 
                     if (geometries.Length == 0)
                         continue;
-
-                    yield return new ProtoSector(
-                        sectorId,
-                        rootSectorId,
-                        1,
-                        path,
-                        Array.Empty<APrimitive>(),
-                        geometries.GetBoundingBoxMin(),
-                        geometries.GetBoundingBoxMax()
-                    );
 
                     var smallSizeThreshold = 1.0f;
                     var mediumSizeThreshold = 3.0f;
@@ -207,18 +193,29 @@ public static class SectorSplitter
                     var mediumGeometryArray = mediumGeometryList.ToArray();
                     var largeGeometryArray = largeGeometryList.ToArray();
 
+                    var largeSectorId = (uint)sectorIdGenerator.GetNextId();
+                    var largeSectorPath = $"{rootSectorPath}/{largeSectorId}";
+
+                    yield return new ProtoSector(
+                        largeSectorId,
+                        rootSectorId,
+                        1,
+                        largeSectorPath,
+                        largeGeometryArray,
+                        largeGeometryArray.GetBoundingBoxMin(),
+                        largeGeometryArray.GetBoundingBoxMax()
+                    );
+
                     var smallChildSectorId = (uint)sectorIdGenerator.GetNextId();
-                    var smallChildPath = $"{rootSectorPath}/{sectorId}/{smallChildSectorId}";
+                    var smallChildPath = $"{rootSectorPath}/{largeSectorId}/{smallChildSectorId}";
                     var mediumChildSectorId = (uint)sectorIdGenerator.GetNextId();
-                    var mediumChildPath = $"{rootSectorPath}/{sectorId}/{mediumChildSectorId}";
-                    var largeChildSectorId = (uint)sectorIdGenerator.GetNextId();
-                    var largeChildPath = $"{rootSectorPath}/{sectorId}/{largeChildSectorId}";
+                    var mediumChildPath = $"{rootSectorPath}/{largeSectorId}/{mediumChildSectorId}";
 
                     if (smallGeometryArray.Length > 0)
                     {
                         yield return new ProtoSector(
                             smallChildSectorId,
-                            sectorId,
+                            largeSectorId,
                             2,
                             smallChildPath,
                             smallGeometryArray,
@@ -231,25 +228,12 @@ public static class SectorSplitter
                     {
                         yield return new ProtoSector(
                             mediumChildSectorId,
-                            sectorId,
+                            largeSectorId,
                             2,
                             mediumChildPath,
                             mediumGeometryArray,
                             mediumGeometryArray.GetBoundingBoxMin(),
                             mediumGeometryArray.GetBoundingBoxMax()
-                        );
-                    }
-
-                    if (largeGeometryArray.Length > 0)
-                    {
-                        yield return new ProtoSector(
-                            largeChildSectorId,
-                            sectorId,
-                            2,
-                            largeChildPath,
-                            largeGeometryArray,
-                            largeGeometryArray.GetBoundingBoxMin(),
-                            largeGeometryArray.GetBoundingBoxMax()
                         );
                     }
                 }
