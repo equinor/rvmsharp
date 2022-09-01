@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
+// this class is similar to CadRevealComposer.Tessellation.Mesh
+// CadRevealComposer and RvmSharp packages are completely independent
+// Conversion of RvmMesh to Mesh via CadRevealRvmProvider
 public class RvmMesh : IEquatable<RvmMesh>
 {
     public static RvmMesh Empty { get; } = new RvmMesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);

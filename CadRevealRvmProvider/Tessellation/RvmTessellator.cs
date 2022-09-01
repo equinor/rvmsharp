@@ -6,7 +6,6 @@ using CadRevealComposer.Primitives;
 using RvmSharp.Tessellation;
 using RvmSharp.Primitives;
 using System;
-using System.Numerics;
 using System.Diagnostics;
 using System.Linq;
 
@@ -106,14 +105,5 @@ public class RvmTessellator
         return mesh;
     }
 
-    /// <summary>
-    /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.
-    /// </summary>
-    public record RvmFacetGroupWithProtoMesh(
-            ProtoMeshFromFacetGroup ProtoMesh,
-            uint Version,
-            Matrix4x4 Matrix,
-            RvmBoundingBox BoundingBoxLocal,
-            RvmFacetGroup.RvmPolygon[] Polygons)
-        : RvmFacetGroup(Version, Matrix, BoundingBoxLocal, Polygons);
+    
 }

@@ -51,7 +51,7 @@ public class RvmProvider : IModelFormatProvider
         var stopwatch = Stopwatch.StartNew();
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
-            .Select(p => new RvmTessellator.RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
+            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
                 p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
             .Cast<RvmFacetGroup>()
             .ToArray();
