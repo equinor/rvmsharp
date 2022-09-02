@@ -74,6 +74,32 @@ public class RvmProvider : IModelFormatProvider
             stopwatch.Restart();
         }
 
+        var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromRvmPyramid>().ToArray();
+        // We have models where several pyramids on the same "part" are completely identical.
+        var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
+        if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
+        {
+            var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
+            Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
+        }
+        RvmPyramidInstancer.Result[] pyramidInstancingResult;
+        if (composerParameters.NoInstancing)
+        {
+            pyramidInstancingResult = uniqueProtoMeshesFromPyramid
+                .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
+                .OfType<RvmPyramidInstancer.Result>()
+                .ToArray();
+            Console.WriteLine("Pyramid instancing disabled.");
+        }
+        else
+        {
+            pyramidInstancingResult = RvmPyramidInstancer.Process(
+                uniqueProtoMeshesFromPyramid,
+                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
+            Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
+            stopwatch.Restart();
+        }
+
         Console.WriteLine("Start tessellate");
         var meshes = RvmTessellator.TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult
