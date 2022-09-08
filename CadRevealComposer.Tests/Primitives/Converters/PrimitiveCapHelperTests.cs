@@ -624,31 +624,16 @@ public class PrimitiveCapHelperTests
 
     /////// SPHERICAL DISH ///////
     [Test]
-    public void CalculateCapVisibility_CylinderHidesCapAOfSphericalDish()
+    public void CalculateCapVisibility_CylinderHidesCapOfSphericalDish()
     {
         var cylinder = new RvmCylinder(1, Matrix4x4.Identity, null, 0.5f, 1f);
 
         _sphericalDish.Connections[0] = new RvmConnection(_sphericalDish, cylinder, 0, 0, Vector3.Zero, Vector3.UnitY,
             RvmConnection.ConnectionType.HasCircularSide);
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, Vector3.Zero, new Vector3(0, -1, -0));
+        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, Vector3.Zero);
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
-    }
-
-    [Test]
-    public void CalculateCapVisibility_CylinderHidesCapBOfSphericalDish()
-    {
-        var cylinder = new RvmCylinder(1, Matrix4x4.Identity, null, 0.5f, 1f);
-
-        _sphericalDish.Connections[0] = new RvmConnection(_sphericalDish, cylinder, 0, 0, Vector3.Zero, Vector3.UnitY,
-            RvmConnection.ConnectionType.HasCircularSide);
-
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, new Vector3(0, -1, -0), Vector3.Zero);
-
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.IsFalse(showCap);
     }
 
     [Test]
@@ -659,52 +644,35 @@ public class PrimitiveCapHelperTests
         _sphericalDish.Connections[0] = new RvmConnection(_sphericalDish, cylinder, 0, 0, Vector3.Zero, Vector3.UnitY,
             RvmConnection.ConnectionType.HasCircularSide);
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, Vector3.Zero, new Vector3(0, -1, -0));
+        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.IsTrue(showCap);
     }
 
     /////// ELLIPTICAL DISH ///////
     [Test]
-    public void CalculateCapVisibility_CylinderHidesCapAOfEllipticalDish()
+    public void CalculateCapVisibility_CylinderHidesCapOfEllipticalDish()
     {
         var cylinder = new RvmCylinder(1, Matrix4x4.Identity, null, 0.5f, 1f);
 
         _ellipticalDish.Connections[0] = new RvmConnection(_ellipticalDish, cylinder, 0, 0, Vector3.Zero, Vector3.UnitY,
             RvmConnection.ConnectionType.HasCircularSide);
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, Vector3.Zero, new Vector3(0, -1, -0));
+        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, Vector3.Zero);
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.IsFalse(showCap);
     }
 
     [Test]
-    public void CalculateCapVisibility_CylinderHidesCapBOfEllipticalDish()
-    {
-        var cylinder = new RvmCylinder(1, Matrix4x4.Identity, null, 0.5f, 1f);
-
-        _ellipticalDish.Connections[0] = new RvmConnection(_ellipticalDish, cylinder, 0, 0, Vector3.Zero, Vector3.UnitY,
-            RvmConnection.ConnectionType.HasCircularSide);
-
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, new Vector3(0, -1, -0), Vector3.Zero);
-
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
-    }
-
-    [Test]
-    public void CalculateCapVisibility_SmallCylinderDoesNotHideCapsAOfEllipticalDish()
+    public void CalculateCapVisibility_SmallCylinderDoesNotHideCapOfEllipticalDish()
     {
         var cylinder = new RvmCylinder(1, Matrix4x4.Identity, null, 0.4f, 1f);
 
         _ellipticalDish.Connections[0] = new RvmConnection(_ellipticalDish, cylinder, 0, 0, Vector3.Zero, Vector3.UnitY,
             RvmConnection.ConnectionType.HasCircularSide);
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, Vector3.Zero, new Vector3(0, -1, -0));
+        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.IsTrue(showCap);
     }
 }
