@@ -167,7 +167,7 @@ public static class SectorSplitter
                         continue;
 
                     var smallSizeThreshold = 1.0f;
-                    var mediumSizeThreshold = 3.0f;
+                    var mediumSizeThreshold = 10.0f;
 
                     var smallGeometryList = new List<APrimitive>();
                     var mediumGeometryList = new List<APrimitive>();
