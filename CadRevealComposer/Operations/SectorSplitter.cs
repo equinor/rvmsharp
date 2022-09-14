@@ -115,7 +115,7 @@ public static class SectorSplitter
         );
 
         // All the other sectors
-        int sectorSideSize = 10; // Size of box, assume cubes
+        int sectorSideSize = 5; // Size of box, assume cubes
 
         var xSize = bbMax.X - bbMin.X;
         var ySize = bbMax.Y - bbMin.Y;
@@ -167,7 +167,7 @@ public static class SectorSplitter
                         continue;
 
                     var smallSizeThreshold = 1.0f;
-                    var mediumSizeThreshold = 10.0f;
+                    var mediumSizeThreshold = 5.0f;
 
                     var smallGeometryList = new List<APrimitive>();
                     var mediumGeometryList = new List<APrimitive>();
@@ -213,28 +213,124 @@ public static class SectorSplitter
 
                     if (smallGeometryArray.Length > 0)
                     {
-                        yield return new ProtoSector(
-                            smallChildSectorId,
-                            largeSectorId,
-                            2,
-                            smallChildPath,
-                            smallGeometryArray,
-                            smallGeometryArray.GetBoundingBoxMin(),
-                            smallGeometryArray.GetBoundingBoxMax()
-                        );
+                        if (smallGeometryArray.Length > 50)
+                        {
+                            var smallBbMin = smallGeometryArray.GetBoundingBoxMin();
+                            var smallBbMax = smallGeometryArray.GetBoundingBoxMax();
+
+                            float xMidPoint = (smallBbMax.X + smallBbMin.X) / 2.0f;
+
+                            var small1 = new List<APrimitive>();
+                            var small2 = new List<APrimitive>();
+
+                            foreach (var geometry in smallGeometryArray)
+                            {
+                                if (geometry.AxisAlignedBoundingBox.Center.X <= xMidPoint)
+                                {
+                                    small1.Add(geometry);
+                                }
+                                else
+                                {
+                                    small2.Add(geometry);
+                                }
+                            }
+
+                            yield return new ProtoSector(
+                                smallChildSectorId,
+                                largeSectorId,
+                                2,
+                                smallChildPath,
+                                small1.ToArray(),
+                                small1.ToArray().GetBoundingBoxMin(),
+                                small1.ToArray().GetBoundingBoxMax()
+                            );
+
+                            smallChildSectorId = (uint)sectorIdGenerator.GetNextId();
+                            smallChildPath = $"{rootSectorPath}/{largeSectorId}/{smallChildSectorId}";
+
+                            yield return new ProtoSector(
+                                smallChildSectorId,
+                                largeSectorId,
+                                2,
+                                smallChildPath,
+                                small2.ToArray(),
+                                small2.ToArray().GetBoundingBoxMin(),
+                                small2.ToArray().GetBoundingBoxMax()
+                            );
+                        }
+                        else
+                        {
+                            yield return new ProtoSector(
+                                smallChildSectorId,
+                                largeSectorId,
+                                2,
+                                smallChildPath,
+                                smallGeometryArray,
+                                smallGeometryArray.GetBoundingBoxMin(),
+                                smallGeometryArray.GetBoundingBoxMax()
+                            );
+                        }
                     }
 
                     if (mediumGeometryArray.Length > 0)
                     {
-                        yield return new ProtoSector(
-                            mediumChildSectorId,
-                            largeSectorId,
-                            2,
-                            mediumChildPath,
-                            mediumGeometryArray,
-                            mediumGeometryArray.GetBoundingBoxMin(),
-                            mediumGeometryArray.GetBoundingBoxMax()
-                        );
+                        if (mediumGeometryArray.Length > 50)
+                        {
+                            var mediumBbMin = mediumGeometryArray.GetBoundingBoxMin();
+                            var mediumBbMax = mediumGeometryArray.GetBoundingBoxMax();
+
+                            float xMidPoint = (mediumBbMax.X + mediumBbMin.X) / 2.0f;
+
+                            var medium1 = new List<APrimitive>();
+                            var medium2 = new List<APrimitive>();
+
+                            foreach (var geometry in smallGeometryArray)
+                            {
+                                if (geometry.AxisAlignedBoundingBox.Center.X <= xMidPoint)
+                                {
+                                    medium1.Add(geometry);
+                                }
+                                else
+                                {
+                                    medium2.Add(geometry);
+                                }
+                            }
+
+                            yield return new ProtoSector(
+                                mediumChildSectorId,
+                                largeSectorId,
+                                2,
+                                mediumChildPath,
+                                medium1.ToArray(),
+                                medium1.ToArray().GetBoundingBoxMin(),
+                                medium1.ToArray().GetBoundingBoxMax()
+                            );
+
+                            mediumChildSectorId = (uint)sectorIdGenerator.GetNextId();
+                            mediumChildPath = $"{rootSectorPath}/{largeSectorId}/{smallChildSectorId}";
+
+                            yield return new ProtoSector(
+                                mediumChildSectorId,
+                                largeSectorId,
+                                2,
+                                mediumChildPath,
+                                medium2.ToArray(),
+                                medium2.ToArray().GetBoundingBoxMin(),
+                                medium2.ToArray().GetBoundingBoxMax()
+                            );
+                        }
+                        else
+                        {
+                            yield return new ProtoSector(
+                                mediumChildSectorId,
+                                largeSectorId,
+                                2,
+                                mediumChildPath,
+                                mediumGeometryArray,
+                                mediumGeometryArray.GetBoundingBoxMin(),
+                                mediumGeometryArray.GetBoundingBoxMax()
+                            );
+                        }
                     }
                 }
             }
