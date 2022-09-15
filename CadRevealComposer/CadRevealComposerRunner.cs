@@ -211,8 +211,11 @@ public static class CadRevealComposerRunner
             EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
             EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
             p.Geometries,
-            p.BoundingBoxMin,
-            p.BoundingBoxMax);
+            p.SubtreeBoundingBoxMin,
+            p.SubtreeBoundingBoxMax,
+            p.GeometryBoundingBoxMin,
+            p.GeometryBoundingBoxMax
+        );
         SceneCreator.ExportSector(sectorInfo, outputDirectory);
 
         return sectorInfo;

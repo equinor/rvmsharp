@@ -23,8 +23,10 @@ public static class SectorSplitter
         int Depth,
         string Path,
         APrimitive[] Geometries,
-        Vector3 BoundingBoxMin,
-        Vector3 BoundingBoxMax
+        Vector3 SubtreeBoundingBoxMin,
+        Vector3 SubtreeBoundingBoxMax,
+        Vector3 GeometryBoundingBoxMin,
+        Vector3 GeometryBoundingBoxMax
     );
 
     private record Node(
@@ -168,6 +170,8 @@ public static class SectorSplitter
                 path,
                 geometries,
                 bbMin,
+                bbMax,
+                bbMin,
                 bbMax
             );
         }
@@ -192,7 +196,9 @@ public static class SectorSplitter
                     path,
                     geometries,
                     bbMin,
-                    bbMax
+                    bbMax,
+                    geometries.GetBoundingBoxMin(),
+                    geometries.GetBoundingBoxMax()
                 );
             }
 
@@ -232,6 +238,8 @@ public static class SectorSplitter
             StartDepth,
             $"{sectorId}",
             geometries,
+            bbMin,
+            bbMax,
             bbMin,
             bbMax
         );
