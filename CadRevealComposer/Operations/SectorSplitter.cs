@@ -32,8 +32,10 @@ public static class SectorSplitter
         int Depth,
         string Path,
         APrimitive[] Geometries,
-        Vector3 BoundingBoxMin,
-        Vector3 BoundingBoxMax
+        Vector3 SubtreeBoundingBoxMin,
+        Vector3 SubtreeBoundingBoxMax,
+        Vector3 GeometryBoundingBoxMin,
+        Vector3 GeometryBoundingBoxMax
     );
 
     private record Node(
@@ -111,11 +113,13 @@ public static class SectorSplitter
             rootSectorPath,
             Array.Empty<APrimitive>(),
             bbMin,
-            bbMax
+            bbMax,
+            Vector3.Zero,
+            Vector3.Zero
         );
 
         // All the other sectors
-        int sectorSideSize = 10; // Size of box, assume cubes
+        int sectorSideSize = 5; // Size of box, assume cubes
 
         var xSize = bbMax.X - bbMin.X;
         var ySize = bbMax.Y - bbMin.Y;
@@ -167,7 +171,7 @@ public static class SectorSplitter
                         continue;
 
                     var smallSizeThreshold = 1.0f;
-                    var mediumSizeThreshold = 10.0f;
+                    var mediumSizeThreshold = 4.0f;
 
                     var smallGeometryList = new List<APrimitive>();
                     var mediumGeometryList = new List<APrimitive>();
@@ -202,6 +206,8 @@ public static class SectorSplitter
                         1,
                         largeSectorPath,
                         largeGeometryArray,
+                        geometries.GetBoundingBoxMin(),
+                        geometries.GetBoundingBoxMax(),
                         largeGeometryArray.GetBoundingBoxMin(),
                         largeGeometryArray.GetBoundingBoxMax()
                     );
@@ -220,6 +226,8 @@ public static class SectorSplitter
                             smallChildPath,
                             smallGeometryArray,
                             smallGeometryArray.GetBoundingBoxMin(),
+                            smallGeometryArray.GetBoundingBoxMax(),
+                            smallGeometryArray.GetBoundingBoxMin(),
                             smallGeometryArray.GetBoundingBoxMax()
                         );
                     }
@@ -233,120 +241,11 @@ public static class SectorSplitter
                             mediumChildPath,
                             mediumGeometryArray,
                             mediumGeometryArray.GetBoundingBoxMin(),
+                            mediumGeometryArray.GetBoundingBoxMax(),
+                            mediumGeometryArray.GetBoundingBoxMin(),
                             mediumGeometryArray.GetBoundingBoxMax()
                         );
                     }
-                }
-            }
-        }
-    }
-
-    private static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
-        Node[] nodes,
-        int recursiveDepth,
-        string parentPath,
-        uint? parentSectorId,
-        SequentialIdGenerator sectorIdGenerator)
-    {
-        /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
-         * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
-         * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
-         */
-
-        if (nodes.Length == 0)
-        {
-            yield break;
-        }
-
-        var bbMin = nodes.GetBoundingBoxMin();
-        var bbMax = nodes.GetBoundingBoxMax();
-        var bbMidPoint = (bbMin + bbMax) / 2;
-        var bbSize = Vector3.Distance(bbMin, bbMax);
-
-        var mainVoxelNodes = Array.Empty<Node>();
-        var subVoxelNodes = Array.Empty<Node>();
-        bool isLeaf = false;
-
-        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
-        {
-            mainVoxelNodes = nodes;
-            var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
-            isLeaf = true;
-        }
-        else
-        {
-            // fill main voxel according to budget
-            long estimatedByteSize = 0;
-            var additionalMainVoxelNodesByBudget =
-                GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
-            mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-            subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
-
-            isLeaf = subVoxelNodes.Length == 0;
-        }
-
-        if (isLeaf)
-        {
-            var sectorId = (uint)sectorIdGenerator.GetNextId();
-            var path = $"{parentPath}/{sectorId}";
-            var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
-            yield return new ProtoSector(
-                sectorId,
-                parentSectorId,
-                recursiveDepth,
-                path,
-                geometries,
-                bbMin,
-                bbMax
-            );
-        }
-        else
-        {
-            var parentPathForChildren = parentPath;
-            var parentSectorIdForChildren = parentSectorId;
-
-            if (mainVoxelNodes.Length != 0)
-            {
-                var sectorId = (uint)sectorIdGenerator.GetNextId();
-                var geometries = mainVoxelNodes.SelectMany(node => node.Geometries).ToArray();
-                var path = $"{parentPath}/{sectorId}";
-
-                parentPathForChildren = path;
-                parentSectorIdForChildren = sectorId;
-
-                yield return new ProtoSector(
-                    sectorId,
-                    parentSectorId,
-                    recursiveDepth,
-                    path,
-                    geometries,
-                    bbMin,
-                    bbMax
-                );
-            }
-
-            var voxels = subVoxelNodes
-                .GroupBy(node => CalculateVoxelKeyForNode(node, bbMidPoint))
-                .OrderBy(x => x.Key)
-                .ToImmutableList();
-
-            foreach (var voxelGroup in voxels)
-            {
-                if (voxelGroup.Key == MainVoxel)
-                {
-                    throw new Exception(
-                        "Main voxel should not appear here. Main voxel should be processed separately.");
-                }
-
-                var sectors = SplitIntoSectorsRecursive(
-                    voxelGroup.ToArray(),
-                    recursiveDepth + 1,
-                    parentPathForChildren,
-                    parentSectorIdForChildren,
-                    sectorIdGenerator);
-                foreach (var sector in sectors)
-                {
-                    yield return sector;
                 }
             }
         }
@@ -363,69 +262,10 @@ public static class SectorSplitter
             $"{sectorId}",
             geometries,
             bbMin,
-            bbMax
+            bbMax,
+            Vector3.Zero,
+            Vector3.Zero
         );
-    }
-
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
-    {
-        // TODO: Optimize, or find a better way, to include the right amount of TriangleMesh and primitives. Without weighting too many primitives will be included.
-        var nodesInPrioritizedOrder = nodes
-            .OrderByDescending(x =>
-                {
-                    var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
-                    var weightFactor =
-                        isTriangleMesh
-                            ? 1
-                            : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
-
-                    return x.Diagonal / (x.EstimatedByteSize * weightFactor);
-                }
-            );
-
-        // Always add atleast one node if there is still budget left, to avoid nothing ever being added if the largest node exceeds the maximum budget
-        var budgetLeft = budget;
-        foreach (var node in nodesInPrioritizedOrder)
-        {
-            if (budgetLeft < 0)
-            {
-                yield break;
-            }
-
-            budgetLeft -= node.EstimatedByteSize;
-            yield return node;
-        }
-    }
-
-    private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
-    {
-        return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
-                geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
-            {
-                (false, false, false) => SubVoxelA,
-                (false, false, true) => SubVoxelB,
-                (false, true, false) => SubVoxelC,
-                (false, true, true) => SubVoxelD,
-                (true, false, false) => SubVoxelE,
-                (true, false, true) => SubVoxelF,
-                (true, true, false) => SubVoxelG,
-                (true, true, true) => SubVoxelH
-            };
-    }
-
-    private static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
-    {
-        var voxelKeyAndUsageCount = new Dictionary<int, int>();
-
-        foreach (var geometry in nodeGroupGeometries.Geometries)
-        {
-            var voxelKey = CalculateVoxelKeyForGeometry(geometry.AxisAlignedBoundingBox, bbMidPoint);
-            var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount) ? existingCount : 0;
-            voxelKeyAndUsageCount[voxelKey] = count + 1;
-        }
-
-        // Return the voxel key where most of the node's geometries lie
-        return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
     }
 
     private static Vector3 GetBoundingBoxMin(this IReadOnlyCollection<Node> nodes)

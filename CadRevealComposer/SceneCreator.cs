@@ -28,8 +28,10 @@ public static class SceneCreator
         long EstimatedTriangleCount,
         long EstimatedDrawCalls,
         IReadOnlyList<APrimitive> Geometries,
-        Vector3 BoundingBoxMin,
-        Vector3 BoundingBoxMax
+        Vector3 SubtreeBoundingBoxMin,
+        Vector3 SubtreeBoundingBoxMax,
+        Vector3 GeometryBoundingBoxMin,
+        Vector3 GeometryBoundingBoxMax
     )
     {
         public long DownloadSize { get; init; }
@@ -78,11 +80,15 @@ public static class SceneCreator
                 ParentId = sector.ParentSectorId,
                 BoundingBox =
                     new BoundingBox(
-                        Min: new BbVector3(sector.BoundingBoxMin.X, sector.BoundingBoxMin.Y, sector.BoundingBoxMin.Z),
-                        Max: new BbVector3(sector.BoundingBoxMax.X, sector.BoundingBoxMax.Y, sector.BoundingBoxMax.Z)
+                        Min: new BbVector3(sector.SubtreeBoundingBoxMin.X, sector.SubtreeBoundingBoxMin.Y, sector.SubtreeBoundingBoxMin.Z),
+                        Max: new BbVector3(sector.SubtreeBoundingBoxMax.X, sector.SubtreeBoundingBoxMax.Y, sector.SubtreeBoundingBoxMax.Z)
                     ),
                 GeometryBoundingBox =
-                    null, // TODO: Implement Geometry and Subtree Bounding Box (Currently gracefully handled if null in reveal v9)
+                    new BoundingBox(
+                        Min: new BbVector3(sector.SubtreeBoundingBoxMin.X, sector.SubtreeBoundingBoxMin.Y, sector.SubtreeBoundingBoxMin.Z),
+                        Max: new BbVector3(sector.SubtreeBoundingBoxMax.X, sector.SubtreeBoundingBoxMax.Y, sector.SubtreeBoundingBoxMax.Z)
+                    ),
+                // null, // TODO: Implement Geometry and Subtree Bounding Box (Currently gracefully handled if null in reveal v9)
                 Depth = sector.Depth,
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,

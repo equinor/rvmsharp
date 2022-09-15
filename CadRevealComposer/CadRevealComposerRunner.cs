@@ -134,7 +134,6 @@ public static class CadRevealComposerRunner
         }
 
 
-
         Console.WriteLine("Start tessellate");
         var meshes = TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
@@ -200,8 +199,10 @@ public static class CadRevealComposerRunner
                 0,
                 0,
                 Array.Empty<APrimitive>(),
-                p.BoundingBoxMin,
-                p.BoundingBoxMax
+                p.SubtreeBoundingBoxMin,
+                p.SubtreeBoundingBoxMax,
+                p.GeometryBoundingBoxMin,
+                p.GeometryBoundingBoxMax
             );
 
             return sectorInfo;
@@ -219,8 +220,10 @@ public static class CadRevealComposerRunner
                 EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
                 EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
                 p.Geometries,
-                p.BoundingBoxMin,
-                p.BoundingBoxMax);
+                p.SubtreeBoundingBoxMin,
+                p.SubtreeBoundingBoxMax,
+                p.GeometryBoundingBoxMin,
+                p.GeometryBoundingBoxMax);
             SceneCreator.ExportSector(sectorInfo, outputDirectory);
             return sectorInfo;
         }
