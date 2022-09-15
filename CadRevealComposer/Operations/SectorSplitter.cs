@@ -208,8 +208,8 @@ public static class SectorSplitter
                         largeGeometryArray,
                         geometries.GetBoundingBoxMin(),
                         geometries.GetBoundingBoxMax(),
-                        largeGeometryArray.GetBoundingBoxMin(),
-                        largeGeometryArray.GetBoundingBoxMax()
+                        largeGeometryArray.Length == 0 ? Vector3.Zero : largeGeometryArray.GetBoundingBoxMin(),
+                        largeGeometryArray.Length == 0 ? Vector3.Zero : largeGeometryArray.GetBoundingBoxMax()
                     );
 
                     var smallChildSectorId = (uint)sectorIdGenerator.GetNextId();

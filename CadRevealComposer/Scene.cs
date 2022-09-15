@@ -41,7 +41,7 @@ public class Sector
     [JsonProperty("estimatedTriangleCount")]
     public long EstimatedTriangleCount { get; set; }
 
-    [JsonProperty("boundingBox")] public BoundingBox BoundingBox { get; set; } = null!;
+    [JsonProperty("boundingBox")] public BoundingBox SubtreeBoundingBox { get; set; } = null!;
 
     /// <summary>
     /// TODO: Figure out what GeometryBoundingBox is needed for.

@@ -78,15 +78,15 @@ public static class SceneCreator
             {
                 Id = sector.SectorId,
                 ParentId = sector.ParentSectorId,
-                BoundingBox =
+                SubtreeBoundingBox =
                     new BoundingBox(
                         Min: new BbVector3(sector.SubtreeBoundingBoxMin.X, sector.SubtreeBoundingBoxMin.Y, sector.SubtreeBoundingBoxMin.Z),
                         Max: new BbVector3(sector.SubtreeBoundingBoxMax.X, sector.SubtreeBoundingBoxMax.Y, sector.SubtreeBoundingBoxMax.Z)
                     ),
                 GeometryBoundingBox =
                     new BoundingBox(
-                        Min: new BbVector3(sector.SubtreeBoundingBoxMin.X, sector.SubtreeBoundingBoxMin.Y, sector.SubtreeBoundingBoxMin.Z),
-                        Max: new BbVector3(sector.SubtreeBoundingBoxMax.X, sector.SubtreeBoundingBoxMax.Y, sector.SubtreeBoundingBoxMax.Z)
+                        Min: new BbVector3(sector.GeometryBoundingBoxMin.X, sector.GeometryBoundingBoxMin.Y, sector.GeometryBoundingBoxMin.Z),
+                        Max: new BbVector3(sector.GeometryBoundingBoxMax.X, sector.GeometryBoundingBoxMax.Y, sector.GeometryBoundingBoxMax.Z)
                     ),
                 // null, // TODO: Implement Geometry and Subtree Bounding Box (Currently gracefully handled if null in reveal v9)
                 Depth = sector.Depth,
