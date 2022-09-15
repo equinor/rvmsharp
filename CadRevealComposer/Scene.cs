@@ -41,11 +41,13 @@ public class Sector
     [JsonProperty("estimatedTriangleCount")]
     public long EstimatedTriangleCount { get; set; }
 
+    /// <summary>
+    /// Bounding box which includes the sector's own geometry and all children's geometry
+    /// </summary>
     [JsonProperty("boundingBox")] public BoundingBox SubtreeBoundingBox { get; set; } = null!;
 
     /// <summary>
-    /// TODO: Figure out what GeometryBoundingBox is needed for.
-    /// Semi optional since its gracefully handled in reveal to not use this field in v9
+    /// Bounding box which includes the sector's own geometry
     /// </summary>
     [JsonProperty("geometryBoundingBox")]
     public BoundingBox? GeometryBoundingBox { get; set; }
