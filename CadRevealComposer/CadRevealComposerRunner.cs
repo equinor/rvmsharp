@@ -195,7 +195,7 @@ public static class CadRevealComposerRunner
                 p.ParentSectorId,
                 p.Depth,
                 p.Path,
-                "",
+                null,
                 0,
                 0,
                 Array.Empty<APrimitive>(),

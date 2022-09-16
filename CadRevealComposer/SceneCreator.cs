@@ -7,10 +7,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Operations;
 using Primitives;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -24,7 +22,7 @@ public static class SceneCreator
         uint? ParentSectorId,
         long Depth,
         string Path,
-        string Filename,
+        string? Filename,
         long EstimatedTriangleCount,
         long EstimatedDrawCalls,
         IReadOnlyList<APrimitive> Geometries,
