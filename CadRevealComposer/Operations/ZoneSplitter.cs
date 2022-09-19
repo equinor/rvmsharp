@@ -174,9 +174,30 @@ public static class ZoneSplitter
         }
     }
 
+    public static Zone[] SplitIntoTinyZones(APrimitive[] primitives)
+    {
+        var grid = Grid.Create(primitives); // Note: the grid is based on X, Y - ...But what if Z is significant?
+        var sceneBoundingBoxMin = primitives.GetBoundingBoxMin();
+        var sceneBoundingBoxMax = primitives.GetBoundingBoxMax();
+        var zones = new List<Zone>();
+        for(int i=0;i<grid.Cells.Length;i++)
+        {
+            var cell = grid.Cells[i];
+            var nodesContainedWithinZone = cell.Nodes;
+            var cellprimitives = nodesContainedWithinZone
+                .SelectMany(n => n.Primitives)
+                .ToArray();
+            var zone =  new Zone(cellprimitives, cellprimitives.GetBoundingBoxMin(), cellprimitives.GetBoundingBoxMax(), sceneBoundingBoxMin, sceneBoundingBoxMax);
+            zones.Add(zone);
+        }
+        return zones.ToArray();
+
+    }
+
+
     public static Zone[] SplitIntoZones(APrimitive[] primitives, DirectoryInfo outputDirectory)
     {
-        var grid = Grid.Create(primitives);
+        var grid = Grid.Create(primitives); // Note: the grid is based on X, Y - ...But what if Z is significant?
         var sceneBoundingBoxMin = primitives.GetBoundingBoxMin();
         var sceneBoundingBoxMax = primitives.GetBoundingBoxMax();
 
@@ -270,20 +291,26 @@ public static class ZoneSplitter
             {
                 for (var y = currentCell.Y - 2; y <= currentCell.Y + 2; y++)
                 {
+                    var zoneIsFull = result.Sum(c => c.Nodes.Count) > 25_000; // 50_000;
+                    if (zoneIsFull)
+                    {
+                        isPartOfZone = false;
+                        continue;
+                    }
                     var isWithinGridBounds = x >= 0 &&
                                              y >= 0 &&
                                              x < grid.GridSizeX &&
                                              y < grid.GridSizeY;
                     var cellOk = isWithinGridBounds &&
-                               grid[x, y] is { } cell &&
-                               cell.Nodes.Count >= minNodeCountInCell;
+                               grid[x, y] is { } cell;
+                    //&&
+                    //cell.Nodes.Count >= minNodeCountInCell;
                     if (!cellOk)
                     {
                         isPartOfZone = false;
                         break;
                     }
                 }
-
                 if (!isPartOfZone)
                 {
                     break;

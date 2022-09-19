@@ -29,7 +29,8 @@ public static class CadRevealComposerRunner
     {
         var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
 
-        Console.WriteLine("Reading RvmData");
+        Console.WriteLine($"Reading RvmData from '{inputRvmFolderPath.FullName}'");
+        Console.WriteLine($"Output destination '{outputDirectory.FullName}'");
         var rvmTimer = Stopwatch.StartNew();
         var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
         {
@@ -152,6 +153,7 @@ public static class CadRevealComposerRunner
         }
         else if (composerParameters.SplitIntoZones)
         {
+            //var zones = ZoneSplitter.SplitIntoTinyZones(geometriesIncludingMeshes);
             var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
             Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
             stopwatch.Restart();
@@ -205,7 +207,7 @@ public static class CadRevealComposerRunner
             p.ParentSectorId,
             p.Depth,
             p.Path,
-            $"sector_{p.SectorId}.glb",
+            p.Geometries != null ? $"sector_{p.SectorId}.glb" : null,
             EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
             EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
             p.Geometries,

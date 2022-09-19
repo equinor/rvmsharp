@@ -15,7 +15,7 @@ public static class SectorSplitter
     private const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
     private const int StartDepth = 0;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
-    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
+    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 10.0f; // Arbitrary value  - used to be 20
 
     public record ProtoSector(
         uint SectorId,
@@ -47,14 +47,14 @@ public static class SectorSplitter
             if (rootZone != null)
             {
                 var nodes = GetNodesInZone(rootZone);
-                var rootSectorLevel2 = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), rootZone.SceneBoundingBoxMin, rootZone.SceneBoundingBoxMax);
-                yield return rootSectorLevel2; // Root sector, containing no nodes
+                //var rootSectorLevel2 = CreateEmptyRootSector((uint)sectorIdGenerator.GetNextId(), rootZone.SceneBoundingBoxMin, rootZone.SceneBoundingBoxMax);
+                //yield return rootSectorLevel2; // Root sector, containing no nodes
 
                 var sectors = SplitIntoSectorsRecursive(
                     nodes,
                     StartDepth + 1,
-                    $"0/",
-                    0,
+                    $"{rootSector.SectorId}/",
+                    rootSector.SectorId,
                     sectorIdGenerator).ToArray();
 
                 foreach (var sector in sectors)
@@ -95,7 +95,7 @@ public static class SectorSplitter
 
             var sectors = SplitIntoSectorsRecursive(
                 nodes,
-                StartDepth + 1,
+                StartDepth + 1, //We want all these on level 2... methinks...
                 "0/",
                 0,
                 sectorIdGenerator).ToArray();
@@ -222,16 +222,25 @@ public static class SectorSplitter
 
             isLeaf = subVoxelNodes.Length == 0;
         }
-
+        var depth = isLeaf ? 2 : 1;
+        if (recursiveDepth == 0)
+            depth = 0;
+        if(!isLeaf && recursiveDepth==2)
+        {
+            var splitpath = parentPath.Split("/");
+            parentSectorId = UInt32.Parse(splitpath[0]);
+            parentPath = splitpath[0]+"/";
+            
+        }
         if (isLeaf)
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
-            var path = $"{parentPath}/{sectorId}";
+            var path = $"{parentPath}{sectorId}/";
             var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
-                recursiveDepth,
+                depth, // recursiveDepth,  - LeafNodes on level 2
                 path,
                 geometries,
                 bbMin,
@@ -247,7 +256,7 @@ public static class SectorSplitter
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var geometries = mainVoxelNodes.SelectMany(node => node.Geometries).ToArray();
-                var path = $"{parentPath}/{sectorId}";
+                var path = $"{parentPath}{sectorId}/";
 
                 parentPathForChildren = path;
                 parentSectorIdForChildren = sectorId;
@@ -255,7 +264,7 @@ public static class SectorSplitter
                 yield return new ProtoSector(
                     sectorId,
                     parentSectorId,
-                    recursiveDepth,
+                    depth, // recursiveDepth, - All nodes not leaf on level 1
                     path,
                     geometries,
                     bbMin,
@@ -277,7 +286,7 @@ public static class SectorSplitter
 
                 var sectors = SplitIntoSectorsRecursive(
                     voxelGroup.ToArray(),
-                    recursiveDepth + 1,
+                    depth+1, // recursiveDepth, // + 1,
                     parentPathForChildren,
                     parentSectorIdForChildren,
                     sectorIdGenerator);
@@ -308,13 +317,15 @@ public static class SectorSplitter
     {
         // TODO: Optimize, or find a better way, to include the right amount of TriangleMesh and primitives. Without weighting too many primitives will be included.
         var nodesInPrioritizedOrder = nodes
-            .OrderByDescending(x =>
-                {
-                    var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
-                    var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
+            .OrderByDescending(x => x.Diagonal
+                //{
+                //    var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
+                //    var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
 
-                    return x.Diagonal / (x.EstimatedByteSize * weightFactor);
-                }
+                //    return x.Diagonal / (x.EstimatedByteSize * weightFactor);
+                //    //return x.Diagonal;   
+
+                //}
             );
 
         // Always add atleast one node if there is still budget left, to avoid nothing ever being added if the largest node exceeds the maximum budget
