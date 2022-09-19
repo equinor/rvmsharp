@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 using Operations;
 using Primitives;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
@@ -23,7 +22,7 @@ public static class SceneCreator
         uint? ParentSectorId,
         long Depth,
         string Path,
-        string Filename,
+        string? Filename,
         long EstimatedTriangleCount,
         long EstimatedDrawCalls,
         IReadOnlyList<APrimitive> Geometries,
@@ -54,12 +53,25 @@ public static class SceneCreator
     {
         Sector FromSector(SectorInfo sector)
         {
+            //if (!sector.Geometries.Any())
+            //    throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+
+            float maxDiagonalLength;
+            float minDiagonalLength;
+
             if (!sector.Geometries.Any())
-                throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+            {
+                maxDiagonalLength = 0;
+                minDiagonalLength = 0;               
+            }
+            else
+            {
+                maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
+                minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
+            }
 
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
-            float maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
-            float minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
+
             return new Sector
             {
                 Id = sector.SectorId,
@@ -78,7 +90,7 @@ public static class SceneCreator
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
                 EstimatedDrawCallCount = sector.EstimatedDrawCalls,
-                SectorFileName = sector.Filename,
+                SectorFileName = sector.Filename, 
                 MaxDiagonalLength = maxDiagonalLength,
                 MinDiagonalLength = minDiagonalLength,
                 DownloadSize = sector.DownloadSize
