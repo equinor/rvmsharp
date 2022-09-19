@@ -174,6 +174,36 @@ public class DatabaseComposer
             }
         );
 
+        MopTimer.RunAndMeasure("VACUUM Database", _logger, () =>
+        {
+            // Vacuum completely recreates the database but removes all "Extra Data" from it.
+            // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
+            using var vacuumCmds = new SQLiteCommand(connection);
+
+            vacuumCmds.CommandText = "PRAGMA page_count";
+            var pageCountBeforeVacuum = (Int64) vacuumCmds.ExecuteScalar();
+            var timer = Stopwatch.StartNew();
+            // Vacuum the database. This is quite slow!
+            vacuumCmds.CommandText = "VACUUM";
+            vacuumCmds.ExecuteNonQuery();
+            vacuumCmds.CommandText = "PRAGMA page_count";
+            var pageCountAfterVacuum = (Int64) vacuumCmds.ExecuteScalar();
+
+            // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
+            vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
+            vacuumCmds.ExecuteNonQuery();
+
+            // Analyze only a subset of the data when doing optimize queries.
+            // See more at:  https://sqlite.org/pragma.html#pragma_analysis_limit
+            // Recommended values are between 100-1000.
+            vacuumCmds.CommandText = "PRAGMA analysis_limit = 1000";
+            vacuumCmds.ExecuteNonQuery();
+
+            // FUTURE: Consider if we should disable VACUUM in dev builds if its too slow, its not really needed there.
+            Console.WriteLine(
+                $"VACUUM finished in {timer.Elapsed}. Reduced size from {pageCountBeforeVacuum} to {pageCountAfterVacuum}");
+        });
+
         // ReSharper restore AccessToDisposedClosure
         sqliteComposeTimer.LogCompletion();
     }

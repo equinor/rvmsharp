@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Operations.Converters;
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
 using NUnit.Framework;
 using RvmSharp.Primitives;
 using System;
@@ -64,8 +65,8 @@ internal class RvmRectangularTorusConverterTests
         Assert.That(geometries[1], Is.TypeOf<Cone>());
         Assert.That(geometries[2], Is.TypeOf<GeneralRing>());
         Assert.That(geometries[3], Is.TypeOf<GeneralRing>());
-        Assert.That(geometries[4], Is.TypeOf<Trapezium>());
-        Assert.That(geometries[5], Is.TypeOf<Trapezium>());
+        Assert.That(geometries[4], Is.TypeOf<Quad>());
+        Assert.That(geometries[5], Is.TypeOf<Quad>());
         Assert.That(geometries.Length, Is.EqualTo(6));
     }
 
@@ -77,5 +78,32 @@ internal class RvmRectangularTorusConverterTests
         var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 
         Assert.That(geometries, Is.Empty);
+    }
+
+    [Test]
+    public void RvmRectangularTorusConverter_CorrectQuads()
+    {
+        var torus = _rvmRectangularTorus with { Angle = MathF.PI / 2.0f, Height = 5.0f, RadiusOuter = 3.0f, RadiusInner = 1.0f};
+
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+
+        var quad1 = (Quad)geometries[4];
+        var quad2 = (Quad)geometries[5];
+
+        quad1.InstanceMatrix.DecomposeAndNormalize(out var scale1, out var rotation1, out _);
+        quad2.InstanceMatrix.DecomposeAndNormalize(out var scale2, out var rotation2, out _);
+
+        Assert.That(scale1.X, Is.EqualTo(5).Within(0.001f));
+        Assert.That(scale1.Y, Is.EqualTo(2).Within(0.001f));
+        Assert.That(scale1.Z, Is.EqualTo(0).Within(0.001f));
+
+        Assert.That(scale2.X, Is.EqualTo(5).Within(0.001f));
+        Assert.That(scale2.Y, Is.EqualTo(2).Within(0.001f));
+        Assert.That(scale2.Z, Is.EqualTo(0).Within(0.001f));
+
+        var (quadNormal1, rotationAngle1) = rotation1.DecomposeQuaternion();
+        var (quadNormal2, rotationAngle2) = rotation2.DecomposeQuaternion();
+
+        Assert.That(Vector3.Dot(quadNormal1, quadNormal2), Is.EqualTo(0f).Within((0.001f)));
     }
 }

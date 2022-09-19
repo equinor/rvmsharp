@@ -36,7 +36,8 @@ public static class RvmRectangularTorusConverter
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
 
         var outerDiameter = radiusOuter * 2;
-        var halfHeight = rvmRectangularTorus.Height / 2.0f * scale.Y;
+        var height = rvmRectangularTorus.Height * scale.Y;
+        var halfHeight = height / 2.0f;
 
         var centerA = position + normal * halfHeight;
         var centerB = position - normal * halfHeight;
@@ -118,31 +119,40 @@ public static class RvmRectangularTorusConverter
             var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
             var v2 = Vector3.Transform(v1, q2);
 
-            var vertex1InnerBottom = centerA + v1 * radiusInner;
-            var vertex1InnerTop = centerB + v1 * radiusInner;
-            var vertex1OuterBottom = centerA + v1 * radiusOuter;
-            var vertex1OuterTop = centerB + v1 * radiusOuter;
+            var centerQuadA = (centerA + centerB + v1 * (radiusInner + radiusOuter)) / 2.0f;
+            var centerQuadB = (centerA + centerB + v2 * (radiusInner + radiusOuter)) / 2.0f;
 
-            var vertex2InnerBottom = centerA + v2 * radiusInner;
-            var vertex2InnerTop = centerB + v2 * radiusInner;
-            var vertex2OuterBottom = centerA + v2 * radiusOuter;
-            var vertex2OuterTop = centerB + v2 * radiusOuter;
+            var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+            var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
+            var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
+            var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
+            var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
 
-            yield return new Trapezium(
-                vertex1InnerTop,
-                vertex1OuterTop,
-                vertex1InnerBottom,
-                vertex1OuterBottom,
+            var scaleQuad = new Vector3(
+                height,
+                radiusOuter - radiusInner,
+                0
+            );
+
+            var quadMatrixA =
+                Matrix4x4.CreateScale(scaleQuad)
+                * Matrix4x4.CreateFromQuaternion(rotationQuadA)
+                * Matrix4x4.CreateTranslation(centerQuadA);
+
+            var quadMatrixB =
+                Matrix4x4.CreateScale(scaleQuad)
+                * Matrix4x4.CreateFromQuaternion(rotationQuadB)
+                * Matrix4x4.CreateTranslation(centerQuadB);
+
+            yield return new Quad(
+                quadMatrixA,
                 treeIndex,
                 color,
                 bbBox
             );
 
-            yield return new Trapezium(
-                vertex2OuterTop,
-                vertex2InnerTop,
-                vertex2OuterBottom,
-                vertex2InnerBottom,
+            yield return new Quad(
+                quadMatrixB,
                 treeIndex,
                 color,
                 bbBox

@@ -56,6 +56,17 @@ It can be invoked using the script below:
 .\scripts\Convert-RvmToI3df.ps1 -InputDirectory $AFolderWithRvmAndTxtFiles -ProjectId 1 -ModelId 2 -RevisionId 1 -ArtifactDirectory $OutputDirectory 
 ```
 
+Invoke from IDE
+
+```ide
+-i $AFolderWithRvmAndTxtFiles -o $OutputDirectory -ProjectId 1 -ModelId 2 -RevisionId 1 
+```
+
+Invoke from CLI
+```cli
+dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.exe" -i $AFolderWithRvmAndTxtFiles -o $OutputDirectory --ProjectId 1 --ModelId 1 --RevisionId 1
+```
+
 ## Example Data
 
 Equinor has published the Huldra dataset, including RVM files to the public.

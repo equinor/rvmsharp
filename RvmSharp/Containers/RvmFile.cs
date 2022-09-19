@@ -41,8 +41,12 @@ public class RvmFile
     private static void AssignRecursive(IReadOnlyList<PdmsTextParser.PdmsNode> attributeNodes,
         IReadOnlyList<RvmNode> groups)
     {
-        if (!attributeNodes.Any()) // No need to keep recursing if there are no attributeNodes
+        if (!attributeNodes.Any())
+        {
+            // Not all RvmNodes have attributes. If there are no PdmsNodes we just skip the assigning. This works around an issue where the
+            // rvm file can contain multiple nodes with the same name if it has been converted from another file format to rvm first.
             return;
+        }
 
         var rvmNodeNameLookup = groups
             .Where(x => !string.IsNullOrEmpty(x.Name)) // Ignoring nodes with no name
@@ -54,8 +58,7 @@ public class RvmFile
             {
                 foreach (var kvp in attributeNode.MetadataDict)
                     rvmNode.Attributes.Add(kvp.Key, kvp.Value);
-                if (attributeNode.Children.Any())   //No need to keep recursing when the attributeNode has no children
-                    AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
+                AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
             }
         }
     }

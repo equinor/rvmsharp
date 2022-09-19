@@ -42,6 +42,7 @@ public static class RvmFacetGroupMatcher
         public RvmFacetGroup Template { get; set; }
         public Matrix4x4 Transform { get; set; }
         public int MatchCount { get; set; }
+        public int MatchAttempts { get; set; }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -122,6 +123,7 @@ public static class RvmFacetGroupMatcher
             $"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups " +
             $"of total {allFacetGroups.Length:N0} in {groupingTimer.Elapsed}");
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
+        Console.WriteLine("Explanations. IC: iteration count, TC: template count, VC: vertex count");
 
         (IReadOnlyList<Result> Result, long IterationCounter) MatchGroup(RvmFacetGroup[] facetGroups)
         {
@@ -139,7 +141,7 @@ public static class RvmFacetGroupMatcher
             }
 
             var timer = Stopwatch.StartNew();
-            var instancingResults = MatchGroups(facetGroups, out var iterationCounter);
+            var instancingResults = MatchFacetGroups(facetGroups, out var iterationCounter);
 
             // post determine if group is adequate for instancing
             var templateCount = 0L;
@@ -228,7 +230,7 @@ public static class RvmFacetGroupMatcher
         return result;
     }
 
-    private static List<Result> MatchGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
+    private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
     {
         static void SwapItemData(TemplateItem a, TemplateItem b)
         {
@@ -236,30 +238,49 @@ public static class RvmFacetGroupMatcher
             var aTemplate = a.Template;
             var aTransform = a.Transform;
             var aMatchCount = a.MatchCount;
+            var aMatchAttempts = a.MatchAttempts;
 
             a.Original = b.Original;
             a.Template = b.Template;
             a.Transform = b.Transform;
             a.MatchCount = b.MatchCount;
+            a.MatchAttempts = b.MatchAttempts;
 
             b.Original = aOriginal;
             b.Template = aTemplate;
             b.Transform = aTransform;
             b.MatchCount = aMatchCount;
+            b.MatchAttempts = aMatchAttempts;
         }
 
         var result = new List<Result>();
-        var templates = new List<TemplateItem>(); // sorted high to low by explicit code
+        var templateCandidates = new List<TemplateItem>(); // sorted high to low by explicit code
 
         var iterCounter = 0L;
+        var matchingTimer = Stopwatch.StartNew();
+        var target = TimeSpan.FromMinutes(5);
+        var cleanupIntervalCounter = 0;
         foreach (var facetGroup in facetGroups)
         {
+            cleanupIntervalCounter++;
+            if (matchingTimer.Elapsed > target)
+            {
+                var groupKey = CalculateKey(facetGroup);
+                var vertexCount = facetGroups
+                    .First()
+                    .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+                Console.WriteLine(
+                    $"Grouping with {vertexCount} vertices taking a long time. More than {(int)target.TotalMinutes} minutes. Group key is: {groupKey}");
+                target += TimeSpan.FromMinutes(5);
+            }
+
             var matchFoundFromPreviousTemplates = false;
             var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
 
-            for (var i = 0; i < templates.Count; i++)
+            for (var i = 0; i < templateCandidates.Count; i++)
             {
-                var item = templates[i];
+                var item = templateCandidates[i];
+                item.MatchAttempts++;
                 iterCounter++;
                 if (!Match(item.Template, bakedFacetGroup, out var transform))
                 {
@@ -272,14 +293,14 @@ public static class RvmFacetGroupMatcher
                 // sort template list descending by match count
                 var templateMatchCount = item.MatchCount;
                 var j = i;
-                while (j - 1 >= 0 && templateMatchCount > templates[j - 1].MatchCount)
+                while (j - 1 >= 0 && templateMatchCount > templateCandidates[j - 1].MatchCount)
                 {
                     j--;
                 }
 
                 if (j != i) // swap items
                 {
-                    SwapItemData(item, templates[j]);
+                    SwapItemData(item, templateCandidates[j]);
                 }
 
                 matchFoundFromPreviousTemplates = true;
@@ -295,18 +316,19 @@ public static class RvmFacetGroupMatcher
 
             // To avoid comparing with too many templates, making the worst case O(N^2),
             // we remove the templates with the least number of matches after reaching the threshold
-            if (templates.Count > TemplateCleanupThreshold)
+            if (templateCandidates.Count > TemplateCleanupThreshold)
             {
-                result.AddRange(templates
-                    .GetRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1)
+                result.AddRange(templateCandidates
+                    .GetRange(TemplateCleanupNumberToKeep, templateCandidates.Count - TemplateCleanupNumberToKeep - 1)
                     .Select(x => new NotInstancedResult(x.Original)));
-                templates.RemoveRange(TemplateCleanupNumberToKeep, templates.Count - TemplateCleanupNumberToKeep - 1);
+                templateCandidates.RemoveRange(TemplateCleanupNumberToKeep,
+                    templateCandidates.Count - TemplateCleanupNumberToKeep - 1);
             }
 
-            templates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
+            templateCandidates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
         }
 
-        foreach (var template in templates)
+        foreach (var template in templateCandidates)
         {
             Result r = template.MatchCount > 0
                 ? new TemplateResult(template.Original, template.Template, template.Transform)
