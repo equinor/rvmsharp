@@ -52,7 +52,7 @@ public static class Program
             options.NoInstancing,
             options.SingleSector,
             options.SplitIntoZones,
-            options.UseEmptyRootSector);
+            true); //            options.UseEmptyRootSector);
 
         if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
         {
