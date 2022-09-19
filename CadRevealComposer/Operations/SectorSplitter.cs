@@ -118,6 +118,8 @@ public static class SectorSplitter
             $"{sectorId}/",
             null!,
             bbMin,
+            bbMax,
+            bbMin,
             bbMax
         );
 
