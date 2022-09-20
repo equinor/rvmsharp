@@ -16,6 +16,7 @@ public static class SectorSplitter
     private const int StartDepth = 0;
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 10.0f; // Arbitrary value
+    private const float DoNotIncludeGeometryInSectorsLargerThanMetersInDiameter = 100.0f; // Arbitrary value
 
     public record ProtoSector(
         uint SectorId,
@@ -101,12 +102,19 @@ public static class SectorSplitter
             .ToArray();
 
 
+        var bbMin = nodes.GetBoundingBoxMin();
+        var bbMax = nodes.GetBoundingBoxMax();
+        var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
+
+        int depthToStartSplittingGeometry = (int)MathF.Sqrt(sizeOfAllNodes / 100f);
+
         var sectors = SplitIntoSectorsRecursive(
             nodes,
             StartDepth,
             "",
             null,
-            sectorIdGenerator).ToArray();
+            sectorIdGenerator,
+            depthToStartSplittingGeometry).ToArray();
 
         foreach (var sector in sectors)
         {
@@ -119,7 +127,8 @@ public static class SectorSplitter
         int recursiveDepth,
         string parentPath,
         uint? parentSectorId,
-        SequentialIdGenerator sectorIdGenerator)
+        SequentialIdGenerator sectorIdGenerator,
+        int depthToStartSplittingGeometry = 0)
     {
 
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
@@ -149,7 +158,7 @@ public static class SectorSplitter
         }
         else
         {
-            if (recursiveDepth < 3)
+            if (recursiveDepth < depthToStartSplittingGeometry)
             {
                 subVoxelNodes = nodes;
             }
