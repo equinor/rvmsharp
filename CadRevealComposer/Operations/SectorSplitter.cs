@@ -279,7 +279,7 @@ public static class SectorSplitter
         var nodeArray = nodesInPrioritizedOrder.ToArray();
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            if (budgetLeft < 0)// && nodeArray.Length - i > 10)
+            if (budgetLeft < 0 && nodeArray.Length - i > 10)
             {
                 yield break;
             }
