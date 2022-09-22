@@ -105,7 +105,8 @@ public static class SectorSplitter
         var bbMax = nodes.GetBoundingBoxMax();
         var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
 
-        int depthToStartSplittingGeometry = (int)MathF.Sqrt(sizeOfAllNodes / 100f);
+        int depthToStartSplittingGeometry = Math.Min(4,(int)MathF.Sqrt(sizeOfAllNodes / 100f));
+
 
         var sectors = SplitIntoSectorsRecursive(
             nodes,
@@ -264,27 +265,41 @@ public static class SectorSplitter
     {
         // TODO: Optimize, or find a better way, to include the right amount of TriangleMesh and primitives. Without weighting too many primitives will be included.
         var nodesInPrioritizedOrder = nodes
-            .OrderByDescending(x =>
-                {
-                    var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
-                    var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
-
-                    return x.Diagonal / (x.EstimatedByteSize * weightFactor);
-                }
-            );
+            .OrderByDescending(x => x.Diagonal);
+            //     {
+            //         // var isTriangleMesh = x.Geometries.Any(y => y is TriangleMesh);
+            //         // var weightFactor = isTriangleMesh ? 1 : 10; // Theory: Primitives have more overhead than their byte size. This is not verified.
+            //
+            //         return x.Diagonal;// / (x.EstimatedByteSize * weightFactor);
+            //     }
+            // );
 
         // Always add atleast one node if there is still budget left, to avoid nothing ever being added if the largest node exceeds the maximum budget
         var budgetLeft = budget;
-        foreach (var node in nodesInPrioritizedOrder)
+        var nodeArray = nodesInPrioritizedOrder.ToArray();
+        for (int i = 0; i < nodeArray.Length; i++)
         {
-            if (budgetLeft < 0)
+            if (budgetLeft < 0)// && nodeArray.Length - i > 10)
             {
                 yield break;
             }
 
+            var node = nodeArray[i];
             budgetLeft -= node.EstimatedByteSize;
             yield return node;
         }
+
+
+        // foreach (var node in nodesInPrioritizedOrder)
+        // {
+        //     if (budgetLeft < 0)
+        //     {
+        //         yield break;
+        //     }
+        //
+        //     budgetLeft -= node.EstimatedByteSize;
+        //     yield return node;
+        // }
     }
 
     private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
