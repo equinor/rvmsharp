@@ -132,8 +132,6 @@ public static class CadRevealComposerRunner
             stopwatch.Restart();
         }
 
-
-
         Console.WriteLine("Start tessellate");
         var meshes = TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
@@ -150,7 +148,7 @@ public static class CadRevealComposerRunner
         SectorSplitter.ProtoSector[] sectors;
         if (composerParameters.SingleSector)
         {
-            sectors = SectorSplitter.CreateSingleSector(geometriesIncludingMeshes).ToArray();
+            sectors = SectorSplitterSingle.CreateSingleSector(geometriesIncludingMeshes).ToArray();
         }
         else if (composerParameters.SplitIntoZones)
         {
@@ -158,7 +156,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
-            sectors = SectorSplitter.SplitIntoSectors(zones)
+            sectors = SectorSplitterZones.SplitIntoSectors(zones)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
