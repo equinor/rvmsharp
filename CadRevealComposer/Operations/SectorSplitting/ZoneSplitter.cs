@@ -162,7 +162,7 @@ public static class ZoneSplitter
         }
     }
 
-    public static Zone[] SplitIntoZones(APrimitive[] primitives, DirectoryInfo outputDirectory)
+    public static Zone[] SplitIntoZones(APrimitive[] primitives) //, DirectoryInfo outputDirectory)
     {
         var grid = Grid.Create(primitives);
 
@@ -191,16 +191,16 @@ public static class ZoneSplitter
         }
 
         // write zone visualization (PNG grid image)
-        if (OperatingSystem.IsWindows())
-        {
-            var path = Path.Combine(outputDirectory.FullName, "Zones.png");
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
-            using var stream = File.OpenWrite(path);
-            WriteZoneBitmap(stream, zonesInternal, grid.GridSizeX, grid.GridSizeY);
-        }
+        //if (OperatingSystem.IsWindows())
+        //{
+        //    var path = Path.Combine(outputDirectory.FullName, "Zones.png");
+        //    if (File.Exists(path))
+        //    {
+        //        File.Delete(path);
+        //    }
+        //    using var stream = File.OpenWrite(path);
+        //    WriteZoneBitmap(stream, zonesInternal, grid.GridSizeX, grid.GridSizeY);
+        //}
 
         static Zone ConvertToZone(ZoneInternal zone)
         {

@@ -1,16 +1,21 @@
-﻿namespace CadRevealComposer.Operations;
+﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations.SectorSplitting;
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using static CadRevealComposer.Operations.SectorSplitter;
+using static CadRevealComposer.Operations.SectorSplitting.SplittingUtils;
 
-public static class SectorSplitterZones
+public class SectorSplitterZones : ISectorSplitter
 {
-    public static IEnumerable<ProtoSector> SplitIntoSectors(ZoneSplitter.Zone[] zones)
+    public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
+
+        var zones = ZoneSplitter.SplitIntoZones(allGeometries);
+
         var sectorIdGenerator = new SequentialIdGenerator();
 
         foreach (var zone in zones)
@@ -32,7 +37,9 @@ public static class SectorSplitterZones
                 })
                 .ToArray();
 
-            var sectors = SectorSplitter.SplitIntoSectorsRecursive(
+
+            var octreeSplitter = new SectorSplitterOctree();
+            var sectors = octreeSplitter.SplitIntoSectorsRecursive(
                 nodes,
                 0,
                 "",

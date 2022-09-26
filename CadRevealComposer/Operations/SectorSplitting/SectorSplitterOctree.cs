@@ -1,4 +1,4 @@
-namespace CadRevealComposer.Operations;
+namespace CadRevealComposer.Operations.SectorSplitting;
 
 using CadRevealComposer.Operations.SectorSplitting;
 using IdProviders;
@@ -9,34 +9,14 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
 using Utils;
+using static CadRevealComposer.Operations.SectorSplitting.SplittingUtils;
 
-public static class SectorSplitter
+public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
 
-    public record ProtoSector(
-        uint SectorId,
-        uint? ParentSectorId,
-        int Depth,
-        string Path,
-        APrimitive[] Geometries,
-        Vector3 SubtreeBoundingBoxMin,
-        Vector3 SubtreeBoundingBoxMax,
-        Vector3 GeometryBoundingBoxMin,
-        Vector3 GeometryBoundingBoxMax
-    );
-
-    public record Node(
-        ulong NodeId,
-        APrimitive[] Geometries,
-        long EstimatedByteSize,
-        Vector3 BoundingBoxMin,
-        Vector3 BoundingBoxMax,
-        float Diagonal
-    );
-
-    public static IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
@@ -78,7 +58,7 @@ public static class SectorSplitter
         }
     }
 
-    public static IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
+    public IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
         Node[] nodes,
         int recursiveDepth,
         string parentPath,
@@ -200,7 +180,7 @@ public static class SectorSplitter
         }
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
+    private IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
     {
         var nodesInPrioritizedOrder = nodes
             .OrderByDescending(x => x.Diagonal);
@@ -218,5 +198,5 @@ public static class SectorSplitter
             budgetLeft -= node.EstimatedByteSize;
             yield return node;
         }
-    }    
+    }
 }

@@ -1,6 +1,7 @@
 namespace CadRevealComposer;
 
 using Ben.Collections.Specialized;
+using CadRevealComposer.Operations.SectorSplitting;
 using Configuration;
 using IdProviders;
 using Operations;
@@ -145,18 +146,19 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        SectorSplitter.ProtoSector[] sectors;
+        SplittingUtils.ProtoSector[] sectors;
         if (composerParameters.SingleSector)
         {
-            sectors = SectorSplitterSingle.CreateSingleSector(geometriesIncludingMeshes).ToArray();
+            var splitter = new SectorSplitterSingle();
+            sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes).ToArray();
         }
         else if (composerParameters.SplitIntoZones)
         {
-            var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            sectors = SectorSplitterZones.SplitIntoSectors(zones)
+            //var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
+            //Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
+            //stopwatch.Restart();
+            var splitter = new SectorSplitterZones();
+            sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -164,7 +166,8 @@ public static class CadRevealComposerRunner
         }
         else
         {
-            sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)
+            var splitter = new SectorSplitterOctree();
+            sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -196,7 +199,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {total.Elapsed}");
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(SplittingUtils.ProtoSector p, string outputDirectory)
     {
         if (!p.Geometries.Any())
         {
