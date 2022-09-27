@@ -42,7 +42,8 @@ public class SectorSplitterOctree : ISectorSplitter
         var bbMax = nodes.GetBoundingBoxMax();
         var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
 
-        int depthToStartSplittingGeometry = 3; //Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
+        int depthToStartSplittingGeometry =
+            3; //Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
 
         // var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         // var rootPath = "/0";
@@ -67,7 +68,7 @@ public class SectorSplitterOctree : ISectorSplitter
             null,
             sectorIdGenerator,
             depthToStartSplittingGeometry
-            ).ToArray();
+        ).ToArray();
 
         foreach (var sector in sectors)
         {
@@ -93,8 +94,7 @@ public class SectorSplitterOctree : ISectorSplitter
             yield break;
         }
 
-        var actualDepth = Math.Max(0, recursiveDepth - depthToStartSplittingGeometry + 1);
-
+        var actualDepth = Math.Max(1, recursiveDepth - depthToStartSplittingGeometry + 1);
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
@@ -106,11 +106,9 @@ public class SectorSplitterOctree : ISectorSplitter
 
         bool isLeaf = false;
 
-        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter && recursiveDepth >= depthToStartSplittingGeometry)
+        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
         {
             mainVoxelNodes = nodes;
-            var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
-            isLeaf = true;
         }
         else
         {
@@ -150,28 +148,51 @@ public class SectorSplitterOctree : ISectorSplitter
         }
         else
         {
-            var parentPathForChildren = parentPath;
-            var parentSectorIdForChildren = parentSectorId;
+            string parentPathForChildren = parentPath;
+            uint? parentSectorIdForChildren = parentSectorId;
 
-            var sectorId = (uint)sectorIdGenerator.GetNextId();
             var geometries = mainVoxelNodes.SelectMany(node => node.Geometries).ToArray();
 
-            var path = $"{parentPath}/{sectorId}";
+            if (recursiveDepth == 0) // Create root sector
+            {
+                var sectorId = (uint)sectorIdGenerator.GetNextId();
+                var path = $"{parentPath}/{sectorId}";
 
-            parentPathForChildren = path;
-            parentSectorIdForChildren = sectorId;
+                yield return new ProtoSector(
+                    sectorId,
+                    parentSectorId,
+                    0,
+                    path,
+                    Array.Empty<APrimitive>(),
+                    bbMin,
+                    bbMax,
+                    Vector3.Zero,
+                    Vector3.Zero
+                );
 
-            yield return new ProtoSector(
-                sectorId,
-                parentSectorId,
-                actualDepth,
-                path,
-                geometries,
-                bbMin,
-                bbMax,
-                geometries.Any() ? geometries.GetBoundingBoxMin() : Vector3.Zero,
-                geometries.Any() ? geometries.GetBoundingBoxMax() : Vector3.Zero
-            );
+                parentPathForChildren = path;
+                parentSectorIdForChildren = sectorId;
+            }
+            else if (geometries.Any())
+            {
+                var sectorId = (uint)sectorIdGenerator.GetNextId();
+                var path = $"{parentPath}/{sectorId}";
+
+                yield return new ProtoSector(
+                    sectorId,
+                    parentSectorId,
+                    actualDepth,
+                    path,
+                    geometries,
+                    bbMin,
+                    bbMax,
+                    geometries.Any() ? geometries.GetBoundingBoxMin() : Vector3.Zero,
+                    geometries.Any() ? geometries.GetBoundingBoxMax() : Vector3.Zero
+                );
+
+                parentPathForChildren = path;
+                parentSectorIdForChildren = sectorId;
+            }
 
             var voxels = subVoxelNodes
                 .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, bbMidPoint))
