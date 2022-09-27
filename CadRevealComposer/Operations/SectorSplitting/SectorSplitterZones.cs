@@ -44,7 +44,8 @@ public class SectorSplitterZones : ISectorSplitter
                 0,
                 "",
                 null,
-                sectorIdGenerator).ToArray();
+                sectorIdGenerator,
+                0).ToArray();
 
             foreach (var sector in sectors)
             {

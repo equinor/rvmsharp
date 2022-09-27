@@ -64,7 +64,7 @@ public class SectorSplitterOctree : ISectorSplitter
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        int depthToStartSplittingGeometry = 0)
+        int depthToStartSplittingGeometry)
     {
 
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
@@ -84,6 +84,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var mainVoxelNodes = Array.Empty<Node>();
         var subVoxelNodes = Array.Empty<Node>();
+
         bool isLeaf = false;
 
         if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
