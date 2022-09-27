@@ -85,7 +85,8 @@ public static class CadRevealComposerRunner
 
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
-            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
+                p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
             .Cast<RvmFacetGroup>()
             .ToArray();
 
@@ -115,6 +116,7 @@ public static class CadRevealComposerRunner
             var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
             Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
         }
+
         RvmPyramidInstancer.Result[] pyramidInstancingResult;
         if (composerParameters.NoInstancing)
         {
@@ -146,33 +148,23 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        SplittingUtils.ProtoSector[] sectors;
+        ISectorSplitter splitter;
         if (composerParameters.SingleSector)
         {
-            var splitter = new SectorSplitterSingle();
-            sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes).ToArray();
+            splitter = new SectorSplitterSingle();
         }
         else if (composerParameters.SplitIntoZones)
         {
-            //var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-            //Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            //stopwatch.Restart();
-            var splitter = new SectorSplitterZones();
-            sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            splitter = new SectorSplitterZones();
         }
         else
         {
-            var splitter = new SectorSplitterOctree();
-            sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            splitter = new SectorSplitterOctree();
         }
+
+        var sectors = splitter.SplitIntoSectors(geometriesIncludingMeshes).ToArray().OrderBy(x => x.SectorId).ToArray();
+        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+        stopwatch.Restart();
 
         var sectorInfos = sectors
             .Select(s => SerializeSector(s, outputDirectory.FullName))
@@ -204,19 +196,19 @@ public static class CadRevealComposerRunner
         if (!p.Geometries.Any())
         {
             var sectorInfo = new SceneCreator.SectorInfo(
-               p.SectorId,
-               p.ParentSectorId,
-               p.Depth,
-               p.Path,
-               null,
-               0,
-               0,
-               Array.Empty<APrimitive>(),
-               p.SubtreeBoundingBoxMin,
-               p.SubtreeBoundingBoxMax,
-               p.GeometryBoundingBoxMin,
-               p.GeometryBoundingBoxMax
-           );
+                p.SectorId,
+                p.ParentSectorId,
+                p.Depth,
+                p.Path,
+                null,
+                0,
+                0,
+                Array.Empty<APrimitive>(),
+                p.SubtreeBoundingBoxMin,
+                p.SubtreeBoundingBoxMax,
+                p.GeometryBoundingBoxMin,
+                p.GeometryBoundingBoxMax
+            );
 
             return sectorInfo;
         }
@@ -254,10 +246,7 @@ public static class CadRevealComposerRunner
             else
             {
                 var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-                yield return sector with
-                {
-                    DownloadSize = new FileInfo(filepath).Length
-                };
+                yield return sector with { DownloadSize = new FileInfo(filepath).Length };
             }
         }
     }
@@ -286,7 +275,8 @@ public static class CadRevealComposerRunner
 
         var facetGroupInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
+            .GroupBy(result => (RvmPrimitive)result.Template,
+                x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
             .ToArray();
 
         var pyramidsInstanced = pyramidInstancingResult
