@@ -42,7 +42,23 @@ public class SectorSplitterOctree : ISectorSplitter
         var bbMax = nodes.GetBoundingBoxMax();
         var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
 
-        int depthToStartSplittingGeometry = Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
+        int depthToStartSplittingGeometry = 3; //Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
+
+        // var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        // var rootPath = "/0";
+
+        // // Root sector
+        // yield return new ProtoSector(
+        //     rootSectorId,
+        //     null,
+        //     0,
+        //     rootPath,
+        //     Array.Empty<APrimitive>(),
+        //     bbMin,
+        //     bbMax,
+        //     Vector3.Zero,
+        //     Vector3.Zero
+        // );
 
         var sectors = SplitIntoSectorsRecursive(
             nodes,
@@ -50,7 +66,8 @@ public class SectorSplitterOctree : ISectorSplitter
             "",
             null,
             sectorIdGenerator,
-            depthToStartSplittingGeometry).ToArray();
+            depthToStartSplittingGeometry
+            ).ToArray();
 
         foreach (var sector in sectors)
         {
@@ -66,7 +83,6 @@ public class SectorSplitterOctree : ISectorSplitter
         SequentialIdGenerator sectorIdGenerator,
         int depthToStartSplittingGeometry)
     {
-
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
          * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
          * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
@@ -76,6 +92,9 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             yield break;
         }
+
+        var actualDepth = Math.Max(0, recursiveDepth - depthToStartSplittingGeometry + 1);
+
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
@@ -87,7 +106,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         bool isLeaf = false;
 
-        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
+        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter && recursiveDepth >= depthToStartSplittingGeometry)
         {
             mainVoxelNodes = nodes;
             var estimatedByteSize = mainVoxelNodes.Sum(n => n.EstimatedByteSize);
@@ -101,10 +120,10 @@ public class SectorSplitterOctree : ISectorSplitter
             }
             else
             {
-
                 // fill main voxel according to budget
                 long estimatedByteSize = 0;
-                var additionalMainVoxelNodesByBudget = GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
+                var additionalMainVoxelNodesByBudget =
+                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
                 mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
                 subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
             }
@@ -120,7 +139,7 @@ public class SectorSplitterOctree : ISectorSplitter
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
-                recursiveDepth,
+                actualDepth,
                 path,
                 geometries,
                 bbMin,
@@ -145,7 +164,7 @@ public class SectorSplitterOctree : ISectorSplitter
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
-                recursiveDepth,
+                actualDepth,
                 path,
                 geometries,
                 bbMin,
@@ -155,15 +174,16 @@ public class SectorSplitterOctree : ISectorSplitter
             );
 
             var voxels = subVoxelNodes
-                    .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, bbMidPoint))
-                    .OrderBy(x => x.Key)
-                    .ToImmutableList();
+                .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, bbMidPoint))
+                .OrderBy(x => x.Key)
+                .ToImmutableList();
 
             foreach (var voxelGroup in voxels)
             {
                 if (voxelGroup.Key == SplittingUtils.MainVoxel)
                 {
-                    throw new Exception("Main voxel should not appear here. Main voxel should be processed separately.");
+                    throw new Exception(
+                        "Main voxel should not appear here. Main voxel should be processed separately.");
                 }
 
                 var sectors = SplitIntoSectorsRecursive(
