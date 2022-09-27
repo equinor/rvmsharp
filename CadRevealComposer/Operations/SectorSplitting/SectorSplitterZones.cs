@@ -1,13 +1,11 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
-using CadRevealComposer.IdProviders;
-using CadRevealComposer.Operations.SectorSplitting;
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils;
+using IdProviders;
+using Primitives;
+using Utils;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using static CadRevealComposer.Operations.SectorSplitting.SplittingUtils;
 
 public class SectorSplitterZones : ISectorSplitter
 {

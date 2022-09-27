@@ -1,6 +1,6 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using CadRevealComposer.Operations.SectorSplitting;
+using SectorSplitting;
 using IdProviders;
 using Primitives;
 using System;
@@ -9,7 +9,6 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
 using Utils;
-using static CadRevealComposer.Operations.SectorSplitting.SplittingUtils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {

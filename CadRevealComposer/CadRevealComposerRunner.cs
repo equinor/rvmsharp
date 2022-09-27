@@ -1,7 +1,7 @@
 namespace CadRevealComposer;
 
 using Ben.Collections.Specialized;
-using CadRevealComposer.Operations.SectorSplitting;
+using Operations.SectorSplitting;
 using Configuration;
 using IdProviders;
 using Operations;
@@ -191,7 +191,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {total.Elapsed}");
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(SplittingUtils.ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(ProtoSector p, string outputDirectory)
     {
         if (!p.Geometries.Any())
         {
