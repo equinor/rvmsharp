@@ -18,53 +18,23 @@ public class SectorSplitterOctree : ISectorSplitter
     public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
-
-        var nodes = allGeometries
-            .GroupBy(p => p.TreeIndex)
-            .Select(g =>
-            {
-                var geometries = g.ToArray();
-                var boundingBoxMin = geometries.GetBoundingBoxMin();
-                var boundingBoxMax = geometries.GetBoundingBoxMax();
-                return new Node(
-                    g.Key,
-                    geometries,
-                    geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                    boundingBoxMin,
-                    boundingBoxMax,
-                    Vector3.Distance(boundingBoxMin, boundingBoxMax));
-            })
-            .ToArray();
-
+        var nodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
 
         var bbMin = nodes.GetBoundingBoxMin();
         var bbMax = nodes.GetBoundingBoxMax();
-        var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
 
-        int depthToStartSplittingGeometry =
-            3; //Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
+        int depthToStartSplittingGeometry = CalculateStartSplittingDepth(bbMin, bbMax);
 
-        // var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-        // var rootPath = "/0";
+        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        var rootPath = "/0";
 
-        // // Root sector
-        // yield return new ProtoSector(
-        //     rootSectorId,
-        //     null,
-        //     0,
-        //     rootPath,
-        //     Array.Empty<APrimitive>(),
-        //     bbMin,
-        //     bbMax,
-        //     Vector3.Zero,
-        //     Vector3.Zero
-        // );
+        yield return CreateRootSector(rootSectorId, rootPath, bbMin, bbMax);
 
         var sectors = SplitIntoSectorsRecursive(
             nodes,
-            0,
-            "",
-            null,
+            1,
+            rootPath,
+            rootSectorId,
             sectorIdGenerator,
             depthToStartSplittingGeometry
         ).ToArray();
@@ -103,32 +73,27 @@ public class SectorSplitterOctree : ISectorSplitter
         var mainVoxelNodes = Array.Empty<Node>();
         var subVoxelNodes = Array.Empty<Node>();
 
-        bool isLeaf = false;
-
-        if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
+        if (recursiveDepth < depthToStartSplittingGeometry)
         {
-            mainVoxelNodes = nodes;
+            subVoxelNodes = nodes;
         }
         else
         {
-            if (recursiveDepth < depthToStartSplittingGeometry)
+            if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
             {
-                subVoxelNodes = nodes;
+                mainVoxelNodes = nodes;
             }
             else
             {
                 // fill main voxel according to budget
-                long estimatedByteSize = 0;
                 var additionalMainVoxelNodesByBudget =
-                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget - estimatedByteSize).ToList();
+                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget).ToList();
                 mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
                 subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
             }
-
-            isLeaf = subVoxelNodes.Length == 0;
         }
 
-        if (isLeaf)
+        if (!subVoxelNodes.Any())
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
             var path = $"{parentPath}/{sectorId}";
@@ -152,27 +117,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
             var geometries = mainVoxelNodes.SelectMany(node => node.Geometries).ToArray();
 
-            if (recursiveDepth == 0) // Create root sector
-            {
-                var sectorId = (uint)sectorIdGenerator.GetNextId();
-                var path = $"{parentPath}/{sectorId}";
-
-                yield return new ProtoSector(
-                    sectorId,
-                    parentSectorId,
-                    0,
-                    path,
-                    Array.Empty<APrimitive>(),
-                    bbMin,
-                    bbMax,
-                    Vector3.Zero,
-                    Vector3.Zero
-                );
-
-                parentPathForChildren = path;
-                parentSectorIdForChildren = sectorId;
-            }
-            else if (geometries.Any())
+            if (geometries.Any())
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
@@ -219,6 +164,28 @@ public class SectorSplitterOctree : ISectorSplitter
                 }
             }
         }
+    }
+
+    private ProtoSector CreateRootSector(uint sectorId, string path, Vector3 bbMin, Vector3 bbMax)
+    {
+        return new ProtoSector(
+            sectorId,
+            null,
+            0,
+            path,
+            Array.Empty<APrimitive>(),
+            bbMin,
+            bbMax,
+            Vector3.Zero,
+            Vector3.Zero
+        );
+    }
+
+    private int CalculateStartSplittingDepth(Vector3 bbMin, Vector3 bbMax)
+    {
+        var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
+
+        return Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
     }
 
     private IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
