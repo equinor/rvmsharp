@@ -127,4 +127,24 @@ public class RvmPrimitiveTests
 
         Assert.That(box, Is.Not.EqualTo(newIdenticalBox));
     }
+
+    [Test]
+    public void RvmSnout_TestCapCalculation()
+    {
+        var snout = new RvmSnout(0, new Matrix4x4(), new RvmBoundingBox(new Vector3(), new Vector3()),
+            2.0f, // bottom radius
+            1.2928932188134525f, // top radius
+            5.656854249492381f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            MathF.PI / 4.0f, // bottom shear x
+            MathF.PI / 4.0f, // bottom shear y
+            0.0f, // top shear x
+            -MathF.PI / 4.0f // top shear y
+            );
+        var topRadii = snout.GetTopRadii();
+
+        Assert.That(topRadii.semiMajorAxis, Is.EqualTo(1.857449777519938f));
+        Assert.That(topRadii.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+    }
 }
