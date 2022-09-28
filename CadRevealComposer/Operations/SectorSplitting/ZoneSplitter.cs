@@ -1,6 +1,7 @@
-namespace CadRevealComposer.Operations;
+namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
+using Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,16 +11,16 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.Versioning;
-using Utils;
 
 /// <summary>
 /// Divides a model into zones for a better starting point for sector splitting.
-/// This is needed for models spread over a larger area like Melkøya and Tjeldbergodden.
+/// This is needed for models spread over a larger area like Melkï¿½ya and Tjeldbergodden.
 /// </summary>
 public static class ZoneSplitter
 {
     public record Zone(APrimitive[] Primitives);
-    public record RootZone(APrimitive[] Primitives) : Zone(Primitives);
+
+    private record RootZone(APrimitive[] Primitives) : Zone(Primitives);
 
     private record ZoneInternal(Cell[] Cells, int MinNodeCount);
 
@@ -162,7 +163,7 @@ public static class ZoneSplitter
         }
     }
 
-    public static Zone[] SplitIntoZones(APrimitive[] primitives) //, DirectoryInfo outputDirectory)
+    public static Zone[] SplitIntoZones(APrimitive[] primitives, DirectoryInfo outputDirectory)
     {
         var grid = Grid.Create(primitives);
 
@@ -191,16 +192,16 @@ public static class ZoneSplitter
         }
 
         // write zone visualization (PNG grid image)
-        //if (OperatingSystem.IsWindows())
-        //{
-        //    var path = Path.Combine(outputDirectory.FullName, "Zones.png");
-        //    if (File.Exists(path))
-        //    {
-        //        File.Delete(path);
-        //    }
-        //    using var stream = File.OpenWrite(path);
-        //    WriteZoneBitmap(stream, zonesInternal, grid.GridSizeX, grid.GridSizeY);
-        //}
+        if (OperatingSystem.IsWindows())
+        {
+            var path = Path.Combine(outputDirectory.FullName, "Zones.png");
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+            using var stream = File.OpenWrite(path);
+            WriteZoneBitmap(stream, zonesInternal, grid.GridSizeX, grid.GridSizeY);
+        }
 
         static Zone ConvertToZone(ZoneInternal zone)
         {
