@@ -14,7 +14,7 @@ public class FacetGroupMatchTests
     public void MatchItself()
     {
         var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");
-        var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe1, out Matrix4x4 _);
+        var pipesEqual = RvmFacetGroupMatcher.Match(pipe1.Polygons, pipe1.Polygons, out Matrix4x4 _);
         Assert.That(pipesEqual);
     }
 
@@ -23,7 +23,7 @@ public class FacetGroupMatchTests
     {
         var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");
         var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43908.json");
-        var pipesEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out Matrix4x4 _);
+        var pipesEqual = RvmFacetGroupMatcher.Match(pipe1.Polygons, pipe2.Polygons, out Matrix4x4 _);
         Assert.That(pipesEqual);
     }
 
@@ -32,7 +32,7 @@ public class FacetGroupMatchTests
     {
         var hinges1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json");
         var hinges2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m2.json");
-        var hingesEqual = RvmFacetGroupMatcher.Match(hinges1, hinges2, out Matrix4x4 _);
+        var hingesEqual = RvmFacetGroupMatcher.Match(hinges1.Polygons, hinges2.Polygons, out Matrix4x4 _);
         Assert.IsFalse(hingesEqual);
     }
 
@@ -41,7 +41,7 @@ public class FacetGroupMatchTests
     {
         var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
         var panel2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("2.json");
-        var panelsEqual = RvmFacetGroupMatcher.Match(panel1, panel2, out Matrix4x4 _);
+        var panelsEqual = RvmFacetGroupMatcher.Match(panel1.Polygons, panel2.Polygons, out Matrix4x4 _);
         Assert.IsFalse(panelsEqual);
     }
 
@@ -55,7 +55,7 @@ public class FacetGroupMatchTests
     {
         var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("5.json");
         var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("6.json");
-        var facetGroupsEqual = RvmFacetGroupMatcher.Match(pipe1, pipe2, out Matrix4x4 _);
+        var facetGroupsEqual = RvmFacetGroupMatcher.Match(pipe1.Polygons, pipe2.Polygons, out Matrix4x4 _);
         Assert.That(facetGroupsEqual);
     }
 

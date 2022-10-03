@@ -49,7 +49,7 @@ public class RvmFacetGroupMatcherTests
 
             var meshB = meshA.TransformVertexData(Ma);
 
-            var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
+            var isMatch = RvmFacetGroupMatcher.Match(meshA.Polygons, meshB.Polygons, out Matrix4x4 _);
             Assert.IsTrue(isMatch, "Could not match.");
         }
     }
@@ -73,7 +73,7 @@ public class RvmFacetGroupMatcherTests
 
         var meshB = meshA.TransformVertexData(Ma);
 
-        var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
+        var isMatch = RvmFacetGroupMatcher.Match(meshA.Polygons, meshB.Polygons, out Matrix4x4 _);
         Assert.IsTrue(isMatch, "Could not match.");
     }
 

@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using Utils;
+using static RvmSharp.Primitives.RvmFacetGroup;
 
 public static class RvmFacetGroupMatcher
 {
@@ -234,23 +235,11 @@ public static class RvmFacetGroupMatcher
     {
         static void SwapItemData(TemplateItem a, TemplateItem b)
         {
-            var aOriginal = a.Original;
-            var aTemplate = a.Template;
-            var aTransform = a.Transform;
-            var aMatchCount = a.MatchCount;
-            var aMatchAttempts = a.MatchAttempts;
-
-            a.Original = b.Original;
-            a.Template = b.Template;
-            a.Transform = b.Transform;
-            a.MatchCount = b.MatchCount;
-            a.MatchAttempts = b.MatchAttempts;
-
-            b.Original = aOriginal;
-            b.Template = aTemplate;
-            b.Transform = aTransform;
-            b.MatchCount = aMatchCount;
-            b.MatchAttempts = aMatchAttempts;
+            (a.Original, b.Original) = (b.Original, a.Original);
+            (a.Template, b.Template) = (b.Template, a.Template);
+            (a.Transform, b.Transform) = (b.Transform, a.Transform);
+            (a.MatchCount, b.MatchCount) = (b.MatchCount, a.MatchCount);
+            (a.MatchAttempts, b.MatchAttempts) = (b.MatchAttempts, a.MatchAttempts);
         }
 
         var result = new List<Result>();
@@ -260,7 +249,8 @@ public static class RvmFacetGroupMatcher
         var matchingTimer = Stopwatch.StartNew();
         var target = TimeSpan.FromMinutes(5);
         var cleanupIntervalCounter = 0;
-        foreach (var facetGroup in facetGroups)
+        var facetGroupSpan = facetGroups.AsSpan();
+        foreach (var facetGroup in facetGroupSpan)
         {
             cleanupIntervalCounter++;
             if (matchingTimer.Elapsed > target)
@@ -282,7 +272,7 @@ public static class RvmFacetGroupMatcher
                 var item = templateCandidates[i];
                 item.MatchAttempts++;
                 iterCounter++;
-                if (!Match(item.Template, bakedFacetGroup, out var transform))
+                if (!Match(item.Template.Polygons, bakedFacetGroup.Polygons, out var transform))
                 {
                     continue;
                 }
@@ -419,7 +409,7 @@ public static class RvmFacetGroupMatcher
     /// <param name="bFacetGroup"></param>
     /// <param name="outputTransform"></param>
     /// <returns></returns>
-    public static bool Match(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 outputTransform)
+    public static bool Match(RvmPolygon[] aFacetGroup, RvmPolygon[] bFacetGroup, out Matrix4x4 outputTransform)
     {
         if (GetPossibleAtoBTransform(aFacetGroup, bFacetGroup, out outputTransform))
         {
@@ -434,14 +424,13 @@ public static class RvmFacetGroupMatcher
     /// For each vertex verify that a * transform = b.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static bool VerifyTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, in Matrix4x4 transform)
+    private static bool VerifyTransform(ReadOnlySpan<RvmPolygon> aPolygonSpan, ReadOnlySpan<RvmPolygon> bFacetGroup, in Matrix4x4 transform)
     {
         // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
-
-        for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
+        for (var i = 0; i < aPolygonSpan.Length; i++)
         {
-            var aPolygon = aFacetGroup.Polygons[i];
-            var bPolygon = bFacetGroup.Polygons[i];
+            var aPolygon = aPolygonSpan[i];
+            var bPolygon = bFacetGroup[i];
 
             for (var j = 0; j < aPolygon.Contours.Length; j++)
             {
@@ -464,7 +453,7 @@ public static class RvmFacetGroupMatcher
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static bool GetPossibleAtoBTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup,
+    private static bool GetPossibleAtoBTransform(ReadOnlySpan<RvmPolygon> aFacetGroup, ReadOnlySpan<RvmPolygon> bFacetGroup,
         out Matrix4x4 transform)
     {
         // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
@@ -475,10 +464,11 @@ public static class RvmFacetGroupMatcher
         (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
         (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex3 = (Vector3.Zero, Vector3.Zero, false);
 
-        for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
+        for (var i = 0; i < aFacetGroup.Length; i++)
         {
-            var aPolygon = aFacetGroup.Polygons[i];
-            var bPolygon = bFacetGroup.Polygons[i];
+            var aPolygon = aFacetGroup[i];
+            var bPolygon = bFacetGroup[i];
+
 
             for (var j = 0; j < aPolygon.Contours.Length; j++)
             {
