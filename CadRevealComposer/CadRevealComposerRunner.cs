@@ -5,6 +5,8 @@ using Configuration;
 using IdProviders;
 using Operations;
 using Primitives;
+using Operations.Converters;
+
 using RvmSharp.BatchUtils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
@@ -79,6 +81,8 @@ public static class CadRevealComposerRunner
                 primitive => APrimitive.FromRvmPrimitive(x, primitive)))
             .ToArray();
 
+
+        Console.WriteLine($"Removed total no of caps: {PrimitiveCapHelper.global_count_removed_caps}" );
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
 

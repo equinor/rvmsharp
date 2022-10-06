@@ -27,17 +27,17 @@ public static class RvmSnoutConverter
 
         var bbox = rvmSnout.CalculateAxisAlignedBoundingBox();
 
-        var height = scale.Z * MathF.Sqrt(
+        var length = scale.Z * MathF.Sqrt(
             rvmSnout.Height * rvmSnout.Height +
             rvmSnout.OffsetX * rvmSnout.OffsetX +
             rvmSnout.OffsetY * rvmSnout.OffsetY);
-        var halfHeight = 0.5f * height;
+        var halfLength = 0.5f * length;
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
-        var centerA = position + normal * halfHeight;
-        var centerB = position - normal * halfHeight;
+        var centerA = position + normal * halfLength;
+        var centerB = position - normal * halfLength;
 
         if (rvmSnout.HasShear())
         {
@@ -56,7 +56,7 @@ public static class RvmSnoutConverter
                     centerA,
                     centerB,
                     normal,
-                    height,
+                    length,
                     scale,
                     treeIndex,
                     color,
@@ -77,7 +77,7 @@ public static class RvmSnoutConverter
                 normal,
                 radiusA,
                 radiusB,
-                height,
+                length,
                 treeIndex,
                 color,
                 bbox);
@@ -168,26 +168,26 @@ public static class RvmSnoutConverter
         Vector3 normal,
         float radiusA,
         float radiusB,
-        float height,
+        float length,
         ulong treeIndex,
         Color color,
         RvmBoundingBox bbox)
     {
-        var halfHeight = height / 2f;
+        var halfLength = length / 2f;
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
 
         var eccentricNormal = Vector3.Transform(
-            Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height) * scale.X),
+            Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height)),
             rotation);
 
-        var eccentricCenterA = position + eccentricNormal * halfHeight;
-        var eccentricCenterB = position - eccentricNormal * halfHeight;
+        var eccentricCenterA = position + eccentricNormal * halfLength;
+        var eccentricCenterB = position - eccentricNormal * halfLength;
 
         yield return new EccentricCone(
             eccentricCenterA,
             eccentricCenterB,
-            normal,
+            normal, // TODO CHECK WHY NOT eccentricNormal
             radiusA,
             radiusB,
             treeIndex,
@@ -248,8 +248,8 @@ public static class RvmSnoutConverter
         var (planeRotationA, planeNormalA, planeSlopeA) = rvmSnout.GetTopSlope();
         var (planeRotationB, planeNormalB, planeSlopeB) = rvmSnout.GetBottomSlope();
 
-        (var semiMinorAxisA, var semiMajorAxisA) = rvmSnout.GetTopRadii();
-        (var semiMinorAxisB, var semiMajorAxisB) = rvmSnout.GetBottomRadii();
+        (var semiMinorAxisA, var semiMajorAxisA, var thetaA, var x0A, var y0A, var toworldA, var toplaneA) = rvmSnout.GetTopEllipsePolarForm();
+        (var semiMinorAxisB, var semiMajorAxisB, var thetaB, var x0B, var y0B, var toworldB, var toplaneB) = rvmSnout.GetBottomEllipsePolarForm();
 
         semiMinorAxisA *= scale.X;
         semiMajorAxisA *= scale.X;
@@ -257,8 +257,8 @@ public static class RvmSnoutConverter
         semiMajorAxisB *= scale.X;
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
-        var extendedHeightA = MathF.Tan(planeSlopeA) * semiMinorAxisA;
-        var extendedHeightB = MathF.Tan(planeSlopeB) * semiMinorAxisB;
+        var extendedHeightA = MathF.Tan(planeSlopeA) * (float)semiMinorAxisA;
+        var extendedHeightB = MathF.Tan(planeSlopeB) * (float)semiMinorAxisB;
 
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
@@ -274,7 +274,7 @@ public static class RvmSnoutConverter
             localToWorldXAxis,
             planeA,
             planeB,
-            semiMinorAxisA,
+            (float)semiMinorAxisA,
             treeIndex,
             color,
             bbox
@@ -285,7 +285,7 @@ public static class RvmSnoutConverter
         if (showCapA)
         {
             var matrixCapA =
-                Matrix4x4.CreateScale(new Vector3(semiMinorAxisA, semiMajorAxisA, 0) * 2.0f)
+                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f)
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
                 * Matrix4x4.CreateTranslation(centerA);
 
@@ -304,7 +304,7 @@ public static class RvmSnoutConverter
         if (showCapB)
         {
             var matrixCapB =
-                Matrix4x4.CreateScale(new Vector3(semiMinorAxisB, semiMajorAxisB, 0) * 2.0f)
+                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
                 * Matrix4x4.CreateTranslation(centerB);
 

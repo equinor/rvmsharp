@@ -129,7 +129,7 @@ public class RvmPrimitiveTests
     }
 
     [Test]
-    public void RvmSnout_TestCapCalculation()
+    public void RvmSnout_TestCapCalculation_Cone()
     {
         var snout = new RvmSnout(0, new Matrix4x4(), new RvmBoundingBox(new Vector3(), new Vector3()),
             2.0f, // bottom radius
@@ -142,9 +142,69 @@ public class RvmPrimitiveTests
             0.0f, // top shear x
             -MathF.PI / 4.0f // top shear y
             );
-        var topRadii = snout.GetTopRadii();
+        var topEllipse = snout.GetTopEllipsePolarForm();
 
-        Assert.That(topRadii.semiMajorAxis, Is.EqualTo(1.857449777519938f));
-        Assert.That(topRadii.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(1.857449777519938f));
+        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+    }
+
+    [Test]
+    public void RvmSnout_TestCapCalculation_FlippedCone_ApexInOrigin()
+    {
+        var snout = new RvmSnout(0, new Matrix4x4(), new RvmBoundingBox(new Vector3(), new Vector3()),
+            0.0f, // bottom radius
+            155.5f, // top radius
+            187.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            0.0f, // bottom shear x
+            0.0f, // bottom shear y
+            0.0f, // top shear x
+            0.0f // top shear y
+            );
+        var topEllipse = snout.GetTopEllipsePolarForm();
+
+        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(155.5));
+    }
+
+    [Test]
+    public void RvmSnout_TestCapCalculation_Cone_Fzero()
+    {
+        var snout = new RvmSnout(0, new Matrix4x4(), new RvmBoundingBox(new Vector3(), new Vector3()),
+            24.0f, // bottom radius
+            16.5f, // top radius
+            64.0f, // height
+            7.5f, // offset x
+            0.0f, // offset y
+            0.0f, // bottom shear x
+            0.0f, // bottom shear y
+            0.0f, // top shear x
+            0.0f // top shear y
+            );
+        var topEllipse = snout.GetTopEllipsePolarForm();
+
+        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(16.5));
+    }
+
+    [Test]
+    public void RvmSnout_TestCapCalculation_Cylinder()
+    {
+        var snout = new RvmSnout(0, new Matrix4x4(), new RvmBoundingBox(new Vector3(), new Vector3()),
+            2.0f, // bottom radius
+            2.0f, // top radius
+            4.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            MathF.PI / 4.0f, // bottom shear x
+            MathF.PI / 4.0f, // bottom shear y
+            0.0f, // top shear x
+            -MathF.PI / 4.0f // top shear y
+            );
+        var topEllipse = snout.GetTopEllipsePolarForm();
+
+        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(2.0/MathF.Cos(snout.TopShearY)));
+        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(2.0));
     }
 }

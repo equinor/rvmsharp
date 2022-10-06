@@ -80,6 +80,7 @@ public class RvmSnoutConverterTests
         Assert.That(geometries.Length, Is.EqualTo(3));
     }
 
+
     [Test]
     public void RvmSnoutConverter_WhenNoShearAndNotEccentric_ReturnsConeWithCaps()
     {
