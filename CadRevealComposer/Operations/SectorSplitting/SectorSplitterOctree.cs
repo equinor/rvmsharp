@@ -183,9 +183,15 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private int CalculateStartSplittingDepth(Vector3 bbMin, Vector3 bbMax)
     {
+        // If we start splitting too low in the octree, we might end up with way too many sectors
+        // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
+
+        int minDepth = 3; // Arbitrary value
+        int maxDepth = 4; // Arbitrary value
+
         var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
 
-        return Math.Clamp((int)MathF.Sqrt(sizeOfAllNodes / 100f), 3, 4); // EH, a bit random O:)
+        return Math.Clamp(minDepth, maxDepth, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // Kind of random calculation
     }
 
     private IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
