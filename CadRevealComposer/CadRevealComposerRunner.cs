@@ -82,7 +82,17 @@ public static class CadRevealComposerRunner
             .ToArray();
 
 
-        Console.WriteLine($"Removed total no of caps: {PrimitiveCapHelper.global_count_removed_caps}" );
+        Console.WriteLine($"False positives in HideCap: {PrimitiveCapHelper.global_count_false_positives}" );
+        Console.WriteLine($"False negatives in HideCap: {PrimitiveCapHelper.global_count_false_negatives}");
+        Console.WriteLine($"True positives in HideCap: {PrimitiveCapHelper.global_count_true_positives}");
+        Console.WriteLine($"True negatives in HideCap: {PrimitiveCapHelper.global_count_true_negatives}");
+
+        Console.WriteLine($"Show no caps before: {PrimitiveCapHelper.global_count_true_negatives + PrimitiveCapHelper.global_count_false_negatives}");
+        Console.WriteLine($"Hide no caps before: {PrimitiveCapHelper.global_count_true_positives + PrimitiveCapHelper.global_count_false_positives}");
+
+        Console.WriteLine($"Show no caps now: {PrimitiveCapHelper.global_count_false_positives + PrimitiveCapHelper.global_count_true_negatives}");
+        Console.WriteLine($"Hide no caps now: {PrimitiveCapHelper.global_count_true_positives + PrimitiveCapHelper.global_count_false_negatives}");
+
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
 

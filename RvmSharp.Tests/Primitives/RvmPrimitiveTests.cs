@@ -207,4 +207,101 @@ public class RvmPrimitiveTests
         Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(2.0/MathF.Cos(snout.TopShearY)));
         Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(2.0));
     }
+
+    [Test]
+    public void RvmSnout_TestCapCalculation_Origin_Cylinder()
+    {
+        var snout = new RvmSnout(0, new Matrix4x4(), new RvmBoundingBox(new Vector3(), new Vector3()),
+            712.0f, // bottom radius
+            712.0f, // top radius
+            640.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            0, // bottom shear x
+            0, // bottom shear y
+            0.0f, // top shear x
+            0.17453292f // top shear y
+            );
+        var topEllipse = snout.GetTopEllipsePolarForm();
+
+        Assert.That(topEllipse.x0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.y0, Is.EqualTo(0.0));
+    }
+
+    [Test]
+    public void RvmSnout_TestCap_InSamePlane()
+    {
+
+        var snout1 = new RvmSnout(
+            1,
+            new Matrix4x4(0.001f, 0.001f, 0.0f, 0.0f,
+                           0.0f, 0.0008660254f, -0.0005f, 0.0f,
+                           0.0f, 0.0005f, 0.0008660254f, 0.0f,
+                           74.95f, 289.608978f, 36.95f, 1.0f),
+            new RvmBoundingBox(new Vector3(-500.0f, -500.0f, 160.0475f),
+                                new Vector3(500.0f, 500.0f, 695.9459f)),
+            535.8984f, // bottom radius
+            500.0f, // top radius
+            500.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            0.2617994f, // bottom shear x
+            0, // bottom shear y
+            0.0f, // top shear x
+            -0.261799387799149f // top shear y
+            );
+
+        var snout2 = new RvmSnout(
+            1,
+            new Matrix4x4( 0.0f, 0.001f, 0.0f, 0.0f,
+                           -0.001f, 0.0f, 0.0f, 0.0f,
+                           0.0f, 0.0f, 0.001f, 0.0f,
+                           74.95f, 289.475f, 36.5839729f, 1.0f),
+            new RvmBoundingBox( new Vector3(-500.0f, -500.0f, 133.9746f),
+                                new Vector3(500.0f, 500.0f, 561.9713f)),
+            267.0f, // bottom radius
+            500.0f, // top radius
+            500.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            0, // bottom shear x
+            0, // bottom shear y
+            0.0f, // top shear x
+            -0.261799387799149f // top shear y
+            );
+
+        // snout1 -> top
+        var snout1TopCapCenter = (new Vector3(snout1.OffsetX/2.0f, snout1.OffsetY / 2.0f, snout1.Height / 2.0f));
+        var snout1TopCapCenter4D = new Vector4(snout1.OffsetX, snout1.OffsetY, snout1.Height, 1.0f);
+        (var snout1_n, var snout1_dc) = RvmSnout.GetPlaneFromShearAndPoint(
+            snout1.TopShearX, snout1.TopShearY,
+            snout1TopCapCenter);
+
+        // snout2 -> bottom
+        var snout2BottomCapCenter = (new Vector3(-snout2.OffsetX / 2.0f, -snout2.OffsetY / 2.0f, -snout2.Height / 2.0f));
+        (var snout2_n, var snout2_dc) = RvmSnout.GetPlaneFromShearAndPoint(
+            snout2.BottomShearX, snout2.BottomShearY,
+            snout2BottomCapCenter);
+
+        var v4transfNormal1 = Vector4.Transform(snout1_n, snout1.Matrix);
+        var v4transfNormal2 = Vector4.Transform(snout2_n, snout1.Matrix);
+        var transfNormal1 = new Vector3(v4transfNormal1.X, v4transfNormal1.Y, v4transfNormal1.Z);
+        var transfNormal2 = new Vector3(v4transfNormal2.X, v4transfNormal2.Y, v4transfNormal2.Z);
+        transfNormal1 = Vector3.Normalize(transfNormal1);
+        transfNormal2 = Vector3.Normalize(transfNormal2);
+
+        Assert.AreEqual((double)transfNormal1.X, (double)transfNormal2.X, (double)0.00001m);
+        Assert.AreEqual((double)transfNormal1.Y, (double)transfNormal2.Y, (double)0.00001m);
+        Assert.AreEqual((double)transfNormal1.Z, (double)transfNormal2.Z, (double)0.00001m);
+
+        // are the planes going through the same pt?
+        // they are not for this snout!!
+
+        var p1w = Vector4.Transform(snout1TopCapCenter, snout1.Matrix);
+        var p2w = Vector4.Transform(snout2BottomCapCenter, snout2.Matrix); ;
+
+        var pdiff = p2w - p1w;
+
+        Assert.AreNotEqual(0.0, pdiff.Length());
+    }
 }

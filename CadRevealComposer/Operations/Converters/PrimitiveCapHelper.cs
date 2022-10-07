@@ -11,7 +11,10 @@ using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public static class PrimitiveCapHelper
 {
-    public static int global_count_removed_caps = 0;
+    public static int global_count_false_positives = 0;
+    public static int global_count_false_negatives = 0;
+    public static int global_count_true_negatives = 0;
+    public static int global_count_true_positives = 0;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
@@ -27,6 +30,22 @@ public static class PrimitiveCapHelper
         });
     }
 
+    public static VectorD Cross(VectorD left, VectorD right)
+    {
+        VectorD result = new DenseVector(3);
+        result[0] = left[1] * right[2] - left[2] * right[1];
+        result[1] = -left[0] * right[2] + left[2] * right[0];
+        result[2] = left[0] * right[1] - left[1] * right[0];
+
+        return result;
+    }
+
+    public static double Dot(VectorD left, VectorD right)
+    {
+        var result =  left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
+        return result;
+    }
+
     public static MatrixD CreateUniformScale(double s)
     {
         return DenseMatrix.OfArray(new double[,] {
@@ -37,8 +56,8 @@ public static class PrimitiveCapHelper
         });
     }
 
-        public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
-        Vector3 capCenterB)
+    public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
+    Vector3 capCenterB)
     {
         const float connectionDistanceTolerance = 0.000_05f; // Arbitrary value
 
@@ -71,8 +90,6 @@ public static class PrimitiveCapHelper
             var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, connectionDistanceTolerance);
 
             var isPrim1CurrentPrimitive = ReferenceEquals(primitive, prim1);
-
-            int counter = 0;
 
             var showCap = (prim1, prim2) switch
             {
@@ -502,86 +519,78 @@ public static class PrimitiveCapHelper
         var result_new = true;
 
         // Fix:
-        (double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0, MatrixD plane2world, MatrixD world2plane) ellipseCurrent;
-        (double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0, MatrixD plane2world, MatrixD world2plane) ellipse2test;
-        (double A, double B, double C, double D, double E, double F, MatrixD plane2world, MatrixD world2plane) ellipseOther;
+        (double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0, MatrixD xplane_to_model, MatrixD model_to_xplane) ellipseCurrent;
+        (double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0, MatrixD xplane_to_model, MatrixD model_to_xplane) ellipseOther;
 
-        MatrixD obj1_to_world;
-        MatrixD obj2_to_world;
-        MatrixD world_to_obj2;
+        MatrixD snout1_to_world;
+        MatrixD world_to_snout2;
         if (isPrim1CurrentPrimitive)
         {
             // is ellipse1 totally inside ellipse2 ?
             ellipseCurrent = isSnoutCapTop1 ? rvmSnout1.GetTopEllipsePolarForm() : rvmSnout1.GetBottomEllipsePolarForm();
-            ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopEllipseImplicitForm() : rvmSnout2.GetBottomEllipseImplicitForm();
-            ellipse2test = isSnoutCapTop2 ? rvmSnout2.GetTopEllipsePolarForm() : rvmSnout2.GetBottomEllipsePolarForm();
-            obj1_to_world = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Multiply(scaleMat);// these matrices are stored as trans
-            obj2_to_world = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Multiply(scaleMat);
-            world_to_obj2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Multiply(scaleMat).Inverse();
+            ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopEllipsePolarForm() : rvmSnout2.GetBottomEllipsePolarForm();
+            snout1_to_world = ConvertMatrix4x4ToMatrixDouble(rvmSnout1.Matrix).Transpose().Multiply(scaleMat);
+            // these matrices are stored as trans ^^ vv
+            world_to_snout2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Multiply(scaleMat).Inverse();
 
         }
         else
         {
             ellipseCurrent = isSnoutCapTop2 ? rvmSnout2.GetTopEllipsePolarForm() : rvmSnout2.GetBottomEllipsePolarForm();
-            ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopEllipseImplicitForm() : rvmSnout1.GetBottomEllipseImplicitForm();
-            ellipse2test = isSnoutCapTop1 ? rvmSnout1.GetTopEllipsePolarForm() : rvmSnout1.GetBottomEllipsePolarForm();
-            obj1_to_world = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Multiply(scaleMat);
-            obj2_to_world = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Multiply(scaleMat);
-            world_to_obj2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Multiply(scaleMat).Inverse();
+            ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopEllipsePolarForm() : rvmSnout1.GetBottomEllipsePolarForm();
+            snout1_to_world = ConvertMatrix4x4ToMatrixDouble(rvmSnout2.Matrix).Transpose().Multiply(scaleMat);
+            world_to_snout2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Multiply(scaleMat).Inverse();
         }
 
-        var a_e1 = ellipseCurrent.semiMajorAxis;
-        var b_e1 = ellipseCurrent.semiMinorAxis;
-        var x0_e1 = ellipseCurrent.x0;
-        var y0_e1 = ellipseCurrent.y0;
+        double a_e1 =  ellipseCurrent.semiMajorAxis;
+        double b_e1 =  ellipseCurrent.semiMinorAxis;
+        double x0_e1 = ellipseCurrent.x0;
+        double y0_e1 = ellipseCurrent.y0;
 
-        var a_e2 = ellipse2test.semiMajorAxis;
-        var b_e2 = ellipse2test.semiMinorAxis;
-        var x0_e2 = ellipse2test.x0;
-        var y0_e2 = ellipse2test.y0;
+        double a_e2 = ellipseOther.semiMajorAxis;
+        double b_e2 = ellipseOther.semiMinorAxis;
+        double x0_e2 = ellipseOther.x0;
+        double y0_e2 = ellipseOther.y0;
 
-        var pt_local_e1 = new VectorD[4];
-        pt_local_e1[0] = VectorD.Build.Dense(new double[] { a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
-        pt_local_e1[1] = VectorD.Build.Dense(new double[] { -x0_e1, b_e1 - y0_e1, 0.0f, 1.0 });
-        pt_local_e1[2] = VectorD.Build.Dense(new double[] { -a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
-        pt_local_e1[3] = VectorD.Build.Dense(new double[] { -x0_e1, -b_e1 - y0_e1, 0.0f, 1.0 });
-
-        var mat_stack = ellipseOther.world2plane * world_to_obj2 * obj1_to_world * ellipseCurrent.plane2world;
-
-        var mat_stack1 = world_to_obj2 * obj1_to_world;
-        var mat_stack2 = ellipseOther.world2plane * ellipseCurrent.plane2world;
-
-
-        var pt_local_e2 = new VectorD[4];
-        for (int i = 0; i < 4; i++)
-        {
-            pt_local_e2[i] = mat_stack.Multiply(pt_local_e1[i]);
-        }
+        var pt_e1_snout1_xplane_local_coord = new VectorD[4];
+        pt_e1_snout1_xplane_local_coord[0] = VectorD.Build.Dense(new double[] { a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
+        pt_e1_snout1_xplane_local_coord[1] = VectorD.Build.Dense(new double[] { -x0_e1, b_e1 - y0_e1, 0.0f, 1.0 });
+        pt_e1_snout1_xplane_local_coord[2] = VectorD.Build.Dense(new double[] { -a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
+        pt_e1_snout1_xplane_local_coord[3] = VectorD.Build.Dense(new double[] { -x0_e1, -b_e1 - y0_e1, 0.0f, 1.0 });
 
         const int x = 0;
         const int y = 1;
 
+        var mat_stack = ellipseOther.model_to_xplane * world_to_snout2 * snout1_to_world * ellipseCurrent.xplane_to_model;
+
+        var pt_e1_snout2_xplane_local_coord = new VectorD[4];
+        for (int i = 0; i < 4; i++)
+        {
+            pt_e1_snout2_xplane_local_coord[i] = mat_stack.Multiply(pt_e1_snout1_xplane_local_coord[i]);
+        }
+        
         // hide cap that is defined by the four points if they fully covered by the other cap
         // return if all if all points of current ellipse are inside the other ellipse
 
-        var pt_local_e2_rot = new VectorD[4];
+        var pt_e1_final_image = new VectorD[4];
         var max_r = 0.0;
         for (int i = 0; i < 4; i++)
         {
-            var diff_theta = ellipse2test.theta - ellipseCurrent.theta;
-            pt_local_e2_rot[i] = pt_local_e2[i];
-            pt_local_e2_rot[i][x] =
-                pt_local_e2[i][x] * Math.Cos(diff_theta) +
-                pt_local_e2[i][y] * Math.Sin(diff_theta);
-            pt_local_e2_rot[i][y] =
-                -pt_local_e2[i][x] * Math.Sin(diff_theta) +
-                pt_local_e2[i][y] * Math.Cos(diff_theta);
+            var diff_theta = ellipseOther.theta - ellipseCurrent.theta;
+            pt_e1_final_image[i] = pt_e1_snout2_xplane_local_coord[i];
+            pt_e1_final_image[i][x] =
+                pt_e1_snout2_xplane_local_coord[i][x] * Math.Cos(-diff_theta) +
+                pt_e1_snout2_xplane_local_coord[i][y] * Math.Sin(-diff_theta);
+            pt_e1_final_image[i][y] =
+                -pt_e1_snout2_xplane_local_coord[i][x] * Math.Sin(-diff_theta) +
+                pt_e1_snout2_xplane_local_coord[i][y] * Math.Cos(-diff_theta);
 
-            var part1 = (pt_local_e2_rot[i][x] - ellipse2test.x0) / ellipse2test.semiMajorAxis;
-            var part2 = (pt_local_e2_rot[i][y] - ellipse2test.y0) / ellipse2test.semiMinorAxis;
+            // put the images of points on e1 to the equation of e2 (inside/outside test)
+            var part1 = (pt_e1_final_image[i][x] - x0_e2) / a_e2;
+            var part2 = (pt_e1_final_image[i][y] - y0_e2) / b_e2;
             var d = part1 * part1 + part2 * part2;
 
-            if (d > 1.0+(double)0.00001m) result_new = false;
+            if (d > 1.0 + (double)0.00001m) result_new = false;
             max_r = Math.Max(d, max_r);
         }
 
@@ -592,9 +601,18 @@ public static class PrimitiveCapHelper
         var wasTrueNegatives = (!result_old && !result_new);
 
         if(wasFalsePositive)
-            global_count_removed_caps++;
+            global_count_false_positives ++;
 
-        return result_old;
+        if (wasFalseNegative)
+            global_count_false_negatives++;
+
+        if (wasTruePositive)
+            global_count_true_positives++;
+
+        if (wasTrueNegatives)
+            global_count_true_negatives++;
+
+        return result_new;
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
