@@ -64,7 +64,6 @@ public record RvmSnout(
 
         const int x = 0;
         const int y = 1;
-        const int z = 2;
         const int w = 3;
 
         var circle_samples = new VectorD[6];
@@ -147,7 +146,7 @@ public record RvmSnout(
     }
 
     private (double A, double B, double C, double D, double E, double F, MatrixD xplane_to_model, MatrixD model_to_xplane)
-        CalcEllipseIntersectionForCone(Vector3 plane_normal, float plane_dc, Vector3 cone_apex, float cone_base_r, float plane_z_offset, Vector3 origo_offset)
+        CalcEllipseIntersectionForCone(Vector3 plane_normal, float plane_dc, Vector3 cone_apex, float cone_base_r, float cone_base_z_offset, Vector3 origo_offset)
     {
         if (plane_dc > 0.0f)
         {
@@ -201,7 +200,9 @@ public record RvmSnout(
             });
             var PV_mat = proj_mat * view_mat;
 
-            (var A, var B, var C, var D, var E, var F) = CalcEllipseImplicitForm(PV_mat, cone_base_r, plane_z_offset);
+            // plane base z offset is non zero if bottom radius is 0, because then it is also the apex
+            // in this case, we take the top cap
+            (var A, var B, var C, var D, var E, var F) = CalcEllipseImplicitForm(PV_mat, cone_base_r, cone_base_z_offset);
 
             return (A, B, C, D, E, F, planexy_to_world, world_to_planexy);
         }
@@ -320,15 +321,15 @@ public record RvmSnout(
         // cones
         if (Math.Abs(RadiusBottom - RadiusTop) > (double)0.00001m)
         {
-            var R = (RadiusBottom > 0.0) ? RadiusBottom : RadiusTop;
-            var base_offset_z = (RadiusBottom > 0.0) ? 0.0f : Height;
-
             var apex = GetConeApex();
 
             var TopCenter = new Vector3(OffsetX, OffsetY, Height);
 
             // plane that is defined by the top cap
             (var normal, var dc) = GetPlaneFromShearAndPoint(TopShearX, TopShearY, TopCenter);
+
+            var R = (RadiusBottom > 0.0) ? RadiusBottom : RadiusTop;
+            var base_offset_z = (RadiusBottom > 0.0) ? 0.0f : Height;
 
             (var A, var B, var C, var D, var E, var F, var xplane_to_model, var model_to_xplane) =
                 CalcEllipseIntersectionForCone(normal, dc, apex, R, base_offset_z, OriginOffset);
