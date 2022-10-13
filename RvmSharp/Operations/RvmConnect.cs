@@ -23,9 +23,9 @@ public static class RvmConnect
         public Vector3 Direction { get; }
         public uint ConnectionIndex { get; }
         public RvmConnection.ConnectionType ConnectionTypeFlags { get; }
-            
+
         public bool Matched { get; set; }
-            
+
         public Anchor(RvmPrimitive geo, Vector3 position, Vector3 direction, uint connectionIndex,
             RvmConnection.ConnectionType connectionTypeFlags)
         {
@@ -76,7 +76,7 @@ public static class RvmConnect
                 bool canMatch = anchors[i].Matched == false && !ReferenceEquals(anchors[i].Geo, anchors[j].Geo);
                 bool close = Vector3.DistanceSquared(anchors[j].Position, anchors[i].Position) <= epsilonSquared;
 
-                const float alignedThreshold = -0.98f;
+                const float alignedThreshold = -0.995f; // 0.995 => About 5.7 degrees // This number was 0.98 => 12 degrees in cdyk/rvmparser
                 bool aligned = Vector3.Dot(anchors[j].Direction, anchors[i].Direction) < alignedThreshold;
 
                 if (canMatch && close && aligned)
@@ -173,8 +173,8 @@ public static class RvmConnect
                             new Vector3(0.0f, 0.0f, -1.0f),
                             new Vector3(0.0f, 0.0f, 1.0f)
                         };
-                        
-                        
+
+
                         Vector3[] p =
                         {
                             new Vector3(0.0f, -m.Y, 0.0f),
@@ -184,7 +184,7 @@ public static class RvmConnect
                             new Vector3(-o.X, -o.Y, -h),
                             new Vector3(o.X, o.Y, h)
                         };
-                        
+
                         for (uint i = 0; i < 6; i++)
                         {
                             AddAnchor(context, pyramid, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
