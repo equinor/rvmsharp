@@ -1,7 +1,6 @@
-﻿using NUnit.Framework;
+﻿namespace RvmSharp.Tests.Primitives;
 
-namespace RvmSharp.Tests.Primitives;
-
+using NUnit.Framework;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System;
@@ -290,9 +289,9 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual((double)transfNormal1.X, (double)transfNormal2.X, (double)0.00001m);
-        Assert.AreEqual((double)transfNormal1.Y, (double)transfNormal2.Y, (double)0.00001m);
-        Assert.AreEqual((double)transfNormal1.Z, (double)transfNormal2.Z, (double)0.00001m);
+        Assert.AreEqual((double)transfNormal1.X, (double)transfNormal2.X, 0.00001);
+        Assert.AreEqual((double)transfNormal1.Y, (double)transfNormal2.Y, 0.00001);
+        Assert.AreEqual((double)transfNormal1.Z, (double)transfNormal2.Z, 0.00001);
 
         // are the planes going through the same pt?
         // they are not for this snout!!
