@@ -23,7 +23,7 @@ public class RvmFile
     public void AttachAttributes(string txtFilename)
     {
         var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename);
-        AssignRecursive(pdms, Model.Children);
+        AttachAttributes(pdms, Model.Children);
     }
 
     /// <summary>
@@ -32,13 +32,17 @@ public class RvmFile
     /// <param name="txtFilename">File path RVM TEXT</param>
     /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
     /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
-    public void AttachAttributes(string txtFilename, IReadOnlyList<string> attributesToExclude, IStringInternPool? stringInternPool)
+    public void AttachAttributes(string txtFilename, IReadOnlyList<string> attributesToExclude,
+        IStringInternPool? stringInternPool)
     {
         var pdms = PdmsTextParser.GetAllPdmsNodesInFile(txtFilename, attributesToExclude, stringInternPool);
-        AssignRecursive(pdms, Model.Children);
+        AttachAttributes(pdms, Model.Children);
     }
 
-    private static void AssignRecursive(IReadOnlyList<PdmsTextParser.PdmsNode> attributeNodes,
+
+
+    public static void AttachAttributes(
+        IReadOnlyList<PdmsTextParser.PdmsNode> attributeNodes,
         IReadOnlyList<RvmNode> groups)
     {
         if (!attributeNodes.Any())
@@ -48,18 +52,43 @@ public class RvmFile
             return;
         }
 
-        var rvmNodeNameLookup = groups
-            .Where(x => !string.IsNullOrEmpty(x.Name)) // Ignoring nodes with no name
-            .ToDictionary(x => x.Name, y => y);
+        var rvmNodeNameLookup = ToNameLookupDiscardNodesWithDuplicateNames(groups);
 
         foreach (var attributeNode in attributeNodes)
         {
-            if (rvmNodeNameLookup.TryGetValue(attributeNode.Name, out var rvmNode))
+            if (!rvmNodeNameLookup.TryGetValue(attributeNode.Name, out var rvmNode) || rvmNode == null)
+                continue; // Ignore nodes that were not found, or which did not have a Unique name
+
+            foreach (var kvp in attributeNode.MetadataDict)
+                rvmNode.Attributes.Add(kvp.Key, kvp.Value);
+            AttachAttributes(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
+        }
+    }
+
+    /// <summary>
+    /// This method indexes the input array, but will `null` the return value for duplicated names.
+    /// RVM should in theory not support duplicates, and much less support attributes for these files.
+    ///
+    /// This decision may be wrong, so if any issues occur due to this filtering we must rewrite.
+    /// </summary>
+    private static Dictionary<string, RvmNode?> ToNameLookupDiscardNodesWithDuplicateNames(IReadOnlyList<RvmNode> a)
+    {
+        var dict = new Dictionary<string, RvmNode?>();
+        foreach (RvmNode rvmNode in a)
+        {
+            if(string.IsNullOrEmpty(rvmNode.Name))
+                continue;
+
+            if (dict.ContainsKey(rvmNode.Name))
             {
-                foreach (var kvp in attributeNode.MetadataDict)
-                    rvmNode.Attributes.Add(kvp.Key, kvp.Value);
-                AssignRecursive(attributeNode.Children, rvmNode.Children.OfType<RvmNode>().ToArray());
+                dict[rvmNode.Name] = null; // Discard nodes that have duplicate names.
+            }
+            else
+            {
+                dict.Add(rvmNode.Name, rvmNode);
             }
         }
+
+        return dict;
     }
 }
