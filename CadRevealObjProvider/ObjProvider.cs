@@ -12,7 +12,7 @@ using ObjLoader.Loader.Loaders;
 using System.Drawing;
 using System.Numerics;
 
-public class ObjProvider2 : IModelFormatProvider
+public class ObjProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
     {

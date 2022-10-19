@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.IO;
 
 public static class Program
 {
@@ -45,13 +46,21 @@ public static class Program
                 new RevisionId(options.RevisionId),
                 new InstancingThreshold(options.InstancingThreshold)
             );
-
+        var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
+        var toolsPath = Path.Combine(programPath!, "tools");
         var toolsParameters = new ComposerParameters(
+            Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
             options.NoInstancing,
             options.SingleSector,
             options.SplitIntoZones);
 
-        var providers = new List<IModelFormatProvider>() { new ObjProvider2(), new RvmProvider() };
+        if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
+        {
+            Console.WriteLine($"Not found: {toolsParameters.Mesh2CtmToolPath}");
+            return 1;
+        }
+
+        var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider() };
 
         CadRevealComposerRunner.Process(
             options.InputDirectory,

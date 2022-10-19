@@ -11,32 +11,22 @@ static internal class RvmStoreToCadRevealNodesConverter
     public static CadRevealNode[] RvmStoreToCadRevealNodes(RvmStore rvmStore,
         TreeIndexGenerator treeIndexGenerator)
     {
-        var rootNode = new CadRevealNode
-        {
-            TreeIndex = treeIndexGenerator.GetNextId(),
-            Parent = null,
-            Children = null
-        };
-
-        rootNode.Children = rvmStore.RvmFiles
+        var cadRevealRootNodes = rvmStore.RvmFiles
             .SelectMany(f => f.Model.Children)
             .Select(root =>
-                RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root, rootNode,
+                RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root, parent: null,
                     treeIndexGenerator))
             .ToArray();
 
-        if(rootNode.BoundingBoxAxisAligned != null)
-        {
-            rootNode.BoundingBoxAxisAligned = rootNode.Children
+        var subBoundingBox = cadRevealRootNodes
             .Select(x => x.BoundingBoxAxisAligned)
             .WhereNotNull()
             .ToArray().Aggregate((a, b) => a.Encapsulate(b));
 
-            Debug.Assert(rootNode.BoundingBoxAxisAligned != null,
-                "Root RVM node has no bounding box. Are there any meshes in the input?");
-        }
-        
-        var allNodes = GetAllNodesFlat(rootNode).ToArray();
+        Debug.Assert(subBoundingBox != null,
+            "Root node has no bounding box. Are there any meshes in the input?");
+
+        var allNodes = cadRevealRootNodes.SelectMany(GetAllNodesFlat).ToArray();
         return allNodes;
     }
 

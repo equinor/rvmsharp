@@ -17,7 +17,8 @@ public class RvmTessellator
     }
 
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
-        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult)
+        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
+        RvmPyramidInstancer.Result[] pyramidInstancingResult)
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
@@ -31,6 +32,11 @@ public class RvmTessellator
             .Cast<ProtoMesh>()
             .ToArray();
 
+        var pyramidsNotInstanced = pyramidInstancingResult
+            .OfType<RvmPyramidInstancer.NotInstancedResult>()
+            .Select(result => result.Pyramid)
+            .Cast<ProtoMesh>()
+            .ToArray();
 
         var facetGroupInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.InstancedResult>()
@@ -38,9 +44,15 @@ public class RvmTessellator
                 x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
             .ToArray();
 
+        var pyramidsInstanced = pyramidInstancingResult
+            .OfType<RvmPyramidInstancer.InstancedResult>()
+            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)x.Pyramid, x.Transform))
+            .ToArray();
+
         // tessellate instanced geometries
         var stopwatch = Stopwatch.StartNew();
         var meshes = facetGroupInstanced
+            .Concat(pyramidsInstanced)
             .AsParallel()
             .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key)))
             .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
@@ -62,6 +74,7 @@ public class RvmTessellator
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
         var triangleMeshes = facetGroupsNotInstanced
+            .Concat(pyramidsNotInstanced)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes

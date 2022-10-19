@@ -63,7 +63,7 @@ public static class HierarchyComposerConverter
         var maybeParent = revealNode.Parent;
 
         // FindRootNode could be slow. Easy to improve if profiling identifies as a problem.
-        CadRevealNode cadRevealNode = FindRootNode(revealNode);
+        CadRevealNode rootNode = FindRootNode(revealNode);
 
         return new HierarchyNode
         {
@@ -71,12 +71,12 @@ public static class HierarchyComposerConverter
             EndId = ConvertUlongToUintOrThrowIfTooLarge(GetLastIndexInChildrenIncludingSelf(revealNode)),
             RefNoDb = maybeRefNo?.DbNo,
             RefNoSequence = maybeRefNo?.SequenceNo,
-            Name = cadRevealNode.Name,
-            TopNodeId = ConvertUlongToUintOrThrowIfTooLarge(cadRevealNode.TreeIndex),
+            Name = revealNode.Name,
+            TopNodeId = ConvertUlongToUintOrThrowIfTooLarge(rootNode.TreeIndex),
             ParentId = maybeParent != null
                 ? ConvertUlongToUintOrThrowIfTooLarge(maybeParent.TreeIndex)
                 : null,
-            PDMSData = FilterRedundantAttributes(cadRevealNode.Attributes),
+            PDMSData = FilterRedundantAttributes(revealNode.Attributes),
             HasMesh = hasMesh,
             AABB = aabb,
             OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo

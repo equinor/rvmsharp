@@ -22,8 +22,12 @@ public static class CadRevealComposerRunner
         ComposerParameters composerParameters,
         IReadOnlyList<IModelFormatProvider> modelFormatProviders)
     {
+        var totalTimeElapsed = Stopwatch.StartNew();
+
         List<CadRevealNode> nodesToProcess = new List<CadRevealNode>();
+        List<Primitives.APrimitive> geometriesToProcess = new List<Primitives.APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
+
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
@@ -31,93 +35,94 @@ public static class CadRevealComposerRunner
                 modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator);
             if(cadRevealNodes != null)
             {
-                nodesToProcess.AddRange(cadRevealNodes);
                 Console.WriteLine(
                     $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
+
+                if (cadRevealNodes.Count > 0)
+                {
+                    // collect all nodes for later sector division of the entire scene
+                    nodesToProcess.AddRange(cadRevealNodes);
+
+                    //nodesToProcess.Sort((x, y) => (x.TreeIndex < y.TreeIndex) ? 1 : 0);
+                    var inputGeometries = cadRevealNodes
+                        .AsParallel()
+                        .AsOrdered()
+                        .SelectMany(x => x.Geometries)
+                        .ToArray();
+
+                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(inputGeometries, composerParameters, modelParameters);
+                    geometriesToProcess.AddRange(geometriesIncludingMeshes);
+                }
             }
-            if(nodesToProcess.Count > 0)
-            {
-                ProcessNodes(nodesToProcess, outputDirectory, modelParameters, composerParameters, treeIndexGenerator, modelFormatProvider);
-            }
+
         }
 
-        
-    }
+        ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
 
-    public static void ProcessNodes(IReadOnlyList<CadRevealNode> allNodes, DirectoryInfo outputDirectory,
-        ModelParameters modelParameters,
-        ComposerParameters composerParameters,
-        TreeIndexGenerator treeIndexGenerator,
-        IModelFormatProvider modelFormatProvider)
-    {
-        var totalTimeElapsed = Stopwatch.StartNew();
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
             Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
         });
-        var inputGeometries = allNodes
-            .AsParallel()
-            .AsOrdered()
-            .SelectMany(x => x.Geometries)
+
+        Task.WaitAll(exportHierarchyDatabaseTask);
+
+        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
+    }
+
+    public static void ProcessPrimitives(Primitives.APrimitive[] allPrimitives, DirectoryInfo outputDirectory,
+        ModelParameters modelParameters,
+        ComposerParameters composerParameters,
+        TreeIndexGenerator treeIndexGenerator)
+    {
+        var stopwatch = Stopwatch.StartNew();
+
+        SectorSplitter.ProtoSector[] sectors;
+        if (composerParameters.SingleSector)
+        {
+            sectors = SectorSplitter.CreateSingleSector(allPrimitives).ToArray();
+        }
+        else if (composerParameters.SplitIntoZones)
+        {
+            var zones = ZoneSplitter.SplitIntoZones(allPrimitives, outputDirectory);
+            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
+            stopwatch.Restart();
+
+            sectors = SectorSplitter.SplitIntoSectors(zones)
+                .OrderBy(x => x.SectorId)
+                .ToArray();
+            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+            stopwatch.Restart();
+        }
+        else
+        {
+            sectors = SectorSplitter.SplitIntoSectors(allPrimitives)
+                .OrderBy(x => x.SectorId)
+                .ToArray();
+            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+            stopwatch.Restart();
+        }
+
+        var sectorInfos = sectors
+            .Select(s => SerializeSector(s, outputDirectory.FullName))
             .ToArray();
 
-        {
-            var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(inputGeometries, composerParameters, modelParameters);
+        Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
+        stopwatch.Restart();
 
-            var stopwatch = Stopwatch.StartNew();
+        var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
+        var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives);
+        SceneCreator.WriteSceneFile(
+            sectorsWithDownloadSize,
+            modelParameters,
+            outputDirectory,
+            treeIndexGenerator.CurrentMaxGeneratedIndex,
+            cameraPosition);
 
-            SectorSplitter.ProtoSector[] sectors;
-            if (composerParameters.SingleSector)
-            {
-                sectors = SectorSplitter.CreateSingleSector(geometriesIncludingMeshes).ToArray();
-            }
-            else if (composerParameters.SplitIntoZones)
-            {
-                var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-                Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-                stopwatch.Restart();
-
-                sectors = SectorSplitter.SplitIntoSectors(zones)
-                    .OrderBy(x => x.SectorId)
-                    .ToArray();
-                Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-                stopwatch.Restart();
-            }
-            else
-            {
-                sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)
-                    .OrderBy(x => x.SectorId)
-                    .ToArray();
-                Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-                stopwatch.Restart();
-            }
-
-            var sectorInfos = sectors
-                .Select(s => SerializeSector(s, outputDirectory.FullName))
-                .ToArray();
-
-            Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-            var cameraPosition = CameraPositioning.CalculateInitialCamera(geometriesIncludingMeshes);
-            SceneCreator.WriteSceneFile(
-                sectorsWithDownloadSize,
-                modelParameters,
-                outputDirectory,
-                treeIndexGenerator.CurrentMaxGeneratedIndex,
-                cameraPosition);
-
-            Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            Task.WaitAll(exportHierarchyDatabaseTask);
-
-            Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-            Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
-        }
+        Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
+        stopwatch.Restart();
     }
 
     private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
@@ -153,5 +158,5 @@ public static class CadRevealComposerRunner
         }
     }
 
-    
+
 }

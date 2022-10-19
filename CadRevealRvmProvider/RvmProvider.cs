@@ -49,6 +49,7 @@ public class RvmProvider : IModelFormatProvider
         ModelParameters modelParameters)
     {
         var stopwatch = Stopwatch.StartNew();
+
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
             .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
@@ -102,7 +103,8 @@ public class RvmProvider : IModelFormatProvider
 
         Console.WriteLine("Start tessellate");
         var meshes = RvmTessellator.TessellateAndOutputInstanceMeshes(
-            facetGroupInstancingResult
+            facetGroupInstancingResult,
+            pyramidInstancingResult
         );
 
         var geometriesIncludingMeshes = geometries

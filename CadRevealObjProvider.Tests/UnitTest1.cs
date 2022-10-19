@@ -15,7 +15,7 @@ public class Tests
     public void Test1()
     {
         var treeIndexGenerator = new TreeIndexGenerator();
-        new ObjProvider2().ParseFiles(new [] { new FileInfo("TestData/HDA_subset.obj")}, treeIndexGenerator);
+        new ObjProvider().ParseFiles(new [] { new FileInfo("TestData/HDA_subset.obj")}, treeIndexGenerator);
 
     }
 }
