@@ -1,6 +1,5 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
-using CadRevealComposer.Primitives;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
 using System.Drawing;
@@ -18,7 +17,7 @@ public class RvmFacetGroupConverterTests
             Version: 2,
             Matrix: Matrix4x4.Identity,
             BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
-            Polygons: null
+            Polygons: null!
         );
     }
 

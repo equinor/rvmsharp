@@ -7,7 +7,7 @@ using RvmSharp.Primitives;
 
 public static class RvmNodeToCadRevealNodeConverter
 {
-    public static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode parent,
+    public static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator)
     {
         var newNode = new CadRevealNode

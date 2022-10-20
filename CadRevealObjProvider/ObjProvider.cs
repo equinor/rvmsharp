@@ -68,11 +68,10 @@ public class ObjProvider : IModelFormatProvider
     public record ObjMesh
     {
         public string Name { get; init; } = "";
-        public const int FaceSize = 3;
-        public uint[] Triangles { get; init; }
-        public Vector3[] Vertices { get; init; }
+        public uint[] Triangles { get; init; } = Array.Empty<uint>();
+        public Vector3[] Vertices { get; init; } = Array.Empty<Vector3>();
 
-        public Vector3[] Normals { get; init; }
+        public Vector3[] Normals { get; init; }= Array.Empty<Vector3>();
         // public int[] ColorIndices { get; set; }
         // public Color[] Colors { get; set; }
 
