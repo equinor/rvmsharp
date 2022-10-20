@@ -52,8 +52,38 @@ public record RvmSnout(
         return (normal, dc);
     }
 
-    private (double A, double B, double C, double D, double E, double F) CalcEllipseImplicitForm(MatrixD pv_mat, double basis_r, double plane_z_offset)
+    // this function returns coefficients A,B,C,D,E,F that describe a general ellipse in an implicit form in a Cartesian plane z=0
+    // Ax^2 + Bxy + Cy^2 + Dx + Ey + F = 0
+    // ellipse in implicit form https://en.wikipedia.org/wiki/Ellipse#General_ellipse
+
+    // OBS: the description is wrt to a local Cartesian plane z=0,
+    // in order to embed the ellipse in 3D, we provide a transformation of this plane to 3D model coordinates
+    // this is taken care of elsewhere
+
+    // the ellipse is defined as a projection of a circle onto a plane (assumed z=0)
+    // ellipse = matPV * circle
+    // matPV: projection*view transformation matrix (assumes transformation of points from left!)
+    // basisRadius: radius of the circle being projected
+    // circleOffsetZ: z coordinate of the circle samples
+
+    // algorithm:
+    // take 6 sample points of the given circle
+    // apply matPV transform so that they are located on the ellipse of interest
+    // calculate coefficients A,B,C,D,E,F from the set of 6 transformed points
+    // OBS: in theory only 5 points are be necessary, but we use 6 points to make the algorithm less complicated 
+
+
+    private (double A, double B, double C, double D, double E, double F) CalcEllipseImplicitForm(MatrixD matPV, double basisRadius, double circleOffsetZ)
     {
+        // for convenience of adressing homogeneous coordinates in an array
+        const int x = 0;
+        const int y = 1;
+        const int w = 3;
+
+        // setting up 6 sample points of the circle with some arbitrary theta
+        // choice of theta is not so important as long as the points are not too close to each other,
+        // this could lead to numerical problems otherwise
+
         var thetas = new double[6];
         thetas[0] = 0.05* Math.PI;
         thetas[1] = Math.PI / 3.0f;
@@ -62,34 +92,44 @@ public record RvmSnout(
         thetas[4] = 4.0 * Math.PI / 3.0;
         thetas[5] = 1.7 * Math.PI;
 
-        const int x = 0;
-        const int y = 1;
-        const int w = 3;
-
-        var circle_samples = new VectorD[6];
-        var sam_prj = new VectorD[6];
+        var circleSamples = new VectorD[6];
+        var projSam = new VectorD[6]; // projected samples
         var index = 0;
         foreach (var th in thetas)
         {
-            circle_samples[index] = VectorD.Build.Dense(new double[] { basis_r* Math.Cos(th), basis_r* Math.Sin(th), (double)plane_z_offset, (double)1.0});
-            // for some strange reason the transform function multiplies the vector and the matrix w the vector on the left
-            sam_prj[index] = pv_mat.Multiply(circle_samples[index]);
-            sam_prj[index] = sam_prj[index].Divide(sam_prj[index][w]);
+            circleSamples[index] = VectorD.Build.Dense(new double[] {
+                basisRadius * Math.Cos(th),
+                basisRadius * Math.Sin(th),
+                circleOffsetZ,
+                1.0});
+            projSam[index] = matPV.Multiply(circleSamples[index]);
+            projSam[index] = projSam[index].Divide(projSam[index][w]);
             index++;
         }
 
-        
-        MatrixD coeff_6x6 = DenseMatrix.OfArray(new double[,] {
-                { sam_prj[0][x] * sam_prj[0][x], sam_prj[0][x] * sam_prj[0][y], sam_prj[0][y] * sam_prj[0][y], sam_prj[0][x], sam_prj[0][y], 1.0 },
-                { sam_prj[1][x] * sam_prj[1][x], sam_prj[1][x] * sam_prj[1][y], sam_prj[1][y] * sam_prj[1][y], sam_prj[1][x], sam_prj[1][y], 1.0 },
-                { sam_prj[2][x] * sam_prj[2][x], sam_prj[2][x] * sam_prj[2][y], sam_prj[2][y] * sam_prj[2][y], sam_prj[2][x], sam_prj[2][y], 1.0 },
-                { sam_prj[3][x] * sam_prj[3][x], sam_prj[3][x] * sam_prj[3][y], sam_prj[3][y] * sam_prj[3][y], sam_prj[3][x], sam_prj[3][y], 1.0 },
-                { sam_prj[4][x] * sam_prj[4][x], sam_prj[4][x] * sam_prj[4][y], sam_prj[4][y] * sam_prj[4][y], sam_prj[4][x], sam_prj[4][y], 1.0 },
-                { sam_prj[5][x] * sam_prj[5][x], sam_prj[5][x] * sam_prj[5][y], sam_prj[5][y] * sam_prj[5][y], sam_prj[5][x], sam_prj[5][y], 1.0 }
-            });
+        // this matrix represents the following system of equations using points (xi,yi) with i 1..6
+        // NB: (x0,y0) is by tradition used to define the center, so to avoid confusion points are indexed 1..6, not 0..5
 
+        // Ax1^2 + Bx1y1 + Cy1^2 + Dx1 + Ey1 + F = 0
+        // Ax2^2 + Bx2y2 + Cy2^2 + Dx2 + Ey2 + F = 0
+        // Ax3^2 + Bx3y3 + Cy3^2 + Dx3 + Ey3 + F = 0
+        // Ax4^2 + Bx4y4 + Cy4^2 + Dx4 + Ey4 + F = 0
+        // Ax5^2 + Bx5y5 + Cy5^2 + Dx5 + Ey5 + F = 0
+        // Ax6^2 + Bx6y6 + Cy6^2 + Dx6 + Ey6 + F = 0
+
+        // the system has a trivial solution, the null vector
+        // or possible other solutions defined as the "null space" or the "kernel" of the coefficient matrix
+
+        MatrixD coeff_6x6 = DenseMatrix.OfArray(new double[,] {
+                { projSam[0][x] * projSam[0][x], projSam[0][x] * projSam[0][y], projSam[0][y] * projSam[0][y], projSam[0][x], projSam[0][y], 1.0 },
+                { projSam[1][x] * projSam[1][x], projSam[1][x] * projSam[1][y], projSam[1][y] * projSam[1][y], projSam[1][x], projSam[1][y], 1.0 },
+                { projSam[2][x] * projSam[2][x], projSam[2][x] * projSam[2][y], projSam[2][y] * projSam[2][y], projSam[2][x], projSam[2][y], 1.0 },
+                { projSam[3][x] * projSam[3][x], projSam[3][x] * projSam[3][y], projSam[3][y] * projSam[3][y], projSam[3][x], projSam[3][y], 1.0 },
+                { projSam[4][x] * projSam[4][x], projSam[4][x] * projSam[4][y], projSam[4][y] * projSam[4][y], projSam[4][x], projSam[4][y], 1.0 },
+                { projSam[5][x] * projSam[5][x], projSam[5][x] * projSam[5][y], projSam[5][y] * projSam[5][y], projSam[5][x], projSam[5][y], 1.0 }
+            });
         VectorD[] kernel;
-        if (coeff_6x6.Nullity() > 0.0)
+        if (coeff_6x6.Nullity() > 0.0) // nullity should be 0 or 1, otherwise we have a problem
         {
             kernel = coeff_6x6.Kernel();
             var A = kernel[0][0];
@@ -107,8 +147,6 @@ public record RvmSnout(
             {
                 kernel[0] = kernel[0].Multiply(-1.0);
             }
-
-
             return (kernel[0][0], kernel[0][1], kernel[0][2], kernel[0][3], kernel[0][4], kernel[0][5]);
         }
         // the matrix does not have a null space, so the only solution is a null vector
