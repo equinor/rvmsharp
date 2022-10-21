@@ -141,10 +141,10 @@ public class RvmPrimitiveTests
             0.0f, // top shear x
             -MathF.PI / 4.0f // top shear y
             );
-        var topEllipse = snout.GetTopEllipsePolarForm();
+        var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(1.857449777519938f));
-        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(1.857449777519938f));
+        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(1.3031138776160802));
     }
 
     [Test]
@@ -161,10 +161,10 @@ public class RvmPrimitiveTests
             0.0f, // top shear x
             0.0f // top shear y
             );
-        var topEllipse = snout.GetTopEllipsePolarForm();
+        var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(155.5));
-        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(155.5));
     }
 
     [Test]
@@ -181,10 +181,10 @@ public class RvmPrimitiveTests
             0.0f, // top shear x
             0.0f // top shear y
             );
-        var topEllipse = snout.GetTopEllipsePolarForm();
+        var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(16.5));
-        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(16.5));
     }
 
     [Test]
@@ -201,10 +201,10 @@ public class RvmPrimitiveTests
             0.0f, // top shear x
             -MathF.PI / 4.0f // top shear y
             );
-        var topEllipse = snout.GetTopEllipsePolarForm();
+        var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.semiMajorAxis, Is.EqualTo(2.0/MathF.Cos(snout.TopShearY)));
-        Assert.That(topEllipse.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(2.0/MathF.Cos(snout.TopShearY)));
+        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(2.0));
     }
 
     [Test]
@@ -221,10 +221,10 @@ public class RvmPrimitiveTests
             0.0f, // top shear x
             0.17453292f // top shear y
             );
-        var topEllipse = snout.GetTopEllipsePolarForm();
+        var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.x0, Is.EqualTo(0.0));
-        Assert.That(topEllipse.y0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.polarEq.x0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.polarEq.y0, Is.EqualTo(0.0));
     }
 
     [Test]

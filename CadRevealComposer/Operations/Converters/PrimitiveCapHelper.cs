@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Operations.Converters;
 
 using RvmSharp.Primitives;
+using RvmSharp.Operations;
 using System;
 using System.Numerics;
 using Utils;
@@ -177,8 +178,8 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var snoutMajorAxis = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMajorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale.X;
 
         // Only check for the snout, because a box does not have any caps
         if (!isPrim1CurrentPrimitive)
@@ -296,12 +297,12 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMinorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMinorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale.X;
 
         var semiMajorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMajorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
@@ -393,12 +394,12 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMinorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMinorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale.X;
 
         var semiMajorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMajorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
@@ -432,12 +433,12 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMinorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMinorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale.X;
 
         var semiMajorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMajorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale.X;
 
         if (isPrim1CurrentPrimitive)
         {
@@ -481,20 +482,20 @@ public static class PrimitiveCapHelper
         var result_old = false;
         
         var semiMinorAxis1 = isSnoutCapTop1
-            ? rvmSnout1.GetTopEllipsePolarForm().semiMinorAxis * snoutScale1.X
-            : rvmSnout1.GetBottomEllipsePolarForm().semiMinorAxis * snoutScale1.X;
+            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale1.X
+            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale1.X;
 
         var semiMajorAxis1 = isSnoutCapTop1
-            ? rvmSnout1.GetTopEllipsePolarForm().semiMajorAxis * snoutScale1.X
-            : rvmSnout1.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale1.X;
+            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale1.X
+            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale1.X;
 
         var semiMinorAxis2 = isSnoutCapTop2
-            ? rvmSnout2.GetTopEllipsePolarForm().semiMinorAxis * snoutScale2.X
-            : rvmSnout2.GetBottomEllipsePolarForm().semiMinorAxis * snoutScale2.X;
+            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale2.X
+            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale2.X;
 
         var semiMajorAxis2 = isSnoutCapTop2
-            ? rvmSnout2.GetTopEllipsePolarForm().semiMajorAxis * snoutScale2.X
-            : rvmSnout2.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale2.X;
+            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale2.X
+            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale2.X;
 
         // TODO User story: #77874
         // This test can be optimized by comparing the major axii and minor axii
@@ -518,17 +519,16 @@ public static class PrimitiveCapHelper
 
         var result_new = true;
 
-        // Fix:
-        (double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0, MatrixD xplane_to_model, MatrixD model_to_xplane) ellipseCurrent;
-        (double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0, MatrixD xplane_to_model, MatrixD model_to_xplane) ellipseOther;
+        (EllipsePolarForm polarEq, MatrixD xplane2ModelCoord, MatrixD modelCoord2xplane) ellipseCurrent;
+        (EllipsePolarForm polarEq, MatrixD xplane2ModelCoord, MatrixD modelCoord2xplane) ellipseOther;
 
         MatrixD snout1_to_world;
         MatrixD world_to_snout2;
         if (isPrim1CurrentPrimitive)
         {
             // is ellipse1 totally inside ellipse2 ?
-            ellipseCurrent = isSnoutCapTop1 ? rvmSnout1.GetTopEllipsePolarForm() : rvmSnout1.GetBottomEllipsePolarForm();
-            ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopEllipsePolarForm() : rvmSnout2.GetBottomEllipsePolarForm();
+            ellipseCurrent = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
+            ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
             snout1_to_world = ConvertMatrix4x4ToMatrixDouble(rvmSnout1.Matrix).Transpose().Multiply(scaleMat);
             // these matrices are stored as trans ^^ vv
             world_to_snout2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Multiply(scaleMat).Inverse();
@@ -536,21 +536,21 @@ public static class PrimitiveCapHelper
         }
         else
         {
-            ellipseCurrent = isSnoutCapTop2 ? rvmSnout2.GetTopEllipsePolarForm() : rvmSnout2.GetBottomEllipsePolarForm();
-            ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopEllipsePolarForm() : rvmSnout1.GetBottomEllipsePolarForm();
+            ellipseCurrent = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
+            ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
             snout1_to_world = ConvertMatrix4x4ToMatrixDouble(rvmSnout2.Matrix).Transpose().Multiply(scaleMat);
             world_to_snout2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Multiply(scaleMat).Inverse();
         }
 
-        double a_e1 =  ellipseCurrent.semiMajorAxis;
-        double b_e1 =  ellipseCurrent.semiMinorAxis;
-        double x0_e1 = ellipseCurrent.x0;
-        double y0_e1 = ellipseCurrent.y0;
+        double a_e1 =  ellipseCurrent.polarEq.semiMajorAxis;
+        double b_e1 =  ellipseCurrent.polarEq.semiMinorAxis;
+        double x0_e1 = ellipseCurrent.polarEq.x0;
+        double y0_e1 = ellipseCurrent.polarEq.y0;
 
-        double a_e2 = ellipseOther.semiMajorAxis;
-        double b_e2 = ellipseOther.semiMinorAxis;
-        double x0_e2 = ellipseOther.x0;
-        double y0_e2 = ellipseOther.y0;
+        double a_e2 = ellipseOther.polarEq.semiMajorAxis;
+        double b_e2 = ellipseOther.polarEq.semiMinorAxis;
+        double x0_e2 = ellipseOther.polarEq.x0;
+        double y0_e2 = ellipseOther.polarEq.y0;
 
         var pt_e1_snout1_xplane_local_coord = new VectorD[4];
         pt_e1_snout1_xplane_local_coord[0] = VectorD.Build.Dense(new double[] { a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
@@ -561,7 +561,7 @@ public static class PrimitiveCapHelper
         const int x = 0;
         const int y = 1;
 
-        var mat_stack = ellipseOther.model_to_xplane * world_to_snout2 * snout1_to_world * ellipseCurrent.xplane_to_model;
+        var mat_stack = ellipseOther.modelCoord2xplane * world_to_snout2 * snout1_to_world * ellipseCurrent.xplane2ModelCoord;
 
         var pt_e1_snout2_xplane_local_coord = new VectorD[4];
         for (int i = 0; i < 4; i++)
@@ -576,7 +576,7 @@ public static class PrimitiveCapHelper
         var max_r = 0.0;
         for (int i = 0; i < 4; i++)
         {
-            var diff_theta = ellipseOther.theta - ellipseCurrent.theta;
+            var diff_theta = ellipseOther.polarEq.theta - ellipseCurrent.polarEq.theta;
             pt_e1_final_image[i] = pt_e1_snout2_xplane_local_coord[i];
             pt_e1_final_image[i][x] =
                 pt_e1_snout2_xplane_local_coord[i][x] * Math.Cos(-diff_theta) +
@@ -627,12 +627,12 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop = rvmSnoutCapIndex == 0;
 
         var semiMinorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMinorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMinorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale.X;
 
         var semiMajorRadius = isSnoutCapTop
-            ? rvmSnout.GetTopEllipsePolarForm().semiMajorAxis * snoutScale.X
-            : rvmSnout.GetBottomEllipsePolarForm().semiMajorAxis * snoutScale.X;
+            ? rvmSnout.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale.X
+            : rvmSnout.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale.X;
 
         var sphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 

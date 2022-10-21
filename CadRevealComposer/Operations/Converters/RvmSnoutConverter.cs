@@ -248,13 +248,13 @@ public static class RvmSnoutConverter
         var (planeRotationA, planeNormalA, planeSlopeA) = rvmSnout.GetTopSlope();
         var (planeRotationB, planeNormalB, planeSlopeB) = rvmSnout.GetBottomSlope();
 
-        (var semiMinorAxisA, var semiMajorAxisA, var thetaA, var x0A, var y0A, var toworldA, var toplaneA) = rvmSnout.GetTopEllipsePolarForm();
-        (var semiMinorAxisB, var semiMajorAxisB, var thetaB, var x0B, var y0B, var toworldB, var toplaneB) = rvmSnout.GetBottomEllipsePolarForm();
+        (var ellipsePolarA, _, _) = rvmSnout.GetTopCapEllipse();
+        (var ellipsePolarB, _, _) = rvmSnout.GetBottomCapEllipse();
 
-        semiMinorAxisA *= scale.X;
-        semiMajorAxisA *= scale.X;
-        semiMinorAxisB *= scale.X;
-        semiMajorAxisB *= scale.X;
+        var semiMinorAxisA = ellipsePolarA.semiMinorAxis * scale.X;
+        var semiMajorAxisA = ellipsePolarA.semiMajorAxis * scale.X;
+        var semiMinorAxisB = ellipsePolarB.semiMinorAxis * scale.X;
+        var semiMajorAxisB = ellipsePolarB.semiMajorAxis * scale.X;
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
         var extendedHeightA = MathF.Tan(planeSlopeA) * (float)semiMinorAxisA;
