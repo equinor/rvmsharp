@@ -1,18 +1,108 @@
 ﻿namespace RvmSharp.Operations;
-using System;
 
+using System;
+using System.Diagnostics;
+using System.Numerics;
 using MathNet.Numerics.LinearAlgebra.Double;
 
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public sealed record EllipseImplicitForm(double A, double B, double C, double D, double E, double F);
-public sealed record EllipsePolarForm(double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0);
+public sealed record EllipsePolarForm(
+    double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0,
+    EllipseImplicitForm implicitEq);
+
+public sealed record PlaneImplicitForm(Vector3 normal, float d);
+public sealed record Cone(float baseR, Vector3 apex);
+
+// helper class for calculating conic sections (cones and cylinders)
+// cylinder can be considered a cone with its apex at infinity
+public static class VectorAlgebraHelper
+{
+    public static MatrixD ConvertMatrix4x4ToMatrixDouble(Matrix4x4 mat)
+    {
+        return DenseMatrix.OfArray(new double[,] {
+           { mat.M11, mat.M12, mat.M13, mat.M14 },
+           { mat.M21, mat.M22, mat.M23, mat.M24 },
+           { mat.M31, mat.M32, mat.M33, mat.M34 },
+           { mat.M41, mat.M42, mat.M43, mat.M44 }
+        });
+    }
+
+    public static VectorD Cross(VectorD left, VectorD right)
+    {
+        VectorD result = new DenseVector(3);
+        result[0] = left[1] * right[2] - left[2] * right[1];
+        result[1] = -left[0] * right[2] + left[2] * right[0];
+        result[2] = left[0] * right[1] - left[1] * right[0];
+
+        return result;
+    }
+
+    public static double Dot(VectorD left, VectorD right)
+    {
+        var result = left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
+        return result;
+    }
+
+    public static MatrixD CreateUniformScale(double s)
+    {
+        return DenseMatrix.OfArray(new double[,] {
+           { s, 0, 0, 0 },
+           { 0, s, 0, 0 },
+           { 0, 0, s, 0 },
+           { 0, 0, 0, 1 }
+        });
+    }
+
+}
+
+public static class GeometryHelper
+{
+    public static PlaneImplicitForm GetPlaneFromShearAndPoint(float shearX, float shearY, Vector3 pt)
+    {
+        var rotationAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -shearX);
+        var rotationAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, shearY);
+        var rotation = rotationAroundX * rotationAroundY;
+        var normal = Vector3.Transform(Vector3.UnitZ, rotation);
+        normal = Vector3.Normalize(normal);
+        var dc = -Vector3.Dot(normal, pt);
+
+        return new PlaneImplicitForm(normal, dc);
+    }
+}
+
 
 public static class ConicSectionsHelper
 {
     public static readonly EllipseImplicitForm zeroEllipseImplicit = new EllipseImplicitForm(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    public static readonly EllipsePolarForm zeroEllipsePolar = new EllipsePolarForm(0.0, 0.0, 0.0, 0.0, 0.0);
+    public static readonly EllipsePolarForm zeroEllipsePolar = new EllipsePolarForm(0.0, 0.0, 0.0, 0.0, 0.0, zeroEllipseImplicit);
+
+    public static Cone getConeFromSnout(float bottomRadius, float topRadius, Vector3 offset)
+    {
+        // Assert (bottomRadius - topRadius) != 0.0
+
+        float coneBaseRadius = (topRadius + bottomRadius) * 0.5f;
+        var halfOffset = 0.5f * offset;
+
+        if (topRadius == 0.0f)
+            return new Cone(coneBaseRadius, halfOffset);
+
+        var ratio = coneBaseRadius / topRadius;
+
+        // apexZ / (apexZ - halfOffset.Z) = ratio
+        // apexZ = (apexZ - halfOffset.Z) * ratio
+        // apexZ = apexZ * ratio - halfOffset.Z * ratio
+        // apex Z - apexZ * ratio = - halfOffset.Z * ratio
+        // apexZ * (1.0 - ratio) = - halfOffset.Z * ratio
+        // apexZ = - halfOffset.Z * ratio / (1.0 - ratio)
+        // apexZ = halfOffset.Z * ratio / (ratio - 1.0)
+
+        var apex = halfOffset * (ratio / (ratio - 1.0f));
+
+        return new Cone(coneBaseRadius, apex);
+    }
 
     // this function returns coefficients A,B,C,D,E,F that describe a general ellipse in an implicit form in a Cartesian plane z=0
     // Ax^2 + Bxy + Cy^2 + Dx + Ey + F = 0
@@ -34,7 +124,7 @@ public static class ConicSectionsHelper
     // calculate coefficients A,B,C,D,E,F from the set of 6 transformed points
     // OBS: in theory only 5 points are be necessary, but we use 6 points to make the algorithm less complicated 
 
-    public static EllipseImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius, double circleOffsetZ)
+    public static EllipseImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius)
     {
         // for convenience of adressing homogeneous coordinates in an array
         const int x = 0;
@@ -61,7 +151,7 @@ public static class ConicSectionsHelper
             circleSamples[index] = VectorD.Build.Dense(new double[] {
                 basisRadius * Math.Cos(th),
                 basisRadius * Math.Sin(th),
-                circleOffsetZ,
+                0.0,
                 1.0});
             projSam[index] = matPV.Multiply(circleSamples[index]);
             projSam[index] = projSam[index].Divide(projSam[index][w]);
@@ -165,6 +255,82 @@ public static class ConicSectionsHelper
         x0 = (Math.Abs(x0) < (double)0.00001m) ? 0.0 : x0;
         y0 = (Math.Abs(y0) < (double)0.00001m) ? 0.0 : y0;
 
-        return new EllipsePolarForm(semiMinorRadius, semiMajorRadius, theta, x0, y0);
+        return new EllipsePolarForm(semiMinorRadius, semiMajorRadius, theta, x0, y0, el);
+    }
+
+    public static double calcDistancePointEllise(EllipsePolarForm el, double px, double py)
+    {
+        
+        var dx = px - el.x0;
+        var dy = py - el.y0;
+
+        // quadratic equation for point on ellipse defined as X = C + k(P-C)
+        // with P being pt_e1_snout2_xplane_local_coord, C is the center (x0,y0) and k is a parameter to be defined
+        // distance to the ellipse is then D = |P-C| - |X-C|
+        // A * (x0 +k(Px-xo))^2 + B * (x0 + k(Px-x0)*(y0 + k(Py-y0)) + ... + E * (y0 + k(Py-y0)) + F = 0
+        // some transformations of the expression
+        // k^2 * (sqFactor) + k * linFactor + constFactor = 0
+        var sqFactor =
+            el.implicitEq.A * dx * dx +
+            el.implicitEq.B * dx * dy +
+            el.implicitEq.C * dy * dy;
+        var linFactor =
+            el.implicitEq.A * 2.0 * el.x0 * dx +
+            el.implicitEq.B * (el.x0 * dx + el.y0 * dy) +
+            el.implicitEq.C * 2.0 * el.y0 * dy +
+            el.implicitEq.D * dx +
+            el.implicitEq.E * dy;
+        // this is the equation for the constant factor:
+        // var constFactor =
+        //    el.implicitEq.A * el.x0 * el.x0 +
+        //    el.implicitEq.B * el.x0 * el.y0 +
+        //    el.implicitEq.C * el.y0 * el.y0 +
+        //    el.implicitEq.D * el.x0 +
+        //    el.implicitEq.E * el.y0 +
+        //    el.implicitEq.F;
+        // it evaluates to -1 as we put the center (x0,y0) of the ellipse into the equation of the same ellipse!
+        var constFactor = -1.0;
+
+        var discriminant = linFactor * linFactor - 4.0 * sqFactor * constFactor;
+        
+        if (discriminant <= 0.0 || Math.Abs(sqFactor) < 1e-18)
+        {
+            // distance is so small that it is almost impossible to represent numerically
+            // k is probably like 1.0000000000000000000000000001
+            // or it is too close to the center of the ellipse => bisetrix cannot be determined
+            var d =
+                el.implicitEq.A * px * px +
+                el.implicitEq.B * px * py +
+                el.implicitEq.C * py * py +
+                el.implicitEq.D * px +
+                el.implicitEq.E * py +
+                el.implicitEq.F;
+            Trace.Assert(d < 0.0 || Math.Abs(d) < 1e-9);
+            return d;
+        }
+        else
+        {
+            var discriminantSqrt = Math.Sqrt(discriminant);
+
+            var root1 = (-linFactor + discriminantSqrt) / (2.0 * sqFactor);
+            var root2 = (-linFactor - discriminantSqrt) / (2.0 * sqFactor);
+            var k = (root1 > 0) ? root1 : root2;
+            Trace.Assert(k > 0.0, "Error in Error in point-ellipse distance calculation. " +
+                $"One root is expected to be positive, but it was not. Root1: {root1} and root2: {root2}");
+
+            var xPointX = el.x0 + dx * k;
+            var xPointY = el.y0 + dy * k;
+
+            var distX = px - xPointX;
+            var distY = py - xPointY;
+
+            var d = Math.Sqrt(distX * distX + distY * distY);
+            if (k > 1.0)
+            {
+                d = -d;
+            }
+
+            return d;
+        }
     }
 }

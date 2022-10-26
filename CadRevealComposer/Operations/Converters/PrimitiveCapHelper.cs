@@ -21,41 +21,7 @@ public static class PrimitiveCapHelper
     {
         return CalculateCapVisibility(primitive, capCenter, Vector3.Zero).showCapA;
     }
-    public static MatrixD ConvertMatrix4x4ToMatrixDouble(Matrix4x4 mat)
-    {
-        return DenseMatrix.OfArray(new double[,] {
-           { mat.M11, mat.M12, mat.M13, mat.M14 },
-           { mat.M21, mat.M22, mat.M23, mat.M24 },
-           { mat.M31, mat.M32, mat.M33, mat.M34 },
-           { mat.M41, mat.M42, mat.M43, mat.M44 }
-        });
-    }
-
-    public static VectorD Cross(VectorD left, VectorD right)
-    {
-        VectorD result = new DenseVector(3);
-        result[0] = left[1] * right[2] - left[2] * right[1];
-        result[1] = -left[0] * right[2] + left[2] * right[0];
-        result[2] = left[0] * right[1] - left[1] * right[0];
-
-        return result;
-    }
-
-    public static double Dot(VectorD left, VectorD right)
-    {
-        var result =  left[0] * right[0] + left[1] * right[1] + left[2] * right[2];
-        return result;
-    }
-
-    public static MatrixD CreateUniformScale(double s)
-    {
-        return DenseMatrix.OfArray(new double[,] {
-           { s, 0, 0, 0 },
-           { 0, s, 0, 0 },
-           { 0, 0, s, 0 },
-           { 0, 0, 0, 1 }
-        });
-    }
+    
 
     public static (bool showCapA, bool showCapB) CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenterA,
     Vector3 capCenterB)
@@ -386,6 +352,11 @@ public static class PrimitiveCapHelper
         uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
+        if (rvmCylinder.Height <= 1)
+            Console.WriteLine("Degenerated cylinder");
+        if (rvmSnout.Height <= 1)
+            Console.WriteLine("Degenerated snout");
+
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
 
@@ -472,7 +443,7 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop2 = rvmSnoutCapIndex2 == 0;
 
         // this is to improve numerics
-        MatrixD scaleMat = CreateUniformScale(1.0 / (double)snoutScale1.X);
+        //MatrixD scaleMat = CreateUniformScale(1.0 / (double)snoutScale1.X);
 
         // TODO User story: #77874
         // This test can be optimized by comparing the major axii and minor axii
@@ -482,20 +453,20 @@ public static class PrimitiveCapHelper
         var result_old = false;
         
         var semiMinorAxis1 = isSnoutCapTop1
-            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale1.X
-            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale1.X;
+            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMinorAxis 
+            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMinorAxis;
 
         var semiMajorAxis1 = isSnoutCapTop1
-            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale1.X
-            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale1.X;
+            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMajorAxis
+            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMajorAxis;
 
         var semiMinorAxis2 = isSnoutCapTop2
-            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale2.X
-            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMinorAxis * snoutScale2.X;
+            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMinorAxis
+            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMinorAxis;
 
         var semiMajorAxis2 = isSnoutCapTop2
-            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale2.X
-            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMajorAxis * snoutScale2.X;
+            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMajorAxis
+            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMajorAxis;
 
         // TODO User story: #77874
         // This test can be optimized by comparing the major axii and minor axii
@@ -522,35 +493,31 @@ public static class PrimitiveCapHelper
         (EllipsePolarForm polarEq, MatrixD xplane2ModelCoord, MatrixD modelCoord2xplane) ellipseCurrent;
         (EllipsePolarForm polarEq, MatrixD xplane2ModelCoord, MatrixD modelCoord2xplane) ellipseOther;
 
-        MatrixD snout1_to_world;
-        MatrixD world_to_snout2;
+        MatrixD snout1ToWorld;
+        MatrixD worldToSnout2;
         if (isPrim1CurrentPrimitive)
         {
             // is ellipse1 totally inside ellipse2 ?
             ellipseCurrent = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
             ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
-            snout1_to_world = ConvertMatrix4x4ToMatrixDouble(rvmSnout1.Matrix).Transpose().Multiply(scaleMat);
+            snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(rvmSnout1.Matrix).Transpose();
             // these matrices are stored as trans ^^ vv
-            world_to_snout2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Multiply(scaleMat).Inverse();
+            worldToSnout2 = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Inverse();
 
         }
         else
         {
             ellipseCurrent = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
             ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
-            snout1_to_world = ConvertMatrix4x4ToMatrixDouble(rvmSnout2.Matrix).Transpose().Multiply(scaleMat);
-            world_to_snout2 = ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Multiply(scaleMat).Inverse();
+            snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(rvmSnout2.Matrix).Transpose();
+            worldToSnout2 = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Inverse();
         }
 
         double a_e1 =  ellipseCurrent.polarEq.semiMajorAxis;
         double b_e1 =  ellipseCurrent.polarEq.semiMinorAxis;
         double x0_e1 = ellipseCurrent.polarEq.x0;
         double y0_e1 = ellipseCurrent.polarEq.y0;
-
-        double a_e2 = ellipseOther.polarEq.semiMajorAxis;
-        double b_e2 = ellipseOther.polarEq.semiMinorAxis;
-        double x0_e2 = ellipseOther.polarEq.x0;
-        double y0_e2 = ellipseOther.polarEq.y0;
+        double theta = ellipseCurrent.polarEq.theta;
 
         var pt_e1_snout1_xplane_local_coord = new VectorD[4];
         pt_e1_snout1_xplane_local_coord[0] = VectorD.Build.Dense(new double[] { a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
@@ -558,42 +525,41 @@ public static class PrimitiveCapHelper
         pt_e1_snout1_xplane_local_coord[2] = VectorD.Build.Dense(new double[] { -a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
         pt_e1_snout1_xplane_local_coord[3] = VectorD.Build.Dense(new double[] { -x0_e1, -b_e1 - y0_e1, 0.0f, 1.0 });
 
-        const int x = 0;
-        const int y = 1;
+        var cosTheta = Math.Cos(theta);
+        var sinTheta = Math.Sin(theta);
+        var matRotationEl1 = DenseMatrix.OfArray(new double[,] {
+           { cosTheta, sinTheta, 0.0, 0.0 },
+           { sinTheta, cosTheta, 0.0, 0.0 },
+           { 0.0, 0.0, 1.0, 0.0 },
+           { 0.0, 0.0, 0.0, 1.0 }
+        });
 
-        var mat_stack = ellipseOther.modelCoord2xplane * world_to_snout2 * snout1_to_world * ellipseCurrent.xplane2ModelCoord;
+        var mat_stack =
+            ellipseOther.modelCoord2xplane *
+            worldToSnout2 * snout1ToWorld *
+            ellipseCurrent.xplane2ModelCoord *
+            matRotationEl1;
 
         var pt_e1_snout2_xplane_local_coord = new VectorD[4];
         for (int i = 0; i < 4; i++)
         {
             pt_e1_snout2_xplane_local_coord[i] = mat_stack.Multiply(pt_e1_snout1_xplane_local_coord[i]);
         }
-        
-        // hide cap that is defined by the four points if they fully covered by the other cap
-        // return if all if all points of current ellipse are inside the other ellipse
 
-        var pt_e1_final_image = new VectorD[4];
-        var max_r = 0.0;
+        // hide cap if all four points (extremities) of the ellipse (cap) are inside the other cap
+        // returns true if all if all points of the current ellipse are inside the other ellipse
+        // returns false if there exists at least one point of the current ellipse that is outside the other ellipse
+        const int x = 0;
+        const int y = 1;
         for (int i = 0; i < 4; i++)
         {
-            var diff_theta = ellipseOther.polarEq.theta - ellipseCurrent.polarEq.theta;
-            pt_e1_final_image[i] = pt_e1_snout2_xplane_local_coord[i];
-            pt_e1_final_image[i][x] =
-                pt_e1_snout2_xplane_local_coord[i][x] * Math.Cos(-diff_theta) +
-                pt_e1_snout2_xplane_local_coord[i][y] * Math.Sin(-diff_theta);
-            pt_e1_final_image[i][y] =
-                -pt_e1_snout2_xplane_local_coord[i][x] * Math.Sin(-diff_theta) +
-                pt_e1_snout2_xplane_local_coord[i][y] * Math.Cos(-diff_theta);
+            var px = pt_e1_snout2_xplane_local_coord[i][x];
+            var py = pt_e1_snout2_xplane_local_coord[i][y];
 
-            // put the images of points on e1 to the equation of e2 (inside/outside test)
-            var part1 = (pt_e1_final_image[i][x] - x0_e2) / a_e2;
-            var part2 = (pt_e1_final_image[i][y] - y0_e2) / b_e2;
-            var d = part1 * part1 + part2 * part2;
-
-            if (d > 1.0 + (double)0.00001m) result_new = false;
-            max_r = Math.Max(d, max_r);
+            var d = ConicSectionsHelper.calcDistancePointEllise(ellipseOther.polarEq, px, py);
+            if (d > 0.1) // 0.1mm
+                result_new = false;
         }
-
 
         var wasTruePositive = (result_old && result_new);
         var wasFalsePositive = (result_old && !result_new);
