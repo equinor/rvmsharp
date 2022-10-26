@@ -525,7 +525,7 @@ public class PrimitiveCapHelperTests
             snout1.TopShearX, snout1.TopShearY,
             snout1CapCenter);
 
-        snout1.Connections[0] = new RvmConnection(snout1, snout2, 0, 1, snout1CapCenter, snout1_n,
+        snout1.Connections[0] = new RvmConnection(snout1, snout2, 1, 0, snout1CapCenter, snout1_n,
             RvmConnection.ConnectionType.HasCircularSide);
 
         (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(snout1, snout1CapCenter, snout1CapCenterB);
@@ -578,7 +578,7 @@ public class PrimitiveCapHelperTests
             snout1.TopShearX, snout1.TopShearY,
             snout1CapCenter);
 
-        snout1.Connections[0] = new RvmConnection(snout1, snout2, 0, 1, snout1CapCenter, snout1_n,
+        snout1.Connections[0] = new RvmConnection(snout1, snout2, 1, 0, snout1CapCenter, snout1_n,
             RvmConnection.ConnectionType.HasCircularSide);
 
         (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(snout1, snout1CapCenter, snout1CapCenterB);
@@ -704,7 +704,7 @@ public class PrimitiveCapHelperTests
         Assert.AreEqual(0.0, distance2_1 * 1000.0);
         Assert.AreEqual(0.0, distance2_2 * 1000.0);
 
-        snout2.Connections[0] = new RvmConnection(snout2, snout1, 0, 1, snout2CapCenter, snout1_n,
+        snout2.Connections[0] = new RvmConnection(snout2, snout1, 1, 0, snout2CapCenter, snout1_n,
             RvmConnection.ConnectionType.HasCircularSide);
 
         (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(snout2, snout2CapCenter, snout2CapCenterB);
@@ -829,7 +829,7 @@ public class PrimitiveCapHelperTests
         Assert.AreEqual(0.0, distance2_1 * 1000.0);
         Assert.AreEqual(0.0, distance2_2 * 1000.0);
 
-        snout1.Connections[0] = new RvmConnection(snout1, snout2, 0, 1, snout1CapCenter, snout1_n,
+        snout1.Connections[0] = new RvmConnection(snout1, snout2, 1, 0, snout1CapCenter, snout1_n,
             RvmConnection.ConnectionType.HasCircularSide);
 
         (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(snout1, snout1CapCenter, snout1CapCenterB);

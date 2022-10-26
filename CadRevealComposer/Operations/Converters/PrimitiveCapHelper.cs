@@ -141,7 +141,7 @@ public static class PrimitiveCapHelper
         var halfLengthY = rvmBox.LengthY * boxScale.Y / 2.0f;
         var halfLengthZ = rvmBox.LengthZ * boxScale.Z / 2.0f;
 
-        var isSnoutCapTop = rvmSnoutCapIndex == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 1;
 
         var snoutMajorAxis = isSnoutCapTop
             ? rvmSnout.GetTopCapEllipse().polarEq.semiMajorAxis * snoutScale.X
@@ -260,7 +260,7 @@ public static class PrimitiveCapHelper
 
         var torusRadius = rvmCircularTorus.Radius * circularTorusScale.X;
 
-        var isSnoutCapTop = rvmSnoutCapIndex == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 1;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
@@ -362,7 +362,7 @@ public static class PrimitiveCapHelper
 
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
-        var isSnoutCapTop = rvmSnoutCapIndex == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 1;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
@@ -401,7 +401,7 @@ public static class PrimitiveCapHelper
 
         var ellipticalDishRadius = rvmEllipticalDish.BaseRadius * ellipticalDishScale.X;
 
-        var isSnoutCapTop = rvmSnoutCapIndex == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 1;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
@@ -439,16 +439,8 @@ public static class PrimitiveCapHelper
         rvmSnout1.Matrix.DecomposeAndNormalize(out var snoutScale1, out _, out _);
         rvmSnout2.Matrix.DecomposeAndNormalize(out var snoutScale2, out _, out _);
 
-        var isSnoutCapTop1 = rvmSnoutCapIndex1 == 0;
-        var isSnoutCapTop2 = rvmSnoutCapIndex2 == 0;
-
-        // this is to improve numerics
-        //MatrixD scaleMat = CreateUniformScale(1.0 / (double)snoutScale1.X);
-
-        // TODO User story: #77874
-        // This test can be optimized by comparing the major axii and minor axii
-        // This will however require that we are able to check that the major axii of
-        // one primitive aligns the the major axii of the other
+        var isSnoutCapTop1 = rvmSnoutCapIndex1 == 1;
+        var isSnoutCapTop2 = rvmSnoutCapIndex2 == 1;
 
         var result_old = false;
         
@@ -590,7 +582,7 @@ public static class PrimitiveCapHelper
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
         rvmSphericalDish.Matrix.DecomposeAndNormalize(out var sphericalDishScale, out _, out _);
 
-        var isSnoutCapTop = rvmSnoutCapIndex == 0;
+        var isSnoutCapTop = rvmSnoutCapIndex == 1;
 
         var semiMinorRadius = isSnoutCapTop
             ? rvmSnout.GetTopCapEllipse().polarEq.semiMinorAxis * snoutScale.X
