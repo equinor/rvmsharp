@@ -56,6 +56,22 @@ public static class VectorAlgebraHelper
         });
     }
 
+    public static (Vector3 right, Vector3 up, Vector3 view) calcVectorBasisFromPlane(Vector3 planeNormal)
+    {
+        var view = -planeNormal;
+        var up_to_proj = new Vector3(0.0f, 1.0f, 0.0f);
+        if (planeNormal.Y == 1.0f)
+        {
+            up_to_proj = new Vector3(1.0f, 0.0f, 0.0f);
+        }
+        var up = up_to_proj - Vector3.Dot(up_to_proj, view) * view;
+        up = Vector3.Normalize(up);
+
+        var right = Vector3.Normalize(Vector3.Cross(up, view));
+
+        return (right, up, view);
+    }
+
 }
 
 public static class GeometryHelper
@@ -71,15 +87,24 @@ public static class GeometryHelper
 
         return new PlaneImplicitForm(normal, dc);
     }
+
+    public static PlaneImplicitForm GetPlaneWithNormalPointingAwayFromOrigin(PlaneImplicitForm plane)
+    {
+        PlaneImplicitForm newPlane = (plane.d > 0.0f)
+            ? new PlaneImplicitForm(-plane.normal, -plane.d)
+            : new PlaneImplicitForm(plane.normal, plane.d);
+
+        return newPlane;
+    }
 }
 
 
 public static class ConicSectionsHelper
 {
-    public static readonly EllipseImplicitForm zeroEllipseImplicit = new EllipseImplicitForm(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    public static readonly EllipsePolarForm zeroEllipsePolar = new EllipsePolarForm(0.0, 0.0, 0.0, 0.0, 0.0, zeroEllipseImplicit);
+    public static readonly EllipseImplicitForm ZeroEllipseImplicit = new EllipseImplicitForm(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    public static readonly EllipsePolarForm ZeroEllipsePolar = new EllipsePolarForm(0.0, 0.0, 0.0, 0.0, 0.0, ZeroEllipseImplicit);
 
-    public static Cone getConeFromSnout(float bottomRadius, float topRadius, Vector3 offset)
+    public static Cone CreateConeFromSnout(float bottomRadius, float topRadius, Vector3 offset)
     {
         // Assert (bottomRadius - topRadius) != 0.0
 
@@ -210,7 +235,7 @@ public static class ConicSectionsHelper
             return new EllipseImplicitForm(kernel[0][0], kernel[0][1], kernel[0][2], kernel[0][3], kernel[0][4], kernel[0][5]);
         }
         // the matrix does not have a null space, so the only solution is a null vector
-        return ConicSectionsHelper.zeroEllipseImplicit;
+        return ConicSectionsHelper.ZeroEllipseImplicit;
     }
 
     // converts general ellipse in implicit form to polar form
@@ -258,9 +283,8 @@ public static class ConicSectionsHelper
         return new EllipsePolarForm(semiMinorRadius, semiMajorRadius, theta, x0, y0, el);
     }
 
-    public static double calcDistancePointEllise(EllipsePolarForm el, double px, double py)
+    public static double CalcDistancePointEllise(EllipsePolarForm el, double px, double py)
     {
-        
         var dx = px - el.x0;
         var dy = py - el.y0;
 
@@ -332,5 +356,168 @@ public static class ConicSectionsHelper
 
             return d;
         }
+    }
+
+    public static (EllipsePolarForm ellipsePolar, MatrixD xplane_to_model, MatrixD model_to_xplane)
+        CalcEllipseIntersectionForCone(PlaneImplicitForm capPlane, Cone cone)
+    {
+        PlaneImplicitForm xPlane = GeometryHelper.GetPlaneWithNormalPointingAwayFromOrigin(capPlane);
+
+        (var rightVec, var upVec, var viewVec) = VectorAlgebraHelper.calcVectorBasisFromPlane(xPlane.normal);
+
+        // distance of the apex to the intersection plane (cap)
+        var zn = Vector3.Dot(xPlane.normal, cone.apex) + xPlane.d;
+
+        // project apex to the cap plane
+        Vector3 originOfPlane = cone.apex - zn * xPlane.normal;
+
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, upVec.X, viewVec.X, originOfPlane.X},
+            { rightVec.Y, upVec.Y, viewVec.Y, originOfPlane.Y},
+            { rightVec.Z, upVec.Z, viewVec.Z, originOfPlane.Z},
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originOfPlane) },
+            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originOfPlane) },
+            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originOfPlane) },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        if (zn != 0.0)
+        {
+            var view_mat = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(cone.apex, rightVec) },
+            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(cone.apex, upVec) },
+            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(cone.apex, viewVec) },
+            {0.0, 0.0, 0.0, 1.0}
+            });
+            var proj_mat = DenseMatrix.OfArray(new double[,] {
+            { zn, 0.0,  0.0, 0.0 },
+            { 0.0, zn,  0.0, 0.0 },
+            { 0.0, 0.0, 0.0, 0.0 },
+            { 0.0, 0.0, -1.0, 0.0}
+            });
+            var PV_mat = proj_mat * view_mat;
+
+            EllipseImplicitForm ellImpl = CalcEllipseImplicitForm(PV_mat, cone.baseR);
+
+            var ellipsePolar = ConvertEllipseImplicitToPolarForm(ellImpl);
+            return (ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+        }
+
+        return (ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+    }
+
+    public static (EllipsePolarForm, MatrixD, MatrixD)
+        CalcEllipseIntersectionForCylinder(PlaneImplicitForm capPlane, float base_r, Vector3 origin)
+    {
+        PlaneImplicitForm xPlane = GeometryHelper.GetPlaneWithNormalPointingAwayFromOrigin(capPlane);
+
+        var eye = origin; // eye is placed in the origin
+
+        (var rightVec, var upVec, var viewVec) = VectorAlgebraHelper.calcVectorBasisFromPlane(xPlane.normal);
+
+        var view_mat = DenseMatrix.OfArray(new double[,] {
+            { 1.0, 0.0, 0.0, -eye.X },
+            { 0.0, 1.0, 0.0, -eye.Y },
+            { 0.0, 0.0, 1.0, -eye.Z },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        var rot_to_plane = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, rightVec.Y, rightVec.Z, 0.0 },
+            { upVec.X, upVec.Y, upVec.Z, 0.0 },
+            { viewVec.X, viewVec.Y, viewVec.Z, 0.0 },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        // TODO: this should take account of oblique cylinders as well
+        var oblique_proj_mat = DenseMatrix.OfArray(new double[,] {
+            { 1.0, 0.0, 0.0, 0.0 },
+            { 0.0, 1.0, 0.0, 0.0 },
+            { -xPlane.normal.X / xPlane.normal.Z, -xPlane.normal.Y / xPlane.normal.Z, 0.0, 0.0 },
+            { 0.0, 0.0, 0.0, 1.0 }
+         });
+
+        var proj = DenseMatrix.OfArray(new double[,] {
+            { 1.0, 0.0, 0.0, 0.0 },
+            { 0.0, 1.0, 0.0, 0.0 },
+            { 0.0, 0.0, 0.0, 0.0 },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        var PV_mat = proj * rot_to_plane * oblique_proj_mat * view_mat;
+
+        var ellipseImplicitForm = CalcEllipseImplicitForm(PV_mat, base_r);
+
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, upVec.X, viewVec.X, eye.X },
+            { rightVec.Y, upVec.Y, viewVec.Y, eye.Y },
+            { rightVec.Z, upVec.Z, viewVec.Z, eye.Z },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, eye) },
+            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, eye) },
+            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, eye) },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        var ellipsePolar = ConvertEllipseImplicitToPolarForm(ellipseImplicitForm);
+        return (ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+    }
+
+    public static (EllipsePolarForm, MatrixD, MatrixD)
+        CalcEllipseIntersectionForCylinderWithZeroCapSlope(float radius, Vector3 origin)
+    {
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
+                    { -1.0, 0.0, 0.0, origin.X },
+                    { 0.0, 1.0, 0.0, origin.Y },
+                    { 0.0, 0.0, -1.0, origin.Z },
+                    { 0.0, 0.0, 0.0, 1.0 }
+                });
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
+                    { -1.0, 0.0, 0.0, origin.X },
+                    { 0.0, 1.0, 0.0, -origin.Y },
+                    { 0.0, 0.0, -1.0, origin.Z },
+                    { 0.0, 0.0, 0.0, 1.0 }
+                });
+
+        var rsq = radius * radius;
+        var elImplicit = new EllipseImplicitForm(1.0 / rsq, 0.0, 1.0 / rsq, 0.0, 0.0, -1.0);
+        var elPolar = new EllipsePolarForm(radius, radius, 0.0, 0.0, 0.0, elImplicit);
+        return (elPolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+    }
+
+    public static (EllipsePolarForm, MatrixD, MatrixD) CreateDegenerateEllipse(PlaneImplicitForm capPlane, Cone cone)
+    {
+        PlaneImplicitForm xPlane = GeometryHelper.GetPlaneWithNormalPointingAwayFromOrigin(capPlane);
+
+        (var rightVec, var upVec, var viewVec) = VectorAlgebraHelper.calcVectorBasisFromPlane(xPlane.normal);
+
+        // distance of the apex to the intersection plane (cap)
+        var zn = Vector3.Dot(xPlane.normal, cone.apex) + xPlane.d;
+
+        // project apex to the cap plane
+        Vector3 originModelCoord = cone.apex - zn * xPlane.normal;
+
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, upVec.X, viewVec.X, originModelCoord.X},
+            { rightVec.Y, upVec.Y, viewVec.Y, originModelCoord.Y},
+            { rightVec.Z, upVec.Z, viewVec.Z, originModelCoord.Z},
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
+            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originModelCoord) },
+            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originModelCoord) },
+            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originModelCoord) },
+            { 0.0, 0.0, 0.0, 1.0 }
+        });
+
+        return (ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
     }
 }

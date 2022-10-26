@@ -432,8 +432,6 @@ public static class PrimitiveCapHelper
         var isSnoutCapTop1 = rvmSnoutCapIndex1 == 1;
         var isSnoutCapTop2 = rvmSnoutCapIndex2 == 1;
 
-        var result_new = true;
-
         (EllipsePolarForm polarEq, MatrixD xplane2ModelCoord, MatrixD modelCoord2xplane) ellipseCurrent;
         (EllipsePolarForm polarEq, MatrixD xplane2ModelCoord, MatrixD modelCoord2xplane) ellipseOther;
 
@@ -456,17 +454,17 @@ public static class PrimitiveCapHelper
             worldToSnout2 = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix)).Inverse();
         }
 
-        double a_e1 =  ellipseCurrent.polarEq.semiMajorAxis;
-        double b_e1 =  ellipseCurrent.polarEq.semiMinorAxis;
-        double x0_e1 = ellipseCurrent.polarEq.x0;
-        double y0_e1 = ellipseCurrent.polarEq.y0;
+        double aE1 =  ellipseCurrent.polarEq.semiMajorAxis;
+        double bE1 =  ellipseCurrent.polarEq.semiMinorAxis;
+        double x0E1 = ellipseCurrent.polarEq.x0;
+        double y0E1 = ellipseCurrent.polarEq.y0;
         double theta = ellipseCurrent.polarEq.theta;
 
-        var pt_e1_snout1_xplane_local_coord = new VectorD[4];
-        pt_e1_snout1_xplane_local_coord[0] = VectorD.Build.Dense(new double[] { a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
-        pt_e1_snout1_xplane_local_coord[1] = VectorD.Build.Dense(new double[] { -x0_e1, b_e1 - y0_e1, 0.0f, 1.0 });
-        pt_e1_snout1_xplane_local_coord[2] = VectorD.Build.Dense(new double[] { -a_e1 - x0_e1, -y0_e1, 0.0f, 1.0 });
-        pt_e1_snout1_xplane_local_coord[3] = VectorD.Build.Dense(new double[] { -x0_e1, -b_e1 - y0_e1, 0.0f, 1.0 });
+        var ptE1_xplaneCoord = new VectorD[4];
+        ptE1_xplaneCoord[0] = VectorD.Build.Dense(new double[] { aE1 - x0E1, -y0E1, 0.0f, 1.0 });
+        ptE1_xplaneCoord[1] = VectorD.Build.Dense(new double[] { -x0E1, bE1 - y0E1, 0.0f, 1.0 });
+        ptE1_xplaneCoord[2] = VectorD.Build.Dense(new double[] { -aE1 - x0E1, -y0E1, 0.0f, 1.0 });
+        ptE1_xplaneCoord[3] = VectorD.Build.Dense(new double[] { -x0E1, -bE1 - y0E1, 0.0f, 1.0 });
 
         var cosTheta = Math.Cos(theta);
         var sinTheta = Math.Sin(theta);
@@ -483,10 +481,10 @@ public static class PrimitiveCapHelper
             ellipseCurrent.xplane2ModelCoord *
             matRotationEl1;
 
-        var pt_e1_snout2_xplane_local_coord = new VectorD[4];
+        var ptE1_transformedTo_xplaneCoordOfE2 = new VectorD[4];
         for (int i = 0; i < 4; i++)
         {
-            pt_e1_snout2_xplane_local_coord[i] = mat_stack.Multiply(pt_e1_snout1_xplane_local_coord[i]);
+            ptE1_transformedTo_xplaneCoordOfE2[i] = mat_stack.Multiply(ptE1_xplaneCoord[i]);
         }
 
         // hide cap if all four points (extremities) of the ellipse (cap) are inside the other cap
@@ -496,10 +494,10 @@ public static class PrimitiveCapHelper
         const int y = 1;
         for (int i = 0; i < 4; i++)
         {
-            var px = pt_e1_snout2_xplane_local_coord[i][x];
-            var py = pt_e1_snout2_xplane_local_coord[i][y];
+            var px = ptE1_transformedTo_xplaneCoordOfE2[i][x];
+            var py = ptE1_transformedTo_xplaneCoordOfE2[i][y];
 
-            var d = ConicSectionsHelper.calcDistancePointEllise(ellipseOther.polarEq, px, py);
+            var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.polarEq, px, py);
             if (d > 0.1) // 0.1mm
             {
                 global_count_shown_caps++;
