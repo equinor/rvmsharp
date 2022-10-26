@@ -12,10 +12,8 @@ using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public static class PrimitiveCapHelper
 {
-    public static int global_count_false_positives = 0;
-    public static int global_count_false_negatives = 0;
-    public static int global_count_true_negatives = 0;
-    public static int global_count_true_positives = 0;
+    public static int global_count_hidden_caps = 0;
+    public static int global_count_shown_caps = 0;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
@@ -352,11 +350,6 @@ public static class PrimitiveCapHelper
         uint rvmSnoutCapIndex,
         bool isPrim1CurrentPrimitive)
     {
-        if (rvmCylinder.Height <= 1)
-            Console.WriteLine("Degenerated cylinder");
-        if (rvmSnout.Height <= 1)
-            Console.WriteLine("Degenerated snout");
-
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
 
@@ -436,49 +429,8 @@ public static class PrimitiveCapHelper
         uint rvmSnoutCapIndex2,
         bool isPrim1CurrentPrimitive)
     {
-        rvmSnout1.Matrix.DecomposeAndNormalize(out var snoutScale1, out _, out _);
-        rvmSnout2.Matrix.DecomposeAndNormalize(out var snoutScale2, out _, out _);
-
         var isSnoutCapTop1 = rvmSnoutCapIndex1 == 1;
         var isSnoutCapTop2 = rvmSnoutCapIndex2 == 1;
-
-        var result_old = false;
-        
-        var semiMinorAxis1 = isSnoutCapTop1
-            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMinorAxis 
-            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMinorAxis;
-
-        var semiMajorAxis1 = isSnoutCapTop1
-            ? rvmSnout1.GetTopCapEllipse().polarEq.semiMajorAxis
-            : rvmSnout1.GetBottomCapEllipse().polarEq.semiMajorAxis;
-
-        var semiMinorAxis2 = isSnoutCapTop2
-            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMinorAxis
-            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMinorAxis;
-
-        var semiMajorAxis2 = isSnoutCapTop2
-            ? rvmSnout2.GetTopCapEllipse().polarEq.semiMajorAxis
-            : rvmSnout2.GetBottomCapEllipse().polarEq.semiMajorAxis;
-
-        // TODO User story: #77874
-        // This test can be optimized by comparing the major axii and minor axii
-        // This will however require that we are able to check that the major axii of
-        // one primitive aligns the the major axii of the other
-        if (isPrim1CurrentPrimitive)
-        {
-            if (semiMinorAxis2 >= semiMajorAxis1)
-            {
-                result_old = true;
-            }
-        }
-        else
-        {
-            if (semiMinorAxis1 >= semiMajorAxis2)
-            {
-                result_old = true;
-            }
-        }
-        
 
         var result_new = true;
 
@@ -495,7 +447,6 @@ public static class PrimitiveCapHelper
             snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(rvmSnout1.Matrix).Transpose();
             // these matrices are stored as trans ^^ vv
             worldToSnout2 = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix)).Inverse();
-
         }
         else
         {
@@ -550,27 +501,14 @@ public static class PrimitiveCapHelper
 
             var d = ConicSectionsHelper.calcDistancePointEllise(ellipseOther.polarEq, px, py);
             if (d > 0.1) // 0.1mm
-                result_new = false;
+            {
+                global_count_shown_caps++;
+                return false;
+            }
         }
 
-        var wasTruePositive = (result_old && result_new);
-        var wasFalsePositive = (result_old && !result_new);
-        var wasFalseNegative = (!result_old && result_new);
-        var wasTrueNegatives = (!result_old && !result_new);
-
-        if(wasFalsePositive)
-            global_count_false_positives ++;
-
-        if (wasFalseNegative)
-            global_count_false_negatives++;
-
-        if (wasTruePositive)
-            global_count_true_positives++;
-
-        if (wasTrueNegatives)
-            global_count_true_negatives++;
-
-        return result_new;
+        global_count_hidden_caps++;
+        return true;
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
