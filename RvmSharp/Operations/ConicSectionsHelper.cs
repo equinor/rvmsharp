@@ -12,9 +12,7 @@ public sealed record Ellipse2DImplicitForm(double A, double B, double C, double 
 public sealed record Ellipse2DPolarForm(
     double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0,
     Ellipse2DImplicitForm implicitEq);
-
 public sealed record Ellipse3D(Ellipse2DPolarForm ellipse2DPolar, MatrixD planeToModelCoord, MatrixD modelToPlaneCoord);
-
 public sealed record PlaneImplicitForm(Vector3 normal, float d);
 public sealed record Cone(float baseR, Vector3 apex);
 
