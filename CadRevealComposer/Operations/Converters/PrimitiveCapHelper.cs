@@ -3,6 +3,7 @@
 using RvmSharp.Primitives;
 using RvmSharp.Operations;
 using System;
+using System.Diagnostics;
 using System.Numerics;
 using Utils;
 
@@ -266,6 +267,7 @@ public static class PrimitiveCapHelper
             ? rvmSnout.GetTopCapEllipse().ellipse2DPolar
             : rvmSnout.GetBottomCapEllipse().ellipse2DPolar;
 
+        Trace.Assert(MathF.Abs(snoutScale.X / snoutScale.Y - 1.0f) < 0.00001f);
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
@@ -362,6 +364,7 @@ public static class PrimitiveCapHelper
             ? rvmSnout.GetTopCapEllipse().ellipse2DPolar
             : rvmSnout.GetBottomCapEllipse().ellipse2DPolar;
 
+        Trace.Assert(MathF.Abs(snoutScale.X / snoutScale.Y - 1.0f) < 0.00001f);
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
@@ -400,6 +403,7 @@ public static class PrimitiveCapHelper
             ? rvmSnout.GetTopCapEllipse().ellipse2DPolar
             : rvmSnout.GetBottomCapEllipse().ellipse2DPolar;
 
+        Trace.Assert(MathF.Abs(snoutScale.X / snoutScale.Y - 1.0f) < 0.00001f);
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
@@ -523,6 +527,7 @@ public static class PrimitiveCapHelper
             ? rvmSnout.GetTopCapEllipse().ellipse2DPolar
             : rvmSnout.GetBottomCapEllipse().ellipse2DPolar;
 
+        Trace.Assert(MathF.Abs(snoutScale.X / snoutScale.Y - 1.0f) < 0.00001f);
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
