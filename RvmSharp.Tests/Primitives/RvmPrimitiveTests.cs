@@ -145,8 +145,8 @@ public class RvmPrimitiveTests
             );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(1.857449777519938f));
-        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(1.857449777519938f));
+        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(1.3031138776160802));
     }
 
     [Test]
@@ -165,8 +165,8 @@ public class RvmPrimitiveTests
             );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(0.0f));
-        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(0.0f));
+        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(0.0f));
+        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(0.0f));
     }
 
     [Test]
@@ -185,8 +185,8 @@ public class RvmPrimitiveTests
             );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(155.5));
-        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(155.5));
     }
 
     [Test]
@@ -205,8 +205,8 @@ public class RvmPrimitiveTests
             );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(16.5));
-        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(16.5));
     }
 
     [Test]
@@ -225,8 +225,8 @@ public class RvmPrimitiveTests
             );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.polarEq.semiMajorAxis, Is.EqualTo(2.0/MathF.Cos(snout.TopShearY)));
-        Assert.That(topEllipse.polarEq.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0/MathF.Cos(snout.TopShearY)));
+        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0));
     }
 
     [Test]
@@ -245,8 +245,8 @@ public class RvmPrimitiveTests
             );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.polarEq.x0, Is.EqualTo(0.0));
-        Assert.That(topEllipse.polarEq.y0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.ellipse2DPolar.x0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.ellipse2DPolar.y0, Is.EqualTo(0.0));
     }
 
     //0.1 millimeters precision
@@ -295,13 +295,11 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetTopCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.xplane2ModelCoords * origin;
-        var pt_orig_ell2 = ellipse2.xplane2ModelCoords * origin;
+        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
 
-
-        // snout1 -> top, but is BOTTOM!!
+        // snout1 -> BOTTOM!!
         var snout1CapCenter = -0.5f*(new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
-        //var snout1TopCapCenter4D = new Vector4(snout1.OffsetX, snout1.OffsetY, snout1.Height, 1.0f);
         (var snout1_n, var snout1_dc) = GeometryHelper.GetPlaneFromShearAndPoint(
             snout1.BottomShearX, snout1.BottomShearY,
             snout1CapCenter);
@@ -309,8 +307,7 @@ public class RvmPrimitiveTests
 
         var distance1 = snout1_n.X * pt_orig_ell1[0] + snout1_n.Y * pt_orig_ell1[1] + snout1_n.Z * pt_orig_ell1[2] + snout1_dc;
 
-        // snout2 -> bottom, but is TOP!!
-        //var snout2BottomCapCenter = (new Vector3(0.0f, 0.0f, 0.0f));
+        // snout2 -> bottom TOP!!
         var snout2CapCenter = 0.5f*(new Vector3(snout2.OffsetX, snout2.OffsetY, snout2.Height));
         (var snout2_n, var snout2_dc) = GeometryHelper.GetPlaneFromShearAndPoint(
             snout2.TopShearX, snout2.TopShearY,
@@ -330,7 +327,6 @@ public class RvmPrimitiveTests
 
         // are the planes going through the same pt?
         // they are not for this snout!!
-
 
         Matrix4x4 s1Mat = (snout1.Matrix);
         Matrix4x4 s2Mat = (snout2.Matrix);

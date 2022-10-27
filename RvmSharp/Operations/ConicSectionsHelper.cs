@@ -8,10 +8,12 @@ using MathNet.Numerics.LinearAlgebra.Double;
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
-public sealed record EllipseImplicitForm(double A, double B, double C, double D, double E, double F);
-public sealed record EllipsePolarForm(
+public sealed record Ellipse2DImplicitForm(double A, double B, double C, double D, double E, double F);
+public sealed record Ellipse2DPolarForm(
     double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0,
-    EllipseImplicitForm implicitEq);
+    Ellipse2DImplicitForm implicitEq);
+
+public sealed record Ellipse3D(Ellipse2DPolarForm ellipse2DPolar, MatrixD planeToModelCoord, MatrixD modelToPlaneCoord);
 
 public sealed record PlaneImplicitForm(Vector3 normal, float d);
 public sealed record Cone(float baseR, Vector3 apex);
@@ -101,8 +103,8 @@ public static class GeometryHelper
 
 public static class ConicSectionsHelper
 {
-    public static readonly EllipseImplicitForm ZeroEllipseImplicit = new EllipseImplicitForm(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    public static readonly EllipsePolarForm ZeroEllipsePolar = new EllipsePolarForm(0.0, 0.0, 0.0, 0.0, 0.0, ZeroEllipseImplicit);
+    public static readonly Ellipse2DImplicitForm ZeroEllipseImplicit = new Ellipse2DImplicitForm(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    public static readonly Ellipse2DPolarForm ZeroEllipsePolar = new Ellipse2DPolarForm(0.0, 0.0, 0.0, 0.0, 0.0, ZeroEllipseImplicit);
 
     public static Cone CreateConeFromSnout(float bottomRadius, float topRadius, Vector3 offset)
     {
@@ -149,7 +151,7 @@ public static class ConicSectionsHelper
     // calculate coefficients A,B,C,D,E,F from the set of 6 transformed points
     // OBS: in theory only 5 points are be necessary, but we use 6 points to make the algorithm less complicated 
 
-    public static EllipseImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius)
+    public static Ellipse2DImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius)
     {
         // for convenience of adressing homogeneous coordinates in an array
         const int x = 0;
@@ -232,7 +234,7 @@ public static class ConicSectionsHelper
             }
 
             // do not replace kernel by A..F here, maybe it was inverted!
-            return new EllipseImplicitForm(kernel[0][0], kernel[0][1], kernel[0][2], kernel[0][3], kernel[0][4], kernel[0][5]);
+            return new Ellipse2DImplicitForm(kernel[0][0], kernel[0][1], kernel[0][2], kernel[0][3], kernel[0][4], kernel[0][5]);
         }
         // the matrix does not have a null space, so the only solution is a null vector
         return ConicSectionsHelper.ZeroEllipseImplicit;
@@ -249,7 +251,7 @@ public static class ConicSectionsHelper
     // used conversion formulas: https://en.wikipedia.org/wiki/Ellipse#General_ellipse
     // have been verified by @vero-so
 
-    public static EllipsePolarForm ConvertEllipseImplicitToPolarForm(EllipseImplicitForm el)
+    public static Ellipse2DPolarForm ConvertEllipseImplicitToPolarForm(Ellipse2DImplicitForm el)
     {
         double A = el.A;
         double B = el.B;
@@ -280,10 +282,10 @@ public static class ConicSectionsHelper
         x0 = (Math.Abs(x0) < (double)0.00001m) ? 0.0 : x0;
         y0 = (Math.Abs(y0) < (double)0.00001m) ? 0.0 : y0;
 
-        return new EllipsePolarForm(semiMinorRadius, semiMajorRadius, theta, x0, y0, el);
+        return new Ellipse2DPolarForm(semiMinorRadius, semiMajorRadius, theta, x0, y0, el);
     }
 
-    public static double CalcDistancePointEllise(EllipsePolarForm el, double px, double py)
+    public static double CalcDistancePointEllise(Ellipse2DPolarForm el, double px, double py)
     {
         var dx = px - el.x0;
         var dy = py - el.y0;
@@ -358,8 +360,7 @@ public static class ConicSectionsHelper
         }
     }
 
-    public static (EllipsePolarForm ellipsePolar, MatrixD xplane_to_model, MatrixD model_to_xplane)
-        CalcEllipseIntersectionForCone(PlaneImplicitForm capPlane, Cone cone)
+    public static Ellipse3D CalcEllipseIntersectionForCone(PlaneImplicitForm capPlane, Cone cone)
     {
         PlaneImplicitForm xPlane = GeometryHelper.GetPlaneWithNormalPointingAwayFromOrigin(capPlane);
 
@@ -401,17 +402,16 @@ public static class ConicSectionsHelper
             });
             var PV_mat = proj_mat * view_mat;
 
-            EllipseImplicitForm ellImpl = CalcEllipseImplicitForm(PV_mat, cone.baseR);
+            Ellipse2DImplicitForm ellImpl = CalcEllipseImplicitForm(PV_mat, cone.baseR);
 
             var ellipsePolar = ConvertEllipseImplicitToPolarForm(ellImpl);
-            return (ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+            return new Ellipse3D(ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
         }
 
-        return (ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+        return new Ellipse3D(ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
     }
 
-    public static (EllipsePolarForm, MatrixD, MatrixD)
-        CalcEllipseIntersectionForCylinder(PlaneImplicitForm capPlane, float base_r, Vector3 origin)
+    public static Ellipse3D CalcEllipseIntersectionForCylinder(PlaneImplicitForm capPlane, float base_r, Vector3 origin)
     {
         PlaneImplicitForm xPlane = GeometryHelper.GetPlaneWithNormalPointingAwayFromOrigin(capPlane);
 
@@ -467,11 +467,10 @@ public static class ConicSectionsHelper
         });
 
         var ellipsePolar = ConvertEllipseImplicitToPolarForm(ellipseImplicitForm);
-        return (ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+        return new Ellipse3D(ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
     }
 
-    public static (EllipsePolarForm, MatrixD, MatrixD)
-        CalcEllipseIntersectionForCylinderWithZeroCapSlope(float radius, Vector3 origin)
+    public static Ellipse3D CalcEllipseIntersectionForCylinderWithZeroCapSlope(float radius, Vector3 origin)
     {
         var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
                     { -1.0, 0.0, 0.0, origin.X },
@@ -487,12 +486,12 @@ public static class ConicSectionsHelper
                 });
 
         var rsq = radius * radius;
-        var elImplicit = new EllipseImplicitForm(1.0 / rsq, 0.0, 1.0 / rsq, 0.0, 0.0, -1.0);
-        var elPolar = new EllipsePolarForm(radius, radius, 0.0, 0.0, 0.0, elImplicit);
-        return (elPolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+        var elImplicit = new Ellipse2DImplicitForm(1.0 / rsq, 0.0, 1.0 / rsq, 0.0, 0.0, -1.0);
+        var elPolar = new Ellipse2DPolarForm(radius, radius, 0.0, 0.0, 0.0, elImplicit);
+        return new Ellipse3D(elPolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
     }
 
-    public static (EllipsePolarForm, MatrixD, MatrixD) CreateDegenerateEllipse(PlaneImplicitForm capPlane, Cone cone)
+    public static Ellipse3D CreateDegenerateEllipse(PlaneImplicitForm capPlane, Cone cone)
     {
         PlaneImplicitForm xPlane = GeometryHelper.GetPlaneWithNormalPointingAwayFromOrigin(capPlane);
 
@@ -518,6 +517,6 @@ public static class ConicSectionsHelper
             { 0.0, 0.0, 0.0, 1.0 }
         });
 
-        return (ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
+        return new Ellipse3D(ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
     }
 }

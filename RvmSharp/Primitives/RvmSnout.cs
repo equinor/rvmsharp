@@ -4,12 +4,6 @@ using System;
 using System.Numerics;
 using Operations;
 
-using MathNet.Numerics.LinearAlgebra.Double;
-using MathNet.Numerics.LinearAlgebra.Factorization;
-
-using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
-using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
-
 public record RvmSnout(
     uint Version,
     Matrix4x4 Matrix,
@@ -56,7 +50,7 @@ public record RvmSnout(
         return Math.Abs(RadiusBottom - RadiusTop) < 0.01;
     }
 
-    public (EllipsePolarForm polarEq, MatrixD xplane2ModelCoords, MatrixD modelCoord2xplane) GetTopCapEllipse()
+    public Ellipse3D GetTopCapEllipse()
     { 
         // plane that is defined by the top cap
         var topCapCenter = 0.5f * new Vector3(OffsetX, OffsetY, Height);
@@ -65,7 +59,7 @@ public record RvmSnout(
         return getCapEllipse(xPlane, topCapCenter, RadiusTop);
     }
 
-    public (EllipsePolarForm polarEq, MatrixD xplane2ModelCoords, MatrixD modelCoord2xplane) GetBottomCapEllipse()
+    public Ellipse3D GetBottomCapEllipse()
     {
         // plane that is defined by the bottom cap
         var bottomCapCenter = -0.5f * new Vector3(OffsetX, OffsetY, Height);
@@ -74,10 +68,7 @@ public record RvmSnout(
         return getCapEllipse(xPlane, bottomCapCenter, RadiusBottom);
     }
 
-    private (EllipsePolarForm, MatrixD, MatrixD) getCapEllipse(
-        PlaneImplicitForm xPlane,
-        Vector3 capCenter,
-        float capRadius)
+    private Ellipse3D getCapEllipse(PlaneImplicitForm xPlane, Vector3 capCenter, float capRadius)
     {
         // cones
         if (!IsCappedCylinder())
@@ -89,9 +80,7 @@ public record RvmSnout(
             {
                 return ConicSectionsHelper.CreateDegenerateEllipse(xPlane, cone);
             }
-
             return ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
-
         }
         //cylinders
         else
