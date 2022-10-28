@@ -11,8 +11,6 @@ using Utils;
 
 public static class RvmSnoutConverter
 {
-    private static Color CapA = Color.Blue;
-    private static Color CapB = Color.Red;
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSnout rvmSnout,
         ulong treeIndex,
@@ -140,7 +138,7 @@ public static class RvmSnoutConverter
                 matrixCapA,
                 normal,
                 treeIndex,
-                CapA,
+                color,
                 bbox // use same bbox as RVM source
             );
         }
@@ -156,7 +154,7 @@ public static class RvmSnoutConverter
                 matrixCapB,
                 -normal,
                 treeIndex,
-                CapB,
+                color,
                 bbox // use same bbox as RVM source
             );
         }
@@ -211,7 +209,7 @@ public static class RvmSnoutConverter
                 matrixEccentricCapA,
                 normal,
                 treeIndex,
-                CapA,
+                color,
                 bbox // use same bbox as RVM source
             );
         }
@@ -227,7 +225,7 @@ public static class RvmSnoutConverter
                 matrixEccentricCapB,
                 -normal,
                 treeIndex,
-                CapB,
+                color,
                 bbox // use same bbox as RVM source
             );
         }
@@ -298,7 +296,7 @@ public static class RvmSnoutConverter
                 normal,
                 Thickness: 1f,
                 treeIndex,
-                CapA,
+                color,
                 bbox // use same bbox as RVM source
             );
         }
@@ -317,7 +315,7 @@ public static class RvmSnoutConverter
                 -normal,
                 Thickness: 1f,
                 treeIndex,
-                CapB,
+                color,
                 bbox // use same bbox as RVM source
             );
         }
