@@ -139,7 +139,7 @@ public static class RvmSnoutConverter
                 normal,
                 treeIndex,
                 color,
-                bbox // use same bbox as RVM source
+                bbox // Why we use the same bbox as RVM source
             );
         }
 
@@ -155,7 +155,7 @@ public static class RvmSnoutConverter
                 -normal,
                 treeIndex,
                 color,
-                bbox // use same bbox as RVM source
+                bbox // Why we use the same bbox as RVM source
             );
         }
     }
@@ -210,7 +210,7 @@ public static class RvmSnoutConverter
                 normal,
                 treeIndex,
                 color,
-                bbox // use same bbox as RVM source
+                bbox // Why we use the same bbox as RVM source
             );
         }
 
@@ -226,7 +226,7 @@ public static class RvmSnoutConverter
                 -normal,
                 treeIndex,
                 color,
-                bbox // use same bbox as RVM source
+                bbox // Why we use the same bbox as RVM source
             );
         }
     }
@@ -297,7 +297,7 @@ public static class RvmSnoutConverter
                 Thickness: 1f,
                 treeIndex,
                 color,
-                bbox // use same bbox as RVM source
+                bbox // Why we use the same bbox as RVM source
             );
         }
 
@@ -316,7 +316,7 @@ public static class RvmSnoutConverter
                 Thickness: 1f,
                 treeIndex,
                 color,
-                bbox // use same bbox as RVM source
+                bbox // Why we use the same bbox as RVM source
             );
         }
     }
