@@ -5,6 +5,8 @@ using Configuration;
 using IdProviders;
 using Operations;
 using Primitives;
+using Operations.Converters;
+
 using RvmSharp.BatchUtils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
@@ -79,6 +81,9 @@ public static class CadRevealComposerRunner
                 primitive => APrimitive.FromRvmPrimitive(x, primitive)))
             .ToArray();
 
+        Console.WriteLine($"Show no caps now: {PrimitiveCapHelper.global_count_shown_caps}");
+        Console.WriteLine($"Hide no caps now: {PrimitiveCapHelper.global_count_hidden_caps}");
+
         Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
@@ -131,8 +136,6 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
-
-
 
         Console.WriteLine("Start tessellate");
         var meshes = TessellateAndOutputInstanceMeshes(

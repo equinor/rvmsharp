@@ -180,6 +180,7 @@ public abstract record APrimitive(ulong TreeIndex, Color Color, RvmBoundingBox A
             case RvmRectangularTorus rvmRectangularTorus:
                 return rvmRectangularTorus.ConvertToRevealPrimitive(revealNode.TreeIndex, rvmNode.GetColor());
             default:
+                //return Array.Empty<APrimitive>();
                 throw new ArgumentOutOfRangeException(nameof(rvmPrimitive), rvmPrimitive, nameof(rvmPrimitive));
         }
     }

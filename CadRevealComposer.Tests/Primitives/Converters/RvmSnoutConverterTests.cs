@@ -68,19 +68,6 @@ public class RvmSnoutConverterTests
     }
 
     [Test]
-    public void RvmSnoutConverter_WhenHasShearAndNotCylinderShaped_ReturnsConeWithCaps()
-    {
-        _rvmSnout = _rvmSnout with { RadiusBottom = 1, RadiusTop = 0.1f, BottomShearX = 0.5f };
-
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
-
-        Assert.That(geometries[0], Is.TypeOf<Cone>());
-        Assert.That(geometries[1], Is.TypeOf<GeneralRing>());
-        Assert.That(geometries[2], Is.TypeOf<GeneralRing>());
-        Assert.That(geometries.Length, Is.EqualTo(3));
-    }
-
-    [Test]
     public void RvmSnoutConverter_WhenNoShearAndEccentric_ReturnsEccentricConeWithCaps()
     {
         var snout = _rvmSnout with { OffsetX = 0.5f };
@@ -92,6 +79,7 @@ public class RvmSnoutConverterTests
         Assert.That(geometries[2], Is.TypeOf<Circle>());
         Assert.That(geometries.Length, Is.EqualTo(3));
     }
+
 
     [Test]
     public void RvmSnoutConverter_WhenNoShearAndNotEccentric_ReturnsConeWithCaps()
