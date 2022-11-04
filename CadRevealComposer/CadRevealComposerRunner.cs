@@ -43,7 +43,6 @@ public static class CadRevealComposerRunner
                     // collect all nodes for later sector division of the entire scene
                     nodesToProcess.AddRange(cadRevealNodes);
 
-                    //nodesToProcess.Sort((x, y) => (x.TreeIndex < y.TreeIndex) ? 1 : 0);
                     var inputGeometries = cadRevealNodes
                         .AsParallel()
                         .AsOrdered()
