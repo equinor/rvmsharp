@@ -145,7 +145,7 @@ public static class RvmAlign
             if (item.From != item.Connection.Primitive1)
             {
                 var geo = item.Connection.Primitive2;
-                var offset = i == 0 ? item.Connection.OffsetX : item.Connection.OffsetY;
+                var offset = i == 0 ? item.Connection.ConnectionIndex1 : item.Connection.ConnectionIndex2;
                 switch (geo)
                 {
                     case RvmPyramid:

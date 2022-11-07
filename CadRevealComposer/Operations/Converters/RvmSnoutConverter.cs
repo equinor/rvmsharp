@@ -27,44 +27,77 @@ public static class RvmSnoutConverter
 
         var bbox = rvmSnout.CalculateAxisAlignedBoundingBox();
 
-        var height = scale.Z * MathF.Sqrt(
+        var length = scale.Z * MathF.Sqrt(
             rvmSnout.Height * rvmSnout.Height +
             rvmSnout.OffsetX * rvmSnout.OffsetX +
             rvmSnout.OffsetY * rvmSnout.OffsetY);
-        var halfHeight = 0.5f * height;
-        
+        var halfLength = 0.5f * length;
+
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
-        var centerA = position + normal * halfHeight;
-        var centerB = position - normal * halfHeight;
+        var centerA = position + normal * halfLength;
+        var centerB = position - normal * halfLength;
 
-        if (HasShear(rvmSnout))
+        if (rvmSnout.HasShear())
         {
-            if (IsEccentric(rvmSnout))
+            if (rvmSnout.IsEccentric())
             {
                 throw new NotImplementedException(
-                    "This type of primitive is missing from CadReveal, should convert to mesh?");
+                    "Eccentric snout with shear primitive is missing from CadReveal");
             }
 
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
             if (isCylinderShaped)
             {
-                return CylinderWithShear(rvmSnout, rotation, centerA, centerB, normal, radiusA, height, treeIndex, color, bbox);
+                return CreateCylinderWithShear(
+                    rvmSnout,
+                    rotation,
+                    centerA,
+                    centerB,
+                    normal,
+                    length,
+                    scale,
+                    treeIndex,
+                    color,
+                    bbox);
             }
 
-            return ConeWithShear(rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+            throw new NotImplementedException(
+                "Cone with shear primitive is missing from CadReveal");
         }
 
-        if (IsEccentric(rvmSnout))
+        if (rvmSnout.IsEccentric())
         {
-            return EccentricCone(rvmSnout, scale, rotation, position, normal, radiusA, radiusB, height, treeIndex, color, bbox);
+            return CreateEccentricCone(
+                rvmSnout,
+                scale,
+                rotation,
+                position,
+                normal,
+                radiusA,
+                radiusB,
+                length,
+                treeIndex,
+                color,
+                bbox);
         }
 
-        return Cone(rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+        return CreateCone(
+            rvmSnout,
+            rotation,
+            centerA,
+            centerB,
+            normal,
+            radiusA,
+            radiusB,
+            treeIndex,
+            color,
+            bbox);
     }
 
-    private static IEnumerable<APrimitive> Cone(
+    private static IEnumerable<APrimitive> CreateCone(
+        RvmSnout rvmSnout,
         Quaternion rotation,
         Vector3 centerA,
         Vector3 centerB,
@@ -78,16 +111,6 @@ public static class RvmSnoutConverter
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
-
-        var matrixCapA =
-            Matrix4x4.CreateScale(diameterA)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerA);
-
-        var matrixCapB =
-            Matrix4x4.CreateScale(diameterB)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerB);
 
         yield return new Cone(
             Angle: 0f,
@@ -102,24 +125,42 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        yield return new Circle(
-            matrixCapA,
-            normal,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
+        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
 
-        yield return new Circle(
-            matrixCapB,
-            -normal,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
+        if (showCapA)
+        {
+            var matrixCapA =
+                Matrix4x4.CreateScale(diameterA)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(centerA);
+
+            yield return new Circle(
+                matrixCapA,
+                normal,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
+
+        if (showCapB)
+        {
+            var matrixCapB =
+                Matrix4x4.CreateScale(diameterB)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(centerB);
+
+            yield return new Circle(
+                matrixCapB,
+                -normal,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
     }
 
-    private static IEnumerable<APrimitive> EccentricCone(
+    private static IEnumerable<APrimitive> CreateEccentricCone(
         RvmSnout rvmSnout,
         Vector3 scale,
         Quaternion rotation,
@@ -127,36 +168,26 @@ public static class RvmSnoutConverter
         Vector3 normal,
         float radiusA,
         float radiusB,
-        float height,
+        float length,
         ulong treeIndex,
         Color color,
         RvmBoundingBox bbox)
     {
-        var halfHeight = height / 2f;
+        var halfLength = length / 2f;
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
 
         var eccentricNormal = Vector3.Transform(
-            Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height) * scale.X),
+            Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height)),
             rotation);
 
-        var eccentricCenterA = position + eccentricNormal * halfHeight;
-        var eccentricCenterB = position - eccentricNormal * halfHeight;
-
-        var matrixEccentricCapA =
-            Matrix4x4.CreateScale(diameterA)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(eccentricCenterA);
-
-        var matrixEccentricCapB =
-            Matrix4x4.CreateScale(diameterB)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(eccentricCenterB);
+        var eccentricCenterA = position + eccentricNormal * halfLength;
+        var eccentricCenterB = position - eccentricNormal * halfLength;
 
         yield return new EccentricCone(
             eccentricCenterA,
             eccentricCenterB,
-            normal,
+            normal, // TODO CHECK WHY NOT eccentricNormal
             radiusA,
             radiusB,
             treeIndex,
@@ -164,60 +195,76 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        yield return new Circle(
-            matrixEccentricCapA,
-            normal,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
+        var (showCapA, showCapB) =
+            PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, eccentricCenterA, eccentricCenterB);
 
-        yield return new Circle(
-            matrixEccentricCapB,
-            -normal,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
+        if (showCapA)
+        {
+            var matrixEccentricCapA =
+                Matrix4x4.CreateScale(diameterA)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(eccentricCenterA);
+
+            yield return new Circle(
+                matrixEccentricCapA,
+                normal,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
+
+        if (showCapB)
+        {
+            var matrixEccentricCapB =
+                Matrix4x4.CreateScale(diameterB)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(eccentricCenterB);
+
+            yield return new Circle(
+                matrixEccentricCapB,
+                -normal,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
     }
 
-    private static IEnumerable<APrimitive> CylinderWithShear(
+    private static IEnumerable<APrimitive> CreateCylinderWithShear(
         RvmSnout rvmSnout,
         Quaternion rotation,
         Vector3 centerA,
         Vector3 centerB,
         Vector3 normal,
-        float radius,
         float height,
+        Vector3 scale,
         ulong treeIndex,
         Color color,
         RvmBoundingBox bbox)
     {
-        var diameter = 2f * radius;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
-        var (planeRotationA, planeNormalA, planeSlopeA) = TranslateShearToSlope(rvmSnout.TopShearX, rvmSnout.TopShearY);
-        var (planeRotationB, planeNormalB, planeSlopeB) = TranslateShearToSlope(rvmSnout.BottomShearX, rvmSnout.BottomShearY);
+        var (planeRotationA, planeNormalA, planeSlopeA) = rvmSnout.GetTopSlope();
+        var (planeRotationB, planeNormalB, planeSlopeB) = rvmSnout.GetBottomSlope();
+
+        (var ellipsePolarA, _, _) = rvmSnout.GetTopCapEllipse();
+        (var ellipsePolarB, _, _) = rvmSnout.GetBottomCapEllipse();
+
+        var semiMinorAxisA = ellipsePolarA.semiMinorAxis * scale.X;
+        var semiMajorAxisA = ellipsePolarA.semiMajorAxis * scale.X;
+        var semiMinorAxisB = ellipsePolarB.semiMinorAxis * scale.X;
+        var semiMajorAxisB = ellipsePolarB.semiMajorAxis * scale.X;
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
-        var extendedHeightA = MathF.Tan(planeSlopeA) * radius;
-        var extendedHeightB = MathF.Tan(planeSlopeB) * radius;
+        var extendedHeightA = MathF.Tan(planeSlopeA) * (float)semiMinorAxisA;
+        var extendedHeightB = MathF.Tan(planeSlopeB) * (float)semiMinorAxisB;
 
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
 
         var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height);
         var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB);
-
-        var matrixCapA =
-            Matrix4x4.CreateScale(diameter)
-            * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
-            * Matrix4x4.CreateTranslation(centerA);
-
-        var matrixCapB =
-            Matrix4x4.CreateScale(diameter)
-            * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
-            * Matrix4x4.CreateTranslation(centerB);
 
         yield return new GeneralCylinder(
             Angle: 0f,
@@ -227,118 +274,50 @@ public static class RvmSnoutConverter
             localToWorldXAxis,
             planeA,
             planeB,
-            radius,
+            (float)semiMinorAxisA,
             treeIndex,
             color,
             bbox
         );
 
-        yield return new GeneralRing(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            matrixCapA,
-            normal,
-            Thickness: 1f,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
+        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
 
-        yield return new GeneralRing(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            matrixCapB,
-            -normal,
-            Thickness: 1f,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
-    }
+        if (showCapA)
+        {
+            var matrixCapA =
+                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f)
+                * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
+                * Matrix4x4.CreateTranslation(centerA);
 
-    private static IEnumerable<APrimitive> ConeWithShear(
-        Quaternion rotation,
-        Vector3 centerA,
-        Vector3 centerB,
-        Vector3 normal,
-        float radiusA,
-        float radiusB,
-        ulong treeIndex,
-        Color color,
-        RvmBoundingBox bbox)
-    {
-        var diameterA = 2f * radiusA;
-        var diameterB = 2f * radiusB;
-        var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                matrixCapA,
+                normal,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
 
-        var matrixCapA =
-            Matrix4x4.CreateScale(diameterA)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerA);
+        if (showCapB)
+        {
+            var matrixCapB =
+                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
+                * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
+                * Matrix4x4.CreateTranslation(centerB);
 
-        var matrixCapB =
-            Matrix4x4.CreateScale(diameterB)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerB);
-
-        yield return new Cone(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox
-        );
-
-        yield return new GeneralRing(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            matrixCapA,
-            normal,
-            Thickness: 1f,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
-
-        yield return new GeneralRing(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            matrixCapB,
-            -normal,
-            Thickness: 1f,
-            treeIndex,
-            color,
-            bbox // use same bbox as RVM source
-        );
-    }
-
-    private static bool IsEccentric(RvmSnout rvmSnout)
-    {
-        return rvmSnout.OffsetX is > 0f or < 0f ||
-               rvmSnout.OffsetY is > 0f or < 0f;
-    }
-
-    private static bool HasShear(RvmSnout rvmSnout)
-    {
-        return rvmSnout.BottomShearX is > 0f or < 0f ||
-               rvmSnout.BottomShearY is > 0f or < 0f ||
-               rvmSnout.TopShearX is > 0f or < 0f ||
-               rvmSnout.TopShearY is > 0f or < 0f;
-    }
-
-    private static (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)
-    {
-        var rotationAroundY = Quaternion.CreateFromAxisAngle(Vector3.UnitY, -shearX);
-        var rotationAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, shearY);
-        var rotation = rotationAroundX * rotationAroundY;
-        var normal = Vector3.Transform(Vector3.UnitZ, rotation);
-        var slope = MathF.PI / 2f - MathF.Atan2(normal.Z, MathF.Sqrt(normal.X * normal.X + normal.Y * normal.Y));
-
-        return (rotation, normal, slope);
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                matrixCapB,
+                -normal,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
     }
 }

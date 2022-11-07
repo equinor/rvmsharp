@@ -14,12 +14,12 @@ public class RvmConnection
         // NextFlag = 4
     }
 
-    public RvmConnection(RvmPrimitive primitive1, RvmPrimitive primitive2, uint offsetX, uint offsetY, Vector3 position, Vector3 direction, ConnectionType connectionTypeFlags)
+    public RvmConnection(RvmPrimitive primitive1, RvmPrimitive primitive2, uint connectionIndex1, uint connectionIndex2, Vector3 position, Vector3 direction, ConnectionType connectionTypeFlags)
     {
         Primitive1 = primitive1;
         Primitive2 = primitive2;
-        OffsetX = offsetX;
-        OffsetY = offsetY;
+        ConnectionIndex1 = connectionIndex1;
+        ConnectionIndex2 = connectionIndex2;
         Position = position;
         Direction = direction;
         ConnectionTypeFlags = connectionTypeFlags;
@@ -27,8 +27,8 @@ public class RvmConnection
 
     public RvmPrimitive Primitive1 { get; }
     public RvmPrimitive Primitive2 { get; }
-    public uint OffsetX { get; }
-    public uint OffsetY { get; }
+    public uint ConnectionIndex1 { get; }
+    public uint ConnectionIndex2 { get; }
     public Vector3 Position { get; }
     public Vector3 Direction { get; }
     public ConnectionType ConnectionTypeFlags { get; }
