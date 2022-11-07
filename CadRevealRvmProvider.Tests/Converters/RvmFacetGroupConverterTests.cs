@@ -8,7 +8,7 @@ using System.Numerics;
 public class RvmFacetGroupConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmFacetGroup _rvmFacetGroup;
+    private RvmFacetGroup _rvmFacetGroup = null!;
 
     [SetUp]
     public void Setup()

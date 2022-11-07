@@ -9,7 +9,7 @@ using System.Numerics;
 [TestFixture]
 public class RvmCircularTorusConverterTests
 {
-    private RvmCircularTorus _rvmCircularTorus;
+    private RvmCircularTorus _rvmCircularTorus = null!;
 
     [SetUp]
     public void Setup()

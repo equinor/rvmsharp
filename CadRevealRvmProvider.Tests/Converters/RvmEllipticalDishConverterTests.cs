@@ -9,7 +9,7 @@ using System.Numerics;
 public class RvmEllipticalDishConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmEllipticalDish _rvmEllipticalDish;
+    private RvmEllipticalDish _rvmEllipticalDish = null!;
 
     [SetUp]
     public void Setup()

@@ -11,7 +11,7 @@ using System.Numerics;
 internal class RvmRectangularTorusConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmRectangularTorus _rvmRectangularTorus;
+    private RvmRectangularTorus _rvmRectangularTorus = null!;
 
     [SetUp]
     public void Setup()

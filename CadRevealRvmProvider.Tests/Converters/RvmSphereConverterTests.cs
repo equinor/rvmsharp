@@ -9,7 +9,7 @@ using System.Numerics;
 public class RvmSphereConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmSphere _rvmSphere;
+    private RvmSphere _rvmSphere = null!;
 
     [SetUp]
     public void Setup()

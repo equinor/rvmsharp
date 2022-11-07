@@ -10,7 +10,7 @@ using System.Numerics;
 public class RvmSnoutConverterTests
 {
     private const int _treeIndex = 1337;
-    private static RvmSnout _rvmSnout;
+    private static RvmSnout _rvmSnout = null!;
 
     [SetUp]
     public void Setup()

@@ -10,7 +10,7 @@ using System.Numerics;
 public class RvmPyramidConverterTests
 {
     private const int _treeIndex = 1337;
-    private static RvmPyramid _rvmPyramid;
+    private static RvmPyramid _rvmPyramid = null!;
 
     [SetUp]
     public void Setup()

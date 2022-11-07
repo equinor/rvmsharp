@@ -8,7 +8,7 @@ using System.Numerics;
 public class RvmSphericalDishConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmSphericalDish _rvmSphericalDish;
+    private RvmSphericalDish _rvmSphericalDish = null!;
 
     [SetUp]
     public void Setup()

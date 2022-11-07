@@ -10,7 +10,7 @@ using System.Numerics;
 public class RvmCylinderConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmCylinder _rvmCylinder;
+    private RvmCylinder _rvmCylinder = null!;
 
     [SetUp]
     public void Setup()

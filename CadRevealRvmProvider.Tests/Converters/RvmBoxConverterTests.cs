@@ -10,7 +10,7 @@ using System.Numerics;
 public class RvmBoxConverterTests
 {
     const int _treeIndex = 1337;
-    private RvmBox _rvmBox;
+    private RvmBox _rvmBox = null!;
 
     [SetUp]
     public void Setup()
