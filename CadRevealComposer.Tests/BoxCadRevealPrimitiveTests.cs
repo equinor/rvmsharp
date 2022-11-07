@@ -1,7 +1,5 @@
 ﻿namespace CadRevealComposer.Tests;
 
-using NUnit.Framework;
-
 [TestFixture]
 public class BoxCadRevealPrimitiveTests
 {

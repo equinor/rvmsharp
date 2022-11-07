@@ -2,7 +2,6 @@
 
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
-using NUnit.Framework;
 using System.Drawing;
 using System.Numerics;
 
