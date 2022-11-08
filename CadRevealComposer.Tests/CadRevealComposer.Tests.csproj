@@ -21,6 +21,12 @@
       <ProjectReference Include="..\CadRevealRvmProvider\CadRevealRvmProvider.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestSamples\QuaternionDecomposition.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
     <ItemGroup>
       <Folder Include="..\TestSamples">
         <Link>TestSamples</Link>

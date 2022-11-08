@@ -18,6 +18,7 @@ public static class RvmEllipticalDishConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmEllipticalDish.Matrix);
         }
+
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
         var (normal, _) = rotation.DecomposeQuaternion();
@@ -43,12 +44,17 @@ public static class RvmEllipticalDishConverter
             bbBox
         );
 
-        yield return new Circle(
-            matrixCap,
-            -normal,
-            treeIndex,
-            color,
-            bbBox
-        );
+        var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmEllipticalDish, position);
+
+        if (showCap)
+        {
+            yield return new Circle(
+                matrixCap,
+                -normal,
+                treeIndex,
+                color,
+                bbBox
+            );
+        }
     }
 }

@@ -187,7 +187,7 @@ internal class ConnectionInterface
                 }
             case RvmSnout snout:
                 connectionInterface.InterfaceType = Type.Circular;
-                var offset = ix == 0 ? connection.OffsetX : connection.OffsetY;
+                var offset = ix == 0 ? connection.ConnectionIndex1 : connection.ConnectionIndex2;
                 connectionInterface.CircularRadius = scale * (offset == 0 ? snout.RadiusBottom : snout.RadiusTop);
                 break;
             case RvmCylinder cylinder:
@@ -211,11 +211,11 @@ internal class ConnectionInterface
         bool isFirst = primitive == connection.Primitive1;
 
         var thisGeo = isFirst ? connection.Primitive1 : connection.Primitive2;
-        var thisOffset = isFirst ? connection.OffsetX : connection.OffsetY;
+        var thisOffset = isFirst ? connection.ConnectionIndex1 : connection.ConnectionIndex2;
         var thisIFace = GetInterface(thisGeo, (int)thisOffset);
 
         var thatGeo = isFirst ? connection.Primitive2 : connection.Primitive1;
-        var thatOffset = isFirst ? connection.OffsetY : connection.OffsetX;
+        var thatOffset = isFirst ? connection.ConnectionIndex2 : connection.ConnectionIndex1;
         var thatIFace = GetInterface(thatGeo, (int)thatOffset);
 
 
