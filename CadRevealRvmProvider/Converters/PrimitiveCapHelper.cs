@@ -13,8 +13,8 @@ using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public static class PrimitiveCapHelper
 {
-    public static int global_count_hidden_caps_snouts = 0;
-    public static int global_count_shown_caps_snouts = 0;
+    public static int GlobalCount_SnoutCaps_Hidden = 0;
+    public static int GlobalCount_SnoutCaps_Shown = 0;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
@@ -502,12 +502,12 @@ public static class PrimitiveCapHelper
             var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.ellipse2DPolar, px, py);
             if (d > 0.1) // 0.1mm
             {
-                global_count_shown_caps_snouts++;
+                GlobalCount_SnoutCaps_Shown++;
                 return false;
             }
         }
 
-        global_count_hidden_caps_snouts++;
+        GlobalCount_SnoutCaps_Hidden++;
         return true;
     }
 

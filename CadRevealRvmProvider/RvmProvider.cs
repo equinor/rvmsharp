@@ -1,5 +1,6 @@
 ﻿namespace CadRevealRvmProvider;
 
+using Converters;
 using Operations;
 using Utils;
 using Tessellation;
@@ -16,7 +17,6 @@ using System.Diagnostics;
 
 public class RvmProvider : IModelFormatProvider
 {
-
     public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
     {
         var workload = Workload.CollectWorkload( filesToParse.Select(x => x.FullName).ToArray());
@@ -113,6 +113,10 @@ public class RvmProvider : IModelFormatProvider
             .ToArray();
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
+
+        Console.WriteLine($"Show number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Shown}");
+        Console.WriteLine($"Hide number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Hidden}");
+
         stopwatch.Restart();
 
         return geometriesIncludingMeshes;
