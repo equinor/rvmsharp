@@ -27,6 +27,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadRevealRvmProvider", "Cad
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadRevealRvmProvider.Tests", "CadRevealRvmProvider.Tests\CadRevealRvmProvider.Tests.csproj", "{D4E1FCCE-C216-4797-9998-463547165C24}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealFbxProvider", "CadRevealFbxProvider\CadRevealFbxProvider.csproj", "{EEC942C2-74A3-4488-88AE-6FB5466BD781}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealFbxProvider.Tests", "CadRevealFbxProvider.Tests\CadRevealFbxProvider.Tests.csproj", "{5635131D-DC08-449D-8E48-5780C2EB9A4A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +85,14 @@ Global
 		{D4E1FCCE-C216-4797-9998-463547165C24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4E1FCCE-C216-4797-9998-463547165C24}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4E1FCCE-C216-4797-9998-463547165C24}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EEC942C2-74A3-4488-88AE-6FB5466BD781}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EEC942C2-74A3-4488-88AE-6FB5466BD781}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EEC942C2-74A3-4488-88AE-6FB5466BD781}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EEC942C2-74A3-4488-88AE-6FB5466BD781}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5635131D-DC08-449D-8E48-5780C2EB9A4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5635131D-DC08-449D-8E48-5780C2EB9A4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5635131D-DC08-449D-8E48-5780C2EB9A4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5635131D-DC08-449D-8E48-5780C2EB9A4A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
