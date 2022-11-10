@@ -74,7 +74,7 @@ Transform node_get_transform(CFbxNode node)
     transform_out.rotZ = r[2];
     transform_out.rotW = r[3];
     transform_out.scaleX = s[0];
-    transform_out.scaleX = s[1];
-    transform_out.scaleX = s[2];
+    transform_out.scaleY = s[1];
+    transform_out.scaleZ = s[2];
     return transform_out;
 }

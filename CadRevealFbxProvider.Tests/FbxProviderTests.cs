@@ -62,7 +62,7 @@ public class FbxProviderTests
         var trans = sdk.GetTransform(node);
         var pos = new Vector3(trans.posX, trans.posY, trans.posZ);
         var rot = new Quaternion(trans.rotX, trans.rotY, trans.rotZ, trans.rotW);
-        var sca = Vector3.One;//new Vector3(trans.scaleX, trans.scaleY, trans.scaleZ);
+        var sca = new Vector3(trans.scaleX, trans.scaleY, trans.scaleZ);
         Console.WriteLine($"Pos {pos}");
         Console.WriteLine($"Rot {rot}");
         Console.WriteLine($"Sca {sca}");
