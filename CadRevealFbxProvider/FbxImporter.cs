@@ -1,5 +1,7 @@
 ﻿namespace CadRevealFbxProvider;
 
+using CadRevealComposer.Tessellation;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -99,21 +101,36 @@ public class FbxImporter : IDisposable
         return transform;
     }
 
-    public void GetGeometricData(FbxNode node)
+    public (Mesh, IntPtr)? GetGeometricData(FbxNode node)
     {
         var mesh = node_get_mesh(node.NodeAddress);
         if (mesh != IntPtr.Zero)
         {
             var geom = mesh_get_geometry_data(mesh);
             Console.WriteLine("Number of vertices: " + geom.vertex_count);
-            var vertices = new float[geom.vertex_count*3];
-            var normals = new float[geom.vertex_count*3];
+            var vCount = geom.vertex_count;
+            var vertices = new float[vCount * 3];
+            var normals = new float[vCount * 3];
             var indicies = new int[geom.triangle_count];
             Marshal.Copy(geom.vertex_data, vertices, 0, vertices.Length);
             Marshal.Copy(geom.normal_data, normals, 0, normals.Length);
             Marshal.Copy(geom.triangle_data, indicies, 0, indicies.Length);
             mesh_clean(geom);
+            var vv = new Vector3[vCount];
+            var nn = new Vector3[vCount];
+            for (var i = 0; i < vCount; i++)
+            {
+                vv[i] = new Vector3(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
+                nn[i] = new Vector3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
+            }
+
+            var ii = indicies.Select(a => (uint)a).ToArray();
+
+            Mesh meshish = new Mesh(vv, nn, ii, 0.0f);
+            return (meshish, mesh);
         }
+
+        return null;
     }
 
     public void Dispose()
