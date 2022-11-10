@@ -5,28 +5,28 @@ using System.Text;
 
 public class FbxImporter : IDisposable
 {
-    private const string Library = "fbximporterlib";
+    private const string Library = "cfbx";
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "sdk_init")]
-    private static extern IntPtr sdk_init();
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_create")]
+    private static extern IntPtr manager_create();
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "sdk_destroy")]
-    private static extern void sdk_destroy(IntPtr sdk);
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_destroy")]
+    private static extern void manager_destroy(IntPtr manager);
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "load_file")]
     private static extern IntPtr load_file(string filename, IntPtr sdk);
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_child_count")]
-    private static extern int get_child_count(IntPtr node);
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_child_count")]
+    private static extern int node_get_child_count(IntPtr node);
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_child")]
-    private static extern IntPtr get_child(int index, IntPtr node);
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_child")]
+    private static extern IntPtr node_get_child(IntPtr node, int index);
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_name")]
-    private static extern void get_name(IntPtr node, StringBuilder nameOut, int bufferSize);
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_name")]
+    private static extern void node_get_name(IntPtr node, StringBuilder nameOut, int bufferSize);
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_transform")]
-    private static extern void get_transform(IntPtr node, [In, Out] FbxTransform transform);
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_transform")]
+    private static extern void node_get_transform(IntPtr node, [In, Out] FbxTransform transform);
 
     private IntPtr sdk;
 
@@ -59,7 +59,7 @@ public class FbxImporter : IDisposable
 
     public FbxImporter()
     {
-        sdk = sdk_init();
+        sdk = manager_create();
     }
 
     public FbxNode LoadFile(string filename)
@@ -70,30 +70,30 @@ public class FbxImporter : IDisposable
     public string GetNodeName(FbxNode node)
     {
         StringBuilder sb = new StringBuilder(512);
-        get_name(node.NodeAddress, sb, 512);
+        node_get_name(node.NodeAddress, sb, 512);
         return sb.ToString();
     }
 
     public int GetChildCount(FbxNode node)
     {
-        return get_child_count(node.NodeAddress);
+        return node_get_child_count(node.NodeAddress);
     }
 
     public FbxNode GetChild(int index, FbxNode node)
     {
-        return new FbxNode(get_child(index, node.NodeAddress));
+        return new FbxNode(node_get_child(node.NodeAddress, index));
     }
 
     public FbxTransform GetTransform(FbxNode node)
     {
         var transform = new FbxTransform();
-        get_transform(node.NodeAddress, transform);
+        node_get_transform(node.NodeAddress, transform);
         return transform;
     }
 
     public void Dispose()
     {
-        sdk_destroy(sdk);
+        manager_destroy(sdk);
         Console.WriteLine("Disposing FBX SDK");
     }
 }

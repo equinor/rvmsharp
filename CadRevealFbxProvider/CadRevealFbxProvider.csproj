@@ -11,8 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\fbximport\build\Debug\fbximporterlib.dll">
-      <Link>fbximporterlib.dll</Link>
+    <Content Include="..\fbximport\build\Debug\cfbx.dll">
+      <Link>cfbx.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -22,7 +22,7 @@ public class FbxProviderTests
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         using var test = new FbxImporter();
-        var RootNode = test.LoadFile(@"E:\gush\projects\experimental\study\rvmsharp-scaffolding\fbximport\build\Debug\AQ110South-3DView.FBX");
+        var RootNode = test.LoadFile(@"E:\tmp\AQ110South-3DView.FBX");
         Iterate(RootNode, test);
     }
 

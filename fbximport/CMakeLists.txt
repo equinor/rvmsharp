@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13.4)
 
-project (fbximporter LANGUAGES CXX VERSION 0.0.1)
+project (cfbx LANGUAGES CXX VERSION 0.0.1)
+
+find_package(Catch2 3 REQUIRED)
 
 # FBX SDK section
 set(FBX_ROOT "$ENV{FBX_ROOT}")
@@ -29,24 +31,31 @@ endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
 
-set(COMMON_SOURCES
-)
 set(TARGET_SOURCES
+    src/common.h
+    src/node.h
+    src/node.cpp
     src/main.cpp
+    src/mesh.h
+    src/mesh.cpp
+    src/manager.h
+    src/manager.cpp
+    src/importer.h
+    src/importer.cpp
+)
+set(TEST_SOURCES
+    tests/tests.cpp
 )
 
 include_directories(
-    ${fbximporter_SOURCE_DIR}/src)
+    ${cfbx_SOURCE_DIR}/src)
 
-add_executable(fbximporter ${COMMON_SOURCES} ${TARGET_SOURCES})
-add_library(fbximporterlib SHARED ${COMMON_SOURCES} ${TARGET_SOURCES})
+add_executable(tests ${TEST_SOURCES} ${TARGET_SOURCES})
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain ${FBX_REQUIRED_LIBS_DEPENDENCY})
+set_property(TARGET tests PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(fbximporter ${FBX_REQUIRED_LIBS_DEPENDENCY})
+add_library(cfbx SHARED ${TARGET_SOURCES})
+target_link_libraries(cfbx ${FBX_REQUIRED_LIBS_DEPENDENCY})
+set_property(TARGET cfbx PROPERTY CXX_STANDARD 20)
 
-target_link_libraries(fbximporterlib ${FBX_REQUIRED_LIBS_DEPENDENCY})
-
-# use C++14 standard
-set_property(TARGET fbximporter PROPERTY CXX_STANDARD 14)
-set_property(TARGET fbximporterlib PROPERTY CXX_STANDARD 14)
-
-target_compile_definitions(fbximporterlib PUBLIC FBXIMPORT_BUILD_AS_DLL)
+target_compile_definitions(cfbx PUBLIC CFBX_BUILD_AS_DLL)
