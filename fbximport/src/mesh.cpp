@@ -6,8 +6,15 @@
 using namespace fbxsdk;
 using namespace std;
 
-ExportableMesh* mesh_get_geometry_data(void* geometry)
+ExportableMesh mesh_get_geometry_data(CFbxMesh geometry)
 {
+    ExportableMesh mesh_out_tmp;
+    mesh_out_tmp.triangle_count = 0;
+    mesh_out_tmp.vertex_count = 0;
+    mesh_out_tmp.vertex_data = nullptr;
+    mesh_out_tmp.triangle_data = nullptr;
+    mesh_out_tmp.normal_data = nullptr;
+
     auto mesh = (FbxMesh*)geometry;
     // TODO UVs
 
@@ -83,38 +90,35 @@ ExportableMesh* mesh_get_geometry_data(void* geometry)
     if (lOutVertices.size() != lOutNormals.size())
     {
         // TODO: something wrong
-        return nullptr;
+        return mesh_out_tmp;
     }
 
-    auto mesh_out_tmp = new ExportableMesh();
-    mesh_out_tmp->triangle_count = lOutTriangles.size();
-    mesh_out_tmp->vertex_count = lOutVertices.size();
-    mesh_out_tmp->vertex_data = new float[lOutVertices.size() * 3];
-    mesh_out_tmp->triangle_data = new int[lOutTriangles.size()];
-    mesh_out_tmp->normal_data = new float[lOutVertices.size() * 3];
+    mesh_out_tmp.triangle_count = lOutTriangles.size();
+    mesh_out_tmp.vertex_count = lOutVertices.size();
+    mesh_out_tmp.vertex_data = new float[lOutVertices.size() * 3];
+    mesh_out_tmp.triangle_data = new int[lOutTriangles.size()];
+    mesh_out_tmp.normal_data = new float[lOutVertices.size() * 3];
 
     for (int i = 0; i < lOutVertices.size(); i++)
     {
-        mesh_out_tmp->vertex_data[i * 3] = (float)lOutVertices[i][0];
-        mesh_out_tmp->vertex_data[i * 3 + 1] = (float)lOutVertices[i][1];
-        mesh_out_tmp->vertex_data[i * 3 + 2] = (float)lOutVertices[i][2];
-        mesh_out_tmp->normal_data[i * 3] = (float)lOutNormals[i][0];
-        mesh_out_tmp->normal_data[i * 3 + 1] = (float)lOutNormals[i][1];
-        mesh_out_tmp->normal_data[i * 3 + 2] = (float)lOutNormals[i][2];
+        mesh_out_tmp.vertex_data[i * 3] = (float)lOutVertices[i][0];
+        mesh_out_tmp.vertex_data[i * 3 + 1] = (float)lOutVertices[i][1];
+        mesh_out_tmp.vertex_data[i * 3 + 2] = (float)lOutVertices[i][2];
+        mesh_out_tmp.normal_data[i * 3] = (float)lOutNormals[i][0];
+        mesh_out_tmp.normal_data[i * 3 + 1] = (float)lOutNormals[i][1];
+        mesh_out_tmp.normal_data[i * 3 + 2] = (float)lOutNormals[i][2];
     }
     for (int i = 0; i < lOutTriangles.size(); i++)
     {
-        mesh_out_tmp->triangle_data[i] = lOutTriangles[i];
+        mesh_out_tmp.triangle_data[i] = lOutTriangles[i];
     }
     return mesh_out_tmp;
 
 }
 
-void mesh_clean(void* mesh_data)
+void mesh_clean(ExportableMesh mesh_data)
 {
-    auto mesh_out_tmp = (ExportableMesh*)mesh_data;
-    delete[] mesh_out_tmp->vertex_data;
-    delete[] mesh_out_tmp->triangle_data;
-    delete[] mesh_out_tmp->normal_data;
-    delete mesh_out_tmp;
+    delete[] mesh_data.vertex_data;
+    delete[] mesh_data.triangle_data;
+    delete[] mesh_data.normal_data;
 }

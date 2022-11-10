@@ -32,15 +32,14 @@ void iterate_children(FbxNode* parent, int ident = 0)
     auto geometry = (FbxMesh*)node_get_mesh(parent);
     if (geometry != nullptr)
     {
-        ExportableMesh* data = nullptr;
-        data = (ExportableMesh*)mesh_get_geometry_data(geometry);
-        if (data == nullptr)
+        auto data = mesh_get_geometry_data(geometry);
+        if (data.vertex_count == 0)
         {
             cerr << "Could not retreive geometry" << endl;
         }
         else {
-            cout << "Vertex count: " << data->vertex_count << endl;
-            cout << "Triangle count: " << data->triangle_count << endl;
+            cout << "Vertex count: " << data.vertex_count << endl;
+            cout << "Triangle count: " << data.triangle_count << endl;
         }
 
     }

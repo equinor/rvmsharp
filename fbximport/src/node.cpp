@@ -53,10 +53,11 @@ CFbxMesh node_get_mesh(CFbxNode node)
 }
 
 
-void node_get_transform(CFbxNode node, Transform* transform_out)
+Transform node_get_transform(CFbxNode node)
 {
+    Transform transform_out{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     if (node == nullptr)
-        return;
+        return transform_out;
 
     const auto fbxNode = static_cast<FbxNode*>(node);
     auto t = fbxNode->LclTranslation.Get();
@@ -64,14 +65,16 @@ void node_get_transform(CFbxNode node, Transform* transform_out)
     r.ComposeSphericalXYZ(fbxNode->LclRotation.Get());
     auto s = fbxNode->LclScaling.Get();
 
-    transform_out->posX = t[0];
-    transform_out->posY = t[1];
-    transform_out->posZ = t[2];
-    transform_out->rotX = r[0];
-    transform_out->rotY = r[1];
-    transform_out->rotZ = r[2];
-    transform_out->rotW = r[3];
-    transform_out->scaleX = s[0];
-    transform_out->scaleX = s[1];
-    transform_out->scaleX = s[2];
+    
+    transform_out.posX = t[0];
+    transform_out.posY = t[1];
+    transform_out.posZ = t[2];
+    transform_out.rotX = r[0];
+    transform_out.rotY = r[1];
+    transform_out.rotZ = r[2];
+    transform_out.rotW = r[3];
+    transform_out.scaleX = s[0];
+    transform_out.scaleX = s[1];
+    transform_out.scaleX = s[2];
+    return transform_out;
 }

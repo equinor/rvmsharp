@@ -11,7 +11,7 @@ extern "C" {
     CFBX_API CFbxMesh node_get_mesh(CFbxNode node);
 
     // this function should be replaced by corresponding FBX calls, transform should be initialized
-    CFBX_API void node_get_transform(CFbxNode node, Transform* transform_out);
+    CFBX_API Transform node_get_transform(CFbxNode node);
 }
 
 

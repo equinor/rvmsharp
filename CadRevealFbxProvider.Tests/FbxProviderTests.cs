@@ -32,6 +32,7 @@ public class FbxProviderTests
         var childCount = test.GetChildCount(root);
         var t = test.GetTransform(root);
         Console.WriteLine($"Pos: {t.posX}, {t.posY}, {t.posZ}");
+        test.GetGeometricData(root);
         for (var i = 0; i < childCount; i++)
         {
             var child = test.GetChild(i, root);

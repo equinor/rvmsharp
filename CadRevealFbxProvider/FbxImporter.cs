@@ -26,12 +26,21 @@ public class FbxImporter : IDisposable
     private static extern void node_get_name(IntPtr node, StringBuilder nameOut, int bufferSize);
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_transform")]
-    private static extern void node_get_transform(IntPtr node, [In, Out] FbxTransform transform);
+    private static extern FbxTransform node_get_transform(IntPtr node);
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_mesh")]
+    private static extern IntPtr node_get_mesh(IntPtr node);
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_clean")]
+    private static extern void mesh_clean(FbxMesh mesh_data);
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
+    private static extern FbxMesh mesh_get_geometry_data(IntPtr mesh);
 
     private IntPtr sdk;
 
     [StructLayout(LayoutKind.Sequential)]
-    public class FbxTransform
+    public struct FbxTransform
     {
         public float posX;
         public float posY;
@@ -46,13 +55,13 @@ public class FbxImporter : IDisposable
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private class FbxMesh
+    private struct FbxMesh
     {
-        int vertex_count;
-        int triangle_count;
-        IntPtr vertex_data;
-        IntPtr normal_data;
-        IntPtr triangle_data;
+        public int vertex_count;
+        public int triangle_count;
+        public IntPtr vertex_data;
+        public IntPtr normal_data;
+        public IntPtr triangle_data;
     }
 
     public record struct FbxNode(IntPtr NodeAddress);
@@ -86,9 +95,25 @@ public class FbxImporter : IDisposable
 
     public FbxTransform GetTransform(FbxNode node)
     {
-        var transform = new FbxTransform();
-        node_get_transform(node.NodeAddress, transform);
+        var transform = node_get_transform(node.NodeAddress);
         return transform;
+    }
+
+    public void GetGeometricData(FbxNode node)
+    {
+        var mesh = node_get_mesh(node.NodeAddress);
+        if (mesh != IntPtr.Zero)
+        {
+            var geom = mesh_get_geometry_data(mesh);
+            Console.WriteLine("Number of vertices: " + geom.vertex_count);
+            var vertices = new float[geom.vertex_count*3];
+            var normals = new float[geom.vertex_count*3];
+            var indicies = new int[geom.triangle_count];
+            Marshal.Copy(geom.vertex_data, vertices, 0, vertices.Length);
+            Marshal.Copy(geom.normal_data, normals, 0, normals.Length);
+            Marshal.Copy(geom.triangle_data, indicies, 0, indicies.Length);
+            mesh_clean(geom);
+        }
     }
 
     public void Dispose()
