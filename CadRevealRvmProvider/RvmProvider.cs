@@ -34,6 +34,12 @@ public class RvmProvider : IModelFormatProvider
         var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
+
+        if (workload.Length == 0)
+        {
+            // returns empty list if there are no rvm files to process
+            return new List<CadRevealNode>();
+        }
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
 

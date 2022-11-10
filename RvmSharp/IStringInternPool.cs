@@ -1,4 +1,4 @@
-namespace RvmSharp.BatchUtils;
+namespace RvmSharp;
 
 using System;
 

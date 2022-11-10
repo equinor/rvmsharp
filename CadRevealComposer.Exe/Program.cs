@@ -2,6 +2,7 @@
 
 using CadRevealObjProvider;
 using CadRevealRvmProvider;
+using CadRevealFbxProvider;
 using CommandLine;
 using Configuration;
 using ModelFormatProvider;
@@ -60,7 +61,7 @@ public static class Program
             return 1;
         }
 
-        var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider() };
+        var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider(), new FbxProvider() };
 
         CadRevealComposerRunner.Process(
             options.InputDirectory,
