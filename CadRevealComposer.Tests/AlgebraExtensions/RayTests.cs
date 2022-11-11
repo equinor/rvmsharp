@@ -1,8 +1,7 @@
-namespace CadRevealComposer.Tests.Utils;
+namespace CadRevealComposer.Tests.AlgebraExtensions;
 
-using AlgebraExtensions;
+using CadRevealComposer.AlgebraExtensions;
 using CadRevealComposer.Utils;
-using NUnit.Framework;
 using System;
 using System.Numerics;
 

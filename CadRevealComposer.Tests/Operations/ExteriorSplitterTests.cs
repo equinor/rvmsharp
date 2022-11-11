@@ -2,8 +2,6 @@
 
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
-using NUnit.Framework;
-using RvmSharp.Primitives;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
@@ -33,7 +31,7 @@ public class ExteriorSplitterTests
             Matrix4x4.Identity,
             treeIndex,
             Color.Red,
-            new RvmBoundingBox(
+            new BoundingBox(
                 new Vector3(-boxSize / 2f),
                 new Vector3(boxSize / 2f)));
     }

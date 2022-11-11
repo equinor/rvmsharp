@@ -1,0 +1,14 @@
+[
+  {
+    "name": "Negative half PI",
+    "quaternionIn": {"x":-0.5024936,"y":-0.49749377,"z":-0.49749377,"w":0.5024937},
+    "rotationAngleExpected": -1.57079635,
+    "normalExpected":{"x": 0,"y": 1,"z": 0}
+  },
+  {
+    "name": "Positive half PI",
+    "quaternionIn": {"x":0.70710677,"y":-0.70710677,"z":0,"w":0},
+    "rotationAngleExpected": 1.57079635,
+    "normalExpected":{"x": 0,"y": 0,"z": -1}
+  }
+]

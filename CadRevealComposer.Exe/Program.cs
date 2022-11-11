@@ -1,13 +1,15 @@
 ﻿namespace CadRevealComposer.Exe;
 
+using CadRevealObjProvider;
+using CadRevealRvmProvider;
 using CommandLine;
 using Configuration;
+using ModelFormatProvider;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
 
 public static class Program
 {
@@ -44,7 +46,6 @@ public static class Program
                 new RevisionId(options.RevisionId),
                 new InstancingThreshold(options.InstancingThreshold)
             );
-
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");
         var toolsParameters = new ComposerParameters(
@@ -59,7 +60,14 @@ public static class Program
             return 1;
         }
 
-        CadRevealComposerRunner.Process(options.InputDirectory, options.OutputDirectory, parameters, toolsParameters);
+        var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider() };
+
+        CadRevealComposerRunner.Process(
+            options.InputDirectory,
+            options.OutputDirectory,
+            parameters,
+            toolsParameters,
+            providers);
 
         Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
         return Success;

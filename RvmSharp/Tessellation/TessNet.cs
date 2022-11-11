@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using static RvmSharp.Primitives.RvmFacetGroup;
+using static Primitives.RvmFacetGroup;
 
 public static class TessNet
 {

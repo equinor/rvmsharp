@@ -2,7 +2,6 @@ namespace CadRevealComposer.Operations;
 
 using IdProviders;
 using Primitives;
-using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -272,7 +271,7 @@ public static class SectorSplitter
         }
     }
 
-    private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
+    private static int CalculateVoxelKeyForGeometry(BoundingBox geometryBoundingBox, Vector3 bbMidPoint)
     {
         return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y, geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
         {

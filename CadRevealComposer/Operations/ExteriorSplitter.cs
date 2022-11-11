@@ -2,8 +2,7 @@ namespace CadRevealComposer.Operations;
 
 using AlgebraExtensions;
 using Primitives;
-using RvmSharp.Primitives;
-using RvmSharp.Tessellation;
+using Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -183,7 +182,7 @@ public static class ExteriorSplitter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static (bool Hit, float Distance) MatchBoundingBox(RvmBoundingBox boundingBox, Bounds rayBounds, Ray ray)
+    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, Bounds rayBounds, Ray ray)
     {
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);

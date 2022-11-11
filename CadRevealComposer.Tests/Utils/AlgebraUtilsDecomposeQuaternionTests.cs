@@ -14,11 +14,11 @@ public class AlgebraUtilsDecomposeQuaternionTests
     public record RotationTestCase
     {
         [JsonProperty("name")]
-        public string Name;
+        public string Name = null!;
         [JsonProperty("quaternionIn")]
-        public QuaternionSerializable QuaternionIn;
+        public QuaternionSerializable QuaternionIn = null!;
         [JsonProperty("normalExpected")]
-        public Vector3Serializable NormalExpected;
+        public Vector3Serializable NormalExpected = null!;
         [JsonProperty("rotationAngleExpected")]
         public float RotationAngleExpected;
 
