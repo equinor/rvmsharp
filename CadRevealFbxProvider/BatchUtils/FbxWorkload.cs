@@ -1,7 +1,5 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
-using CadRevealFbxProvider;
-
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
@@ -12,11 +10,8 @@ using Commons;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
-
 
 public static class FbxWorkload
 {
@@ -57,7 +52,7 @@ public static class FbxWorkload
                 Console.WriteLine(
                     $"No corresponding FBX file found for attributes: '{txtFilename}', the file will be skipped.");
             }
-                
+
             else
                 result.Add((fbxFilename, txtFilename));
         }
@@ -81,7 +76,7 @@ public static class FbxWorkload
             using var fbxImporter = new FbxImporter();
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
-            
+
             if (!string.IsNullOrEmpty(infoTextFilename))
             {
                 // TODO
@@ -120,69 +115,81 @@ public static class FbxWorkload
         return fbxNodesFlat;
     }
 
-    public static IEnumerable<CadRevealNode> IterateAndGenerate(FbxImporter.FbxNode node, TreeIndexGenerator gen,
-        FbxImporter sdk,
-        Dictionary<IntPtr, (Mesh, int)> valueTuples,
-        List<APrimitive> meshdata)
+    // ReSharper disable once InconsistentNaming -- Matrix4x4 is correct
+    private static Matrix4x4 ConvertFbxTransformToMatrix4x4(FbxImporter.FbxTransform transform)
     {
+        var pos = new Vector3(transform.posX, transform.posY, transform.posZ);
+        var rot = new Quaternion(transform.rotX, transform.rotY, transform.rotZ, transform.rotW);
+        var sca = new Vector3(transform.scaleX, transform.scaleY, transform.scaleZ);
+        return Matrix4x4.CreateScale(sca)
+               * Matrix4x4.CreateFromQuaternion(rot)
+               * Matrix4x4.CreateTranslation(pos);
+    }
 
-        var id = gen.GetNextId();
+    public static IEnumerable<CadRevealNode> ConvertFbxNodesToCadRevealRecursive(FbxImporter.FbxNode node,
+        TreeIndexGenerator treeIndexGenerator,
+        FbxImporter fbxSdk,
+        Dictionary<IntPtr, (Mesh templateMesh, int instanceId)> meshInstanceLookup)
+    {
+        var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
-        var name = sdk.GetNodeName(node);
-        var geom = sdk.GetGeometricData(node);
-        var trans = sdk.GetTransform(node);
-        var pos = new Vector3(trans.posX, trans.posY, trans.posZ);
-        var rot = new Quaternion(trans.rotX, trans.rotY, trans.rotZ, trans.rotW);
-        var sca = new Vector3(trans.scaleX, trans.scaleY, trans.scaleZ);
-        Console.WriteLine($"Pos {pos}");
-        Console.WriteLine($"Rot {rot}");
-        Console.WriteLine($"Sca {sca}");
-        var matrix = Matrix4x4.CreateScale(sca)
-            * Matrix4x4.CreateFromQuaternion(rot)
-            * Matrix4x4.CreateTranslation(pos);
-        //var matrix =
+        var name = fbxSdk.GetNodeName(node);
+        var nodeGeometryPtr = fbxSdk.GetMeshGeometryPtr(node);
+        var fbxTransform = fbxSdk.GetTransform(node);
+        var transform = ConvertFbxTransformToMatrix4x4(fbxTransform);
 
-        if (geom != null)
+        if (nodeGeometryPtr != IntPtr.Zero)
         {
-            var ptr = geom.Value.Item2;
-            if (valueTuples.ContainsKey(ptr))
+            if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
             {
-                var aprim = new InstancedMesh(valueTuples[ptr].Item2, valueTuples[ptr].Item1, matrix, id, Color.Aqua, new BoundingBox(pos + Vector3.One * -100, pos + Vector3.One * 100));
-                geometries.Add(aprim);
-                meshdata.Add(aprim);
+                var bb = instanceData.templateMesh.CalculateBoundingBox(transform);
+                var instancedMeshCopy = new InstancedMesh(instanceData.instanceId, instanceData.templateMesh,
+                    transform, id, Color.Aqua,
+                    bb);
+                geometries.Add(instancedMeshCopy);
             }
             else
             {
+                var meshData = fbxSdk.GetGeometricData(node);
+                if (meshData.HasValue)
+                {
+                    var mesh = meshData.Value.Mesh;
+                    var meshPtr = meshData.Value.MeshPtr;
+                    var instanceId = meshInstanceLookup.Count + 300;
 
-                var instanceId = valueTuples.Count;
+                    var bb = mesh.CalculateBoundingBox(transform);
 
-                valueTuples.Add(ptr, (geom.Value.Item1, instanceId));
-                var aprim = new InstancedMesh(valueTuples[ptr].Item2, valueTuples[ptr].Item1, matrix, id, Color.Aqua, new BoundingBox(pos + Vector3.One * -100, pos + Vector3.One * 100));
+                    meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+                    var instancedMesh = new InstancedMesh(instanceId, mesh,
+                        transform,
+                        id,
+                        Color.Magenta, // Temp debug color to distinguish first Instance
+                        bb);
 
-                geometries.Add(aprim);
-                meshdata.Add(aprim);
-                //using ObjExporter exporter = new ObjExporter($"E:/{instanceId}.obj");
-                //exporter.StartGroup(name);
-                //exporter.WriteMesh(valueTuples[ptr].Item1);
-                //exporter.Dispose();
+                    geometries.Add(instancedMesh);
+                    //using ObjExporter exporter = new ObjExporter($"E:/{instanceId}.obj");
+                    //exporter.StartGroup(name);
+                    //exporter.WriteMesh(valueTuples[ptr].Item1);
+                    //exporter.Dispose();
+                }
             }
         }
 
-        yield return new CadRevealNode
-        {
-            TreeIndex = gen.GetNextId(),
-            Name = name,
-            Geometries = geometries.ToArray()
-        };
+        yield return new CadRevealNode { TreeIndex = id, Name = name, Geometries = geometries.ToArray() };
 
-        var childCount = sdk.GetChildCount(node);
+        var childCount = fbxSdk.GetChildCount(node);
         for (var i = 0; i < childCount; i++)
         {
-            foreach (CadRevealNode cadRevealNode in IterateAndGenerate(sdk.GetChild(i, node), gen, sdk, valueTuples, meshdata))
+            var child = fbxSdk.GetChild(i, node);
+            var childCadRevealNodes = ConvertFbxNodesToCadRevealRecursive(
+                child,
+                treeIndexGenerator,
+                fbxSdk,
+                meshInstanceLookup);
+            foreach (CadRevealNode cadRevealNode in childCadRevealNodes)
             {
                 yield return cadRevealNode;
             }
         }
     }
-
 }

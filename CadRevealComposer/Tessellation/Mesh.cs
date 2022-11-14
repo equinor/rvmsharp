@@ -53,6 +53,44 @@ public class Mesh : IEquatable<Mesh>
         _triangles = triangles;
     }
 
+    /// <summary>
+    /// Calculates a BoundingBox of the Mesh.
+    /// Takes a transform as input if needed.
+    /// </summary>
+    /// <param name="transform">Optionally add a transform to the bounding box.</param>
+    /// <returns>A Bounding Box</returns>
+    /// <exception cref="Exception">Throws if the Mesh has 0 vertices.</exception>
+    public BoundingBox CalculateBoundingBox(Matrix4x4? transform)
+    {
+        var vertices = this._vertices;
+
+        if (vertices.Length == 0)
+            throw new Exception("Cannot find BoundingBox of a Mesh with 0 Vertices.");
+
+        Vector3 min = Vector3.One * float.MaxValue;
+        Vector3 max = Vector3.One * float.MinValue;
+        if (transform is not null and { IsIdentity: false }) // Do not apply the transform if its an identity transform.
+        {
+            for (int i = 1; i < vertices.Length; i++)
+            {
+                var transformedVertice = Vector3.Transform(vertices[i], transform.Value);
+                min = Vector3.Min(min, transformedVertice);
+                max = Vector3.Max(max, transformedVertice);
+            }
+        }
+        else
+        {
+            for (int i = 1; i < vertices.Length; i++)
+            {
+                var vertex = vertices[i];
+                min = Vector3.Min(min, vertex);
+                max = Vector3.Max(max, vertex);
+            }
+        }
+
+        return new BoundingBox(min, max);
+    }
+
     public void Apply(Matrix4x4 matrix)
     {
         // Transforming mesh normals requires some extra calculations.
@@ -78,6 +116,7 @@ public class Mesh : IEquatable<Mesh>
         return new Mesh(vertices, normals, triangles, error);
     }
 
+
     #region Equality Comparers
 
     /// <summary>
@@ -96,7 +135,7 @@ public class Mesh : IEquatable<Mesh>
         }
 
         return Error.Equals(other.Error)
-               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(0.001f))
+               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
                && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
                && Triangles.SequenceEqual(other.Triangles);
     }

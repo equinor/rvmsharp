@@ -1,8 +1,8 @@
 namespace CadRevealComposer.Primitives;
 
-using Tessellation;
 using System.Drawing;
 using System.Numerics;
+using Tessellation;
 
 // Reveal GLTF model
 public sealed record Box(
@@ -103,9 +103,20 @@ public sealed record Trapezium(
     Color Color,
     BoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
+/// <summary>
+/// Define an "Instanced Mesh". An InstanceMesh a Primitive that shares a Geometry representation with other primitives.
+/// Every primitive reusing a mesh MUST use the same InstanceId and TemplateMesh.
+/// Only the first Mesh for a given InstanceId is Serialized and used.
+/// </summary>
+/// <param name="InstanceId">Needs to be the same instanceId for all instances using a given <see cref="TemplateMesh"/>.</param>
+/// <param name="TemplateMesh">The Mesh that is used as the Instance Template</param>
+/// <param name="InstanceMatrix">The matrix to apply to the TemplateMesh to get the correct transform</param>
+/// <param name="TreeIndex">The Instances TreeIndex</param>
+/// <param name="Color"></param>
+/// <param name="AxisAlignedBoundingBox"></param>
 public sealed record InstancedMesh(
     int InstanceId,
-    Mesh Mesh,
+    Mesh TemplateMesh,
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
     Color Color,

@@ -134,7 +134,7 @@ public static class GltfWriter
         foreach (var instanceMeshGroup in instanceMeshGroups)
         {
             var instanceId = instanceMeshGroup.Key;
-            var sourceMesh = instanceMeshGroup.First().Mesh;
+            var sourceMesh = instanceMeshGroup.First().TemplateMesh;
 
             // create GLTF byte buffer
             var indexCount = sourceMesh.Triangles.Length;

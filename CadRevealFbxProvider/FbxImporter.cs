@@ -101,13 +101,18 @@ public class FbxImporter : IDisposable
         return transform;
     }
 
-    public (Mesh, IntPtr)? GetGeometricData(FbxNode node)
+    public IntPtr GetMeshGeometryPtr(FbxNode node)
     {
-        var mesh = node_get_mesh(node.NodeAddress);
-        if (mesh != IntPtr.Zero)
+        return node_get_mesh(node.NodeAddress);
+    }
+
+    public (Mesh Mesh, IntPtr MeshPtr)? GetGeometricData(FbxNode node)
+    {
+        var meshPtr = node_get_mesh(node.NodeAddress);
+        if (meshPtr != IntPtr.Zero)
         {
-            var geom = mesh_get_geometry_data(mesh);
-            Console.WriteLine("Number of vertices: " + geom.vertex_count);
+            var geom = mesh_get_geometry_data(meshPtr);
+            // Console.WriteLine("Number of vertices: " + geom.vertex_count);
             var vCount = geom.vertex_count;
             var vertices = new float[vCount * 3];
             var normals = new float[vCount * 3];
@@ -126,8 +131,9 @@ public class FbxImporter : IDisposable
 
             var ii = indicies.Select(a => (uint)a).ToArray();
 
-            Mesh meshish = new Mesh(vv, nn, ii, 0.0f);
-            return (meshish, mesh);
+            const float error = 0f; // We have no tessellation error info for FBX files.
+            Mesh meshData = new Mesh(vv, nn, ii, error);
+            return (meshData, meshPtr);
         }
 
         return null;
