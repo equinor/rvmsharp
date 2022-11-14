@@ -51,7 +51,7 @@ public class FbxProviderTests
         using var testLoader = new FbxImporter();
         var rootNode = testLoader.LoadFile(@"E:\tmp\A6001-20A06.fbx");
         var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-        var nodesToProcess = FbxWorkload.ConvertFbxNodesToCadRevealRecursive(
+        var nodesToProcess = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
