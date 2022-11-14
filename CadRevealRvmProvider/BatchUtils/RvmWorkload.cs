@@ -11,7 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-public static class Workload
+public static class RvmWorkload
 {
     public static (string rvmFilename, string? txtFilename)[] CollectWorkload(IReadOnlyCollection<string> filesAndFolders, string? filter = null)
     {

@@ -19,7 +19,7 @@ public class RvmProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
     {
-        var workload = Workload.CollectWorkload( filesToParse.Select(x => x.FullName).ToArray());
+        var workload = RvmWorkload.CollectWorkload( filesToParse.Select(x => x.FullName).ToArray());
 
         Console.WriteLine("Reading RvmData");
         var rvmTimer = Stopwatch.StartNew();
@@ -31,7 +31,7 @@ public class RvmProvider : IModelFormatProvider
         });
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
+        var rvmStore = RvmWorkload.ReadRvmData(workload, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
