@@ -63,7 +63,7 @@ public class RvmTessellator
 
         var instancedMeshes = meshes
             .SelectMany((group, index) => group.InstanceGroup.Select(item => new InstancedMesh(
-                InstanceId: index,
+                InstanceId: (ulong)index,
                 ConvertRvmMesh(group.Mesh),
                 item.Transform,
                 item.ProtoMesh.TreeIndex,

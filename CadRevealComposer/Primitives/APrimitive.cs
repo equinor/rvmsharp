@@ -115,7 +115,7 @@ public sealed record Trapezium(
 /// <param name="Color"></param>
 /// <param name="AxisAlignedBoundingBox"></param>
 public sealed record InstancedMesh(
-    int InstanceId,
+    ulong InstanceId,
     Mesh TemplateMesh,
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,

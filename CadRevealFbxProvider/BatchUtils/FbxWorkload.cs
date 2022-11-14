@@ -63,6 +63,7 @@ public static class FbxWorkload
     public static IReadOnlyList<CadRevealNode> ReadFbxData(
         IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
         IStringInternPool? stringInternPool = null)
     {
@@ -84,9 +85,14 @@ public static class FbxWorkload
                // (...).AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
             }
 
-            var lookupA = new Dictionary<IntPtr, (Mesh, int)>();
+            var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
             List<APrimitive> geometriesToProcess = new List<APrimitive>();
-            var nodesToProcess = IterateAndGenerate(rootNodeOfModel, treeIndexGenerator, fbxImporter, lookupA, geometriesToProcess).ToList();
+            var nodesToProcess = ConvertFbxNodesToCadRevealRecursive(
+                rootNodeOfModel,
+                treeIndexGenerator,
+                instanceIdGenerator,
+                fbxImporter,
+                lookupA).ToList();
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));
             return nodesToProcess;
@@ -128,8 +134,9 @@ public static class FbxWorkload
 
     public static IEnumerable<CadRevealNode> ConvertFbxNodesToCadRevealRecursive(FbxImporter.FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator,
         FbxImporter fbxSdk,
-        Dictionary<IntPtr, (Mesh templateMesh, int instanceId)> meshInstanceLookup)
+        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup)
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
@@ -155,7 +162,7 @@ public static class FbxWorkload
                 {
                     var mesh = meshData.Value.Mesh;
                     var meshPtr = meshData.Value.MeshPtr;
-                    var instanceId = meshInstanceLookup.Count + 300;
+                    ulong instanceId = instanceIdGenerator.GetNextId();
 
                     var bb = mesh.CalculateBoundingBox(transform);
 
@@ -184,6 +191,7 @@ public static class FbxWorkload
             var childCadRevealNodes = ConvertFbxNodesToCadRevealRecursive(
                 child,
                 treeIndexGenerator,
+                instanceIdGenerator,
                 fbxSdk,
                 meshInstanceLookup);
             foreach (CadRevealNode cadRevealNode in childCadRevealNodes)

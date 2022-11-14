@@ -46,10 +46,17 @@ public class FbxProviderTests
     public void SampleModel()
     {
         var treeIndexGenerator = new TreeIndexGenerator();
-        using var test = new FbxImporter();
-        var rootNode = test.LoadFile(@"E:\tmp\A6001-20A06.fbx");
-        var lookupA = new Dictionary<IntPtr, (Mesh, int)>();
-        var nodesToProcess = FbxWorkload.ConvertFbxNodesToCadRevealRecursive(rootNode, treeIndexGenerator, test, lookupA).ToList();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+
+        using var testLoader = new FbxImporter();
+        var rootNode = testLoader.LoadFile(@"E:\tmp\A6001-20A06.fbx");
+        var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
+        var nodesToProcess = FbxWorkload.ConvertFbxNodesToCadRevealRecursive(
+            rootNode,
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            testLoader,
+            lookupA).ToList();
 
         var outputDirectory = new DirectoryInfo(@"E:\tmp\lol");
         var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1));
