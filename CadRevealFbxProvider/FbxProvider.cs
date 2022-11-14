@@ -7,20 +7,41 @@ using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
-using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
+
+using Ben.Collections.Specialized;
+using Commons;
+
+using System.Diagnostics;
 
 public class FbxProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
     {
-        using var test = new FbxImporter();
+        var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
 
-        var RootNode = test.LoadFile(@"D:\Models\FBX\AQ110South-3DView.fbx");
-        var lookupA = new Dictionary<IntPtr, (Mesh, int)>();
-        List<APrimitive> geometriesToProcess = new List<APrimitive>();
-        var nodesToProcess = FbxWorkload.IterateAndGenerate(RootNode, treeIndexGenerator, test, lookupA, geometriesToProcess).ToList();
+        var fbxTimer = Stopwatch.StartNew();
 
-        return nodesToProcess;
+        var teamCityReadRvmFilesLogBlock = new TeamCityLogBlock("Reading Rvm Files");
+        var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+        {
+            Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
+        });
+
+        var stringInternPool = new BenStringInternPool(new SharedInternPool());
+        var nodes = FbxWorkload.ReadFbxData(workload, treeIndexGenerator, progressReport, stringInternPool);
+        var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
+        teamCityReadRvmFilesLogBlock.CloseBlock();
+
+        if (workload.Length == 0)
+        {
+            // returns empty list if there are no rvm files to process
+            return new List<CadRevealNode>();
+        }
+        Console.WriteLine(
+            $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .txt file size))");
+
+        return nodes;
     }
 
     public APrimitive[] ProcessGeometries(APrimitive[] geometries, ComposerParameters composerParameters,

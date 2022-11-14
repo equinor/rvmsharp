@@ -1,7 +1,6 @@
-namespace CadRevealRvmProvider.Utils;
+namespace Commons;
 
 using Ben.Collections.Specialized;
-using RvmSharp;
 using System;
 
 public class BenStringInternPool : IStringInternPool

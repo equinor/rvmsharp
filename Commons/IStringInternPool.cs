@@ -1,4 +1,4 @@
-namespace RvmSharp;
+namespace Commons;
 
 using System;
 

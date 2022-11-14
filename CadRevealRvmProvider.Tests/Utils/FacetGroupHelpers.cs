@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Tests.Utils;
 
+using BatchUtils;
 using CadRevealRvmProvider.Operations;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using RvmSharp.BatchUtils;
 using RvmSharp.Exporters;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;

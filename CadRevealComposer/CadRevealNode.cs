@@ -62,4 +62,21 @@ public class CadRevealNode
     /// </summary>
     public string? OptionalDiagnosticInfo;
 
+    public static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
+    {
+        yield return root;
+
+        if (root.Children == null)
+        {
+            yield break;
+        }
+
+        foreach (CadRevealNode cadRevealNode in root.Children)
+        {
+            foreach (CadRevealNode revealNode in GetAllNodesFlat(cadRevealNode))
+            {
+                yield return revealNode;
+            }
+        }
+    }
 }

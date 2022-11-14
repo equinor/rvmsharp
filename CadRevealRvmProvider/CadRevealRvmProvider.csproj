@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+      <ProjectReference Include="..\Commons\Commons.csproj" />
       <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
     </ItemGroup>
 
