@@ -35,6 +35,11 @@ void* load_file(const char* filename, void* sdk)
     //FbxAxisSystem as(FbxAxisSystem::eYAxis, (FbxAxisSystem::EFrontVector)FbxAxisSystem::eParityEven, FbxAxisSystem::eLeftHanded);
     //as.ConvertScene(lScene);
 
+    // Convert the scene to meters if its using other Units.
+    if (lScene->GetGlobalSettings().GetSystemUnit() != FbxSystemUnit::m) {
+        FbxSystemUnit::m.ConvertScene(lScene);
+    }
+
     FbxNode* lRoot = lScene->GetRootNode();
 
     return lRoot;
