@@ -1,5 +1,6 @@
 ﻿namespace CadRevealRvmProvider.Tests;
 
+using Operations;
 using CadRevealComposer;
 using RvmSharp.Primitives;
 using System.Drawing;

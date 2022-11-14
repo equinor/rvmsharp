@@ -1,4 +1,4 @@
-﻿namespace CadRevealRvmProvider;
+﻿namespace CadRevealRvmProvider.Operations;
 
 using CadRevealComposer.Utils;
 using RvmSharp.Operations;

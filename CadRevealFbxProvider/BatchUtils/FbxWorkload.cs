@@ -1,5 +1,7 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
+using CadRevealFbxProvider.Utils;
+
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
@@ -10,7 +12,6 @@ using Commons;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Numerics;
 using System.Text.RegularExpressions;
 
 public static class FbxWorkload
@@ -121,16 +122,7 @@ public static class FbxWorkload
         return fbxNodesFlat;
     }
 
-    // ReSharper disable once InconsistentNaming -- Matrix4x4 is correct
-    private static Matrix4x4 ConvertFbxTransformToMatrix4x4(FbxImporter.FbxTransform transform)
-    {
-        var pos = new Vector3(transform.posX, transform.posY, transform.posZ);
-        var rot = new Quaternion(transform.rotX, transform.rotY, transform.rotZ, transform.rotW);
-        var sca = new Vector3(transform.scaleX, transform.scaleY, transform.scaleZ);
-        return Matrix4x4.CreateScale(sca)
-               * Matrix4x4.CreateFromQuaternion(rot)
-               * Matrix4x4.CreateTranslation(pos);
-    }
+    
 
     public static IEnumerable<CadRevealNode> ConvertFbxNodesToCadRevealRecursive(FbxImporter.FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
@@ -143,7 +135,7 @@ public static class FbxWorkload
         var name = fbxSdk.GetNodeName(node);
         var nodeGeometryPtr = fbxSdk.GetMeshGeometryPtr(node);
         var fbxTransform = fbxSdk.GetTransform(node);
-        var transform = ConvertFbxTransformToMatrix4x4(fbxTransform);
+        var transform = FbxTransformConverter.ToMatrix4x4(fbxTransform);
 
         if (nodeGeometryPtr != IntPtr.Zero)
         {

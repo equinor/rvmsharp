@@ -1,4 +1,4 @@
-﻿namespace CadRevealRvmProvider;
+﻿namespace CadRevealRvmProvider.Operations;
 
 using RvmSharp.Primitives;
 using System.Numerics;

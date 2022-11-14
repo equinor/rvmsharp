@@ -1,4 +1,4 @@
-namespace CadRevealRvmProvider;
+namespace CadRevealRvmProvider.Converters;
 
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
