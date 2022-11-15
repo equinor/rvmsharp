@@ -442,7 +442,7 @@ public static class PrimitiveCapHelper
         if (isPrim1CurrentPrimitive)
         {
             // any snout has larger cap than a snout w zero radius top&bottom
-            if(rvmSnout1.RadiusBottom < 0.00001 && rvmSnout1.RadiusTop < 0.00001)
+            if (rvmSnout1.RadiusBottom < 0.00001 && rvmSnout1.RadiusTop < 0.00001)
                 return true;
             if (rvmSnout2.RadiusBottom < 0.00001 && rvmSnout2.RadiusTop < 0.00001)
                 return false;
