@@ -266,19 +266,19 @@ public static class ConicSectionsHelper
         var semiMajorRadius = Math.Max(semiRadius1, semiRadius2);
         var semiMinorRadius = Math.Min(semiRadius1, semiRadius2);
 
-        B = (Math.Abs(B) < (double)0.00001m) ? 0.0 : B;
-        var diffAC = (Math.Abs(A - C) < (double)0.00001m) ? 0.0 : (A - C);
-        var theta = (Math.Abs(B) > (double)0.00001m) ?
+        B = (Math.Abs(B) < 0.00001) ? 0.0 : B;
+        var diffAC = (Math.Abs(A - C) < 0.00001) ? 0.0 : (A - C);
+        var theta = (Math.Abs(B) > 0.00001) ?
         //var theta = (Math.Abs(B) > 1.0e-12) ?
             Math.Atan((C - A - Math.Sqrt((A - C) * (A - C) + B * B) / B)) :
             (diffAC <= 0.0) ? 0.0 : Math.PI / 2.0;
-        B = (Math.Abs(B) < (double)0.00001m) ? 0.0 : theta;
+        B = (Math.Abs(B) < 0.00001) ? 0.0 : theta;
 
         var x0 = (2 * C * D - A * E) / (B * B - 4.0 * A * C);
         var y0 = (2 * A * E - B * D) / (B * B - 4.0 * A * C);
 
-        x0 = (Math.Abs(x0) < (double)0.00001m) ? 0.0 : x0;
-        y0 = (Math.Abs(y0) < (double)0.00001m) ? 0.0 : y0;
+        x0 = (Math.Abs(x0) < 0.00001) ? 0.0 : x0;
+        y0 = (Math.Abs(y0) < 0.00001) ? 0.0 : y0;
 
         return new Ellipse2DPolarForm(semiMinorRadius, semiMajorRadius, theta, x0, y0, el);
     }
@@ -339,7 +339,7 @@ public static class ConicSectionsHelper
             var root1 = (-linFactor + discriminantSqrt) / (2.0 * sqFactor);
             var root2 = (-linFactor - discriminantSqrt) / (2.0 * sqFactor);
             var k = (root1 > 0) ? root1 : root2;
-            Trace.Assert(k > 0.0, "Error in Error in point-ellipse distance calculation. " +
+            Trace.Assert(k > 0.0, "Error in point-ellipse distance calculation. " +
                 $"One root is expected to be positive, but it was not. Root1: {root1} and root2: {root2}");
 
             var xPointX = el.x0 + dx * k;

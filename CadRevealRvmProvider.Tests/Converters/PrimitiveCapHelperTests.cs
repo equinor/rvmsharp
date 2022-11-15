@@ -488,7 +488,7 @@ public class PrimitiveCapHelperTests
 
     [Test]
     [DefaultFloatingPointTolerance(0.0001)]
-    public void CalculateCapVisibility_TestCapMatch_Cylinder()
+    public void CalculateCapVisibility_TestSnoutCapMatch_Cylinder()
     {
         var snout1 = new RvmSnout(0, Matrix4x4.Identity, new RvmBoundingBox(new Vector3(), new Vector3()),
             2.0f, // bottom radius
@@ -539,7 +539,7 @@ public class PrimitiveCapHelperTests
 
     [Test]
     [DefaultFloatingPointTolerance(0.0001)]
-    public void CalculateCapVisibility_TestCapMatch_RotatedCylinders()
+    public void CalculateCapVisibility_TestSnoutCapMatch_RotatedCylinders()
     {
         var transform1 = Matrix4x4.CreateTranslation(0.0f, 0.0f, 0.0f);
         var rotate = Matrix4x4.CreateRotationX(0.1f);
@@ -593,7 +593,7 @@ public class PrimitiveCapHelperTests
 
     [Test]
     [DefaultFloatingPointTolerance(0.01)]
-    public void CalculateCapVisibility_TestCapMatch_TwoSnouts()
+    public void CalculateCapVisibility_TestSnoutCapMatch_TwoSnouts()
     {
         var snout1 = new RvmSnout(
             1,
@@ -718,7 +718,7 @@ public class PrimitiveCapHelperTests
 
     [Test]
     [DefaultFloatingPointTolerance(0.0001)]
-    public void CalculateCapVisibility_TestCapMatch_RotatedCylindersWithDifferentShear()
+    public void CalculateCapVisibility_TestSnoutCapMatch_RotatedCylindersWithDifferentShear()
     {
         var transform11 = Matrix4x4.CreateTranslation(0.0f, 0.0f, -2.0f);
 
@@ -897,6 +897,85 @@ public class PrimitiveCapHelperTests
         (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(snout1, snout1CapCenter, snout1CapCenterB);
         Assert.That(showCapA, Is.False);
         Assert.That(showCapB, Is.True);
+    }
+
+    [Test]
+    [DefaultFloatingPointTolerance(0.1)]
+    public void RvmSnout_CapSnout_EdgeCases_ZeroRaddii()
+    {
+        var snout2 = new RvmSnout(
+            1,
+            new Matrix4x4(0.0f, -0.000422618265f, 0.0009063078f, 0.0f,
+                           -0.001f, 0.0f, 0.0f, 0.0f,
+                           0.0f, -0.0009063078f, -0.000422618265f, 0.0f,
+                           353.937f, 288.3957f, 59.96253f, 1.0f),
+            new RvmBoundingBox(new Vector3(0.0f, 0.0f, -1.0f),
+                                new Vector3(0.0f, 0.0f, 1.0f)),
+            0.0f, // bottom radius
+            0.0f, // top radius
+            2.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            0.0f, // bottom shear x
+            0.0f, // bottom shear y
+            0.0f, // top shear x
+            0.0f // top shear y
+            );
+
+        var snout1 = new RvmSnout(
+            1,
+            new Matrix4x4(0.0f, 0.000422618265f, -0.0009063078f, 0.0f,
+                           0.0f, 0.001f, 0.0f, 0.0f,
+                           0.0f, -0.0009063078f, -0.000422618265f, 0.0f,
+                           353.937f, 288.419281f, 59.9735146f, 1.0f),
+            new RvmBoundingBox(new Vector3(-62.5f, -62.5f, -25.0f),
+                                new Vector3(62.5f, 62.5f, 25.0f)),
+            62.5f, // bottom radius
+            62.5f, // top radius
+            50.0f, // height
+            0.0f, // offset x
+            0.0f, // offset y
+            0.0f, // bottom shear x
+            0.0f, // bottom shear y
+            0.0f, // top shear x
+            0.0f // top shear y
+            );
+
+        // snout1 -> top
+        var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
+        var snout1CapCenterB = -0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
+        (var snout1_n, _) = GeometryHelper.GetPlaneFromShearAndPoint(
+            snout1.TopShearX, snout1.TopShearY,
+            snout1CapCenter);
+
+        // snout1's top should match snout2's bottom
+        snout1.Connections[0] = new RvmConnection(snout1, snout2, 1, 0, snout1CapCenter, snout1_n,
+            RvmConnection.ConnectionType.HasCircularSide);
+
+        (bool showCapASnout1, bool showCapBSnout1) =
+            PrimitiveCapHelper.CalculateCapVisibility(snout1, snout1CapCenter, snout1CapCenterB);
+        // snout 1 has non zero radii and thus its caps should not be occluded by a snout with zero radii
+        Assert.That(showCapASnout1, Is.True);
+        Assert.That(showCapBSnout1, Is.True);
+
+        // snout2 -> bottom
+        var snout2CapCenter = -0.5f * (new Vector3(snout2.OffsetX, snout2.OffsetY, snout2.Height));
+        var snout2CapCenterB = 0.5f * (new Vector3(snout2.OffsetX, snout2.OffsetY, snout2.Height));
+        (var snout2_n, _) = GeometryHelper.GetPlaneFromShearAndPoint(
+            snout2.BottomShearX, snout2.BottomShearY,
+            snout2CapCenter);
+
+        // snout1's top should match snout2's bottom
+        snout2.Connections[0] = new RvmConnection(snout2, snout1, 0, 1, snout2CapCenter, snout2_n,
+            RvmConnection.ConnectionType.HasCircularSide);
+
+        (bool showCapASnout2, bool showCapBSnout2) =
+            PrimitiveCapHelper.CalculateCapVisibility(snout2, snout2CapCenter, snout2CapCenterB);
+        // snout 2 has zero radii, caps should not show
+        Assert.That(showCapASnout2, Is.False);
+
+        // default is true, as this is not being tested
+        Assert.That(showCapBSnout2, Is.True);
     }
 
     [Test]
