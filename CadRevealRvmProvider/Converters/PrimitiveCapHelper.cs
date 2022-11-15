@@ -441,6 +441,12 @@ public static class PrimitiveCapHelper
         MatrixD worldToSnout2;
         if (isPrim1CurrentPrimitive)
         {
+            // any snout has larger cap than a snout w zero radius top&bottom
+            if(rvmSnout1.RadiusBottom < 0.00001 && rvmSnout1.RadiusTop < 0.00001)
+                return true;
+            if (rvmSnout2.RadiusBottom < 0.00001 && rvmSnout2.RadiusTop < 0.00001)
+                return false;
+
             // is ellipse1 totally inside ellipse2 ?
             ellipseCurrent = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
             ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
@@ -450,6 +456,12 @@ public static class PrimitiveCapHelper
         }
         else
         {
+            // any snout has larger cap than a snout w zero radius top&bottom
+            if (rvmSnout2.RadiusBottom < 0.00001 && rvmSnout2.RadiusTop < 0.00001)
+                return true;
+            if (rvmSnout1.RadiusBottom < 0.00001 && rvmSnout1.RadiusTop < 0.00001)
+                return false;
+
             ellipseCurrent = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
             ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
             snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(rvmSnout2.Matrix).Transpose();
