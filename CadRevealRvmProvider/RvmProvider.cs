@@ -17,7 +17,10 @@ using System.Diagnostics;
 
 public class RvmProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
+    public IReadOnlyList<CadRevealNode> ParseFiles(
+        IEnumerable<FileInfo> filesToParse,
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator)
     {
         var workload = RvmWorkload.CollectWorkload( filesToParse.Select(x => x.FullName).ToArray());
 
@@ -52,7 +55,8 @@ public class RvmProvider : IModelFormatProvider
 
     public APrimitive[] ProcessGeometries(APrimitive[] geometries,
         ComposerParameters composerParameters,
-        ModelParameters modelParameters)
+        ModelParameters modelParameters,
+        InstanceIdGenerator instanceIdGenerator)
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -110,7 +114,8 @@ public class RvmProvider : IModelFormatProvider
         Console.WriteLine("Start tessellate");
         var meshes = RvmTessellator.TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
-            pyramidInstancingResult
+            pyramidInstancingResult,
+            instanceIdGenerator
         );
 
         var geometriesIncludingMeshes = geometries

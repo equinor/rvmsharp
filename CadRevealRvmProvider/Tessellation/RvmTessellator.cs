@@ -1,6 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Tessellation;
 
 using Operations;
+using CadRevealComposer.IdProviders;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Primitives;
 using RvmSharp.Tessellation;
@@ -18,7 +19,8 @@ public class RvmTessellator
 
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
-        RvmPyramidInstancer.Result[] pyramidInstancingResult)
+        RvmPyramidInstancer.Result[] pyramidInstancingResult,
+        InstanceIdGenerator instanceIdGenerator)
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
@@ -62,8 +64,8 @@ public class RvmTessellator
             $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
 
         var instancedMeshes = meshes
-            .SelectMany((group, index) => group.InstanceGroup.Select(item => new InstancedMesh(
-                InstanceId: (ulong)index,
+            .SelectMany(group => group.InstanceGroup.Select(item => new InstancedMesh(
+                InstanceId: instanceIdGenerator.GetNextId(),
                 ConvertRvmMesh(group.Mesh),
                 item.Transform,
                 item.ProtoMesh.TreeIndex,

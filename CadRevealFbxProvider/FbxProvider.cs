@@ -16,7 +16,10 @@ using System.Diagnostics;
 
 public class FbxProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
+    public IReadOnlyList<CadRevealNode> ParseFiles(
+        IEnumerable<FileInfo> filesToParse,
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator)
     {
         var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
 
@@ -30,7 +33,7 @@ public class FbxProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
 
-        var instanceIdGenerator = new InstanceIdGenerator();
+        
         var nodes = FbxWorkload.ReadFbxData(workload, treeIndexGenerator, instanceIdGenerator, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
@@ -47,7 +50,7 @@ public class FbxProvider : IModelFormatProvider
     }
 
     public APrimitive[] ProcessGeometries(APrimitive[] geometries, ComposerParameters composerParameters,
-        ModelParameters modelParameters)
+        ModelParameters modelParameters, InstanceIdGenerator instanceIdGenerator)
     {
         return geometries;
     }
