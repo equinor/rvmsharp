@@ -69,11 +69,11 @@ public static class FbxWorkload
         var progress = 0;
         var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
+        using var fbxImporter = new FbxImporter();
+
         IReadOnlyList<CadRevealNode> LoadFbxFile((string rvmFilename, string? txtFilename) filePair)
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
-
-            using var fbxImporter = new FbxImporter();
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
 
