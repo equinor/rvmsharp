@@ -23,6 +23,12 @@ Most of the FBX functionality is not supported. This library should:
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
 cmake --build build
 ```
+Building release mode explicitly
+
+```bash
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+cmake --build build --config Release
+```
 
 ## Testing
 
