@@ -59,6 +59,7 @@ public class FbxImporter : IDisposable
     [StructLayout(LayoutKind.Sequential)]
     private struct FbxMesh
     {
+        public bool valid;
         public int vertex_count;
         public int triangle_count;
         public IntPtr vertex_data;
@@ -112,28 +113,38 @@ public class FbxImporter : IDisposable
         if (meshPtr != IntPtr.Zero)
         {
             var geom = mesh_get_geometry_data(meshPtr);
-            // Console.WriteLine("Number of vertices: " + geom.vertex_count);
-            var vCount = geom.vertex_count;
-            var vertices = new float[vCount * 3];
-            var normals = new float[vCount * 3];
-            var indicies = new int[geom.triangle_count];
-            Marshal.Copy(geom.vertex_data, vertices, 0, vertices.Length);
-            Marshal.Copy(geom.normal_data, normals, 0, normals.Length);
-            Marshal.Copy(geom.triangle_data, indicies, 0, indicies.Length);
-            mesh_clean(geom);
-            var vv = new Vector3[vCount];
-            var nn = new Vector3[vCount];
-            for (var i = 0; i < vCount; i++)
+
+            // geoemtry can be invalid if the extraction of normal vectors fails
+            if(geom.valid)
             {
-                vv[i] = new Vector3(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
-                nn[i] = new Vector3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
+                var vCount = geom.vertex_count;
+                var vertices = new float[vCount * 3];
+                var normals = new float[vCount * 3];
+                var indicies = new int[geom.triangle_count];
+                Marshal.Copy(geom.vertex_data, vertices, 0, vertices.Length);
+                Marshal.Copy(geom.normal_data, normals, 0, normals.Length);
+                Marshal.Copy(geom.triangle_data, indicies, 0, indicies.Length);
+                mesh_clean(geom);
+                var vv = new Vector3[vCount];
+                var nn = new Vector3[vCount];
+
+                for (var i = 0; i < vCount; i++)
+                {
+                    vv[i] = new Vector3(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
+                    nn[i] = new Vector3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
+                }
+
+                var ii = indicies.Select(a => (uint)a).ToArray();
+
+                const float error = 0f; // We have no tessellation error info for FBX files.
+                Mesh meshData = new Mesh(vv, nn, ii, error);
+                return (meshData, meshPtr);
             }
-
-            var ii = indicies.Select(a => (uint)a).ToArray();
-
-            const float error = 0f; // We have no tessellation error info for FBX files.
-            Mesh meshData = new Mesh(vv, nn, ii, error);
-            return (meshData, meshPtr);
+            else
+            {
+                mesh_clean(geom);   
+            }
+            
         }
 
         return null;

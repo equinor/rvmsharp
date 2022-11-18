@@ -5,6 +5,8 @@
 #include "mesh.h"
 #include "importer.h"
 #include "manager.h"
+#include "tests.h"
+
 #include <iostream>
 #include <fbxsdk.h>
 
@@ -47,7 +49,7 @@ void iterate_children(FbxNode* parent, int ident = 0)
 
 void load_and_iterate() {
     auto sdk = manager_create();
-    const char* lInputFbxFilename = "e:/tmp/A6001-20A06.fbx";
+    const char* lInputFbxFilename = "D:/models/FBX/AQ110South-3DView.fbx";
     auto root = (FbxNode*)load_file(lInputFbxFilename, sdk);
 
     iterate_children(root);

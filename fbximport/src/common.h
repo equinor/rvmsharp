@@ -30,6 +30,7 @@ extern "C" {
     };
 
     CFBX_API struct ExportableMesh {
+        bool valid;
         int vertex_count;
         int triangle_count;
         float* vertex_data;

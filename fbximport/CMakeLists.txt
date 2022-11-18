@@ -45,6 +45,7 @@ set(TARGET_SOURCES
 )
 set(TEST_SOURCES
     tests/tests.cpp
+    tests/tests.h
 )
 
 include_directories(

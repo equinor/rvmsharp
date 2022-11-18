@@ -97,10 +97,7 @@ public static class FbxWorkload
             return nodesToProcess;
         }
 
-        var fbxNodes = workload
-            .AsParallel()
-            .AsOrdered()
-            .SelectMany(LoadFbxFile).ToArray();
+        var fbxNodes = workload.SelectMany(LoadFbxFile).ToArray();
 
         var fbxNodesFlat = fbxNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
