@@ -61,10 +61,10 @@ public class FbxImporter : IDisposable
     {
         public bool valid;
         public int vertex_count;
-        public int triangle_count;
-        public IntPtr vertex_data;
-        public IntPtr normal_data;
-        public IntPtr triangle_data;
+        public int index_count;
+        public IntPtr vertex_position_data;
+        public IntPtr vertex_normal_data;
+        public IntPtr index_data;
     }
 
     public record struct FbxNode(IntPtr NodeAddress);
@@ -120,10 +120,10 @@ public class FbxImporter : IDisposable
                 var vCount = geom.vertex_count;
                 var vertices = new float[vCount * 3];
                 var normals = new float[vCount * 3];
-                var indicies = new int[geom.triangle_count];
-                Marshal.Copy(geom.vertex_data, vertices, 0, vertices.Length);
-                Marshal.Copy(geom.normal_data, normals, 0, normals.Length);
-                Marshal.Copy(geom.triangle_data, indicies, 0, indicies.Length);
+                var indicies = new int[geom.index_count];
+                Marshal.Copy(geom.vertex_position_data, vertices, 0, vertices.Length);
+                Marshal.Copy(geom.vertex_normal_data, normals, 0, normals.Length);
+                Marshal.Copy(geom.index_data, indicies, 0, indicies.Length);
                 mesh_clean(geom);
                 var vv = new Vector3[vCount];
                 var nn = new Vector3[vCount];

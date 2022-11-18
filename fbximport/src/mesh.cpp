@@ -12,11 +12,11 @@ typedef std::tuple<float, float, float, float, float, float> vertex_tuple;
 ExportableMesh mesh_get_geometry_data(CFbxMesh geometry)
 {
     ExportableMesh mesh_out_tmp;
-    mesh_out_tmp.triangle_count = 0;
     mesh_out_tmp.vertex_count = 0;
-    mesh_out_tmp.vertex_data = nullptr;
-    mesh_out_tmp.triangle_data = nullptr;
-    mesh_out_tmp.normal_data = nullptr;
+    mesh_out_tmp.vertex_position_data = nullptr;
+    mesh_out_tmp.vertex_normal_data = nullptr;
+    mesh_out_tmp.index_count = 0;
+    mesh_out_tmp.index_data = nullptr;
 
     auto mesh = (FbxMesh*)geometry;
 
@@ -74,37 +74,37 @@ ExportableMesh mesh_get_geometry_data(CFbxMesh geometry)
         }
     }
 
-    mesh_out_tmp.triangle_count = lMeshOutVertexIndices.size();
+    mesh_out_tmp.index_count = lMeshOutVertexIndices.size();
     mesh_out_tmp.vertex_count = lMeshOutVertexPositions.size() / 3;
 
-    mesh_out_tmp.triangle_data = new int[mesh_out_tmp.triangle_count];
-    mesh_out_tmp.vertex_data = new float[lMeshOutVertexPositions.size()];
-    mesh_out_tmp.normal_data = new float[lMeshOutVertexPositions.size()];
+    mesh_out_tmp.index_data = new int[mesh_out_tmp.index_count];
+    mesh_out_tmp.vertex_position_data = new float[lMeshOutVertexPositions.size()];
+    mesh_out_tmp.vertex_normal_data = new float[lMeshOutVertexPositions.size()];
 
-    std::copy(lMeshOutVertexIndices.begin(), lMeshOutVertexIndices.end(), mesh_out_tmp.triangle_data);
-    std::copy(lMeshOutVertexPositions.begin(), lMeshOutVertexPositions.end(), mesh_out_tmp.vertex_data);
-    std::copy(lMeshOutVertexNormals.begin(), lMeshOutVertexNormals.end(), mesh_out_tmp.normal_data);
+    std::copy(lMeshOutVertexIndices.begin(), lMeshOutVertexIndices.end(), mesh_out_tmp.index_data);
+    std::copy(lMeshOutVertexPositions.begin(), lMeshOutVertexPositions.end(), mesh_out_tmp.vertex_position_data);
+    std::copy(lMeshOutVertexNormals.begin(), lMeshOutVertexNormals.end(), mesh_out_tmp.vertex_normal_data);
 
     return mesh_out_tmp;
 }
 
 void mesh_clean(ExportableMesh mesh_data)
 {
-    if (mesh_data.vertex_data)
+    if (mesh_data.vertex_position_data)
     {
-        delete mesh_data.vertex_data;
-        mesh_data.vertex_data = nullptr;
+        delete mesh_data.vertex_position_data;
+        mesh_data.vertex_position_data = nullptr;
     }
 
-    if (mesh_data.triangle_data)
+    if (mesh_data.index_data)
     {
-        delete mesh_data.triangle_data;
-        mesh_data.triangle_data = nullptr;
+        delete mesh_data.index_data;
+        mesh_data.index_data = nullptr;
     }
     
-    if (mesh_data.normal_data)
+    if (mesh_data.vertex_normal_data)
     {
-        delete mesh_data.normal_data;
-        mesh_data.normal_data = nullptr;
+        delete mesh_data.vertex_normal_data;
+        mesh_data.vertex_normal_data = nullptr;
     }
 }

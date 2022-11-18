@@ -41,7 +41,7 @@ void iterate_children(FbxNode* parent, int ident = 0)
         }
         else {
             cout << "Vertex count: " << data.vertex_count << endl;
-            cout << "Triangle count: " << data.triangle_count << endl;
+            cout << "Triangle count: " << data.index_count << endl;
         }
 
     }
