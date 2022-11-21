@@ -12,5 +12,10 @@
 # Ignore test data because of large or confidential files.
 /TestData/*
 
+# Ignore everything in TestSamples except for a whitelist
+/TestSamples/
+!/TestSamples/Huldra/
+
+# Script TempFiles
 /scripts/outputs/**
 /scripts/work_temp/
