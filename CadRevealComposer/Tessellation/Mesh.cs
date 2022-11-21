@@ -55,12 +55,12 @@ public class Mesh : IEquatable<Mesh>
 
     /// <summary>
     /// Calculates a BoundingBox of the Mesh.
-    /// Takes a transform as input if needed.
+    /// Takes a transform as input and applies to the mesh data.
     /// </summary>
-    /// <param name="transform">Optionally add a transform to the bounding box.</param>
+    /// <param name="transform">Optionally add a transform to the mesh while calculating the bounding box.</param>
     /// <returns>A Bounding Box</returns>
     /// <exception cref="Exception">Throws if the Mesh has 0 vertices.</exception>
-    public BoundingBox CalculateBoundingBox(Matrix4x4? transform)
+    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform)
     {
         var vertices = this._vertices;
 
@@ -69,7 +69,7 @@ public class Mesh : IEquatable<Mesh>
 
         Vector3 min = Vector3.One * float.MaxValue;
         Vector3 max = Vector3.One * float.MinValue;
-        if (transform is not null and { IsIdentity: false }) // Do not apply the transform if its an identity transform.
+        if (transform is not null and { IsIdentity: false }) // Skip applying the transform if its an identity transform.
         {
             for (int i = 1; i < vertices.Length; i++)
             {

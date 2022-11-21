@@ -32,7 +32,7 @@ public class FbxNodeToCadRevealNodeConverter
         {
             if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
             {
-                var bb = instanceData.templateMesh.CalculateBoundingBox(transform);
+                var bb = instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform);
                 var instancedMeshCopy = new InstancedMesh(instanceData.instanceId, instanceData.templateMesh,
                     transform, id, Color.Aqua,
                     bb);
@@ -47,7 +47,7 @@ public class FbxNodeToCadRevealNodeConverter
                     var meshPtr = meshData.Value.MeshPtr;
                     ulong instanceId = instanceIdGenerator.GetNextId();
 
-                    var bb = mesh.CalculateBoundingBox(transform);
+                    var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
 
                     meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
                     var instancedMesh = new InstancedMesh(instanceId, mesh,
