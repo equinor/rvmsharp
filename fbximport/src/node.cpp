@@ -65,7 +65,6 @@ Transform node_get_transform(CFbxNode node)
     r.ComposeSphericalXYZ(fbxNode->LclRotation.Get());
     auto s = fbxNode->LclScaling.Get();
 
-    
     transform_out.posX = t[0];
     transform_out.posY = t[1];
     transform_out.posZ = t[2];

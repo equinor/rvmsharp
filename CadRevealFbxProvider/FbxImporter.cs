@@ -33,11 +33,11 @@ public class FbxImporter : IDisposable
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_mesh")]
     private static extern IntPtr node_get_mesh(IntPtr node);
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_clean")]
-    private static extern void mesh_clean(FbxMesh mesh_data);
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_clean_memory")]
+    private static extern void mesh_clean_memory(IntPtr meshPtr); //IntPtr in is FbxMesh*
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
-    private static extern FbxMesh mesh_get_geometry_data(IntPtr mesh);
+    private static extern IntPtr mesh_get_geometry_data(IntPtr mesh); //IntPtr out is FbxMesh*
 
     private IntPtr sdk;
 
@@ -69,6 +69,9 @@ public class FbxImporter : IDisposable
 
     public record struct FbxNode(IntPtr NodeAddress);
 
+    /// <summary>
+    /// FBX Importer is NOT thread-safe, and only one instance should be active at a time. Remember to dispose.
+    /// </summary>
     public FbxImporter()
     {
         sdk = manager_create();
@@ -112,9 +115,10 @@ public class FbxImporter : IDisposable
         var meshPtr = node_get_mesh(node.NodeAddress);
         if (meshPtr != IntPtr.Zero)
         {
-            var geom = mesh_get_geometry_data(meshPtr);
+            var geomPtr = mesh_get_geometry_data(meshPtr);
+            var geom = Marshal.PtrToStructure<FbxMesh>(geomPtr);
 
-            // geoemtry can be invalid if the extraction of normal vectors fails
+            // geoemtry can be invalid if, e.g., the extraction of normal vectors failed
             if(geom.valid)
             {
                 var vCount = geom.vertex_count;
@@ -124,7 +128,7 @@ public class FbxImporter : IDisposable
                 Marshal.Copy(geom.vertex_position_data, vertices, 0, vertices.Length);
                 Marshal.Copy(geom.vertex_normal_data, normals, 0, normals.Length);
                 Marshal.Copy(geom.index_data, indicies, 0, indicies.Length);
-                mesh_clean(geom);
+                mesh_clean_memory(geomPtr);
                 var vv = new Vector3[vCount];
                 var nn = new Vector3[vCount];
 
@@ -142,9 +146,9 @@ public class FbxImporter : IDisposable
             }
             else
             {
-                mesh_clean(geom);   
+                mesh_clean_memory(geomPtr);
             }
-            
+
         }
 
         return null;

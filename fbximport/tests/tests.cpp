@@ -5,7 +5,6 @@
 #include "mesh.h"
 #include "importer.h"
 #include "manager.h"
-#include "tests.h"
 
 #include <iostream>
 #include <fbxsdk.h>
@@ -35,15 +34,15 @@ void iterate_children(FbxNode* parent, int ident = 0)
     if (geometry != nullptr)
     {
         auto data = mesh_get_geometry_data(geometry);
-        if (data.vertex_count == 0)
+        if (data->vertex_count == 0)
         {
             cerr << "Could not retreive geometry" << endl;
         }
         else {
-            cout << "Vertex count: " << data.vertex_count << endl;
-            cout << "Triangle count: " << data.index_count << endl;
+            cout << "Vertex count: " << data->vertex_count << endl;
+            cout << "Triangle count: " << data->index_count << endl;
         }
-
+        delete data;
     }
 }
 
@@ -53,11 +52,12 @@ void load_and_iterate() {
     auto root = (FbxNode*)load_file(lInputFbxFilename, sdk);
 
     iterate_children(root);
-
+    root->Destroy();
     manager_destroy(sdk);
 }
 
 TEST_CASE( "Factorials are computed", "[factorial]" ) {
+
     REQUIRE( Factorial(1) == 1 );
     REQUIRE( Factorial(2) == 2 );
     REQUIRE( Factorial(3) == 6 );

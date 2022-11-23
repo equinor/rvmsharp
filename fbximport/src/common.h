@@ -27,6 +27,8 @@ extern "C" {
         float scaleX;
         float scaleY;
         float scaleZ;
+
+        ~Transform() {}
     };
 
     CFBX_API struct ExportableMesh {
@@ -36,6 +38,27 @@ extern "C" {
         float* vertex_position_data;
         float* vertex_normal_data;
         int* index_data;
+
+        ~ExportableMesh()
+        {
+            if (vertex_position_data)
+            {
+                delete vertex_position_data;
+                vertex_position_data = nullptr;
+            }
+
+            if (index_data)
+            {
+                delete index_data;
+                index_data = nullptr;
+            }
+
+            if (vertex_normal_data)
+            {
+                delete vertex_normal_data;
+                vertex_normal_data = nullptr;
+            }
+        }
     };
 }
 
