@@ -1,10 +1,8 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
-using CadRevealFbxProvider.Utils;
-
+using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
-using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 
 using Commons;
@@ -71,27 +69,41 @@ public static class FbxWorkload
 
         using var fbxImporter = new FbxImporter();
 
-        IReadOnlyList<CadRevealNode> LoadFbxFile((string rvmFilename, string? txtFilename) filePair)
+        IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? txtFilename) filePair)
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
-
-            if (!string.IsNullOrEmpty(infoTextFilename))
-            {
-                // TODO
-                // attach attributes if they exist !!
-               // (...).AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
-            }
-
             var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-            List<APrimitive> geometriesToProcess = new List<APrimitive>();
             var nodesToProcess = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxImporter,
                 lookupA).ToList();
+
+            // TODO: Refactor CSV metadata handling
+            string csvPath = fbxFilename.Replace(".fbx", newValue: ".csv");
+            if (File.Exists(csvPath))
+            {
+                var lines = File.ReadAllLines(csvPath);
+                var data = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                var flatNodes = nodesToProcess.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+
+                var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
+                foreach (CadRevealNode cadRevealNode in flatNodes)
+                {
+                    var match = fbxNameIdRegex.Match(cadRevealNode.Name);
+                    if (match.Success)
+                    {
+                        var id = match.Groups[1].Value;
+                        foreach (var kvp in data[id])
+                        {
+                            cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                        }
+                    }
+                }
+            }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));
             return nodesToProcess;
