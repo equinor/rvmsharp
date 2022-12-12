@@ -1,10 +1,11 @@
 namespace CadRevealFbxProvider.Tests;
 
-using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Tessellation;
+using System.Numerics;
+
 
 [TestFixture]
 public class FbxProviderTests
@@ -28,16 +29,16 @@ public class FbxProviderTests
         Iterate(RootNode, test);
     }
 
-    private void Iterate(FbxImporter.FbxNode root, FbxImporter fbxImporter)
+    private void Iterate(FbxNode root, FbxImporter fbxImporter)
     {
-        Console.WriteLine(fbxImporter.GetNodeName(root));
-        var childCount = fbxImporter.GetChildCount(root);
-        var t = fbxImporter.GetTransform(root);
-        Console.WriteLine($"Pos: {t.posX}, {t.posY}, {t.posZ}");
-        fbxImporter.GetGeometricData(root);
+        Console.WriteLine(FbxNodeWrapper.GetNodeName(root));
+        var childCount = FbxNodeWrapper.GetChildCount(root);
+        Matrix4x4 t = FbxNodeWrapper.GetTransform(root);
+        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
+        FbxMeshWrapper.GetGeometricData(root);
         for (var i = 0; i < childCount; i++)
         {
-            var child = fbxImporter.GetChild(i, root);
+            var child = FbxNodeWrapper.GetChild(i, root);
             Iterate(child, fbxImporter);
         }
     }

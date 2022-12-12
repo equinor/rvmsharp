@@ -33,7 +33,6 @@ public class FbxProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
 
-        
         var nodes = FbxWorkload.ReadFbxData(workload, treeIndexGenerator, instanceIdGenerator, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();

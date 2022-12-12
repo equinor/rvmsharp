@@ -1,7 +1,5 @@
 ﻿namespace CadRevealFbxProvider;
 
-using Utils;
-
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
@@ -14,7 +12,7 @@ using System.Drawing;
 
 public class FbxNodeToCadRevealNodeConverter
 {
-    public static IEnumerable<CadRevealNode> ConvertRecursive(FbxImporter.FbxNode node,
+    public static IEnumerable<CadRevealNode> ConvertRecursive(FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         FbxImporter fbxSdk,
@@ -23,10 +21,9 @@ public class FbxNodeToCadRevealNodeConverter
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
 
-        var name = fbxSdk.GetNodeName(node);
-        var nodeGeometryPtr = fbxSdk.GetMeshGeometryPtr(node);
-        var fbxTransform = fbxSdk.GetTransform(node);
-        var transform = FbxTransformConverter.ToMatrix4x4(fbxTransform);
+        var name = FbxNodeWrapper.GetNodeName(node);
+        var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
+        var transform = FbxNodeWrapper.GetTransform(node);
 
         if (nodeGeometryPtr != IntPtr.Zero)
         {
@@ -40,7 +37,7 @@ public class FbxNodeToCadRevealNodeConverter
             }
             else
             {
-                var meshData = fbxSdk.GetGeometricData(node);
+                var meshData = FbxMeshWrapper.GetGeometricData(node);
                 if (meshData.HasValue)
                 {
                     var mesh = meshData.Value.Mesh;
@@ -63,10 +60,10 @@ public class FbxNodeToCadRevealNodeConverter
 
         yield return new CadRevealNode { TreeIndex = id, Name = name, Geometries = geometries.ToArray() };
 
-        var childCount = fbxSdk.GetChildCount(node);
+        var childCount = FbxNodeWrapper.GetChildCount(node);
         for (var i = 0; i < childCount; i++)
         {
-            var child = fbxSdk.GetChild(i, node);
+            var child = FbxNodeWrapper.GetChild(i, node);
             var childCadRevealNodes = ConvertRecursive(
                 child,
                 treeIndexGenerator,

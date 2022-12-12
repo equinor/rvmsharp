@@ -9,154 +9,23 @@ public class FbxImporter : IDisposable
 {
     private const string Library = "cfbx";
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_create")]
-    private static extern IntPtr manager_create();
+    private FbxSdkWrapper sdk;
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_destroy")]
-    private static extern void manager_destroy(IntPtr manager);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "load_file")]
-    private static extern IntPtr load_file(string filename, IntPtr sdk);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_child_count")]
-    private static extern int node_get_child_count(IntPtr node);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_child")]
-    private static extern IntPtr node_get_child(IntPtr node, int index);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_name")]
-    private static extern void node_get_name(IntPtr node, StringBuilder nameOut, int bufferSize);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_transform")]
-    private static extern FbxTransform node_get_transform(IntPtr node);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_mesh")]
-    private static extern IntPtr node_get_mesh(IntPtr node);
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_clean_memory")]
-    private static extern void mesh_clean_memory(IntPtr meshPtr); //IntPtr in is FbxMesh*
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
-    private static extern IntPtr mesh_get_geometry_data(IntPtr mesh); //IntPtr out is FbxMesh*
-
-    private IntPtr sdk;
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct FbxTransform
-    {
-        public float posX;
-        public float posY;
-        public float posZ;
-        public float rotX;
-        public float rotY;
-        public float rotZ;
-        public float rotW;
-        public float scaleX;
-        public float scaleY;
-        public float scaleZ;
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    private struct FbxMesh
-    {
-        public bool valid;
-        public int vertex_count;
-        public int index_count;
-        public IntPtr vertex_position_data;
-        public IntPtr vertex_normal_data;
-        public IntPtr index_data;
-    }
-
-    public record struct FbxNode(IntPtr NodeAddress);
-
-    /// <summary>
-    /// FBX Importer is NOT thread-safe, and only one instance should be active at a time. Remember to dispose.
-    /// </summary>
     public FbxImporter()
     {
-        sdk = manager_create();
+        sdk = new FbxSdkWrapper();
     }
 
     public FbxNode LoadFile(string filename)
     {
-        return new FbxNode(load_file(filename, sdk));
-    }
-
-    public string GetNodeName(FbxNode node)
-    {
-        StringBuilder sb = new StringBuilder(512);
-        node_get_name(node.NodeAddress, sb, 512);
-        return sb.ToString();
-    }
-
-    public int GetChildCount(FbxNode node)
-    {
-        return node_get_child_count(node.NodeAddress);
-    }
-
-    public FbxNode GetChild(int index, FbxNode node)
-    {
-        return new FbxNode(node_get_child(node.NodeAddress, index));
-    }
-
-    public FbxTransform GetTransform(FbxNode node)
-    {
-        var transform = node_get_transform(node.NodeAddress);
-        return transform;
-    }
-
-    public IntPtr GetMeshGeometryPtr(FbxNode node)
-    {
-        return node_get_mesh(node.NodeAddress);
-    }
-
-    public (Mesh Mesh, IntPtr MeshPtr)? GetGeometricData(FbxNode node)
-    {
-        var meshPtr = node_get_mesh(node.NodeAddress);
-        if (meshPtr != IntPtr.Zero)
-        {
-            var geomPtr = mesh_get_geometry_data(meshPtr);
-            var geom = Marshal.PtrToStructure<FbxMesh>(geomPtr);
-
-            // geoemtry can be invalid if, e.g., the extraction of normal vectors failed
-            if(geom.valid)
-            {
-                var vCount = geom.vertex_count;
-                var vertices = new float[vCount * 3];
-                var normals = new float[vCount * 3];
-                var indicies = new int[geom.index_count];
-                Marshal.Copy(geom.vertex_position_data, vertices, 0, vertices.Length);
-                Marshal.Copy(geom.vertex_normal_data, normals, 0, normals.Length);
-                Marshal.Copy(geom.index_data, indicies, 0, indicies.Length);
-                mesh_clean_memory(geomPtr);
-                var vv = new Vector3[vCount];
-                var nn = new Vector3[vCount];
-
-                for (var i = 0; i < vCount; i++)
-                {
-                    vv[i] = new Vector3(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
-                    nn[i] = new Vector3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
-                }
-
-                var ii = indicies.Select(a => (uint)a).ToArray();
-
-                const float error = 0f; // We have no tessellation error info for FBX files.
-                Mesh meshData = new Mesh(vv, nn, ii, error);
-                return (meshData, meshPtr);
-            }
-            else
-            {
-                mesh_clean_memory(geomPtr);
-            }
-
-        }
-
-        return null;
+        return sdk.LoadFile(filename);
     }
 
     public void Dispose()
     {
-        manager_destroy(sdk);
-        Console.WriteLine("Disposing FBX SDK");
+        sdk.Dispose();
     }
+
+
+    
 }

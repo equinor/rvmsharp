@@ -12,6 +12,8 @@ public class Mesh : IEquatable<Mesh>
 
     public float Error { get; }
 
+    private static readonly float MeshPrecision = 0.001f;
+
     public Vector3[] Vertices => _vertices;
 
     public Vector3[] Normals => _normals;
@@ -135,8 +137,8 @@ public class Mesh : IEquatable<Mesh>
         }
 
         return Error.Equals(other.Error)
-               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
-               && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
+               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(MeshPrecision))
+               && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(MeshPrecision))
                && Triangles.SequenceEqual(other.Triangles);
     }
 

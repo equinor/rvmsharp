@@ -50,6 +50,8 @@ public static class CameraPositioning
 
     private static (Vector3 PlatformBoundingBoxMin, Vector3 PlatformBoundingBoxMax) GetPlatformBoundingBox(APrimitive[] geometries)
     {
+        // TODO: does not handle empty geometries correctly
+
         // get bounding box for platform using approximation (99th percentile)
         var percentile = 0.01;
         var platformMinX = geometries.Select(node => node.AxisAlignedBoundingBox.Min.X).OrderBy(x => x).Skip((int)(percentile * geometries.Length)).First();

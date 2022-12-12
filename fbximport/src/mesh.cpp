@@ -9,9 +9,9 @@ using namespace fbxsdk;
 using namespace std;
 typedef std::tuple<float, float, float, float, float, float> vertex_tuple;
 
-// this function allocated memory
+// this function allocates memory
 // there should be a corresponding mesh_clean call for each call of this function
-// it should neve return nullptr, if the mesh is invalid for some reason, set the valid field to false
+// it should never return nullptr, if the mesh is invalid for some reason, set the valid field to false
 ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
 {
     ExportableMesh* mesh_out_tmp = new ExportableMesh();
