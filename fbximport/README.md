@@ -15,18 +15,24 @@ Most of the FBX functionality is not supported. This library should:
 - FBX SDK 2020 or later
   - FBX_ROOT environment variable must be set
 - VCPKG
-  - VCPKG_ROOT environment variable must be set
+  - VCPKG_ROOT environment variable must be set to the VCPKG root folder without trailing slash
+    - Example: `C:\Users\username\vcpkg`
 
 ## Building
 
 ```bash
+# bash
 cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
 cmake --build build
+# For release build:
+cmake --build build --config Release
 ```
-Building release mode explicitly
 
-```bash
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+```ps1
+# PowerShell
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+cmake --build build
+# For release build:
 cmake --build build --config Release
 ```
 
