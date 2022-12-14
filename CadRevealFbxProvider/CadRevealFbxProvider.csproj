@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\fbximport\build\Release\cfbx.dll">
+    <Content Include=".\lib\cfbx.dll">
       <Link>cfbx.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
