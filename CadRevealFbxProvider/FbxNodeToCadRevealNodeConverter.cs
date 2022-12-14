@@ -31,7 +31,7 @@ public class FbxNodeToCadRevealNodeConverter
             {
                 var bb = instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform);
                 var instancedMeshCopy = new InstancedMesh(instanceData.instanceId, instanceData.templateMesh,
-                    transform, id, Color.Aqua,
+                    transform, id, Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
                     bb);
                 geometries.Add(instancedMeshCopy);
             }
@@ -50,7 +50,7 @@ public class FbxNodeToCadRevealNodeConverter
                     var instancedMesh = new InstancedMesh(instanceId, mesh,
                         transform,
                         id,
-                        Color.Magenta, // Temp debug color to distinguish first Instance
+                        Color.Magenta, // TODO: Temp debug color to distinguish first Instance
                         bb);
 
                     geometries.Add(instancedMesh);
