@@ -22,6 +22,7 @@ public class FbxProviderTests
     }
 
     [Test]
+    [Explicit("Temp test, requires non-checked in fbx file")]
     public void FbxImporterLoadFileTest()
     {
         using var test = new FbxImporter();
@@ -44,6 +45,7 @@ public class FbxProviderTests
     }
 
     [Test]
+    [Explicit("Temp test, requires non-checked in fbx file")]
     public void SampleModel()
     {
         var treeIndexGenerator = new TreeIndexGenerator();
