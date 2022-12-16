@@ -22,11 +22,10 @@ public class FbxProviderTests
     }
 
     [Test]
-    [Explicit("Temp test, requires non-checked in fbx file")]
     public void FbxImporterLoadFileTest()
     {
         using var test = new FbxImporter();
-        var RootNode = test.LoadFile(@"E:\tmp\AQ110South-3DView.FBX");
+        var RootNode = test.LoadFile(@".\TestSamples\fbx_test_model.fbx");
         Iterate(RootNode, test);
     }
 
@@ -45,14 +44,13 @@ public class FbxProviderTests
     }
 
     [Test]
-    [Explicit("Temp test, requires non-checked in fbx file")]
     public void SampleModel()
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
 
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(@"E:\tmp\A6001-20A06.fbx");
+        var rootNode = testLoader.LoadFile(@".\TestSamples\fbx_test_model.fbx");
         var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
         var nodesToProcess = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -61,7 +59,7 @@ public class FbxProviderTests
             testLoader,
             lookupA).ToList();
 
-        var outputDirectory = new DirectoryInfo(@"E:\tmp\lol");
+        var outputDirectory = new DirectoryInfo(@".\TestSamples");
         var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1));
         var composerParameters = new ComposerParameters("", false, true, false);
 

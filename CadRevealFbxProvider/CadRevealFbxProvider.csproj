@@ -22,4 +22,8 @@
     <PackageReference Include="Csv" Version="2.0.87" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Utils\" />
+  </ItemGroup>
+
 </Project>

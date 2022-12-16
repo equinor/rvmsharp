@@ -21,4 +21,10 @@
       <ProjectReference Include="..\CadRevealFbxProvider\CadRevealFbxProvider.csproj" />
     </ItemGroup>
 
+  <ItemGroup>
+    <None Update="TestSamples\fbx_test_model.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

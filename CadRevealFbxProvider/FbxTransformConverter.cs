@@ -1,4 +1,4 @@
-﻿namespace CadRevealFbxProvider.Utils;
+﻿namespace CadRevealFbxProvider;
 
 using System.Numerics;
 using System.Runtime.InteropServices;
