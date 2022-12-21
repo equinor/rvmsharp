@@ -25,7 +25,7 @@ public class FbxProvider : IModelFormatProvider
 
         var fbxTimer = Stopwatch.StartNew();
 
-        var teamCityReadRvmFilesLogBlock = new TeamCityLogBlock("Reading Rvm Files");
+        var teamCityReadFbxFilesLogBlock = new TeamCityLogBlock("Reading Fbx Files");
         var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
         {
             Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
@@ -35,7 +35,7 @@ public class FbxProvider : IModelFormatProvider
 
         var nodes = FbxWorkload.ReadFbxData(workload, treeIndexGenerator, instanceIdGenerator, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
-        teamCityReadRvmFilesLogBlock.CloseBlock();
+        teamCityReadFbxFilesLogBlock.CloseBlock();
 
         if (workload.Length == 0)
         {
@@ -43,7 +43,7 @@ public class FbxProvider : IModelFormatProvider
             return new List<CadRevealNode>();
         }
         Console.WriteLine(
-            $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .txt file size))");
+            $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))");
 
         return nodes;
     }

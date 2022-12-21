@@ -3,17 +3,18 @@ namespace CadRevealFbxProvider.Tests;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Tessellation;
 using System.Numerics;
 
+using NUnit.Framework;
 
 [TestFixture]
 public class FbxProviderTests
 {
-    [SetUp]
-    public void Setup()
-    {
-    }
+    private DirectoryInfo outputDirectory = new DirectoryInfo(@".\TestSamples");
+    private DirectoryInfo inputDirectory = new DirectoryInfo(@".\TestSamples");
+
 
     [Test]
     public void FbxImporterSdkInitTest()
@@ -44,7 +45,48 @@ public class FbxProviderTests
     }
 
     [Test]
-    public void SampleModel()
+    public void SampleModel_SmokeTest()
+    {
+        try
+        {
+            var providers = new List<IModelFormatProvider>() { new FbxProvider() };
+
+            var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1));
+            var composerParameters = new ComposerParameters("", false, true, false);
+
+            CadRevealComposerRunner.Process(
+            inputDirectory,
+            outputDirectory,
+            modelParameters,
+            composerParameters,
+            providers);
+        }
+        catch(Exception ex)
+        {
+            Assert.Fail("Expected no exception, but got: " + ex.Message);
+        }
+    }
+
+    [Test]
+    public void SampleModel_AttributeTest()
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+
+        var nodes = modelFormatProviderFbx.ParseFiles(inputDirectory.EnumerateFiles(),
+            treeIndexGenerator, instanceIndexGenerator);
+
+        Assert.That(nodes.Count() == 28);
+        Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
+        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(11));
+        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(11));
+        Assert.That(nodes[2].Attributes.ContainsKey("Description"));
+        Assert.That(nodes[2].Attributes["Description"].Equals("Leather"));
+    }
+
+    [Test]
+    public void SampleModel_Load()
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
@@ -59,7 +101,7 @@ public class FbxProviderTests
             testLoader,
             lookupA).ToList();
 
-        var outputDirectory = new DirectoryInfo(@".\TestSamples");
+        
         var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1));
         var composerParameters = new ComposerParameters("", false, true, false);
 

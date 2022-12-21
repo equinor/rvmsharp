@@ -13,7 +13,7 @@ using System.Text.RegularExpressions;
 
 public static class FbxWorkload
 {
-    public static (string fbxFilename, string? txtFilename)[] CollectWorkload(
+    public static (string fbxFilename, string? attributeFilename)[] CollectWorkload(
         IReadOnlyCollection<string> filesAndFolders,
         string? filter = null)
     {
@@ -30,7 +30,7 @@ public static class FbxWorkload
 
         var inputFiles =
             directories.SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
-                .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
+                .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
                 .Concat(files) // Append single files
                 .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
                 .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
@@ -39,20 +39,20 @@ public static class FbxWorkload
             select filePair.ToArray()
             into filePairStatic
             let fbxFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".fbx"))
-            let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
-            select (fbxFilename, txtFilename)).ToArray();
+            let csvFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".csv"))
+            select (fbxFilename, csvFilename)).ToArray();
 
         var result = new List<(string, string?)>();
-        foreach ((string? fbxFilename, string? txtFilename) in workload)
+        foreach ((string? fbxFilename, string? attributeFilename) in workload)
         {
             if (fbxFilename == null)
             {
                 Console.WriteLine(
-                    $"No corresponding FBX file found for attributes: '{txtFilename}', the file will be skipped.");
+                    $"No corresponding FBX file found for attributes: '{attributeFilename}', the file will be skipped.");
             }
 
             else
-                result.Add((fbxFilename, txtFilename));
+                result.Add((fbxFilename, attributeFilename));
         }
         return result.ToArray();
     }
@@ -69,7 +69,7 @@ public static class FbxWorkload
 
         using var fbxImporter = new FbxImporter();
 
-        IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? txtFilename) filePair)
+        IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
@@ -82,11 +82,10 @@ public static class FbxWorkload
                 fbxImporter,
                 lookupA).ToList();
 
-            // TODO: Refactor CSV metadata handling
-            string csvPath = fbxFilename.Replace(".fbx", newValue: ".csv");
-            if (File.Exists(csvPath))
+            // attach attribute info to the nodes if there is any
+            if (infoTextFilename != null)
             {
-                var lines = File.ReadAllLines(csvPath);
+                var lines = File.ReadAllLines(infoTextFilename);
                 var data = new ScaffoldingAttributeParser().ParseAttributes(lines);
                 var flatNodes = nodesToProcess.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
@@ -97,9 +96,16 @@ public static class FbxWorkload
                     if (match.Success)
                     {
                         var id = match.Groups[1].Value;
-                        foreach (var kvp in data[id])
+                        if(data.ContainsKey(id))
                         {
-                            cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                            foreach (var kvp in data[id])
+                            {
+                                cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Data Id {id} does not exist in the attribute file.");
                         }
                     }
                 }
@@ -119,6 +125,7 @@ public static class FbxWorkload
                 $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
         }
 
+        // TODO: check if/how something similar has to be done for FBX models
         //var rvmStore = new RvmStore();
         //rvmStore.RvmFiles.AddRange(fbxFiles);
         //progressReport?.Report(("Connecting geometry", 0, 2));
