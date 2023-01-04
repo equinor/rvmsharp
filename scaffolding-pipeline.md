@@ -1,0 +1,12 @@
+# TODO
+- sample environment
+  - input files to test with (TestSamples to maybe start with)
+- pws script: pipeline
+   - input params:
+      - folder path to input files
+      - folder path for the output files
+   - steps: 
+      - find .fbx (3D model), .csv (attributes), .json (metadata) in the folder
+      - parse metadata (get modelID)
+      - start CadRevealComposer.exe and run the pipeline
+      - write a metadata file .json for the later upload to Echo Model Distribution Service
