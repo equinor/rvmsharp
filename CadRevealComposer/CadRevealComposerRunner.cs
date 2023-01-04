@@ -27,12 +27,13 @@ public static class CadRevealComposerRunner
         List<CadRevealNode> nodesToProcess = new List<CadRevealNode>();
         List<Primitives.APrimitive> geometriesToProcess = new List<Primitives.APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIdGenerator = new InstanceIdGenerator();
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
             IReadOnlyList<CadRevealNode> cadRevealNodes =
-                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator);
+                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator, instanceIdGenerator);
             if(cadRevealNodes != null)
             {
                 Console.WriteLine(
@@ -49,7 +50,11 @@ public static class CadRevealComposerRunner
                         .SelectMany(x => x.Geometries)
                         .ToArray();
 
-                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(inputGeometries, composerParameters, modelParameters);
+                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                        inputGeometries,
+                        composerParameters,
+                        modelParameters,
+                        instanceIdGenerator);
                     geometriesToProcess.AddRange(geometriesIncludingMeshes);
                 }
             }

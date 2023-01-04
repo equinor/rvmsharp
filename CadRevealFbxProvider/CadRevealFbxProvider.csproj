@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+    <ProjectReference Include="..\Commons\Commons.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include=".\lib\cfbx.dll">
+      <Link>cfbx.dll</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Csv" Version="2.0.87" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Utils\" />
+  </ItemGroup>
+
+</Project>

@@ -14,7 +14,10 @@ using System.Numerics;
 
 public class ObjProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator)
+    public IReadOnlyList<CadRevealNode> ParseFiles(
+        IEnumerable<FileInfo> filesToParse,
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator)
     {
         var objLoaderFactory = new ObjLoaderFactory();
         var objLoader = objLoaderFactory.Create();
@@ -60,7 +63,8 @@ public class ObjProvider : IModelFormatProvider
 
     public APrimitive[] ProcessGeometries(APrimitive[] geometries,
         ComposerParameters composerParameters,
-        ModelParameters modelParameters)
+        ModelParameters modelParameters,
+        InstanceIdGenerator instanceIdGenerator)
     {
         return geometries;
     }

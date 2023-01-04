@@ -4,6 +4,9 @@ using System;
 using System.Collections.Concurrent;
 
 // FIXME: placeholder implementation
+
+// Separate empty implementations SequentialIdGenerator are used to
+// avoid a TreeIndexGenerator being sent in where a InstanceIdGenerator or a NodeIdGenerator should be used.
 public class NodeIdProvider
 {
     private readonly Random _random = new();

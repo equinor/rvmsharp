@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable;</WarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="LibTessDotNet" Version="1.1.15" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Ben.StringIntern" Version="0.1.8" />
+  </ItemGroup>
+  
+</Project>

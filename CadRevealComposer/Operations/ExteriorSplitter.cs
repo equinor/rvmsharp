@@ -2,12 +2,12 @@ namespace CadRevealComposer.Operations;
 
 using AlgebraExtensions;
 using Primitives;
-using Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using Tessellation;
 using Utils;
 
 /// <summary>
@@ -240,7 +240,7 @@ public static class ExteriorSplitter
     {
         static TessellatedPrimitive? TessellateInstancedMesh(InstancedMesh primitive)
         {
-            var triangles = CollectTrianglesForMesh(primitive.Mesh).ToArray();
+            var triangles = CollectTrianglesForMesh(primitive.TemplateMesh).ToArray();
             return new TessellatedPrimitive(triangles, primitive);
         }
 

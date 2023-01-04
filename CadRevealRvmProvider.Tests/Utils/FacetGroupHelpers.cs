@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Tests.Utils;
 
+using BatchUtils;
 using CadRevealRvmProvider.Operations;
 using Newtonsoft.Json;
 using NUnit.Framework;
-using RvmSharp.BatchUtils;
 using RvmSharp.Exporters;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
@@ -71,8 +71,8 @@ public class FacetGroupHelpers
     [Test]
     public void ExportAllUnmatchedFacetGroupsAsObjs()
     {
-        var workload = Workload.CollectWorkload(new[] { @"d:\Models\hda\HDA_RVM" });
-        var rvmStore = Workload.ReadRvmData(workload);
+        var workload = RvmWorkload.CollectWorkload(new[] { @"d:\Models\hda\HDA_RVM" });
+        var rvmStore = RvmWorkload.ReadRvmData(workload);
         var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
         var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 

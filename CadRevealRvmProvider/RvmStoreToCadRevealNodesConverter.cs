@@ -1,9 +1,10 @@
-namespace CadRevealRvmProvider;
+namespace CadRevealRvmProvider.Converters;
 
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
+using RvmSharp.Primitives;
 using System.Diagnostics;
 
 static internal class RvmStoreToCadRevealNodesConverter
@@ -14,7 +15,7 @@ static internal class RvmStoreToCadRevealNodesConverter
         var cadRevealRootNodes = rvmStore.RvmFiles
             .SelectMany(f => f.Model.Children)
             .Select(root =>
-                RvmNodeToCadRevealNodeConverter.CollectGeometryNodesRecursive(root, parent: null,
+                CollectGeometryNodesRecursive(root, parent: null,
                     treeIndexGenerator))
             .ToArray();
 
@@ -26,25 +27,69 @@ static internal class RvmStoreToCadRevealNodesConverter
         Debug.Assert(subBoundingBox != null,
             "Root node has no bounding box. Are there any meshes in the input?");
 
-        var allNodes = cadRevealRootNodes.SelectMany(GetAllNodesFlat).ToArray();
+        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
         return allNodes;
     }
 
-    private static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
+    private static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode? parent,
+        TreeIndexGenerator treeIndexGenerator)
     {
-        yield return root;
-
-        if (root.Children == null)
+        var newNode = new CadRevealNode
         {
-            yield break;
-        }
+            TreeIndex = treeIndexGenerator.GetNextId(),
+            Parent = parent,
+            Children = null,
+            Name = root.Name,
+            Attributes = root.Attributes
+        };
 
-        foreach (CadRevealNode cadRevealNode in root.Children)
+        CadRevealNode[] childrenCadNodes;
+        RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
+
+        if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
         {
-            foreach (CadRevealNode revealNode in GetAllNodesFlat(cadRevealNode))
+            childrenCadNodes = root.Children.Select(child =>
             {
-                yield return revealNode;
-            }
+                switch (child)
+                {
+                    case RvmPrimitive rvmPrimitive:
+                        return CollectGeometryNodesRecursive(
+                            new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
+                            {
+                                Children = { rvmPrimitive }
+                            }, newNode, treeIndexGenerator);
+                    case RvmNode rvmNode:
+                        return CollectGeometryNodesRecursive(rvmNode, newNode, treeIndexGenerator);
+                    default:
+                        throw new Exception();
+                }
+            }).ToArray();
         }
+        else
+        {
+            childrenCadNodes = root.Children.OfType<RvmNode>()
+                .Select(n => CollectGeometryNodesRecursive(n, newNode, treeIndexGenerator))
+                .ToArray();
+            rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
+        }
+
+        newNode.Geometries = rvmGeometries
+            .SelectMany(primitive =>
+                RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root))
+            .ToArray();
+
+        newNode.Children = childrenCadNodes;
+
+        var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
+            .Select(x => x.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox()).ToArray();
+        var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned)
+            .WhereNotNull();
+
+        var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
+        newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
+            ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
+            : null;
+
+        return newNode;
     }
 }

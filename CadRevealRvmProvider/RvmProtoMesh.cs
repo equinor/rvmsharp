@@ -19,6 +19,12 @@ public sealed record ProtoMeshFromFacetGroup(
     Color Color,
     BoundingBox AxisAlignedBoundingBox) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
 
+public sealed record ProtoMeshFromRvmPyramid(
+    RvmPyramid Pyramid,
+    ulong TreeIndex,
+    Color Color,
+    BoundingBox AxisAlignedBoundingBox) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
+
 /// <summary>
 /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.
 /// </summary>

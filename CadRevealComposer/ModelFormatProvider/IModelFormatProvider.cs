@@ -8,9 +8,13 @@ using System.IO;
 
 public interface IModelFormatProvider
 {
-    IReadOnlyList<CadRevealNode> ParseFiles(IEnumerable<FileInfo> filesToParse, TreeIndexGenerator treeIndexGenerator);
+    IReadOnlyList<CadRevealNode> ParseFiles(
+        IEnumerable<FileInfo> filesToParse,
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator);
 
     public APrimitive[] ProcessGeometries(APrimitive[] geometries,
         ComposerParameters composerParameters,
-        ModelParameters modelParameters);
+        ModelParameters modelParameters,
+        InstanceIdGenerator instanceIdGenerator);
 }
