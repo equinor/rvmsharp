@@ -8,5 +8,8 @@
    - steps: 
       - find .fbx (3D model), .csv (attributes), .json (metadata) in the folder
       - parse metadata (get modelID)
+      - read versionNr from .json (metadata)
+      - delete content of both WorkDirectory and OutputDirectory (set of sector files can be different for different versions of the model)
       - start CadRevealComposer.exe and run the pipeline
+      - rename hierarchy.db to expected_hierarchyID.db
       - write a metadata file .json for the later upload to Echo Model Distribution Service
