@@ -1,9 +1,10 @@
 #Requires -Version 7
 [CmdletBinding()]
 param (
-    [Parameter(Mandatory = $true)][string] $InputDirectory, #Example "../TestData/FBX"),
+    [Parameter(Mandatory = $true)][string] $InputDirectory, #Example "../TestData/FBX",
     [Parameter(Mandatory = $false)][string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
     [Parameter(Mandatory = $true)][string] $OutputDirectory, #Example: "C:/artifacts/scaffolding",
+    [Parameter(Mandatory = $true)][Int32] $RevisionNumber, # Read previous revNr and increment +n, important that is is always increasing
     [switch] $Force = $false
 )
 
@@ -38,13 +39,14 @@ end {
 
     Remove-Item -Path $WorkDirectory -Recurse -Force -ErrorAction Ignore
     New-Item -Path $WorkDirectory -ItemType Directory -Force | Out-Null
+    Remove-Item -Path $OutputDirectory -Recurse -Force -ErrorAction Ignore
+    New-Item -Path $OutputDirectory -ItemType Directory -Force | Out-Null
 
     #endregion Guards
 
     #region metadata extraction
 
     $inputMetadata = Get-Content $(Join-Path "$InputDirectory" ".\fbx_test_model_metadata.json") -Raw | ConvertFrom-Json -Depth 100
-
     #endregion
 
     #region Reveal Composer
@@ -74,36 +76,39 @@ end {
         Write-Error "Dotnet failed with exit code $LASTEXITCODE"
     }
 
+    $sceneMetadata = Get-Content $(Join-Path "$WorkDirectory" ".\scene.json") -Raw | ConvertFrom-Json -Depth 100
+
     #endregion Reveal Composer
 
     # compose output metadata json
-    $artifactVersion = 9
+    $artifactVersion = $sceneMetadata.version
     $artifactKind = "Reveal"
-    $revisionNumber = 295
+    $plantCode = $inputMetadata.plantCode
+    $platformSectionId = $inputMetadata.scaffoldingId
+    $SourceModelUpdatedDateTime = [DateTime]$inputMetadata.modelUpdatedDateTime
+
     $outputMetadata = @{
-        id = 8195
-        plantCode = "jsa"
-        revisionNumber = 295
-        artifactKind = $artifactKind # Kept as is
-        artifactVersion = $artifactVersion # Kept as is
-        buildRunDateTime = "2022-10-10T13:45:52+00:00" # Kept as is
-        sourceModelUpdatedDateTime = "2022-10-09T15:49:59+00:00"
-        projectNameLabel = "Johan Sverdrup" # Equal to Plant Scaffolding is placed in
         platformNameLabel = "Processing Platform 1" # Equal to Plant Scaffolding is placed in
+        projectNameLabel = "Johan Sverdrup" # Equal to Plant Scaffolding is placed in
+        plantCode = $plantCode
         projectSectionId = "Scaffolding"
-        platformSectionId = "Scaffolding-AC110-VG23001" # Needs to be consistent across multiple updates of the same scaffolding file
-        platformSectionLabel = "As-Built" # Display name of the scaffolding
-        hierarchyId = "jsa-reveal_9_full_asb-295-4ec5a867-ab36-4827-b2ea-f3205014657f" # Unique for each scaffolding "File"
+        platformSectionId = $platformSectionId # Needs to be consistent across multiple updates of the same scaffolding file
+        platformSectionLabel = $inputMetadata.scaffoldingDisplayName # Display name of the scaffolding
+        revisionNumber = $RevisionNumber
+        buildRunDateTime = Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ" -AsUTC
+        sourceModelUpdatedDateTime = $SourceModelUpdatedDateTime.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        artifactKind = $artifactKind # Kept as is
+        artifactFileFormatVersion = $artifactVersion # Kept as is
+        hierarchyId = ($plantCode + "-" +
+            $artifactKind +"_" +
+            $artifactVersion + "_" +
+            $platformSectionId + "-" +
+            $RevisionNumber + "-" + [guid]::NewGuid()).ToLower() # Unique for each scaffolding "File"
         metadata = @{
             Key = "Value" # Generic Key-Value pairs of metadata that can be used to filter scaffoldings client side?,
             StidTags = @("VG230001", "VG230022") # Example: Could be tags that are covered by this scaffolding? Might be something to search/filter on?
             LastUpdatedBy = "NIH@equinor.com"
         }
-
-
-        # Auto generated based on other metadata)
-        blobContainer = "jsa-full-asb" # should be "jsa-full-asb"
-        filesPrefix = $artifactKind + "_" + $artifactVersion + "/"+ $revisionNumber + "/"  # should be "Reveal_9/295/""
     }
 
     $outputJsonFile = $(Join-Path "$WorkDirectory" ".\metadata.json")
@@ -115,6 +120,11 @@ end {
 
     New-Item -Path $artifactStagingDirectory -ItemType Directory -Force | Out-Null
 
+    $hierachyFile = Join-Path "$WorkDirectory" ".\hierarchy.db"
+    $hierarchyFileNew = $outputMetadata.hierarchyId  + ".db"
+    $hierachyFile
+    $hierarchyFileNew
+    Rename-Item $hierachyFile $hierarchyFileNew
 
     $artifactStagingGlobs = @(
         "scene.json"

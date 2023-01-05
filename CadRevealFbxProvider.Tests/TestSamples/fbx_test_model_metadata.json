@@ -1,5 +1,6 @@
 {
   "plantCode": "TEST",
-  "scaffoldingId": "TEST-ID",
-  "scaffoldingDisplayName": "TEST-DISPLAY"
+  "scaffoldingId": "TESTID",
+  "scaffoldingDisplayName": "TESTDISPLAY",
+  "modelUpdatedDateTime": "2023-01-01T00:30:01Z"
 }
