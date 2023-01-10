@@ -22,6 +22,11 @@ public class FbxProvider : IModelFormatProvider
         InstanceIdGenerator instanceIdGenerator)
     {
         var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
+        if(!workload.Any())
+        {
+            Console.WriteLine("Found no .fbx files. Skipping FBX Parser.");
+            return new List<CadRevealNode>();
+        }
 
         var fbxTimer = Stopwatch.StartNew();
 

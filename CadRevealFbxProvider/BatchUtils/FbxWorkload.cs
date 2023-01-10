@@ -31,7 +31,9 @@ public static class FbxWorkload
         var inputFiles =
             directories.SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
                 .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
-                .Concat(files) // Append single files
+                .Concat(files.Where(x =>
+                    x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase) ||
+                    x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))) // Append single files
                 .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
                 .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
 
@@ -45,6 +47,9 @@ public static class FbxWorkload
         var result = new List<(string, string?)>();
         foreach ((string? fbxFilename, string? attributeFilename) in workload)
         {
+            if (fbxFilename == null && attributeFilename == null)
+                continue; // Nothing found
+
             if (fbxFilename == null)
             {
                 Console.WriteLine(
