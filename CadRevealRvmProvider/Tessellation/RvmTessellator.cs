@@ -56,7 +56,7 @@ public class RvmTessellator
         var meshes = facetGroupInstanced
             .Concat(pyramidsInstanced)
             .AsParallel()
-            .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key)))
+            .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key), InstanceId: instanceIdGenerator.GetNextId() /* Must be identical for all instances of this mesh */ ))
             .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
@@ -65,7 +65,7 @@ public class RvmTessellator
 
         var instancedMeshes = meshes
             .SelectMany(group => group.InstanceGroup.Select(item => new InstancedMesh(
-                InstanceId: instanceIdGenerator.GetNextId(),
+                InstanceId: group.InstanceId,
                 ConvertRvmMesh(group.Mesh),
                 item.Transform,
                 item.ProtoMesh.TreeIndex,
@@ -120,5 +120,5 @@ public class RvmTessellator
         return mesh;
     }
 
-    
+
 }
