@@ -1,7 +1,6 @@
-﻿using NUnit.Framework;
+﻿namespace RvmSharp.Tests.Primitives;
 
-namespace RvmSharp.Tests.Primitives;
-
+using NUnit.Framework;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System;
@@ -96,12 +95,22 @@ public class RvmPrimitiveTests
     public void GetAxisAlignedBoundingBox_WithUnitBox(BoundingBoxTestCaseDescription testCaseDescription)
     {
         var primitive = CreateUnitBoxWithMatrix(testCaseDescription.Transform);
-        RvmBoundingBox bb = primitive.CalculateAxisAlignedBoundingBox();
+        RvmBoundingBox bb = primitive.TryCalculateAxisAlignedBoundingBox();
         var diagonal = bb.Diagonal;
 
         Assert.That(bb.Min, Is.EqualTo(testCaseDescription.ExpectedMin));
         Assert.That(bb.Max, Is.EqualTo(testCaseDescription.ExpectedMax));
         Assert.That(diagonal, Is.EqualTo(testCaseDescription.ExpectedDiagonal));
+    }
+
+    [Test]
+    [TestCaseSource(nameof(_boundingBoxTestCases))]
+    public void GetAxisAlignedBoundingBox_WithRvmLineReturnsNull()
+    {
+        var primitive = new RvmLine(1, Matrix4x4.Identity, new RvmBoundingBox(Vector3.One * -1, Vector3.One), 5, 0);
+        RvmBoundingBox bb = primitive.TryCalculateAxisAlignedBoundingBox();
+        // When we update the implementation for RvmLine please fix this test as well.
+        Assert.That(bb, Is.Null);
     }
 
     [Test]

@@ -4,7 +4,6 @@ using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Drawing;
-using System.Numerics;
 using Utils;
 
 public static class RvmPrimitiveExtensions
@@ -31,7 +30,11 @@ public static class RvmPrimitiveExtensions
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPrimitive.Matrix);
         }
 
-        var axisAlignedBoundingBox = rvmPrimitive.CalculateAxisAlignedBoundingBox();
+        var axisAlignedBoundingBox = rvmPrimitive.TryCalculateAxisAlignedBoundingBox();
+        if (axisAlignedBoundingBox == null)
+        {
+            throw new Exception("Could not calculate bounding box for primitive." + rvmPrimitive);
+        }
 
         var colors = GetColor(container);
 

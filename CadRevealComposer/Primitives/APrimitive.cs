@@ -80,6 +80,14 @@ public abstract record APrimitive(
             return null;
         }
 
+        if (rvmPrimitive.GetType() == typeof(RvmLine))
+        {
+            PrimitiveCounter.line++;
+            // 2023-01-16 NIH: Intentionally ignored as Reveal do not support Lines, we could workaround by using a cylinder, but it may get messy
+            // As far as I can see these are not visible in Navisworks either, so it may be OK to ignore
+            return null;
+        }
+
         PrimitiveCounter.pc++;
         var commonPrimitiveProperties = rvmPrimitive.GetCommonProps(rvmNode, revealNode);
         (ulong _, ulong _, Vector3 _, Quaternion _, Vector3 scale, float _, _, _,
