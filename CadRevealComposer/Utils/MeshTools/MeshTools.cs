@@ -17,8 +17,8 @@ public static class MeshTools
     /// </summary>
     public static Mesh DeduplicateVertices(Mesh input)
     {
-        var comparer = new XyzVector3EqualityComparer(tolerance: 0.00001f);
-        var alreadyFoundVertices = new Dictionary<Vector3, uint>(comparer);
+        var comparer = new XyzVector3EqualityComparer();
+        var alreadyFoundVerticesToIndexMap = new Dictionary<Vector3, uint>(comparer);
 
         var newVertices = new List<Vector3>();
         var indicesCopy = input.Triangles.ToArray();
@@ -29,17 +29,17 @@ public static class MeshTools
         for (uint i = 0; i < input.Vertices.Count(); i++)
         {
             var vertex = input.Vertices[(int)i];
-            if (!alreadyFoundVertices.TryGetValue(vertex, out uint newIndex))
+            if (!alreadyFoundVerticesToIndexMap.TryGetValue(vertex, out uint newIndex))
             {
                 newIndex = (uint)newVertices.Count;
                 newVertices.Add(vertex);
-                alreadyFoundVertices.Add(vertex, newIndex);
+                alreadyFoundVerticesToIndexMap.Add(vertex, newIndex);
             }
 
             oldVertexIndexToNewIndexRemap[i] = newIndex;
         }
         // Explicitly clear to unload memory as soon as possible.
-        alreadyFoundVertices.Clear();
+        alreadyFoundVerticesToIndexMap.Clear();
 
         for (int i = 0; i < indicesCopy.Length; i++)
         {
