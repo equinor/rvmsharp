@@ -104,7 +104,6 @@ public class RvmPrimitiveTests
     }
 
     [Test]
-    [TestCaseSource(nameof(_boundingBoxTestCases))]
     public void GetAxisAlignedBoundingBox_WithRvmLineReturnsNull()
     {
         var primitive = new RvmLine(1, Matrix4x4.Identity, new RvmBoundingBox(Vector3.One * -1, Vector3.One), 5, 0);
