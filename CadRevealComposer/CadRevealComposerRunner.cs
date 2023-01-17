@@ -1,6 +1,7 @@
 namespace CadRevealComposer;
 
 using Ben.Collections.Specialized;
+using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
 using Operations;
@@ -369,10 +370,11 @@ public static class CadRevealComposerRunner
 
     private static Mesh Tessellate(RvmPrimitive primitive)
     {
-        Mesh mesh;
+        Mesh?  mesh;
         try
         {
-            mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? Mesh.Empty;
+            mesh = TessellatorBridge.Tessellate(primitive, 0f);
+            mesh = mesh != null ? MeshTools.DeduplicateVertices(mesh) : Mesh.Empty;
         }
         catch
         {

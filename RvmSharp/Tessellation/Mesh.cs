@@ -14,35 +14,38 @@ public class Mesh : IEquatable<Mesh>
 
     public IReadOnlyList<Vector3> Vertices => _vertices;
 
-    public IReadOnlyList<Vector3> Normals => _normals;
+    public IReadOnlyList<Vector3>? Normals => _normals;
 
     public IReadOnlyList<int> Triangles => _triangles;
+    public int TriangleCount => Triangles.Count / 3;
 
     private readonly Vector3[] _vertices;
-    private readonly Vector3[] _normals;
+    private readonly Vector3[]? _normals;
     private readonly int[] _triangles;
 
     public Mesh(IReadOnlyList<float> vertexData, IReadOnlyList<float> normalData, int[] triangleData, float error)
     {
         Error = error;
-        if (vertexData.Count != normalData.Count)
+        if (normalData != null && vertexData.Count != normalData.Count)
             throw new ArgumentException("Vertex and normal arrays must have equal length");
 
         _vertices = new Vector3[vertexData.Count / 3];
-        _normals = new Vector3[normalData.Count / 3];
+
+        _normals = normalData != null ? new Vector3[normalData.Count / 3] : null;
         for (var i = 0; i < vertexData.Count / 3; i++)
         {
             _vertices[i] = new Vector3(vertexData[i * 3], vertexData[i * 3 + 1], vertexData[i * 3 + 2]);
-            _normals[i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
+            if(normalData != null)
+                _normals![i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
         }
 
         _triangles = new int[triangleData.Length];
         Array.Copy(triangleData, _triangles, triangleData.Length);
     }
 
-    public Mesh(Vector3[] vertices, Vector3[] normals, int[] triangles, float error)
+    public Mesh(Vector3[] vertices, Vector3[]? normals, int[] triangles, float error)
     {
-        if (vertices.Length != normals.Length)
+        if (normals != null && vertices.Length != normals.Length)
             throw new ArgumentException("Vertex and normal arrays must have equal length");
 
         Error = error;
@@ -62,7 +65,8 @@ public class Mesh : IEquatable<Mesh>
         for (var i = 0; i < _vertices.Length; i++)
         {
             _vertices[i] = Vector3.Transform(_vertices[i], matrix);
-            _normals[i] = Vector3.Normalize(Vector3.TransformNormal(_normals[i], matrixInvertedTransposed));
+            if(_normals != null)
+                _normals[i] = Vector3.Normalize(Vector3.TransformNormal(_normals[i], matrixInvertedTransposed));
         }
     }
 
@@ -70,7 +74,8 @@ public class Mesh : IEquatable<Mesh>
     {
         var mesh1VertexCount = mesh1.Vertices.Count;
         var vertices = mesh1.Vertices.Concat(mesh2.Vertices).ToArray();
-        var normals = mesh1.Normals.Concat(mesh2.Normals).ToArray();
+
+        var normals = (mesh1.Normals ?? ArraySegment<Vector3>.Empty).Concat(mesh2.Normals ?? ArraySegment<Vector3>.Empty).ToArray();
         var triangles = mesh1.Triangles.Concat(mesh2.Triangles.Select(t => t + mesh1VertexCount)).ToArray();
         var error = Math.Max(mesh1.Error, mesh2.Error);
         return new Mesh(vertices, normals, triangles, error);
@@ -95,7 +100,7 @@ public class Mesh : IEquatable<Mesh>
 
         return Error.Equals(other.Error)
                && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(0.001f))
-               && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
+               && (Normals ?? ArraySegment<Vector3>.Empty).SequenceEqual((other.Normals ?? ArraySegment<Vector3>.Empty), new ToleranceVector3EqualityComparer(tolerance: 0.001f))
                && Triangles.SequenceEqual(other.Triangles);
     }
 
@@ -113,7 +118,7 @@ public class Mesh : IEquatable<Mesh>
     {
         var errorHashCode = Error.GetHashCode();
         var verticesHashCode = GetStructuralHashCode(_vertices);
-        var normalsHashCode = GetStructuralHashCode(_normals);
+        var normalsHashCode = GetStructuralHashCode(_normals ?? Array.Empty<Vector3>());
         var trianglesHashCode = GetStructuralHashCode(_triangles);
         unchecked
         {
