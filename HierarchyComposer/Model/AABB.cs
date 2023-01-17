@@ -1,7 +1,7 @@
 ﻿namespace HierarchyComposer.Model;
 
+using Microsoft.Data.Sqlite;
 using System;
-using System.Data.SQLite;
 using System.Numerics;
 
 public class AABB : IEquatable<AABB>
@@ -15,17 +15,18 @@ public class AABB : IEquatable<AABB>
         return new AABB() { Id = id, min = this.min, max = this.max };
     }
 
-    public void RawInsert(SQLiteCommand command)
+    public void RawInsert(SqliteCommand command)
     {
         command.CommandText = "INSERT INTO AABBs (Id, min_x, min_y, min_z, max_x, max_y, max_z) VALUES (@Id, @min_x, @min_y, @min_z, @max_x, @max_y, @max_z)";
+        command.Parameters.Clear();
         command.Parameters.AddRange(new[] {
-            new SQLiteParameter("@Id", Id),
-            new SQLiteParameter("@min_x", min.x),
-            new SQLiteParameter("@min_y", min.y),
-            new SQLiteParameter("@min_z", min.z),
-            new SQLiteParameter("@max_x", max.x),
-            new SQLiteParameter("@max_y", max.y),
-            new SQLiteParameter("@max_z", max.z)
+            new SqliteParameter("@Id", Id),
+            new SqliteParameter("@min_x", min.x),
+            new SqliteParameter("@min_y", min.y),
+            new SqliteParameter("@min_z", min.z),
+            new SqliteParameter("@max_x", max.x),
+            new SqliteParameter("@max_y", max.y),
+            new SqliteParameter("@max_z", max.z)
         });
         command.ExecuteNonQuery();
     }

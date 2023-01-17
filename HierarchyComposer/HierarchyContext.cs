@@ -46,6 +46,5 @@ public class HierarchyContext : DbContext
             .WithMany(e => e.NodePDMSEntry)
             .HasForeignKey(e => e.PDMSEntryId);
         modelBuilder.Entity<Node>().ToTable("Nodes");
-
     }
 }
