@@ -156,14 +156,7 @@ public class Mesh : IEquatable<Mesh>
 
         public int GetHashCode(Vector3 obj)
         {
-            unchecked
-            {
-                int hash = 17;
-                hash = hash * 31 + obj.X.GetHashCode();
-                hash = hash * 31 + obj.Y.GetHashCode();
-                hash = hash * 31 + obj.Z.GetHashCode();
-                return hash;
-            }
+            throw new NotImplementedException("Cannot have a hashcode for a equality with tolerance.");
         }
     }
 
