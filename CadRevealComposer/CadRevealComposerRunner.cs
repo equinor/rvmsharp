@@ -1,6 +1,7 @@
 namespace CadRevealComposer;
 
 using Ben.Collections.Specialized;
+using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
 using Operations;
@@ -17,6 +18,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using Utils;
 
@@ -271,6 +273,10 @@ public static class CadRevealComposerRunner
         }
     }
 
+
+    private static long TotalVerticesBeforeDedupeStats = 0;
+    private static long TotalVerticesAfterDedupeStats = 0;
+
     private static async Task<APrimitive[]> TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult,
@@ -306,6 +312,9 @@ public static class CadRevealComposerRunner
                 translation.Y, translation.Z,
                 rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
         }
+
+        TotalVerticesBeforeDedupeStats = 0;
+        TotalVerticesAfterDedupeStats = 0;
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.NotInstancedResult>()
@@ -361,6 +370,8 @@ public static class CadRevealComposerRunner
             .ToArray();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
 
+        Console.WriteLine($"---\nVertice Dedupe Stats (Vertice Count):\nBefore: {TotalVerticesBeforeDedupeStats,11}\nAfter:  {TotalVerticesAfterDedupeStats,11}\nPercent: {(float)TotalVerticesAfterDedupeStats/TotalVerticesBeforeDedupeStats:F2}\n---");
+
         return instancedMeshes
             .Cast<APrimitive>()
             .Concat(triangleMeshes)
@@ -369,10 +380,13 @@ public static class CadRevealComposerRunner
 
     private static Mesh Tessellate(RvmPrimitive primitive)
     {
-        Mesh mesh;
+        Mesh?  mesh;
         try
         {
-            mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? Mesh.Empty;
+            mesh = TessellatorBridge.Tessellate(primitive, 0f);
+            Interlocked.Add(ref TotalVerticesBeforeDedupeStats, mesh?.Vertices.Count ?? 0);
+            mesh = mesh != null ? MeshTools.DeduplicateVertices(mesh) : Mesh.Empty;
+            Interlocked.Add(ref TotalVerticesAfterDedupeStats, mesh.Vertices.Count);
         }
         catch
         {
