@@ -95,7 +95,7 @@ public class Mesh : IEquatable<Mesh>
     /// <summary>
     /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc. Has a float tolerance, so there might be issues with  tiny meshes.
     /// </summary>
-    public bool Equals(Mesh other)
+    public bool Equals(Mesh? other)
     {
         if (ReferenceEquals(null, other))
         {
@@ -112,7 +112,7 @@ public class Mesh : IEquatable<Mesh>
                && Triangles.SequenceEqual(other.Triangles);
     }
 
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
         if (obj is Mesh other)
         {
