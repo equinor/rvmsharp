@@ -315,15 +315,16 @@ public static class RvmFacetGroupMatcher
             var newTemplate = BakeTransformAndCenter(facetGroup, true, out var newTransform);
 
             // To avoid comparing with too many templates, making the worst case O(N^2),
-            // we remove the templates with the least number of matches after reaching the threshold
-            if (templateCandidates.Count > TemplateCleanupThreshold)
+            // we remove the templates with the least number of matches every once in a while
+            // This is potentially a bit lossy, is usually within a few percent of optimal
+            const int templateCleanupInterval = 500; // Arbitrarily chosen number
+            if (cleanupIntervalCounter > templateCleanupInterval)
             {
-                result.AddRange(templateCandidates
-                    .GetRange(TemplateCleanupNumberToKeep, templateCandidates.Count - TemplateCleanupNumberToKeep - 1)
-                    .Select(x => new NotInstancedResult(x.Original)));
-                templateCandidates.RemoveRange(TemplateCleanupNumberToKeep,
-                    templateCandidates.Count - TemplateCleanupNumberToKeep - 1);
+                CleanupTemplateCandidates(ref templateCandidates, ref result, facetGroups.Length);
+                cleanupIntervalCounter = 0;
             }
+
+            cleanupIntervalCounter++;
 
             templateCandidates.Add(new TemplateItem(facetGroup, newTemplate, newTransform));
         }
@@ -339,6 +340,29 @@ public static class RvmFacetGroupMatcher
 
         iterationCounter = iterCounter;
         return result;
+    }
+
+
+    private static void CleanupTemplateCandidates(ref List<TemplateItem> templateCandidates, ref List<Result> result,
+        int facetGroupsLength)
+    {
+        // Give up on templates that have had X attempts, but less than Y% matches.
+        var templatesToGiveUpOn = templateCandidates
+            .Where(x =>
+                    x.MatchAttempts > Math.Max(500, Math.Min(facetGroupsLength / 300, 3000))
+                    && (double)x.MatchCount / (x.MatchAttempts) < 0.001 // If match count is low we discard it
+            )
+            .ToHashSet();
+
+        if (templatesToGiveUpOn.Any())
+        {
+            // Console.WriteLine("Gave up on " + templatesToGiveUpOn.Count);
+
+
+            result.AddRange(templatesToGiveUpOn
+                .Select(x => new NotInstancedResult(x.Original)));
+            templateCandidates.RemoveAll(x => templatesToGiveUpOn.Contains(x));
+        }
     }
 
     /// <summary>
