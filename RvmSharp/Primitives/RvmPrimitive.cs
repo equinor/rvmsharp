@@ -34,11 +34,17 @@ public abstract record RvmPrimitive(uint Version,
     internal float SampleStartAngle { get; set; }
 
     /// <summary>
-    /// Use the BoundingBox and align with the rotation to make the best fitting axis aligned Bounding Box
+    /// Use the BoundingBox and align with the rotation to make the best fitting axis aligned Bounding Box.
+    /// Returns null for RvmLine, as bounding boxes are all over the place for that primitive.
     /// </summary>
     /// <returns>Bounding box in World Space.</returns>
-    public RvmBoundingBox CalculateAxisAlignedBoundingBox()
+    public RvmBoundingBox? TryCalculateAxisAlignedBoundingBox()
     {
+        if (this is RvmLine)
+        {
+            return null;
+        }
+
         var box = BoundingBoxLocal.GenerateBoxVertexes();
 
         var rotatedBox = box.Select(vertex => Vector3.Transform(vertex, this.Matrix)).ToArray();
@@ -46,5 +52,6 @@ public abstract record RvmPrimitive(uint Version,
         var min = rotatedBox.Aggregate(Vector3.Min);
         var max = rotatedBox.Aggregate(Vector3.Max);
         return new RvmBoundingBox(Min: min, Max: max);
+
     }
 }
