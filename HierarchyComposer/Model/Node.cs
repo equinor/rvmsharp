@@ -1,9 +1,13 @@
 ﻿namespace HierarchyComposer.Model;
 
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.SQLite;
 
+[Index(nameof(ParentId), IsUnique = false)]
+[Index(nameof(TopNodeId), IsUnique = false)]
 public class Node
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -17,11 +21,11 @@ public class Node
     public string? Name { get; init; }
     public bool HasMesh { get; init; }
 
-    [ForeignKey("ParentId")]
-    public virtual Node? Parent { get; set; }
+    // Index (see class annotation)
+    public uint? ParentId { get; init; }
 
-    [ForeignKey("TopNodeId")]
-    public virtual Node? TopNode { get; set; }
+    // Index (see class annotation)
+    public uint TopNodeId { get; init; }
 
     public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
 
@@ -29,20 +33,23 @@ public class Node
 
     public string? DiagnosticInfo { get; init; }
 
-    public void RawInsert(SQLiteCommand command)
+    public void RawInsert(SqliteCommand command)
     {
-        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES (@Id, @EndId, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId, @DiagnosticInfo);";
-        command.Parameters.AddRange(new[] {
-            new SQLiteParameter("@Id", Id),
-            new SQLiteParameter("@EndId", EndId),
-            new SQLiteParameter("@RefNoDb", RefNoDb),
-            new SQLiteParameter("@RefNoSequence", RefNoSequence),
-            new SQLiteParameter("@Name", Name),
-            new SQLiteParameter("@HasMesh", HasMesh),
-            new SQLiteParameter("@ParentId", Parent?.Id ?? 0),
-            new SQLiteParameter("@TopNodeId", TopNode?.Id ?? 0),
-            new SQLiteParameter("@AABBId", AABB?.Id ?? 0),
-            new SQLiteParameter("@DiagnosticInfo", DiagnosticInfo)
+        command.CommandText =
+            "INSERT INTO Nodes (Id, EndId, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES (@Id, @EndId, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId, @DiagnosticInfo);";
+        command.Parameters.Clear();
+        command.Parameters.AddRange(new[]
+        {
+            new SqliteParameter("@Id", Id),
+            new SqliteParameter("@EndId", EndId),
+            new SqliteParameter("@RefNoDb", RefNoDb ?? (object)DBNull.Value),
+            new SqliteParameter("@RefNoSequence", RefNoSequence ?? (object)DBNull.Value),
+            new SqliteParameter("@Name", Name),
+            new SqliteParameter("@HasMesh", HasMesh),
+            new SqliteParameter("@ParentId", ParentId ?? (object) DBNull.Value),
+            new SqliteParameter("@TopNodeId", TopNodeId),
+            new SqliteParameter("@AABBId", AABB?.Id ?? (object) DBNull.Value),
+            new SqliteParameter("@DiagnosticInfo", DiagnosticInfo ?? (object)DBNull.Value)
         });
         command.ExecuteNonQuery();
     }

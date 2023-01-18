@@ -1,8 +1,8 @@
 ﻿namespace HierarchyComposer.Model;
 
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 
 public class PDMSEntry : IEquatable<PDMSEntry>
 {
@@ -11,13 +11,14 @@ public class PDMSEntry : IEquatable<PDMSEntry>
     public string? Value { get; init; }
     public virtual ICollection<NodePDMSEntry> NodePDMSEntry { get; set; } = null!; // Navigation property
 
-    public void RawInsert(SQLiteCommand command)
+    public void RawInsert(SqliteCommand command)
     {
         command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES (@Id, @Key, @Value);";
+        command.Parameters.Clear();
         command.Parameters.AddRange(new[] {
-            new SQLiteParameter("@Id", Id),
-            new SQLiteParameter("@Key", Key),
-            new SQLiteParameter("@Value", Value)});
+            new SqliteParameter("@Id", Id),
+            new SqliteParameter("@Key", Key),
+            new SqliteParameter("@Value", Value)});
         command.ExecuteNonQuery();
     }
 
