@@ -12,8 +12,9 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
+using Tessellation;
 
 public static class CadRevealComposerRunner
 {
@@ -35,8 +36,9 @@ public static class CadRevealComposerRunner
         {
             var timer = Stopwatch.StartNew();
             IReadOnlyList<CadRevealNode> cadRevealNodes =
-                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator, instanceIdGenerator);
-            if(cadRevealNodes != null)
+                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator,
+                    instanceIdGenerator);
+            if (cadRevealNodes != null)
             {
                 Console.WriteLine(
                     $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
@@ -60,17 +62,12 @@ public static class CadRevealComposerRunner
                     geometriesToProcess.AddRange(geometriesIncludingMeshes);
                 }
             }
-
         }
 
-        // Optimize TriangleMesh meshes for least memory use
-        geometriesToProcess = geometriesToProcess.Select(x =>
-        {
-            if (x is TriangleMesh tm) return tm with { Mesh = MeshTools.DeduplicateVertices(tm.Mesh) };
-            return x;
-        }).ToList();
+        geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
+        ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters,
+            treeIndexGenerator);
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
@@ -85,7 +82,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(Primitives.APrimitive[] allPrimitives, DirectoryInfo outputDirectory,
+    public static void ProcessPrimitives(APrimitive[] allPrimitives, DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
         TreeIndexGenerator treeIndexGenerator)
@@ -172,4 +169,30 @@ public static class CadRevealComposerRunner
     }
 
 
+    private static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
+    {
+        var meshCount = 0;
+        var beforeOptimizationTotalVertices = 0;
+        var afterOptimizationTotalVertices = 0;
+        var timer = Stopwatch.StartNew();
+        // Optimize TriangleMesh meshes for least memory use
+        var processedGeometries = geometriesToProcess.AsParallel().AsOrdered().Select(primitive =>
+        {
+            if (primitive is not TriangleMesh triangleMesh)
+            {
+                return primitive;
+            }
+
+            Mesh newMesh = MeshTools.DeduplicateVertices(triangleMesh.Mesh);
+            Interlocked.Increment(ref meshCount);
+            Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
+            Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
+            return triangleMesh with { Mesh = newMesh };
+        }).ToList();
+
+        Console.WriteLine(
+            $"---\nVertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices,11}\nAfter:  {afterOptimizationTotalVertices,11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices,11:P2}\n\nTime: {timer.Elapsed}---");
+
+        return processedGeometries;
+    }
 }
