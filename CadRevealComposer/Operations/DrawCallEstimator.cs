@@ -96,7 +96,8 @@ public static class DrawCallEstimator
 
         var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
         var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TriangleCount).Sum();
-        var estimatedInstancedMeshDrawCallCount = instancedMeshes.Distinct().Count();
+        // Expect 1 drawcall per type of instanced mesh (Find it by the TriangleOffset, FileId combination)
+        var estimatedInstancedMeshDrawCallCount = instancedMeshes.DistinctBy(x => (x.TriangleOffset, x.FileId)).Count();
 
         var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +
                                      estimatedInstancedMeshTriangleCount;

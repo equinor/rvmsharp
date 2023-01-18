@@ -92,9 +92,12 @@ public sealed class ObjExporter : IDisposable
             _writer.WriteLine($"v {FastToString(vertex.X)} {FastToString(vertex.Z)} {FastToString(-vertex.Y)}");
         }
 
-        foreach (var normal in mesh.Normals)
+        if(mesh.Normals != null)
         {
-            _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
+            foreach (var normal in mesh.Normals)
+            {
+                _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
+            }
         }
 
         _writer.WriteLine("s off");
@@ -117,7 +120,7 @@ public sealed class ObjExporter : IDisposable
         }
 
         _vertexCount += mesh.Vertices.Count;
-        _normalCount += mesh.Normals.Count;
+        _normalCount += mesh.Normals?.Count ?? 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
