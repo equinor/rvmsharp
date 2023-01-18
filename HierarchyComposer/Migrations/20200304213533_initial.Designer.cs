@@ -12,7 +12,7 @@ namespace Mop.Hierarchy.Migrations
 
     [DbContext(typeof(HierarchyContext))]
     [Migration("20200304213533_initial")]
-    partial class initial
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
