@@ -26,7 +26,7 @@ public static class RvmEllipticalDishConverter
         var verticalRadius = rvmEllipticalDish.Height * scale.X;
         var horizontalRadius = rvmEllipticalDish.BaseRadius * scale.X;
 
-        var bbBox = rvmEllipticalDish.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+        var bbBox = rvmEllipticalDish.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         var matrixCap =
             Matrix4x4.CreateScale(horizontalRadius * 2, horizontalRadius * 2, 1f)

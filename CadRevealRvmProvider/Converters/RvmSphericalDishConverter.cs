@@ -30,7 +30,7 @@ public static class RvmSphericalDishConverter
         var d = sphereRadius - height;
         var upVector = Vector3.Transform(Vector3.UnitZ, Matrix4x4.CreateFromQuaternion(rotation));
         var center = position - upVector * d;
-        var bbBox = rvmSphericalDish.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+        var bbBox = rvmSphericalDish.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         var matrixCap =
             Matrix4x4.CreateScale(baseDiameter, baseDiameter, 1f)

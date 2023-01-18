@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net6.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net7.0;netstandard2.1</TargetFrameworks>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
@@ -15,5 +15,5 @@
   <ItemGroup>
     <PackageReference Include="Ben.StringIntern" Version="0.1.8" />
   </ItemGroup>
-  
+
 </Project>

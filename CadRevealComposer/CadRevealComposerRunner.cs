@@ -1,9 +1,11 @@
 namespace CadRevealComposer;
 
+using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
+using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -25,7 +27,7 @@ public static class CadRevealComposerRunner
         var totalTimeElapsed = Stopwatch.StartNew();
 
         List<CadRevealNode> nodesToProcess = new List<CadRevealNode>();
-        List<Primitives.APrimitive> geometriesToProcess = new List<Primitives.APrimitive>();
+        List<APrimitive> geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
@@ -60,6 +62,13 @@ public static class CadRevealComposerRunner
             }
 
         }
+
+        // Optimize TriangleMesh meshes for least memory use
+        geometriesToProcess = geometriesToProcess.Select(x =>
+        {
+            if (x is TriangleMesh tm) return tm with { Mesh = MeshTools.DeduplicateVertices(tm.Mesh) };
+            return x;
+        }).ToList();
 
         ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
 

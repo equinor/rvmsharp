@@ -4,6 +4,7 @@ using Operations;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Primitives;
+using CadRevealFbxProvider.BatchUtils;
 using RvmSharp.Tessellation;
 using RvmSharp.Primitives;
 using System;
@@ -14,7 +15,9 @@ public class RvmTessellator
 {
     public static Mesh ConvertRvmMesh(RvmMesh rvmMesh)
     {
-        return new Mesh(rvmMesh.Vertices, rvmMesh.Normals, rvmMesh.Triangles, rvmMesh.Error);
+        // Reveal does not use normals, so they are discarded here.
+        // Because it does not use normals, we can remove duplicate vertices optimizing it slightly
+        return new Mesh(rvmMesh.Vertices, rvmMesh.Triangles, rvmMesh.Error);
     }
 
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
@@ -91,7 +94,7 @@ public class RvmTessellator
 
     public static RvmMesh Tessellate(RvmPrimitive primitive)
     {
-        RvmMesh mesh;
+        RvmMesh mesh = RvmMesh.Empty;
         try
         {
             mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? RvmMesh.Empty;

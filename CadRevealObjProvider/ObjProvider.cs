@@ -55,7 +55,8 @@ public class ObjProvider : IModelFormatProvider
     {
         return new APrimitive[]
         {
-            new TriangleMesh(new Mesh(mesh.Vertices, mesh.Normals, mesh.Triangles, 0), treeIndex,
+            // Reveal does not use normals, so we discard them here.
+            new TriangleMesh(new Mesh(mesh.Vertices,  mesh.Triangles, 0), treeIndex,
                 Color.Magenta /* TODO: Add color support */,
                 mesh.CalculateBoundingBox())
         };

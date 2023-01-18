@@ -106,6 +106,15 @@ public class RvmPrimitiveTests
     }
 
     [Test]
+    public void GetAxisAlignedBoundingBox_WithRvmLineReturnsNull()
+    {
+        var primitive = new RvmLine(1, Matrix4x4.Identity, new RvmBoundingBox(Vector3.One * -1, Vector3.One), 5, 0);
+        RvmBoundingBox bb = primitive.CalculateAxisAlignedBoundingBox();
+        // When we update the implementation for RvmLine please fix this test as well.
+        Assert.That(bb, Is.Null);
+    }
+
+    [Test]
     public void AxisAlignedBoundingBox_Center_IsCenterOfMinAndMax()
     {
         var rvmBoundingBox = new RvmBoundingBox(Min: new Vector3(-1, -2, -3), Max: new Vector3(1, 4, 3));

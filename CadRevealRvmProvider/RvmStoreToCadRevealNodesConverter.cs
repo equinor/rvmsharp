@@ -81,7 +81,7 @@ static internal class RvmStoreToCadRevealNodesConverter
         newNode.Children = childrenCadNodes;
 
         var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
-            .Select(x => x.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox()).ToArray();
+            .Select(x => x.CalculateAxisAlignedBoundingBox()?.ToCadRevealBoundingBox()).WhereNotNull().ToArray();
         var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned)
             .WhereNotNull();
 

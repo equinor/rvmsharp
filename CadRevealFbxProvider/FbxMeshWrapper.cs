@@ -69,7 +69,9 @@ public class FbxMeshWrapper
                 var ii = indices.Select(a => (uint)a).ToArray();
 
                 const float error = 0f; // We have no tessellation error info for FBX files.
-                Mesh meshData = new Mesh(vv, nn, ii, error);
+
+                // NOTE: We discard normals as they are not used in Reveal. Consider if this is the best way.
+                Mesh meshData = new Mesh(vv, ii, error);
                 return (meshData, meshPtr);
             }
             else

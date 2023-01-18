@@ -8,22 +8,17 @@ using System.Numerics;
 
 public class Mesh : IEquatable<Mesh>
 {
-    public static Mesh Empty { get; } = new Mesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
-
     public float Error { get; }
 
-    private static readonly float MeshPrecision = 0.001f;
+    private static readonly float MeshEqualityPrecision = 0.001f;
 
     public Vector3[] Vertices => _vertices;
-
-    public Vector3[] Normals => _normals;
 
     public uint[] Triangles => _triangles;
 
     public int TriangleCount => _triangles.Length / 3;
 
     private readonly Vector3[] _vertices;
-    private readonly Vector3[] _normals;
     private readonly uint[] _triangles;
 
     public Mesh(IReadOnlyList<float> vertexData, IReadOnlyList<float> normalData, int[] triangleData, float error)
@@ -33,25 +28,19 @@ public class Mesh : IEquatable<Mesh>
             throw new ArgumentException("Vertex and normal arrays must have equal length");
 
         _vertices = new Vector3[vertexData.Count / 3];
-        _normals = new Vector3[normalData.Count / 3];
         for (var i = 0; i < vertexData.Count / 3; i++)
         {
             _vertices[i] = new Vector3(vertexData[i * 3], vertexData[i * 3 + 1], vertexData[i * 3 + 2]);
-            _normals[i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
         }
 
         _triangles = new uint[triangleData.Length];
         Array.Copy(triangleData, _triangles, triangleData.Length);
     }
 
-    public Mesh(Vector3[] vertices, Vector3[] normals, uint[] triangles, float error)
+    public Mesh(Vector3[] vertices,  uint[] triangles, float error)
     {
-        if (vertices.Length != normals.Length)
-            throw new ArgumentException("Vertex and normal arrays must have equal length");
-
         Error = error;
         _vertices = vertices;
-        _normals = normals;
         _triangles = triangles;
     }
 
@@ -95,36 +84,18 @@ public class Mesh : IEquatable<Mesh>
 
     public void Apply(Matrix4x4 matrix)
     {
-        // Transforming mesh normals requires some extra calculations.
-        // https://web.archive.org/web/20210628111622/https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
-        if (!Matrix4x4.Invert(matrix, out var matrixInverted))
-            throw new ArgumentException($"Could not invert matrix {matrix}");
-        var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
-
         for (var i = 0; i < _vertices.Length; i++)
         {
             _vertices[i] = Vector3.Transform(_vertices[i], matrix);
-            _normals[i] = Vector3.Normalize(Vector3.TransformNormal(_normals[i], matrixInvertedTransposed));
         }
     }
-
-    public static Mesh Merge(Mesh mesh1, Mesh mesh2)
-    {
-        var mesh1VertexCount = (uint)mesh1.Vertices.Length;
-        var vertices = mesh1.Vertices.Concat(mesh2.Vertices).ToArray();
-        var normals = mesh1.Normals.Concat(mesh2.Normals).ToArray();
-        var triangles = mesh1.Triangles.Concat(mesh2.Triangles.Select(t => t + mesh1VertexCount)).ToArray();
-        var error = Math.Max(mesh1.Error, mesh2.Error);
-        return new Mesh(vertices, normals, triangles, error);
-    }
-
 
     #region Equality Comparers
 
     /// <summary>
     /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc. Has a float tolerance, so there might be issues with  tiny meshes.
     /// </summary>
-    public bool Equals(Mesh? other)
+    public bool Equals(Mesh other)
     {
         if (ReferenceEquals(null, other))
         {
@@ -137,12 +108,11 @@ public class Mesh : IEquatable<Mesh>
         }
 
         return Error.Equals(other.Error)
-               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(MeshPrecision))
-               && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(MeshPrecision))
+               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(MeshEqualityPrecision))
                && Triangles.SequenceEqual(other.Triangles);
     }
 
-    public override bool Equals(object? obj)
+    public override bool Equals(object obj)
     {
         if (obj is Mesh other)
         {
@@ -156,7 +126,6 @@ public class Mesh : IEquatable<Mesh>
     {
         var errorHashCode = Error.GetHashCode();
         var verticesHashCode = GetStructuralHashCode(_vertices);
-        var normalsHashCode = GetStructuralHashCode(_normals);
         var trianglesHashCode = GetStructuralHashCode(_triangles);
         unchecked
         {
@@ -164,7 +133,6 @@ public class Mesh : IEquatable<Mesh>
             int hash = 17;
             hash = hash * 31 + errorHashCode;
             hash = hash * 31 + verticesHashCode;
-            hash = hash * 31 + normalsHashCode;
             hash = hash * 31 + trianglesHashCode;
             return hash;
         }

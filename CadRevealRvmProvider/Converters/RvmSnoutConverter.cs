@@ -26,7 +26,7 @@ public static class RvmSnoutConverter
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
-        var bbox = rvmSnout.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+        var bbox = rvmSnout.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         var length = scale.Z * MathF.Sqrt(
             rvmSnout.Height * rvmSnout.Height +

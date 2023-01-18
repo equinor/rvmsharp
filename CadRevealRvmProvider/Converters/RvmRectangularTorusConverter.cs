@@ -43,7 +43,7 @@ public static class RvmRectangularTorusConverter
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
         var arcAngle = rvmRectangularTorus.Angle;
 
-        var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+        var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         yield return new Cone(
             0,

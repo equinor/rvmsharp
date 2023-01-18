@@ -26,7 +26,7 @@ public static class RvmCylinderConverter
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
-        var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+        var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         /*
         * One case of non-uniform XY-scale on a cylinder on JSB (JS P2) was throwing an exception. Since this was the only case,

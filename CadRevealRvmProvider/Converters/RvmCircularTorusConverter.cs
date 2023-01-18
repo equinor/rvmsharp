@@ -22,7 +22,7 @@ public static class RvmCircularTorusConverter
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
-        var bbox = rvmCircularTorus.CalculateAxisAlignedBoundingBox().ToCadRevealBoundingBox();
+        var bbox = rvmCircularTorus.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         const float oneDegree = 2 * MathF.PI / 360f;
         var arcAngle = rvmCircularTorus.Angle;
