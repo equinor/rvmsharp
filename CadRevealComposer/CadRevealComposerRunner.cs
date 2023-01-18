@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
+using Utils;
 
 public static class CadRevealComposerRunner
 {
@@ -123,6 +124,9 @@ public static class CadRevealComposerRunner
         stopwatch.Restart();
 
         var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
+
+        PrintSectorStats(sectorsWithDownloadSize);
+
         var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives);
         SceneCreator.WriteSceneFile(
             sectorsWithDownloadSize,
@@ -133,6 +137,30 @@ public static class CadRevealComposerRunner
 
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
+    }
+
+    private static void PrintSectorStats(ImmutableArray<SceneCreator.SectorInfo> sectorsWithDownloadSize)
+    {
+        // Helpers
+        float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
+
+        // Add stuff you would like for a quick overview here:
+        using (new TeamCityLogBlock("Sector Stats"))
+        {
+            Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
+            Console.WriteLine($"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
+            Console.WriteLine($"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
+            Console.WriteLine($"Depth Stats:");
+            foreach (IGrouping<long,SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth).OrderBy(x => x.Key))
+            {
+                Console.WriteLine($"\t{g.Key,2}: Sectors: {g.Count(),4}, Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2}, Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0}, Avg Download Size: {g.Average(x => x.DownloadSize / 1024f/1024f),6:F}MB");
+                if(g.Count() > 1)
+                {
+                    Console.WriteLine($"\t\tMax Download Size :{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}.");
+                }
+            }
+
+        }
     }
 
     private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
@@ -190,8 +218,11 @@ public static class CadRevealComposerRunner
             return triangleMesh with { Mesh = newMesh };
         }).ToList();
 
-        Console.WriteLine(
-            $"---\nVertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices,11}\nAfter:  {afterOptimizationTotalVertices,11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices,11:P2}\n\nTime: {timer.Elapsed}---");
+        using (new TeamCityLogBlock("Vertex Dedupe Stats"))
+        {
+            Console.WriteLine(
+                $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices,11}\nAfter:  {afterOptimizationTotalVertices,11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices,11:P2}\nTime: {timer.Elapsed}");
+        }
 
         return processedGeometries;
     }

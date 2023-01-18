@@ -8,17 +8,22 @@ public class TeamCityLogBlock : IDisposable
     private bool _isClosed;
 
     /// <summary>
-    /// Helper to create a log block when running in TeamCity only.
+    /// Helper to create a log block. With special handling for TeamCity
     /// Automatically "opens" a log block on creation.
     /// Use <see cref="Dispose"/> or <see cref="CloseBlock"/> to close the block.
     /// </summary>
     public TeamCityLogBlock(string blockName)
     {
-        if (!IsOnTeamCity())
-            return;
-
         _blockName = blockName;
-        Console.WriteLine($"##teamcity[blockOpened name='{_blockName}']");
+        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression -- Makes it less readable
+        if (IsOnTeamCity())
+        {
+            Console.WriteLine($"##teamcity[blockOpened name='{_blockName}']");
+        }
+        else
+        {
+            Console.WriteLine($"--- {_blockName} ---");
+        }
     }
 
     private static bool IsOnTeamCity()
@@ -36,9 +41,17 @@ public class TeamCityLogBlock : IDisposable
             return;
 
         _isClosed = true;
-        if (_blockName != null)
+        if (_blockName == null)
+            return;
+
+        // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression -- Makes it less readable
+        if (IsOnTeamCity())
         {
             Console.WriteLine($"##teamcity[blockClosed name='{_blockName}']");
+        }
+        else
+        {
+            Console.WriteLine($"--- End {_blockName} ---");
         }
     }
 
