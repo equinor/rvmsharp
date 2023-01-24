@@ -8,7 +8,7 @@ using CadRevealComposer.Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-
+using System.Runtime.CompilerServices;
 
 public class FbxNodeToCadRevealNodeConverter
 {
@@ -20,6 +20,7 @@ public class FbxNodeToCadRevealNodeConverter
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
+        BoundingBox nodeBoundingBox = null;
 
         var name = FbxNodeWrapper.GetNodeName(node);
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
@@ -34,6 +35,11 @@ public class FbxNodeToCadRevealNodeConverter
                     transform, id, Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
                     bb);
                 geometries.Add(instancedMeshCopy);
+
+                if (nodeBoundingBox != null)
+                    nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
+                else
+                    nodeBoundingBox = bb;
             }
             else
             {
@@ -54,11 +60,20 @@ public class FbxNodeToCadRevealNodeConverter
                         bb);
 
                     geometries.Add(instancedMesh);
+                    if (nodeBoundingBox != null)
+                        nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
+                    else
+                        nodeBoundingBox = bb;
                 }
             }
         }
 
-        yield return new CadRevealNode { TreeIndex = id, Name = name, Geometries = geometries.ToArray() };
+        yield return new CadRevealNode {
+            TreeIndex = id,
+            Name = name,
+            Geometries = geometries.ToArray(),
+            BoundingBoxAxisAligned = nodeBoundingBox
+        };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
         for (var i = 0; i < childCount; i++)
