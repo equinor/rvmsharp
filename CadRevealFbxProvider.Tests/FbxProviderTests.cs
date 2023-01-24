@@ -93,8 +93,8 @@ public class FbxProviderTests
 
         Assert.That(nodes.Count() == 28);
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(11));
-        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(11));
+        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(12));
+        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(12));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
         Assert.That(nodes[2].Attributes["Description"].Equals("Leather"));
     }
@@ -112,6 +112,11 @@ public class FbxProviderTests
             .ConvertRecursive(rootNode, treeIndexGenerator, instanceIndexGenerator, testLoader, lookupA)
             .ToList();
 
+        // this test model should have a bounding box for each node
+        foreach( var node in nodesToProcess ) {
+            if(node.Geometries.Length>0) Assert.That(node.BoundingBoxAxisAligned != null);
+        }
+        
         var modelParameters = new ModelParameters(
             new ProjectId(1),
             new ModelId(1),
