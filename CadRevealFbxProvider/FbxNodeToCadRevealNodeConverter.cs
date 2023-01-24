@@ -18,6 +18,7 @@ public class FbxNodeToCadRevealNodeConverter
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
+        BoundingBox nodeBoundingBox = null;
 
         var name = FbxNodeWrapper.GetNodeName(node);
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
@@ -37,6 +38,11 @@ public class FbxNodeToCadRevealNodeConverter
                     bb
                 );
                 geometries.Add(instancedMeshCopy);
+
+                if (nodeBoundingBox != null)
+                    nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
+                else
+                    nodeBoundingBox = bb;
             }
             else
             {
@@ -60,15 +66,19 @@ public class FbxNodeToCadRevealNodeConverter
                     );
 
                     geometries.Add(instancedMesh);
+                    if (nodeBoundingBox != null)
+                        nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
+                    else
+                        nodeBoundingBox = bb;
                 }
             }
         }
 
-        yield return new CadRevealNode
-        {
+        yield return new CadRevealNode {
             TreeIndex = id,
             Name = name,
-            Geometries = geometries.ToArray()
+            Geometries = geometries.ToArray(),
+            BoundingBoxAxisAligned = nodeBoundingBox
         };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
