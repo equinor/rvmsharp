@@ -18,7 +18,7 @@ public class FbxNodeToCadRevealNodeConverter
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
-        BoundingBox nodeBoundingBox = null;
+        BoundingBox? nodeBoundingBox = null;
 
         var name = FbxNodeWrapper.GetNodeName(node);
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
