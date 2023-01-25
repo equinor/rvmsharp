@@ -108,12 +108,17 @@ public class FbxProviderTests
         using var testLoader = new FbxImporter();
         var rootNode = testLoader.LoadFile(@".\TestSamples\fbx_test_model.fbx");
         var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-        var nodesToProcess = FbxNodeToCadRevealNodeConverter
-            .ConvertRecursive(rootNode, treeIndexGenerator, instanceIndexGenerator, testLoader, lookupA)
-            .ToList();
 
+        var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
+            rootNode,
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            testLoader,
+            lookupA);
+
+        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
         // this test model should have a bounding box for each node
-        foreach( var node in nodesToProcess ) {
+        foreach ( var node in flatNodes) {
             if(node.Geometries.Length>0) Assert.That(node.BoundingBoxAxisAligned != null);
         }
         
@@ -126,7 +131,8 @@ public class FbxProviderTests
         );
         var composerParameters = new ComposerParameters("", false, true, false);
 
-        var geometriesToProcess = nodesToProcess.SelectMany(x => x.Geometries);
+        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
+
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
             outputDirectory,
@@ -134,7 +140,7 @@ public class FbxProviderTests
             composerParameters,
             treeIndexGenerator
         );
-
+       
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
     }
 }
