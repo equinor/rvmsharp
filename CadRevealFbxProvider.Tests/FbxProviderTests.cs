@@ -94,7 +94,7 @@ public class FbxProviderTests
         Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(12));
         Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(12));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
-        Assert.That(nodes[2].Attributes["Description"].Equals("Leather"));
+        Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
     }
 
     [Test]
