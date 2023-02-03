@@ -11,6 +11,20 @@ if(FBX_ROOT)
 else()
     message(FATAL_ERROR "FBX_ROOT is not set in enviroment variables!")
 endif()
+
+if(FBXSDK_VERSION)
+    message(STATUS "FBX SDK version used ${FBXSDK_VERSION}")
+else()
+    message(FATAL_ERROR "FBXSDK_VERSION is not set!")
+endif()
+
+set(FBXSDK_VERSION_THRESH "2020.3.1")
+if(${FBXSDK_VERSION} VERSION_GREATER ${FBXSDK_VERSION_THRESH})
+else()
+    message(FATAL_ERROR "FBXSDK_VERSION has to newer than ${FBXSDK_VERSION_THRESH}")
+endif()
+
+
 include_directories("${FBX_ROOT}/include")
 IF (NOT WIN32 AND NOT APPLE)
    # assume we are on Linux
