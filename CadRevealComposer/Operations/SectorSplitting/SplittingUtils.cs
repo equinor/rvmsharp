@@ -22,22 +22,6 @@ public static class SplittingUtils
         SubVoxelG = 7,
         SubVoxelH = 8;
 
-    public static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
-    {
-        return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
-                geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
-            {
-                (false, false, false) => SubVoxelA,
-                (false, false, true) => SubVoxelB,
-                (false, true, false) => SubVoxelC,
-                (false, true, true) => SubVoxelD,
-                (true, false, false) => SubVoxelE,
-                (true, false, true) => SubVoxelF,
-                (true, true, false) => SubVoxelG,
-                (true, true, true) => SubVoxelH
-            };
-    }
-
     public static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
     {
         var voxelKeyAndUsageCount = new Dictionary<int, int>();
@@ -51,6 +35,22 @@ public static class SplittingUtils
 
         // Return the voxel key where most of the node's geometries lie
         return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+    }
+
+    private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
+    {
+        return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
+                geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
+            {
+                (false, false, false) => SubVoxelA,
+                (false, false, true) => SubVoxelB,
+                (false, true, false) => SubVoxelC,
+                (false, true, true) => SubVoxelD,
+                (true, false, false) => SubVoxelE,
+                (true, false, true) => SubVoxelF,
+                (true, true, false) => SubVoxelG,
+                (true, true, true) => SubVoxelH
+            };
     }
 
     public static Vector3 GetBoundingBoxMin(this IReadOnlyCollection<Node> nodes)
