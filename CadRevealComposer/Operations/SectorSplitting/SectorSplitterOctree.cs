@@ -185,7 +185,7 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
 
-        return Math.Min(4, (int)MathF.Sqrt(sizeOfAllNodes / 100f)); // EH, a bit random O:)
+        return Math.Clamp((int)MathF.Sqrt(sizeOfAllNodes / 100f), 3, 4); // EH, a bit random O:)
     }
 
     private IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
