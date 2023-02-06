@@ -101,7 +101,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
             stopwatch.Restart();
 
-            sectors = SectorSplitter.SplitIntoSectors(zones)
+            sectors = SectorSplitterZones.SplitIntoSectors(zones)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
