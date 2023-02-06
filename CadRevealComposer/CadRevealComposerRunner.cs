@@ -100,7 +100,7 @@ public static class CadRevealComposerRunner
         }
         else if (composerParameters.SplitIntoZones)
         {
-            splitter = new SectorSplitterZones();
+            splitter = new SectorSplitterZones(outputDirectory);
         }
         else
         {
@@ -160,46 +160,28 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(ProtoSector p, string outputDirectory)
     {
-        if (!p.Geometries.Any())
-        {
-            var sectorInfo = new SceneCreator.SectorInfo(
-                p.SectorId,
-                p.ParentSectorId,
-                p.Depth,
-                p.Path,
-                null,
-                0,
-                0,
-                Array.Empty<APrimitive>(),
-                p.SubtreeBoundingBoxMin,
-                p.SubtreeBoundingBoxMax,
-                p.GeometryBoundingBoxMin,
-                p.GeometryBoundingBoxMax
-            );
+        var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
 
-            return sectorInfo;
-        }
-        else
-        {
-            var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
+        var sectorInfo = new SceneCreator.SectorInfo(
+            p.SectorId,
+            p.ParentSectorId,
+            p.Depth,
+            p.Path,
+            p.Depth == 0 ? null : $"sector_{p.SectorId}.glb", // Root sector does not have a file
+            EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
+            EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
+            p.Geometries,
+            p.SubtreeBoundingBoxMin,
+            p.SubtreeBoundingBoxMax,
+            p.GeometryBoundingBoxMin,
+            p.GeometryBoundingBoxMax
+        );
 
-            var sectorInfo = new SceneCreator.SectorInfo(
-                p.SectorId,
-                p.ParentSectorId,
-                p.Depth,
-                p.Path,
-                $"sector_{p.SectorId}.glb",
-                EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
-                EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
-                p.Geometries,
-                p.SubtreeBoundingBoxMin,
-                p.SubtreeBoundingBoxMax,
-                p.GeometryBoundingBoxMin,
-                p.GeometryBoundingBoxMax
-            );
+        if (p.Depth != 0)
+        {
             SceneCreator.ExportSector(sectorInfo, outputDirectory);
-            return sectorInfo;
         }
+        return sectorInfo;
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
