@@ -91,33 +91,23 @@ public static class CadRevealComposerRunner
     {
         var stopwatch = Stopwatch.StartNew();
 
-        SplittingUtils.ProtoSector[] sectors;
+        ISectorSplitter splitter;
         if (composerParameters.SingleSector)
         {
-            var splitter = new SectorSplitterSingle();
-            sectors = splitter.SplitIntoSectors(allPrimitives).ToArray();
+            splitter = new SectorSplitterSingle();
         }
         else if (composerParameters.SplitIntoZones)
         {
-            //var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-            //Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            //stopwatch.Restart();
-            var splitter = new SectorSplitterZones();
-            sectors = splitter.SplitIntoSectors(allPrimitives)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            splitter = new SectorSplitterZones();
         }
         else
         {
-            var splitter = new SectorSplitterOctree();
-            sectors = splitter.SplitIntoSectors(allPrimitives)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            splitter = new SectorSplitterOctree();
         }
+
+        var sectors = splitter.SplitIntoSectors(allPrimitives).ToArray().OrderBy(x => x.SectorId).ToArray();
+        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+        stopwatch.Restart();
 
         var sectorInfos = sectors
             .Select(s => SerializeSector(s, outputDirectory.FullName))
@@ -171,19 +161,19 @@ public static class CadRevealComposerRunner
         if (!p.Geometries.Any())
         {
             var sectorInfo = new SceneCreator.SectorInfo(
-               p.SectorId,
-               p.ParentSectorId,
-               p.Depth,
-               p.Path,
-               null,
-               0,
-               0,
-               Array.Empty<APrimitive>(),
-               p.SubtreeBoundingBoxMin,
-               p.SubtreeBoundingBoxMax,
-               p.GeometryBoundingBoxMin,
-               p.GeometryBoundingBoxMax
-           );
+                p.SectorId,
+                p.ParentSectorId,
+                p.Depth,
+                p.Path,
+                null,
+                0,
+                0,
+                Array.Empty<APrimitive>(),
+                p.SubtreeBoundingBoxMin,
+                p.SubtreeBoundingBoxMax,
+                p.GeometryBoundingBoxMin,
+                p.GeometryBoundingBoxMax
+            );
 
             return sectorInfo;
         }
@@ -222,10 +212,7 @@ public static class CadRevealComposerRunner
             else
             {
                 var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-                yield return sector with
-                {
-                    DownloadSize = new FileInfo(filepath).Length
-                };
+                yield return sector with { DownloadSize = new FileInfo(filepath).Length };
             }
         }
     }
