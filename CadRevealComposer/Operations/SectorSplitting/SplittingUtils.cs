@@ -1,7 +1,6 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
-using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,7 +36,7 @@ public static class SplittingUtils
         return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
     }
 
-    private static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
+    private static int CalculateVoxelKeyForGeometry(BoundingBox geometryBoundingBox, Vector3 bbMidPoint)
     {
         return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
                 geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
