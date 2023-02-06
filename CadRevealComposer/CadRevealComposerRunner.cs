@@ -165,25 +165,46 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
     {
-        var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
+        if (!p.Geometries.Any())
+        {
+            var sectorInfo = new SceneCreator.SectorInfo(
+               p.SectorId,
+               p.ParentSectorId,
+               p.Depth,
+               p.Path,
+               null,
+               0,
+               0,
+               Array.Empty<APrimitive>(),
+               p.SubtreeBoundingBoxMin,
+               p.SubtreeBoundingBoxMax,
+               p.GeometryBoundingBoxMin,
+               p.GeometryBoundingBoxMax
+           );
 
-        var sectorInfo = new SceneCreator.SectorInfo(
-            p.SectorId,
-            p.ParentSectorId,
-            p.Depth,
-            p.Path,
-            $"sector_{p.SectorId}.glb",
-            EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
-            EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
-            p.Geometries,
-            p.SubtreeBoundingBoxMin,
-            p.SubtreeBoundingBoxMax,
-            p.GeometryBoundingBoxMin,
-            p.GeometryBoundingBoxMax
-        );
-        SceneCreator.ExportSector(sectorInfo, outputDirectory);
+            return sectorInfo;
+        }
+        else
+        {
+            var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
 
-        return sectorInfo;
+            var sectorInfo = new SceneCreator.SectorInfo(
+                p.SectorId,
+                p.ParentSectorId,
+                p.Depth,
+                p.Path,
+                $"sector_{p.SectorId}.glb",
+                EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
+                EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
+                p.Geometries,
+                p.SubtreeBoundingBoxMin,
+                p.SubtreeBoundingBoxMax,
+                p.GeometryBoundingBoxMin,
+                p.GeometryBoundingBoxMax
+            );
+            SceneCreator.ExportSector(sectorInfo, outputDirectory);
+            return sectorInfo;
+        }
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
@@ -191,8 +212,18 @@ public static class CadRevealComposerRunner
     {
         foreach (var sector in sectors)
         {
-            var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-            yield return sector with { DownloadSize = new FileInfo(filepath).Length };
+            if (string.IsNullOrEmpty(sector.Filename))
+            {
+                yield return sector;
+            }
+            else
+            {
+                var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
+                yield return sector with
+                {
+                    DownloadSize = new FileInfo(filepath).Length
+                };
+            }
         }
     }
 
