@@ -1,9 +1,8 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils;
+using Primitives;
+using Utils;
 using System.Collections.Generic;
-using static CadRevealComposer.Operations.SectorSplitting.SplittingUtils;
 
 public class SectorSplitterSingle : ISectorSplitter
 {
@@ -28,5 +27,4 @@ public class SectorSplitterSingle : ISectorSplitter
             bbMax
         );
     }
-
 }

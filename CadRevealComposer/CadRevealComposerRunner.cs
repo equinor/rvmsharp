@@ -1,5 +1,7 @@
 namespace CadRevealComposer;
 
+using Ben.Collections.Specialized;
+using Operations.SectorSplitting;
 using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
@@ -156,7 +158,7 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(SplittingUtils.ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(ProtoSector p, string outputDirectory)
     {
         if (!p.Geometries.Any())
         {
