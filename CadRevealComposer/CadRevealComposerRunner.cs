@@ -1,8 +1,6 @@
 namespace CadRevealComposer;
 
-using Ben.Collections.Specialized;
 using Operations.SectorSplitting;
-using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
