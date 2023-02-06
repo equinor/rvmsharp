@@ -88,9 +88,9 @@ end {
         platformNameLabel = "Huldra" # Equal to Plant Scaffolding is placed in
         projectNameLabel = "Huldra" # Equal to Plant Scaffolding is placed in
         plantCode = $plantCode
-        installationCode = "HUA" ## TODO REMOVE ME
+        installationCode = "HUA" ## TODO REMOVE ME #HUA, SNA etc
         instCode = "HUA" # TODO REMOVE ME
-        projectSectionId = "Scaffolding" # Scaffolding or Topside
+        projectSectionId = "Topside" # Scaffolding or Topside
         platformSectionId = $platformSectionId # Needs to be consistent across multiple updates of the same scaffolding file
         platformSectionLabel = $inputMetadata.scaffoldingDisplayName # Display name of the scaffolding
         revisionNumber = $RevisionNumber
