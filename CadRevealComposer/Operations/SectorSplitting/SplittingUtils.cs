@@ -1,10 +1,12 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
+using Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Utils;
 
 public static class SplittingUtils
 {
@@ -67,5 +69,25 @@ public static class SplittingUtils
                 nameof(nodes));
 
         return nodes.Select(p => p.BoundingBoxMax).Aggregate(new Vector3(float.MinValue), Vector3.Max);
+    }
+
+    public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
+    {
+        return primitives
+            .GroupBy(p => p.TreeIndex)
+            .Select(g =>
+            {
+                var geometries = g.ToArray();
+                var boundingBoxMin = geometries.GetBoundingBoxMin();
+                var boundingBoxMax = geometries.GetBoundingBoxMax();
+                return new Node(
+                    g.Key,
+                    geometries,
+                    geometries.Sum(DrawCallEstimator.EstimateByteSize),
+                    boundingBoxMin,
+                    boundingBoxMax,
+                    Vector3.Distance(boundingBoxMin, boundingBoxMax));
+            })
+            .ToArray();
     }
 }
