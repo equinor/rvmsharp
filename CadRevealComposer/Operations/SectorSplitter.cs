@@ -199,7 +199,7 @@ public static class SectorSplitter
             var sectorId = (uint)sectorIdGenerator.GetNextId();
             var geometries = mainVoxelNodes.SelectMany(node => node.Geometries).ToArray();
 
-            var path = $"{parentPath}/{sectorId}";            
+            var path = $"{parentPath}/{sectorId}";
 
             parentPathForChildren = path;
             parentSectorIdForChildren = sectorId;
@@ -233,7 +233,8 @@ public static class SectorSplitter
                     recursiveDepth + 1,
                     parentPathForChildren,
                     parentSectorIdForChildren,
-                    sectorIdGenerator);
+                    sectorIdGenerator,
+                    depthToStartSplittingGeometry);
                 foreach (var sector in sectors)
                 {
                     yield return sector;
