@@ -160,25 +160,24 @@ public static class CadRevealComposerRunner
     {
         var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
 
+        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
-            p.SectorId,
-            p.ParentSectorId,
-            p.Depth,
-            p.Path,
-            p.Depth == 0 ? null : $"sector_{p.SectorId}.glb", // Root sector does not have a file
+            SectorId: p.SectorId,
+            ParentSectorId: p.ParentSectorId,
+            Depth: p.Depth,
+            Path: p.Path,
+            Filename: sectorFilename,
             EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
             EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
-            p.Geometries,
-            p.SubtreeBoundingBoxMin,
-            p.SubtreeBoundingBoxMax,
-            p.GeometryBoundingBoxMin,
-            p.GeometryBoundingBoxMax
+            Geometries: p.Geometries,
+            SubtreeBoundingBoxMin: p.SubtreeBoundingBoxMin,
+            SubtreeBoundingBoxMax: p.SubtreeBoundingBoxMax,
+            GeometryBoundingBoxMin: p.GeometryBoundingBoxMin,
+            GeometryBoundingBoxMax: p.GeometryBoundingBoxMax
         );
 
-        if (p.Depth != 0)
-        {
-            SceneCreator.ExportSector(sectorInfo, outputDirectory);
-        }
+        if (sectorFilename != null)
+            SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
         return sectorInfo;
     }
 

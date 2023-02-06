@@ -62,7 +62,7 @@ public static class SceneCreator
             if (!sector.Geometries.Any())
             {
                 maxDiagonalLength = 0;
-                minDiagonalLength = 0;               
+                minDiagonalLength = 0;
             }
             else
             {
@@ -90,7 +90,7 @@ public static class SceneCreator
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
                 EstimatedDrawCallCount = sector.EstimatedDrawCalls,
-                SectorFileName = sector.Filename, 
+                SectorFileName = sector.Filename,
                 MaxDiagonalLength = maxDiagonalLength,
                 MinDiagonalLength = minDiagonalLength,
                 DownloadSize = sector.DownloadSize
@@ -115,11 +115,11 @@ public static class SceneCreator
         JsonUtils.JsonSerializeToFile(scene, scenePath, Formatting.Indented);
     }
 
-    public static void ExportSector(SectorInfo sector, string outputDirectory)
+    public static void ExportSectorGeometries(IReadOnlyList<APrimitive> geometries, string sectorFilename, string? outputDirectory)
     {
-        var filePath = Path.Join(outputDirectory, sector.Filename);
+        var filePath = Path.Join(outputDirectory, sectorFilename);
         using var gltfSectorFile = File.Create(filePath);
-        GltfWriter.WriteSector(sector.Geometries, gltfSectorFile);
+        GltfWriter.WriteSector(geometries, gltfSectorFile);
         gltfSectorFile.Flush(true);
     }
 }
