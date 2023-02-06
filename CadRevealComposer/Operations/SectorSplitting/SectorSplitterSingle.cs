@@ -1,18 +1,18 @@
-﻿namespace CadRevealComposer.Operations;
+﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using System.Collections.Generic;
-using static CadRevealComposer.Operations.SectorSplitter;
+using static CadRevealComposer.Operations.SectorSplitting.SplittingUtils;
 
-public static class SectorSplitterSingle
+public class SectorSplitterSingle : ISectorSplitter
 {
-    public static IEnumerable<ProtoSector> CreateSingleSector(APrimitive[] allGeometries)
+    public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         yield return CreateRootSector(0, allGeometries);
     }
 
-    private static ProtoSector CreateRootSector(uint sectorId, APrimitive[] geometries)
+    private ProtoSector CreateRootSector(uint sectorId, APrimitive[] geometries)
     {
         var bbMin = geometries.GetBoundingBoxMin();
         var bbMax = geometries.GetBoundingBoxMax();

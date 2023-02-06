@@ -1,15 +1,36 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
+using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using static CadRevealComposer.Operations.SectorSplitter;
 
 public static class SplittingUtils
 {
     public const int MainVoxel = 0, SubVoxelA = 1, SubVoxelB = 2, SubVoxelC = 3, SubVoxelD = 4, SubVoxelE = 5, SubVoxelF = 6, SubVoxelG = 7, SubVoxelH = 8;
+
+    public record ProtoSector(
+        uint SectorId,
+        uint? ParentSectorId,
+        int Depth,
+        string Path,
+        APrimitive[] Geometries,
+        Vector3 SubtreeBoundingBoxMin,
+        Vector3 SubtreeBoundingBoxMax,
+        Vector3 GeometryBoundingBoxMin,
+        Vector3 GeometryBoundingBoxMax
+    );
+
+    public record Node(
+        ulong NodeId,
+        APrimitive[] Geometries,
+        long EstimatedByteSize,
+        Vector3 BoundingBoxMin,
+        Vector3 BoundingBoxMax,
+        float Diagonal
+    );
 
     public static int CalculateVoxelKeyForGeometry(RvmBoundingBox geometryBoundingBox, Vector3 bbMidPoint)
     {

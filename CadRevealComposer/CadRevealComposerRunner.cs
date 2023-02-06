@@ -1,5 +1,6 @@
 namespace CadRevealComposer;
 
+using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
@@ -90,18 +91,19 @@ public static class CadRevealComposerRunner
     {
         var stopwatch = Stopwatch.StartNew();
 
-        SectorSplitter.ProtoSector[] sectors;
+        SplittingUtils.ProtoSector[] sectors;
         if (composerParameters.SingleSector)
         {
-            sectors = SectorSplitter.CreateSingleSector(allPrimitives).ToArray();
+            var splitter = new SectorSplitterSingle();
+            sectors = splitter.SplitIntoSectors(allPrimitives).ToArray();
         }
         else if (composerParameters.SplitIntoZones)
         {
-            var zones = ZoneSplitter.SplitIntoZones(allPrimitives, outputDirectory);
-            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            sectors = SectorSplitterZones.SplitIntoSectors(zones)
+            //var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
+            //Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
+            //stopwatch.Restart();
+            var splitter = new SectorSplitterZones();
+            sectors = splitter.SplitIntoSectors(allPrimitives)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -109,7 +111,8 @@ public static class CadRevealComposerRunner
         }
         else
         {
-            sectors = SectorSplitter.SplitIntoSectors(allPrimitives)
+            var splitter = new SectorSplitterOctree();
+            sectors = splitter.SplitIntoSectors(allPrimitives)
                 .OrderBy(x => x.SectorId)
                 .ToArray();
             Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
@@ -163,7 +166,7 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(SplittingUtils.ProtoSector p, string outputDirectory)
     {
         if (!p.Geometries.Any())
         {
