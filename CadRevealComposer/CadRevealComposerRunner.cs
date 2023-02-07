@@ -66,18 +66,21 @@ public static class CadRevealComposerRunner
             }
         }
 
+        var exportHierarchyDatabaseTask = Task.Run(() =>
+        {
+            // Exporting hierarchy on side thread to allow it to run in parallel
+            var hierarchyExportTimer = Stopwatch.StartNew();
+            var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
+            Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
+        });
+
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
         ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters,
             treeIndexGenerator);
 
-        var exportHierarchyDatabaseTask = Task.Run(() =>
-        {
-            var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
-            Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
-        });
-
+        if (!exportHierarchyDatabaseTask.IsCompleted) Console.WriteLine("Waiting for hierarchy export to complete...");
         Task.WaitAll(exportHierarchyDatabaseTask);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
