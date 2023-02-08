@@ -37,9 +37,10 @@ public static class ZoneSplitter
     private record Node(
         ulong NodeId,
         APrimitive[] Primitives,
-        Vector3 BoundingBoxMin,
-        Vector3 Extents)
+        BoundingBox BoundingBox)
     {
+        public Vector3 Extents => BoundingBox.Extents;
+
         public List<Cell> Cells { get; } = new();
 
         /// <summary>
@@ -91,20 +92,17 @@ public static class ZoneSplitter
                 .Select(g =>
                 {
                     var geometries = g.ToArray();
-                    var boundingBoxMin = geometries.GetBoundingBoxMin();
-                    var extents = geometries.GetBoundingBoxMax() - boundingBoxMin;
+                    var geometryBounds = geometries.CalculateBoundingBox();
                     return new Node(
                         g.Key,
                         geometries,
-                        boundingBoxMin,
-                        extents);
+                        geometryBounds);
                 })
                 .ToArray();
 
             // calculate grid size
-            var bbMin = primitives.GetBoundingBoxMin();
-            var bbMax = primitives.GetBoundingBoxMax();
-            var extents = bbMax - bbMin;
+            var boundingBox = primitives.CalculateBoundingBox();
+            var extents = boundingBox.Extents;
             var gridSizeX = (uint)MathF.Ceiling(extents.X / tenMeterCellSize);
             var gridSizeY = (uint)MathF.Ceiling(extents.Y / tenMeterCellSize);
 
@@ -113,7 +111,7 @@ public static class ZoneSplitter
             var matrix = new Cell?[gridSizeX, gridSizeY];
             foreach (var node in nodes)
             {
-                var pBbMin = node.BoundingBoxMin - bbMin;
+                var pBbMin = node.BoundingBox.Min - boundingBox.Min;
                 var cellStartX = (int)MathF.Floor(pBbMin.X / tenMeterCellSize);
                 var cellStartY = (int)MathF.Floor(pBbMin.Y / tenMeterCellSize);
 

@@ -13,18 +13,15 @@ public class SectorSplitterSingle : ISectorSplitter
 
     private ProtoSector CreateRootSector(uint sectorId, APrimitive[] geometries)
     {
-        var bbMin = geometries.GetBoundingBoxMin();
-        var bbMax = geometries.GetBoundingBoxMax();
+        var bb = geometries.CalculateBoundingBox();
         return new ProtoSector(
             sectorId,
             ParentSectorId: null,
             0,
             $"{sectorId}",
             geometries,
-            bbMin,
-            bbMax,
-            bbMin,
-            bbMax
+            bb,
+            bb
         );
     }
 }

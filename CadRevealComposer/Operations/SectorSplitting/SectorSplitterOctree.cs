@@ -12,7 +12,7 @@ using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {
-    private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
 
     public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
@@ -20,15 +20,14 @@ public class SectorSplitterOctree : ISectorSplitter
         var sectorIdGenerator = new SequentialIdGenerator();
         var nodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
 
-        var bbMin = nodes.GetBoundingBoxMin();
-        var bbMax = nodes.GetBoundingBoxMax();
+        var boundingBoxEncapsulatingAllNodes = nodes.CalculateBoundingBox();
 
-        int depthToStartSplittingGeometry = CalculateStartSplittingDepth(bbMin, bbMax);
+        int depthToStartSplittingGeometry = CalculateStartSplittingDepth(boundingBoxEncapsulatingAllNodes);
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
 
-        yield return CreateRootSector(rootSectorId, rootPath, bbMin, bbMax);
+        yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
         var sectors = SplitIntoSectorsRecursive(
             nodes,
@@ -65,10 +64,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var actualDepth = Math.Max(1, recursiveDepth - depthToStartSplittingGeometry + 1);
 
-        var bbMin = nodes.GetBoundingBoxMin();
-        var bbMax = nodes.GetBoundingBoxMax();
-        var bbMidPoint = (bbMin + bbMax) / 2;
-        var bbSize = Vector3.Distance(bbMin, bbMax);
+        var subtreeBoundingBox = nodes.CalculateBoundingBox();
 
         var mainVoxelNodes = Array.Empty<Node>();
         var subVoxelNodes = Array.Empty<Node>();
@@ -79,7 +75,7 @@ public class SectorSplitterOctree : ISectorSplitter
         }
         else
         {
-            if (bbSize < DoNotSplitSectorsSmallerThanMetersInDiameter)
+            if (subtreeBoundingBox.Diagonal < DoNotSplitSectorsSmallerThanMetersInDiameter)
             {
                 mainVoxelNodes = nodes;
             }
@@ -104,10 +100,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 actualDepth,
                 path,
                 geometries,
-                bbMin,
-                bbMax,
-                bbMin,
-                bbMax
+                subtreeBoundingBox,
+                subtreeBoundingBox
             );
         }
         else
@@ -121,6 +115,7 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
+                var geometryBb = geometries.CalculateBoundingBox();
 
                 yield return new ProtoSector(
                     sectorId,
@@ -128,10 +123,8 @@ public class SectorSplitterOctree : ISectorSplitter
                     actualDepth,
                     path,
                     geometries,
-                    bbMin,
-                    bbMax,
-                    geometries.Any() ? geometries.GetBoundingBoxMin() : Vector3.Zero,
-                    geometries.Any() ? geometries.GetBoundingBoxMax() : Vector3.Zero
+                    subtreeBoundingBox,
+                    geometryBb
                 );
 
                 parentPathForChildren = path;
@@ -139,7 +132,7 @@ public class SectorSplitterOctree : ISectorSplitter
             }
 
             var voxels = subVoxelNodes
-                .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, bbMidPoint))
+                .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, subtreeBoundingBox))
                 .OrderBy(x => x.Key)
                 .ToImmutableList();
 
@@ -166,7 +159,7 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private ProtoSector CreateRootSector(uint sectorId, string path, Vector3 bbMin, Vector3 bbMax)
+    private ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
         return new ProtoSector(
             sectorId,
@@ -174,14 +167,12 @@ public class SectorSplitterOctree : ISectorSplitter
             0,
             path,
             Array.Empty<APrimitive>(),
-            bbMin,
-            bbMax,
-            Vector3.Zero,
-            Vector3.Zero
+            subtreeBoundingBox,
+            new BoundingBox(Vector3.Zero, Vector3.Zero)
         );
     }
 
-    private int CalculateStartSplittingDepth(Vector3 bbMin, Vector3 bbMax)
+    private int CalculateStartSplittingDepth(BoundingBox bb)
     {
         // If we start splitting too low in the octree, we might end up with way too many sectors
         // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
@@ -189,7 +180,7 @@ public class SectorSplitterOctree : ISectorSplitter
         int minDepth = 3; // Arbitrary value
         int maxDepth = 4; // Arbitrary value
 
-        var sizeOfAllNodes = Vector3.Distance(bbMin, bbMax);
+        var sizeOfAllNodes = bb.Diagonal;
 
         return Math.Clamp((int)MathF.Sqrt(sizeOfAllNodes / 100f), minDepth, maxDepth); // Kind of random calculation
     }

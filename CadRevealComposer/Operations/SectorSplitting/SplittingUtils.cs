@@ -21,13 +21,13 @@ public static class SplittingUtils
         SubVoxelG = 7,
         SubVoxelH = 8;
 
-    public static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, Vector3 bbMidPoint)
+    public static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, BoundingBox boundingBox)
     {
         var voxelKeyAndUsageCount = new Dictionary<int, int>();
 
         foreach (var geometry in nodeGroupGeometries.Geometries)
         {
-            var voxelKey = CalculateVoxelKeyForGeometry(geometry.AxisAlignedBoundingBox, bbMidPoint);
+            var voxelKey = CalculateVoxelKeyForGeometry(geometry.AxisAlignedBoundingBox, boundingBox);
             var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount) ? existingCount : 0;
             voxelKeyAndUsageCount[voxelKey] = count + 1;
         }
@@ -36,8 +36,9 @@ public static class SplittingUtils
         return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
     }
 
-    private static int CalculateVoxelKeyForGeometry(BoundingBox geometryBoundingBox, Vector3 bbMidPoint)
+    private static int CalculateVoxelKeyForGeometry(BoundingBox geometryBoundingBox, BoundingBox boundingBox)
     {
+        var bbMidPoint = boundingBox.Center;
         return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
                 geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
             {
@@ -52,22 +53,20 @@ public static class SplittingUtils
             };
     }
 
-    public static Vector3 GetBoundingBoxMin(this IReadOnlyCollection<Node> nodes)
+    /// <summary>
+    /// Calculates a bounding box encapsulating all nodes in the list.
+    /// List must have 1 or more nodes.
+    /// </summary>
+    /// <exception cref="ArgumentException">List must have 1 or more nodes</exception>
+    public static BoundingBox CalculateBoundingBox(this IReadOnlyCollection<Node> nodes)
     {
         if (!nodes.Any())
             throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
                 nameof(nodes));
-
-        return nodes.Select(p => p.BoundingBoxMin).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
-    }
-
-    public static Vector3 GetBoundingBoxMax(this IReadOnlyCollection<Node> nodes)
-    {
-        if (!nodes.Any())
-            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
-                nameof(nodes));
-
-        return nodes.Select(p => p.BoundingBoxMax).Aggregate(new Vector3(float.MinValue), Vector3.Max);
+        // This could be done in just one pass if profiling shows its needed.
+        var max =  nodes.Select(p => p.BoundingBox.Max).Aggregate(new Vector3(float.MinValue), Vector3.Max);
+        var min = nodes.Select(p => p.BoundingBox.Min).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
+        return new BoundingBox(Min: min, Max: max);
     }
 
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
@@ -77,15 +76,12 @@ public static class SplittingUtils
             .Select(g =>
             {
                 var geometries = g.ToArray();
-                var boundingBoxMin = geometries.GetBoundingBoxMin();
-                var boundingBoxMax = geometries.GetBoundingBoxMax();
+                var boundingBox = geometries.CalculateBoundingBox();
                 return new Node(
                     g.Key,
                     geometries,
                     geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                    boundingBoxMin,
-                    boundingBoxMax,
-                    Vector3.Distance(boundingBoxMin, boundingBoxMax));
+                    boundingBox);
             })
             .ToArray();
     }

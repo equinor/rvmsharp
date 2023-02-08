@@ -176,10 +176,8 @@ public static class CadRevealComposerRunner
             EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
             EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
             Geometries: p.Geometries,
-            SubtreeBoundingBoxMin: p.SubtreeBoundingBoxMin,
-            SubtreeBoundingBoxMax: p.SubtreeBoundingBoxMax,
-            GeometryBoundingBoxMin: p.GeometryBoundingBoxMin,
-            GeometryBoundingBoxMax: p.GeometryBoundingBoxMax
+            SubtreeBoundingBox: p.SubtreeBoundingBox,
+            GeometryBoundingBox: p.GeometryBoundingBox
         );
 
         if (sectorFilename != null)

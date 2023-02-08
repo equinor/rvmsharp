@@ -26,10 +26,8 @@ public static class SceneCreator
         long EstimatedTriangleCount,
         long EstimatedDrawCalls,
         IReadOnlyList<APrimitive> Geometries,
-        Vector3 SubtreeBoundingBoxMin,
-        Vector3 SubtreeBoundingBoxMax,
-        Vector3 GeometryBoundingBoxMin,
-        Vector3 GeometryBoundingBoxMax
+        BoundingBox SubtreeBoundingBox,
+        BoundingBox GeometryBoundingBox
     )
     {
         public long DownloadSize { get; init; }
@@ -78,13 +76,13 @@ public static class SceneCreator
                 ParentId = sector.ParentSectorId,
                 SubtreeBoundingBox =
                     new SerializableBoundingBox(
-                        Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBoxMin),
-                        Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBoxMax)
+                        Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Min),
+                        Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Max)
                     ),
                 GeometryBoundingBox =
                     new SerializableBoundingBox(
-                        Min: SerializableVector3.FromVector3(sector.GeometryBoundingBoxMin),
-                        Max: SerializableVector3.FromVector3(sector.GeometryBoundingBoxMax)
+                        Min: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Min),
+                        Max: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Max)
                     ),
                 Depth = sector.Depth,
                 Path = sector.Path,

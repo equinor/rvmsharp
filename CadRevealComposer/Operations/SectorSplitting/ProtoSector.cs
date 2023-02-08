@@ -9,8 +9,6 @@ public record ProtoSector(
     int Depth,
     string Path,
     APrimitive[] Geometries,
-    Vector3 SubtreeBoundingBoxMin,
-    Vector3 SubtreeBoundingBoxMax,
-    Vector3 GeometryBoundingBoxMin,
-    Vector3 GeometryBoundingBoxMax
+    BoundingBox SubtreeBoundingBox,
+    BoundingBox GeometryBoundingBox
 );
