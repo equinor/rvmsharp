@@ -111,8 +111,20 @@ public static class DrawCallEstimator
             TorusSegment => 9 * sizeof(ulong),
             Trapezium => 4 * sizeof(ulong),
             InstancedMesh => 20 * sizeof(ulong),
-            TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.Mesh.TriangleCount * 6 * sizeof(float),
+            TriangleMesh triangleMesh => CalculateTriangleMeshByteSize(triangleMesh),
             _ => throw new NotImplementedException()
         };
+    }
+
+    private static long CalculateTriangleMeshByteSize(TriangleMesh triangleMesh)
+    {
+        var triangleCost = triangleMesh.Mesh.Triangles.Length * sizeof(int);
+
+        var verticesLength = triangleMesh.Mesh.Vertices.Length;
+        var positionsCost = verticesLength * 3 /*xyz*/ * sizeof(float);
+        var treeIndexDataCost = verticesLength * 1 * sizeof(int);
+        var colorDataCost = verticesLength * 4 /*RGBA*/ * sizeof(byte);
+
+        return triangleCost + (positionsCost + treeIndexDataCost + colorDataCost);
     }
 }
