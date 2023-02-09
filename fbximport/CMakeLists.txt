@@ -64,6 +64,8 @@ set(TEST_SOURCES
     tests/tests.cpp
 )
 
+add_compile_definitions(FBXSDK_VERSION=\"${FBXSDK_VERSION}\")
+
 include_directories(
     ${cfbx_SOURCE_DIR}/src)
 

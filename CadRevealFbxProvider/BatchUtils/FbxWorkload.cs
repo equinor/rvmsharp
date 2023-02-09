@@ -3,6 +3,7 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 
 using Commons;
@@ -73,6 +74,12 @@ public static class FbxWorkload
         var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
         using var fbxImporter = new FbxImporter();
+        if(!fbxImporter.HasValidSdk())
+        {
+            // returns an empty list and issues a warning
+            Console.WriteLine("Did not find valid SDK, cannot import FBX file");
+            return new List<CadRevealNode>();
+        }
 
         IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
         {

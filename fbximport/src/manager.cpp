@@ -15,3 +15,22 @@ void manager_destroy(CFbxManager manager)
     auto fbxManager = static_cast<FbxManager*>(manager);
     fbxManager->Destroy();
 }
+
+std::string* get_fbxsdk_version()
+{
+#ifdef FBXSDK_VERSION
+    std::string* fbxVers = new std::string(FBXSDK_VERSION);
+    return fbxVers;
+#else
+    std::string* fbxVers = new std::string("-1");
+#endif
+    return fbxVers;
+}
+
+void delete_fbxsdk_version(std::string* fbxVers)
+{
+    if (fbxVers == nullptr)
+        return;
+
+    delete fbxVers;
+}

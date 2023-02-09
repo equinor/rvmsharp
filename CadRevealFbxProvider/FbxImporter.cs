@@ -1,5 +1,6 @@
 ﻿namespace CadRevealFbxProvider;
 
+using System;
 using CadRevealComposer.Tessellation;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -16,8 +17,18 @@ public class FbxImporter : IDisposable
         sdk = new FbxSdkWrapper();
     }
 
+    public bool HasValidSdk()
+    {
+        return sdk.IsValid();
+    }
+
     public FbxNode LoadFile(string filename)
     {
+        //this should never be called in the first place if the SDK is invalid
+        if(!sdk.IsValid())
+        {
+            throw new NullReferenceException("Cannot load files with invalid SDK.");
+        }
         return sdk.LoadFile(filename);
     }
 
@@ -25,7 +36,4 @@ public class FbxImporter : IDisposable
     {
         sdk.Dispose();
     }
-
-
-    
 }
