@@ -29,14 +29,17 @@ public class FbxSdkWrapper:IDisposable
 
     public void Dispose()
     {
-        ClearFbxSdkVersion(version);
         DestroySdk();
     }
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "get_fbxsdk_version")]
     private static extern IntPtr get_fbxsdk_version();
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "delete_fbxsdk_version")]
+    private static extern void delete_fbxsdk_version(IntPtr versionString);
+
     /// <summary>
     /// Retrieves the FBX SDK version that was used to build the DLL. Returns true if valid, false if invalid.
+    /// Clears the memory afterwards (unmanaged code)
     /// </summary>
     public bool GetFbxSdkVersion()
     {
@@ -58,17 +61,8 @@ public class FbxSdkWrapper:IDisposable
             return false;
         }
 
+        delete_fbxsdk_version(version);
         return true;
-    }
-
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "delete_fbxsdk_version")]
-    private static extern void delete_fbxsdk_version(IntPtr versionString);
-    /// <summary>
-    /// Clears memory
-    /// </summary>
-    public void ClearFbxSdkVersion(IntPtr versionString)
-    {
-        delete_fbxsdk_version(versionString);   
     }
 
 
