@@ -19,7 +19,7 @@ public class FbxSdkWrapper:IDisposable
     public FbxSdkWrapper()
     {
         CreateSdk();
-        isValidSdk = GetFbxSdkVersion();
+        isValidSdk = AssertFbxSdkVersion();
     }
 
     public bool IsValid()
@@ -41,23 +41,23 @@ public class FbxSdkWrapper:IDisposable
     /// Retrieves the FBX SDK version that was used to build the DLL. Returns true if valid, false if invalid.
     /// Clears the memory afterwards (unmanaged code)
     /// </summary>
-    public bool GetFbxSdkVersion()
+    public bool AssertFbxSdkVersion()
     {
         version = get_fbxsdk_version();
         var versionStr = Marshal.PtrToStringAnsi(version);
 
-        Console.WriteLine("FBX SDK version: " + versionStr);
+        Console.WriteLine("Using FBX SDK version: " + versionStr);
 
         if (versionStr == null)
         {
-            Console.WriteLine("FBX SDK version is missing");
+            Console.WriteLine("FBX SDK version is missing.");
             return false;
         }
         var versionMinExpected = new Version("2020.3.2");
         var versionObj = new Version(versionStr);
         if(versionObj.CompareTo(versionMinExpected) < 0)
         {
-            Console.WriteLine("FBX SDK version is too old. Will be skipping all FBX files.");
+            Console.WriteLine("FBX SDK version is too old. Cannot load this FBX file.");
             return false;
         }
 
