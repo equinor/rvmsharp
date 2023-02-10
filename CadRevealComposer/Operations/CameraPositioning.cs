@@ -51,6 +51,10 @@ public static class CameraPositioning
     private static (Vector3 PlatformBoundingBoxMin, Vector3 PlatformBoundingBoxMax) GetPlatformBoundingBox(APrimitive[] geometries)
     {
         // TODO: does not handle empty geometries correctly
+        if(geometries.Length== 0)
+        {
+            throw new Exception("The input data had 0 elements, we cannot position the camera. Does the 3D scene have any valid meshes?");
+        }
 
         // get bounding box for platform using approximation (99th percentile)
         var percentile = 0.01;

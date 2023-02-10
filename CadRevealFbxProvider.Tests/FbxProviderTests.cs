@@ -23,6 +23,13 @@ public class FbxProviderTests
     }
 
     [Test]
+    public void FbxSdkVersionTest()
+    {
+        using var testImporter = new FbxImporter();
+        Assert.That(testImporter.HasValidSdk());
+    }
+
+    [Test]
     public void FbxImporterLoadFileTest()
     {
         using var test = new FbxImporter();
