@@ -72,6 +72,7 @@ public class DatabaseComposer
         {
             Id = inputNode.NodeId,
             EndId = inputNode.EndId,
+            RefNoPrefix = inputNode.RefNoPrefix,
             RefNoDb = inputNode.RefNoDb,
             RefNoSequence = inputNode.RefNoSequence,
             Name = inputNode.Name,
@@ -149,7 +150,8 @@ public class DatabaseComposer
             cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
             cmd.ExecuteNonQuery();
             cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
-            cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoDb, RefNoSequence)";
+            cmd.ExecuteNonQuery();
+            cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoPrefix, RefNoDb, RefNoSequence)";
             cmd.ExecuteNonQuery();
 
             transaction.Commit();
@@ -158,18 +160,22 @@ public class DatabaseComposer
 
         MopTimer.RunAndMeasure("VACUUM Database", _logger, () =>
         {
+#if DEBUG
+            // Ignore in debug mode to run faster
+            return;
+#else
             // Vacuum completely recreates the database but removes all "Extra Data" from it.
             // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
             using var vacuumCmds = new SQLiteCommand(connection);
 
             vacuumCmds.CommandText = "PRAGMA page_count";
-            var pageCountBeforeVacuum = (Int64) vacuumCmds.ExecuteScalar();
+            var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar();
             var timer = Stopwatch.StartNew();
             // Vacuum the database. This is quite slow!
             vacuumCmds.CommandText = "VACUUM";
             vacuumCmds.ExecuteNonQuery();
             vacuumCmds.CommandText = "PRAGMA page_count";
-            var pageCountAfterVacuum = (Int64) vacuumCmds.ExecuteScalar();
+            var pageCountAfterVacuum = (Int64)vacuumCmds.ExecuteScalar();
 
             // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
             vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
@@ -184,6 +190,7 @@ public class DatabaseComposer
             // FUTURE: Consider if we should disable VACUUM in dev builds if its too slow, its not really needed there.
             Console.WriteLine(
                 $"VACUUM finished in {timer.Elapsed}. Reduced size from {pageCountBeforeVacuum} to {pageCountAfterVacuum}");
+#endif
         });
 
         // ReSharper restore AccessToDisposedClosure

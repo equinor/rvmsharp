@@ -8,9 +8,8 @@ public class Node
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public uint Id { get; init; }
-
     public uint EndId { get; init; }
-
+    public string? RefNoPrefix { get; init; }
     public int? RefNoDb { get; init; }
     public int? RefNoSequence { get; init; }
 
@@ -31,10 +30,11 @@ public class Node
 
     public void RawInsert(SQLiteCommand command)
     {
-        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES (@Id, @EndId, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId, @DiagnosticInfo);";
+        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES (@Id, @EndId, @RefNoPrefix, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId, @DiagnosticInfo);";
         command.Parameters.AddRange(new[] {
             new SQLiteParameter("@Id", Id),
             new SQLiteParameter("@EndId", EndId),
+            new SQLiteParameter("@RefNoPrefix", RefNoPrefix),
             new SQLiteParameter("@RefNoDb", RefNoDb),
             new SQLiteParameter("@RefNoSequence", RefNoSequence),
             new SQLiteParameter("@Name", Name),
