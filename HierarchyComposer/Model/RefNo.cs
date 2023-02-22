@@ -22,10 +22,13 @@ using System.Text.RegularExpressions;
 public partial class RefNo
 {
     /// <summary>
-    /// Prefix: In the current known data this is either null or ILTUBOF
+    /// Prefix: In the current known data this is either empty or ILTUBOF
     /// Its really a "Query" for the data, in PDMS. But we do not support queries (yet) so we store it as a "dumb" prefix.
     /// </summary>
-    public string? Prefix { get; set; }
+    /// <remarks>
+    /// This should never be null as it would make DB queries a lot more complicated ((NULL = NULL) is UNKNOWN in SQL)
+    /// </remarks>
+    public string Prefix { get; set; }
     public int DbNo { get; }
     public int SequenceNo { get; }
 
@@ -36,13 +39,12 @@ public partial class RefNo
 
     public RefNo(string? prefix, int dbNo, int sequenceNo)
     {
-        var prefixOrNull = string.IsNullOrWhiteSpace(prefix)
-            ? null
-            : (PrefixValidRegex.IsMatch(prefix)
-                ? prefix
-                : throw new ArgumentException($"Prefix \"{prefix}\" is unexpected, is this a valid prefix? If so update the code and tests."));
+        if (!string.IsNullOrEmpty(prefix) && !PrefixValidRegex.IsMatch(prefix))
+        {
+            throw new ArgumentException($"Prefix \"{prefix}\" is unexpected, is this a valid prefix? If so update the code and tests.");
+        }
 
-        Prefix = prefixOrNull;
+        Prefix = prefix ?? string.Empty;
         DbNo = dbNo;
         SequenceNo = sequenceNo;
     }
@@ -70,17 +72,17 @@ public partial class RefNo
             throw new ArgumentException($"Expected format 'prefix=123/321' '(string?=uint/uint)' (prefix is optional), was '{refNo}'", nameof(refNo));
 
         // Regex Group 0 is the entire match.
-        var prefix = match.Groups[1].Value;
+        var prefixParsed = match.Groups[1].Value;
         var dbNo = int.Parse(match.Groups[2].Value);
         var sequenceNo = int.Parse(match.Groups[3].Value);
 
         if (dbNo < 0 || sequenceNo < 0)
             throw new ArgumentException($"Expected positive values, was '{refNo}'", nameof(refNo));
 
-        // Avoid saving "empty string" for empty capture groups
-        var prefixOrNull = string.IsNullOrWhiteSpace(prefix) ? null : prefix;
+        // Save empty prefixes as string.empty
+        var prefix = string.IsNullOrWhiteSpace(prefixParsed) ? String.Empty : prefixParsed;
 
-        return new RefNo(prefixOrNull, dbNo, sequenceNo);
+        return new RefNo(prefix, dbNo, sequenceNo);
     }
 
     /// <summary>

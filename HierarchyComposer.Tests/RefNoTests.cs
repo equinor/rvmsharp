@@ -26,9 +26,9 @@ public class RefNoTests
     }
 
     [Test]
-    [TestCase("=123/1337", 123, 1337, null)]
-    [TestCase("=1/0", 1, 0, null)]
-    [TestCase("=8129/0", 8129, 0, null)]
+    [TestCase("=123/1337", 123, 1337, "")]
+    [TestCase("=1/0", 1, 0, "")]
+    [TestCase("=8129/0", 8129, 0, "")]
     [TestCase("ILTUBOF=8129/0", 8129, 0, "ILTUBOF")]
     public void Parse_WhenGivenValidValues_ReturnsRefNoWithExpectedDbAndSeq(string validInput, int expectedDb,
         int expectedSequence, string expectedPrefix)
@@ -42,16 +42,17 @@ public class RefNoTests
     [Test]
     [TestCase("ILTUBOF", "ILTUBOF")]
     [TestCase("123", "123")]
-    [TestCase(" ", null)]
-    [TestCase("", null)]
+    [TestCase("", "")]
+    [TestCase(null, "")]
     public void Constructor_WhenGivenValidValues_ReturnsExpectedRefNo(string actualPrefix, string expectedPrefix)
     {
-        var refNo = new RefNo(expectedPrefix, 123,321);
+        var refNo = new RefNo(actualPrefix, 123,321);
         Assert.That(refNo.Prefix, Is.EqualTo(expectedPrefix));
     }
 
     [Test]
     [TestCase("PREFIX WITH SPACES")]
+    [TestCase(" ")]
     [TestCase(" ILTUBOF")] // Expect trimmed input
     public void Constructor_WhenGivenInvalidValues_Throws(string invalidPrefix)
     {
