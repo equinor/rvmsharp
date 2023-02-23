@@ -43,11 +43,7 @@ public static class HierarchyComposerConverter
         var maybeRefNoString = rvmNode.Attributes.GetValueOrNull("RefNo");
 
         RefNo? maybeRefNo = null;
-        if (!string.IsNullOrWhiteSpace(maybeRefNoString)
-            &&
-            // TEMP: 2022-08-25 Ignore ILTUBOF RefNos instead of actually handling them, as the database does not yet support representing this.
-            !maybeRefNoString.Trim().StartsWith("ILTUBOF", StringComparison.OrdinalIgnoreCase)
-           )
+        if (!string.IsNullOrWhiteSpace(maybeRefNoString))
         {
             maybeRefNo = RefNo.Parse(maybeRefNoString);
         }
@@ -74,6 +70,7 @@ public static class HierarchyComposerConverter
         {
             NodeId = ConvertUlongToUintOrThrowIfTooLarge(revealNode.TreeIndex),
             EndId = ConvertUlongToUintOrThrowIfTooLarge(GetLastIndexInChildrenIncludingSelf(revealNode)),
+            RefNoPrefix = maybeRefNo?.Prefix,
             RefNoDb = maybeRefNo?.DbNo,
             RefNoSequence = maybeRefNo?.SequenceNo,
             Name = rvmNode.Name,
