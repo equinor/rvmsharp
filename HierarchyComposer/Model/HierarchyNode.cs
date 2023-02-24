@@ -6,6 +6,8 @@ public class HierarchyNode
 {
     public uint NodeId { get; set; }
     public uint EndId { get; set; }
+
+    public string? RefNoPrefix { get; set; }
     public int? RefNoDb { get; set; }
     public int? RefNoSequence { get; set; }
     public string Name { get; set; } = "";
