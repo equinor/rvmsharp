@@ -446,7 +446,7 @@ public static class VertexCacheOptimizer
     /// If index buffer contains multiple ranges for multiple draw calls, this functions needs to be called on each range individually.
     /// destination must contain enough space for the resulting index buffer (index_count elements)
     /// </summary>
-    /// <param name="destination">Destination array, can be same as input if you want in-place edits</param>
+    /// <param name="destination">Destination array, can be same as input if you want in-place edits. Must be initialized and same length as input</param>
     /// <param name="inputIndices">Input index array</param>
     /// <param name="vertexCount">Vertex count of the mesh (Vertices.Length)</param>
     /// <param name="cacheSize">CacheSize should be less than the actual GPU cache size to avoid cache thrashing</param>
