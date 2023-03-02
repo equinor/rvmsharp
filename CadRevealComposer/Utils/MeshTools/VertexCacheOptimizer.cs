@@ -1,4 +1,4 @@
-﻿namespace  CadRevealComposer.Utils.MeshTools;
+﻿namespace CadRevealComposer.Utils.MeshTools;
 
 using System;
 using System.Diagnostics;
@@ -237,11 +237,11 @@ public static class VertexCacheOptimizer
         return ~0u;
     }
 
-    static void OptimizeVertexCacheTable(Span<uint> destination, Span<uint> inputIndices, uint vertexCount,
+    static void OptimizeVertexCacheTable(Span<uint> destination, ReadOnlySpan<uint> inputIndices, uint vertexCount,
         VertexScoreTable table)
     {
-        // support in-place optimization if input and output is identical
-        var indices = destination == inputIndices ? inputIndices.ToArray() : inputIndices;
+        // If input and output are the same reference we keep a copy of the input indexes
+        var indices = inputIndices == destination ? inputIndices.ToArray() : inputIndices;
         uint indexCount = (uint)indices.Length;
         Debug.Assert(indices.Length % 3 == 0);
 
@@ -417,9 +417,9 @@ public static class VertexCacheOptimizer
     /// If index buffer contains multiple ranges for multiple draw calls, this functions needs to be called on each range individually.
     /// </summary>
     /// <param name="destination">Destination array, can be same as input if you want in-place edits</param>
-    /// <param name="inputIndices">Input index array</param>
+    /// <param name="inputIndices">Input indexes, can be same as destination</param>
     /// <param name="vertexCount">Vertex count of the mesh (Vertices.Length)</param>
-    public static void OptimizeVertexCache(Span<uint> destination, Span<uint> inputIndices, uint vertexCount)
+    public static void OptimizeVertexCache(Span<uint> destination, ReadOnlySpan<uint> inputIndices, uint vertexCount)
     {
         OptimizeVertexCacheTable(destination, inputIndices, vertexCount, VertexScoreTableInstance);
     }
@@ -432,7 +432,7 @@ public static class VertexCacheOptimizer
     /// <param name="destination">Destination array, can be same as input if you want in-place edits</param>
     /// <param name="inputIndices">Input index array</param>
     /// <param name="vertexCount">Vertex count of the mesh (Vertices.Length)</param>
-    public static void OptimizeVertexCacheStrip(uint[] destination, uint[] inputIndices, uint
+    public static void OptimizeVertexCacheStrip(Span<uint> destination, ReadOnlySpan<uint> inputIndices, uint
         vertexCount)
     {
         OptimizeVertexCacheTable(destination, inputIndices, vertexCount,
@@ -450,9 +450,10 @@ public static class VertexCacheOptimizer
     /// <param name="inputIndices">Input index array</param>
     /// <param name="vertexCount">Vertex count of the mesh (Vertices.Length)</param>
     /// <param name="cacheSize">CacheSize should be less than the actual GPU cache size to avoid cache thrashing</param>
-    public static void OptimizeVertexCacheFifo(Span<uint> destination, Span<uint> inputIndices, uint
+    public static void OptimizeVertexCacheFifo(Span<uint> destination, ReadOnlySpan<uint> inputIndices, uint
         vertexCount, uint cacheSize = 16)
     {
+        // If input and output are the same, keep a copy of the input indexes
         var indices = inputIndices == destination ? inputIndices.ToArray() : inputIndices;
         uint indexCount = (uint)indices.Length;
         Debug.Assert(indexCount % 3 == 0);
@@ -461,12 +462,6 @@ public static class VertexCacheOptimizer
         // guard for empty meshes
         if (indexCount == 0 || vertexCount == 0)
             return;
-
-        // support in-place optimization
-        if (destination == indices)
-        {
-            indices = indices.ToArray();
-        }
 
         uint faceCount = indexCount / 3;
 
@@ -560,8 +555,15 @@ public static class VertexCacheOptimizer
         Debug.Assert(outputTriangle == faceCount);
     }
 
-    public static float ComputeAverageCacheMissRatio(ReadOnlySpan<uint> indices, int
-        cacheSize = 16)
+    /// <summary>
+    /// Computes the Average Cache Miss Ratio from the Input indices and selected cache size.
+    /// Can be used to evaluate the performance of the OptimizeVertexCache methods.
+    /// </summary>
+    /// <param name="indices">The indices</param>
+    /// <param name="cacheSize">The cache size</param>
+    /// <returns></returns>
+    public static float ComputeAverageCacheMissRatio(ReadOnlySpan<uint> indices, uint
+        cacheSize = CacheSizeMax)
     {
         // From https://github.com/Sigkill79/sts/blob/master/sts_vertex_cache_optimizer.h
         uint numCacheMisses = 0;
@@ -584,7 +586,7 @@ public static class VertexCacheOptimizer
             if (!foundInCache)
             {
                 ++numCacheMisses;
-                for (int c = cacheSize - 1; c >= 1; --c)
+                for (int c = (int)cacheSize - 1; c >= 1; --c)
                 {
                     cache[c] = cache[c - 1];
                 }
@@ -593,6 +595,7 @@ public static class VertexCacheOptimizer
             }
         }
 
-        return numCacheMisses / (float)(indices.Length / 3f);
+        float triangleCount = (indices.Length / 3f);
+        return numCacheMisses / triangleCount;
     }
 }

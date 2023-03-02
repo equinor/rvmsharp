@@ -19,8 +19,8 @@ public class VertexCacheOptimizerTests
 
         uint[] output = new uint[inputIndices.Length];
         VertexCacheOptimizer.OptimizeVertexCacheFifo(output, inputIndices, 24, 16);
-        Assert.That(output, Is.Not.EquivalentTo(inputIndices));
-        Assert.That(expectedFifo, Is.EquivalentTo(output));
+        Assert.That(output, Is.Not.EqualTo(inputIndices)); // Input and output are separate arrays so this should not do in-place changes to the input indices
+        Assert.That(output, Is.EqualTo(expectedFifo));
     }
 
     [Test]
@@ -32,8 +32,8 @@ public class VertexCacheOptimizerTests
         uint[] expected     = {0,1,2,3,1,0,7,1,3,3,4,7,6,2,7,0,2,6,0,2,6,6,5,0,8,13,11,11,13,12,9,8,11,11,12,9,9,10,8,10,12,14,14,13,15,15,10,14,16,17,18,18,17,22,22,17,16,18,19,16,16,23,22,22,21,18,20,23,16,22,23,20,16,19,20,20,21,22,20,19,18,18,21,20};
 // @formatter:on
         uint[] output = new uint[inputIndices.Length];
-        VertexCacheOptimizer.OptimizeVertexCache(output, inputIndices, 24);
-        Assert.That(output, Is.Not.EquivalentTo(inputIndices));
-        Assert.That(output, Is.EquivalentTo(expected));
+        VertexCacheOptimizer.OptimizeVertexCache(output, inputIndices, 24); // Input and output are separate arrays so this should not do in-place changes to the input indices
+        Assert.That(output, Is.Not.EqualTo(inputIndices));
+        Assert.That(output, Is.EqualTo(expected));
     }
 }
