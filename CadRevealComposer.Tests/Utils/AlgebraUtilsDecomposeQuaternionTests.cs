@@ -1,7 +1,7 @@
 namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Utils;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using NUnit.Framework;
 using System;
 using System.Linq;
@@ -13,25 +13,25 @@ public class AlgebraUtilsDecomposeQuaternionTests
     [Serializable]
     public record RotationTestCase
     {
-        [JsonProperty("name")]
-        public string Name = null!;
-        [JsonProperty("quaternionIn")]
-        public QuaternionSerializable QuaternionIn = null!;
-        [JsonProperty("normalExpected")]
-        public Vector3Serializable NormalExpected = null!;
-        [JsonProperty("rotationAngleExpected")]
-        public float RotationAngleExpected;
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+        [JsonPropertyName("quaternionIn")]
+        public QuaternionSerializable QuaternionIn { get; set; }
+        [JsonPropertyName("normalExpected")]
+        public Vector3Serializable NormalExpected { get; set; }
+        [JsonPropertyName("rotationAngleExpected")]
+        public float RotationAngleExpected { get; set; }
 
         public record QuaternionSerializable(
-            [JsonProperty("x")] float X,
-            [JsonProperty("y")] float Y,
-            [JsonProperty("z")] float Z,
-            [JsonProperty("w")] float W);
+            [property:JsonPropertyName("x")] float X,
+            [property: JsonPropertyName("y")] float Y,
+            [property: JsonPropertyName("z")] float Z,
+            [property: JsonPropertyName("w")] float W);
 
         public record Vector3Serializable(
-            [JsonProperty("x")] float X,
-            [JsonProperty("y")] float Y,
-            [JsonProperty("z")] float Z);
+            [property: JsonPropertyName("x")] float X,
+            [property: JsonPropertyName("y")] float Y,
+            [property: JsonPropertyName("z")] float Z);
     }
 
     private static TestCaseData[] ReadTestCases()

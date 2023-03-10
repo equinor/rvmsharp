@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using System.IO;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 public static class TestSampleLoader
 {
@@ -19,6 +19,6 @@ public static class TestSampleLoader
     /// <returns>Deserialized object</returns>
     public static T LoadTestJson<T>(string filename)
     {
-        return JsonConvert.DeserializeObject<T>(File.ReadAllText(Path.Combine(TestSamplesDirectory, filename)))!;
+        return JsonSerializer.Deserialize<T>(File.ReadAllText(Path.Combine(TestSamplesDirectory, filename)))!;
     }
 }
