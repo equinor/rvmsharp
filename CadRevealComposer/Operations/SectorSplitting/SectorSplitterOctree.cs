@@ -135,7 +135,6 @@ public class SectorSplitterOctree : ISectorSplitter
             }
 
             var voxels = subVoxelNodes
-                .AsParallel()
                 .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, subtreeBoundingBox))
                 .OrderBy(x => x.Key)
                 .ToImmutableList();

@@ -23,7 +23,7 @@ public class AlgebraUtilsDecomposeQuaternionTests
         public float RotationAngleExpected { get; set; }
 
         public record QuaternionSerializable(
-            [property:JsonPropertyName("x")] float X,
+            [property: JsonPropertyName("x")] float X,
             [property: JsonPropertyName("y")] float Y,
             [property: JsonPropertyName("z")] float Z,
             [property: JsonPropertyName("w")] float W);

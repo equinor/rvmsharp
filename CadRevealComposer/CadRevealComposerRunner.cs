@@ -116,7 +116,6 @@ public static class CadRevealComposerRunner
         stopwatch.Restart();
 
         var sectorInfos = sectors
-            .AsParallel()
             .Select(s => SerializeSector(s, outputDirectory.FullName))
             .ToArray();
 
