@@ -23,9 +23,6 @@ public static class RvmFacetGroupMatcher
         (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template,
             Transform);
 
-    private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
-    private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
-
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
     /// </summary>
@@ -162,14 +159,17 @@ public static class RvmFacetGroupMatcher
                 // is instanced
                 var instanceGroups = instancingGroup
                     .OfType<InstancedResult>()
-                    .GroupBy(r => r.Template);
+                    .GroupBy(r => r.Template)
+                    .OrderByDescending(g => g.Count());
 
+                int counter = 0;
                 foreach (var instanceGroup in instanceGroups)
                 {
                     var fg = instanceGroup
                         .Select(x => x.FacetGroup)
                         .ToArray();
-                    var shouldInstanceGroup = shouldInstance(fg);
+                    var shouldInstanceGroup = shouldInstance(fg) && counter < 10;
+                    counter++;
 
                     foreach (var instancedResult in instanceGroup)
                     {
@@ -213,21 +213,59 @@ public static class RvmFacetGroupMatcher
                     return result.Result;
                 })
                 .ToArray();
+        var res2 = new List<Result>();
+        foreach (var instancingGroup in result.ToLookup(x => x is InstancedResult))
+        {
+            // is not instanced
+            if (instancingGroup.Key is false)
+            {
+                foreach (var instanceResult in instancingGroup)
+                {
+                    res2.Add(instanceResult);
+                }
 
-        var templateCount = result.OfType<TemplateResult>().Count();
-        var instancedCount = result.OfType<InstancedResult>().Count();
+                continue;
+            }
+
+            // is instanced
+            var instanceGroups = instancingGroup
+                .OfType<InstancedResult>()
+                .GroupBy(r => r.Template)
+                .OrderByDescending(g => g.Count());
+
+            int counter = 0;
+            foreach (var instanceGroup in instanceGroups)
+            {
+                var fg = instanceGroup
+                    .Select(x => x.FacetGroup)
+                    .ToArray();
+                var shouldInstanceGroup = shouldInstance(fg) && counter < 100;
+                counter++;
+
+                foreach (var instancedResult in instanceGroup)
+                {
+
+                    res2.Add(shouldInstanceGroup
+                        ? instancedResult
+                        : new NotInstancedResult(instancedResult.FacetGroup));
+                }
+            }
+        }
+
+        var templateCount = res2.OfType<TemplateResult>().Count();
+        var instancedCount = res2.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
         Console.WriteLine(
             $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
             $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
         Console.WriteLine($"Total iteration count: {iterationCounter}");
 
-        if (result.Length != allFacetGroups.Length)
+        if (res2.Count != allFacetGroups.Length)
         {
             throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
         }
 
-        return result;
+        return res2.ToArray();
     }
 
     private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
