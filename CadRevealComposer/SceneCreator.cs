@@ -4,14 +4,13 @@ using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Newtonsoft.Json;
 using Operations;
 using Primitives;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Numerics;
+using System.Text.Json;
 using Utils;
 using Writers;
 
@@ -110,7 +109,13 @@ public static class SceneCreator
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
         var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
         JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
-        JsonUtils.JsonSerializeToFile(scene, scenePath, Formatting.Indented);
+#if DEBUG
+        var options = new JsonSerializerOptions();
+        options.WriteIndented = true;
+        JsonUtils.JsonSerializeToFile(scene, scenePath, options);  // We don't want intentation, it doubles the size just for visual inspection of the file
+#else
+        JsonUtils.JsonSerializeToFile(scene, scenePath);  // We don't want intentation, it doubles the size just for visual inspection of the file
+#endif
     }
 
     public static void ExportSectorGeometries(IReadOnlyList<APrimitive> geometries, string sectorFilename, string? outputDirectory)

@@ -12,7 +12,7 @@ using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {
-    private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 2_500_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
 
     public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
@@ -29,8 +29,11 @@ public class SectorSplitterOctree : ISectorSplitter
 
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
+        //Order nodes by diagonal size
+        var sortedNodes = nodes.OrderByDescending(n => n.Diagonal).ToArray();
+
         var sectors = SplitIntoSectorsRecursive(
-            nodes,
+            sortedNodes,
             1,
             rootPath,
             rootSectorId,

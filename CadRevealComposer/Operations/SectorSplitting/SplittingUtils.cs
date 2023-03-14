@@ -85,4 +85,17 @@ public static class SplittingUtils
             })
             .ToArray();
     }
+
+    public static ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox, BoundingBox geometryBoundingBox)
+    {
+        return new ProtoSector(
+            sectorId,
+            null,
+            0,
+            path,
+            Array.Empty<APrimitive>(),
+            subTreeBoundingBox,
+            geometryBoundingBox
+        );
+    }
 }

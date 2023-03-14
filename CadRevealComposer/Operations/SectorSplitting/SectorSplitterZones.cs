@@ -5,6 +5,7 @@ using Primitives;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 
 public class SectorSplitterZones : ISectorSplitter
 {
@@ -22,17 +23,25 @@ public class SectorSplitterZones : ISectorSplitter
         var sectorIdGenerator = new SequentialIdGenerator();
         var octreeSplitter = new SectorSplitterOctree();
 
+        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        var rootPath = "/0";
+
+        var allnodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
+        var boundingBox = allnodes.CalculateBoundingBox();
+        yield return SplittingUtils.CreateRootSector(rootSectorId, rootPath, boundingBox, new BoundingBox(Vector3.Zero,Vector3.Zero));
+
+
         foreach (var zone in zones)
         {
             var nodes = SplittingUtils.ConvertPrimitivesToNodes(zone.Primitives);
 
             var sectors = octreeSplitter.SplitIntoSectorsRecursive(
                 nodes,
-                0,
-                "",
-                null,
+                1,
+                rootPath,
+                rootSectorId,
                 sectorIdGenerator,
-                0).ToArray();
+                1).ToArray();
 
             foreach (var sector in sectors)
             {
