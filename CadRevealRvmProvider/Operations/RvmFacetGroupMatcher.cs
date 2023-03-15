@@ -162,14 +162,12 @@ public static class RvmFacetGroupMatcher
                     .GroupBy(r => r.Template)
                     .OrderByDescending(g => g.Count());
 
-                int counter = 0;
                 foreach (var instanceGroup in instanceGroups)
                 {
                     var fg = instanceGroup
                         .Select(x => x.FacetGroup)
                         .ToArray();
-                    var shouldInstanceGroup = shouldInstance(fg) && counter < 10;
-                    counter++;
+                    var shouldInstanceGroup = shouldInstance(fg);
 
                     foreach (var instancedResult in instanceGroup)
                     {
