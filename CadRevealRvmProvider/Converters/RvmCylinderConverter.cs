@@ -18,9 +18,9 @@ public static class RvmCylinderConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        if(!(float.IsFinite(rotation.X) && float.IsFinite(rotation.Y) & float.IsFinite(rotation.Z) && float.IsFinite(rotation.W)))
+        if(!(float.IsFinite(rotation.X) && float.IsFinite(rotation.Y) && float.IsFinite(rotation.Z) && float.IsFinite(rotation.W)))
         {
-            Console.WriteLine("Cylinder was removed due to invalid rotation values");
+            Console.WriteLine($"Cylinder was removed due to invalid rotation values: {rotation}");
             yield break;
         }
 
