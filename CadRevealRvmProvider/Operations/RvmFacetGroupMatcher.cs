@@ -170,8 +170,7 @@ public static class RvmFacetGroupMatcher
                 // is instanced
                 var instanceGroups = instancingGroup
                     .OfType<InstancedResult>()
-                    .GroupBy(r => r.Template)
-                    .OrderByDescending(g => g.Count());
+                    .GroupBy(r => r.Template);
 
                 foreach (var instanceGroup in instanceGroups)
                 {
