@@ -51,7 +51,7 @@ public class FbxProviderTests
         {
             var providers = new List<IModelFormatProvider>() { new FbxProvider() };
 
-            var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1));
+            var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1), new MaxTemplateNumber(100));
             var composerParameters = new ComposerParameters("", false, true, false);
 
             CadRevealComposerRunner.Process(
@@ -102,7 +102,7 @@ public class FbxProviderTests
             lookupA).ToList();
 
         
-        var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1));
+        var modelParameters = new ModelParameters(new ProjectId(1), new ModelId(1), new RevisionId(1), new InstancingThreshold(1), new MaxTemplateNumber(100));
         var composerParameters = new ComposerParameters("", false, true, false);
 
         var geometriesToProcess = nodesToProcess.SelectMany(x => x.Geometries);

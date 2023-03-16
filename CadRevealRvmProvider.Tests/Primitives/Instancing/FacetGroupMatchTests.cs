@@ -66,7 +66,7 @@ public class FacetGroupMatchTests
         var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43908.json");
         var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
 
-        var results = RvmFacetGroupMatcher.MatchAll(new []{ pipe1, pipe2, panel1}, _ => true);
+        var results = RvmFacetGroupMatcher.MatchAll(new []{ pipe1, pipe2, panel1}, _ => true, 100);
 
         var templates = results.OfType<RvmFacetGroupMatcher.TemplateResult>().Select(r => r.FacetGroup).ToArray();
         var instanced = results.OfType<RvmFacetGroupMatcher.InstancedResult>().Select(r => r.FacetGroup).ToArray();
@@ -95,7 +95,7 @@ public class FacetGroupMatchTests
             .Select(_ => TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json"));
 
         var facetGroups = equalPipes.Concat(equalHinges).ToArray();
-        var results = RvmFacetGroupMatcher.MatchAll(facetGroups, group => group.Length >= 10);
+        var results = RvmFacetGroupMatcher.MatchAll(facetGroups, group => group.Length >= 10, 100);
 
         var templates = results.OfType<RvmFacetGroupMatcher.TemplateResult>().Select(r => r.FacetGroup).ToArray();
         var instanced = results.OfType<RvmFacetGroupMatcher.InstancedResult>().Select(r => r.FacetGroup).ToArray();

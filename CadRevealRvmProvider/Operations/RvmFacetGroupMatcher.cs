@@ -9,7 +9,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-
+using System.IO;
 public static class RvmFacetGroupMatcher
 {
     public abstract record Result(RvmFacetGroup FacetGroup);
@@ -101,8 +101,19 @@ public static class RvmFacetGroupMatcher
             Matrix = Matrix4x4.Identity
         };
     }
+    private static void PrintTemplateStats(IEnumerable<(uint index, int, int, int)> templateInfo)
+    {
+        using (new TeamCityLogBlock("Template Stats"))
+        {
+            Console.WriteLine("Template TreeId, Instance Count, Polygon Count, Total Instances Vertex Count");
+            foreach (var (index, instCount, polyCount, vertexCount) in templateInfo)
+            {
+                Console.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount * vertexCount}");
+            }
+        }
+    }
 
-    public static Result[] MatchAll(RvmFacetGroup[] allFacetGroups, Func<RvmFacetGroup[], bool> shouldInstance)
+    public static Result[] MatchAll(RvmFacetGroup[] allFacetGroups, Func<RvmFacetGroup[], bool> shouldInstance, uint maxNoTemplates)
     {
         var groupingTimer = Stopwatch.StartNew();
         var groupedFacetGroups =
@@ -229,7 +240,29 @@ public static class RvmFacetGroupMatcher
             var instanceGroups = instancingGroup
                 .OfType<InstancedResult>()
                 .GroupBy(r => r.Template)
-                .OrderByDescending(g => g.Count());
+                .OrderByDescending(g => g.Count()* g.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count())));
+
+            uint templIndex = 0;
+            var templateStats = instanceGroups.Select(
+                // this was originally meant to use as index, but it does not work for the tests..
+                //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
+                t => (templIndex++,
+                t.Count(),
+                t.First().FacetGroup.Polygons.Count(),
+                t.First().FacetGroup.Polygons.Sum(p=> p.Contours.Sum(c => c.Vertices.Count()))));
+
+            // This is kept for local testing
+            // Uncomment if you want to print a csv with debug data to your local machine
+            //using (var writer = new StreamWriter(File.Create("stats.csv")))
+            //{
+            //    writer.WriteLine("Template TreeIndex,instance count,polygon count,vertex count,total vertex count");
+            //    foreach (var (index, instCount, polyCount, vertexCount) in templateStats)
+            //    {
+            //        writer.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount* vertexCount}");
+            //    }
+            //}
+
+            PrintTemplateStats(templateStats);
 
             int counter = 0;
             foreach (var instanceGroup in instanceGroups)
@@ -237,7 +270,7 @@ public static class RvmFacetGroupMatcher
                 var fg = instanceGroup
                     .Select(x => x.FacetGroup)
                     .ToArray();
-                var shouldInstanceGroup = shouldInstance(fg) && counter < 100;
+                var shouldInstanceGroup = shouldInstance(fg) && counter < maxNoTemplates;
                 counter++;
 
                 foreach (var instancedResult in instanceGroup)

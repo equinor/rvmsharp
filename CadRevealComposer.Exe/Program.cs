@@ -45,7 +45,8 @@ public static class Program
                 new ProjectId(options.ProjectId),
                 new ModelId(options.ModelId),
                 new RevisionId(options.RevisionId),
-                new InstancingThreshold(options.InstancingThreshold)
+                new InstancingThreshold(options.InstancingThreshold),
+                new MaxTemplateNumber(options.MaxTemplateNumber)
             );
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");
