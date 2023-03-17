@@ -103,7 +103,6 @@ public static class RvmFacetGroupMatcher
     }
     private static void PrintTemplateStats(IOrderedEnumerable<IGrouping<RvmFacetGroup, InstancedResult>> instanceGroups)
     {
-        // make some stats
         uint templIndex = 0;
         var templateStats = instanceGroups.Select(
             // this was originally meant to use as index, but it does not work for the tests..
@@ -113,7 +112,7 @@ public static class RvmFacetGroupMatcher
             t.First().FacetGroup.Polygons.Count(),
             t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))));
 
-        using (new TeamCityLogBlock("Template Stats"))
+        using (new TeamCityLogBlock("Template Candidate Stats"))
         {
             Console.WriteLine("Template Id, Instance Count, Polygon Count, Total Instances Vertex Count");
             foreach (var (index, instCount, polyCount, vertexCount) in templateStats)
@@ -147,7 +146,6 @@ public static class RvmFacetGroupMatcher
 
     private static Result[] ReduceNumberOfTemplates(Result[] candidates, uint maxNoTemplates)
     {
-        
         // groups that are not an instance of a template (regular groups) are copied over as is
         var resultAfterTemplatePrioritization = candidates.Where(x => x is not InstancedResult).ToList();
 
@@ -290,7 +288,7 @@ public static class RvmFacetGroupMatcher
         var instancedCount = finalResult.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
         Console.WriteLine(
-            $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
+            $"Facet groups generated {templateCount:N0} templates representing {instancedCount:N0} instances " +
             $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
         Console.WriteLine($"Total iteration count: {iterationCounter}");
 
