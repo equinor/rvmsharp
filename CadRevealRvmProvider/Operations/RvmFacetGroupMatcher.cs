@@ -167,7 +167,6 @@ public static class RvmFacetGroupMatcher
             var shouldTemplateGroup = counterTemplates < maxNoTemplates;
             counterTemplates++;
 
-            // what about instancedResults that are not of type FacetGroup??
             foreach (var instancedResult in instanceGroup)
             {
                 resultAfterTemplatePrioritization.Add(shouldTemplateGroup
@@ -235,6 +234,7 @@ public static class RvmFacetGroupMatcher
 
             foreach (var instancesGroup in instanceGroups)
             {
+                // what about instancedResults that are not of type FacetGroup??
                 var facetGroup = instancesGroup
                     .Select(x => x.FacetGroup)
                     .ToArray();
