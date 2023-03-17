@@ -67,7 +67,7 @@ public class CommandLineOptions
          Default = (uint)100,
          Required = false,
          HelpText =
-             "Sets the maximal number of template meshes created. If not specified this will have a default value. Minimum 100 and maximum 1500.")
+             "Sets the maximal number of template meshes created. If not specified this will have a default value.")
      , Range(1, uint.MaxValue)]
     public uint TemplateCountLimit { get; set; }
 

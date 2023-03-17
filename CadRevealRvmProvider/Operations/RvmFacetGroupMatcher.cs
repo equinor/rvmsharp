@@ -163,7 +163,6 @@ public static class RvmFacetGroupMatcher
         int counterTemplates = 0;
         foreach (var instanceGroup in instanceGroups)
         {
-            // since the group pops up here, it must have already satisfied this
             var shouldTemplateGroup = counterTemplates < maxNoTemplates;
             counterTemplates++;
 
