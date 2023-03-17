@@ -105,7 +105,7 @@ public static class RvmFacetGroupMatcher
     {
         using (new TeamCityLogBlock("Template Stats"))
         {
-            Console.WriteLine("Template TreeId, Instance Count, Polygon Count, Total Instances Vertex Count");
+            Console.WriteLine("Template Id, Instance Count, Polygon Count, Total Instances Vertex Count");
             foreach (var (index, instCount, polyCount, vertexCount) in templateInfo)
             {
                 Console.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount * vertexCount}");
@@ -221,81 +221,79 @@ public static class RvmFacetGroupMatcher
                     return result.Result;
                 })
                 .ToArray();
-        var res2 = new List<Result>();
-        foreach (var instancingGroup in result.ToLookup(x => x is InstancedResult))
+
+        // the total number of template groups has a limit, therefore:
+        // iterate over the results and do prioritization on template groups
+
+        // groups that are not an instance of a template (regular groups) are copied over as is
+        var resultAfterPrioritization = result.Where(x => x is not InstancedResult).ToList();
+
+        // template groups are sorted according to number of instances x vertices and the top N are taken
+        // the template groups that did not make after the prioritazion will become regular groups
+
+        // get the templates that are instanced
+        var resultTemplates = result.Where(x => x is InstancedResult).ToList();
+        // and sort them according to number of instaces x number of vertices in the template mesh
+        var instanceGroups = resultTemplates
+            .OfType<InstancedResult>()
+            .GroupBy(r => r.Template)
+            .OrderByDescending(g => g.Count() * g.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count())));
+
+        int counter = 0;
+        foreach (var instanceGroup in instanceGroups)
         {
-            // is not instanced
-            if (instancingGroup.Key is false)
+            var fg = instanceGroup
+                .Select(x => x.FacetGroup)
+                .ToArray();
+            var shouldInstanceGroup = shouldInstance(fg) && counter < maxNoTemplates;
+            counter++;
+
+            foreach (var instancedResult in instanceGroup)
             {
-                foreach (var instanceResult in instancingGroup)
-                {
-                    res2.Add(instanceResult);
-                }
 
-                continue;
-            }
-
-            // is instanced
-            var instanceGroups = instancingGroup
-                .OfType<InstancedResult>()
-                .GroupBy(r => r.Template)
-                .OrderByDescending(g => g.Count()* g.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count())));
-
-            uint templIndex = 0;
-            var templateStats = instanceGroups.Select(
-                // this was originally meant to use as index, but it does not work for the tests..
-                //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
-                t => (templIndex++,
-                t.Count(),
-                t.First().FacetGroup.Polygons.Count(),
-                t.First().FacetGroup.Polygons.Sum(p=> p.Contours.Sum(c => c.Vertices.Count()))));
-
-            // This is kept for local testing
-            // Uncomment if you want to print a csv with debug data to your local machine
-            //using (var writer = new StreamWriter(File.Create("stats.csv")))
-            //{
-            //    writer.WriteLine("Template TreeIndex,instance count,polygon count,vertex count,total vertex count");
-            //    foreach (var (index, instCount, polyCount, vertexCount) in templateStats)
-            //    {
-            //        writer.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount* vertexCount}");
-            //    }
-            //}
-
-            PrintTemplateStats(templateStats);
-
-            int counter = 0;
-            foreach (var instanceGroup in instanceGroups)
-            {
-                var fg = instanceGroup
-                    .Select(x => x.FacetGroup)
-                    .ToArray();
-                var shouldInstanceGroup = shouldInstance(fg) && counter < maxNoTemplates;
-                counter++;
-
-                foreach (var instancedResult in instanceGroup)
-                {
-
-                    res2.Add(shouldInstanceGroup
-                        ? instancedResult
-                        : new NotInstancedResult(instancedResult.FacetGroup));
-                }
+                resultAfterPrioritization.Add(shouldInstanceGroup
+                    ? instancedResult
+                    : new NotInstancedResult(instancedResult.FacetGroup));
             }
         }
 
-        var templateCount = res2.OfType<TemplateResult>().Count();
-        var instancedCount = res2.OfType<InstancedResult>().Count();
+        // make some stats
+        uint templIndex = 0;
+        var templateStats = instanceGroups.Select(
+            // this was originally meant to use as index, but it does not work for the tests..
+            //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
+            t => (templIndex++,
+            t.Count(),
+            t.First().FacetGroup.Polygons.Count(),
+            t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))));
+
+        PrintTemplateStats(templateStats);
+
+        // This is kept for local testing
+        // Uncomment if you want to print a csv with debug data to your local machine
+        //using (var writer = new StreamWriter(File.Create("stats.csv")))
+        //{
+        //    writer.WriteLine("Template TreeIndex,instance count,polygon count,vertex count,total vertex count");
+        //    foreach (var (index, instCount, polyCount, vertexCount) in templateStats)
+        //    {
+        //        writer.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount* vertexCount}");
+        //    }
+        //}
+
+        var templateCount = resultAfterPrioritization.OfType<TemplateResult>().Count();
+        var instancedCount = resultAfterPrioritization.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
         Console.WriteLine(
             $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
             $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
         Console.WriteLine($"Total iteration count: {iterationCounter}");
 
-        if (res2.Count != allFacetGroups.Length)
+        if (resultAfterPrioritization.Count != allFacetGroups.Length)
         {
             throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
         }
 
-        return res2.ToArray();
+        return resultAfterPrioritization.ToArray();
     }
 
     private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
