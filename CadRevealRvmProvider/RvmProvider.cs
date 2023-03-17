@@ -81,7 +81,7 @@ public class RvmProvider : IModelFormatProvider
             facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
                 facetGroupsWithEmbeddedProtoMeshes,
                 facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value,
-                modelParameters.MaxTemplateNumber.Value);
+                modelParameters.TemplateCountLimit.Value);
             Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
