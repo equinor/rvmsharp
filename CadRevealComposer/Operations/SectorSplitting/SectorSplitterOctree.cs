@@ -14,6 +14,9 @@ public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_500_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
+    private const int MinDigagonalSizeAtDepth_1 = 50; // arbitrary value for min size at depth 1
+    private const int MinDigagonalSizeAtDepth_2 = 30; // arbitrary value for min size at depth 2
+    private const int MinDigagonalSizeAtDepth_3 = 20; // arbitrary value for min size at depth 3
 
     public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -96,7 +99,13 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
             var path = $"{parentPath}/{sectorId}";
-            var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+            APrimitive[] geometries = actualDepth switch
+            {
+                1 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_1).SelectMany(n => n.Geometries).ToArray(),
+                2 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_2).SelectMany(n => n.Geometries).ToArray(),
+                3 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_3).SelectMany(n => n.Geometries).ToArray(),
+                _ => nodes.SelectMany(n => n.Geometries).ToArray(),
+            };
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
@@ -162,7 +171,7 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
+    private static ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
         return new ProtoSector(
             sectorId,
@@ -175,7 +184,7 @@ public class SectorSplitterOctree : ISectorSplitter
         );
     }
 
-    private int CalculateStartSplittingDepth(BoundingBox bb)
+    private static int CalculateStartSplittingDepth(BoundingBox bb)
     {
         // If we start splitting too low in the octree, we might end up with way too many sectors
         // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
@@ -188,7 +197,7 @@ public class SectorSplitterOctree : ISectorSplitter
         return Math.Clamp((int)MathF.Sqrt(sizeOfAllNodes / 100f), minDepth, maxDepth); // Kind of random calculation
     }
 
-    private IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
     {
         var nodesInPrioritizedOrder = nodes
             .OrderByDescending(x => x.Diagonal);
