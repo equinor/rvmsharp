@@ -14,9 +14,9 @@ public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_500_000; // bytes, Arbitrary value
     private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
-    private const int MinDigagonalSizeAtDepth_1 = 50; // arbitrary value for min size at depth 1
-    private const int MinDigagonalSizeAtDepth_2 = 30; // arbitrary value for min size at depth 2
-    private const int MinDigagonalSizeAtDepth_3 = 20; // arbitrary value for min size at depth 3
+    private const int MinDigagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
+    private const int MinDigagonalSizeAtDepth_2 = 5; // arbitrary value for min size at depth 2
+    private const int MinDigagonalSizeAtDepth_3 = 3; // arbitrary value for min size at depth 3
 
     public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -89,7 +89,7 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 // fill main voxel according to budget
                 var additionalMainVoxelNodesByBudget =
-                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget).ToList();
+                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget,actualDepth).ToList();
                 mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
                 subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
             }
@@ -99,13 +99,8 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
             var path = $"{parentPath}/{sectorId}";
-            APrimitive[] geometries = actualDepth switch
-            {
-                1 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_1).SelectMany(n => n.Geometries).ToArray(),
-                2 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_2).SelectMany(n => n.Geometries).ToArray(),
-                3 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_3).SelectMany(n => n.Geometries).ToArray(),
-                _ => nodes.SelectMany(n => n.Geometries).ToArray(),
-            };
+            var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
@@ -121,7 +116,7 @@ public class SectorSplitterOctree : ISectorSplitter
             string parentPathForChildren = parentPath;
             uint? parentSectorIdForChildren = parentSectorId;
 
-            var geometries = mainVoxelNodes.SelectMany(node => node.Geometries).ToArray();
+            var geometries = mainVoxelNodes.SelectMany(n => n.Geometries).ToArray();
 
             if (geometries.Any())
             {
@@ -190,16 +185,24 @@ public class SectorSplitterOctree : ISectorSplitter
         // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
 
         int minDepth = 3; // Arbitrary value
-        int maxDepth = 4; // Arbitrary value
+        int maxDepth = 6; // Arbitrary value
 
         var sizeOfAllNodes = bb.Diagonal;
 
         return Math.Clamp((int)MathF.Sqrt(sizeOfAllNodes / 100f), minDepth, maxDepth); // Kind of random calculation
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget, int actualDepth)
     {
-        var nodesInPrioritizedOrder = nodes
+        var selectedNodes = actualDepth switch
+        {
+            1 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_1).ToArray(),
+            2 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_2).ToArray(),
+            3 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_3).ToArray(),
+            _ => nodes.ToArray(),
+        };
+
+        var nodesInPrioritizedOrder = selectedNodes
             .OrderByDescending(x => x.Diagonal);
 
         var budgetLeft = budget;
