@@ -9,7 +9,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-
+using System.IO;
 public static class RvmFacetGroupMatcher
 {
     public abstract record Result(RvmFacetGroup FacetGroup);
@@ -22,9 +22,6 @@ public static class RvmFacetGroupMatcher
     public record TemplateResult
         (RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform) : InstancedResult(FacetGroup, Template,
             Transform);
-
-    private const int TemplateCleanupThreshold = 5000; // Arbitrarily chosen number
-    private const int TemplateCleanupNumberToKeep = 1000; // Arbitrarily chosen number
 
     /// <summary>
     /// Mutable to allow fast sorting of templates by swapping properties.
@@ -104,8 +101,85 @@ public static class RvmFacetGroupMatcher
             Matrix = Matrix4x4.Identity
         };
     }
+    private static void PrintTemplateStats(IOrderedEnumerable<IGrouping<RvmFacetGroup, InstancedResult>> instanceGroups)
+    {
+        uint templIndex = 0;
+        var templateStats = instanceGroups.Select(
+            // this was originally meant to use as index, but it does not work for the tests..
+            //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
+            t => (templIndex++,
+            t.Count(),
+            t.First().FacetGroup.Polygons.Count(),
+            t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))));
 
-    public static Result[] MatchAll(RvmFacetGroup[] allFacetGroups, Func<RvmFacetGroup[], bool> shouldInstance)
+        using (new TeamCityLogBlock("Template Candidate Stats"))
+        {
+            Console.WriteLine("Template Id, Instance Count, Polygon Count, Total Instances Vertex Count");
+            foreach (var (index, instCount, polyCount, vertexCount) in templateStats)
+            {
+                Console.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount * vertexCount}");
+            }
+        }
+
+        // This is kept for local testing
+        // Uncomment if you want to print a csv with debug data to your local machine
+        //using (var writer = new StreamWriter(File.Create("stats.csv")))
+        //{
+        //    writer.WriteLine("Template TreeIndex,instance count,polygon count,vertex count,total vertex count");
+        //    foreach (var (index, instCount, polyCount, vertexCount) in templateStats)
+        //    {
+        //        writer.WriteLine($"{index},{instCount},{polyCount},{vertexCount},{instCount* vertexCount}");
+        //    }
+        //}
+    }
+
+    /// <summary>
+    /// Possibly reduces the number of templates:
+    /// the total number of template groups has a limit, because:
+    /// templating bears extra cost connected to retrieving the actual geometry when its instance is used
+    /// and cost and gain must be in balance 
+    /// therefore we iterate over the template results and do prioritization based on gain
+    /// </summary>
+    /// <param name="candidates"></param>
+    /// <param name="maxNoTemplates"></param>
+    /// <returns></returns>
+
+    private static Result[] ReduceNumberOfTemplates(Result[] candidates, uint maxNoTemplates)
+    {
+        // groups that are not an instance of a template (regular groups) are copied over as is
+        var resultAfterTemplatePrioritization = candidates.Where(x => x is not InstancedResult).ToList();
+
+        // template groups are sorted according to number of instances x vertices and the top N are taken
+        // the template groups that did not make after the prioritazion will become regular groups
+
+        // first: get the templates that are instanced
+        var resultsWithTemplate = candidates.OfType<InstancedResult>().ToList();
+        // second: sort them according to number of instaces x number of vertices in the template mesh
+        var instanceGroups = resultsWithTemplate
+            .GroupBy(r => r.Template)
+            .OrderByDescending(g => g.Count() * g.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count())));
+
+        // third: pick N that bring most gain
+        int counterTemplates = 0;
+        foreach (var instanceGroup in instanceGroups)
+        {
+            var shouldTemplateGroup = counterTemplates < maxNoTemplates;
+            counterTemplates++;
+
+            foreach (var instancedResult in instanceGroup)
+            {
+                resultAfterTemplatePrioritization.Add(shouldTemplateGroup
+                    ? instancedResult
+                    : new NotInstancedResult(instancedResult.FacetGroup));
+            }
+        }
+
+        PrintTemplateStats(instanceGroups);
+
+        return resultAfterTemplatePrioritization.ToArray();
+    }
+
+    public static Result[] MatchAll(RvmFacetGroup[] allFacetGroups, Func<RvmFacetGroup[], bool> shouldMakeTemplateOf, uint maxNoTemplates)
     {
         var groupingTimer = Stopwatch.StartNew();
         var groupedFacetGroups =
@@ -115,9 +189,9 @@ public static class RvmFacetGroupMatcher
                 .Select(g => g.OrderByDescending(x => x.BoundingBoxLocal.Diagonal).ToArray())
                 .ToArray();
 
-        var groupCount = groupedFacetGroups.Count(shouldInstance);
+        var groupCount = groupedFacetGroups.Count(shouldMakeTemplateOf);
         var facetGroupForMatchingCount = groupedFacetGroups
-            .Where(shouldInstance)
+            .Where(shouldMakeTemplateOf)
             .Sum(facetGroups => facetGroups.Length);
         Console.WriteLine(
             $"Found {groupCount:N0} groups for a count of {facetGroupForMatchingCount:N0} facet groups " +
@@ -129,7 +203,7 @@ public static class RvmFacetGroupMatcher
         {
             var result = new List<Result>();
 
-            if (shouldInstance(facetGroups) is false)
+            if (shouldMakeTemplateOf(facetGroups) is false)
             {
                 foreach (var facetGroup in facetGroups)
                 {
@@ -141,54 +215,47 @@ public static class RvmFacetGroupMatcher
             }
 
             var timer = Stopwatch.StartNew();
-            var instancingResults = MatchFacetGroups(facetGroups, out var iterationCounter);
+            var matchingResults = MatchFacetGroups(facetGroups, out var iterationCounter);
 
-            // post determine if group is adequate for instancing
+            // results that do not match and thus cannot be instanced, and are added as is
+            result = matchingResults.Where(x => x is not InstancedResult).ToList();
+
+            // post-determine if group is an adequate template candidate
+            // criterion evaluated here is that a template should have a minimum number of instances
+            // see the definition of shouldMakeTemplateOf
             var templateCount = 0L;
             var instancedCount = 0L;
-            foreach (var instancingGroup in instancingResults.ToLookup(x => x is InstancedResult))
+            var instancedResults = matchingResults.OfType<InstancedResult>().ToList();
+            
+            // each group of matching instances will be evaluated as a candidate for a template
+            var instanceGroups = instancedResults
+                .GroupBy(r => r.Template);
+
+            foreach (var instancesGroup in instanceGroups)
             {
-                // is not instanced
-                if (instancingGroup.Key is false)
+                // what about instancedResults that are not of type FacetGroup??
+                var facetGroup = instancesGroup
+                    .Select(x => x.FacetGroup)
+                    .ToArray();
+                var shouldMakeTemplateForGroup = shouldMakeTemplateOf(facetGroup);
+
+                foreach (var instancedResult in instancesGroup)
                 {
-                    foreach (var instanceResult in instancingGroup)
+                    if (shouldMakeTemplateForGroup)
                     {
-                        result.Add(instanceResult);
-                    }
-
-                    continue;
-                }
-
-                // is instanced
-                var instanceGroups = instancingGroup
-                    .OfType<InstancedResult>()
-                    .GroupBy(r => r.Template);
-
-                foreach (var instanceGroup in instanceGroups)
-                {
-                    var fg = instanceGroup
-                        .Select(x => x.FacetGroup)
-                        .ToArray();
-                    var shouldInstanceGroup = shouldInstance(fg);
-
-                    foreach (var instancedResult in instanceGroup)
-                    {
-                        if (shouldInstanceGroup)
+                        instancedCount++;
+                        if (instancedResult is TemplateResult)
                         {
-                            instancedCount++;
-                            if (instancedResult is TemplateResult)
-                            {
-                                templateCount++;
-                            }
+                            templateCount++;
                         }
-
-                        result.Add(shouldInstanceGroup
-                            ? instancedResult
-                            : new NotInstancedResult(instancedResult.FacetGroup));
                     }
+
+                    result.Add(shouldMakeTemplateForGroup
+                        ? instancedResult
+                        : new NotInstancedResult(instancedResult.FacetGroup));
                 }
             }
-
+            
             var vertexCount = facetGroups
                 .First()
                 .Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
@@ -202,7 +269,7 @@ public static class RvmFacetGroupMatcher
 
         long iterationCounter = 0;
 
-        var result =
+        var matchingResult =
             groupedFacetGroups
                 .OrderByDescending(facetGroups => facetGroups.Length)
                 .AsParallel()
@@ -214,20 +281,22 @@ public static class RvmFacetGroupMatcher
                 })
                 .ToArray();
 
-        var templateCount = result.OfType<TemplateResult>().Count();
-        var instancedCount = result.OfType<InstancedResult>().Count();
+        var finalResult = ReduceNumberOfTemplates(matchingResult, maxNoTemplates);
+
+        var templateCount = finalResult.OfType<TemplateResult>().Count();
+        var instancedCount = finalResult.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)allFacetGroups.Length;
         Console.WriteLine(
-            $"Facet groups found {templateCount:N0} unique representing {instancedCount:N0} instances " +
+            $"Facet groups generated {templateCount:N0} templates representing {instancedCount:N0} instances " +
             $"from a total of {allFacetGroups.Length:N0} ({fraction:P1}).");
         Console.WriteLine($"Total iteration count: {iterationCounter}");
 
-        if (result.Length != allFacetGroups.Length)
+        if (finalResult.Length != allFacetGroups.Length)
         {
-            throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {result.Length}");
+            throw new Exception($"Input and output count doesn't match up. {allFacetGroups.Length} vs {finalResult.Length}");
         }
 
-        return result;
+        return finalResult;
     }
 
     private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
