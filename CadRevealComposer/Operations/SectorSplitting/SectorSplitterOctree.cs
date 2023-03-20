@@ -12,7 +12,7 @@ using Utils;
 public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_500_000; // bytes, Arbitrary value
-    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 20.0f; // Arbitrary value
+    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 10f; // Arbitrary value
     private const int MinDigagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const int MinDigagonalSizeAtDepth_2 = 5; // arbitrary value for min size at depth 2
     private const int MinDigagonalSizeAtDepth_3 = 3; // arbitrary value for min size at depth 3
@@ -100,12 +100,16 @@ public class SectorSplitterOctree : ISectorSplitter
             var sectorId = (uint)sectorIdGenerator.GetNextId();
             var path = $"{parentPath}/{sectorId}";
             var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+            var minDiagonal = nodes.Min(x => x.Diagonal);
+            var maxDiagonal = nodes.Max(x => x.Diagonal);
 
             yield return new ProtoSector(
                 sectorId,
                 parentSectorId,
                 actualDepth,
                 path,
+                minDiagonal,
+                maxDiagonal,
                 geometries,
                 subtreeBoundingBox,
                 subtreeBoundingBox
@@ -118,17 +122,22 @@ public class SectorSplitterOctree : ISectorSplitter
 
             var geometries = mainVoxelNodes.SelectMany(n => n.Geometries).ToArray();
 
-            if (geometries.Any())
+            // Should we keep empty sectors???? yes no?
+            if (geometries.Any() || subVoxelNodes.Any())
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
                 var geometryBb = geometries.CalculateBoundingBox();
 
+                var minDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Min(x => x.Diagonal) : 0;
+                var maxDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Max(x => x.Diagonal) : 0;
                 yield return new ProtoSector(
                     sectorId,
                     parentSectorId,
                     actualDepth,
                     path,
+                    minDiagonal,
+                    maxDiagonal,
                     geometries,
                     subtreeBoundingBox,
                     geometryBb
@@ -173,33 +182,35 @@ public class SectorSplitterOctree : ISectorSplitter
             null,
             0,
             path,
+            0, 0,
             Array.Empty<APrimitive>(),
             subtreeBoundingBox,
             new BoundingBox(Vector3.Zero, Vector3.Zero)
         );
     }
 
-    private static int CalculateStartSplittingDepth(BoundingBox bb)
+    private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
     {
         // If we start splitting too low in the octree, we might end up with way too many sectors
         // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
 
-        var sizeOfAllNodes = bb.Diagonal;
-
-        float dividedByTwo = bb.Diagonal / 2;
-
-        var diagonalAtDepth = sizeOfAllNodes;
+        var diagonalAtDepth = boundingBox.Diagonal;
         int depth = 1;
         // Todo: Arbitrary numbers in this method based on gut feeling.
-        const float level1SectorsMaxDiagonal = 150;
-        while (diagonalAtDepth > level1SectorsMaxDiagonal || diagonalAtDepth > dividedByTwo)
+        // Assumes 3 levels of "LOD Splitting":
+        // 300x300 for Very large parts
+        // 150x150 for large parts
+        // 75x75 for > 1 meter parts
+        // 37,5 etc by budget
+        const float level1SectorsMaxDiagonal = 300;
+        while (diagonalAtDepth > level1SectorsMaxDiagonal)
         {
             diagonalAtDepth /= 2;
             depth++;
         }
 
         Console.WriteLine(
-            $"Diagonal was: {bb.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m");
+            $"Diagonal was: {boundingBox.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m");
         return depth;
     }
 

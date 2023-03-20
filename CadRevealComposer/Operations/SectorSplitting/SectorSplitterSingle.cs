@@ -1,8 +1,9 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
-using Utils;
 using System.Collections.Generic;
+using System.Linq;
+using Utils;
 
 public class SectorSplitterSingle : ISectorSplitter
 {
@@ -19,6 +20,8 @@ public class SectorSplitterSingle : ISectorSplitter
             ParentSectorId: null,
             0,
             $"{sectorId}",
+            geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal),
+            geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
             geometries,
             bb,
             bb

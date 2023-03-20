@@ -125,6 +125,8 @@ public static class SplittingUtils
             null,
             0,
             path,
+            0,
+            0,
             Array.Empty<APrimitive>(),
             subTreeBoundingBox,
             geometryBoundingBox

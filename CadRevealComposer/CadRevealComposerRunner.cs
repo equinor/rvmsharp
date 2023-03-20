@@ -157,10 +157,14 @@ public static class CadRevealComposerRunner
                          .OrderBy(x => x.Key))
             {
                 var anyHasGeometry = g.Any(x => x.Geometries.Any());
-                var sizeMinAvgExceptEmpty = anyHasGeometry ? g.Where(x => x.Geometries.Any()).Average(x =>
-                    x.Geometries.Min(y => y.AxisAlignedBoundingBox.Diagonal)) : 0; // Note this is by Geometry and not TreeIndex (Part Size)
-                var sizeMaxAvgExceptEmpty = anyHasGeometry ? g.Where(x => x.Geometries.Any()).Average(x =>
-                    x.Geometries.Max(y => y.AxisAlignedBoundingBox.Diagonal)) : 0; // Note this is by Geometry and not TreeIndex (Part Size)
+                var sizeMinAvgExceptEmpty = anyHasGeometry
+                    ? g.Where(x => x.Geometries.Any()).Average(x =>
+                        x.MinNodeDiagonal)
+                    : 0;
+                var sizeMaxAvgExceptEmpty = anyHasGeometry
+                    ? g.Where(x => x.Geometries.Any()).Average(x =>
+                        x.MaxNodeDiagonal)
+                    : 0;
                 var outputText =
                     "\t" + $@"
 {g.Key,2}:
@@ -193,6 +197,8 @@ public static class CadRevealComposerRunner
             Filename: sectorFilename,
             EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
             EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
+            MinNodeDiagonal: p.MinNodeDiagonal,
+            MaxNodeDiagonal: p.MaxNodeDiagonal,
             Geometries: p.Geometries,
             SubtreeBoundingBox: p.SubtreeBoundingBox,
             GeometryBoundingBox: p.GeometryBoundingBox

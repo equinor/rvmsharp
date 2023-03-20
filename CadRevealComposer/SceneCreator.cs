@@ -24,6 +24,8 @@ public static class SceneCreator
         string? Filename,
         long EstimatedTriangleCount,
         long EstimatedDrawCalls,
+        float MinNodeDiagonal,
+        float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
         BoundingBox GeometryBoundingBox
@@ -53,19 +55,9 @@ public static class SceneCreator
             //if (!sector.Geometries.Any())
             //    throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
 
-            float maxDiagonalLength;
-            float minDiagonalLength;
+            float maxDiagonalLength = sector.MaxNodeDiagonal;
+            float minDiagonalLength = sector.MinNodeDiagonal;
 
-            if (!sector.Geometries.Any())
-            {
-                maxDiagonalLength = 0;
-                minDiagonalLength = 0;
-            }
-            else
-            {
-                maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
-                minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
-            }
 
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
 
