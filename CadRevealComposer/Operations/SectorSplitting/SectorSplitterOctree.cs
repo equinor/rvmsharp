@@ -91,7 +91,7 @@ public class SectorSplitterOctree : ISectorSplitter
                 var additionalMainVoxelNodesByBudget =
                     GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget, actualDepth).ToList();
                 mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-                subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
+                subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
             }
         }
 
