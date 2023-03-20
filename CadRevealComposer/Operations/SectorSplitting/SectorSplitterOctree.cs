@@ -185,15 +185,13 @@ public class SectorSplitterOctree : ISectorSplitter
         // If we start splitting too low in the octree, we might end up with way too many sectors
         // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
 
-        int minDepth = 3; // Arbitrary value
-        int maxDepth = 6; // Arbitrary value
-
         var sizeOfAllNodes = bb.Diagonal;
 
         float dividedByTwo = bb.Diagonal / 2;
 
         var diagonalAtDepth = sizeOfAllNodes;
         int depth = 1;
+        // Todo: Arbitrary numbers in this method based on gut feeling.
         const float level1SectorsMaxDiagonal = 150;
         while (diagonalAtDepth > level1SectorsMaxDiagonal || diagonalAtDepth > dividedByTwo)
         {
