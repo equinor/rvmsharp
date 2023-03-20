@@ -1,6 +1,5 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using SectorSplitting;
 using IdProviders;
 using Primitives;
 using System;
