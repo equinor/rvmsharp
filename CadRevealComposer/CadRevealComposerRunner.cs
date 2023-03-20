@@ -1,11 +1,11 @@
 namespace CadRevealComposer;
 
-using Operations.SectorSplitting;
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
+using Operations.SectorSplitting;
 using Primitives;
 using System;
 using System.Collections.Generic;
@@ -152,7 +152,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine($"Depth Stats:");
             foreach (IGrouping<long,SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth).OrderBy(x => x.Key))
             {
-                Console.WriteLine($"\t{g.Key,2}: Sectors: {g.Count(),4}, Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2}, Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0}, Avg Download Size: {g.Average(x => x.DownloadSize / 1024f/1024f),6:F}MB");
+                Console.WriteLine($"\t{g.Key,2}: Sectors: {g.Count(),4}, Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2}, Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0}, Avg Diam: {g.Average(x => x.GeometryBoundingBox.Diagonal),6:F2}m, Avg Download Size: {g.Average(x => x.DownloadSize / 1024f/1024f),6:F}MB");
                 if(g.Count() > 1)
                 {
                     Console.WriteLine($"\t\tMax Download Size :{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}.");
