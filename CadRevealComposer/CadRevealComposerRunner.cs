@@ -157,22 +157,21 @@ public static class CadRevealComposerRunner
                          .OrderBy(x => x.Key))
             {
                 var anyHasGeometry = g.Any(x => x.Geometries.Any());
-                var sizeMinAvgExceptEmpty = anyHasGeometry ? g.Average(x =>
-                    x.Geometries.Min(y => y.AxisAlignedBoundingBox.Diagonal)) : 0;
-                var sizeMaxAvgExceptEmpty = anyHasGeometry ? g.Average(x =>
-                    x.Geometries.Max(y => y.AxisAlignedBoundingBox.Diagonal)) : 0;
-                var a =
+                var sizeMinAvgExceptEmpty = anyHasGeometry ? g.Where(x => x.Geometries.Any()).Average(x =>
+                    x.Geometries.Min(y => y.AxisAlignedBoundingBox.Diagonal)) : 0; // Note this is by Geometry and not TreeIndex (Part Size)
+                var sizeMaxAvgExceptEmpty = anyHasGeometry ? g.Where(x => x.Geometries.Any()).Average(x =>
+                    x.Geometries.Max(y => y.AxisAlignedBoundingBox.Diagonal)) : 0; // Note this is by Geometry and not TreeIndex (Part Size)
+                var outputText =
                     "\t" + $@"
 {g.Key,2}:
  Sectors: {g.Count(),4}
  Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2},
  Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0},
- Avg Sector Diam: {g.Average(x => x.GeometryBoundingBox.Diagonal),6:F2}m,
- Avg Smallest Part: {sizeMinAvgExceptEmpty,6:F2}m,
- Avg Largest Part: {sizeMaxAvgExceptEmpty,6:F2}m,
+ Avg Sector Diam: {g.Average(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
+ Avg Smallest/Largest Part: {sizeMinAvgExceptEmpty,6:F2}m/{sizeMaxAvgExceptEmpty,6:F2}m,
  Avg Download Size: {g.Average(x => x.DownloadSize / 1024f / 1024f),6:F}MB
                 ".Replace(Environment.NewLine, "");
-                Console.WriteLine(a);
+                Console.WriteLine(outputText);
                 if (g.Count() > 1)
                 {
                     Console.WriteLine($"\t\tMax Download Size :{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}.");
