@@ -72,7 +72,8 @@ public static class CadRevealComposerRunner
             var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
             SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
-            Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
+            Console.WriteLine(
+                $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
         });
 
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
@@ -147,18 +148,36 @@ public static class CadRevealComposerRunner
         using (new TeamCityLogBlock("Sector Stats"))
         {
             Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
-            Console.WriteLine($"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
-            Console.WriteLine($"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
+            Console.WriteLine(
+                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
+            Console.WriteLine(
+                $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
             Console.WriteLine($"Depth Stats:");
-            foreach (IGrouping<long,SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth).OrderBy(x => x.Key))
+            foreach (IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth)
+                         .OrderBy(x => x.Key))
             {
-                Console.WriteLine($"\t{g.Key,2}: Sectors: {g.Count(),4}, Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2}, Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0}, Avg Diam: {g.Average(x => x.GeometryBoundingBox.Diagonal),6:F2}m, Avg Download Size: {g.Average(x => x.DownloadSize / 1024f/1024f),6:F}MB");
-                if(g.Count() > 1)
+                var anyHasGeometry = g.Any(x => x.Geometries.Any());
+                var sizeMinAvgExceptEmpty = anyHasGeometry ? g.Average(x =>
+                    x.Geometries.Min(y => y.AxisAlignedBoundingBox.Diagonal)) : 0;
+                var sizeMaxAvgExceptEmpty = anyHasGeometry ? g.Average(x =>
+                    x.Geometries.Max(y => y.AxisAlignedBoundingBox.Diagonal)) : 0;
+                var a =
+                    "\t" + $@"
+{g.Key,2}:
+ Sectors: {g.Count(),4}
+ Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2},
+ Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0},
+ Avg Sector Diam: {g.Average(x => x.GeometryBoundingBox.Diagonal),6:F2}m,
+ Avg Smallest Part: {sizeMinAvgExceptEmpty,6:F2}m,
+ Avg Largest Part: {sizeMaxAvgExceptEmpty,6:F2}m,
+ Avg Download Size: {g.Average(x => x.DownloadSize / 1024f / 1024f),6:F}MB
+                ".Replace(Environment.NewLine, "");
+                Console.WriteLine(a);
+                if (g.Count() > 1)
                 {
                     Console.WriteLine($"\t\tMax Download Size :{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}.");
                 }
             }
-
         }
     }
 

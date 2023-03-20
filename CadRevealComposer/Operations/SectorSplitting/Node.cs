@@ -6,6 +6,7 @@ public record Node(
     ulong NodeId,
     APrimitive[] Geometries,
     long EstimatedByteSize,
+    long EstimatedTriangleCount,
     BoundingBox BoundingBox
 )
 {

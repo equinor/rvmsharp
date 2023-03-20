@@ -24,9 +24,10 @@ public class SectorSplitterOctree : ISectorSplitter
         var nodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
 
         var boundingBoxEncapsulatingAllNodes = nodes.CalculateBoundingBox();
+        var boundingBoxEncapsulatingMostNodes = nodes.CalculateBoundingBox(keepFactor: 0.995f);
 
-        int depthToStartSplittingGeometry = CalculateStartSplittingDepth(boundingBoxEncapsulatingAllNodes);
 
+        int depthToStartSplittingGeometry = CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes);
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
 
@@ -89,7 +90,7 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 // fill main voxel according to budget
                 var additionalMainVoxelNodesByBudget =
-                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget,actualDepth).ToList();
+                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget, actualDepth).ToList();
                 mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
                 subVoxelNodes = nodes.Except(additionalMainVoxelNodesByBudget).ToArray();
             }
@@ -189,7 +190,20 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var sizeOfAllNodes = bb.Diagonal;
 
-        return Math.Clamp((int)MathF.Sqrt(sizeOfAllNodes / 100f), minDepth, maxDepth); // Kind of random calculation
+        float dividedByTwo = bb.Diagonal / 2;
+
+        var diagonalAtDepth = sizeOfAllNodes;
+        int depth = 1;
+        const float level1SectorsMaxDiagonal = 150;
+        while (diagonalAtDepth > level1SectorsMaxDiagonal || diagonalAtDepth > dividedByTwo)
+        {
+            diagonalAtDepth /= 2;
+            depth++;
+        }
+
+        Console.WriteLine(
+            $"Diagonal was: {bb.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m");
+        return depth;
     }
 
     private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget, int actualDepth)
@@ -203,7 +217,7 @@ public class SectorSplitterOctree : ISectorSplitter
         };
 
         var nodesInPrioritizedOrder = selectedNodes
-            .OrderByDescending(x => x.Diagonal);
+            .OrderByDescending(x => x.Diagonal * (1 - (0.01 * x.EstimatedTriangleCount)));
 
         var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();

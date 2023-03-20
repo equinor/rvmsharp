@@ -64,9 +64,39 @@ public static class SplittingUtils
             throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
                 nameof(nodes));
         // This could be done in just one pass if profiling shows its needed.
-        var max =  nodes.Select(p => p.BoundingBox.Max).Aggregate(new Vector3(float.MinValue), Vector3.Max);
+        var max = nodes.Select(p => p.BoundingBox.Max).Aggregate(new Vector3(float.MinValue), Vector3.Max);
         var min = nodes.Select(p => p.BoundingBox.Min).Aggregate(new Vector3(float.MaxValue), Vector3.Min);
         return new BoundingBox(Min: min, Max: max);
+    }
+
+
+    /// <summary>
+    /// Calculates a bounding box encapsulating a factor of nodes in the input. Based on distance from the average center.
+    /// </summary>
+    /// <param name="nodes">Nodes</param>
+    /// <param name="keepFactor">Value between 0 and 1 for how many percent of nodes to keep based on distance from center. 1 is 100% and keeps everything.</param>
+    /// <exception cref="ArgumentException">List must have 1 or more nodes</exception>
+    public static BoundingBox CalculateBoundingBox(this IReadOnlyCollection<Node> nodes, float keepFactor)
+    {
+        if (!nodes.Any())
+            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
+                nameof(nodes));
+
+        if (keepFactor is <= 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(keepFactor), keepFactor,
+                "Must be > 0 and <= 1");
+        }
+
+        var firstNodeCenter = nodes.First().BoundingBox.Center;
+        var avgCenter = nodes.Aggregate(firstNodeCenter,
+            (accumulator, node) => (accumulator + node.BoundingBox.Center) / 2);
+
+        var nodesToKeep = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+            .Take((int)Math.Ceiling(nodes.Count * keepFactor)).ToArray();
+        Console.WriteLine(
+            $"Using {nodesToKeep.Length} of {nodes.Count} ({nodesToKeep.Length / (float)nodes.Count:P2}%) to create bounding box of all non-outliers");
+        return nodesToKeep.CalculateBoundingBox();
     }
 
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
@@ -81,12 +111,14 @@ public static class SplittingUtils
                     g.Key,
                     geometries,
                     geometries.Sum(DrawCallEstimator.EstimateByteSize),
+                    EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,
                     boundingBox);
             })
             .ToArray();
     }
 
-    public static ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox, BoundingBox geometryBoundingBox)
+    public static ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox,
+        BoundingBox geometryBoundingBox)
     {
         return new ProtoSector(
             sectorId,
