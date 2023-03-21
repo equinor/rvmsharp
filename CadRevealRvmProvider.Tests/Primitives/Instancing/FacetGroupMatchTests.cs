@@ -66,7 +66,7 @@ public class FacetGroupMatchTests
         var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43908.json");
         var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
 
-        var results = RvmFacetGroupMatcher.MatchAll(new []{ pipe1, pipe2, panel1}, _ => true);
+        var results = RvmFacetGroupMatcher.MatchAll(new[] { pipe1, pipe2, panel1 }, _ => true, 100);
 
         var templates = results.OfType<RvmFacetGroupMatcher.TemplateResult>().Select(r => r.FacetGroup).ToArray();
         var instanced = results.OfType<RvmFacetGroupMatcher.InstancedResult>().Select(r => r.FacetGroup).ToArray();
@@ -95,7 +95,7 @@ public class FacetGroupMatchTests
             .Select(_ => TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json"));
 
         var facetGroups = equalPipes.Concat(equalHinges).ToArray();
-        var results = RvmFacetGroupMatcher.MatchAll(facetGroups, group => group.Length >= 10);
+        var results = RvmFacetGroupMatcher.MatchAll(facetGroups, group => group.Length >= 10, 100);
 
         var templates = results.OfType<RvmFacetGroupMatcher.TemplateResult>().Select(r => r.FacetGroup).ToArray();
         var instanced = results.OfType<RvmFacetGroupMatcher.InstancedResult>().Select(r => r.FacetGroup).ToArray();
@@ -104,5 +104,29 @@ public class FacetGroupMatchTests
         Assert.AreEqual(1, templates.Length);
         Assert.AreEqual(10, instanced.Length);
         Assert.AreEqual(5, notInstanced.Length);
+    }
+
+    [Test]
+    public void MatchAllWithTemplateLimit()
+    {
+        var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");
+        var pipe2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43908.json");
+        var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
+
+        var results = RvmFacetGroupMatcher.MatchAll(new[]
+        { pipe1, pipe1,
+            pipe2, pipe2,
+            panel1, panel1 }, _ => true, 1);
+
+        var instancedResults = results.OfType<RvmFacetGroupMatcher.TemplateResult>();
+        Assert.That(instancedResults.Count() <= 1);
+
+        var resultsNoLimit = RvmFacetGroupMatcher.MatchAll(new[]
+        { pipe1, pipe1,
+            pipe2, pipe2,
+            panel1, panel1 }, _ => true, 100);
+
+        var instancedResultsNoLimit = resultsNoLimit.OfType<RvmFacetGroupMatcher.TemplateResult>();
+        Assert.That(instancedResultsNoLimit.Count() > 1);
     }
 }
