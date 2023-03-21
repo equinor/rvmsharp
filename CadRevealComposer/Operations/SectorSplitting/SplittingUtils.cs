@@ -98,8 +98,12 @@ public static class SplittingUtils
         float paddingFactor = 1.1f)
     {
         var firstNodeCenter = nodes.First().BoundingBox.Center;
-        var avgCenter = nodes.Aggregate(firstNodeCenter,
-            (accumulator, node) => (accumulator + node.BoundingBox.Center) / 2);
+        // TODO Optimize me
+        var avgCenter = new Vector3(
+            nodes.Average(x=>x.BoundingBox.Center.X),
+            nodes.Average(x=>x.BoundingBox.Center.Y),
+            nodes.Average(x=>x.BoundingBox.Center.Z));
+
 
         var percentileNode = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
             .Skip((int)(nodes.Count * keepFactor)).FirstOrDefault();
@@ -107,7 +111,7 @@ public static class SplittingUtils
 
         float distanceToPercentileNode =
             Vector3.Distance(percentileNode.BoundingBox.Center, avgCenter) * paddingFactor /* Slight Padding */;
-        var nodesToKeep = nodes.Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) > distanceToPercentileNode)
+        var nodesToKeep = nodes.Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) < distanceToPercentileNode)
             .ToArray();
         return nodesToKeep;
     }
