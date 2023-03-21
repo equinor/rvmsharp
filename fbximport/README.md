@@ -12,8 +12,9 @@ Most of the FBX functionality is not supported. This library should:
 ## Requirements
 
 - Visual Studio 2019 or later for Windows
-- FBX SDK 2020 or later
+- FBX SDK 2020.3.2 or later
   - FBX_ROOT environment variable must be set
+  - FBXSDK_VERSION must be set at variable for the cmake build (for version checking)
 - VCPKG
   - VCPKG_ROOT environment variable must be set to the VCPKG root folder without trailing slash
     - Example: `C:\Users\username\vcpkg`
@@ -22,7 +23,7 @@ Most of the FBX functionality is not supported. This library should:
 
 ```bash
 # bash
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake
+cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -D FBXSDK_VERSION=2020.3.2
 cmake --build build
 # For release build:
 cmake --build build --config Release
