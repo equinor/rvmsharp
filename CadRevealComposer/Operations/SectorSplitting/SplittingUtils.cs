@@ -94,14 +94,21 @@ public static class SplittingUtils
         return nodesToKeep.CalculateBoundingBox();
     }
 
-    public static Node[] GetNodesExcludingOutliers(this IReadOnlyCollection<Node> nodes, float keepFactor)
+    public static Node[] GetNodesExcludingOutliers(this IReadOnlyCollection<Node> nodes, float keepFactor,
+        float paddingFactor = 1.1f)
     {
         var firstNodeCenter = nodes.First().BoundingBox.Center;
         var avgCenter = nodes.Aggregate(firstNodeCenter,
             (accumulator, node) => (accumulator + node.BoundingBox.Center) / 2);
 
-        var nodesToKeep = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-            .Take((int)Math.Ceiling(nodes.Count * keepFactor)).ToArray();
+        var percentileNode = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+            .Skip((int)(nodes.Count * keepFactor)).FirstOrDefault();
+        if (percentileNode == null) return nodes.ToArray();
+
+        float distanceToPercentileNode =
+            Vector3.Distance(percentileNode.BoundingBox.Center, avgCenter) * paddingFactor /* Slight Padding */;
+        var nodesToKeep = nodes.Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) > distanceToPercentileNode)
+            .ToArray();
         return nodesToKeep;
     }
 

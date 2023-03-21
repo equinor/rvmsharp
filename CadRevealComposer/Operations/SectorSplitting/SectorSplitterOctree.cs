@@ -23,10 +23,11 @@ public class SectorSplitterOctree : ISectorSplitter
 
 
         /// TODO!!!! Handle outliers. Dont just discard them.
-        var nodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).GetNodesExcludingOutliers(0.995f);
+        /// TODO: Remove only actual outliers, not stuff that is close to the bounding box (Add x meters of padding?)
+        var nodesExcludingOutliers = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).GetNodesExcludingOutliers(0.995f);
 
-        var boundingBoxEncapsulatingAllNodes = nodes.CalculateBoundingBox();
-        var boundingBoxEncapsulatingMostNodes = nodes.CalculateBoundingBox();
+        var boundingBoxEncapsulatingAllNodes = nodesExcludingOutliers.CalculateBoundingBox();
+        var boundingBoxEncapsulatingMostNodes = nodesExcludingOutliers.CalculateBoundingBox();
 
 
 
@@ -37,7 +38,7 @@ public class SectorSplitterOctree : ISectorSplitter
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
         //Order nodes by diagonal size
-        var sortedNodes = nodes.OrderByDescending(n => n.Diagonal).ToArray();
+        var sortedNodes = nodesExcludingOutliers.OrderByDescending(n => n.Diagonal).ToArray();
 
         var sectors = SplitIntoSectorsRecursive(
             sortedNodes,
