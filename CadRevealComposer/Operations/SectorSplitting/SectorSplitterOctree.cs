@@ -220,7 +220,7 @@ public class SectorSplitterOctree : ISectorSplitter
         // 150x150 for large parts
         // 75x75 for > 1 meter parts
         // 37,5 etc by budget
-        const float level1SectorsMaxDiagonal = 300;
+        const float level1SectorsMaxDiagonal = 500;
         while (diagonalAtDepth > level1SectorsMaxDiagonal)
         {
             diagonalAtDepth /= 2;
