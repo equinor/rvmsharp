@@ -12,18 +12,22 @@ using Utils;
 public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_500_000; // bytes, Arbitrary value
-    private const float DoNotSplitSectorsSmallerThanMetersInDiameter = 10f; // Arbitrary value
-    private const int MinDigagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
-    private const int MinDigagonalSizeAtDepth_2 = 5; // arbitrary value for min size at depth 2
-    private const int MinDigagonalSizeAtDepth_3 = 3; // arbitrary value for min size at depth 3
+    private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
+    private const float MinDigagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
+    private const float MinDigagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
+    private const float MinDigagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
     public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
-        var nodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
+
+
+        /// TODO!!!! Handle outliers. Dont just discard them.
+        var nodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).GetNodesExcludingOutliers(0.995f);
 
         var boundingBoxEncapsulatingAllNodes = nodes.CalculateBoundingBox();
-        var boundingBoxEncapsulatingMostNodes = nodes.CalculateBoundingBox(keepFactor: 0.995f);
+        var boundingBoxEncapsulatingMostNodes = nodes.CalculateBoundingBox();
+
 
 
         int depthToStartSplittingGeometry = CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes);
@@ -73,7 +77,7 @@ public class SectorSplitterOctree : ISectorSplitter
         var subtreeBoundingBox = nodes.CalculateBoundingBox();
 
         var mainVoxelNodes = Array.Empty<Node>();
-        var subVoxelNodes = Array.Empty<Node>();
+        Node[] subVoxelNodes;
 
         if (recursiveDepth < depthToStartSplittingGeometry)
         {
@@ -81,18 +85,11 @@ public class SectorSplitterOctree : ISectorSplitter
         }
         else
         {
-            if (subtreeBoundingBox.Diagonal < DoNotSplitSectorsSmallerThanMetersInDiameter)
-            {
-                mainVoxelNodes = nodes;
-            }
-            else
-            {
-                // fill main voxel according to budget
-                var additionalMainVoxelNodesByBudget =
-                    GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget, actualDepth).ToList();
-                mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-                subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
-            }
+            // fill main voxel according to budget
+            var additionalMainVoxelNodesByBudget =
+                GetNodesByBudget(nodes.ToArray(), SectorEstimatedByteSizeBudget, actualDepth).ToList();
+            mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
+            subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
         }
 
         if (!subVoxelNodes.Any())
@@ -145,6 +142,26 @@ public class SectorSplitterOctree : ISectorSplitter
 
                 parentPathForChildren = path;
                 parentSectorIdForChildren = sectorId;
+            }
+
+            var sizeOfSubVoxelNodes = subVoxelNodes.Sum(x => x.EstimatedByteSize);
+            var subVoxelDiagonal = subVoxelNodes.CalculateBoundingBox().Diagonal;
+
+            if ( subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter || sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget)
+            {
+                var sectors = SplitIntoSectorsRecursive(
+                    subVoxelNodes,
+                    recursiveDepth + 1,
+                    parentPathForChildren,
+                    parentSectorIdForChildren,
+                    sectorIdGenerator,
+                    depthToStartSplittingGeometry);
+                foreach (var sector in sectors)
+                {
+                    yield return sector;
+                }
+
+                yield break;
             }
 
             var voxels = subVoxelNodes

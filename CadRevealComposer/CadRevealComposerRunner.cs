@@ -172,6 +172,8 @@ public static class CadRevealComposerRunner
  Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2},
  Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0},
  Avg Sector Diam: {g.Average(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
+ Min Sector Diam: {g.Min(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
+ Max Sector Diam: {g.Max(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
  Avg Smallest/Largest Part: {sizeMinAvgExceptEmpty,6:F2}m/{sizeMaxAvgExceptEmpty,6:F2}m,
  Avg Download Size: {g.Average(x => x.DownloadSize / 1024f / 1024f),6:F}MB
                 ".Replace(Environment.NewLine, "");

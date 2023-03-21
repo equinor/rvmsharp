@@ -88,16 +88,23 @@ public static class SplittingUtils
                 "Must be > 0 and <= 1");
         }
 
+        Node[] nodesToKeep = nodes.GetNodesExcludingOutliers(keepFactor);
+        Console.WriteLine(
+            $"Using {nodesToKeep.Length} of {nodes.Count} ({nodesToKeep.Length / (float)nodes.Count:P2}%) to create bounding box of all non-outliers");
+        return nodesToKeep.CalculateBoundingBox();
+    }
+
+    public static Node[] GetNodesExcludingOutliers(this IReadOnlyCollection<Node> nodes, float keepFactor)
+    {
         var firstNodeCenter = nodes.First().BoundingBox.Center;
         var avgCenter = nodes.Aggregate(firstNodeCenter,
             (accumulator, node) => (accumulator + node.BoundingBox.Center) / 2);
 
         var nodesToKeep = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
             .Take((int)Math.Ceiling(nodes.Count * keepFactor)).ToArray();
-        Console.WriteLine(
-            $"Using {nodesToKeep.Length} of {nodes.Count} ({nodesToKeep.Length / (float)nodes.Count:P2}%) to create bounding box of all non-outliers");
-        return nodesToKeep.CalculateBoundingBox();
+        return nodesToKeep;
     }
+
 
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
     {
