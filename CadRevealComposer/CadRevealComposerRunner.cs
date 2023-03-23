@@ -1,4 +1,4 @@
-namespace CadRevealComposer;
+﻿namespace CadRevealComposer;
 
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
@@ -144,6 +144,8 @@ public static class CadRevealComposerRunner
         // Helpers
         float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
 
+
+        (string, string, string, string, string, string, string, string, string, string) headers = ("Depth", "Sectors", "μ drawCalls", "μ Triangles", "μ sectDiam", "^ sectDiam", "v sectDiam", "μ s/l part", "μ DLsize", "v DLsize");
         // Add stuff you would like for a quick overview here:
         using (new TeamCityLogBlock("Sector Stats"))
         {
@@ -153,6 +155,8 @@ public static class CadRevealComposerRunner
             Console.WriteLine(
                 $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
             Console.WriteLine($"Depth Stats:");
+            Console.WriteLine($"|{headers.Item1,5}|{headers.Item2,7}|{headers.Item3,10}|{headers.Item4,11}|{headers.Item5,10}|{headers.Item6,10}|{headers.Item7,10}|{headers.Item8,17}|{headers.Item9,10}|{headers.Item10,8}|");
+            Console.WriteLine(new String('-', 110));
             foreach (IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth)
                          .OrderBy(x => x.Key))
             {
@@ -165,23 +169,25 @@ public static class CadRevealComposerRunner
                     ? g.Where(x => x.Geometries.Any()).Average(x =>
                         x.MaxNodeDiagonal)
                     : 0;
-                var outputText =
-                    "\t" + $@"
-{g.Key,2}:
- Sectors: {g.Count(),4}
- Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2},
- Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0},
- Avg Sector Diam: {g.Average(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
- Min Sector Diam: {g.Min(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
- Max Sector Diam: {g.Max(x => x.SubtreeBoundingBox.Diagonal),6:F2}m,
- Avg Smallest/Largest Part: {sizeMinAvgExceptEmpty,6:F2}m/{sizeMaxAvgExceptEmpty,6:F2}m,
- Avg Download Size: {g.Average(x => x.DownloadSize / 1024f / 1024f),6:F}MB
-                ".Replace(Environment.NewLine, "");
-                Console.WriteLine(outputText);
+                var maxSize = "N/A";
                 if (g.Count() > 1)
                 {
-                    Console.WriteLine($"\t\tMax Download Size :{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}.");
+                    maxSize = $"{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}";
                 }
+
+                var formatted = $@"|
+{g.Key,5}|
+{g.Count(),7}|
+{g.Average(x => x.EstimatedDrawCalls),11:F2}|
+{g.Average(x => x.EstimatedTriangleCount),11:F0}|
+{g.Average(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{g.Min(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{g.Max(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{sizeMinAvgExceptEmpty,7:F2}m/{sizeMaxAvgExceptEmpty,7:F2}m|
+{g.Average(x => x.DownloadSize / 1024f / 1024f),8:F}MB|
+{maxSize,8}|
+".Replace(Environment.NewLine, "");
+             Console.WriteLine(formatted);
             }
         }
     }
