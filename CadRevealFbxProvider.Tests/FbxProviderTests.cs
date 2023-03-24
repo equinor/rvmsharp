@@ -12,14 +12,24 @@ using NUnit.Framework;
 [TestFixture]
 public class FbxProviderTests
 {
-    private DirectoryInfo outputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
-    private DirectoryInfo inputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
+    private static readonly DirectoryInfo outputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
+    private static readonly DirectoryInfo inputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
 
-    private DirectoryInfo outputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\incorrect");
-    private DirectoryInfo inputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\incorrect");
+    private static readonly DirectoryInfo outputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\incorrect");
+    private static readonly DirectoryInfo inputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\incorrect");
 
-    private DirectoryInfo outputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
-    private DirectoryInfo inputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
+    private static readonly DirectoryInfo outputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
+    private static readonly DirectoryInfo inputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
+
+    private static readonly ModelParameters modelParameters = new ModelParameters(
+                new ProjectId(1),
+                new ModelId(1),
+                new RevisionId(1),
+                new InstancingThreshold(1),
+                new TemplateCountLimit(100));
+    private static readonly ComposerParameters composerParameters = new ComposerParameters("", false, true, false);
+
+    private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>() { new FbxProvider() };
 
     [Test]
     public void FbxImporterSdkInitTest()
@@ -59,70 +69,34 @@ public class FbxProviderTests
     [Test]
     public void ModelAndAttributeFileMismatchGivesErrorMessage()
     {
-        try
+        Assert.Throws<Exception>(() =>
         {
-            var providers = new List<IModelFormatProvider>() { new FbxProvider() };
-
-            var modelParameters = new ModelParameters(
-                new ProjectId(1),
-                new ModelId(1),
-                new RevisionId(1),
-                new InstancingThreshold(1),
-                new TemplateCountLimit(100));
-            var composerParameters = new ComposerParameters("", false, true, false);
-
             CadRevealComposerRunner.Process(
             inputDirectoryMismatch,
             outputDirectoryMismatch,
             modelParameters,
             composerParameters,
             providers);
-
-            Assert.Fail("An exception was expected, saying that the model and attribute file do not match, but got none.");
-        }
-        catch (Exception) { }
+         }, "An exception was expected, saying that the model and attribute file do not match, but got none.");
     }
 
     [Test]
     public void WrongAttributeFormatGivesErrorMessage()
     {
-        try
+        Assert.Throws<Exception>(() =>
         {
-            var providers = new List<IModelFormatProvider>() { new FbxProvider() };
-
-            var modelParameters = new ModelParameters(
-                new ProjectId(1),
-                new ModelId(1),
-                new RevisionId(1),
-                new InstancingThreshold(1),
-                new TemplateCountLimit(100));
-            var composerParameters = new ComposerParameters("", false, true, false);
-
             CadRevealComposerRunner.Process(
             inputDirectoryIncorrect,
             outputDirectoryIncorrect,
             modelParameters,
             composerParameters,
             providers);
-
-            Assert.Fail("An exception was expected, but got none.");
-        }
-        catch(Exception){ }
+        });
     }
 
     [Test]
     public void SampleModel_SmokeTest()
     {
-        var providers = new List<IModelFormatProvider>() { new FbxProvider() };
-
-        var modelParameters = new ModelParameters(
-            new ProjectId(1),
-            new ModelId(1),
-            new RevisionId(1),
-            new InstancingThreshold(1),
-            new TemplateCountLimit(100));
-        var composerParameters = new ComposerParameters("", false, true, false);
-
         CadRevealComposerRunner.Process(
         inputDirectoryCorrect,
         outputDirectoryCorrect,
@@ -170,14 +144,6 @@ public class FbxProviderTests
             if(node.Geometries.Length>0) Assert.That(node.BoundingBoxAxisAligned != null);
         }
         
-        var modelParameters = new ModelParameters(
-            new ProjectId(1),
-            new ModelId(1),
-            new RevisionId(1),
-            new InstancingThreshold(1),
-            new TemplateCountLimit(100));
-        var composerParameters = new ComposerParameters("", false, true, false);
-
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
         CadRevealComposerRunner.ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectoryCorrect, modelParameters, composerParameters, treeIndexGenerator);
 
