@@ -22,7 +22,8 @@ public class ScaffoldingAttributeParser
             throw new Exception("Key header \"" + AttributeKey + "\" is missing in the attribute file.");
 
         if (attributeRawData.First().ColumnCount == 23)
-            throw new Exception($"Attribute file contains {attributeRawData.First().ColumnCount} a table with 23 attributes.");
+            throw new Exception($"Attribute file contains {attributeRawData.First().ColumnCount}" +
+                $", expected a table with 23 attributes.");
 
         var attributesDictionary = attributeRawData.ToDictionary(x => x.Values[indexIdColumn], v =>
         {
