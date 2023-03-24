@@ -4,6 +4,7 @@ using Csv;
 
 public class ScaffoldingAttributeParser
 {
+    private static readonly string AttributeKey = "Item Code";
     public Dictionary<string, Dictionary<string, string>> ParseAttributes(string[] fileLines)
     {
         var attributeRawData = CsvReader.ReadFromText(String.Join(Environment.NewLine, fileLines), new CsvOptions()
@@ -15,16 +16,15 @@ public class ScaffoldingAttributeParser
             Separator = ';'
         });
 
-
-        var indexIdColumn = Array.IndexOf(attributeRawData.First().Headers, "Item code");
+        var indexIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
 
         if (indexIdColumn < 0)
-            throw new Exception("Key header \"Item code\" is missing in the attribute file.");
+            throw new Exception("Key header \"" + AttributeKey + "\" is missing in the attribute file.");
 
         if (attributeRawData.First().ColumnCount == 23)
             throw new Exception($"Attribute file contains {attributeRawData.First().ColumnCount} a table with 23 attributes.");
 
-        var attribtuesDictionary = attributeRawData.ToDictionary(x => x.Values[indexIdColumn], v =>
+        var attributesDictionary = attributeRawData.ToDictionary(x => x.Values[indexIdColumn], v =>
         {
             var kvp = new Dictionary<string, string>();
 
@@ -40,6 +40,6 @@ public class ScaffoldingAttributeParser
             return kvp;
         });
 
-        return attribtuesDictionary;
+        return attributesDictionary;
     }
 }
