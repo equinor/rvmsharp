@@ -1,31 +1,30 @@
-Element Count all;;;;;;;;;;;
-Equinor ID nummer;Description;Weight kg;Count;Equinor Build Date;Equinor Coordinator;Equinor Dismantle Date;Equinor Rectification Date;Equinor Size;Equinor Tag number;Equinor Weight;Equinor Work order
-;;;;;;;;;;;
-001;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;10
-002;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;11
-003;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;12
-004;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;13
-005;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;14
-006;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;15
-007;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;16
-008;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;17
-009;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;18
-010;Pole;7.40 kg;1;3;4;5;6;7;8;9.00 kg;19
-011;Ladder;8.90 kg;1;3;4;5;6;7;8;9.00 kg;20
-012;Ladder;8.90 kg;1;3;4;5;6;7;8;9.00 kg;21
-013;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;22
-014;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;23
-015;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;24
-016;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;25
-017;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;26
-018;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;27
-019;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;28
-020;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;29
-021;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;30
-022;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;31
-023;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;32
-024;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;33
-025;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;34
-026;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;35
-027;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;36
-028;Plank;4.34 kg;1;3;4;5;6;7;8;9.00 kg;37
+Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m³);Length(m);Widht(m);Height(m);Covering (Y or N);Covering material;Item code
+;;;;;;;;;;;;;;;;;;;;;;;
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;1
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;2
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;3
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;4
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;5
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;6
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;7
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;8
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;9
+Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;10
+Ladder;18.90 kg;1;;;;;;;;;;;;;;;;;;;;;11
+Ladder;18.90 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;12
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;13
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;14
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;15
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;16
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;17
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;18
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;19
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;20
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;21
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;22
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;23
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;24
+Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;25
+Plank;4.54 kg;1;;;;;;;;;;;;;;;;;;;;;26
+Plank;4.54 kg;1;;;;;;;;;;;;;;;;;;;;;27
+Plank;4.54 kg;1;1235678;67;9;175856;;1220;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;28

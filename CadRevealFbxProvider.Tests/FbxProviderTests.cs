@@ -86,15 +86,21 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(inputDirectory.EnumerateFiles(),
-            treeIndexGenerator, instanceIndexGenerator);
-
-        Assert.That(nodes.Count() == 28);
-        Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(12));
-        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(12));
-        Assert.That(nodes[2].Attributes.ContainsKey("Description"));
-        Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
+        try
+        {
+            var nodes = modelFormatProviderFbx.ParseFiles(inputDirectory.EnumerateFiles(),
+                treeIndexGenerator, instanceIndexGenerator);
+            Assert.That(nodes.Count() == 28);
+            Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
+            Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
+            Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(23));
+            Assert.That(nodes[2].Attributes.ContainsKey("Description"));
+            Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
+        }
+        catch (Exception ex)
+        {
+            Assert.Fail("Expected no exception during loading FBX file and attribute file parsing, but got: " + ex.Message);
+        }
     }
 
     [Test]

@@ -99,7 +99,9 @@ public static class FbxWorkload
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                var data = new ScaffoldingAttributeParser().ParseAttributes(lines);
+
+                var attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                //var flatNodes = nodesToProcess.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)
@@ -108,9 +110,9 @@ public static class FbxWorkload
                     if (match.Success)
                     {
                         var id = match.Groups[1].Value;
-                        if(data.ContainsKey(id))
+                        if(attributes.ContainsKey(id))
                         {
-                            foreach (var kvp in data[id])
+                            foreach (var kvp in attributes[id])
                             {
                                 cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
                             }

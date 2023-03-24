@@ -6,8 +6,6 @@ public class ScaffoldingAttributeParser
 {
     public Dictionary<string, Dictionary<string, string>> ParseAttributes(string[] fileLines)
     {
-        // TODO: Add unit tests
-        // TODO: Refactor ParseAttributes
         var attributeRawData = CsvReader.ReadFromText(String.Join(Environment.NewLine, fileLines), new CsvOptions()
         {
             HeaderMode = HeaderMode.HeaderPresent,
@@ -17,20 +15,14 @@ public class ScaffoldingAttributeParser
             Separator = ';'
         });
 
-//<<<<<<< HEAD
-//        var idNummerCol = Array.IndexOf(
-//            data.First().Headers, "Equinor ID nummer");
-//        //var datas = data.ToDictionary(x => x.Values[0], v =>
-//        var datas = data.ToDictionary(x => x.Values[idNummerCol], v =>
-//        {
-//            var kvp = new Dictionary<string, string>();
-//            for (int col = 0; col < v.ColumnCount ; col++)
-//=======
+
         var indexIdColumn = Array.IndexOf(attributeRawData.First().Headers, "Item code");
-        //int keyHeaderIndex = attributeRawData.First().ColumnCount - 1;
-        //var keyHeader = attributeRawData.First().Headers[keyHeaderIndex];
+
         if (indexIdColumn < 0)
             throw new Exception("Key header \"Item code\" is missing in the attribute file.");
+
+        if (attributeRawData.First().ColumnCount == 23)
+            throw new Exception($"Attribute file contains {attributeRawData.First().ColumnCount} a table with 23 attributes.");
 
         var attribtuesDictionary = attributeRawData.ToDictionary(x => x.Values[indexIdColumn], v =>
         {
