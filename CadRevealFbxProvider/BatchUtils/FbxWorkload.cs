@@ -3,7 +3,6 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
-using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 
 using Commons;
@@ -103,6 +102,7 @@ public static class FbxWorkload
 
                 var attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
 
+                bool totalMismatch = true;
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)
                 {
@@ -112,6 +112,7 @@ public static class FbxWorkload
                         var id = match.Groups[1].Value;
                         if(attributes.ContainsKey(id))
                         {
+                            totalMismatch = false;
                             foreach (var kvp in attributes[id])
                             {
                                 cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
@@ -123,6 +124,8 @@ public static class FbxWorkload
                         }
                     }
                 }
+
+                if (totalMismatch) throw new Exception($"FBX model file {fbxFilename} and corresponding attribute file {infoTextFilename} completely mismatch.");
             }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));

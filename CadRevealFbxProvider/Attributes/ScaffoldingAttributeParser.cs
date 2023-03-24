@@ -4,7 +4,7 @@ using Csv;
 
 public class ScaffoldingAttributeParser
 {
-    private static readonly string AttributeKey = "Item Code";
+    private static readonly string AttributeKey = "Item code";
     public Dictionary<string, Dictionary<string, string>> ParseAttributes(string[] fileLines)
     {
         var attributeRawData = CsvReader.ReadFromText(String.Join(Environment.NewLine, fileLines), new CsvOptions()

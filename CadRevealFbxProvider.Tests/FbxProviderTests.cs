@@ -12,9 +12,14 @@ using NUnit.Framework;
 [TestFixture]
 public class FbxProviderTests
 {
-    private DirectoryInfo outputDirectory = new DirectoryInfo(@".\TestSamples");
-    private DirectoryInfo inputDirectory = new DirectoryInfo(@".\TestSamples");
+    private DirectoryInfo outputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
+    private DirectoryInfo inputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
 
+    private DirectoryInfo outputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\incorrect");
+    private DirectoryInfo inputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\incorrect");
+
+    private DirectoryInfo outputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
+    private DirectoryInfo inputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
 
     [Test]
     public void FbxImporterSdkInitTest()
@@ -33,7 +38,7 @@ public class FbxProviderTests
     public void FbxImporterLoadFileTest()
     {
         using var test = new FbxImporter();
-        var RootNode = test.LoadFile(@".\TestSamples\fbx_test_model.fbx");
+        var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
         Iterate(RootNode, test);
     }
 
@@ -52,7 +57,7 @@ public class FbxProviderTests
     }
 
     [Test]
-    public void SampleModel_SmokeTest()
+    public void ModelAndAttributeFileMismatchGivesErrorMessage()
     {
         try
         {
@@ -67,16 +72,63 @@ public class FbxProviderTests
             var composerParameters = new ComposerParameters("", false, true, false);
 
             CadRevealComposerRunner.Process(
-            inputDirectory,
-            outputDirectory,
+            inputDirectoryMismatch,
+            outputDirectoryMismatch,
             modelParameters,
             composerParameters,
             providers);
+
+            Assert.Fail("An exception was expected, saying that the model and attribute file do not match, but got none.");
         }
-        catch(Exception ex)
+        catch (Exception) { }
+    }
+
+    [Test]
+    public void WrongAttributeFormatGivesErrorMessage()
+    {
+        try
         {
-            Assert.Fail("Expected no exception, but got: " + ex.Message);
+            var providers = new List<IModelFormatProvider>() { new FbxProvider() };
+
+            var modelParameters = new ModelParameters(
+                new ProjectId(1),
+                new ModelId(1),
+                new RevisionId(1),
+                new InstancingThreshold(1),
+                new TemplateCountLimit(100));
+            var composerParameters = new ComposerParameters("", false, true, false);
+
+            CadRevealComposerRunner.Process(
+            inputDirectoryIncorrect,
+            outputDirectoryIncorrect,
+            modelParameters,
+            composerParameters,
+            providers);
+
+            Assert.Fail("An exception was expected, but got none.");
         }
+        catch(Exception){ }
+    }
+
+    [Test]
+    public void SampleModel_SmokeTest()
+    {
+        var providers = new List<IModelFormatProvider>() { new FbxProvider() };
+
+        var modelParameters = new ModelParameters(
+            new ProjectId(1),
+            new ModelId(1),
+            new RevisionId(1),
+            new InstancingThreshold(1),
+            new TemplateCountLimit(100));
+        var composerParameters = new ComposerParameters("", false, true, false);
+
+        CadRevealComposerRunner.Process(
+        inputDirectoryCorrect,
+        outputDirectoryCorrect,
+        modelParameters,
+        composerParameters,
+        providers);
     }
 
     [Test]
@@ -86,21 +138,14 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        try
-        {
-            var nodes = modelFormatProviderFbx.ParseFiles(inputDirectory.EnumerateFiles(),
-                treeIndexGenerator, instanceIndexGenerator);
-            Assert.That(nodes.Count() == 28);
-            Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-            Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
-            Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(23));
-            Assert.That(nodes[2].Attributes.ContainsKey("Description"));
-            Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
-        }
-        catch (Exception ex)
-        {
-            Assert.Fail("Expected no exception during loading FBX file and attribute file parsing, but got: " + ex.Message);
-        }
+        var nodes = modelFormatProviderFbx.ParseFiles(inputDirectoryCorrect.EnumerateFiles(),
+            treeIndexGenerator, instanceIndexGenerator);
+        Assert.That(nodes.Count() == 28);
+        Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
+        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
+        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(23));
+        Assert.That(nodes[2].Attributes.ContainsKey("Description"));
+        Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
     }
 
     [Test]
@@ -110,7 +155,7 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
 
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(@".\TestSamples\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
         var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -134,8 +179,8 @@ public class FbxProviderTests
         var composerParameters = new ComposerParameters("", false, true, false);
 
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
-        CadRevealComposerRunner.ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
+        CadRevealComposerRunner.ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectoryCorrect, modelParameters, composerParameters, treeIndexGenerator);
 
-        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\"");
     }
 }
