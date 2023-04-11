@@ -22,16 +22,17 @@ public class SectorSplitterOctree : ISectorSplitter
         var sectorIdGenerator = new SequentialIdGenerator();
 
 
-        /// TODO!!!! Handle outliers. Dont just discard them.
-        /// TODO: Remove only actual outliers, not stuff that is close to the bounding box (Add x meters of padding?)
-        var nodesExcludingOutliers = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).GetNodesExcludingOutliers(0.995f);
-
-        var boundingBoxEncapsulatingAllNodes = nodesExcludingOutliers.CalculateBoundingBox();
+        var nodesAndOutliers = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).GetNodesExcludingOutliers(0.995f);
+        var nodesExcludingOutliers = nodesAndOutliers.regularNodes;
+        var excludedOutliers = nodesAndOutliers.outlierNodes;
+        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
+        var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = nodesExcludingOutliers.CalculateBoundingBox();
-
+        var boundingBoxEncapsulatingOutlierNodes = excludedOutliers.CalculateBoundingBox();
 
 
         int depthToStartSplittingGeometry = CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes);
+
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
 
@@ -53,6 +54,29 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             yield return sector;
         }
+
+        // Add outliers to special outliers sector
+        var excludedOutliersCount = excludedOutliers!=null?excludedOutliers.Length:0;
+        if (excludedOutliers != null && excludedOutliersCount > 0)
+        {
+            Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
+            int depthToStartForOutliers = CalculateStartSplittingDepth(boundingBoxEncapsulatingOutlierNodes);
+            var outlierSectors = SplitIntoSectorsRecursive(
+                excludedOutliers.ToArray(),
+                20,     // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                rootPath,
+                rootSectorId,
+                sectorIdGenerator,
+                depthToStartForOutliers
+                ).ToArray();
+
+            foreach (var sector in outlierSectors)
+            {
+                Console.WriteLine($"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}.");
+                yield return sector;
+            }
+        }
+
     }
 
     public IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
