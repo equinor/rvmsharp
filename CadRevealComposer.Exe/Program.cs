@@ -56,6 +56,11 @@ public static class Program
             options.SingleSector,
             options.SplitIntoZones);
 
+        if(options.SplitIntoZones)
+        {
+            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
+        }
+
         if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
         {
             Console.WriteLine($"Not found: {toolsParameters.Mesh2CtmToolPath}");

@@ -29,8 +29,8 @@ public static class CadRevealComposerRunner
     {
         var totalTimeElapsed = Stopwatch.StartNew();
 
-        List<CadRevealNode> nodesToProcess = new List<CadRevealNode>();
-        List<APrimitive> geometriesToProcess = new List<APrimitive>();
+        var nodesToProcess = new List<CadRevealNode>();
+        var geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
@@ -82,7 +82,7 @@ public static class CadRevealComposerRunner
             treeIndexGenerator);
 
         if (!exportHierarchyDatabaseTask.IsCompleted) Console.WriteLine("Waiting for hierarchy export to complete...");
-        Task.WaitAll(exportHierarchyDatabaseTask);
+        exportHierarchyDatabaseTask.Wait();
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
@@ -102,7 +102,7 @@ public static class CadRevealComposerRunner
         }
         else if (composerParameters.SplitIntoZones)
         {
-            splitter = new SectorSplitterZones(outputDirectory);
+            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
         }
         else
         {
@@ -142,7 +142,7 @@ public static class CadRevealComposerRunner
     private static void PrintSectorStats(ImmutableArray<SceneCreator.SectorInfo> sectorsWithDownloadSize)
     {
         // Helpers
-        float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
+        static float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
 
 
         (string, string, string, string, string, string, string, string, string, string) headers = ("Depth", "Sectors", "μ drawCalls", "μ Triangles", "μ sectDiam", "^ sectDiam", "v sectDiam", "μ s/l part", "μ DLsize", "v DLsize");
@@ -192,9 +192,9 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
     {
-        var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
+        var (EstimatedTriangleCount, EstimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
         var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
@@ -203,8 +203,8 @@ public static class CadRevealComposerRunner
             Depth: p.Depth,
             Path: p.Path,
             Filename: sectorFilename,
-            EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
-            EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
+            EstimatedTriangleCount: EstimatedTriangleCount,
+            EstimatedDrawCalls: EstimatedDrawCalls,
             MinNodeDiagonal: p.MinNodeDiagonal,
             MaxNodeDiagonal: p.MaxNodeDiagonal,
             Geometries: p.Geometries,

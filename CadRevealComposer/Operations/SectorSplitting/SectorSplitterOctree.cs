@@ -13,22 +13,20 @@ public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_500_000; // bytes, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
-    private const float MinDigagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
-    private const float MinDigagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
-    private const float MinDigagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
+    private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
+    private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
+    private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
-    public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
 
-        var nodesAndOutliers = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).GetNodesExcludingOutliers(0.995f);
-        var nodesExcludingOutliers = nodesAndOutliers.regularNodes;
-        var excludedOutliers = nodesAndOutliers.outlierNodes;
+        var (regularNodes,outlierNodes) = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
-        var boundingBoxEncapsulatingMostNodes = nodesExcludingOutliers.CalculateBoundingBox();
-        var boundingBoxEncapsulatingOutlierNodes = excludedOutliers.CalculateBoundingBox();
+        var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
+        var boundingBoxEncapsulatingOutlierNodes = outlierNodes.CalculateBoundingBox();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
@@ -36,7 +34,7 @@ public class SectorSplitterOctree : ISectorSplitter
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
         //Order nodes by diagonal size
-        var sortedNodes = nodesExcludingOutliers.OrderByDescending(n => n.Diagonal).ToArray();
+        var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
 
         var sectors = SplitIntoSectorsRecursive(
             sortedNodes,
@@ -52,12 +50,12 @@ public class SectorSplitterOctree : ISectorSplitter
         }
 
         // Add outliers to special outliers sector
-        var excludedOutliersCount = excludedOutliers!=null?excludedOutliers.Length:0;
-        if (excludedOutliers != null && excludedOutliersCount > 0)
+        var excludedOutliersCount = outlierNodes!=null?outlierNodes.Length:0;
+        if (outlierNodes != null && excludedOutliersCount > 0)
         {
             Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
             var outlierSectors = SplitIntoSectorsRecursive(
-                excludedOutliers.ToArray(),
+                outlierNodes.ToArray(),
                 20,     // Arbitrary depth for outlier sectors, just to ensure separation from the rest
                 rootPath,
                 rootSectorId,
@@ -73,7 +71,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
     }
 
-    public IEnumerable<ProtoSector> SplitIntoSectorsRecursive(
+    private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
         Node[] nodes,
         int recursiveDepth,
         string parentPath,
@@ -119,7 +117,7 @@ public class SectorSplitterOctree : ISectorSplitter
             var minDiagonal = nodes.Min(x => x.Diagonal);
             var maxDiagonal = nodes.Max(x => x.Diagonal);
 
-            yield return new ProtoSector(
+            yield return new InternalSector(
                 sectorId,
                 parentSectorId,
                 actualDepth,
@@ -147,7 +145,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
                 var minDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Min(x => x.Diagonal) : 0;
                 var maxDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Max(x => x.Diagonal) : 0;
-                yield return new ProtoSector(
+                yield return new InternalSector(
                     sectorId,
                     parentSectorId,
                     actualDepth,
@@ -211,9 +209,9 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private static ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
+    private static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
-        return new ProtoSector(
+        return new InternalSector(
             sectorId,
             null,
             0,
@@ -254,9 +252,9 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_1).ToArray(),
-            2 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_2).ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDigagonalSizeAtDepth_3).ToArray(),
+            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
+            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
+            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
             _ => nodes.ToArray(),
         };
 

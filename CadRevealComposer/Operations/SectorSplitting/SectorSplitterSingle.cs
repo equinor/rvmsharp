@@ -7,15 +7,15 @@ using Utils;
 
 public class SectorSplitterSingle : ISectorSplitter
 {
-    public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         yield return CreateRootSector(0, allGeometries);
     }
 
-    private ProtoSector CreateRootSector(uint sectorId, APrimitive[] geometries)
+    private InternalSector CreateRootSector(uint sectorId, APrimitive[] geometries)
     {
         var bb = geometries.CalculateBoundingBox();
-        return new ProtoSector(
+        return new InternalSector(
             sectorId,
             ParentSectorId: null,
             0,

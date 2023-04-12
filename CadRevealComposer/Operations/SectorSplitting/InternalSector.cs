@@ -2,7 +2,7 @@ namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
 
-public record ProtoSector(
+public record InternalSector(
     uint SectorId,
     uint? ParentSectorId,
     int Depth,

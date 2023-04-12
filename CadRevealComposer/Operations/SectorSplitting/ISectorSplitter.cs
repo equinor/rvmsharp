@@ -5,5 +5,5 @@ using System.Collections.Generic;
 
 public interface ISectorSplitter
 {
-    public IEnumerable<ProtoSector> SplitIntoSectors(APrimitive[] allGeometries);
+    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries);
 }

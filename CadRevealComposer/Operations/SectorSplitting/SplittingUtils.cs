@@ -69,34 +69,26 @@ public static class SplittingUtils
         return new BoundingBox(Min: min, Max: max);
     }
 
-
     /// <summary>
-    /// Calculates a bounding box encapsulating a factor of nodes in the input. Based on distance from the average center.
+    /// Split Nodes into groups of "regular nodes" and outlier nodes. Outliers are based on distance from the average center.
     /// </summary>
     /// <param name="nodes">Nodes</param>
     /// <param name="keepFactor">Value between 0 and 1 for how many percent of nodes to keep based on distance from center. 1 is 100% and keeps everything.</param>
-    /// <exception cref="ArgumentException">List must have 1 or more nodes</exception>
-    public static BoundingBox CalculateBoundingBox(this IReadOnlyCollection<Node> nodes, float keepFactor)
+    /// <param name="paddingFactor">Padding factor to add some padding for distance calculation</param>
+    /// <param name="outlierDistance">The minimum distance between most distant "regular" node and first outlier node.  Default 20.0 </param>
+    /// <returns>
+    /// (Node[] regularNodes, Node[] outlierNodes)
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>    
+    public static (Node[] regularNodes, Node[] outlierNodes) SplitNodesIntoRegularAndOutlierNodes(this IReadOnlyCollection<Node> nodes, float keepFactor,
+        float paddingFactor = 1.1f, float outlierDistance = 20.0f)
     {
-        if (!nodes.Any())
-            throw new ArgumentException($"Need to have at least 1 node to calculate bounds. {nameof(nodes)} was empty",
-                nameof(nodes));
-
         if (keepFactor is <= 0 or > 1)
         {
             throw new ArgumentOutOfRangeException(nameof(keepFactor), keepFactor,
                 "Must be > 0 and <= 1");
         }
 
-        Node[] nodesToKeep = nodes.GetNodesExcludingOutliers(keepFactor).Item1;
-        Console.WriteLine(
-            $"Using {nodesToKeep.Length} of {nodes.Count} ({nodesToKeep.Length / (float)nodes.Count:P2}%) to create bounding box of all non-outliers");
-        return nodesToKeep.CalculateBoundingBox();
-    }
-
-    public static (Node[] regularNodes,  Node[] outlierNodes) GetNodesExcludingOutliers(this IReadOnlyCollection<Node> nodes, float keepFactor,
-        float paddingFactor = 1.1f, float outlierDistance = 20.0f)
-    {
         var firstNodeCenter = nodes.First().BoundingBox.Center;
         // TODO Optimize me
         var avgCenter = new Vector3(
@@ -106,11 +98,11 @@ public static class SplittingUtils
 
         var percentileNode = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
             .Skip((int)(nodes.Count * keepFactor)).FirstOrDefault();
-        if (percentileNode == null) return (nodes.ToArray(), new Node[0]);
+        if (percentileNode == null) return (nodes.ToArray(), Array.Empty<Node>());
 
         var lastKeepCandidate = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
             .Take((int)(nodes.Count * keepFactor)).LastOrDefault();
-        if (lastKeepCandidate == null) return (nodes.ToArray(), new Node[0]);
+        if (lastKeepCandidate == null) return (nodes.ToArray(), Array.Empty<Node>());
         var distanceLastKeepCandidate = Vector3.Distance(lastKeepCandidate.BoundingBox.Center, avgCenter) * paddingFactor /* Slight Padding */;
 
         float distanceToPercentileNode =
@@ -153,10 +145,10 @@ public static class SplittingUtils
             .ToArray();
     }
 
-    public static ProtoSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox,
+    public static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox,
         BoundingBox geometryBoundingBox)
     {
-        return new ProtoSector(
+        return new InternalSector(
             sectorId,
             null,
             0,
