@@ -30,9 +30,6 @@ public class SectorSplitterOctree : ISectorSplitter
         var boundingBoxEncapsulatingMostNodes = nodesExcludingOutliers.CalculateBoundingBox();
         var boundingBoxEncapsulatingOutlierNodes = excludedOutliers.CalculateBoundingBox();
 
-
-        int depthToStartSplittingGeometry = CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes);
-
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
 
@@ -47,8 +44,7 @@ public class SectorSplitterOctree : ISectorSplitter
             rootPath,
             rootSectorId,
             sectorIdGenerator,
-            depthToStartSplittingGeometry
-        ).ToArray();
+            CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)).ToArray();
 
         foreach (var sector in sectors)
         {
@@ -60,15 +56,13 @@ public class SectorSplitterOctree : ISectorSplitter
         if (excludedOutliers != null && excludedOutliersCount > 0)
         {
             Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
-            int depthToStartForOutliers = CalculateStartSplittingDepth(boundingBoxEncapsulatingOutlierNodes);
             var outlierSectors = SplitIntoSectorsRecursive(
                 excludedOutliers.ToArray(),
                 20,     // Arbitrary depth for outlier sectors, just to ensure separation from the rest
                 rootPath,
                 rootSectorId,
                 sectorIdGenerator,
-                depthToStartForOutliers
-                ).ToArray();
+                CalculateStartSplittingDepth(boundingBoxEncapsulatingOutlierNodes)).ToArray();
 
             foreach (var sector in outlierSectors)
             {

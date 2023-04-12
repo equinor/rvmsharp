@@ -41,16 +41,16 @@ public static class SplittingUtils
         var bbMidPoint = boundingBox.Center;
         return (geometryBoundingBox.Center.X < bbMidPoint.X, geometryBoundingBox.Center.Y < bbMidPoint.Y,
                 geometryBoundingBox.Center.Z < bbMidPoint.Z) switch
-            {
-                (false, false, false) => SubVoxelA,
-                (false, false, true) => SubVoxelB,
-                (false, true, false) => SubVoxelC,
-                (false, true, true) => SubVoxelD,
-                (true, false, false) => SubVoxelE,
-                (true, false, true) => SubVoxelF,
-                (true, true, false) => SubVoxelG,
-                (true, true, true) => SubVoxelH
-            };
+        {
+            (false, false, false) => SubVoxelA,
+            (false, false, true) => SubVoxelB,
+            (false, true, false) => SubVoxelC,
+            (false, true, true) => SubVoxelD,
+            (true, false, false) => SubVoxelE,
+            (true, false, true) => SubVoxelF,
+            (true, true, false) => SubVoxelG,
+            (true, true, true) => SubVoxelH
+        };
     }
 
     /// <summary>
@@ -88,32 +88,50 @@ public static class SplittingUtils
                 "Must be > 0 and <= 1");
         }
 
-        Node[] nodesToKeep = nodes.GetNodesExcludingOutliers(keepFactor);
+        Node[] nodesToKeep = nodes.GetNodesExcludingOutliers(keepFactor).Item1;
         Console.WriteLine(
             $"Using {nodesToKeep.Length} of {nodes.Count} ({nodesToKeep.Length / (float)nodes.Count:P2}%) to create bounding box of all non-outliers");
         return nodesToKeep.CalculateBoundingBox();
     }
 
-    public static Node[] GetNodesExcludingOutliers(this IReadOnlyCollection<Node> nodes, float keepFactor,
-        float paddingFactor = 1.1f)
+    public static (Node[] regularNodes,  Node[] outlierNodes) GetNodesExcludingOutliers(this IReadOnlyCollection<Node> nodes, float keepFactor,
+        float paddingFactor = 1.1f, float outlierDistance = 20.0f)
     {
         var firstNodeCenter = nodes.First().BoundingBox.Center;
         // TODO Optimize me
         var avgCenter = new Vector3(
-            nodes.Average(x=>x.BoundingBox.Center.X),
-            nodes.Average(x=>x.BoundingBox.Center.Y),
-            nodes.Average(x=>x.BoundingBox.Center.Z));
-
+            nodes.Average(x => x.BoundingBox.Center.X),
+            nodes.Average(x => x.BoundingBox.Center.Y),
+            nodes.Average(x => x.BoundingBox.Center.Z));
 
         var percentileNode = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
             .Skip((int)(nodes.Count * keepFactor)).FirstOrDefault();
-        if (percentileNode == null) return nodes.ToArray();
+        if (percentileNode == null) return (nodes.ToArray(), new Node[0]);
+
+        var lastKeepCandidate = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+            .Take((int)(nodes.Count * keepFactor)).LastOrDefault();
+        if (lastKeepCandidate == null) return (nodes.ToArray(), new Node[0]);
+        var distanceLastKeepCandidate = Vector3.Distance(lastKeepCandidate.BoundingBox.Center, avgCenter) * paddingFactor /* Slight Padding */;
 
         float distanceToPercentileNode =
             Vector3.Distance(percentileNode.BoundingBox.Center, avgCenter) * paddingFactor /* Slight Padding */;
-        var nodesToKeep = nodes.Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) < distanceToPercentileNode)
+
+        if (distanceToPercentileNode - distanceLastKeepCandidate < outlierDistance)
+        {
+            var outlierCandidates = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+            .Skip((int)(nodes.Count * keepFactor)).Select(x => new { Distance = Vector3.Distance(x.BoundingBox.Center, avgCenter) * paddingFactor }).ToArray();
+            var newOutlierNode = outlierCandidates.Where((x, i) => i > 0 && (x.Distance - outlierCandidates[i - 1].Distance > outlierDistance)).FirstOrDefault();
+            if (newOutlierNode != null)
+            {
+                distanceToPercentileNode = newOutlierNode.Distance;
+            }
+        }
+
+        var regularNodes = nodes.Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) < distanceToPercentileNode)
             .ToArray();
-        return nodesToKeep;
+        var outlierNodes = nodes.Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) >= distanceToPercentileNode)
+            .ToArray();
+        return (regularNodes, outlierNodes);
     }
 
 
