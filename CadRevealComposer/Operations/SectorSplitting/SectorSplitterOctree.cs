@@ -26,7 +26,6 @@ public class SectorSplitterOctree : ISectorSplitter
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
-        var boundingBoxEncapsulatingOutlierNodes = outlierNodes.CalculateBoundingBox();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
@@ -50,9 +49,11 @@ public class SectorSplitterOctree : ISectorSplitter
         }
 
         // Add outliers to special outliers sector
-        var excludedOutliersCount = outlierNodes!=null?outlierNodes.Length:0;
-        if (outlierNodes != null && excludedOutliersCount > 0)
+        var excludedOutliersCount = outlierNodes.Length;
+        if (excludedOutliersCount > 0)
         {
+            var boundingBoxEncapsulatingOutlierNodes = outlierNodes.CalculateBoundingBox();
+
             Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
             var outlierSectors = SplitIntoSectorsRecursive(
                 outlierNodes.ToArray(),
