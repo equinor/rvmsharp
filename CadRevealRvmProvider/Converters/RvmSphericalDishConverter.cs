@@ -20,7 +20,7 @@ public static class RvmSphericalDishConverter
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
-        var (normal, _) = rotation.DecomposeQuaternion();
+        (Vector3 normal, _) = rotation.DecomposeQuaternion();
 
         var height = rvmSphericalDish.Height * scale.X;
         var baseRadius = rvmSphericalDish.BaseRadius * scale.X;
