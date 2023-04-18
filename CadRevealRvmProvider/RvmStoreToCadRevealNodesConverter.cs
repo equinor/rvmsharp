@@ -24,7 +24,7 @@ static internal class RvmStoreToCadRevealNodesConverter
             .WhereNotNull()
             .ToArray().Aggregate((a, b) => a.Encapsulate(b));
 
-        Debug.Assert(subBoundingBox != null,
+        Trace.Assert(subBoundingBox != null,
             "Root node has no bounding box. Are there any meshes in the input?");
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
