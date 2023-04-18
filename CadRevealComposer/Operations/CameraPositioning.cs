@@ -71,7 +71,7 @@ public static class CameraPositioning
         }
 
         // get bounding box for platform using approximation (99th percentile)
-        var percentile = 0.01;
+        const double percentile = 0.01;
         var platformMinX = geometries.Select(node => node.AxisAlignedBoundingBox.Min.X).OrderBy(x => x)
             .Skip((int)(percentile * geometries.Length)).First();
         var platformMinY = geometries.Select(node => node.AxisAlignedBoundingBox.Min.Y).OrderBy(x => x)
