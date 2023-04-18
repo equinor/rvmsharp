@@ -1,16 +1,12 @@
 ﻿namespace CadRevealFbxProvider;
 
 using CadRevealComposer.Tessellation;
-
-using System;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
-public class FbxMeshWrapper
+public static class FbxMeshWrapper
 {
-
-    private const string Library = "cfbx";
+    private const string FbxLib = FbxSdkWrapper.FbxLibraryName;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct FbxMesh
@@ -23,18 +19,19 @@ public class FbxMeshWrapper
         public IntPtr index_data;
     }
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_clean_memory")]
+    [DllImport(FbxLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_clean_memory")]
     private static extern void mesh_clean_memory(IntPtr meshPtr); //IntPtr in is FbxMesh*
 
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_mesh")]
+    [DllImport(FbxLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_mesh")]
     private static extern IntPtr node_get_mesh(IntPtr node);
+
     public static IntPtr GetMeshGeometryPtr(FbxNode node)
     {
         return node_get_mesh(node.NodeAddress);
     }
 
     // the underlying umanaged code allocates memory, you must call mesh_clean_memory to free it later
-    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
+    [DllImport(FbxLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
     private static extern IntPtr mesh_get_geometry_data(IntPtr mesh); //IntPtr out is FbxMesh*
 
     public static (Mesh Mesh, IntPtr MeshPtr)? GetGeometricData(FbxNode node)
@@ -46,7 +43,7 @@ public class FbxMeshWrapper
             var geom = Marshal.PtrToStructure<FbxMesh>(geomPtr);
 
             // geoemtry can be invalid if, e.g., the extraction of normal vectors failed
-            if(geom.valid)
+            if (geom.valid)
             {
                 var vCount = geom.vertex_count;
                 var iCount = geom.index_count;
@@ -78,7 +75,6 @@ public class FbxMeshWrapper
             {
                 mesh_clean_memory(geomPtr);
             }
-
         }
 
         return null;

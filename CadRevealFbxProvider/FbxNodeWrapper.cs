@@ -1,15 +1,13 @@
 ﻿namespace CadRevealFbxProvider;
 
-using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-
 public record struct FbxNode(IntPtr NodeAddress);
 public static class FbxNodeWrapper
 {
-    private const string Library = "cfbx";
+    private const string Library = FbxSdkWrapper.FbxLibraryName;
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_name")]
     private static extern void node_get_name(IntPtr node, StringBuilder nameOut, int bufferSize);
