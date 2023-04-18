@@ -12,7 +12,7 @@ public static class RvmNodeExtensions
             return color;
         }
 
-        // TODO: Fallback color is arbitrarily chosen. It seems we have some issue with the material mapping table, and should have had more colors.
+        // Fallback color is arbitrarily chosen
         return Color.Magenta;
     }
 }
