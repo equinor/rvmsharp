@@ -22,9 +22,9 @@ public static class ExteriorSplitter
     private record Primitive(APrimitive OriginalPrimitive);
     private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
 
-    private readonly record struct Node(Bounds BoundingBox, Primitive[] Primitives);
+    private readonly record struct Node(BoundingBox BoundingBox, Primitive[] Primitives);
 
-    private readonly record struct RayEx(Bounds Box, Ray Ray);
+    private readonly record struct RayEx(BoundingBox Box, Ray Ray);
 
     private static IEnumerable<RayEx> CreateRays(Vector3 boundingBoxMin, Vector3 boundingBoxMax)
     {
@@ -51,7 +51,7 @@ public static class ExteriorSplitter
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
             for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
             {
-                var bounds = new Bounds(
+                var bounds = new BoundingBox(
                     new Vector3(x, y, rayOriginMin.Z),
                     new Vector3(x + cellSize, y + cellSize, rayOriginMax.Z)
                     );
@@ -71,7 +71,7 @@ public static class ExteriorSplitter
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
-                var bounds = new Bounds(
+                var bounds = new BoundingBox(
                     new Vector3(x, rayOriginMin.Y, z),
                     new Vector3(x + cellSize, rayOriginMax.Y, z + cellSize)
                 );
@@ -91,7 +91,7 @@ public static class ExteriorSplitter
         for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
-                var bounds = new Bounds(
+                var bounds = new BoundingBox(
                     new Vector3(rayOriginMin.X, y, z),
                     new Vector3(rayOriginMax.X, y + cellSize, z + cellSize)
                 );
@@ -182,10 +182,10 @@ public static class ExteriorSplitter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, Bounds rayBounds, Ray ray)
+    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, BoundingBox BoundingBox, Ray ray)
     {
         // positive if overlaps
-        var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
+        var diff = Vector3.Min(boundingBox.Max, BoundingBox.Max) - Vector3.Max(boundingBox.Min, BoundingBox.Min);
         var isHit = diff.X > 0f &&
                     diff.Y > 0f &&
                     diff.Z > 0f;
@@ -254,7 +254,7 @@ public static class ExteriorSplitter
         {
             var bbMin = nodeGroup.GetBoundingBoxMin();
             var bbMax = nodeGroup.GetBoundingBoxMax();
-            var boundingBox = new Bounds(bbMin, bbMax);
+            var boundingBox = new BoundingBox(bbMin, bbMax);
 
             var primitives = nodeGroup
                 .Select(p => p switch
