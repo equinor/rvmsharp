@@ -1,7 +1,6 @@
-﻿namespace CadRevealRvmProvider;
+﻿namespace CadRevealRvmProvider.Converters;
 
 using CadRevealComposer.Primitives;
-using Converters;
 using RvmSharp.Primitives;
 
 public class RvmPrimitiveToAPrimitive
