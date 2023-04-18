@@ -3,13 +3,8 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
-using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-
 using Commons;
-
-using System;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 public static class FbxWorkload
@@ -71,8 +66,6 @@ public static class FbxWorkload
         IStringInternPool? stringInternPool = null)
     {
         var progress = 0;
-        var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
-
         using var fbxImporter = new FbxImporter();
         if(!fbxImporter.HasValidSdk())
         {
@@ -108,9 +101,9 @@ public static class FbxWorkload
                     if (match.Success)
                     {
                         var id = match.Groups[1].Value;
-                        if(data.ContainsKey(id))
+                        if(data.TryGetValue(id, out Dictionary<string, string>? value))
                         {
-                            foreach (var kvp in data[id])
+                            foreach (var kvp in value)
                             {
                                 cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
                             }
