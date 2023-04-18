@@ -91,12 +91,12 @@ public class ObjProvider : IModelFormatProvider
         }
     }
 
-    record VertexData(
+    private record VertexData(
         Vector3 Vertex,
         Vector3 Normal
     );
 
-    public ObjMesh? ReadMeshFromGroup(Group group, LoadResult result)
+    private static ObjMesh? ReadMeshFromGroup(Group group, LoadResult result)
     {
         var index = 0u;
         var vertexData = new List<VertexData>();
@@ -149,12 +149,12 @@ public class ObjProvider : IModelFormatProvider
         return mesh;
     }
 
-    private Vector3 ToVector3(Vertex x)
+    private static Vector3 ToVector3(Vertex x)
     {
         return new Vector3(x.X, x.Y, x.Z);
     }
 
-    private Vector3 ToVector3(Normal x)
+    private static Vector3 ToVector3(Normal x)
     {
         return new Vector3(x.X, x.Y, x.Z);
     }
