@@ -1,5 +1,6 @@
 namespace CadRevealComposer;
 
+using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
@@ -98,13 +99,7 @@ public static class SceneCreator
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
         var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
         JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
-
-#if DEBUG
-        const bool indent = true;
-#else
-        const bool indent = false;
-#endif
-        JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: indent); // We don't want intentation, it doubles the size just for visual inspection of the file
+        JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: EnvUtil.IsDebugBuild); // We don't want indentation in prod, it doubles the size. Format in an editor if needed.
     }
 
     public static void ExportSectorGeometries(
