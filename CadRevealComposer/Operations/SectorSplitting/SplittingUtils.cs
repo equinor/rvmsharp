@@ -89,7 +89,6 @@ public static class SplittingUtils
                 "Must be > 0 and <= 1");
         }
 
-        var firstNodeCenter = nodes.First().BoundingBox.Center;
         // TODO Optimize me
         var avgCenter = new Vector3(
             nodes.Average(x => x.BoundingBox.Center.X),
