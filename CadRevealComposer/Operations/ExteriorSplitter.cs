@@ -22,7 +22,7 @@ public static class ExteriorSplitter
     private record Primitive(APrimitive OriginalPrimitive);
     private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
 
-    private readonly record struct Node(BoundingBox BoundingBox, Primitive[] Primitives);
+    private readonly record struct Node(BoundingBox? BoundingBox, Primitive[] Primitives);
 
     private readonly record struct RayEx(BoundingBox Box, Ray Ray);
 
@@ -114,10 +114,16 @@ public static class ExteriorSplitter
 
         // create k-d tree for efficient processing of nodes
         var bb = primitives.CalculateBoundingBox();
+        if (bb == null)
+            return (Array.Empty<APrimitive>(), Array.Empty<APrimitive>());
+
         var tree = new IntervalKdTree<Node>(bb.Min, bb.Max, 100);
         foreach (var node in nodes)
         {
-            tree.Put(node.BoundingBox.Min, node.BoundingBox.Max, node);
+            if (node.BoundingBox != null)
+            {
+                tree.Put(node.BoundingBox.Min, node.BoundingBox.Max, node);
+            }
         }
 
         // ray casting

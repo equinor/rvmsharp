@@ -30,7 +30,7 @@ public static class SceneCreator
         float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
-        BoundingBox GeometryBoundingBox
+        BoundingBox? GeometryBoundingBox
     )
     {
         public long DownloadSize { get; init; }

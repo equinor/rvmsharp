@@ -139,7 +139,6 @@ public class SectorSplitterOctree : ISectorSplitter
             // Should we keep empty sectors???? yes no?
             if (geometries.Any() || subVoxelNodes.Any())
             {
-                var geoTest = new Vector3();
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
                 var geometryBb = geometries.CalculateBoundingBox();
