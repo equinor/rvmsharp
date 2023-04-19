@@ -9,10 +9,11 @@ using System.Text.Json.Serialization;
 public static class CameraPositioning
 {
     public record CameraPosition([property: JsonPropertyName("cameraPosition")]
-        Vector3 Position,
+        SerializableVector3 Position,
         [property: JsonPropertyName("cameraTarget")]
-        Vector3 Target, [property: JsonPropertyName("cameraDirection")]
-        Vector3 Direction);
+        SerializableVector3 Target,
+        [property: JsonPropertyName("cameraDirection")]
+        SerializableVector3 Direction);
 
     public static CameraPosition CalculateInitialCamera(APrimitive[] geometries)
     {
@@ -57,7 +58,9 @@ public static class CameraPositioning
         var position = platformCenter + dir * cameraDistance;
         var direction = Vector3.Negate(dir);
 
-        return new CameraPosition(position, platformCenter, direction);
+        return new CameraPosition(SerializableVector3.FromVector3(position),
+            SerializableVector3.FromVector3(platformCenter),
+            SerializableVector3.FromVector3(direction));
     }
 
     private static (Vector3 PlatformBoundingBoxMin, Vector3 PlatformBoundingBoxMax) GetPlatformBoundingBox(
