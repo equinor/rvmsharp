@@ -10,7 +10,7 @@ public static class CameraPositioning
 {
     public record CameraPosition([property: JsonPropertyName("cameraPosition")]
         SerializableVector3 Position,
-        [property: JsonPropertyName("cameraTarget")]
+        [property: JsonPropertyName("targetPosition")]
         SerializableVector3 Target,
         [property: JsonPropertyName("cameraDirection")]
         SerializableVector3 Direction);

@@ -57,7 +57,6 @@ public static class SceneCreator
             float maxDiagonalLength = sector.MaxNodeDiagonal;
             float minDiagonalLength = sector.MinNodeDiagonal;
 
-
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
 
             return new Sector
