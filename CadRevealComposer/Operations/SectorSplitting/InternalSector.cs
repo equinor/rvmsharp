@@ -11,5 +11,5 @@ public record InternalSector(
     float MaxNodeDiagonal,
     APrimitive[] Geometries,
     BoundingBox SubtreeBoundingBox,
-    BoundingBox GeometryBoundingBox
+    BoundingBox? GeometryBoundingBox
 );

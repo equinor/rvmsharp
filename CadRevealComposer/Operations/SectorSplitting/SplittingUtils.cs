@@ -135,6 +135,10 @@ public static class SplittingUtils
             {
                 var geometries = g.ToArray();
                 var boundingBox = geometries.CalculateBoundingBox();
+                if(boundingBox==null)
+                {
+                    throw new Exception("Unexpected error, the boundingbox should not have been null.");
+                }
                 return new Node(
                     g.Key,
                     geometries,
@@ -145,8 +149,7 @@ public static class SplittingUtils
             .ToArray();
     }
 
-    public static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox,
-        BoundingBox geometryBoundingBox)
+    public static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox)
     {
         return new InternalSector(
             sectorId,
@@ -157,7 +160,7 @@ public static class SplittingUtils
             0,
             Array.Empty<APrimitive>(),
             subTreeBoundingBox,
-            geometryBoundingBox
+            null
         );
     }
 }

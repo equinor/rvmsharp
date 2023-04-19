@@ -6,10 +6,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
 using Primitives;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Text.Json;
 using Utils;
 using Writers;
@@ -70,11 +72,11 @@ public static class SceneCreator
                         Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Min),
                         Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Max)
                     ),
-                GeometryBoundingBox =
+                GeometryBoundingBox = sector.GeometryBoundingBox!=null?
                     new SerializableBoundingBox(
                         Min: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Min),
                         Max: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Max)
-                    ),
+                    ):null,
                 Depth = sector.Depth,
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,

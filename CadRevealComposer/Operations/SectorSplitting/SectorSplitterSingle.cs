@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Utils;
@@ -15,6 +16,10 @@ public class SectorSplitterSingle : ISectorSplitter
     private InternalSector CreateRootSector(uint sectorId, APrimitive[] geometries)
     {
         var bb = geometries.CalculateBoundingBox();
+        if(bb==null)
+        {
+            throw new Exception("The bounding box of the root sector should never be null");
+        }
         return new InternalSector(
             sectorId,
             ParentSectorId: null,
@@ -24,7 +29,7 @@ public class SectorSplitterSingle : ISectorSplitter
             geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
             geometries,
             bb,
-            bb
+            null
         );
     }
 }
