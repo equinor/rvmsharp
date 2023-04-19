@@ -14,9 +14,9 @@ public class NodePDMSEntry
     public void RawInsert(SQLiteCommand command)
     {
         command.CommandText = "INSERT INTO NodeToPDMSEntry (NodeId, PDMSEntryId) VALUES (@NodeId, @PDMSEntryId);";
-        command.Parameters.AddRange(new[] {
-            new SQLiteParameter("@NodeId", NodeId),
-            new SQLiteParameter("@PDMSEntryId", PDMSEntryId)});
+        command.Parameters.AddRange(
+            new[] { new SQLiteParameter("@NodeId", NodeId), new SQLiteParameter("@PDMSEntryId", PDMSEntryId) }
+        );
         command.ExecuteNonQuery();
     }
 

@@ -4,17 +4,14 @@ using Containers;
 using System.Linq;
 using System.Numerics;
 
-public abstract record RvmPrimitive(uint Version,
-        RvmPrimitiveKind Kind,
-        Matrix4x4 Matrix,
-        RvmBoundingBox BoundingBoxLocal)
-    : RvmGroup(Version)
+public abstract record RvmPrimitive(
+    uint Version,
+    RvmPrimitiveKind Kind,
+    Matrix4x4 Matrix,
+    RvmBoundingBox BoundingBoxLocal
+) : RvmGroup(Version)
 {
-    public RvmConnection?[]
-        Connections { get; } =
-    {
-        null, null, null, null, null, null
-    }; // Up to six connections. Connections depend on primitive type.
+    public RvmConnection?[] Connections { get; } = { null, null, null, null, null, null }; // Up to six connections. Connections depend on primitive type.
 
     public virtual bool Equals(RvmPrimitive? other)
     {
@@ -24,8 +21,22 @@ public abstract record RvmPrimitive(uint Version,
     public override int GetHashCode()
     {
         // As connections is an array, we use this for comparison.
-        var connectionsHash = (Connections[0],Connections[1],Connections[2],Connections[3],Connections[4],Connections[5]).GetHashCode();
-        return (base.GetHashCode(), connectionsHash, SampleStartAngle, (int) Kind, Matrix, BoundingBoxLocal).GetHashCode();
+        var connectionsHash = (
+            Connections[0],
+            Connections[1],
+            Connections[2],
+            Connections[3],
+            Connections[4],
+            Connections[5]
+        ).GetHashCode();
+        return (
+            base.GetHashCode(),
+            connectionsHash,
+            SampleStartAngle,
+            (int)Kind,
+            Matrix,
+            BoundingBoxLocal
+        ).GetHashCode();
     }
 
     /// <summary>
@@ -52,6 +63,5 @@ public abstract record RvmPrimitive(uint Version,
         var min = rotatedBox.Aggregate(Vector3.Min);
         var max = rotatedBox.Aggregate(Vector3.Max);
         return new RvmBoundingBox(Min: min, Max: max);
-
     }
 }

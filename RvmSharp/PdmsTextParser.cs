@@ -1,7 +1,6 @@
 ﻿namespace RvmSharp;
 
 using Commons;
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,13 +13,15 @@ public static class PdmsTextParser
         string Name,
         Dictionary<string, string> MetadataDict,
         PdmsNode? Parent,
-        List<PdmsNode> Children);
+        List<PdmsNode> Children
+    );
 
     private class StatefulReader : StreamReader
     {
         public int LineNumber { get; private set; }
 
-        public StatefulReader(string filename) : base(filename) {}
+        public StatefulReader(string filename)
+            : base(filename) { }
 
         override public string? ReadLine()
         {
@@ -41,9 +42,12 @@ public static class PdmsTextParser
     /// <param name="pdmsTxtFilePath">File path RVM TEXT</param>
     /// <param name="attributesToExclude">Exclude node attributes by name (case sensitive). If a attribute is not needed this can help to avoid string memory allocations and reduce processing time.</param>
     /// <param name="stringInternPool">String intern pool to deduplicate string allocations and reuse string instances.</param>
-    public static List<PdmsNode> GetAllPdmsNodesInFile(string pdmsTxtFilePath, IReadOnlyList<string> attributesToExclude, IStringInternPool? stringInternPool)
+    public static List<PdmsNode> GetAllPdmsNodesInFile(
+        string pdmsTxtFilePath,
+        IReadOnlyList<string> attributesToExclude,
+        IStringInternPool? stringInternPool
+    )
     {
-
         var pdmsNodes = new List<PdmsNode>();
 
         using (var reader = new StatefulReader(pdmsTxtFilePath))
@@ -59,15 +63,14 @@ public static class PdmsTextParser
             {
                 var line = reader.ReadLine();
                 if (line == null)
-                    throw new NullReferenceException( $"Unexpected null in {nameof(line)}");
+                    throw new NullReferenceException($"Unexpected null in {nameof(line)}");
 
                 var lineSpan = line.AsSpan();
 
                 var trimmedLine = lineSpan.Trim();
                 if (trimmedLine.StartsWith(newItemSeparator, StringComparison.Ordinal))
                 {
-                    var pdmsNode = new PdmsNode
-                    (
+                    var pdmsNode = new PdmsNode(
                         Name: trimmedLine[newItemSeparatorLength..].Trim().ToString(),
                         MetadataDict: new Dictionary<string, string>(),
                         Parent: currentPdmsNode,
@@ -100,22 +103,25 @@ public static class PdmsTextParser
                     }
                     else
                     {
-                        var nameSeparatorIndex = trimmedLine.IndexOf(headerInfo.NameEnd, StringComparison.InvariantCulture);
+                        var nameSeparatorIndex = trimmedLine.IndexOf(
+                            headerInfo.NameEnd,
+                            StringComparison.InvariantCulture
+                        );
                         var key = GetKey(trimmedLine, nameSeparatorIndex);
 
                         if (!IsExcludedAttribute(key, attributesToExclude))
                         {
                             var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
-                            if (stringInternPool  != null)
+                            if (stringInternPool != null)
                             {
                                 var keyInterned = stringInternPool.Intern(key);
                                 var valueInterned = stringInternPool.Intern(StripQuotes(value));
                                 currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
-                            } else
+                            }
+                            else
                             {
                                 currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
                             }
-
                         }
                     }
                 }
@@ -146,6 +152,7 @@ public static class PdmsTextParser
         public string EndSeparator = "END";
         public string NameEnd = ":=";
         public string Sep = "&end&";
+
         // ReSharper disable once CollectionNeverQueried.Local -- We currently do not use this for anything, but it can be used in the future.
         public readonly Dictionary<string, string> HeaderMetadata = new();
     }
@@ -154,7 +161,7 @@ public static class PdmsTextParser
     {
         var header = new PdmsFileHeader();
 
-        string[] cadcAttributesFilesSupported = {"CADC_Attributes_File v1.0"};
+        string[] cadcAttributesFilesSupported = { "CADC_Attributes_File v1.0" };
 
         // Parse the first line:
         string? firstLine = reader.ReadLine();
@@ -168,7 +175,8 @@ public static class PdmsTextParser
         if (!cadcAttributesFilesSupported.Contains(header.FileFormat))
         {
             throw new Exception(
-                $"Unsupported PDMS file header: {header.FileFormat}. Expected one of: {string.Join(", ", cadcAttributesFilesSupported)}");
+                $"Unsupported PDMS file header: {header.FileFormat}. Expected one of: {string.Join(", ", cadcAttributesFilesSupported)}"
+            );
         }
         header.StartSeparator = firstLineSegments[1].Split(':')[1].Trim();
         header.EndSeparator = firstLineSegments[2].Split(':')[1].Trim();
@@ -189,10 +197,13 @@ public static class PdmsTextParser
                 }
                 else
                 {
-                    var lineSegments = currentLine.Split(new[] {header.Sep}, StringSplitOptions.RemoveEmptyEntries);
+                    var lineSegments = currentLine.Split(new[] { header.Sep }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (string keyValueSegment in lineSegments)
                     {
-                        var nameSeparatorIndex = keyValueSegment.IndexOf(header.NameEnd, StringComparison.InvariantCulture);
+                        var nameSeparatorIndex = keyValueSegment.IndexOf(
+                            header.NameEnd,
+                            StringComparison.InvariantCulture
+                        );
                         var key = GetKey(keyValueSegment, nameSeparatorIndex).ToString();
                         var value = GetValue(keyValueSegment, nameSeparatorIndex + header.NameEnd.Length).ToString();
                         header.HeaderMetadata[key] = value;

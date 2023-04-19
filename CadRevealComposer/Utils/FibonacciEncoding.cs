@@ -95,7 +95,7 @@ public static class FibonacciEncoding
         foreach (ulong v in encoded)
         {
             int oneCount = 0;
-            for (int v_pos = 0;; v_pos++)
+            for (int v_pos = 0; ; v_pos++)
             {
                 if (v_pos >= 64)
                 {
@@ -143,7 +143,7 @@ public static class FibonacciEncoding
         int lastBit = 0;
         while (rest != 0)
         {
-            for (int i = 0;; i++)
+            for (int i = 0; ; i++)
             {
                 ulong value = Fib(i + 2);
                 if (value > rest)

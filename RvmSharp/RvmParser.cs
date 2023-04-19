@@ -90,6 +90,7 @@ public static class RvmParser
     {
         var version = ReadUint(stream);
         var kind = (RvmPrimitiveKind)ReadUint(stream);
+        // csharpier-ignore -- Keep matrix formatting
         var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
@@ -101,18 +102,28 @@ public static class RvmParser
         switch (kind)
         {
             case RvmPrimitiveKind.Pyramid:
-                {
-                    var bottomX = ReadFloat(stream);
-                    var bottomY = ReadFloat(stream);
-                    var topX = ReadFloat(stream);
-                    var topY = ReadFloat(stream);
-                    var offsetX = ReadFloat(stream);
-                    var offsetY = ReadFloat(stream);
-                    var height = ReadFloat(stream);
-                    primitive = new RvmPyramid(version, matrix, bBoxLocal, bottomX, bottomY, topX, topY, offsetX,
-                        offsetY, height);
-                    break;
-                }
+            {
+                var bottomX = ReadFloat(stream);
+                var bottomY = ReadFloat(stream);
+                var topX = ReadFloat(stream);
+                var topY = ReadFloat(stream);
+                var offsetX = ReadFloat(stream);
+                var offsetY = ReadFloat(stream);
+                var height = ReadFloat(stream);
+                primitive = new RvmPyramid(
+                    version,
+                    matrix,
+                    bBoxLocal,
+                    bottomX,
+                    bottomY,
+                    topX,
+                    topY,
+                    offsetX,
+                    offsetY,
+                    height
+                );
+                break;
+            }
             case RvmPrimitiveKind.Box:
                 var lengthX = ReadFloat(stream);
                 var lengthY = ReadFloat(stream);
@@ -120,60 +131,78 @@ public static class RvmParser
                 primitive = new RvmBox(version, matrix, bBoxLocal, lengthX, lengthY, lengthZ);
                 break;
             case RvmPrimitiveKind.RectangularTorus:
-                {
-                    var radiusInner = ReadFloat(stream);
-                    var radiusOuter = ReadFloat(stream);
-                    var height = ReadFloat(stream);
-                    var angle = ReadFloat(stream);
-                    primitive = new RvmRectangularTorus(version, matrix, bBoxLocal, radiusInner, radiusOuter,
-                        height,
-                        angle);
-                    break;
-                }
+            {
+                var radiusInner = ReadFloat(stream);
+                var radiusOuter = ReadFloat(stream);
+                var height = ReadFloat(stream);
+                var angle = ReadFloat(stream);
+                primitive = new RvmRectangularTorus(
+                    version,
+                    matrix,
+                    bBoxLocal,
+                    radiusInner,
+                    radiusOuter,
+                    height,
+                    angle
+                );
+                break;
+            }
             case RvmPrimitiveKind.CircularTorus:
-                {
-                    var offset = ReadFloat(stream);
-                    var radius = ReadFloat(stream);
-                    var angle = ReadFloat(stream);
-                    primitive = new RvmCircularTorus(version, matrix, bBoxLocal, offset, radius, angle);
-                    break;
-                }
+            {
+                var offset = ReadFloat(stream);
+                var radius = ReadFloat(stream);
+                var angle = ReadFloat(stream);
+                primitive = new RvmCircularTorus(version, matrix, bBoxLocal, offset, radius, angle);
+                break;
+            }
             case RvmPrimitiveKind.EllipticalDish:
-                {
-                    var baseRadius = ReadFloat(stream);
-                    var height = ReadFloat(stream);
-                    primitive = new RvmEllipticalDish(version, matrix, bBoxLocal, baseRadius, height);
-                    break;
-                }
+            {
+                var baseRadius = ReadFloat(stream);
+                var height = ReadFloat(stream);
+                primitive = new RvmEllipticalDish(version, matrix, bBoxLocal, baseRadius, height);
+                break;
+            }
             case RvmPrimitiveKind.SphericalDish:
-                {
-                    var baseRadius = ReadFloat(stream);
-                    var height = ReadFloat(stream);
-                    primitive = new RvmSphericalDish(version, matrix, bBoxLocal, baseRadius, height);
-                    break;
-                }
+            {
+                var baseRadius = ReadFloat(stream);
+                var height = ReadFloat(stream);
+                primitive = new RvmSphericalDish(version, matrix, bBoxLocal, baseRadius, height);
+                break;
+            }
             case RvmPrimitiveKind.Snout:
-                {
-                    var radiusBottom = ReadFloat(stream);
-                    var radiusTop = ReadFloat(stream);
-                    var height = ReadFloat(stream);
-                    var offsetX = ReadFloat(stream);
-                    var offsetY = ReadFloat(stream);
-                    var bottomShearX = ReadFloat(stream);
-                    var bottomShearY = ReadFloat(stream);
-                    var topShearX = ReadFloat(stream);
-                    var topShearY = ReadFloat(stream);
-                    primitive = new RvmSnout(version, matrix, bBoxLocal, radiusBottom, radiusTop, height,
-                        offsetX, offsetY, bottomShearX, bottomShearY, topShearX, topShearY);
-                    break;
-                }
+            {
+                var radiusBottom = ReadFloat(stream);
+                var radiusTop = ReadFloat(stream);
+                var height = ReadFloat(stream);
+                var offsetX = ReadFloat(stream);
+                var offsetY = ReadFloat(stream);
+                var bottomShearX = ReadFloat(stream);
+                var bottomShearY = ReadFloat(stream);
+                var topShearX = ReadFloat(stream);
+                var topShearY = ReadFloat(stream);
+                primitive = new RvmSnout(
+                    version,
+                    matrix,
+                    bBoxLocal,
+                    radiusBottom,
+                    radiusTop,
+                    height,
+                    offsetX,
+                    offsetY,
+                    bottomShearX,
+                    bottomShearY,
+                    topShearX,
+                    topShearY
+                );
+                break;
+            }
             case RvmPrimitiveKind.Cylinder:
-                {
-                    var radius = ReadFloat(stream);
-                    var height = ReadFloat(stream);
-                    primitive = new RvmCylinder(version, matrix, bBoxLocal, radius, height);
-                    break;
-                }
+            {
+                var radius = ReadFloat(stream);
+                var height = ReadFloat(stream);
+                primitive = new RvmCylinder(version, matrix, bBoxLocal, radius, height);
+                break;
+            }
             case RvmPrimitiveKind.Sphere:
                 var diameter = ReadFloat(stream);
                 primitive = new RvmSphere(version, matrix, bBoxLocal, diameter);
@@ -231,10 +260,7 @@ public static class RvmParser
         var name = ReadString(stream);
 
         const float mmToM = 0.001f;
-        var translation = new Vector3(
-            ReadFloat(stream) * mmToM,
-            ReadFloat(stream) * mmToM,
-            ReadFloat(stream) * mmToM);
+        var translation = new Vector3(ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM);
 
         var materialId = ReadUint(stream);
         if (version == 3)
@@ -299,7 +325,8 @@ public static class RvmParser
 
     public static RvmFile ReadRvm(Stream stream)
     {
-        uint len, dunno;
+        uint len,
+            dunno;
 
         var head = ReadChunkHeader(stream, out len, out dunno);
         if (head != "HEAD")
@@ -334,8 +361,16 @@ public static class RvmParser
             chunk = ReadChunkHeader(stream, out len, out dunno);
         }
 
-        return new RvmFile(header,
-            new RvmModel(modelParameters.version, modelParameters.project, modelParameters.name,
-                modelChildren, modelPrimitives, modelColors));
+        return new RvmFile(
+            header,
+            new RvmModel(
+                modelParameters.version,
+                modelParameters.project,
+                modelParameters.name,
+                modelChildren,
+                modelPrimitives,
+                modelColors
+            )
+        );
     }
 }

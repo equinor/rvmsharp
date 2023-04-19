@@ -15,7 +15,7 @@ public sealed class ObjExporter : IDisposable
     private readonly string _filename;
     private readonly StreamWriter _writer;
     private StreamWriter? _materialWriter;
-    private readonly Dictionary<Color, string> _colors = new ();
+    private readonly Dictionary<Color, string> _colors = new();
     private int _vertexCount;
     private int _normalCount;
 
@@ -42,7 +42,8 @@ public sealed class ObjExporter : IDisposable
 
     public void StartMaterial(Color color)
     {
-        if (_materialWriter == null) {
+        if (_materialWriter == null)
+        {
             var materialFullFilename = Path.ChangeExtension(_filename, "mtl");
             var materialFilename = Path.GetFileName(materialFullFilename);
             _writer.WriteLine($"mtllib {materialFilename}");
@@ -58,7 +59,8 @@ public sealed class ObjExporter : IDisposable
             _materialWriter.WriteLine("Ka 0.000000 0.000000 0.000000");
             // Diffuse color
             _materialWriter.WriteLine(
-                $"Kd {FastToString((float)color.R / 255)} {FastToString((float)color.G / 255)} {FastToString((float)color.B / 255)}");
+                $"Kd {FastToString((float)color.R / 255)} {FastToString((float)color.G / 255)} {FastToString((float)color.B / 255)}"
+            );
             // Specular color
             _materialWriter.WriteLine("Ks 0.000000 0.000000 0.000000");
             // Emission color
@@ -73,7 +75,6 @@ public sealed class ObjExporter : IDisposable
             _materialWriter.WriteLine("illum 1");
         }
         _writer.WriteLine($"usemtl {materialName}");
-
     }
 
     public void StartObject(string name)
@@ -128,7 +129,10 @@ public sealed class ObjExporter : IDisposable
             // This is a development guard. Usually the tessellation needs improvement.
             // Need to figure out a nice way to handle this.
             // Consider ignoring. or serializing as "NaN"?
-            throw new ArgumentOutOfRangeException(nameof(number), $"Expected {nameof(number)} to be finite. Was {number}.");
+            throw new ArgumentOutOfRangeException(
+                nameof(number),
+                $"Expected {nameof(number)} to be finite. Was {number}."
+            );
         }
 
         // Using Math.Round, and Decimal instead of "float.ToString("0.000000") as it is roughly 100% faster,

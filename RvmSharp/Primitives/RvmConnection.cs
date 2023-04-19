@@ -14,7 +14,15 @@ public class RvmConnection
         // NextFlag = 4
     }
 
-    public RvmConnection(RvmPrimitive primitive1, RvmPrimitive primitive2, uint connectionIndex1, uint connectionIndex2, Vector3 position, Vector3 direction, ConnectionType connectionTypeFlags)
+    public RvmConnection(
+        RvmPrimitive primitive1,
+        RvmPrimitive primitive2,
+        uint connectionIndex1,
+        uint connectionIndex2,
+        Vector3 position,
+        Vector3 direction,
+        ConnectionType connectionTypeFlags
+    )
     {
         Primitive1 = primitive1;
         Primitive2 = primitive2;

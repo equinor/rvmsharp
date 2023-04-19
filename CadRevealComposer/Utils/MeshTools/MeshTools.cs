@@ -8,7 +8,6 @@ using System.Numerics;
 
 public static class MeshTools
 {
-
     /// <summary>
     /// Remove re-used vertices, and remap the Triangle indices to the new unique table.
     /// Saves memory but assumes the mesh ONLY has Position and Index data. Discards any normals!

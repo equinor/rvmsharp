@@ -6,8 +6,7 @@ namespace Mop.Hierarchy.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "NodeToPDMSEntries");
+            migrationBuilder.DropTable(name: "NodeToPDMSEntries");
 
             migrationBuilder.AlterColumn<double>(
                 name: "min_z",
@@ -17,7 +16,8 @@ namespace Mop.Hierarchy.Migrations
                 defaultValue: 0.0,
                 oldClrType: typeof(float),
                 oldType: "REAL",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<double>(
                 name: "min_y",
@@ -27,7 +27,8 @@ namespace Mop.Hierarchy.Migrations
                 defaultValue: 0.0,
                 oldClrType: typeof(float),
                 oldType: "REAL",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<double>(
                 name: "min_x",
@@ -37,7 +38,8 @@ namespace Mop.Hierarchy.Migrations
                 defaultValue: 0.0,
                 oldClrType: typeof(float),
                 oldType: "REAL",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<double>(
                 name: "max_z",
@@ -47,7 +49,8 @@ namespace Mop.Hierarchy.Migrations
                 defaultValue: 0.0,
                 oldClrType: typeof(float),
                 oldType: "REAL",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<double>(
                 name: "max_y",
@@ -57,7 +60,8 @@ namespace Mop.Hierarchy.Migrations
                 defaultValue: 0.0,
                 oldClrType: typeof(float),
                 oldType: "REAL",
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.AlterColumn<double>(
                 name: "max_x",
@@ -67,33 +71,23 @@ namespace Mop.Hierarchy.Migrations
                 defaultValue: 0.0,
                 oldClrType: typeof(float),
                 oldType: "REAL",
-                oldNullable: true);
+                oldNullable: true
+            );
 
-            migrationBuilder.AddColumn<string>(
-                name: "DiagnosticInfo",
-                table: "Nodes",
-                type: "TEXT",
-                nullable: true);
+            migrationBuilder.AddColumn<string>(name: "DiagnosticInfo", table: "Nodes", type: "TEXT", nullable: true);
 
-            migrationBuilder.AddColumn<int>(
-                name: "RefNoDb",
-                table: "Nodes",
-                type: "INTEGER",
-                nullable: true);
+            migrationBuilder.AddColumn<int>(name: "RefNoDb", table: "Nodes", type: "INTEGER", nullable: true);
 
-            migrationBuilder.AddColumn<int>(
-                name: "RefNoSequence",
-                table: "Nodes",
-                type: "INTEGER",
-                nullable: true);
+            migrationBuilder.AddColumn<int>(name: "RefNoSequence", table: "Nodes", type: "INTEGER", nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "NodeToPDMSEntry",
-                columns: table => new
-                {
-                    NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
-                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
-                },
+                columns: table =>
+                    new
+                    {
+                        NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
+                        PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
+                    },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NodeToPDMSEntry", x => new { x.NodeId, x.PDMSEntryId });
@@ -102,37 +96,34 @@ namespace Mop.Hierarchy.Migrations
                         column: x => x.NodeId,
                         principalTable: "Nodes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Cascade
+                    );
                     table.ForeignKey(
                         name: "FK_NodeToPDMSEntry_PDMSEntries_PDMSEntryId",
                         column: x => x.PDMSEntryId,
                         principalTable: "PDMSEntries",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_NodeToPDMSEntry_PDMSEntryId",
                 table: "NodeToPDMSEntry",
-                column: "PDMSEntryId");
+                column: "PDMSEntryId"
+            );
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "NodeToPDMSEntry");
+            migrationBuilder.DropTable(name: "NodeToPDMSEntry");
 
-            migrationBuilder.DropColumn(
-                name: "DiagnosticInfo",
-                table: "Nodes");
+            migrationBuilder.DropColumn(name: "DiagnosticInfo", table: "Nodes");
 
-            migrationBuilder.DropColumn(
-                name: "RefNoDb",
-                table: "Nodes");
+            migrationBuilder.DropColumn(name: "RefNoDb", table: "Nodes");
 
-            migrationBuilder.DropColumn(
-                name: "RefNoSequence",
-                table: "Nodes");
+            migrationBuilder.DropColumn(name: "RefNoSequence", table: "Nodes");
 
             migrationBuilder.AlterColumn<float>(
                 name: "min_z",
@@ -140,7 +131,8 @@ namespace Mop.Hierarchy.Migrations
                 type: "REAL",
                 nullable: true,
                 oldClrType: typeof(double),
-                oldType: "REAL");
+                oldType: "REAL"
+            );
 
             migrationBuilder.AlterColumn<float>(
                 name: "min_y",
@@ -148,7 +140,8 @@ namespace Mop.Hierarchy.Migrations
                 type: "REAL",
                 nullable: true,
                 oldClrType: typeof(double),
-                oldType: "REAL");
+                oldType: "REAL"
+            );
 
             migrationBuilder.AlterColumn<float>(
                 name: "min_x",
@@ -156,7 +149,8 @@ namespace Mop.Hierarchy.Migrations
                 type: "REAL",
                 nullable: true,
                 oldClrType: typeof(double),
-                oldType: "REAL");
+                oldType: "REAL"
+            );
 
             migrationBuilder.AlterColumn<float>(
                 name: "max_z",
@@ -164,7 +158,8 @@ namespace Mop.Hierarchy.Migrations
                 type: "REAL",
                 nullable: true,
                 oldClrType: typeof(double),
-                oldType: "REAL");
+                oldType: "REAL"
+            );
 
             migrationBuilder.AlterColumn<float>(
                 name: "max_y",
@@ -172,7 +167,8 @@ namespace Mop.Hierarchy.Migrations
                 type: "REAL",
                 nullable: true,
                 oldClrType: typeof(double),
-                oldType: "REAL");
+                oldType: "REAL"
+            );
 
             migrationBuilder.AlterColumn<float>(
                 name: "max_x",
@@ -180,15 +176,17 @@ namespace Mop.Hierarchy.Migrations
                 type: "REAL",
                 nullable: true,
                 oldClrType: typeof(double),
-                oldType: "REAL");
+                oldType: "REAL"
+            );
 
             migrationBuilder.CreateTable(
                 name: "NodeToPDMSEntries",
-                columns: table => new
-                {
-                    NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
-                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
-                },
+                columns: table =>
+                    new
+                    {
+                        NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
+                        PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
+                    },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NodeToPDMSEntries", x => new { x.NodeId, x.PDMSEntryId });
@@ -197,19 +195,23 @@ namespace Mop.Hierarchy.Migrations
                         column: x => x.NodeId,
                         principalTable: "Nodes",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Cascade
+                    );
                     table.ForeignKey(
                         name: "FK_NodeToPDMSEntries_PDMSEntries_PDMSEntryId",
                         column: x => x.PDMSEntryId,
                         principalTable: "PDMSEntries",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
+                        onDelete: ReferentialAction.Cascade
+                    );
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_NodeToPDMSEntries_PDMSEntryId",
                 table: "NodeToPDMSEntries",
-                column: "PDMSEntryId");
+                column: "PDMSEntryId"
+            );
         }
     }
 }

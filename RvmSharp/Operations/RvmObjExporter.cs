@@ -11,19 +11,26 @@ using Tessellation;
 
 public static class RvmObjExporter
 {
-    public static void ExportToObj(RvmStore rvmStore, float tolerance, string outputFilename,
+    public static void ExportToObj(
+        RvmStore rvmStore,
+        float tolerance,
+        string outputFilename,
         (Action<int> init, Action tick)? tessellationProgressCallback = null,
-        (Action<int> init, Action tick)? exportProgressCallback = null)
+        (Action<int> init, Action tick)? exportProgressCallback = null
+    )
     {
         var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(CollectGeometryNodes)).ToArray();
         var totalLeafs = leafs.Length;
         tessellationProgressCallback?.init(totalLeafs);
-        var meshes = leafs.AsParallel().Select(leaf =>
-        {
-            var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, tolerance);
-            tessellationProgressCallback?.tick();
-            return (name: leaf.Name, primitives: tessellatedMeshes);
-        }).ToArray();
+        var meshes = leafs
+            .AsParallel()
+            .Select(leaf =>
+            {
+                var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, tolerance);
+                tessellationProgressCallback?.tick();
+                return (name: leaf.Name, primitives: tessellatedMeshes);
+            })
+            .ToArray();
 
         var totalMeshes = meshes.Length;
         exportProgressCallback?.init(totalMeshes);

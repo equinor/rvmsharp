@@ -1,12 +1,9 @@
 namespace CadRevealRvmProvider.Tests.Converters;
 
-using CadRevealRvmProvider.Converters;
 using CadRevealComposer.Primitives;
-using NUnit.Framework;
+using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
-using System;
 using System.Drawing;
-using System.Linq;
 using System.Numerics;
 
 [TestFixture]
@@ -30,7 +27,8 @@ public class RvmSnoutConverterTests
             BottomShearX: 0,
             BottomShearY: 0,
             TopShearX: 0,
-            TopShearY: 0);
+            TopShearY: 0
+        );
     }
 
     [Test]
@@ -50,13 +48,16 @@ public class RvmSnoutConverterTests
         var snout = _rvmSnout with { BottomShearX = 0.5f, OffsetX = 0.5f };
 
         Assert.Throws<NotImplementedException>(
-            delegate { snout.ConvertToRevealPrimitive(_treeIndex, Color.Red); });
+            delegate
+            {
+                snout.ConvertToRevealPrimitive(_treeIndex, Color.Red);
+            }
+        );
     }
 
     [Test]
     public void RvmSnoutConverter_WhenHasShearAndCylinderShaped_ReturnsCylinderWithCaps()
     {
-
         _rvmSnout = _rvmSnout with { RadiusBottom = 1, RadiusTop = 1, BottomShearX = 0.5f };
 
         var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
@@ -79,7 +80,6 @@ public class RvmSnoutConverterTests
         Assert.That(geometries[2], Is.TypeOf<Circle>());
         Assert.That(geometries.Length, Is.EqualTo(3));
     }
-
 
     [Test]
     public void RvmSnoutConverter_WhenNoShearAndNotEccentric_ReturnsConeWithCaps()

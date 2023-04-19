@@ -38,15 +38,18 @@ public class Vector3EfSerializable : IEquatable<Vector3EfSerializable>
     public bool Equals(Vector3EfSerializable? other)
     {
         //Check whether the compared object is null.
-        if (ReferenceEquals(other, null)) return false;
+        if (ReferenceEquals(other, null))
+            return false;
 
         //Check whether the compared object references the same data.
-        if (ReferenceEquals(this, other)) return true;
+        if (ReferenceEquals(this, other))
+            return true;
 
         //Check whether the products' properties are equal.
         float tolerance = 0.001f;
-        return Math.Abs(x - other.x) < tolerance && Math.Abs(y - other.y) < tolerance &&
-               Math.Abs(z - other.z) < tolerance;
+        return Math.Abs(x - other.x) < tolerance
+            && Math.Abs(y - other.y) < tolerance
+            && Math.Abs(z - other.z) < tolerance;
     }
 
     public override int GetHashCode()

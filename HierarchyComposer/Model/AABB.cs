@@ -13,7 +13,12 @@ public class AABB : IEquatable<AABB>
 
     public AABB CopyWithNewId(int id)
     {
-        return new AABB() { Id = id, min = this.min, max = this.max };
+        return new AABB()
+        {
+            Id = id,
+            min = this.min,
+            max = this.max
+        };
     }
 
     public static void RawInsertBatch(SQLiteCommand command, IEnumerable<AABB> aabbs)
@@ -36,10 +41,18 @@ public class AABB : IEquatable<AABB>
         var maxZParameter = command.CreateParameter();
         maxZParameter.ParameterName = "$max_z";
 
-        command.Parameters.AddRange(new[]
-        {
-            aabbIdParameter, minXParameter, minYParameter, minZParameter, maxXParameter, maxYParameter, maxZParameter
-        });
+        command.Parameters.AddRange(
+            new[]
+            {
+                aabbIdParameter,
+                minXParameter,
+                minYParameter,
+                minZParameter,
+                maxXParameter,
+                maxYParameter,
+                maxZParameter
+            }
+        );
 
         foreach (var aabb in aabbs)
         {

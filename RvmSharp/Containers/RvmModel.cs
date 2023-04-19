@@ -6,7 +6,7 @@ using System.Collections.Generic;
 public record RvmModel
 {
     public uint Version { get; }
-    public string Project  { get; }
+    public string Project { get; }
     public string Name { get; }
 
     public IReadOnlyList<RvmNode> Children => _children;
@@ -15,10 +15,14 @@ public record RvmModel
     private readonly List<RvmPrimitive> _primitives = new List<RvmPrimitive>();
     private readonly List<RvmColor> _colors = new List<RvmColor>();
 
-    public RvmModel(uint version, string project, string name,
+    public RvmModel(
+        uint version,
+        string project,
+        string name,
         IEnumerable<RvmNode> children,
         IEnumerable<RvmPrimitive> primitives,
-        IEnumerable<RvmColor> colors)
+        IEnumerable<RvmColor> colors
+    )
     {
         Version = version;
         Project = project;

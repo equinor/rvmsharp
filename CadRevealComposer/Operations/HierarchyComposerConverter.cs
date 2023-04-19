@@ -22,10 +22,7 @@ public static class HierarchyComposerConverter
 
     public static IReadOnlyList<HierarchyNode> ConvertToHierarchyNodes(IReadOnlyList<CadRevealNode> nodes)
     {
-        return nodes
-            .Select(ConvertRevealNodeToHierarchyNode)
-            .WhereNotNull()
-            .ToImmutableList();
+        return nodes.Select(ConvertRevealNodeToHierarchyNode).WhereNotNull().ToImmutableList();
     }
 
     /// <summary>
@@ -70,16 +67,13 @@ public static class HierarchyComposerConverter
             RefNoSequence = maybeRefNo?.SequenceNo,
             Name = revealNode.Name,
             TopNodeId = ConvertUlongToUintOrThrowIfTooLarge(rootNode.TreeIndex),
-            ParentId = maybeParent != null
-                ? ConvertUlongToUintOrThrowIfTooLarge(maybeParent.TreeIndex)
-                : null,
+            ParentId = maybeParent != null ? ConvertUlongToUintOrThrowIfTooLarge(maybeParent.TreeIndex) : null,
             PDMSData = FilterRedundantAttributes(revealNode.Attributes),
             HasMesh = hasMesh,
             AABB = aabb,
             OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo
         };
     }
-
 
     /// <summary>
     /// Finds the last index of this node or its children. Including its own index.
@@ -109,10 +103,12 @@ public static class HierarchyComposerConverter
     private static Dictionary<string, string> FilterRedundantAttributes(IDictionary<string, string> inputPdmsAttributes)
     {
         return inputPdmsAttributes
-            .Where(kvp =>
-                !string.Equals("Name", kvp.Key, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals("Position", kvp.Key, StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals("RefNo", kvp.Key, StringComparison.OrdinalIgnoreCase))
+            .Where(
+                kvp =>
+                    !string.Equals("Name", kvp.Key, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals("Position", kvp.Key, StringComparison.OrdinalIgnoreCase)
+                    && !string.Equals("RefNo", kvp.Key, StringComparison.OrdinalIgnoreCase)
+            )
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }
 
@@ -128,9 +124,12 @@ public static class HierarchyComposerConverter
     {
         if (input > uint.MaxValue)
         {
-            throw new ArgumentOutOfRangeException(nameof(input), input,
-                $"input was higher than the max uint32 value  {uint.MaxValue}. This is a TODO guard. \n" +
-                "If this becomes a problem we can and should fix the Hierarchy Service to allow for larger IDs.");
+            throw new ArgumentOutOfRangeException(
+                nameof(input),
+                input,
+                $"input was higher than the max uint32 value  {uint.MaxValue}. This is a TODO guard. \n"
+                    + "If this becomes a problem we can and should fix the Hierarchy Service to allow for larger IDs."
+            );
         }
 
         return (uint)input;

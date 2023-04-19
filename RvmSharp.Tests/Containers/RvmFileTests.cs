@@ -22,11 +22,18 @@ public class RvmFileTests
                 }
             }
         };
-        var root = new PdmsTextParser.PdmsNode("Root", new Dictionary<string, string>() { { "RefNo", "=123/321" } },
+        var root = new PdmsTextParser.PdmsNode(
+            "Root",
+            new Dictionary<string, string>() { { "RefNo", "=123/321" } },
             null,
-            new List<PdmsTextParser.PdmsNode>());
-        var duplicate = new PdmsTextParser.PdmsNode("Duplicate",
-            new Dictionary<string, string>() { { "Imported", "True" } }, root, new List<PdmsTextParser.PdmsNode>());
+            new List<PdmsTextParser.PdmsNode>()
+        );
+        var duplicate = new PdmsTextParser.PdmsNode(
+            "Duplicate",
+            new Dictionary<string, string>() { { "Imported", "True" } },
+            root,
+            new List<PdmsTextParser.PdmsNode>()
+        );
         root.Children.Add(duplicate);
 
         var attributeNodes = new[] { root };
@@ -46,18 +53,21 @@ public class RvmFileTests
         {
             new RvmNode(2, "Root", Vector3.Zero, 0)
             {
-                Children =
-                {
-                    new RvmNode(2, "One", Vector3.Zero, 0),
-                    new RvmNode(2, "Two", Vector3.Zero, 0)
-                }
+                Children = { new RvmNode(2, "One", Vector3.Zero, 0), new RvmNode(2, "Two", Vector3.Zero, 0) }
             }
         };
-        var root = new PdmsTextParser.PdmsNode("Root", new Dictionary<string, string>() { { "RefNo", "=123/321" } },
+        var root = new PdmsTextParser.PdmsNode(
+            "Root",
+            new Dictionary<string, string>() { { "RefNo", "=123/321" } },
             null,
-            new List<PdmsTextParser.PdmsNode>());
-        var two = new PdmsTextParser.PdmsNode("Two",
-            new Dictionary<string, string>() { { "Imported", "True" } }, root, new List<PdmsTextParser.PdmsNode>());
+            new List<PdmsTextParser.PdmsNode>()
+        );
+        var two = new PdmsTextParser.PdmsNode(
+            "Two",
+            new Dictionary<string, string>() { { "Imported", "True" } },
+            root,
+            new List<PdmsTextParser.PdmsNode>()
+        );
         root.Children.Add(two);
 
         var attributeNodes = new[] { root };

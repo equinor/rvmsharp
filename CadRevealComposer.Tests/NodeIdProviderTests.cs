@@ -13,8 +13,7 @@ public class NodeIdProviderTests
 
         const ulong maxSafeInt = SequentialIdGenerator.MaxSafeInteger;
 
-        for(var i=0; i<100; i++)
+        for (var i = 0; i < 100; i++)
             Assert.That(nip.GetNodeId(null), Is.LessThanOrEqualTo(maxSafeInt));
     }
-
 }

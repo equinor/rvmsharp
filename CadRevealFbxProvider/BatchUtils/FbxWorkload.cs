@@ -11,7 +11,8 @@ public static class FbxWorkload
 {
     public static (string fbxFilename, string? attributeFilename)[] CollectWorkload(
         IReadOnlyCollection<string> filesAndFolders,
-        string? filter = null)
+        string? filter = null
+    )
     {
         var regexFilter = filter != null ? new Regex(filter) : null;
         var directories = filesAndFolders.Where(Directory.Exists).ToArray();
@@ -21,24 +22,31 @@ public static class FbxWorkload
         if (missingInputs.Any())
         {
             throw new FileNotFoundException(
-                $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}");
+                $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}"
+            );
         }
 
-        var inputFiles =
-            directories.SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
-                .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
-                .Concat(files.Where(x =>
-                    x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase) ||
-                    x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))) // Append single files
-                .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
-                .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
+        var inputFiles = directories
+            .SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
+            .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
+            .Concat(
+                files.Where(
+                    x =>
+                        x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
+                        || x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                )
+            ) // Append single files
+            .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
+            .GroupBy(Path.GetFileNameWithoutExtension)
+            .ToArray(); // Group by filename (rvm, txt)
 
-        var workload = (from filePair in inputFiles
-            select filePair.ToArray()
-            into filePairStatic
+        var workload = (
+            from filePair in inputFiles
+            select filePair.ToArray() into filePairStatic
             let fbxFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".fbx"))
             let csvFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".csv"))
-            select (fbxFilename, csvFilename)).ToArray();
+            select (fbxFilename, csvFilename)
+        ).ToArray();
 
         var result = new List<(string, string?)>();
         foreach ((string? fbxFilename, string? attributeFilename) in workload)
@@ -49,9 +57,9 @@ public static class FbxWorkload
             if (fbxFilename == null)
             {
                 Console.WriteLine(
-                    $"No corresponding FBX file found for attributes: '{attributeFilename}', the file will be skipped.");
+                    $"No corresponding FBX file found for attributes: '{attributeFilename}', the file will be skipped."
+                );
             }
-
             else
                 result.Add((fbxFilename, attributeFilename));
         }
@@ -63,11 +71,12 @@ public static class FbxWorkload
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
-        IStringInternPool? stringInternPool = null)
+        IStringInternPool? stringInternPool = null
+    )
     {
         var progress = 0;
         using var fbxImporter = new FbxImporter();
-        if(!fbxImporter.HasValidSdk())
+        if (!fbxImporter.HasValidSdk())
         {
             // returns an empty list and issues a warning
             Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
@@ -80,12 +89,9 @@ public static class FbxWorkload
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
             var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-            var nodesToProcess = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
-                rootNodeOfModel,
-                treeIndexGenerator,
-                instanceIdGenerator,
-                fbxImporter,
-                lookupA).ToList();
+            var nodesToProcess = FbxNodeToCadRevealNodeConverter
+                .ConvertRecursive(rootNodeOfModel, treeIndexGenerator, instanceIdGenerator, fbxImporter, lookupA)
+                .ToList();
 
             // attach attribute info to the nodes if there is any
             if (infoTextFilename != null)
@@ -101,7 +107,7 @@ public static class FbxWorkload
                     if (match.Success)
                     {
                         var id = match.Groups[1].Value;
-                        if(data.TryGetValue(id, out Dictionary<string, string>? value))
+                        if (data.TryGetValue(id, out Dictionary<string, string>? value))
                         {
                             foreach (var kvp in value)
                             {
@@ -127,7 +133,8 @@ public static class FbxWorkload
         if (stringInternPool != null)
         {
             Console.WriteLine(
-                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
+            );
         }
 
         // TODO: check if/how something similar has to be done for FBX models

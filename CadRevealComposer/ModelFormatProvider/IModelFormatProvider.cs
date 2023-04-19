@@ -11,10 +11,13 @@ public interface IModelFormatProvider
     IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator);
+        InstanceIdGenerator instanceIdGenerator
+    );
 
-    public APrimitive[] ProcessGeometries(APrimitive[] geometries,
+    public APrimitive[] ProcessGeometries(
+        APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator);
+        InstanceIdGenerator instanceIdGenerator
+    );
 }

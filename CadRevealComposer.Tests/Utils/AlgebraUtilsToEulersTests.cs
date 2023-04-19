@@ -1,8 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Utils;
-using NUnit.Framework;
-using System;
 using System.Numerics;
 
 [TestFixture]
@@ -54,7 +52,7 @@ public class AlgebraUtilsToEulersTests
         var ob = Vector3.Transform(Vector3.One, qc);
 
         Console.WriteLine(xa.ToString("0.0000") + " = " + xb.ToString("0.0000"));
-        Console.WriteLine(ya.ToString("0.0000") + " = "  + yb.ToString("0.0000"));
+        Console.WriteLine(ya.ToString("0.0000") + " = " + yb.ToString("0.0000"));
         Console.WriteLine(za.ToString("0.0000") + " = " + zb.ToString("0.0000"));
         Console.WriteLine(oa.ToString("0.0000") + " = " + ob.ToString("0.0000"));
         Assert.That(xa.EqualsWithinTolerance(xb, 0.0001f));

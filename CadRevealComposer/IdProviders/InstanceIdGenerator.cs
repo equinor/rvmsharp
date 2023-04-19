@@ -1,7 +1,5 @@
 ﻿namespace CadRevealComposer.IdProviders;
 
-
-
 /// <summary>
 /// Sequential Id generator for instance meshes.
 /// NOTE: Every Instance of the same Mesh should use the same InstanceId! Generate this only once per instance template

@@ -27,8 +27,17 @@ public static class TessellationHelpers
         return ++l;
     }
 
-    public static int Vertex(Vector3[] normals, Vector3[] vertices, int l, float nx, float ny, float nz, float px,
-        float py, float pz)
+    public static int Vertex(
+        Vector3[] normals,
+        Vector3[] vertices,
+        int l,
+        float nx,
+        float ny,
+        float nz,
+        float px,
+        float py,
+        float pz
+    )
     {
         normals[l] = new Vector3(nx, ny, nz);
         vertices[l] = new Vector3(px, py, pz);
@@ -46,8 +55,17 @@ public static class TessellationHelpers
         return l;
     }
 
-    public static int Vertex(float[] normals, float[] vertices, int l, float nx, float ny, float nz, float px,
-        float py, float pz)
+    public static int Vertex(
+        float[] normals,
+        float[] vertices,
+        int l,
+        float nx,
+        float ny,
+        float nz,
+        float px,
+        float py,
+        float pz
+    )
     {
         normals[l] = nx;
         vertices[l++] = px;
@@ -83,7 +101,9 @@ public static class TessellationHelpers
         var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - maximumSagitta / (scale * radius)));
         if (double.IsNaN(samples))
         {
-            throw new Exception($"Number of samples is calculated as NaN. Diagnostics: ({nameof(scale)}: {scale}, {nameof(arc)}: {arc}, {nameof(radius)}: {radius}, {nameof(tolerance)}: {tolerance} )");
+            throw new Exception(
+                $"Number of samples is calculated as NaN. Diagnostics: ({nameof(scale)}: {scale}, {nameof(arc)}: {arc}, {nameof(radius)}: {radius}, {nameof(tolerance)}: {tolerance} )"
+            );
         }
 
         return Math.Min(MaxSamples, (int)(Math.Max(MinSamples, Math.Ceiling(samples))));

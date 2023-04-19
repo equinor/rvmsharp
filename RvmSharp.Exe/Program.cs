@@ -1,13 +1,13 @@
 ﻿namespace RvmSharp.Exe;
 
 using CommandLine;
+using Containers;
+using Operations;
 using ShellProgressBar;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Containers;
-using Operations;
 using System.Text.RegularExpressions;
 
 static class Program
@@ -19,7 +19,9 @@ static class Program
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
 
-        var result = Parser.Default.ParseArguments<Options>(args).MapResult(RunOptionsAndReturnExitCode, HandleParseError);
+        var result = Parser.Default
+            .ParseArguments<Options>(args)
+            .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
         Environment.Exit(result);
     }
 
@@ -47,9 +49,13 @@ static class Program
         using var tessellationProgressBar = parentProgressBar.Spawn(1, "Tessellating");
         using var exportProgressBar = parentProgressBar.Spawn(1, "Exporting");
 
-        RvmObjExporter.ExportToObj(rvmStore, options.Tolerance, options.Output,
+        RvmObjExporter.ExportToObj(
+            rvmStore,
+            options.Tolerance,
+            options.Output,
             ((i) => tessellationProgressBar.MaxTicks = i, () => tessellationProgressBar.Tick()),
-            ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick()));
+            ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick())
+        );
         parentProgressBar.Tick();
         Console.WriteLine("Done!");
         return 0;
@@ -65,29 +71,33 @@ static class Program
         if (missingInputs.Any())
         {
             throw new FileNotFoundException(
-                $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}");
+                $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}"
+            );
         }
 
-        var inputFiles =
-            directories.SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
-                .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
-                .Concat(files) // Append single files
-                .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
-                .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
+        var inputFiles = directories
+            .SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
+            .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
+            .Concat(files) // Append single files
+            .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
+            .GroupBy(Path.GetFileNameWithoutExtension)
+            .ToArray(); // Group by filename (rvm, txt)
 
-        var workload = (from filePair in inputFiles
-            select filePair.ToArray()
-            into filePairStatic
+        var workload = (
+            from filePair in inputFiles
+            select filePair.ToArray() into filePairStatic
             let rvmFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".rvm"))
             let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
-            select (rvmFilename, txtFilename)).ToArray();
+            select (rvmFilename, txtFilename)
+        ).ToArray();
 
         var result = new List<(string, string?)>();
         foreach ((string? rvmFilename, string? txtFilename) in workload)
         {
             if (rvmFilename == null)
                 Console.WriteLine(
-                    $"No corresponding RVM file found for attributes: '{txtFilename}', the file will be skipped.");
+                    $"No corresponding RVM file found for attributes: '{txtFilename}', the file will be skipped."
+                );
             else
                 result.Add((rvmFilename, txtFilename));
         }
@@ -99,20 +109,22 @@ static class Program
     {
         using var progressBar = new ProgressBar(workload.Count, "Parsing input");
 
-        var rvmFiles = workload.Select(filePair =>
-        {
-            (string rvmFilename, string? txtFilename) = filePair;
-            progressBar.Message = Path.GetFileNameWithoutExtension(rvmFilename);
-            using var stream = File.OpenRead(rvmFilename);
-            var rvmFile = RvmParser.ReadRvm(stream);
-            if (!string.IsNullOrEmpty(txtFilename))
+        var rvmFiles = workload
+            .Select(filePair =>
             {
-                rvmFile.AttachAttributes(txtFilename);
-            }
+                (string rvmFilename, string? txtFilename) = filePair;
+                progressBar.Message = Path.GetFileNameWithoutExtension(rvmFilename);
+                using var stream = File.OpenRead(rvmFilename);
+                var rvmFile = RvmParser.ReadRvm(stream);
+                if (!string.IsNullOrEmpty(txtFilename))
+                {
+                    rvmFile.AttachAttributes(txtFilename);
+                }
 
-            progressBar.Tick();
-            return rvmFile;
-        }).ToArray();
+                progressBar.Tick();
+                return rvmFile;
+            })
+            .ToArray();
         var rvmStore = new RvmStore();
         rvmStore.RvmFiles.AddRange(rvmFiles);
         return rvmStore;

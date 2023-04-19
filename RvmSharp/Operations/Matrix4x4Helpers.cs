@@ -14,7 +14,7 @@ public static class Matrix4x4Helpers
     public static Matrix4x4 CalculateTransformMatrix(Vector3 position, Quaternion rotation, Vector3 scale)
     {
         return Matrix4x4.CreateScale(scale)
-               * Matrix4x4.CreateFromQuaternion(rotation)
-               * Matrix4x4.CreateTranslation(position);
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(position);
     }
 }

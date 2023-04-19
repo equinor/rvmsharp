@@ -30,8 +30,12 @@ public class RefNoTests
     [TestCase("=1/0", 1, 0, "")]
     [TestCase("=8129/0", 8129, 0, "")]
     [TestCase("ILTUBOF=8129/0", 8129, 0, "ILTUBOF")]
-    public void Parse_WhenGivenValidValues_ReturnsRefNoWithExpectedDbAndSeq(string validInput, int expectedDb,
-        int expectedSequence, string expectedPrefix)
+    public void Parse_WhenGivenValidValues_ReturnsRefNoWithExpectedDbAndSeq(
+        string validInput,
+        int expectedDb,
+        int expectedSequence,
+        string expectedPrefix
+    )
     {
         var result = RefNo.Parse(validInput);
         Assert.That(result.DbNo, Is.EqualTo(expectedDb));
@@ -46,7 +50,7 @@ public class RefNoTests
     [TestCase(null, "")]
     public void Constructor_WhenGivenValidValues_ReturnsExpectedRefNo(string actualPrefix, string expectedPrefix)
     {
-        var refNo = new RefNo(actualPrefix, 123,321);
+        var refNo = new RefNo(actualPrefix, 123, 321);
         Assert.That(refNo.Prefix, Is.EqualTo(expectedPrefix));
     }
 

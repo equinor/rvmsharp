@@ -11,12 +11,7 @@ public class CameraPositioningTests
     [Test]
     public void InitialCameraPositionLongestAxisX()
     {
-        APrimitive[] geometries = {
-            new TestPrimitiveWithBoundingBox(
-                new Vector3(0, 0, 0),
-                new Vector3(100, 50, 100)
-            )
-        };
+        APrimitive[] geometries = { new TestPrimitiveWithBoundingBox(new Vector3(0, 0, 0), new Vector3(100, 50, 100)) };
 
         var (position, target, direction) = CameraPositioning.CalculateInitialCamera(geometries);
         Assert.AreEqual(new SerializableVector3(50, -103.56537f, 124.22725f), position);
@@ -27,12 +22,7 @@ public class CameraPositioningTests
     [Test]
     public void InitialCameraPositionLongestAxisY()
     {
-        APrimitive[] geometries = {
-            new TestPrimitiveWithBoundingBox(
-                new Vector3(0, 0, 0),
-                new Vector3(50, 100, 100)
-            )
-        };
+        APrimitive[] geometries = { new TestPrimitiveWithBoundingBox(new Vector3(0, 0, 0), new Vector3(50, 100, 100)) };
 
         var (position, target, direction) = CameraPositioning.CalculateInitialCamera(geometries);
         Assert.AreEqual(new SerializableVector3(-103.56537f, 50, 124.22725f), position);

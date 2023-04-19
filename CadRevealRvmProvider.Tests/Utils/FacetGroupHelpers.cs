@@ -1,16 +1,11 @@
 ﻿namespace CadRevealRvmProvider.Tests.Utils;
 
 using BatchUtils;
-using CadRevealRvmProvider.Operations;
-using System.Text.Json;
-using NUnit.Framework;
+using Operations;
 using RvmSharp.Exporters;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using System.Text.Json;
 
 /// <summary>
 /// Use methods provided here to manually extract and inspect data
@@ -22,13 +17,7 @@ public class FacetGroupHelpers
     private const string ExportPath = "D:\\tmp";
     private const string ExplicitReason = "Development helpers, not real tests.";
 
-    private static readonly string[] FacetGroupJsons = new[]
-    {
-        "m1.json",
-        "m2.json",
-        "5.json",
-        "6.json"
-    };
+    private static readonly string[] FacetGroupJsons = new[] { "m1.json", "m2.json", "5.json", "6.json" };
 
     [Explicit(ExplicitReason)]
     [Test]
@@ -97,7 +86,9 @@ public class FacetGroupHelpers
             if (templateCountForKey == 1) // skip all single key meshes, we cannot match it with anything
                 continue;
             var totalMatches = templates.Select(t => templateToMatchCount[t]).Sum();
-            Console.WriteLine($"For group {key} templating count is remaining {templateCountForKey} of {totalMatches} ({(100.0 * (totalMatches - templateCountForKey) / totalMatches):F}%)");
+            Console.WriteLine(
+                $"For group {key} templating count is remaining {templateCountForKey} of {totalMatches} ({(100.0 * (totalMatches - templateCountForKey) / totalMatches):F}%)"
+            );
             // foreach (var template in templatesByKey)
             // {
             //     var matchCount = templateToMatchCount[template];

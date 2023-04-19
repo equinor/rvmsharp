@@ -16,7 +16,7 @@ public class SectorSplitterSingle : ISectorSplitter
     private InternalSector CreateRootSector(uint sectorId, APrimitive[] geometries)
     {
         var bb = geometries.CalculateBoundingBox();
-        if(bb==null)
+        if (bb == null)
         {
             throw new Exception("The bounding box of the root sector should never be null");
         }

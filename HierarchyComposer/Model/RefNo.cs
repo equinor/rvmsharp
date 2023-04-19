@@ -41,7 +41,9 @@ public partial class RefNo
     {
         if (!string.IsNullOrEmpty(prefix) && !PrefixValidRegex.IsMatch(prefix))
         {
-            throw new ArgumentException($"Prefix \"{prefix}\" is unexpected, is this a valid prefix? If so update the code and tests.");
+            throw new ArgumentException(
+                $"Prefix \"{prefix}\" is unexpected, is this a valid prefix? If so update the code and tests."
+            );
         }
 
         Prefix = prefix ?? string.Empty;
@@ -50,6 +52,7 @@ public partial class RefNo
     }
 
     private static readonly Regex RefNoRegex = RefNoMatchingRegex();
+
     // Ensure the regex is only
     private static readonly Regex PrefixValidRegex = new Regex("^\\w+$", RegexOptions.Compiled);
 
@@ -69,7 +72,10 @@ public partial class RefNo
         var match = RefNoRegex.Match(refNo.Trim());
 
         if (!match.Success)
-            throw new ArgumentException($"Expected format 'prefix=123/321' '(string?=uint/uint)' (prefix is optional), was '{refNo}'", nameof(refNo));
+            throw new ArgumentException(
+                $"Expected format 'prefix=123/321' '(string?=uint/uint)' (prefix is optional), was '{refNo}'",
+                nameof(refNo)
+            );
 
         // Regex Group 0 is the entire match.
         var prefixParsed = match.Groups[1].Value;

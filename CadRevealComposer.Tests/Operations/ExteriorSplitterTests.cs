@@ -1,9 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Operations;
 
 using CadRevealComposer.Operations;
-using CadRevealComposer.Primitives;
+using Primitives;
 using System.Drawing;
-using System.Linq;
 using System.Numerics;
 
 [TestFixture]
@@ -31,8 +30,7 @@ public class ExteriorSplitterTests
             Matrix4x4.Identity,
             treeIndex,
             Color.Red,
-            new BoundingBox(
-                new Vector3(-boxSize / 2f),
-                new Vector3(boxSize / 2f)));
+            new BoundingBox(new Vector3(-boxSize / 2f), new Vector3(boxSize / 2f))
+        );
     }
 }

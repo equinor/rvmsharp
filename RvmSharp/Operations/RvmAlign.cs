@@ -11,7 +11,7 @@ using System.Numerics;
 public static class RvmAlign
 {
     private record QueueItem(RvmPrimitive? From, RvmConnection Connection, Vector3 UpWorld);
-        
+
     private class Context
     {
         public List<QueueItem> Queue = new();
@@ -40,7 +40,7 @@ public static class RvmAlign
         //var  N_inv = inverse(N);
         if (!Matrix4x4.Invert(M, out var N_inv))
             throw new Exception("Inversion failed");
-            
+
         var c = (float)Math.Cos(ct.Angle);
         var s = (float)Math.Sin(ct.Angle);
 
@@ -49,9 +49,7 @@ public static class RvmAlign
         if (offset == 1)
         {
             // rotate back to xz
-            upLocal = new Vector3(c * upLocal.X + s * upLocal.Y,
-                -s * upLocal.X + c * upLocal.Y,
-                upLocal.Z);
+            upLocal = new Vector3(c * upLocal.X + s * upLocal.Y, -s * upLocal.X + c * upLocal.Y, upLocal.Z);
         }
 
         ct.SampleStartAngle = (float)Math.Atan2(upLocal.Z, upLocal.X);
@@ -69,27 +67,27 @@ public static class RvmAlign
 
         Vector3[] upNewWorld = new Vector3[2];
         upNewWorld[0] = Vector3.TransformNormal(upNew, M);
-        upNewWorld[1] = Vector3.TransformNormal(new Vector3(c * upNew.X - s * upNew.Y,
-            s * upNew.X + c * upNew.Y,
-            upNew.Z), M);
+        upNewWorld[1] = Vector3.TransformNormal(
+            new Vector3(c * upNew.X - s * upNew.Y, s * upNew.X + c * upNew.Y, upNew.Z),
+            M
+        );
 
         if (true)
         {
-            Vector3 p0 = new Vector3(ct.Radius * ci + ct.Offset,
-                0.0f,
-                ct.Radius * si);
+            Vector3 p0 = new Vector3(ct.Radius * ci + ct.Offset, 0.0f, ct.Radius * si);
 
-            Vector3 p1 = new Vector3((ct.Radius * ci + ct.Offset) * co,
+            Vector3 p1 = new Vector3(
+                (ct.Radius * ci + ct.Offset) * co,
                 (ct.Radius * ci + ct.Offset) * so,
-                ct.Radius * si);
-
+                ct.Radius * si
+            );
 
             var a0 = Vector3.Transform(p0, ct.Matrix);
-                
+
             var b0 = a0 + 1.5f * ct.Radius * upNewWorld[0];
 
             var a1 = Vector3.Transform(p1, ct.Matrix);
-                
+
             var b1 = a1 + 1.5f * ct.Radius * upNewWorld[1];
         }
 
@@ -97,13 +95,16 @@ public static class RvmAlign
         {
             var con = ct.Connections[k];
 
-            if (con != null && !con.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide) && !con.IsEnqueued)
+            if (
+                con != null
+                && !con.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide)
+                && !con.IsEnqueued
+            )
             {
                 Enqueue(context, ct, con, upNewWorld[k]);
             }
         }
     }
-
 
     private static void HandleCylinderSnoutAndDish(Context context, RvmPrimitive geo, uint offset, Vector3 upWorld)
     {
@@ -122,14 +123,19 @@ public static class RvmAlign
             geo.SampleStartAngle = 0.0f;
         }
 
-        Vector3 upNewWorld = Vector3.TransformNormal(new Vector3((float)Math.Cos(geo.SampleStartAngle),
-            (float)Math.Sin(geo.SampleStartAngle),
-            0.0f), geo.Matrix);
+        Vector3 upNewWorld = Vector3.TransformNormal(
+            new Vector3((float)Math.Cos(geo.SampleStartAngle), (float)Math.Sin(geo.SampleStartAngle), 0.0f),
+            geo.Matrix
+        );
 
         for (var k = 0; k < 2; k++)
         {
             var con = geo.Connections[k];
-            if (con != null && !con.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide) && !con.IsEnqueued)
+            if (
+                con != null
+                && !con.HasConnectionType(RvmConnection.ConnectionType.HasRectangularSide)
+                && !con.IsEnqueued
+            )
             {
                 Enqueue(context, geo, con, upNewWorld);
             }
@@ -174,8 +180,6 @@ public static class RvmAlign
         }
     }
 
-
-        
     // ReSharper disable once UnusedMember.Global -- Align is Public Api
     public static void Align(RvmStore store)
     {
@@ -232,6 +236,7 @@ public static class RvmAlign
         var e0 = stopwatch.Elapsed;
 
         Console.WriteLine(
-            $"{context.ConnectedComponents} connected components in {context.CircularConnections} circular connections {e0}.");
+            $"{context.ConnectedComponents} connected components in {context.CircularConnections} circular connections {e0}."
+        );
     }
 }

@@ -16,14 +16,14 @@ using System.Numerics;
 /// <param name="OffsetY">The offset from center bottom to center top Y</param>
 /// <param name="Height">The Height difference between bottom and top plane</param>
 public record RvmPyramid(
-        uint Version,
-        Matrix4x4 Matrix,
-        RvmBoundingBox BoundingBoxLocal,
-        float BottomX,
-        float BottomY,
-        float TopX,
-        float TopY,
-        float OffsetX,
-        float OffsetY,
-        float Height)
-    : RvmPrimitive(Version, RvmPrimitiveKind.Pyramid, Matrix, BoundingBoxLocal);
+    uint Version,
+    Matrix4x4 Matrix,
+    RvmBoundingBox BoundingBoxLocal,
+    float BottomX,
+    float BottomY,
+    float TopX,
+    float TopY,
+    float OffsetX,
+    float OffsetY,
+    float Height
+) : RvmPrimitive(Version, RvmPrimitiveKind.Pyramid, Matrix, BoundingBoxLocal);

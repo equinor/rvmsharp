@@ -6,9 +6,14 @@ using System.Numerics;
 public static class RvmPyramidInstancer
 {
     public abstract record Result(ProtoMeshFromRvmPyramid Pyramid);
+
     public record NotInstancedResult(ProtoMeshFromRvmPyramid Pyramid) : Result(Pyramid);
-    public record InstancedResult(ProtoMeshFromRvmPyramid Pyramid, RvmPyramid Template, Matrix4x4 Transform) : Result(Pyramid);
-    public record TemplateResult(ProtoMeshFromRvmPyramid Pyramid, RvmPyramid Template, Matrix4x4 Transform) : InstancedResult(Pyramid, Template, Transform);
+
+    public record InstancedResult(ProtoMeshFromRvmPyramid Pyramid, RvmPyramid Template, Matrix4x4 Transform)
+        : Result(Pyramid);
+
+    public record TemplateResult(ProtoMeshFromRvmPyramid Pyramid, RvmPyramid Template, Matrix4x4 Transform)
+        : InstancedResult(Pyramid, Template, Transform);
 
     private record TemplateInfo(ProtoMeshFromRvmPyramid Pyramid, RvmPyramid Template, Matrix4x4 Transform)
     {
@@ -21,7 +26,10 @@ public static class RvmPyramidInstancer
         }
     };
 
-    public static Result[] Process(ProtoMeshFromRvmPyramid[] protoPyramids, Func<ProtoMeshFromRvmPyramid[], bool> shouldInstance)
+    public static Result[] Process(
+        ProtoMeshFromRvmPyramid[] protoPyramids,
+        Func<ProtoMeshFromRvmPyramid[], bool> shouldInstance
+    )
     {
         var templateLibrary = new List<TemplateInfo>();
 
@@ -62,9 +70,7 @@ public static class RvmPyramidInstancer
                 continue;
             }
 
-            var pyramids = new[] { template.Pyramid }
-                .Concat(template.Matches.Select(p => p.Item1))
-                .ToArray();
+            var pyramids = new[] { template.Pyramid }.Concat(template.Matches.Select(p => p.Item1)).ToArray();
 
             if (!shouldInstance(pyramids))
             {
@@ -91,7 +97,9 @@ public static class RvmPyramidInstancer
         var templateCount = result.OfType<TemplateResult>().Count();
         var instancedCount = result.OfType<InstancedResult>().Count();
         var fraction = instancedCount / (float)protoPyramids.Length;
-        Console.WriteLine($"Pyramids found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {protoPyramids.Length:N0} ({fraction:P1}).");
+        Console.WriteLine(
+            $"Pyramids found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {protoPyramids.Length:N0} ({fraction:P1})."
+        );
 
         return result.ToArray();
     }

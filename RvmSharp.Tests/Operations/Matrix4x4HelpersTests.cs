@@ -14,12 +14,10 @@ public class Matrix4x4HelpersTests
         var angle = 1;
         var rot = Quaternion.CreateFromAxisAngle(new Vector3(0.0f, -0.70710677f, 0.70710677f), angle);
         var scale = new Vector3(4, 5, 6);
-        var definitiveMatrix = Matrix4x4.CreateScale(scale) * Matrix4x4.CreateFromQuaternion(rot) *
-                               Matrix4x4.CreateTranslation(pos);
+        var definitiveMatrix =
+            Matrix4x4.CreateScale(scale) * Matrix4x4.CreateFromQuaternion(rot) * Matrix4x4.CreateTranslation(pos);
 
-        var helperMatrix = Matrix4x4Helpers.CalculateTransformMatrix(pos,
-            rot,
-            scale);
+        var helperMatrix = Matrix4x4Helpers.CalculateTransformMatrix(pos, rot, scale);
 
         Matrix4x4.Decompose(helperMatrix, out var outScale, out var outRot, out var outPos);
 

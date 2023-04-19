@@ -1,17 +1,14 @@
 ﻿namespace CadRevealFbxProvider;
 
 using BatchUtils;
-
+using Ben.Collections.Specialized;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
-
-using Ben.Collections.Specialized;
 using Commons;
-
 using System.Diagnostics;
 
 public class FbxProvider : IModelFormatProvider
@@ -19,10 +16,11 @@ public class FbxProvider : IModelFormatProvider
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator)
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
         var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
-        if(!workload.Any())
+        if (!workload.Any())
         {
             Console.WriteLine("Found no .fbx files. Skipping FBX Parser.");
             return new List<CadRevealNode>();
@@ -38,7 +36,13 @@ public class FbxProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
 
-        var nodes = FbxWorkload.ReadFbxData(workload, treeIndexGenerator, instanceIdGenerator, progressReport, stringInternPool);
+        var nodes = FbxWorkload.ReadFbxData(
+            workload,
+            treeIndexGenerator,
+            instanceIdGenerator,
+            progressReport,
+            stringInternPool
+        );
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
         teamCityReadFbxFilesLogBlock.CloseBlock();
 
@@ -48,13 +52,18 @@ public class FbxProvider : IModelFormatProvider
             return new List<CadRevealNode>();
         }
         Console.WriteLine(
-            $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))");
+            $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))"
+        );
 
         return nodes;
     }
 
-    public APrimitive[] ProcessGeometries(APrimitive[] geometries, ComposerParameters composerParameters,
-        ModelParameters modelParameters, InstanceIdGenerator instanceIdGenerator)
+    public APrimitive[] ProcessGeometries(
+        APrimitive[] geometries,
+        ComposerParameters composerParameters,
+        ModelParameters modelParameters,
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
         return geometries;
     }

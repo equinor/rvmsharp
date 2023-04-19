@@ -2,7 +2,6 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
-using NUnit.Framework;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
 using System.Drawing;
@@ -81,7 +80,13 @@ internal class RvmRectangularTorusConverterTests
     [Test]
     public void RvmRectangularTorusConverter_CorrectQuads()
     {
-        var torus = _rvmRectangularTorus with { Angle = MathF.PI / 2.0f, Height = 5.0f, RadiusOuter = 3.0f, RadiusInner = 1.0f};
+        var torus = _rvmRectangularTorus with
+        {
+            Angle = MathF.PI / 2.0f,
+            Height = 5.0f,
+            RadiusOuter = 3.0f,
+            RadiusInner = 1.0f
+        };
 
         var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 

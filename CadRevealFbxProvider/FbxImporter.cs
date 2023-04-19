@@ -17,7 +17,7 @@ public class FbxImporter : IDisposable
     public FbxNode LoadFile(string filename)
     {
         //this should never be called in the first place if the SDK is invalid
-        if(!_sdk.IsValid())
+        if (!_sdk.IsValid())
         {
             throw new NullReferenceException("Cannot load files with invalid SDK.");
         }

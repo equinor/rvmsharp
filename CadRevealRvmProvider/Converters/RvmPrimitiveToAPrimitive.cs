@@ -5,14 +5,13 @@ using RvmSharp.Primitives;
 
 public class RvmPrimitiveToAPrimitive
 {
-    public static IEnumerable<APrimitive> FromRvmPrimitive(
-            ulong treeIndex,
-            RvmPrimitive rvmPrimitive,
-            RvmNode rvmNode)
+    public static IEnumerable<APrimitive> FromRvmPrimitive(ulong treeIndex, RvmPrimitive rvmPrimitive, RvmNode rvmNode)
     {
         if (rvmNode == null)
         {
-            Console.WriteLine($"The RvmGroup for Node {treeIndex} was invalid: {rvmNode?.GetType()}. Returning empty array.");
+            Console.WriteLine(
+                $"The RvmGroup for Node {treeIndex} was invalid: {rvmNode?.GetType()}. Returning empty array."
+            );
             return Array.Empty<APrimitive>();
         }
 

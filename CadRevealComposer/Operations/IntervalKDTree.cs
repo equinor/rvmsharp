@@ -5,7 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 
-internal class IntervalKdTree<T> where T : notnull
+internal class IntervalKdTree<T>
+    where T : notnull
 {
     private readonly Node _rootNode;
     private readonly int _divisionThreshold;
@@ -13,11 +14,7 @@ internal class IntervalKdTree<T> where T : notnull
     public IntervalKdTree(Vector3 min, Vector3 max, int divisionThreshold)
     {
         _divisionThreshold = divisionThreshold;
-        _rootNode = new Node(
-            this,
-            0,
-            min,
-            max);
+        _rootNode = new Node(this, 0, min, max);
     }
 
     public void Put(Vector3 min, Vector3 max, T value)
@@ -47,11 +44,7 @@ internal class IntervalKdTree<T> where T : notnull
         private readonly IntervalKdTree<T> _tree;
         private List<Box> _boxes;
 
-        public Node(
-            IntervalKdTree<T> tree,
-            int depth,
-            Vector3 min,
-            Vector3 max)
+        public Node(IntervalKdTree<T> tree, int depth, Vector3 min, Vector3 max)
             : base(min, max)
         {
             _tree = tree;
@@ -160,7 +153,6 @@ internal class IntervalKdTree<T> where T : notnull
             {
                 AddBox(cube);
             }
-
         }
     }
 
@@ -201,9 +193,7 @@ internal class IntervalKdTree<T> where T : notnull
             // positive if overlaps
             var diff = Vector3.Min(Max, cube.Max) - Vector3.Max(Min, cube.Min);
 
-            return diff.X > 0f &&
-                   diff.Y > 0f &&
-                   diff.Z > 0f;
+            return diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
         }
     }
 }
