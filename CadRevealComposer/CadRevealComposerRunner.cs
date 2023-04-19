@@ -194,7 +194,7 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
     {
-        var (EstimatedTriangleCount, EstimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
         var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
@@ -203,8 +203,8 @@ public static class CadRevealComposerRunner
             Depth: p.Depth,
             Path: p.Path,
             Filename: sectorFilename,
-            EstimatedTriangleCount: EstimatedTriangleCount,
-            EstimatedDrawCalls: EstimatedDrawCalls,
+            EstimatedTriangleCount: estimatedTriangleCount,
+            EstimatedDrawCalls: estimatedDrawCalls,
             MinNodeDiagonal: p.MinNodeDiagonal,
             MaxNodeDiagonal: p.MaxNodeDiagonal,
             Geometries: p.Geometries,

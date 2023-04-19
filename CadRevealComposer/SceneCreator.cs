@@ -54,9 +54,6 @@ public static class SceneCreator
     {
         Sector FromSector(SectorInfo sector)
         {
-            //if (!sector.Geometries.Any())
-            //    throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
-
             float maxDiagonalLength = sector.MaxNodeDiagonal;
             float minDiagonalLength = sector.MinNodeDiagonal;
 

@@ -125,6 +125,6 @@ public static class DrawCallEstimator
         var treeIndexDataCost = verticesLength * 1 * sizeof(int);
         var colorDataCost = verticesLength * 4 /*RGBA*/ * sizeof(byte);
 
-        return triangleCost + (positionsCost + treeIndexDataCost + colorDataCost);
+        return triangleCost + positionsCost + treeIndexDataCost + colorDataCost;
     }
 }

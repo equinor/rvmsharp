@@ -21,9 +21,8 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
-
-        var (regularNodes,outlierNodes) = SplittingUtils.ConvertPrimitivesToNodes(allGeometries).SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
+        var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 

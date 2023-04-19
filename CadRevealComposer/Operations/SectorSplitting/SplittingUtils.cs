@@ -79,7 +79,7 @@ public static class SplittingUtils
     /// <returns>
     /// (Node[] regularNodes, Node[] outlierNodes)
     /// </returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>    
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static (Node[] regularNodes, Node[] outlierNodes) SplitNodesIntoRegularAndOutlierNodes(this IReadOnlyCollection<Node> nodes, float keepFactor,
         float paddingFactor = 1.1f, float outlierDistance = 20.0f)
     {
@@ -147,20 +147,5 @@ public static class SplittingUtils
                     boundingBox);
             })
             .ToArray();
-    }
-
-    public static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subTreeBoundingBox)
-    {
-        return new InternalSector(
-            sectorId,
-            null,
-            0,
-            path,
-            0,
-            0,
-            Array.Empty<APrimitive>(),
-            subTreeBoundingBox,
-            null
-        );
     }
 }
