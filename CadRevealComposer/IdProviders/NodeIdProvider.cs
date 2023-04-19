@@ -5,14 +5,11 @@ using System.Collections.Concurrent;
 
 // FIXME: placeholder implementation
 
-// Separate empty implementations SequentialIdGenerator are used to
-// avoid a TreeIndexGenerator being sent in where a InstanceIdGenerator or a NodeIdGenerator should be used.
+// TODO: NodeId is currently unused, we always use TreeIndex
 public class NodeIdProvider
 {
-    private readonly Random _random = new();
-
     // Using ConcurrentDict as a substitute for the non-existent ConcurrentHashSet.
-    private readonly ConcurrentDictionary<ulong, byte> _generatedIds = new();
+    private readonly ConcurrentDictionary<ulong, byte> _generatedIds = new ConcurrentDictionary<ulong, byte>();
 
     // TODO: this will generate or fetch Node ID based on project, hierarchy, name. The idea is to keep it deterministic if possible
     public ulong GetNodeId(CadRevealNode? cadNode)
@@ -20,7 +17,8 @@ public class NodeIdProvider
         ulong value;
         do
         {
-            value = (uint)_random.Next(0, Int32.MaxValue); // TODO: Expand to Javascript Safe Number range ((2^53)-1)
+            value = (uint)Random.Shared.Next(0,
+                Int32.MaxValue); // TODO: Expand to Javascript Safe Number range ((2^53)-1)
         } while (!_generatedIds.TryAdd(value, 0));
 
         return value;

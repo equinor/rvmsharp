@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 [StructLayout(LayoutKind.Sequential)]
 public struct FbxTransform
 {
+    // ReSharper disable FieldCanBeMadeReadOnly.Global -- not needed
     public float posX;
     public float posY;
     public float posZ;
@@ -16,11 +17,15 @@ public struct FbxTransform
     public float scaleX;
     public float scaleY;
     public float scaleZ;
+    // ReSharper restore FieldCanBeMadeReadOnly.Global
 }
 
 public static class FbxTransformConverter
 {
     
+    /// <summary>
+    /// Convert a Fbx native Transform to a Matrix4x4
+    /// </summary>
     // ReSharper disable once InconsistentNaming -- Matrix4x4 is correct
     public static Matrix4x4 ToMatrix4x4(FbxTransform transform)
     {

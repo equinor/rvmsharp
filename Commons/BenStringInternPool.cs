@@ -3,6 +3,9 @@ namespace Commons;
 using Ben.Collections.Specialized;
 using System;
 
+/// <summary>
+/// String interning is used to avoid allocating new strings for each unique string in a metadata-set
+/// </summary>
 public class BenStringInternPool : IStringInternPool
 {
     private readonly IInternPool _internPool;

@@ -31,8 +31,8 @@ public class DrawCallEstimatorTests
             new GeneralCylinder(0f, 0f, Vector3.One, Vector3.One, Vector3.One, Vector4.One, Vector4.One, 0f, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One))
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
-        Assert.AreEqual(3, estimatedDrawCalls); // 2x circle and cone segment
-        Assert.AreEqual(12, estimatedTriangleCount); // 4 (2 tris) circles and 2 (4 tris) cone segments
+        Assert.AreEqual(3, estimatedDrawCalls); // 2x circle and 1x cone segment
+        Assert.AreEqual((4 * 2) + (1 * 4), estimatedTriangleCount); // 4 (2 tris) circles and 1 (4 tris) cone segments
     }
 
     [Test]

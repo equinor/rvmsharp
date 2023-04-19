@@ -1,15 +1,12 @@
 ﻿namespace CadRevealRvmProvider.Tessellation;
 
-using Operations;
 using CadRevealComposer.IdProviders;
-using CadRevealComposer.Tessellation;
 using CadRevealComposer.Primitives;
-using CadRevealFbxProvider.BatchUtils;
-using RvmSharp.Tessellation;
+using CadRevealComposer.Tessellation;
+using Operations;
 using RvmSharp.Primitives;
-using System;
+using RvmSharp.Tessellation;
 using System.Diagnostics;
-using System.Linq;
 
 public class RvmTessellator
 {
@@ -94,7 +91,7 @@ public class RvmTessellator
 
     public static RvmMesh Tessellate(RvmPrimitive primitive)
     {
-        RvmMesh mesh = RvmMesh.Empty;
+        RvmMesh mesh;
         try
         {
             mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? RvmMesh.Empty;
@@ -112,11 +109,12 @@ public class RvmTessellator
             }
             else if (primitive is RvmPyramid)
             {
-                Console.WriteLine("WARNING: Could not tessellate pyramid!");
+                Console.WriteLine("WARNING: Could not tessellate pyramid!: " + primitive);
             }
             else
             {
-                throw new NotImplementedException();
+                throw new NotImplementedException(
+                    $"Could not tessellate primitive of type {primitive.GetType()}. \n{primitive}. This is unexpected. If this needs to be handled add a case for it");
             }
         }
 

@@ -1,7 +1,7 @@
 namespace CadRevealComposer.Configuration;
 
 /// <summary>
-///
+/// Parameters for the model configuration
 /// </summary>
 /// <param name="ProjectId"></param>
 /// <param name="ModelId"></param>
@@ -19,5 +19,7 @@ public record ProjectId(long Value);
 public record ModelId(long Value);
 
 public record RevisionId(long Value);
+
 public record InstancingThreshold(uint Value);
+
 public record TemplateCountLimit(uint Value);
