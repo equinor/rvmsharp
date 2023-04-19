@@ -4,7 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-public static class FibbonaciEncoding
+/// <summary>
+/// Fibonacci Encoding is an encoding algorithm to encode a list of (non-sequential) numbers in as few bytes as possible.
+/// See google for more info
+/// </summary>
+public static class FibonacciEncoding
 {
     private static readonly ulong[] FibCache =
     {
@@ -165,7 +169,7 @@ public static class FibbonaciEncoding
     {
         if (i >= 70)
         {
-            throw new ArgumentOutOfRangeException();
+            throw new ArgumentOutOfRangeException(nameof(i), i, "Max fib precalculated is 70");
         }
 
         return FibCache[i];

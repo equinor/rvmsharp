@@ -104,9 +104,9 @@ public sealed record Trapezium(
     BoundingBox AxisAlignedBoundingBox) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 /// <summary>
-/// Define an "Instanced Mesh". An InstanceMesh a Primitive that shares a Geometry representation with other primitives.
-/// Every primitive reusing a mesh MUST use the same InstanceId and TemplateMesh.
-/// Only the first Mesh for a given InstanceId is Serialized and used.
+/// Defines an "Instance" of a Template. A instance that shares a Geometry representation with other instances of a shared "Template" reference.
+/// Every instance reusing a mesh MUST have the same InstanceId AND same TemplateMesh.
+/// Only the first TemplateMesh for a given InstanceId is Serialized and used as the template.
 /// </summary>
 /// <param name="InstanceId">Needs to be the same instanceId for all instances using a given <see cref="TemplateMesh"/>.</param>
 /// <param name="TemplateMesh">The Mesh that is used as the Instance Template</param>

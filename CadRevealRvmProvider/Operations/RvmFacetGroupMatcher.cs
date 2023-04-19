@@ -2,14 +2,10 @@ namespace CadRevealRvmProvider.Operations;
 
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using System.IO;
+
 public static class RvmFacetGroupMatcher
 {
     public abstract record Result(RvmFacetGroup FacetGroup);
@@ -101,13 +97,13 @@ public static class RvmFacetGroupMatcher
             Matrix = Matrix4x4.Identity
         };
     }
-    private static void PrintTemplateStats(IOrderedEnumerable<IGrouping<RvmFacetGroup, InstancedResult>> instanceGroups)
+    private static void PrintTemplateStats(IEnumerable<IGrouping<RvmFacetGroup, InstancedResult>> instanceGroups)
     {
-        uint templIndex = 0;
+        uint templateIndex = 0;
         var templateStats = instanceGroups.Select(
             // this was originally meant to use as index, but it does not work for the tests..
             //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
-            t => (templIndex++,
+            t => (templateIndex++,
             t.Count(),
             t.First().FacetGroup.Polygons.Count(),
             t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))));
@@ -157,7 +153,7 @@ public static class RvmFacetGroupMatcher
         // second: sort them according to number of instaces x number of vertices in the template mesh
         var instanceGroups = resultsWithTemplate
             .GroupBy(r => r.Template)
-            .OrderByDescending(g => g.Count() * g.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count())));
+            .OrderByDescending(g => g.Count() * g.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))).ToArray();
 
         // third: pick N that bring most gain
         int counterTemplates = 0;

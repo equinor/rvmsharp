@@ -4,8 +4,6 @@ using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
@@ -163,7 +161,7 @@ public static class RvmSnoutConverter
 
     private static IEnumerable<APrimitive> CreateEccentricCone(
         RvmSnout rvmSnout,
-        Vector3 scale,
+        Vector3 scale, // TODO: Scale is unused, why?
         Quaternion rotation,
         Vector3 position,
         Vector3 normal,
