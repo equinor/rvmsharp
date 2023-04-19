@@ -1,7 +1,7 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
+using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils.Comparers;
-using RvmSharp.Tessellation;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -45,9 +45,9 @@ public static class MeshTools
         {
             var originalIndex = indicesCopy[i];
             var vertexIndex = oldVertexIndexToNewIndexRemap[originalIndex];
-            indicesCopy[i] = (int)vertexIndex;
+            indicesCopy[i] = vertexIndex;
         }
 
-        return new Mesh(newVertices.ToArray(), normals: null, indicesCopy, 0);
+        return new Mesh(newVertices.ToArray(), indicesCopy, 0);
     }
 }

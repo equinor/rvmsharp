@@ -2,9 +2,6 @@
 
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
-using NUnit.Framework;
-using RvmSharp.Operations;
-using RvmSharp.Primitives;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
@@ -28,19 +25,14 @@ public class ExteriorSplitterTests
     /// <summary>
     /// The exterior splitter uses axis aligned bounding box for Box primitive. All other data is irrelevant.
     /// </summary>
-    private static Box CreateBoxCenteredInOrigin(ulong nodeId, float boxSize)
+    private static Box CreateBoxCenteredInOrigin(ulong treeIndex, float boxSize)
     {
-        var common = new CommonPrimitiveProperties(
-            nodeId,
-            nodeId,
-            Vector3.Zero,
-            Quaternion.Identity,
-            Vector3.One,
-            1.0f,
-            new RvmBoundingBox(new Vector3(-boxSize / 2f), new Vector3(boxSize / 2f)),
-            Color.Blue,
-            (Vector3.UnitZ, 0),
-            null!);
-        return new Box(common, Vector3.UnitZ, boxSize, boxSize, boxSize, 0);
+        return new Box(
+            Matrix4x4.Identity,
+            treeIndex,
+            Color.Red,
+            new BoundingBox(
+                new Vector3(-boxSize / 2f),
+                new Vector3(boxSize / 2f)));
     }
 }

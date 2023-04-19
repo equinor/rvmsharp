@@ -1,3 +1,6 @@
+// ReSharper disable UnusedMember.Global -- Could be useful later. If the math is correct it's not tech debt.
+// ReSharper disable MemberCanBePrivate.Global -- Could be useful later. If the math is correct its not tech debt.
+
 namespace CadRevealComposer.Utils;
 
 using System;
@@ -6,6 +9,42 @@ using System.Numerics;
 
 public static class AlgebraUtils
 {
+    /// <summary>
+    /// Just 2*MathF.PI
+    /// </summary>
+    /// <remarks>
+    /// Also known as Tau
+    /// </remarks>
+    public const float TwoPi = MathF.Tau;
+
+    private const double QuaternionApproximatelyEqualThreshold = 0.0001d;
+
+    /// <summary>
+    /// Normalizes a Radian value to [-PI..PI) range.
+    /// </summary>
+    public static float NormalizeRadians(float value)
+    {
+        return NormalizeScalarToRange(value, -MathF.PI, MathF.PI);
+    }
+
+    /// <summary>
+    /// Normalizes any number to an arbitrary range
+    /// by assuming the range wraps around when going below min or above max
+    /// </summary>
+    /// <remarks>
+    /// From:
+    /// https://stackoverflow.com/a/2021986
+    /// </remarks>
+    private static float NormalizeScalarToRange(float value, float start, float end)
+    {
+        float width = end - start;
+        float offsetValue = value - start; // value relative to 0
+
+        return (offsetValue - (MathF.Floor(offsetValue / width) * width)) + start;
+        // + start to reset back to start of original range
+    }
+
+
     public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
     {
         var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
@@ -77,7 +116,9 @@ public static class AlgebraUtils
         var r33 = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3; // cos(rollX) * cos(pitchY)
 
 
-        if (Math.Abs(r31) < gimbalLockLimit) { // Gimbal lock/singularity check
+        if (Math.Abs(r31) < gimbalLockLimit)
+        {
+            // Gimbal lock/singularity check
             var pitchY = -Math.Asin(r31);
             var rollX = Math.Atan2(r32 / Math.Cos(pitchY), r33 / Math.Cos(pitchY));
             var yawZ = Math.Atan2(r21 / Math.Cos(pitchY), r11 / Math.Cos(pitchY));
@@ -95,7 +136,8 @@ public static class AlgebraUtils
         }
     }
 
-    public static void AssertEulerAnglesCorrect((float rollX, float pitchY, float yawZ) eulerAngles, Quaternion rotation)
+    public static void AssertEulerAnglesCorrect((float rollX, float pitchY, float yawZ) eulerAngles,
+        Quaternion rotation)
     {
         (float rollX, float pitchY, float yawZ) = eulerAngles;
         // Assert that converting to euler angels and back gives the same transformation (but not necessarily the same quaternion)
@@ -106,7 +148,7 @@ public static class AlgebraUtils
         var v1 = Vector3.Transform(Vector3.One, rotation);
         var v2 = Vector3.Transform(Vector3.One, qc);
         Debug.Assert(rotation.Length().ApproximatelyEquals(1f));
-        // Debug.Assert(v1.EqualsWithinFactor(v2, 0.001f)); // 0.1%
+        Debug.Assert(v1.EqualsWithinTolerance(v2, 0.001f));
     }
 
     /// <summary>
@@ -156,6 +198,7 @@ public static class AlgebraUtils
                     axes = new Vector3(-to.Y, -to.Z, 0);
                 return Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes), MathF.PI * 2);
             }
+
             return Quaternion.Identity;
         }
 
@@ -179,6 +222,14 @@ public static class AlgebraUtils
         if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
         {
             rotation = Quaternion.Normalize(rotation);
+            if (rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold) &&
+                rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold) &&
+                rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold) &&
+                rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold))
+            {
+                rotation = Quaternion.Identity;
+            }
+
             return true;
         }
 
@@ -200,7 +251,8 @@ public static class AlgebraUtils
     /// <param name="pb4"></param>
     /// <param name="transform">output transformation matrix</param>
     /// <returns>true if there is such matrix</returns>
-    public static bool GetTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2, Vector3 pb3, Vector3 pb4, out Matrix4x4 transform)
+    public static bool GetTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2,
+        Vector3 pb3, Vector3 pb4, out Matrix4x4 transform)
     {
         var va12 = pa2 - pa1;
         var va13 = pa3 - pa1;

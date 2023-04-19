@@ -38,7 +38,7 @@ public abstract record RvmPrimitive(uint Version,
     /// Returns null for RvmLine, as bounding boxes are all over the place for that primitive.
     /// </summary>
     /// <returns>Bounding box in World Space.</returns>
-    public RvmBoundingBox? TryCalculateAxisAlignedBoundingBox()
+    public RvmBoundingBox? CalculateAxisAlignedBoundingBox()
     {
         if (this is RvmLine)
         {

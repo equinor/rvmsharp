@@ -87,33 +87,21 @@ end {
 
     #endregion Reveal Composer
 
-    #region Artifact Staging
-
-    $artifactStagingDirectory = Join-Path $WorkDirectory "ArtifactStaging"
-
-    New-Item -Path $artifactStagingDirectory -ItemType Directory -Force | Out-Null
-
-
-    $artifactStagingGlobs = @(
-        "scene.json"
-        "initialCamera.json"
-        "*.db"
-        "*.i3d"
-        "*.f3d"
-        "*.ctm"
-    )
-
-    foreach ($filter in $artifactStagingGlobs) {
-        Copy-Item -Path (Join-Path $WorkDirectory $filter) -Destination $artifactStagingDirectory
-    }
-
-    #endregion Artifact Staging
-
     if (-not (Test-Path -Path $ArtifactDirectory -PathType Container )) {
         New-Item -Path $ArtifactDirectory -ItemType Container
     }
 
-    Copy-Item -Path (Join-Path $artifactStagingDirectory "*") -Destination $ArtifactDirectory
+    # Files not in the glob list are considered as temp files. Add new globs as needed.
+    $artifactGlobs = @(
+        "scene.json"
+        "initialCamera.json"
+        "*.db"
+        "*.glb"
+    )
+
+    foreach ($filter in $artifactGlobs) {
+        Copy-Item -Path (Join-Path $WorkDirectory $filter) -Destination $ArtifactDirectory
+    }
 
     Write-Host "Success. Output copied to ""$ArtifactDirectory"". Total time: $($scriptTimer.Elapsed)"
 }

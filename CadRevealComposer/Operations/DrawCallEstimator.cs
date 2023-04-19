@@ -52,34 +52,15 @@ public static class DrawCallEstimator
         {
             Box => new[] { RenderPrimitive.Box },
             Circle => new [] { RenderPrimitive.Circle },
-            ClosedCone => new [] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone }, // TODO: if one R is 0, should be 1 circle
-            ClosedCylinder => new [] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone },
-            ClosedEccentricCone => new [] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.EccentricCone },
-            ClosedEllipsoidSegment => new [] { RenderPrimitive.Circle, RenderPrimitive.EllipsoidSegment },
-            ClosedExtrudedRingSegment => new [] { RenderPrimitive.Rectangle, RenderPrimitive.Rectangle, RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.Cone, RenderPrimitive.Cone },
-            ClosedGeneralCone => new [] { RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder }, // TODO: this one is unsure
-            ClosedGeneralCylinder => new [] { RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder },
-            ClosedSphericalSegment => new [] { RenderPrimitive.Circle, RenderPrimitive.SphericalSegment},
-            ClosedTorusSegment => new [] { RenderPrimitive.TorusSegment },
-            Ellipsoid => new [] { RenderPrimitive.EllipsoidSegment },
-            ExtrudedRing => new[] {RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.Cone, RenderPrimitive.Cone },
+            Cone => new[] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone }, // TODO: if one R is 0, should be 1 circle
+            EccentricCone => new[] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.EccentricCone },
+            EllipsoidSegment => new [] { RenderPrimitive.EllipsoidSegment },
+            GeneralCylinder => new[] { RenderPrimitive.SlopedCylinder },
+            GeneralRing => new[] { RenderPrimitive.TorusSegment },
             Nut => new[] { RenderPrimitive.Nut },
-            OpenCone => new[] { RenderPrimitive.Cone },
-            OpenCylinder => new[] { RenderPrimitive.Cone },
-            OpenEccentricCone => new[] {RenderPrimitive.EccentricCone },
-            OpenEllipsoidSegment => new[] { RenderPrimitive.EllipsoidSegment },
-            OpenExtrudedRingSegment => new[] {RenderPrimitive.Cone, RenderPrimitive.Cone },
-            OpenGeneralCone => new[] { RenderPrimitive.SlopedCylinder},
-            OpenGeneralCylinder => new[] { RenderPrimitive.SlopedCylinder},
-            OpenSphericalSegment => new[] { RenderPrimitive.SphericalSegment },
-            OpenTorusSegment => new[] { RenderPrimitive.TorusSegment },
-            Ring => new[] { RenderPrimitive.RingSegment },
-            SolidClosedGeneralCone => new[] {RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder, RenderPrimitive.SlopedCylinder  },
-            SolidClosedGeneralCylinder => new[] {RenderPrimitive.RingSegment, RenderPrimitive.RingSegment, RenderPrimitive.SlopedCylinder , RenderPrimitive.SlopedCylinder },
-            SolidOpenGeneralCone => new[] {RenderPrimitive.SlopedCylinder, RenderPrimitive.SlopedCylinder },
-            SolidOpenGeneralCylinder => new[] { RenderPrimitive.SlopedCylinder, RenderPrimitive.SlopedCylinder},
-            Sphere => new[] { RenderPrimitive.SphericalSegment },
-            Torus => new[] { RenderPrimitive.TorusSegment },
+            Quad => new[] { RenderPrimitive.Rectangle },
+            TorusSegment => new[] { RenderPrimitive.TorusSegment },
+            Trapezium => new[] { RenderPrimitive.Rectangle },
             _ => Array.Empty<RenderPrimitive>()
         };
     }
@@ -91,13 +72,15 @@ public static class DrawCallEstimator
         var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();
 
         var estimatedTriangleMeshTriangleCount = geometry.OfType<TriangleMesh>()
-            .Select(tm => (long)tm.TempTessellatedMesh!.Triangles.Count / 3).Sum();
-        var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0 ? 1 : 0;
+            .Select(tm => (long)tm.Mesh.TriangleCount).Sum();
+        var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0
+            ? 1
+            : 0;
 
         var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
-        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TriangleCount).Sum();
-        // Expect 1 drawcall per type of instanced mesh (Find it by the TriangleOffset, FileId combination)
-        var estimatedInstancedMeshDrawCallCount = instancedMeshes.DistinctBy(x => (x.TriangleOffset, x.FileId)).Count();
+        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TemplateMesh.TriangleCount).Sum();
+        // Expect 1 DrawCall per distinct instanced mesh
+        var estimatedInstancedMeshDrawCallCount = instancedMeshes.DistinctBy(im => im.InstanceId).Count();
 
         var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +
                                      estimatedInstancedMeshTriangleCount;
@@ -118,37 +101,30 @@ public static class DrawCallEstimator
         {
             Box => 11 * sizeof(ulong),
             Circle => 8 * sizeof(ulong),
-            ClosedCone => 10 * sizeof(ulong),
-            ClosedCylinder => 9 * sizeof(ulong),
-            ClosedEccentricCone => 11 * sizeof(ulong),
-            ClosedEllipsoidSegment => 10 * sizeof(ulong),
-            ClosedExtrudedRingSegment => 12 * sizeof(ulong),
-            ClosedGeneralCone => 16 * sizeof(ulong),
-            ClosedGeneralCylinder => 15 * sizeof(ulong),
-            ClosedSphericalSegment => 9 * sizeof(ulong),
-            ClosedTorusSegment => 11 * sizeof(ulong),
-            Ellipsoid => 9 * sizeof(ulong),
-            ExtrudedRing => 10 * sizeof(ulong),
+            Cone => 10 * sizeof(ulong),
+            EccentricCone => 11 * sizeof(ulong),
+            EllipsoidSegment => 9 * sizeof(ulong),
+            GeneralCylinder => 9 * sizeof(ulong),
+            GeneralRing => 9 * sizeof(ulong),
             Nut => 10 * sizeof(ulong),
-            OpenCone => 10 * sizeof(ulong),
-            OpenCylinder => 9 * sizeof(ulong),
-            OpenEccentricCone => 11 * sizeof(ulong),
-            OpenEllipsoidSegment => 10 * sizeof(ulong),
-            OpenExtrudedRingSegment => 12 * sizeof(ulong),
-            OpenGeneralCone => 16 * sizeof(ulong),
-            OpenGeneralCylinder => 15 * sizeof(ulong),
-            OpenSphericalSegment => 9 * sizeof(ulong),
-            OpenTorusSegment => 11 * sizeof(ulong),
-            Ring => 9 * sizeof(ulong),
-            SolidClosedGeneralCone => 16 * sizeof(ulong),
-            SolidClosedGeneralCylinder => 15 * sizeof(ulong),
-            SolidOpenGeneralCone => 16 * sizeof(ulong),
-            SolidOpenGeneralCylinder => 15 * sizeof(ulong),
-            Sphere => 7 * sizeof(ulong),
-            Torus => 9 * sizeof(ulong),
+            Quad => 4 * sizeof(ulong),
+            TorusSegment => 9 * sizeof(ulong),
+            Trapezium => 4 * sizeof(ulong),
             InstancedMesh => 20 * sizeof(ulong),
-            TriangleMesh triangleMesh => 10 * sizeof(ulong) + (long)triangleMesh.TriangleCount * 6 * sizeof(float),
+            TriangleMesh triangleMesh => CalculateTriangleMeshByteSize(triangleMesh),
             _ => throw new NotImplementedException()
         };
+    }
+
+    private static long CalculateTriangleMeshByteSize(TriangleMesh triangleMesh)
+    {
+        var triangleCost = triangleMesh.Mesh.Triangles.Length * sizeof(int);
+
+        var verticesLength = triangleMesh.Mesh.Vertices.Length;
+        var positionsCost = verticesLength * 3 /*xyz*/ * sizeof(float);
+        var treeIndexDataCost = verticesLength * 1 * sizeof(int);
+        var colorDataCost = verticesLength * 4 /*RGBA*/ * sizeof(byte);
+
+        return triangleCost + positionsCost + treeIndexDataCost + colorDataCost;
     }
 }

@@ -2,10 +2,11 @@ namespace CadRevealComposer.AlgebraExtensions;
 
 using System.Numerics;
 
-// ReSharper disable once InconsistentNaming
+// ReSharper disable once InconsistentNaming -- Common name is lowercase i
+// ReSharper disable once UnusedType.Global -- Potentially useful in the future
 public readonly record struct Vector3i(int X, int Y, int Z)
 {
-    public static Vector3i One { get; } = new(1, 1, 1);
+    public static Vector3i One { get; } = new Vector3i(1, 1, 1);
 
     public static Vector3 operator *(Vector3i a, float b)
     {

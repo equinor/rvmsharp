@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Operations;
+using CadRevealComposer.Primitives;
 using NUnit.Framework;
-using RvmSharp.Primitives;
 using System;
 using System.Numerics;
 
@@ -18,14 +18,11 @@ public class HierarchyComposerConverterTests
         {
             TreeIndex = 2,
             Children = Array.Empty<CadRevealNode>(),
-            BoundingBoxAxisAligned = new RvmBoundingBox(-Vector3.One, Vector3.One),
-            Group = new RvmNode(2, "NodeName", Vector3.Zero, 0)
-            {
-                Attributes = { { "RefNo", "=123/322" }, { "Tag", "VG23-0001" } }
-            },
-            NodeId = 1337,
+            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
+            Name = "NodeName",
+            Attributes = { { "RefNo", "=123/322" }, { "Tag", "VG23-0001" } },
             Parent = null,
-            RvmGeometries = Array.Empty<RvmPrimitive>(),
+            Geometries = Array.Empty<APrimitive>(),
             OptionalDiagnosticInfo = arrangedJson
         };
 
@@ -33,24 +30,17 @@ public class HierarchyComposerConverterTests
         {
             TreeIndex = 1,
             Children = new[] { node2 },
-            BoundingBoxAxisAligned = new RvmBoundingBox(-Vector3.One, Vector3.One),
-            Group = new RvmNode(2, "RootNode", Vector3.Zero, 0)
-            {
-                Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } }
-            },
-            NodeId = 9001,
+            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
+            Name = "RootNode",
+            Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } },
             Parent = null,
-            RvmGeometries = Array.Empty<RvmPrimitive>(),
+            Geometries = Array.Empty<APrimitive>(),
             OptionalDiagnosticInfo = arrangedJson
         };
 
         node2.Parent = node1;
 
-        var nodes = new[]
-        {
-            node1,
-            node2
-        };
+        var nodes = new[] { node1, node2 };
 
         var hierarchyNodes = HierarchyComposerConverter.ConvertToHierarchyNodes(nodes);
 
@@ -61,34 +51,28 @@ public class HierarchyComposerConverterTests
         Assert.That(firstNode.RefNoDb, Is.EqualTo(123));
         Assert.That(firstNode.RefNoSequence, Is.EqualTo(321));
         Assert.That(firstNode.PDMSData, Contains.Key("Tag").WithValue("23L0001"));
-        Assert.That(firstNode.PDMSData, Does.Not.ContainKey("RefNo"), "Expecting RefNo to be filtered out of the PDMS data as it is redundant");
+        Assert.That(firstNode.PDMSData, Does.Not.ContainKey("RefNo"),
+            "Expecting RefNo to be filtered out of the PDMS data as it is redundant");
         Assert.That(firstNode.OptionalDiagnosticInfo, Is.EqualTo(arrangedJson));
     }
 
     [Test]
     public void ConvertToHierarchyNodes_GivenRevealNodes_CrashesIfTreeIndexIsOutOfRange()
     {
-
-
         var node1 = new CadRevealNode()
         {
             TreeIndex = uint.MaxValue + 1L,
             Children = Array.Empty<CadRevealNode>(),
-            BoundingBoxAxisAligned = new RvmBoundingBox(-Vector3.One, Vector3.One),
-            Group = new RvmNode(2, "RootNode", Vector3.Zero, 0)
-            {
-                Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } }
-            },
-            NodeId = 9001,
+            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
+            Name = "RootNode",
+            Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } },
             Parent = null,
-            RvmGeometries = Array.Empty<RvmPrimitive>()
+            Geometries = Array.Empty<APrimitive>()
         };
 
-        var nodes = new[]
-        {
-            node1
-        };
+        var nodes = new[] { node1 };
 
-        Assert.That(() => HierarchyComposerConverter.ConvertToHierarchyNodes(nodes), Throws.Exception.Message.StartsWith("input was higher than the max uint32 value"));
+        Assert.That(() => HierarchyComposerConverter.ConvertToHierarchyNodes(nodes),
+            Throws.Exception.Message.StartsWith("input was higher than the max uint32 value"));
     }
 }

@@ -28,22 +28,62 @@ public class Node
 
     public string? DiagnosticInfo { get; init; }
 
-    public void RawInsert(SQLiteCommand command)
+    public static void RawInsertBatch(SQLiteCommand command, IEnumerable<Node> nodes)
     {
-        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES (@Id, @EndId, @RefNoPrefix, @RefNoDb, @RefNoSequence, @Name, @HasMesh, @ParentId, @TopNodeId, @AABBId, @DiagnosticInfo);";
-        command.Parameters.AddRange(new[] {
-            new SQLiteParameter("@Id", Id),
-            new SQLiteParameter("@EndId", EndId),
-            new SQLiteParameter("@RefNoPrefix", RefNoPrefix),
-            new SQLiteParameter("@RefNoDb", RefNoDb),
-            new SQLiteParameter("@RefNoSequence", RefNoSequence),
-            new SQLiteParameter("@Name", Name),
-            new SQLiteParameter("@HasMesh", HasMesh),
-            new SQLiteParameter("@ParentId", Parent?.Id ?? 0),
-            new SQLiteParameter("@TopNodeId", TopNode?.Id ?? 0),
-            new SQLiteParameter("@AABBId", AABB?.Id ?? 0),
-            new SQLiteParameter("@DiagnosticInfo", DiagnosticInfo)
+        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
+        var nodeIdParameter = command.CreateParameter();
+        nodeIdParameter.ParameterName = "$Id";
+        var nodeEndIdParameter = command.CreateParameter();
+        nodeEndIdParameter.ParameterName = "$EndId";
+        var refNoPrefixParameter = command.CreateParameter();
+        refNoPrefixParameter.ParameterName = "$RefNoPrefix";
+        var refNoDbParameter = command.CreateParameter();
+        refNoDbParameter.ParameterName = "$RefNoDb";
+        var refNoSequenceParameter = command.CreateParameter();
+        refNoSequenceParameter.ParameterName = "$RefNoSequence";
+        var nameParameter = command.CreateParameter();
+        nameParameter.ParameterName = "$Name";
+        var hasMeshParameter = command.CreateParameter();
+        hasMeshParameter.ParameterName = "$HasMesh";
+        var parentIdParameter = command.CreateParameter();
+        parentIdParameter.ParameterName = "$ParentId";
+        var topNodeIdParameter = command.CreateParameter();
+        topNodeIdParameter.ParameterName = "$TopNodeId";
+        var aabbIdParameter = command.CreateParameter();
+        aabbIdParameter.ParameterName = "$AABBId";
+        var diagnosticInfoParameter = command.CreateParameter();
+        diagnosticInfoParameter.ParameterName = "$DiagnosticInfo";
+
+        command.Parameters.AddRange(new[]
+        {
+            nodeIdParameter,
+            nodeEndIdParameter,
+            refNoPrefixParameter,
+            refNoDbParameter,
+            refNoSequenceParameter,
+            nameParameter,
+            hasMeshParameter,
+            parentIdParameter,
+            topNodeIdParameter,
+            aabbIdParameter,
+            diagnosticInfoParameter
         });
-        command.ExecuteNonQuery();
+
+        foreach (Node node in nodes)
+        {
+            nodeIdParameter.Value = node.Id;
+            nodeEndIdParameter.Value = node.EndId;
+            refNoPrefixParameter.Value = node.RefNoPrefix;
+            refNoDbParameter.Value = node.RefNoDb;
+            refNoSequenceParameter.Value = node.RefNoSequence;
+            nameParameter.Value = node.Name;
+            hasMeshParameter.Value = node.HasMesh;
+            parentIdParameter.Value = node.Parent?.Id ?? 0;
+            topNodeIdParameter.Value = node.TopNode?.Id ?? 0;
+            aabbIdParameter.Value = node.AABB?.Id ?? 0;
+            diagnosticInfoParameter.Value = node.DiagnosticInfo;
+
+            command.ExecuteNonQuery();
+        }
     }
 }

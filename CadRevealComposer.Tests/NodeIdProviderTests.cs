@@ -1,7 +1,6 @@
 ﻿namespace CadRevealComposer.Tests;
 
 using IdProviders;
-using NUnit.Framework;
 
 [TestFixture]
 public class NodeIdProviderTests

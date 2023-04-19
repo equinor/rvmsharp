@@ -2,13 +2,12 @@ namespace CadRevealComposer.Operations;
 
 using AlgebraExtensions;
 using Primitives;
-using RvmSharp.Primitives;
-using RvmSharp.Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using Tessellation;
 using Utils;
 
 /// <summary>
@@ -23,9 +22,9 @@ public static class ExteriorSplitter
     private record Primitive(APrimitive OriginalPrimitive);
     private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
 
-    private readonly record struct Node(Bounds BoundingBox, Primitive[] Primitives);
+    private readonly record struct Node(BoundingBox? BoundingBox, Primitive[] Primitives);
 
-    private readonly record struct RayEx(Bounds Box, Ray Ray);
+    private readonly record struct RayEx(BoundingBox Box, Ray Ray);
 
     private static IEnumerable<RayEx> CreateRays(Vector3 boundingBoxMin, Vector3 boundingBoxMax)
     {
@@ -52,7 +51,7 @@ public static class ExteriorSplitter
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
             for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
             {
-                var bounds = new Bounds(
+                var bounds = new BoundingBox(
                     new Vector3(x, y, rayOriginMin.Z),
                     new Vector3(x + cellSize, y + cellSize, rayOriginMax.Z)
                     );
@@ -72,7 +71,7 @@ public static class ExteriorSplitter
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
-                var bounds = new Bounds(
+                var bounds = new BoundingBox(
                     new Vector3(x, rayOriginMin.Y, z),
                     new Vector3(x + cellSize, rayOriginMax.Y, z + cellSize)
                 );
@@ -92,7 +91,7 @@ public static class ExteriorSplitter
         for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
-                var bounds = new Bounds(
+                var bounds = new BoundingBox(
                     new Vector3(rayOriginMin.X, y, z),
                     new Vector3(rayOriginMax.X, y + cellSize, z + cellSize)
                 );
@@ -114,12 +113,17 @@ public static class ExteriorSplitter
         var nodes = CreateNodes(primitives);
 
         // create k-d tree for efficient processing of nodes
-        var bbMin = primitives.GetBoundingBoxMin();
-        var bbMax = primitives.GetBoundingBoxMax();
-        var tree = new IntervalKdTree<Node>(bbMin, bbMax, 100);
+        var bb = primitives.CalculateBoundingBox();
+        if (bb == null)
+            return (Array.Empty<APrimitive>(), Array.Empty<APrimitive>());
+
+        var tree = new IntervalKdTree<Node>(bb.Min, bb.Max, 100);
         foreach (var node in nodes)
         {
-            tree.Put(node.BoundingBox.Min, node.BoundingBox.Max, node);
+            if (node.BoundingBox != null)
+            {
+                tree.Put(node.BoundingBox.Min, node.BoundingBox.Max, node);
+            }
         }
 
         // ray casting
@@ -152,7 +156,7 @@ public static class ExteriorSplitter
             }
         }
 
-        var exteriorNodeSet = CreateRays(bbMin, bbMax)
+        var exteriorNodeSet = CreateRays(bb.Min, bb.Max)
             .AsParallel()
             .SelectMany(TraceRay)
             .ToHashSet();
@@ -183,7 +187,7 @@ public static class ExteriorSplitter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static (bool Hit, float Distance) MatchBoundingBox(RvmBoundingBox boundingBox, Bounds rayBounds, Ray ray)
+    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, BoundingBox rayBounds, Ray ray)
     {
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
@@ -226,7 +230,7 @@ public static class ExteriorSplitter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IEnumerable<Triangle> CollectTrianglesForMesh(Mesh mesh)
     {
-        var triangleCount = mesh.Triangles.Count / 3;
+        var triangleCount = mesh.Triangles.Length / 3;
         var vertices = mesh.Vertices;
         for (var i = 0; i < triangleCount; i++)
         {
@@ -239,28 +243,27 @@ public static class ExteriorSplitter
 
     private static Node[] CreateNodes(APrimitive[] primitives)
     {
-        static TessellatedPrimitive? TessellatePrimitive(APrimitive primitive)
+        static TessellatedPrimitive? TessellateInstancedMesh(InstancedMesh primitive)
         {
-            var mesh = TessellatorBridge.Tessellate(primitive.SourcePrimitive, 1.0f);
-            if (mesh is null)
-            {
-                return null;
-            }
-            var triangles = CollectTrianglesForMesh(mesh).ToArray();
+            var triangles = CollectTrianglesForMesh(primitive.TemplateMesh).ToArray();
+            return new TessellatedPrimitive(triangles, primitive);
+        }
+
+        static TessellatedPrimitive? TessellateTriangleMesh(TriangleMesh primitive)
+        {
+            var triangles = CollectTrianglesForMesh(primitive.Mesh).ToArray();
             return new TessellatedPrimitive(triangles, primitive);
         }
 
         static Node ConvertNode(IGrouping<ulong, APrimitive> nodeGroup)
         {
-            var bbMin = nodeGroup.GetBoundingBoxMin();
-            var bbMax = nodeGroup.GetBoundingBoxMax();
-            var boundingBox = new Bounds(bbMin, bbMax);
+            var boundingBox = nodeGroup.ToArray().CalculateBoundingBox();
 
             var primitives = nodeGroup
                 .Select(p => p switch
                 {
-                    InstancedMesh instancedMesh => TessellatePrimitive(instancedMesh),
-                    TriangleMesh triangleMesh => TessellatePrimitive(triangleMesh),
+                    InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
+                    TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
                     _ => new Primitive(p)
                 })
                 .WhereNotNull()
@@ -270,7 +273,7 @@ public static class ExteriorSplitter
         }
 
         return primitives
-            .GroupBy(p => p.NodeId)
+            .GroupBy(p => p.TreeIndex)
             .AsParallel()
             .Select(ConvertNode)
             .ToArray();

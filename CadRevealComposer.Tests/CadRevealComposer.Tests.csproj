@@ -1,54 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
+      <TargetFramework>net7.0</TargetFramework>
+      <ImplicitUsings>enable</ImplicitUsings>
 	    <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="coverlet.collector" Version="3.2.0">
-          <PrivateAssets>all</PrivateAssets>
-          <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        </PackageReference>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
-        <PackageReference Include="NUnit" Version="3.13.3" />
-        <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
+      <PackageReference Include="coverlet.collector" Version="3.2.0">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+      <PackageReference Include="NUnit" Version="3.13.3" />
+      <PackageReference Include="NUnit3TestAdapter" Version="4.3.1" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+      <ProjectReference Include="..\CadRevealRvmProvider\CadRevealRvmProvider.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <None Update="TestSamples\QuaternionDecomposition.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\43908.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\43907.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\m1.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\m2.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\0.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\2.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\5.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\6.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="TestSamples\simple_group.json">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
 

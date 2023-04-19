@@ -85,25 +85,22 @@ public sealed class ObjExporter : IDisposable
     /// Add a mesh to the current Object.
     /// </summary>
     /// <param name="mesh">The mesh to serialize</param>
-    public void WriteMesh(Mesh mesh)
+    public void WriteMesh(RvmMesh mesh)
     {
         foreach (var vertex in mesh.Vertices)
         {
             _writer.WriteLine($"v {FastToString(vertex.X)} {FastToString(vertex.Z)} {FastToString(-vertex.Y)}");
         }
 
-        if(mesh.Normals != null)
+        foreach (var normal in mesh.Normals)
         {
-            foreach (var normal in mesh.Normals)
-            {
-                _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
-            }
+            _writer.WriteLine($"vn {FastToString(normal.X)} {FastToString(normal.Z)} {FastToString(-normal.Y)}");
         }
 
         _writer.WriteLine("s off");
 
         var tris = mesh.Triangles;
-        for (var t = 0; t < tris.Count; t += 3)
+        for (var t = 0; t < tris.Length; t += 3)
         {
             var i2 = tris[t] + 1;
             var v2 = _vertexCount + i2;
@@ -119,8 +116,8 @@ public sealed class ObjExporter : IDisposable
             _writer.WriteLine($"f {v1}//{n1} {v0}//{n0} {v2}//{n2}");
         }
 
-        _vertexCount += mesh.Vertices.Count;
-        _normalCount += mesh.Normals?.Count ?? 0;
+        _vertexCount += mesh.Vertices.Length;
+        _normalCount += mesh.Normals.Length;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

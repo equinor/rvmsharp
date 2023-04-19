@@ -1,7 +1,6 @@
-﻿namespace CadRevealComposer.Operations;
+namespace CadRevealComposer.Operations;
 
 using HierarchyComposer.Model;
-using RvmSharp.Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -13,7 +12,7 @@ public static class HierarchyComposerConverter
     private static CadRevealNode FindRootNode(CadRevealNode revealNode)
     {
         var root = revealNode;
-        while (root.Parent?.Group is RvmNode)
+        while (root.Parent != null)
         {
             root = root.Parent;
         }
@@ -21,7 +20,7 @@ public static class HierarchyComposerConverter
         return root;
     }
 
-    public static IReadOnlyList<HierarchyNode> ConvertToHierarchyNodes(CadRevealNode[] nodes)
+    public static IReadOnlyList<HierarchyNode> ConvertToHierarchyNodes(IReadOnlyList<CadRevealNode> nodes)
     {
         return nodes
             .Select(ConvertRevealNodeToHierarchyNode)
@@ -37,19 +36,15 @@ public static class HierarchyComposerConverter
     /// <returns></returns>
     private static HierarchyNode? ConvertRevealNodeToHierarchyNode(CadRevealNode revealNode)
     {
-        if (revealNode.Group is not RvmNode rvmNode)
-            return null;
-
-        var maybeRefNoString = rvmNode.Attributes.GetValueOrNull("RefNo");
+        var maybeRefNoString = revealNode.Attributes.GetValueOrNull("RefNo");
 
         RefNo? maybeRefNo = null;
         if (!string.IsNullOrWhiteSpace(maybeRefNoString))
         {
             maybeRefNo = RefNo.Parse(maybeRefNoString);
         }
-
         var boundingBox = revealNode.BoundingBoxAxisAligned;
-        bool hasMesh = revealNode.RvmGeometries.Any();
+        bool hasMesh = revealNode.Geometries.Any();
         AABB? aabb = null;
         if (boundingBox != null)
         {
@@ -61,10 +56,10 @@ public static class HierarchyComposerConverter
         }
 
         // ReSharper disable once MergeIntoPattern
-        var maybeParent = revealNode.Parent?.Group is RvmNode ? revealNode.Parent : null;
+        var maybeParent = revealNode.Parent;
 
         // FindRootNode could be slow. Easy to improve if profiling identifies as a problem.
-        CadRevealNode cadRevealNode = FindRootNode(revealNode);
+        CadRevealNode rootNode = FindRootNode(revealNode);
 
         return new HierarchyNode
         {
@@ -73,12 +68,12 @@ public static class HierarchyComposerConverter
             RefNoPrefix = maybeRefNo?.Prefix,
             RefNoDb = maybeRefNo?.DbNo,
             RefNoSequence = maybeRefNo?.SequenceNo,
-            Name = rvmNode.Name,
-            TopNodeId = ConvertUlongToUintOrThrowIfTooLarge(cadRevealNode.TreeIndex),
+            Name = revealNode.Name,
+            TopNodeId = ConvertUlongToUintOrThrowIfTooLarge(rootNode.TreeIndex),
             ParentId = maybeParent != null
                 ? ConvertUlongToUintOrThrowIfTooLarge(maybeParent.TreeIndex)
                 : null,
-            PDMSData = FilterRedundantPdmsAttributes(rvmNode.Attributes),
+            PDMSData = FilterRedundantAttributes(revealNode.Attributes),
             HasMesh = hasMesh,
             AABB = aabb,
             OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo
@@ -111,7 +106,7 @@ public static class HierarchyComposerConverter
     /// </summary>
     /// <param name="inputPdmsAttributes">Original Pdms Attributes</param>
     /// <returns>New Dict without the given keys</returns>
-    private static Dictionary<string, string> FilterRedundantPdmsAttributes(IDictionary<string, string> inputPdmsAttributes)
+    private static Dictionary<string, string> FilterRedundantAttributes(IDictionary<string, string> inputPdmsAttributes)
     {
         return inputPdmsAttributes
             .Where(kvp =>
@@ -128,7 +123,7 @@ public static class HierarchyComposerConverter
     /// </summary>
     /// <param name="input">Input number</param>
     /// <returns>An uint IF its below or equal to <see cref="uint.MaxValue"/></returns>
-    /// <exception cref="ArgumentOutOfRangeException">If <see cref="input"/> is above <see cref="UInt32.MaxValue"/></exception>
+    /// <exception cref="ArgumentOutOfRangeException">If <see cref="input"/> is above <see cref="uint.MaxValue"/></exception>
     private static uint ConvertUlongToUintOrThrowIfTooLarge(ulong input)
     {
         if (input > uint.MaxValue)

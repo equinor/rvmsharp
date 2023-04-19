@@ -1,213 +1,133 @@
-namespace CadRevealComposer;
+﻿namespace CadRevealComposer;
 
-using Ben.Collections.Specialized;
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
+using ModelFormatProvider;
 using Operations;
+using Operations.SectorSplitting;
 using Primitives;
-using Primitives.Reflection;
-using RvmSharp.BatchUtils;
-using RvmSharp.Containers;
-using RvmSharp.Primitives;
-using RvmSharp.Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using Tessellation;
 using Utils;
 
 public static class CadRevealComposerRunner
 {
-    public static async Task Process(
-        DirectoryInfo inputRvmFolderPath,
+    public static void Process(
+        DirectoryInfo inputFolderPath,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
-        ComposerParameters composerParameters)
+        ComposerParameters composerParameters,
+        IReadOnlyList<IModelFormatProvider> modelFormatProviders)
     {
-        var workload = Workload.CollectWorkload(new[] { inputRvmFolderPath.FullName });
+        var totalTimeElapsed = Stopwatch.StartNew();
 
-        Console.WriteLine("Reading RvmData");
-        var rvmTimer = Stopwatch.StartNew();
+        var nodesToProcess = new List<CadRevealNode>();
+        var geometriesToProcess = new List<APrimitive>();
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIdGenerator = new InstanceIdGenerator();
 
-        var teamCityReadRvmFilesLogBlock = new TeamCityLogBlock("Reading Rvm Files");
-        var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+        foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
-            Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
-        });
+            var timer = Stopwatch.StartNew();
+            IReadOnlyList<CadRevealNode> cadRevealNodes =
+                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator,
+                    instanceIdGenerator);
+            if (cadRevealNodes != null)
+            {
+                Console.WriteLine(
+                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
 
-        var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = Workload.ReadRvmData(workload, progressReport, stringInternPool);
-        var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
-        teamCityReadRvmFilesLogBlock.CloseBlock();
-        Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
+                if (cadRevealNodes.Count > 0)
+                {
+                    // collect all nodes for later sector division of the entire scene
+                    nodesToProcess.AddRange(cadRevealNodes);
 
-        await ProcessRvmStore(rvmStore, outputDirectory, modelParameters, composerParameters);
-    }
+                    var inputGeometries = cadRevealNodes
+                        .AsParallel()
+                        .AsOrdered()
+                        .SelectMany(x => x.Geometries)
+                        .ToArray();
 
-    public static async Task ProcessRvmStore(
-        RvmStore rvmStore,
-        DirectoryInfo outputDirectory,
-        ModelParameters modelParameters,
-        ComposerParameters composerParameters)
-    {
-        TreeIndexGenerator treeIndexGenerator = new();
-        NodeIdProvider nodeIdGenerator = new();
-
-        Console.WriteLine("Generating i3d");
-
-        var total = Stopwatch.StartNew();
-        var stopwatch = Stopwatch.StartNew();
-        var allNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, nodeIdGenerator, treeIndexGenerator);
-        Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
-        stopwatch.Restart();
+                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                        inputGeometries,
+                        composerParameters,
+                        modelParameters,
+                        instanceIdGenerator);
+                    geometriesToProcess.AddRange(geometriesIncludingMeshes);
+                }
+            }
+        }
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
+            // Exporting hierarchy on side thread to allow it to run in parallel
+            var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, allNodes);
-            Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
+            Console.WriteLine(
+                $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
         });
 
-        static bool IsValidGeometry(RvmPrimitive geometry)
-        {
-            // TODO: Investigate why we have negative extents in the RVM data, and clarify if we have negligable data loss by excluding these parts. Follow up in AB#58629 ( https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/58629 )
-            var extents = geometry.BoundingBoxLocal.Extents;
-            if (extents.X < 0 || extents.Y < 0 || extents.Z < 0)
-            {
-                return false;
-            }
-            return true;
-        }
+        geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        var invalidGeometriesGroupedByType = allNodes
-            .SelectMany(x => x.RvmGeometries.Where(g => !IsValidGeometry(g)))
-            .GroupBy(g => g.GetType())
-            .OrderBy(g => g.Key.Name);
+        ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters,
+            treeIndexGenerator);
 
-        foreach (var group in invalidGeometriesGroupedByType)
-        {
-            Console.WriteLine($"Excluded {group.Count()} {group.Key.Name} due to negative extents in either X/Y/Z.");
-        }
+        if (!exportHierarchyDatabaseTask.IsCompleted) Console.WriteLine("Waiting for hierarchy export to complete...");
+        exportHierarchyDatabaseTask.Wait();
 
-        var geometries = allNodes
-            .AsParallel()
-            .AsOrdered()
-            .SelectMany(x => x.RvmGeometries
-                .Where(IsValidGeometry)
-                .Select(primitive => APrimitive.FromRvmPrimitive(x, primitive)))
-            .WhereNotNull()
-            .ToArray();
+        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
+        Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
+    }
 
-        Console.WriteLine($"Primitives converted in {stopwatch.Elapsed}");
-        stopwatch.Restart();
+    public static void ProcessPrimitives(APrimitive[] allPrimitives, DirectoryInfo outputDirectory,
+        ModelParameters modelParameters,
+        ComposerParameters composerParameters,
+        TreeIndexGenerator treeIndexGenerator)
+    {
+        var stopwatch = Stopwatch.StartNew();
 
-        var facetGroupsWithEmbeddedProtoMeshes = geometries
-            .OfType<ProtoMeshFromFacetGroup>()
-            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix, p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
-            .Cast<RvmFacetGroup>()
-            .ToArray();
-
-        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
-        if (composerParameters.NoInstancing)
-        {
-            facetGroupInstancingResult = facetGroupsWithEmbeddedProtoMeshes
-                .Select(x => new RvmFacetGroupMatcher.NotInstancedResult(x))
-                .Cast<RvmFacetGroupMatcher.Result>()
-                .ToArray();
-            Console.WriteLine("Facet group instancing disabled.");
-        }
-        else
-        {
-            facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
-                facetGroupsWithEmbeddedProtoMeshes,
-                facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value);
-            Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
-
-        var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromPyramid>().ToArray();
-        // We have models where several pyramids on the same "part" are completely identical.
-        var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
-        if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
-        {
-            var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
-            Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
-        }
-        RvmPyramidInstancer.Result[] pyramidInstancingResult;
-        if (composerParameters.NoInstancing)
-        {
-            pyramidInstancingResult = uniqueProtoMeshesFromPyramid
-                .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
-                .OfType<RvmPyramidInstancer.Result>()
-                .ToArray();
-            Console.WriteLine("Pyramid instancing disabled.");
-        }
-        else
-        {
-            pyramidInstancingResult = RvmPyramidInstancer.Process(
-                uniqueProtoMeshesFromPyramid,
-                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
-            Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-        }
-        
-        var exporter = new PeripheralFileExporter(outputDirectory.FullName, composerParameters.Mesh2CtmToolPath);
-
-        Console.WriteLine("Start tessellate");
-        var meshes = await TessellateAndOutputInstanceMeshes(
-            facetGroupInstancingResult,
-            pyramidInstancingResult,
-            exporter);
-
-        var geometriesIncludingMeshes = geometries
-            .Where(g => g is not ProtoMesh)
-            .Concat(meshes)
-            .ToArray();
-
-        Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
-        stopwatch.Restart();
-
-        SectorSplitter.ProtoSector[] sectors;
+        ISectorSplitter splitter;
         if (composerParameters.SingleSector)
         {
-            sectors = SectorSplitter.CreateSingleSector(geometriesIncludingMeshes).ToArray();
+            splitter = new SectorSplitterSingle();
         }
         else if (composerParameters.SplitIntoZones)
         {
-            var zones = ZoneSplitter.SplitIntoZones(geometriesIncludingMeshes, outputDirectory);
-            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            sectors = SectorSplitter.SplitIntoSectors(zones)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
         }
         else
         {
-            sectors = SectorSplitter.SplitIntoSectors(geometriesIncludingMeshes)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            splitter = new SectorSplitterOctree();
         }
 
-        var sectorInfoTasks = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, exporter));
-        var sectorInfos = await Task.WhenAll(sectorInfoTasks);
+        var sectors = splitter
+            .SplitIntoSectors(allPrimitives)
+            .OrderBy(x => x.SectorId).ToArray();
 
-        Console.WriteLine($"Serialized {sectorInfos.Length} sectors in {stopwatch.Elapsed}");
+        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+        stopwatch.Restart();
+
+        var sectorInfos = sectors
+            .Select(s => SerializeSector(s, outputDirectory.FullName))
+            .ToArray();
+
+        Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
         var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-        var cameraPosition = CameraPositioning.CalculateInitialCamera(geometriesIncludingMeshes);
+
+        PrintSectorStats(sectorsWithDownloadSize);
+
+        var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives);
         SceneCreator.WriteSceneFile(
             sectorsWithDownloadSize,
             modelParameters,
@@ -217,204 +137,131 @@ public static class CadRevealComposerRunner
 
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
-
-        Task.WaitAll(exportHierarchyDatabaseTask);
-
-        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
-        Console.WriteLine($"Convert completed in {total.Elapsed}");
     }
 
-    private static async Task<SceneCreator.SectorInfo> SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory, PeripheralFileExporter exporter)
+    private static void PrintSectorStats(ImmutableArray<SceneCreator.SectorInfo> sectorsWithDownloadSize)
     {
-        var sectorFileName = $"sector_{p.SectorId}.i3d";
-        var meshes = p.Geometries
-            .OfType<TriangleMesh>()
-            .Select(t => t.TempTessellatedMesh)
-            .WhereNotNull()
-            .ToArray();
-        var geometries = p.Geometries;
-        if (meshes.Length > 0)
+        // Helpers
+        static float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
+
+
+        (string, string, string, string, string, string, string, string, string, string) headers = ("Depth", "Sectors", "μ drawCalls", "μ Triangles", "μ sectDiam", "^ sectDiam", "v sectDiam", "μ s/l part", "μ DLsize", "v DLsize");
+        // Add stuff you would like for a quick overview here:
+        using (new TeamCityLogBlock("Sector Stats"))
         {
-            var (triangleMeshFileId, _) = await exporter.ExportMeshesToObjAndCtmFile(meshes, mesh => mesh);
-            geometries = p.Geometries.Select(g => g switch
+            Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
+            Console.WriteLine(
+                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
+            Console.WriteLine(
+                $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
+            Console.WriteLine($"Depth Stats:");
+            Console.WriteLine($"|{headers.Item1,5}|{headers.Item2,7}|{headers.Item3,10}|{headers.Item4,11}|{headers.Item5,10}|{headers.Item6,10}|{headers.Item7,10}|{headers.Item8,17}|{headers.Item9,10}|{headers.Item10,8}|");
+            Console.WriteLine(new String('-', 110));
+            foreach (IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth)
+                         .OrderBy(x => x.Key))
             {
-                TriangleMesh t => t with { FileId = triangleMeshFileId },
-                _ => g
-            }).ToArray();
+                var anyHasGeometry = g.Any(x => x.Geometries.Any());
+                var sizeMinAvgExceptEmpty = anyHasGeometry
+                    ? g.Where(x => x.Geometries.Any()).Average(x =>
+                        x.MinNodeDiagonal)
+                    : 0;
+                var sizeMaxAvgExceptEmpty = anyHasGeometry
+                    ? g.Where(x => x.Geometries.Any()).Average(x =>
+                        x.MaxNodeDiagonal)
+                    : 0;
+                var maxSize = "N/A";
+                if (g.Count() > 1)
+                {
+                    maxSize = $"{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}";
+                }
+
+                var formatted = $@"|
+{g.Key,5}|
+{g.Count(),7}|
+{g.Average(x => x.EstimatedDrawCalls),11:F2}|
+{g.Average(x => x.EstimatedTriangleCount),11:F0}|
+{g.Average(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{g.Min(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{g.Max(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{sizeMinAvgExceptEmpty,7:F2}m/{sizeMaxAvgExceptEmpty,7:F2}m|
+{g.Average(x => x.DownloadSize / 1024f / 1024f),8:F}MB|
+{maxSize,8}|
+".Replace(Environment.NewLine, "");
+             Console.WriteLine(formatted);
+            }
         }
+    }
 
-        var (estimatedTriangleCount, estimatedDrawCallCount) = DrawCallEstimator.Estimate(geometries);
+    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    {
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var peripheralFiles = APrimitiveReflectionHelpers
-            .GetDistinctValuesOfAllPropertiesMatchingKind<ulong>(geometries, I3dfAttribute.AttributeType.FileId)
-            .Distinct()
-            .Select(id => $"mesh_{id}.ctm")
-            .ToArray();
-        var sectorInfo = new SceneCreator.SectorInfo(p.SectorId, p.ParentSectorId, p.Depth, p.Path, sectorFileName,
-            peripheralFiles, estimatedTriangleCount, estimatedDrawCallCount, geometries, p.BoundingBoxMin, p.BoundingBoxMax);
-        SceneCreator.ExportSector(sectorInfo, outputDirectory);
+        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+        var sectorInfo = new SceneCreator.SectorInfo(
+            SectorId: p.SectorId,
+            ParentSectorId: p.ParentSectorId,
+            Depth: p.Depth,
+            Path: p.Path,
+            Filename: sectorFilename,
+            EstimatedTriangleCount: estimatedTriangleCount,
+            EstimatedDrawCalls: estimatedDrawCalls,
+            MinNodeDiagonal: p.MinNodeDiagonal,
+            MaxNodeDiagonal: p.MaxNodeDiagonal,
+            Geometries: p.Geometries,
+            SubtreeBoundingBox: p.SubtreeBoundingBox,
+            GeometryBoundingBox: p.GeometryBoundingBox
+        );
 
+        if (sectorFilename != null)
+            SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
         return sectorInfo;
     }
 
-    private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
+    private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
+        IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
     {
         foreach (var sector in sectors)
         {
-            var downloadSize = sector.PeripheralFiles
-                .Concat(new[] { sector.Filename })
-                .Select(filename => Path.Combine(outputDirectory.FullName, filename))
-                .Select(filepath => new FileInfo(filepath).Length)
-                .Sum();
-            yield return sector with
+            if (string.IsNullOrEmpty(sector.Filename))
             {
-                DownloadSize = downloadSize
-            };
-        }
-    }
-
-
-    private static long TotalVerticesBeforeDedupeStats = 0;
-    private static long TotalVerticesAfterDedupeStats = 0;
-
-    private static async Task<APrimitive[]> TessellateAndOutputInstanceMeshes(
-        RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
-        RvmPyramidInstancer.Result[] pyramidInstancingResult,
-        PeripheralFileExporter exporter)
-    {
-        static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
-        {
-            var mesh = Tessellate(p.ProtoPrimitive);
-            var triangleCount = mesh.Triangles.Count / 3;
-            return new TriangleMesh(
-                new CommonPrimitiveProperties(p.NodeId, p.TreeIndex,
-                    Vector3.Zero, Quaternion.Identity, Vector3.One,
-                    p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                    (Vector3.UnitZ, 0), p.ProtoPrimitive), 0, (ulong)triangleCount, mesh);
-        }
-
-        static InstancedMesh CreateInstanceMesh(ProtoMesh p, Matrix4x4 transform, uint meshFileId, ulong triangleOffset, ulong triangleCount)
-        {
-            if (!transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
-            {
-                throw new Exception("Could not decompose");
-            }
-
-            (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
-            AlgebraUtils.AssertEulerAnglesCorrect((rollX, pitchY, yawZ), rotation);
-
-            return new InstancedMesh(
-                new CommonPrimitiveProperties(p.NodeId, p.TreeIndex, Vector3.Zero, Quaternion.Identity,
-                    Vector3.One,
-                    p.Diagonal, p.AxisAlignedBoundingBox, p.Color,
-                    (Vector3.UnitZ, 0), p.ProtoPrimitive),
-                meshFileId, triangleOffset, triangleCount, translation.X,
-                translation.Y, translation.Z,
-                rollX, pitchY, yawZ, scale.X, scale.Y, scale.Z);
-        }
-
-        TotalVerticesBeforeDedupeStats = 0;
-        TotalVerticesAfterDedupeStats = 0;
-
-        var facetGroupsNotInstanced = facetGroupInstancingResult
-            .OfType<RvmFacetGroupMatcher.NotInstancedResult>()
-            .Select(result => ((RvmFacetGroupWithProtoMesh)result.FacetGroup).ProtoMesh)
-            .Cast<ProtoMesh>()
-            .ToArray();
-
-        var pyramidsNotInstanced = pyramidInstancingResult
-            .OfType<RvmPyramidInstancer.NotInstancedResult>()
-            .Select(result => result.Pyramid)
-            .Cast<ProtoMesh>()
-            .ToArray();
-
-        var facetGroupInstanced = facetGroupInstancingResult
-            .OfType<RvmFacetGroupMatcher.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
-            .ToArray();
-
-        var pyramidsInstanced = pyramidInstancingResult
-            .OfType<RvmPyramidInstancer.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)x.Pyramid, x.Transform))
-            .ToArray();
-
-        // tessellate instanced geometries
-        var stopwatch = Stopwatch.StartNew();
-        var meshes = facetGroupInstanced
-            .Concat(pyramidsInstanced)
-            .AsParallel()
-            .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key)))
-            .Where(g => g.Mesh.Triangles.Count > 0) // ignore empty meshes
-            .ToArray();
-        var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
-        Console.WriteLine($"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
-
-        // write instanced meshes to file
-        var exportedMeshes = await exporter.ExportMeshesToObjAndCtmFile(meshes, m => m.Mesh);
-
-        // create InstancedMesh objects
-        var instancedMeshes = exportedMeshes.Results
-            .SelectMany(x =>
-            {
-                return x.Item.InstanceGroup.Select(y => CreateInstanceMesh(y.ProtoMesh, y.Transform, exportedMeshes.FileId, x.TriangleOffset, x.TriangleCount));
-            })
-            .ToArray();
-
-        // tessellate and create TriangleMesh objects
-        stopwatch.Restart();
-        var triangleMeshes = facetGroupsNotInstanced
-            .Concat(pyramidsNotInstanced)
-            .AsParallel()
-            .Select(TessellateAndCreateTriangleMesh)
-            .Where(t => t.TriangleCount > 0) // ignore empty meshes
-            .ToArray();
-        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
-
-        Console.WriteLine($"---\nVertice Dedupe Stats (Vertice Count):\nBefore: {TotalVerticesBeforeDedupeStats,11}\nAfter:  {TotalVerticesAfterDedupeStats,11}\nPercent: {(float)TotalVerticesAfterDedupeStats/TotalVerticesBeforeDedupeStats:F2}\n---");
-
-        return instancedMeshes
-            .Cast<APrimitive>()
-            .Concat(triangleMeshes)
-            .ToArray();
-    }
-
-    private static Mesh Tessellate(RvmPrimitive primitive)
-    {
-        Mesh?  mesh;
-        try
-        {
-            mesh = TessellatorBridge.Tessellate(primitive, 0f);
-            Interlocked.Add(ref TotalVerticesBeforeDedupeStats, mesh?.Vertices.Count ?? 0);
-            mesh = mesh != null ? MeshTools.DeduplicateVertices(mesh) : Mesh.Empty;
-            Interlocked.Add(ref TotalVerticesAfterDedupeStats, mesh.Vertices.Count);
-        }
-        catch
-        {
-            mesh = Mesh.Empty;
-        }
-
-        if (mesh.Vertices.Count == 0)
-        {
-            if (primitive is RvmFacetGroup f)
-            {
-                Console.WriteLine($"WARNING: Could not tessellate facet group! Polygon count: {f.Polygons.Length}");
-            }
-            else if (primitive is RvmPyramid)
-            {
-                Console.WriteLine("WARNING: Could not tessellate pyramid!");
+                yield return sector;
             }
             else
             {
-                throw new NotImplementedException();
+                var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
+                yield return sector with { DownloadSize = new FileInfo(filepath).Length };
             }
         }
-
-        return mesh;
     }
 
-    /// <summary>
-    /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.
-    /// </summary>
-    private record RvmFacetGroupWithProtoMesh(ProtoMeshFromFacetGroup ProtoMesh, uint Version, Matrix4x4 Matrix, RvmBoundingBox BoundingBoxLocal, RvmFacetGroup.RvmPolygon[] Polygons)
-        : RvmFacetGroup(Version, Matrix, BoundingBoxLocal, Polygons);
+
+    private static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
+    {
+        var meshCount = 0;
+        var beforeOptimizationTotalVertices = 0;
+        var afterOptimizationTotalVertices = 0;
+        var timer = Stopwatch.StartNew();
+        // Optimize TriangleMesh meshes for least memory use
+        var processedGeometries = geometriesToProcess.AsParallel().AsOrdered().Select(primitive =>
+        {
+            if (primitive is not TriangleMesh triangleMesh)
+            {
+                return primitive;
+            }
+
+            Mesh newMesh = MeshTools.DeduplicateVertices(triangleMesh.Mesh);
+            Interlocked.Increment(ref meshCount);
+            Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
+            Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
+            return triangleMesh with { Mesh = newMesh };
+        }).ToList();
+
+        using (new TeamCityLogBlock("Vertex Dedupe Stats"))
+        {
+            Console.WriteLine(
+                $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices,11}\nAfter:  {afterOptimizationTotalVertices,11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices,11:P2}\nTime: {timer.Elapsed}");
+        }
+
+        return processedGeometries;
+    }
 }

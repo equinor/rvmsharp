@@ -62,6 +62,15 @@ public class CommandLineOptions
      , Range(1, uint.MaxValue)]
     public uint InstancingThreshold { get; set; }
 
+    [Option(
+         longName: "TemplateCountLimit",
+         Default = (uint)100,
+         Required = false,
+         HelpText =
+             "Sets the maximal number of template meshes created. If not specified this will have a default value.")
+     , Range(1, uint.MaxValue)]
+    public uint TemplateCountLimit { get; set; }
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes

@@ -18,6 +18,9 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+		<ProjectReference Include="..\CadRevealObjProvider\CadRevealObjProvider.csproj" />
+		<ProjectReference Include="..\CadRevealRvmProvider\CadRevealRvmProvider.csproj" />
+        <ProjectReference Include="..\CadRevealFbxProvider\CadRevealFbxProvider.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
