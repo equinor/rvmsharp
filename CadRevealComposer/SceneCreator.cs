@@ -98,13 +98,13 @@ public static class SceneCreator
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
         var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
         JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
+
 #if DEBUG
-        var options = new JsonSerializerOptions();
-        options.WriteIndented = true;
-        JsonUtils.JsonSerializeToFile(scene, scenePath, options); // We don't want intentation, it doubles the size just for visual inspection of the file
+        const bool indent = true;
 #else
-        JsonUtils.JsonSerializeToFile(scene, scenePath); // We don't want intentation, it doubles the size just for visual inspection of the file
+        const bool indent = false;
 #endif
+        JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: indent); // We don't want intentation, it doubles the size just for visual inspection of the file
     }
 
     public static void ExportSectorGeometries(
