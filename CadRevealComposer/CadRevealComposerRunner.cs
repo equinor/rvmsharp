@@ -1,10 +1,11 @@
-namespace CadRevealComposer;
+﻿namespace CadRevealComposer;
 
 using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
+using Operations.SectorSplitting;
 using Primitives;
 using System;
 using System.Collections.Generic;
@@ -28,8 +29,8 @@ public static class CadRevealComposerRunner
     {
         var totalTimeElapsed = Stopwatch.StartNew();
 
-        List<CadRevealNode> nodesToProcess = new List<CadRevealNode>();
-        List<APrimitive> geometriesToProcess = new List<APrimitive>();
+        var nodesToProcess = new List<CadRevealNode>();
+        var geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
@@ -65,19 +66,23 @@ public static class CadRevealComposerRunner
             }
         }
 
+        var exportHierarchyDatabaseTask = Task.Run(() =>
+        {
+            // Exporting hierarchy on side thread to allow it to run in parallel
+            var hierarchyExportTimer = Stopwatch.StartNew();
+            var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
+            Console.WriteLine(
+                $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
+        });
+
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
         ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters,
             treeIndexGenerator);
 
-        var exportHierarchyDatabaseTask = Task.Run(() =>
-        {
-            var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
-            Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\"");
-        });
-
-        Task.WaitAll(exportHierarchyDatabaseTask);
+        if (!exportHierarchyDatabaseTask.IsCompleted) Console.WriteLine("Waiting for hierarchy export to complete...");
+        exportHierarchyDatabaseTask.Wait();
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
@@ -90,31 +95,26 @@ public static class CadRevealComposerRunner
     {
         var stopwatch = Stopwatch.StartNew();
 
-        SectorSplitter.ProtoSector[] sectors;
+        ISectorSplitter splitter;
         if (composerParameters.SingleSector)
         {
-            sectors = SectorSplitter.CreateSingleSector(allPrimitives).ToArray();
+            splitter = new SectorSplitterSingle();
         }
         else if (composerParameters.SplitIntoZones)
         {
-            var zones = ZoneSplitter.SplitIntoZones(allPrimitives, outputDirectory);
-            Console.WriteLine($"Split into {zones.Length} zones in {stopwatch.Elapsed}");
-            stopwatch.Restart();
-
-            sectors = SectorSplitter.SplitIntoSectors(zones)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
         }
         else
         {
-            sectors = SectorSplitter.SplitIntoSectors(allPrimitives)
-                .OrderBy(x => x.SectorId)
-                .ToArray();
-            Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-            stopwatch.Restart();
+            splitter = new SectorSplitterOctree();
         }
+
+        var sectors = splitter
+            .SplitIntoSectors(allPrimitives)
+            .OrderBy(x => x.SectorId).ToArray();
+
+        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+        stopwatch.Restart();
 
         var sectorInfos = sectors
             .Select(s => SerializeSector(s, outputDirectory.FullName))
@@ -142,47 +142,78 @@ public static class CadRevealComposerRunner
     private static void PrintSectorStats(ImmutableArray<SceneCreator.SectorInfo> sectorsWithDownloadSize)
     {
         // Helpers
-        float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
+        static float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
 
+
+        (string, string, string, string, string, string, string, string, string, string) headers = ("Depth", "Sectors", "μ drawCalls", "μ Triangles", "μ sectDiam", "^ sectDiam", "v sectDiam", "μ s/l part", "μ DLsize", "v DLsize");
         // Add stuff you would like for a quick overview here:
         using (new TeamCityLogBlock("Sector Stats"))
         {
             Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
-            Console.WriteLine($"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
-            Console.WriteLine($"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
+            Console.WriteLine(
+                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
+            Console.WriteLine(
+                $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
             Console.WriteLine($"Depth Stats:");
-            foreach (IGrouping<long,SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth).OrderBy(x => x.Key))
+            Console.WriteLine($"|{headers.Item1,5}|{headers.Item2,7}|{headers.Item3,10}|{headers.Item4,11}|{headers.Item5,10}|{headers.Item6,10}|{headers.Item7,10}|{headers.Item8,17}|{headers.Item9,10}|{headers.Item10,8}|");
+            Console.WriteLine(new String('-', 110));
+            foreach (IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth)
+                         .OrderBy(x => x.Key))
             {
-                Console.WriteLine($"\t{g.Key,2}: Sectors: {g.Count(),4}, Avg DrawCalls: {g.Average(x => x.EstimatedDrawCalls),7:F2}, Avg Triangles: {g.Average(x => x.EstimatedTriangleCount),10:F0}, Avg Download Size: {g.Average(x => x.DownloadSize / 1024f/1024f),6:F}MB");
-                if(g.Count() > 1)
+                var anyHasGeometry = g.Any(x => x.Geometries.Any());
+                var sizeMinAvgExceptEmpty = anyHasGeometry
+                    ? g.Where(x => x.Geometries.Any()).Average(x =>
+                        x.MinNodeDiagonal)
+                    : 0;
+                var sizeMaxAvgExceptEmpty = anyHasGeometry
+                    ? g.Where(x => x.Geometries.Any()).Average(x =>
+                        x.MaxNodeDiagonal)
+                    : 0;
+                var maxSize = "N/A";
+                if (g.Count() > 1)
                 {
-                    Console.WriteLine($"\t\tMax Download Size :{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}.");
+                    maxSize = $"{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}";
                 }
-            }
 
+                var formatted = $@"|
+{g.Key,5}|
+{g.Count(),7}|
+{g.Average(x => x.EstimatedDrawCalls),11:F2}|
+{g.Average(x => x.EstimatedTriangleCount),11:F0}|
+{g.Average(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{g.Min(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{g.Max(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
+{sizeMinAvgExceptEmpty,7:F2}m/{sizeMaxAvgExceptEmpty,7:F2}m|
+{g.Average(x => x.DownloadSize / 1024f / 1024f),8:F}MB|
+{maxSize,8}|
+".Replace(Environment.NewLine, "");
+             Console.WriteLine(formatted);
+            }
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(SectorSplitter.ProtoSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
     {
-        var estimateDrawCalls = DrawCallEstimator.Estimate(p.Geometries);
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
+        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
-            p.SectorId,
-            p.ParentSectorId,
-            p.Depth,
-            p.Path,
-            $"sector_{p.SectorId}.glb",
-            EstimatedTriangleCount: estimateDrawCalls.EstimatedTriangleCount,
-            EstimatedDrawCalls: estimateDrawCalls.EstimatedDrawCalls,
-            p.Geometries,
-            p.SubtreeBoundingBoxMin,
-            p.SubtreeBoundingBoxMax,
-            p.GeometryBoundingBoxMin,
-            p.GeometryBoundingBoxMax
+            SectorId: p.SectorId,
+            ParentSectorId: p.ParentSectorId,
+            Depth: p.Depth,
+            Path: p.Path,
+            Filename: sectorFilename,
+            EstimatedTriangleCount: estimatedTriangleCount,
+            EstimatedDrawCalls: estimatedDrawCalls,
+            MinNodeDiagonal: p.MinNodeDiagonal,
+            MaxNodeDiagonal: p.MaxNodeDiagonal,
+            Geometries: p.Geometries,
+            SubtreeBoundingBox: p.SubtreeBoundingBox,
+            GeometryBoundingBox: p.GeometryBoundingBox
         );
-        SceneCreator.ExportSector(sectorInfo, outputDirectory);
 
+        if (sectorFilename != null)
+            SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
         return sectorInfo;
     }
 
@@ -191,8 +222,15 @@ public static class CadRevealComposerRunner
     {
         foreach (var sector in sectors)
         {
-            var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-            yield return sector with { DownloadSize = new FileInfo(filepath).Length };
+            if (string.IsNullOrEmpty(sector.Filename))
+            {
+                yield return sector;
+            }
+            else
+            {
+                var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
+                yield return sector with { DownloadSize = new FileInfo(filepath).Length };
+            }
         }
     }
 

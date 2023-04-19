@@ -22,7 +22,7 @@ public static class ExteriorSplitter
     private record Primitive(APrimitive OriginalPrimitive);
     private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
 
-    private readonly record struct Node(BoundingBox BoundingBox, Primitive[] Primitives);
+    private readonly record struct Node(BoundingBox? BoundingBox, Primitive[] Primitives);
 
     private readonly record struct RayEx(BoundingBox Box, Ray Ray);
 
@@ -113,12 +113,17 @@ public static class ExteriorSplitter
         var nodes = CreateNodes(primitives);
 
         // create k-d tree for efficient processing of nodes
-        var bbMin = primitives.GetBoundingBoxMin();
-        var bbMax = primitives.GetBoundingBoxMax();
-        var tree = new IntervalKdTree<Node>(bbMin, bbMax, 100);
+        var bb = primitives.CalculateBoundingBox();
+        if (bb == null)
+            return (Array.Empty<APrimitive>(), Array.Empty<APrimitive>());
+
+        var tree = new IntervalKdTree<Node>(bb.Min, bb.Max, 100);
         foreach (var node in nodes)
         {
-            tree.Put(node.BoundingBox.Min, node.BoundingBox.Max, node);
+            if (node.BoundingBox != null)
+            {
+                tree.Put(node.BoundingBox.Min, node.BoundingBox.Max, node);
+            }
         }
 
         // ray casting
@@ -151,7 +156,7 @@ public static class ExteriorSplitter
             }
         }
 
-        var exteriorNodeSet = CreateRays(bbMin, bbMax)
+        var exteriorNodeSet = CreateRays(bb.Min, bb.Max)
             .AsParallel()
             .SelectMany(TraceRay)
             .ToHashSet();
@@ -182,10 +187,10 @@ public static class ExteriorSplitter
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
-    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, BoundingBox BoundingBox, Ray ray)
+    private static (bool Hit, float Distance) MatchBoundingBox(BoundingBox boundingBox, BoundingBox rayBounds, Ray ray)
     {
         // positive if overlaps
-        var diff = Vector3.Min(boundingBox.Max, BoundingBox.Max) - Vector3.Max(boundingBox.Min, BoundingBox.Min);
+        var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
         var isHit = diff.X > 0f &&
                     diff.Y > 0f &&
                     diff.Z > 0f;
@@ -252,9 +257,7 @@ public static class ExteriorSplitter
 
         static Node ConvertNode(IGrouping<ulong, APrimitive> nodeGroup)
         {
-            var bbMin = nodeGroup.GetBoundingBoxMin();
-            var bbMax = nodeGroup.GetBoundingBoxMax();
-            var boundingBox = new BoundingBox(bbMin, bbMax);
+            var boundingBox = nodeGroup.ToArray().CalculateBoundingBox();
 
             var primitives = nodeGroup
                 .Select(p => p switch

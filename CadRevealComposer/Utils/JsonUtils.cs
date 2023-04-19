@@ -1,15 +1,40 @@
 namespace CadRevealComposer.Utils;
 
-using System.IO;
 using System.Text.Json;
+using Operations;
+using System.IO;
 
 public static class JsonUtils
 {
-    public static void JsonSerializeToFile<T>(T obj, string filename, bool formatIndented = false)
+    public static void JsonSerializeToFile<T>(T obj, string filename, JsonSerializerOptions? options = null)
     {
-        using var stream = File.Create(filename);
-        using var writer = new StreamWriter(stream);
-        JsonSerializer.Serialize(stream, obj,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web /* Makes properties lower-case by default */) { WriteIndented = formatIndented });
+        var jsonData = JsonSerializer.Serialize(obj, options);
+        File.WriteAllText(filename, jsonData);
+    }
+
+    public static void JsonSerializeToFile(CameraPositioning.CameraPosition cameraPosition, string filePath)
+    {
+        var json = JsonSerializer.Serialize(new
+        {
+            cameraPosition = new
+            {
+                x = cameraPosition.Position.X,
+                y = cameraPosition.Position.Y,
+                z = cameraPosition.Position.Z
+            },
+            cameraDirection = new
+            {
+                x = cameraPosition.Direction.X,
+                y = cameraPosition.Direction.Y,
+                z = cameraPosition.Direction.Z
+            },
+            targetPosition = new
+            {
+                x = cameraPosition.Target.X,
+                y = cameraPosition.Target.Y,
+                z = cameraPosition.Target.Z
+            }
+        });
+        File.WriteAllText(filePath, json);
     }
 }
