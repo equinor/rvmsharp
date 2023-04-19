@@ -23,6 +23,21 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class GltfWriter
 {
+    public static int WritePrimitives<T>(
+        IReadOnlyList<APrimitive> primitives,
+        Action<T[], ModelRoot, Scene> writeFunction,
+        ModelRoot model,
+        Scene scene)
+    {
+        var selectedPrimitives = primitives.OfType<T>().ToArray();
+        var primitiveNumber = selectedPrimitives.Length;
+        if (selectedPrimitives.Length > 0)
+        {
+            writeFunction(selectedPrimitives, model, scene);
+        }
+        return primitiveNumber;
+    }
+
     public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream outputStream)
     {
         if (!BitConverter.IsLittleEndian)
@@ -35,83 +50,22 @@ public static class GltfWriter
         var scene = model.UseScene(null);
         model.DefaultScene = scene;
 
-        var instancedMeshes = primitives.OfType<InstancedMesh>().ToArray();
-        if (instancedMeshes.Length > 0)
-        {
-            WriteInstancedMeshes(instancedMeshes, model, scene);
-        }
+        int counter = 0;
+        counter += WritePrimitives<InstancedMesh>(primitives, WriteInstancedMeshes, model, scene);
+        counter += WritePrimitives<TriangleMesh>(primitives, WriteTriangleMeshes, model, scene);
+        counter += WritePrimitives<Box>(primitives, WriteBoxes, model, scene);
+        counter += WritePrimitives<Circle>(primitives, WriteCircles, model, scene);
+        counter += WritePrimitives<Cone>(primitives, WriteCones, model, scene);
+        counter += WritePrimitives<EccentricCone>(primitives, WriteEccentricCones, model, scene);
+        counter += WritePrimitives<EllipsoidSegment>(primitives, WriteEllipsoidSegments, model, scene);
+        counter += WritePrimitives<GeneralCylinder>(primitives, WriteGeneralCylinders, model, scene);
+        counter += WritePrimitives<GeneralRing>(primitives, WriteGeneralRings, model, scene);
+        counter += WritePrimitives<Nut>(primitives, WriteNuts, model, scene);
+        counter += WritePrimitives<Quad>(primitives, WriteQuads, model, scene);
+        counter += WritePrimitives<TorusSegment>(primitives, WriteTorusSegments, model, scene);
+        counter += WritePrimitives<Trapezium>(primitives, WriteTrapeziums, model, scene);
 
-        var triangleMeshes = primitives.OfType<TriangleMesh>().ToArray();
-        if (triangleMeshes.Length > 0)
-        {
-            WriteTriangleMeshes(triangleMeshes, model, scene);
-        }
-
-        var boxes = primitives.OfType<Box>().ToArray();
-        if (boxes.Length > 0)
-        {
-            WriteBoxes(boxes, model, scene);
-        }
-
-        var circles = primitives.OfType<Circle>().ToArray();
-        if (circles.Length > 0)
-        {
-            WriteCircles(circles, model, scene);
-        }
-
-        var cones = primitives.OfType<Cone>().ToArray();
-        if (cones.Length > 0)
-        {
-            WriteCones(cones, model, scene);
-        }
-
-        var eccentricCones = primitives.OfType<EccentricCone>().ToArray();
-        if (eccentricCones.Length > 0)
-        {
-            WriteEccentricCones(eccentricCones, model, scene);
-        }
-
-        var ellipsoids = primitives.OfType<EllipsoidSegment>().ToArray();
-        if (ellipsoids.Length > 0)
-        {
-            WriteEllipsoidSegments(ellipsoids, model, scene);
-        }
-
-        var generalCylinders = primitives.OfType<GeneralCylinder>().ToArray();
-        if (generalCylinders.Length > 0)
-        {
-            WriteGeneralCylinders(generalCylinders, model, scene);
-        }
-
-        var generalRings = primitives.OfType<GeneralRing>().ToArray();
-        if (generalRings.Length > 0)
-        {
-            WriteGeneralRings(generalRings, model, scene);
-        }
-
-        var nuts = primitives.OfType<Nut>().ToArray();
-        if (nuts.Length > 0)
-        {
-            WriteNuts(nuts, model, scene);
-        }
-
-        var quads = primitives.OfType<Quad>().ToArray();
-        if (quads.Length > 0)
-        {
-            WriteQuads(quads, model, scene);
-        }
-
-        var torus = primitives.OfType<TorusSegment>().ToArray();
-        if (torus.Length > 0)
-        {
-            WriteTorusSegments(torus, model, scene);
-        }
-
-        var trapeziums = primitives.OfType<Trapezium>().ToArray();
-        if (trapeziums.Length > 0)
-        {
-            WriteTrapeziums(trapeziums, model, scene);
-        }
+        Trace.Assert(counter == primitives.Count, "Not all primitives were processed in GltfWriter.");
 
         model.Asset.Copyright = $"Equinor ASA {DateTime.UtcNow.Year}";
         model.Asset.Generator = "rvmsharp";
