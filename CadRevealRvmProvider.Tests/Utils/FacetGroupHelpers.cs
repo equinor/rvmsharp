@@ -2,7 +2,7 @@
 
 using BatchUtils;
 using CadRevealRvmProvider.Operations;
-using Newtonsoft.Json;
+using System.Text.Json;
 using NUnit.Framework;
 using RvmSharp.Exporters;
 using RvmSharp.Primitives;
@@ -113,7 +113,7 @@ public class FacetGroupHelpers
                 objExporter.StartGroup(i.ToString());
                 objExporter.WriteMesh(m!);
 
-                File.WriteAllText($"{directory}/{i}.json", JsonConvert.SerializeObject(t));
+                File.WriteAllText($"{directory}/{i}.json", JsonSerializer.Serialize(t));
                 i++;
             }
 

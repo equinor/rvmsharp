@@ -12,6 +12,7 @@ using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Text.Json;
 using Utils;
 using Writers;
 
@@ -22,14 +23,14 @@ public static class SceneCreator
         uint? ParentSectorId,
         long Depth,
         string Path,
-        string Filename,
+        string? Filename,
         long EstimatedTriangleCount,
         long EstimatedDrawCalls,
+        float MinNodeDiagonal,
+        float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
-        Vector3 SubtreeBoundingBoxMin,
-        Vector3 SubtreeBoundingBoxMax,
-        Vector3 GeometryBoundingBoxMin,
-        Vector3 GeometryBoundingBoxMax
+        BoundingBox SubtreeBoundingBox,
+        BoundingBox? GeometryBoundingBox
     )
     {
         public long DownloadSize { get; init; }
@@ -53,26 +54,25 @@ public static class SceneCreator
     {
         Sector FromSector(SectorInfo sector)
         {
-            if (!sector.Geometries.Any())
-                throw new Exception($"Sector {sector.SectorId} contains Zero geometries. This will cause issues in Reveal. Stopping!: {sector}");
+            float maxDiagonalLength = sector.MaxNodeDiagonal;
+            float minDiagonalLength = sector.MinNodeDiagonal;
 
             // TODO: Check if this may be the correct way to handle min and max diagonal values.
-            float maxDiagonalLength = sector.Geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
-            float minDiagonalLength = sector.Geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal);
+
             return new Sector
             {
                 Id = sector.SectorId,
                 ParentId = sector.ParentSectorId,
                 SubtreeBoundingBox =
                     new SerializableBoundingBox(
-                        Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBoxMin),
-                        Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBoxMax)
+                        Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Min),
+                        Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Max)
                     ),
-                GeometryBoundingBox =
+                GeometryBoundingBox = sector.GeometryBoundingBox!=null?
                     new SerializableBoundingBox(
-                        Min: SerializableVector3.FromVector3(sector.GeometryBoundingBoxMin),
-                        Max: SerializableVector3.FromVector3(sector.GeometryBoundingBoxMax)
-                    ),
+                        Min: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Min),
+                        Max: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Max)
+                    ):null,
                 Depth = sector.Depth,
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
@@ -98,15 +98,21 @@ public static class SceneCreator
 
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
         var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
-        JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath, formatIndented: true);
-        JsonUtils.JsonSerializeToFile(scene, scenePath, formatIndented: true);
+        JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
+#if DEBUG
+        var options = new JsonSerializerOptions();
+        options.WriteIndented = true;
+        JsonUtils.JsonSerializeToFile(scene, scenePath, options);  // We don't want intentation, it doubles the size just for visual inspection of the file
+#else
+        JsonUtils.JsonSerializeToFile(scene, scenePath);  // We don't want intentation, it doubles the size just for visual inspection of the file
+#endif
     }
 
-    public static void ExportSector(SectorInfo sector, string outputDirectory)
+    public static void ExportSectorGeometries(IReadOnlyList<APrimitive> geometries, string sectorFilename, string? outputDirectory)
     {
-        var filePath = Path.Join(outputDirectory, sector.Filename);
+        var filePath = Path.Join(outputDirectory, sectorFilename);
         using var gltfSectorFile = File.Create(filePath);
-        GltfWriter.WriteSector(sector.Geometries, gltfSectorFile);
+        GltfWriter.WriteSector(geometries, gltfSectorFile);
         gltfSectorFile.Flush(true);
     }
 }
