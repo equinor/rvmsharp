@@ -4,7 +4,6 @@ using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Newtonsoft.Json;
 using Operations;
 using Primitives;
 using System;
@@ -99,8 +98,8 @@ public static class SceneCreator
 
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
         var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
-        JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
-        JsonUtils.JsonSerializeToFile(scene, scenePath, Formatting.Indented);
+        JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath, formatIndented: true);
+        JsonUtils.JsonSerializeToFile(scene, scenePath, formatIndented: true);
     }
 
     public static void ExportSector(SectorInfo sector, string outputDirectory)
