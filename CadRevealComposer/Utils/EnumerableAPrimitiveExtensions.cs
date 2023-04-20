@@ -1,7 +1,6 @@
 namespace CadRevealComposer.Utils;
 
 using Primitives;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -10,7 +9,7 @@ public static class EnumerableAPrimitiveExtensions
 {
     public static BoundingBox? CalculateBoundingBox(this IReadOnlyCollection<APrimitive> primitives)
     {
-        if(primitives.Count == 0)
+        if (primitives.Count == 0)
         {
             return null;
         }

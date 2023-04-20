@@ -8,26 +8,32 @@ public class ScaffoldingAttributeParser
     {
         // TODO: Add unit tests
         // TODO: Refactor ParseAttributes
-        var data = CsvReader.ReadFromText(String.Join(Environment.NewLine, fileLines), new CsvOptions()
-        {
-            HeaderMode = HeaderMode.HeaderPresent,
-            RowsToSkip = 1,
-            TrimData = true,
-            Separator = ';'
-        });
-
-        var datas = data.ToDictionary(x => x.Values[0], v =>
-        {
-            var kvp = new Dictionary<string, string>();
-            for (int col = 1; col < v.ColumnCount; col++)
+        var data = CsvReader.ReadFromText(
+            String.Join(Environment.NewLine, fileLines),
+            new CsvOptions()
             {
-                var header = v.Headers[col];
-                var value = v.Values[col];
-                kvp.Add(header, value);
+                HeaderMode = HeaderMode.HeaderPresent,
+                RowsToSkip = 1,
+                TrimData = true,
+                Separator = ';'
             }
+        );
 
-            return kvp;
-        });
+        var datas = data.ToDictionary(
+            x => x.Values[0],
+            v =>
+            {
+                var kvp = new Dictionary<string, string>();
+                for (int col = 1; col < v.ColumnCount; col++)
+                {
+                    var header = v.Headers[col];
+                    var value = v.Values[col];
+                    kvp.Add(header, value);
+                }
+
+                return kvp;
+            }
+        );
 
         return datas;
     }

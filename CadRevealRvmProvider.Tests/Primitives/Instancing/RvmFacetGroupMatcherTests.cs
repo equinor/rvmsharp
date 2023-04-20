@@ -1,11 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Tests.Primitives.Instancing;
 
-using CadRevealRvmProvider.Operations;
 using CadRevealComposer.Utils;
-using NUnit.Framework;
+using Operations;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
-using System;
 using System.Numerics;
 using Utils;
 
@@ -24,7 +22,8 @@ public class RvmFacetGroupMatcherTests
             Vector3.UnitY,
             Vector3.UnitZ,
             Vector3.One,
-            out var transform);
+            out var transform
+        );
 
         Assert.IsTrue(isMatch, "Could not match.");
         Assert.AreEqual(Matrix4x4.Identity, transform);

@@ -14,6 +14,7 @@ public static class RvmPrimitiveExtensions
             throw new ArgumentException("Matrix cannot be inverted, to adjust normals we need to invert input matrix");
         }
         var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
+        // csharpier-ignore -- <- Causes massive whitespace
         return group with
         {
             Polygons = group.Polygons.Select(a => a with

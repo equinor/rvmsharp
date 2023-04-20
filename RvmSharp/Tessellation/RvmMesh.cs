@@ -11,7 +11,8 @@ using System.Numerics;
 // Conversion of RvmMesh to Mesh via CadRevealRvmProvider
 public class RvmMesh : IEquatable<RvmMesh>
 {
-    public static RvmMesh Empty { get; } = new RvmMesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
+    public static RvmMesh Empty { get; } =
+        new RvmMesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
 
     public float Error { get; }
 
@@ -99,9 +100,9 @@ public class RvmMesh : IEquatable<RvmMesh>
         }
 
         return Error.Equals(other.Error)
-               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(0.001f))
-               && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
-               && Triangles.SequenceEqual(other.Triangles);
+            && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(0.001f))
+            && Normals.SequenceEqual(other.Normals, new ToleranceVector3EqualityComparer(tolerance: 0.001f))
+            && Triangles.SequenceEqual(other.Triangles);
     }
 
     public override bool Equals(object? obj)
@@ -132,7 +133,8 @@ public class RvmMesh : IEquatable<RvmMesh>
         }
 
         // Helper to get structural (ListContent-based) hash code
-        static int GetStructuralHashCode<T>(IReadOnlyList<T> input) where T : IEquatable<T>
+        static int GetStructuralHashCode<T>(IReadOnlyList<T> input)
+            where T : IEquatable<T>
         {
             return ((IStructuralEquatable)input).GetHashCode(EqualityComparer<T>.Default);
         }
@@ -150,8 +152,8 @@ public class RvmMesh : IEquatable<RvmMesh>
         public bool Equals(Vector3 x, Vector3 y)
         {
             return Math.Abs(x.X - y.X) < _tolerance
-                   && Math.Abs(x.Y - y.Y) < _tolerance
-                   && Math.Abs(x.Z - y.Z) < _tolerance;
+                && Math.Abs(x.Y - y.Y) < _tolerance
+                && Math.Abs(x.Z - y.Z) < _tolerance;
         }
 
         public int GetHashCode(Vector3 obj)

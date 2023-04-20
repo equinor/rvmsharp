@@ -32,7 +32,7 @@ public static class VectorExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static float[] CopyToNewArray(this Vector4 vector4)
     {
-        return new[] {vector4.X, vector4.Y, vector4.Z, vector4.W};
+        return new[] { vector4.X, vector4.Y, vector4.Z, vector4.W };
     }
 
     /// <summary>
@@ -52,9 +52,9 @@ public static class VectorExtensions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static bool EqualsWithinTolerance(this Vector3 vector, Vector3 other, float tolerance)
     {
-        return Math.Abs(vector.X - other.X) < tolerance &&
-               Math.Abs(vector.Y - other.Y) < tolerance &&
-               Math.Abs(vector.Z - other.Z) < tolerance;
+        return Math.Abs(vector.X - other.X) < tolerance
+            && Math.Abs(vector.Y - other.Y) < tolerance
+            && Math.Abs(vector.Z - other.Z) < tolerance;
     }
 
     /// <summary>
@@ -71,14 +71,20 @@ public static class VectorExtensions
         // - 0f/0f = NaN
         // - epsilon/0f = Infinity
         const float tolerance = 1E-10f;
-        return (float.IsNaN(divided.X) || float.IsInfinity(divided.X)
-                   ? Math.Abs(vector.X - other.X) < tolerance
-                   : (divided.X >= lowerTolerance && divided.X <= upperTolerance)) &&
-               (float.IsNaN(divided.Y) || float.IsInfinity(divided.Y)
-                   ? Math.Abs(vector.Y - other.Y) < tolerance
-                   : (divided.Y >= lowerTolerance && divided.Y <= upperTolerance)) &&
-               (float.IsNaN(divided.Z) || float.IsInfinity(divided.Z)
-                   ? Math.Abs(vector.Z - other.Z) < tolerance
-                   : (divided.Z >= lowerTolerance && divided.Z <= upperTolerance));
+        return (
+                float.IsNaN(divided.X) || float.IsInfinity(divided.X)
+                    ? Math.Abs(vector.X - other.X) < tolerance
+                    : (divided.X >= lowerTolerance && divided.X <= upperTolerance)
+            )
+            && (
+                float.IsNaN(divided.Y) || float.IsInfinity(divided.Y)
+                    ? Math.Abs(vector.Y - other.Y) < tolerance
+                    : (divided.Y >= lowerTolerance && divided.Y <= upperTolerance)
+            )
+            && (
+                float.IsNaN(divided.Z) || float.IsInfinity(divided.Z)
+                    ? Math.Abs(vector.Z - other.Z) < tolerance
+                    : (divided.Z >= lowerTolerance && divided.Z <= upperTolerance)
+            );
     }
 }

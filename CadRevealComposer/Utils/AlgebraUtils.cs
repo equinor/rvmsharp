@@ -44,7 +44,6 @@ public static class AlgebraUtils
         // + start to reset back to start of original range
     }
 
-
     public static (Vector3 normal, float rotationAngle) DecomposeQuaternion(this Quaternion rot)
     {
         var normal = Vector3.Normalize(Vector3.Transform(Vector3.UnitZ, rot));
@@ -74,8 +73,8 @@ public static class AlgebraUtils
             // 3. axes.x * rot1 = x vector without yaw rotation
             // 4. find vector between axes.x*rot and axes.x*rot1 to find yaw rotation
             var rot2 = Quaternion.Normalize(
-                Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes),
-                    MathF.Acos(Vector3.Dot(Vector3.UnitZ, normal))));
+                Quaternion.CreateFromAxisAngle(Vector3.Normalize(axes), MathF.Acos(Vector3.Dot(Vector3.UnitZ, normal)))
+            );
             var rot1 = Quaternion.Normalize(Quaternion.Inverse(rot2) * rot);
             var x1 = Vector3.Transform(Vector3.UnitX, rot1);
 
@@ -115,7 +114,6 @@ public static class AlgebraUtils
         var r32 = 2 * q2 * q3 + 2 * q0 * q1; // sin(rollX) * cos(pitchY)
         var r33 = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3; // cos(rollX) * cos(pitchY)
 
-
         if (Math.Abs(r31) < gimbalLockLimit)
         {
             // Gimbal lock/singularity check
@@ -136,8 +134,10 @@ public static class AlgebraUtils
         }
     }
 
-    public static void AssertEulerAnglesCorrect((float rollX, float pitchY, float yawZ) eulerAngles,
-        Quaternion rotation)
+    public static void AssertEulerAnglesCorrect(
+        (float rollX, float pitchY, float yawZ) eulerAngles,
+        Quaternion rotation
+    )
     {
         (float rollX, float pitchY, float yawZ) = eulerAngles;
         // Assert that converting to euler angels and back gives the same transformation (but not necessarily the same quaternion)
@@ -216,16 +216,22 @@ public static class AlgebraUtils
     /// <param name="rotation">Normalized rotation quaternion</param>
     /// <param name="translation">Vector translation</param>
     /// <returns>True if transform can be decomposed</returns>
-    public static bool DecomposeAndNormalize(this Matrix4x4 transform, out Vector3 scale, out Quaternion rotation,
-        out Vector3 translation)
+    public static bool DecomposeAndNormalize(
+        this Matrix4x4 transform,
+        out Vector3 scale,
+        out Quaternion rotation,
+        out Vector3 translation
+    )
     {
         if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
         {
             rotation = Quaternion.Normalize(rotation);
-            if (rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold) &&
-                rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold) &&
-                rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold) &&
-                rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold))
+            if (
+                rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold)
+                && rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold)
+                && rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold)
+                && rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold)
+            )
             {
                 rotation = Quaternion.Identity;
             }
@@ -251,8 +257,17 @@ public static class AlgebraUtils
     /// <param name="pb4"></param>
     /// <param name="transform">output transformation matrix</param>
     /// <returns>true if there is such matrix</returns>
-    public static bool GetTransform(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4, Vector3 pb1, Vector3 pb2,
-        Vector3 pb3, Vector3 pb4, out Matrix4x4 transform)
+    public static bool GetTransform(
+        Vector3 pa1,
+        Vector3 pa2,
+        Vector3 pa3,
+        Vector3 pa4,
+        Vector3 pb1,
+        Vector3 pb2,
+        Vector3 pb3,
+        Vector3 pb4,
+        out Matrix4x4 transform
+    )
     {
         var va12 = pa2 - pa1;
         var va13 = pa3 - pa1;
@@ -267,11 +282,13 @@ public static class AlgebraUtils
         var scale = Vector3.One;
         if (!dist.ApproximatelyEquals(0, 0.001f))
         {
+            // csharpier-ignore -- Custom matrix formatting
             var vaMatrix = new Matrix4x4(
                 va12.X * va12.X, va12.Y * va12.Y, va12.Z * va12.Z, 0,
                 va13.X * va13.X, va13.Y * va13.Y, va13.Z * va13.Z, 0,
                 va14.X * va14.X, va14.Y * va14.Y, va14.Z * va14.Z, 0,
                 0, 0, 0, 1);
+
             if (!Matrix4x4.Invert(vaMatrix, out var vaMatrixInverse))
             {
                 transform = default;
@@ -311,9 +328,9 @@ public static class AlgebraUtils
             * Matrix4x4.CreateTranslation(translation);
 
         const float OneMillimeter = 0.001f; // assumption: the data is in meters
-        return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), OneMillimeter) &&
-               pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), OneMillimeter) &&
-               pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), OneMillimeter) &&
-               pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), OneMillimeter);
+        return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), OneMillimeter)
+            && pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), OneMillimeter)
+            && pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), OneMillimeter)
+            && pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), OneMillimeter);
     }
 }

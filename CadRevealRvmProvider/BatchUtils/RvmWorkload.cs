@@ -4,16 +4,14 @@ using Commons;
 using RvmSharp;
 using RvmSharp.Containers;
 using RvmSharp.Operations;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 public static class RvmWorkload
 {
     public static (string rvmFilename, string? txtFilename)[] CollectWorkload(
-        IReadOnlyCollection<string> filesAndFolders, string? filter = null)
+        IReadOnlyCollection<string> filesAndFolders,
+        string? filter = null
+    )
     {
         var regexFilter = filter != null ? new Regex(filter) : null;
         var directories = filesAndFolders.Where(Directory.Exists).ToArray();
@@ -23,31 +21,39 @@ public static class RvmWorkload
         if (missingInputs.Any())
         {
             throw new FileNotFoundException(
-                $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}");
+                $"Missing file or folder: {Environment.NewLine}{string.Join(Environment.NewLine, missingInputs)}"
+            );
         }
 
-        var inputFiles =
-            directories.SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
-                .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
-                .Concat(files.Where(x =>
-                    x.EndsWith(".rvm", StringComparison.OrdinalIgnoreCase) ||
-                    x.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))) // Append single files
-                .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
-                .GroupBy(Path.GetFileNameWithoutExtension).ToArray(); // Group by filename (rvm, txt)
+        var inputFiles = directories
+            .SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
+            .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
+            .Concat(
+                files.Where(
+                    x =>
+                        x.EndsWith(".rvm", StringComparison.OrdinalIgnoreCase)
+                        || x.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+                )
+            ) // Append single files
+            .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
+            .GroupBy(Path.GetFileNameWithoutExtension)
+            .ToArray(); // Group by filename (rvm, txt)
 
-        var workload = (from filePair in inputFiles
-            select filePair.ToArray()
-            into filePairStatic
+        var workload = (
+            from filePair in inputFiles
+            select filePair.ToArray() into filePairStatic
             let rvmFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".rvm"))
             let txtFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".txt"))
-            select (rvmFilename, txtFilename)).ToArray();
+            select (rvmFilename, txtFilename)
+        ).ToArray();
 
         var result = new List<(string, string?)>();
         foreach ((string? rvmFilename, string? txtFilename) in workload)
         {
             if (rvmFilename == null)
                 Console.WriteLine(
-                    $"No corresponding RVM file found for attributes: '{txtFilename}', the file will be skipped.");
+                    $"No corresponding RVM file found for attributes: '{txtFilename}', the file will be skipped."
+                );
             else
                 result.Add((rvmFilename, txtFilename));
         }
@@ -58,7 +64,8 @@ public static class RvmWorkload
     public static RvmStore ReadRvmData(
         IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
-        IStringInternPool? stringInternPool = null)
+        IStringInternPool? stringInternPool = null
+    )
     {
         var progress = 0;
         var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
@@ -77,16 +84,13 @@ public static class RvmWorkload
             return rvmFile;
         }
 
-        var rvmFiles = workload
-            .AsParallel()
-            .AsOrdered()
-            .Select(ParseRvmFile)
-            .ToArray();
+        var rvmFiles = workload.AsParallel().AsOrdered().Select(ParseRvmFile).ToArray();
 
         if (stringInternPool != null)
         {
             Console.WriteLine(
-                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}.");
+                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
+            );
         }
 
         var rvmStore = new RvmStore();

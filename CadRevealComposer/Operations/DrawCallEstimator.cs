@@ -51,10 +51,10 @@ public static class DrawCallEstimator
         return primitive switch
         {
             Box => new[] { RenderPrimitive.Box },
-            Circle => new [] { RenderPrimitive.Circle },
+            Circle => new[] { RenderPrimitive.Circle },
             Cone => new[] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.Cone }, // TODO: if one R is 0, should be 1 circle
             EccentricCone => new[] { RenderPrimitive.Circle, RenderPrimitive.Circle, RenderPrimitive.EccentricCone },
-            EllipsoidSegment => new [] { RenderPrimitive.EllipsoidSegment },
+            EllipsoidSegment => new[] { RenderPrimitive.EllipsoidSegment },
             GeneralCylinder => new[] { RenderPrimitive.SlopedCylinder },
             GeneralRing => new[] { RenderPrimitive.TorusSegment },
             Nut => new[] { RenderPrimitive.Nut },
@@ -71,21 +71,23 @@ public static class DrawCallEstimator
         var estimatedPrimitiveDrawCallCount = renderPrimitives.Distinct().Count();
         var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();
 
-        var estimatedTriangleMeshTriangleCount = geometry.OfType<TriangleMesh>()
-            .Select(tm => (long)tm.Mesh.TriangleCount).Sum();
-        var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0
-            ? 1
-            : 0;
+        var estimatedTriangleMeshTriangleCount = geometry
+            .OfType<TriangleMesh>()
+            .Select(tm => (long)tm.Mesh.TriangleCount)
+            .Sum();
+        var estimatedTriangleMeshDrawCallCount = estimatedTriangleMeshTriangleCount > 0 ? 1 : 0;
 
         var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
-        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TemplateMesh.TriangleCount).Sum();
+        var estimatedInstancedMeshTriangleCount = instancedMeshes
+            .Select(im => (long)im.TemplateMesh.TriangleCount)
+            .Sum();
         // Expect 1 DrawCall per distinct instanced mesh
         var estimatedInstancedMeshDrawCallCount = instancedMeshes.DistinctBy(im => im.InstanceId).Count();
 
-        var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +
-                                     estimatedInstancedMeshTriangleCount;
-        var estimatedDrawCallCount = estimatedPrimitiveDrawCallCount + estimatedTriangleMeshDrawCallCount +
-                                     estimatedInstancedMeshDrawCallCount;
+        var estimatedTriangleCount =
+            estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount + estimatedInstancedMeshTriangleCount;
+        var estimatedDrawCallCount =
+            estimatedPrimitiveDrawCallCount + estimatedTriangleMeshDrawCallCount + estimatedInstancedMeshDrawCallCount;
 
         return (estimatedTriangleCount, estimatedDrawCallCount);
     }
@@ -121,9 +123,15 @@ public static class DrawCallEstimator
         var triangleCost = triangleMesh.Mesh.Triangles.Length * sizeof(int);
 
         var verticesLength = triangleMesh.Mesh.Vertices.Length;
-        var positionsCost = verticesLength * 3 /*xyz*/ * sizeof(float);
+        var positionsCost =
+            verticesLength
+            * 3 /*xyz*/
+            * sizeof(float);
         var treeIndexDataCost = verticesLength * 1 * sizeof(int);
-        var colorDataCost = verticesLength * 4 /*RGBA*/ * sizeof(byte);
+        var colorDataCost =
+            verticesLength
+            * 4 /*RGBA*/
+            * sizeof(byte);
 
         return triangleCost + positionsCost + treeIndexDataCost + colorDataCost;
     }

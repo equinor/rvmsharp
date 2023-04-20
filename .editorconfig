@@ -1,4 +1,4 @@
-# Remove the line below if you want to inherit .editorconfig settings from higher directories
+# Set root = false if you want to inherit .editorconfig settings from higher directories
 root = true
 
 # PS Files
@@ -38,8 +38,8 @@ max_line_length = 120
 trim_trailing_whitespace = true
 
 # New line preferences
-end_of_line = crlf
-insert_final_newline = false
+end_of_line = unset
+insert_final_newline = true
 
 #### .NET Coding Conventions ####
 

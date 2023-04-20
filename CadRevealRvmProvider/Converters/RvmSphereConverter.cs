@@ -11,7 +11,8 @@ public static class RvmSphereConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphere rvmSphere,
         ulong treeIndex,
-        Color color)
+        Color color
+    )
     {
         if (!rvmSphere.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -31,6 +32,7 @@ public static class RvmSphereConverter
             normal,
             treeIndex,
             color,
-            rvmSphere.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox());
+            rvmSphere.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+        );
     }
 }

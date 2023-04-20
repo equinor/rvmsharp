@@ -1,18 +1,16 @@
 namespace CadRevealComposer;
 
+using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
 using Primitives;
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Numerics;
-using System.Text.Json;
 using Utils;
 using Writers;
 
@@ -50,7 +48,8 @@ public static class SceneCreator
         ModelParameters parameters,
         DirectoryInfo outputDirectory,
         ulong maxTreeIndex,
-        CameraPositioning.CameraPosition cameraPosition)
+        CameraPositioning.CameraPosition cameraPosition
+    )
     {
         Sector FromSector(SectorInfo sector)
         {
@@ -63,16 +62,17 @@ public static class SceneCreator
             {
                 Id = sector.SectorId,
                 ParentId = sector.ParentSectorId,
-                SubtreeBoundingBox =
-                    new SerializableBoundingBox(
-                        Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Min),
-                        Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Max)
-                    ),
-                GeometryBoundingBox = sector.GeometryBoundingBox!=null?
-                    new SerializableBoundingBox(
-                        Min: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Min),
-                        Max: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Max)
-                    ):null,
+                SubtreeBoundingBox = new SerializableBoundingBox(
+                    Min: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Min),
+                    Max: SerializableVector3.FromVector3(sector.SubtreeBoundingBox.Max)
+                ),
+                GeometryBoundingBox =
+                    sector.GeometryBoundingBox != null
+                        ? new SerializableBoundingBox(
+                            Min: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Min),
+                            Max: SerializableVector3.FromVector3(sector.GeometryBoundingBox.Max)
+                        )
+                        : null,
                 Depth = sector.Depth,
                 Path = sector.Path,
                 EstimatedTriangleCount = sector.EstimatedTriangleCount,
@@ -99,16 +99,14 @@ public static class SceneCreator
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
         var scenePath = Path.Join(outputDirectory.FullName, "scene.json");
         JsonUtils.JsonSerializeToFile(cameraPosition, cameraPath);
-#if DEBUG
-        var options = new JsonSerializerOptions();
-        options.WriteIndented = true;
-        JsonUtils.JsonSerializeToFile(scene, scenePath, options);  // We don't want intentation, it doubles the size just for visual inspection of the file
-#else
-        JsonUtils.JsonSerializeToFile(scene, scenePath);  // We don't want intentation, it doubles the size just for visual inspection of the file
-#endif
+        JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: EnvUtil.IsDebugBuild); // We don't want indentation in prod, it doubles the size. Format in an editor if needed.
     }
 
-    public static void ExportSectorGeometries(IReadOnlyList<APrimitive> geometries, string sectorFilename, string? outputDirectory)
+    public static void ExportSectorGeometries(
+        IReadOnlyList<APrimitive> geometries,
+        string sectorFilename,
+        string? outputDirectory
+    )
     {
         var filePath = Path.Join(outputDirectory, sectorFilename);
         using var gltfSectorFile = File.Create(filePath);

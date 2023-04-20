@@ -7,14 +7,11 @@ using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Tessellation;
 using System.Numerics;
 
-using NUnit.Framework;
-
 [TestFixture]
 public class FbxProviderTests
 {
     private DirectoryInfo outputDirectory = new DirectoryInfo(@".\TestSamples");
     private DirectoryInfo inputDirectory = new DirectoryInfo(@".\TestSamples");
-
 
     [Test]
     public void FbxImporterSdkInitTest()
@@ -63,17 +60,19 @@ public class FbxProviderTests
                 new ModelId(1),
                 new RevisionId(1),
                 new InstancingThreshold(1),
-                new TemplateCountLimit(100));
+                new TemplateCountLimit(100)
+            );
             var composerParameters = new ComposerParameters("", false, true, false);
 
             CadRevealComposerRunner.Process(
-            inputDirectory,
-            outputDirectory,
-            modelParameters,
-            composerParameters,
-            providers);
+                inputDirectory,
+                outputDirectory,
+                modelParameters,
+                composerParameters,
+                providers
+            );
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Assert.Fail("Expected no exception, but got: " + ex.Message);
         }
@@ -86,8 +85,11 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(inputDirectory.EnumerateFiles(),
-            treeIndexGenerator, instanceIndexGenerator);
+        var nodes = modelFormatProviderFbx.ParseFiles(
+            inputDirectory.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator
+        );
 
         Assert.That(nodes.Count() == 28);
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
@@ -106,24 +108,27 @@ public class FbxProviderTests
         using var testLoader = new FbxImporter();
         var rootNode = testLoader.LoadFile(@".\TestSamples\fbx_test_model.fbx");
         var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-        var nodesToProcess = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
-            rootNode,
-            treeIndexGenerator,
-            instanceIndexGenerator,
-            testLoader,
-            lookupA).ToList();
+        var nodesToProcess = FbxNodeToCadRevealNodeConverter
+            .ConvertRecursive(rootNode, treeIndexGenerator, instanceIndexGenerator, testLoader, lookupA)
+            .ToList();
 
-        
         var modelParameters = new ModelParameters(
             new ProjectId(1),
             new ModelId(1),
             new RevisionId(1),
             new InstancingThreshold(1),
-            new TemplateCountLimit(100));
+            new TemplateCountLimit(100)
+        );
         var composerParameters = new ComposerParameters("", false, true, false);
 
         var geometriesToProcess = nodesToProcess.SelectMany(x => x.Geometries);
-        CadRevealComposerRunner.ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters, treeIndexGenerator);
+        CadRevealComposerRunner.ProcessPrimitives(
+            geometriesToProcess.ToArray(),
+            outputDirectory,
+            modelParameters,
+            composerParameters,
+            treeIndexGenerator
+        );
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
     }

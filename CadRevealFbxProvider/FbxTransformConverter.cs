@@ -22,7 +22,6 @@ public struct FbxTransform
 
 public static class FbxTransformConverter
 {
-    
     /// <summary>
     /// Convert a Fbx native Transform to a Matrix4x4
     /// </summary>
@@ -32,8 +31,6 @@ public static class FbxTransformConverter
         var pos = new Vector3(transform.posX, transform.posY, transform.posZ);
         var rot = new Quaternion(transform.rotX, transform.rotY, transform.rotZ, transform.rotW);
         var sca = new Vector3(transform.scaleX, transform.scaleY, transform.scaleZ);
-        return Matrix4x4.CreateScale(sca)
-               * Matrix4x4.CreateFromQuaternion(rot)
-               * Matrix4x4.CreateTranslation(pos);
+        return Matrix4x4.CreateScale(sca) * Matrix4x4.CreateFromQuaternion(rot) * Matrix4x4.CreateTranslation(pos);
     }
 }

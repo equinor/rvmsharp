@@ -37,7 +37,7 @@ public class Mesh : IEquatable<Mesh>
         Array.Copy(triangleData, _triangles, triangleData.Length);
     }
 
-    public Mesh(Vector3[] vertices,  uint[] triangles, float error)
+    public Mesh(Vector3[] vertices, uint[] triangles, float error)
     {
         Error = error;
         _vertices = vertices;
@@ -108,8 +108,8 @@ public class Mesh : IEquatable<Mesh>
         }
 
         return Error.Equals(other.Error)
-               && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(MeshEqualityPrecision))
-               && Triangles.SequenceEqual(other.Triangles);
+            && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(MeshEqualityPrecision))
+            && Triangles.SequenceEqual(other.Triangles);
     }
 
     public override bool Equals(object? obj)
@@ -138,7 +138,8 @@ public class Mesh : IEquatable<Mesh>
         }
 
         // Helper to get structural (ListContent-based) hash code
-        static int GetStructuralHashCode<T>(IReadOnlyList<T> input) where T : IEquatable<T>
+        static int GetStructuralHashCode<T>(IReadOnlyList<T> input)
+            where T : IEquatable<T>
         {
             return ((IStructuralEquatable)input).GetHashCode(EqualityComparer<T>.Default);
         }
@@ -156,8 +157,8 @@ public class Mesh : IEquatable<Mesh>
         public bool Equals(Vector3 x, Vector3 y)
         {
             return Math.Abs(x.X - y.X) < _tolerance
-                   && Math.Abs(x.Y - y.Y) < _tolerance
-                   && Math.Abs(x.Z - y.Z) < _tolerance;
+                && Math.Abs(x.Y - y.Y) < _tolerance
+                && Math.Abs(x.Z - y.Z) < _tolerance;
         }
 
         public int GetHashCode(Vector3 obj)

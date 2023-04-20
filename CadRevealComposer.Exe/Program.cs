@@ -1,16 +1,16 @@
 ﻿namespace CadRevealComposer.Exe;
 
+using CadRevealFbxProvider;
 using CadRevealObjProvider;
 using CadRevealRvmProvider;
-using CadRevealFbxProvider;
 using CommandLine;
 using Configuration;
 using ModelFormatProvider;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.IO;
+using System.Linq;
 
 public static class Program
 {
@@ -23,7 +23,8 @@ public static class Program
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
 
-        var result = Parser.Default.ParseArguments<CommandLineOptions>(args)
+        var result = Parser.Default
+            .ParseArguments<CommandLineOptions>(args)
             .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
         Environment.Exit(result);
     }
@@ -40,23 +41,23 @@ public static class Program
         var timer = Stopwatch.StartNew();
         CommandLineOptions.AssertValidOptions(options);
 
-        var parameters =
-            new ModelParameters(
-                new ProjectId(options.ProjectId),
-                new ModelId(options.ModelId),
-                new RevisionId(options.RevisionId),
-                new InstancingThreshold(options.InstancingThreshold),
-                new TemplateCountLimit(options.TemplateCountLimit)
-            );
+        var parameters = new ModelParameters(
+            new ProjectId(options.ProjectId),
+            new ModelId(options.ModelId),
+            new RevisionId(options.RevisionId),
+            new InstancingThreshold(options.InstancingThreshold),
+            new TemplateCountLimit(options.TemplateCountLimit)
+        );
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");
         var toolsParameters = new ComposerParameters(
             Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
             options.NoInstancing,
             options.SingleSector,
-            options.SplitIntoZones);
+            options.SplitIntoZones
+        );
 
-        if(options.SplitIntoZones)
+        if (options.SplitIntoZones)
         {
             throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
         }
@@ -74,7 +75,8 @@ public static class Program
             options.OutputDirectory,
             parameters,
             toolsParameters,
-            providers);
+            providers
+        );
 
         Console.WriteLine($"Export completed. {nameof(CadRevealComposer)} finished in {timer.Elapsed}");
         return Success;

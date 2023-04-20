@@ -1,9 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Operations;
-using CadRevealComposer.Primitives;
-using NUnit.Framework;
-using System;
+using Primitives;
 using System.Numerics;
 
 // ReSharper disable once UnusedMember.Global
@@ -51,8 +49,11 @@ public class HierarchyComposerConverterTests
         Assert.That(firstNode.RefNoDb, Is.EqualTo(123));
         Assert.That(firstNode.RefNoSequence, Is.EqualTo(321));
         Assert.That(firstNode.PDMSData, Contains.Key("Tag").WithValue("23L0001"));
-        Assert.That(firstNode.PDMSData, Does.Not.ContainKey("RefNo"),
-            "Expecting RefNo to be filtered out of the PDMS data as it is redundant");
+        Assert.That(
+            firstNode.PDMSData,
+            Does.Not.ContainKey("RefNo"),
+            "Expecting RefNo to be filtered out of the PDMS data as it is redundant"
+        );
         Assert.That(firstNode.OptionalDiagnosticInfo, Is.EqualTo(arrangedJson));
     }
 
@@ -72,7 +73,9 @@ public class HierarchyComposerConverterTests
 
         var nodes = new[] { node1 };
 
-        Assert.That(() => HierarchyComposerConverter.ConvertToHierarchyNodes(nodes),
-            Throws.Exception.Message.StartsWith("input was higher than the max uint32 value"));
+        Assert.That(
+            () => HierarchyComposerConverter.ConvertToHierarchyNodes(nodes),
+            Throws.Exception.Message.StartsWith("input was higher than the max uint32 value")
+        );
     }
 }

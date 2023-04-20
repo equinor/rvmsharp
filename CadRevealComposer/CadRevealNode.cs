@@ -54,6 +54,7 @@ public class CadRevealNode
     /// Some nodes are "Notes", and can validly not have any Bounds
     /// </summary>
     public BoundingBox? BoundingBoxAxisAligned;
+
     // Depth
     // Subtree size
 

@@ -27,7 +27,8 @@ public static class GltfWriter
         IReadOnlyList<APrimitive> primitives,
         Action<T[], ModelRoot, Scene> writeFunction,
         ModelRoot model,
-        Scene scene)
+        Scene scene
+    )
     {
         var selectedPrimitives = primitives.OfType<T>().ToArray();
         var primitiveNumber = selectedPrimitives.Length;
@@ -43,7 +44,8 @@ public static class GltfWriter
         if (!BitConverter.IsLittleEndian)
         {
             throw new Exception(
-                "This code copies bytes directly from memory to output and is coded to work with machines having little endian.");
+                "This code copies bytes directly from memory to output and is coded to work with machines having little endian."
+            );
         }
 
         var model = ModelRoot.CreateModel();
@@ -102,17 +104,20 @@ public static class GltfWriter
             var indexBuffer = model.UseBufferView(
                 buffer,
                 byteLength: indicesBufferSize,
-                target: BufferMode.ELEMENT_ARRAY_BUFFER);
+                target: BufferMode.ELEMENT_ARRAY_BUFFER
+            );
             var vertexBuffer = model.UseBufferView(
                 buffer,
                 byteOffset: indicesBufferSize,
                 byteLength: vertexBufferSize,
-                target: BufferMode.ARRAY_BUFFER);
+                target: BufferMode.ARRAY_BUFFER
+            );
             var instanceBuffer = model.UseBufferView(
                 buffer,
                 byteOffset: indicesBufferSize + vertexBufferSize,
                 byteLength: instanceBufferSize,
-                byteStride: byteStride);
+                byteStride: byteStride
+            );
 
             // write indices
             var indexBufferInt = MemoryMarshal.Cast<byte, uint>(indexBuffer.Content.AsSpan());
@@ -145,12 +150,30 @@ public static class GltfWriter
             var colorAccessor = model.CreateAccessor();
             var instanceMatrixAccessor = model.CreateAccessor();
 
-            treeIndexAccessor.SetData(instanceBuffer, 0, instanceCount, DimensionType.SCALAR, EncodingType.FLOAT,
-                false);
-            colorAccessor.SetData(instanceBuffer, 4, instanceCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE,
-                false);
-            instanceMatrixAccessor.SetData(instanceBuffer, 8, instanceCount, DimensionType.MAT4, EncodingType.FLOAT,
-                false);
+            treeIndexAccessor.SetData(
+                instanceBuffer,
+                0,
+                instanceCount,
+                DimensionType.SCALAR,
+                EncodingType.FLOAT,
+                false
+            );
+            colorAccessor.SetData(
+                instanceBuffer,
+                4,
+                instanceCount,
+                DimensionType.VEC4,
+                EncodingType.UNSIGNED_BYTE,
+                false
+            );
+            instanceMatrixAccessor.SetData(
+                instanceBuffer,
+                8,
+                instanceCount,
+                DimensionType.MAT4,
+                EncodingType.FLOAT,
+                false
+            );
 
             // create node
             var node = scene.CreateNode("InstanceMesh");
@@ -183,13 +206,15 @@ public static class GltfWriter
         var indexBuffer = model.UseBufferView(
             buffer,
             byteLength: indexBufferSize,
-            target: BufferMode.ELEMENT_ARRAY_BUFFER);
+            target: BufferMode.ELEMENT_ARRAY_BUFFER
+        );
         var vertexBuffer = model.UseBufferView(
             buffer,
             byteOffset: indexBufferSize,
             byteLength: vertexBufferSize,
             byteStride: vertexBufferByteStride,
-            target: BufferMode.ARRAY_BUFFER);
+            target: BufferMode.ARRAY_BUFFER
+        );
 
         // write all triangle meshes to same buffer
         var indexOffset = 0;
@@ -211,7 +236,8 @@ public static class GltfWriter
             // write vertices
             var treeIndex = (float)triangleMesh.TreeIndex;
             var color = triangleMesh.Color;
-            var vertexBufferSpan = vertexBuffer.Content.AsSpan()
+            var vertexBufferSpan = vertexBuffer.Content
+                .AsSpan()
                 .Slice(vertexOffset * vertexBufferByteStride, sourceMesh.Vertices.Length * vertexBufferByteStride);
 
             var bufferPos = 0;
@@ -460,8 +486,14 @@ public static class GltfWriter
 
         treeIndexAccessor.SetData(bufferView, 0, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         colorAccessor.SetData(bufferView, 4, ellipsoidCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        horizontalRadiusAccessor.SetData(bufferView, 8, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT,
-            false);
+        horizontalRadiusAccessor.SetData(
+            bufferView,
+            8,
+            ellipsoidCount,
+            DimensionType.SCALAR,
+            EncodingType.FLOAT,
+            false
+        );
         verticalRadiusAccessor.SetData(bufferView, 12, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         heightAccessor.SetData(bufferView, 16, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
         centerAccessor.SetData(bufferView, 20, ellipsoidCount, DimensionType.VEC3, EncodingType.FLOAT, false);
@@ -516,8 +548,14 @@ public static class GltfWriter
         var arcAngleAccessor = model.CreateAccessor();
 
         treeIndexAccessor.SetData(bufferView, 0, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, generalCylinderCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE,
-            false);
+        colorAccessor.SetData(
+            bufferView,
+            4,
+            generalCylinderCount,
+            DimensionType.VEC4,
+            EncodingType.UNSIGNED_BYTE,
+            false
+        );
         centerAAccessor.SetData(bufferView, 8, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
         centerBAccessor.SetData(bufferView, 20, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
         radiusAccessor.SetData(bufferView, 32, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
@@ -819,7 +857,6 @@ public static class GltfWriter
         bufferPos += sizeof(float) * 4;
     }
 
-
     /// <summary>
     /// From Gltf v2 spec: (https://www.khronos.org/registry/glTF/specs/2.0/glTF-2.0.html#accessor-data-types)
     /// > Values of NaN, +Infinity, and -Infinity MUST NOT be present.
@@ -836,8 +873,11 @@ public static class GltfWriter
     {
         if (!float.IsFinite(value))
         {
-            throw new ArgumentOutOfRangeException(nameof(value), value,
-                $"value was {value}, and cannot be serialized to gltf json.");
+            throw new ArgumentOutOfRangeException(
+                nameof(value),
+                value,
+                $"value was {value}, and cannot be serialized to gltf json."
+            );
         }
     }
 }

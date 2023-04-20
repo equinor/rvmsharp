@@ -30,7 +30,8 @@ public class Node
 
     public static void RawInsertBatch(SQLiteCommand command, IEnumerable<Node> nodes)
     {
-        command.CommandText = "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
+        command.CommandText =
+            "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
         var nodeIdParameter = command.CreateParameter();
         nodeIdParameter.ParameterName = "$Id";
         var nodeEndIdParameter = command.CreateParameter();
@@ -54,20 +55,22 @@ public class Node
         var diagnosticInfoParameter = command.CreateParameter();
         diagnosticInfoParameter.ParameterName = "$DiagnosticInfo";
 
-        command.Parameters.AddRange(new[]
-        {
-            nodeIdParameter,
-            nodeEndIdParameter,
-            refNoPrefixParameter,
-            refNoDbParameter,
-            refNoSequenceParameter,
-            nameParameter,
-            hasMeshParameter,
-            parentIdParameter,
-            topNodeIdParameter,
-            aabbIdParameter,
-            diagnosticInfoParameter
-        });
+        command.Parameters.AddRange(
+            new[]
+            {
+                nodeIdParameter,
+                nodeEndIdParameter,
+                refNoPrefixParameter,
+                refNoDbParameter,
+                refNoSequenceParameter,
+                nameParameter,
+                hasMeshParameter,
+                parentIdParameter,
+                topNodeIdParameter,
+                aabbIdParameter,
+                diagnosticInfoParameter
+            }
+        );
 
         foreach (Node node in nodes)
         {

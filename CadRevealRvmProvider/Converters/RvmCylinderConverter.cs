@@ -11,14 +11,22 @@ public static class RvmCylinderConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCylinder rvmCylinder,
         ulong treeIndex,
-        Color color)
+        Color color
+    )
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        if(!(float.IsFinite(rotation.X) && float.IsFinite(rotation.Y) && float.IsFinite(rotation.Z) && float.IsFinite(rotation.W)))
+        if (
+            !(
+                float.IsFinite(rotation.X)
+                && float.IsFinite(rotation.Y)
+                && float.IsFinite(rotation.Z)
+                && float.IsFinite(rotation.W)
+            )
+        )
         {
             Console.WriteLine($"Cylinder was removed due to invalid rotation values: {rotation}");
             yield break;
@@ -64,7 +72,7 @@ public static class RvmCylinderConverter
         var centerA = position + normalA * halfHeight;
         var centerB = position + normalB * halfHeight;
 
-        var(showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmCylinder, centerA, centerB);
+        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmCylinder, centerA, centerB);
 
         yield return new Cone(
             Angle: 0f,
@@ -86,13 +94,7 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return new Circle(
-                InstanceMatrix: matrixCapA,
-                Normal: normalA,
-                treeIndex,
-                color,
-                bbox
-            );
+            yield return new Circle(InstanceMatrix: matrixCapA, Normal: normalA, treeIndex, color, bbox);
         }
 
         if (showCapB)
@@ -102,13 +104,7 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            yield return new Circle(
-                InstanceMatrix: matrixCapB,
-                Normal: normalB,
-                treeIndex,
-                color,
-                bbox
-            );
+            yield return new Circle(InstanceMatrix: matrixCapB, Normal: normalB, treeIndex, color, bbox);
         }
     }
 }

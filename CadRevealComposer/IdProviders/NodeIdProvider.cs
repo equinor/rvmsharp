@@ -17,8 +17,7 @@ public class NodeIdProvider
         ulong value;
         do
         {
-            value = (uint)Random.Shared.Next(0,
-                Int32.MaxValue); // TODO: Expand to Javascript Safe Number range ((2^53)-1)
+            value = (uint)Random.Shared.Next(0, Int32.MaxValue); // TODO: Expand to Javascript Safe Number range ((2^53)-1)
         } while (!_generatedIds.TryAdd(value, 0));
 
         return value;

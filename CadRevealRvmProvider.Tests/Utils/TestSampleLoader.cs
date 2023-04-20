@@ -4,8 +4,12 @@ using System.Text.Json;
 
 public static class TestSampleLoader
 {
-    public static readonly string TestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples"));
-    public static readonly string GlobalTestSamplesDirectory = Path.GetFullPath(Path.Join(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "TestSamples"));
+    public static readonly string TestSamplesDirectory = Path.GetFullPath(
+        Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples")
+    );
+    public static readonly string GlobalTestSamplesDirectory = Path.GetFullPath(
+        Path.Join(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "TestSamples")
+    );
 
     /// <summary>
     /// Loads test sample from TestSamples folder.
@@ -20,6 +24,6 @@ public static class TestSampleLoader
     {
         var options = new JsonSerializerOptions();
         options.IncludeFields = true;
-        return JsonSerializer.Deserialize<T>(File.ReadAllText(Path.Combine(TestSamplesDirectory, filename)),options)!;
+        return JsonSerializer.Deserialize<T>(File.ReadAllText(Path.Combine(TestSamplesDirectory, filename)), options)!;
     }
 }

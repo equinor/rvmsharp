@@ -20,7 +20,8 @@ public class RvmTessellator
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult,
-        InstanceIdGenerator instanceIdGenerator)
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
@@ -42,8 +43,10 @@ public class RvmTessellator
 
         var facetGroupInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template,
-                x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform))
+            .GroupBy(
+                result => (RvmPrimitive)result.Template,
+                x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform)
+            )
             .ToArray();
 
         var pyramidsInstanced = pyramidInstancingResult
@@ -56,21 +59,36 @@ public class RvmTessellator
         var meshes = facetGroupInstanced
             .Concat(pyramidsInstanced)
             .AsParallel()
-            .Select(g => (InstanceGroup: g, Mesh: Tessellate(g.Key), InstanceId: instanceIdGenerator.GetNextId() /* Must be identical for all instances of this mesh */ ))
+            .Select(
+                g =>
+                    (
+                        InstanceGroup: g,
+                        Mesh: Tessellate(g.Key),
+                        InstanceId: instanceIdGenerator.GetNextId() /* Must be identical for all instances of this mesh */
+                    )
+            )
             .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
         Console.WriteLine(
-            $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}");
+            $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}"
+        );
 
         var instancedMeshes = meshes
-            .SelectMany(group => group.InstanceGroup.Select(item => new InstancedMesh(
-                InstanceId: group.InstanceId,
-                ConvertRvmMesh(group.Mesh),
-                item.Transform,
-                item.ProtoMesh.TreeIndex,
-                item.ProtoMesh.Color,
-                item.ProtoMesh.AxisAlignedBoundingBox)))
+            .SelectMany(
+                group =>
+                    group.InstanceGroup.Select(
+                        item =>
+                            new InstancedMesh(
+                                InstanceId: group.InstanceId,
+                                ConvertRvmMesh(group.Mesh),
+                                item.Transform,
+                                item.ProtoMesh.TreeIndex,
+                                item.ProtoMesh.Color,
+                                item.ProtoMesh.AxisAlignedBoundingBox
+                            )
+                    )
+            )
             .ToArray();
 
         // tessellate and create TriangleMesh objects
@@ -83,10 +101,7 @@ public class RvmTessellator
             .ToArray();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
 
-        return instancedMeshes
-            .Cast<APrimitive>()
-            .Concat(triangleMeshes)
-            .ToArray();
+        return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }
 
     public static RvmMesh Tessellate(RvmPrimitive primitive)
@@ -114,12 +129,11 @@ public class RvmTessellator
             else
             {
                 throw new NotImplementedException(
-                    $"Could not tessellate primitive of type {primitive.GetType()}. \n{primitive}. This is unexpected. If this needs to be handled add a case for it");
+                    $"Could not tessellate primitive of type {primitive.GetType()}. \n{primitive}. This is unexpected. If this needs to be handled add a case for it"
+                );
             }
         }
 
         return mesh;
     }
-
-
 }

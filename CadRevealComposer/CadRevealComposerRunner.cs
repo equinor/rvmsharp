@@ -25,7 +25,8 @@ public static class CadRevealComposerRunner
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
-        IReadOnlyList<IModelFormatProvider> modelFormatProviders)
+        IReadOnlyList<IModelFormatProvider> modelFormatProviders
+    )
     {
         var totalTimeElapsed = Stopwatch.StartNew();
 
@@ -37,13 +38,16 @@ public static class CadRevealComposerRunner
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
-            IReadOnlyList<CadRevealNode> cadRevealNodes =
-                modelFormatProvider.ParseFiles(inputFolderPath.EnumerateFiles(), treeIndexGenerator,
-                    instanceIdGenerator);
+            IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
+                inputFolderPath.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIdGenerator
+            );
             if (cadRevealNodes != null)
             {
                 Console.WriteLine(
-                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes.");
+                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
+                );
 
                 if (cadRevealNodes.Count > 0)
                 {
@@ -60,7 +64,8 @@ public static class CadRevealComposerRunner
                         inputGeometries,
                         composerParameters,
                         modelParameters,
-                        instanceIdGenerator);
+                        instanceIdGenerator
+                    );
                     geometriesToProcess.AddRange(geometriesIncludingMeshes);
                 }
             }
@@ -73,25 +78,35 @@ public static class CadRevealComposerRunner
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
             SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
             Console.WriteLine(
-                $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
+                $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
+            );
         });
 
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        ProcessPrimitives(geometriesToProcess.ToArray(), outputDirectory, modelParameters, composerParameters,
-            treeIndexGenerator);
+        ProcessPrimitives(
+            geometriesToProcess.ToArray(),
+            outputDirectory,
+            modelParameters,
+            composerParameters,
+            treeIndexGenerator
+        );
 
-        if (!exportHierarchyDatabaseTask.IsCompleted) Console.WriteLine("Waiting for hierarchy export to complete...");
+        if (!exportHierarchyDatabaseTask.IsCompleted)
+            Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(APrimitive[] allPrimitives, DirectoryInfo outputDirectory,
+    public static void ProcessPrimitives(
+        APrimitive[] allPrimitives,
+        DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
-        TreeIndexGenerator treeIndexGenerator)
+        TreeIndexGenerator treeIndexGenerator
+    )
     {
         var stopwatch = Stopwatch.StartNew();
 
@@ -109,16 +124,12 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter
-            .SplitIntoSectors(allPrimitives)
-            .OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        var sectorInfos = sectors
-            .Select(s => SerializeSector(s, outputDirectory.FullName))
-            .ToArray();
+        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -133,7 +144,8 @@ public static class CadRevealComposerRunner
             modelParameters,
             outputDirectory,
             treeIndexGenerator.CurrentMaxGeneratedIndex,
-            cameraPosition);
+            cameraPosition
+        );
 
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -144,30 +156,45 @@ public static class CadRevealComposerRunner
         // Helpers
         static float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
 
-
-        (string, string, string, string, string, string, string, string, string, string) headers = ("Depth", "Sectors", "μ drawCalls", "μ Triangles", "μ sectDiam", "^ sectDiam", "v sectDiam", "μ s/l part", "μ DLsize", "v DLsize");
+        (string, string, string, string, string, string, string, string, string, string) headers = (
+            "Depth",
+            "Sectors",
+            "μ drawCalls",
+            "μ Triangles",
+            "μ sectDiam",
+            "^ sectDiam",
+            "v sectDiam",
+            "μ s/l part",
+            "μ DLsize",
+            "v DLsize"
+        );
         // Add stuff you would like for a quick overview here:
         using (new TeamCityLogBlock("Sector Stats"))
         {
             Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
             Console.WriteLine(
-                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB");
+                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB"
+            );
             Console.WriteLine(
-                $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}");
+                $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}"
+            );
             Console.WriteLine($"Depth Stats:");
-            Console.WriteLine($"|{headers.Item1,5}|{headers.Item2,7}|{headers.Item3,10}|{headers.Item4,11}|{headers.Item5,10}|{headers.Item6,10}|{headers.Item7,10}|{headers.Item8,17}|{headers.Item9,10}|{headers.Item10,8}|");
+            Console.WriteLine(
+                $"|{headers.Item1, 5}|{headers.Item2, 7}|{headers.Item3, 10}|{headers.Item4, 11}|{headers.Item5, 10}|{headers.Item6, 10}|{headers.Item7, 10}|{headers.Item8, 17}|{headers.Item9, 10}|{headers.Item10, 8}|"
+            );
             Console.WriteLine(new String('-', 110));
-            foreach (IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize.GroupBy(x => x.Depth)
-                         .OrderBy(x => x.Key))
+            foreach (
+                IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize
+                    .GroupBy(x => x.Depth)
+                    .OrderBy(x => x.Key)
+            )
             {
                 var anyHasGeometry = g.Any(x => x.Geometries.Any());
                 var sizeMinAvgExceptEmpty = anyHasGeometry
-                    ? g.Where(x => x.Geometries.Any()).Average(x =>
-                        x.MinNodeDiagonal)
+                    ? g.Where(x => x.Geometries.Any()).Average(x => x.MinNodeDiagonal)
                     : 0;
                 var sizeMaxAvgExceptEmpty = anyHasGeometry
-                    ? g.Where(x => x.Geometries.Any()).Average(x =>
-                        x.MaxNodeDiagonal)
+                    ? g.Where(x => x.Geometries.Any()).Average(x => x.MaxNodeDiagonal)
                     : 0;
                 var maxSize = "N/A";
                 if (g.Count() > 1)
@@ -176,18 +203,18 @@ public static class CadRevealComposerRunner
                 }
 
                 var formatted = $@"|
-{g.Key,5}|
-{g.Count(),7}|
-{g.Average(x => x.EstimatedDrawCalls),11:F2}|
-{g.Average(x => x.EstimatedTriangleCount),11:F0}|
-{g.Average(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
-{g.Min(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
-{g.Max(x => x.SubtreeBoundingBox.Diagonal),9:F2}m|
-{sizeMinAvgExceptEmpty,7:F2}m/{sizeMaxAvgExceptEmpty,7:F2}m|
-{g.Average(x => x.DownloadSize / 1024f / 1024f),8:F}MB|
-{maxSize,8}|
+{g.Key, 5}|
+{g.Count(), 7}|
+{g.Average(x => x.EstimatedDrawCalls), 11:F2}|
+{g.Average(x => x.EstimatedTriangleCount), 11:F0}|
+{g.Average(x => x.SubtreeBoundingBox.Diagonal), 9:F2}m|
+{g.Min(x => x.SubtreeBoundingBox.Diagonal), 9:F2}m|
+{g.Max(x => x.SubtreeBoundingBox.Diagonal), 9:F2}m|
+{sizeMinAvgExceptEmpty, 7:F2}m/{sizeMaxAvgExceptEmpty, 7:F2}m|
+{g.Average(x => x.DownloadSize / 1024f / 1024f), 8:F}MB|
+{maxSize, 8}|
 ".Replace(Environment.NewLine, "");
-             Console.WriteLine(formatted);
+                Console.WriteLine(formatted);
             }
         }
     }
@@ -218,7 +245,9 @@ public static class CadRevealComposerRunner
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
-        IEnumerable<SceneCreator.SectorInfo> sectors, DirectoryInfo outputDirectory)
+        IEnumerable<SceneCreator.SectorInfo> sectors,
+        DirectoryInfo outputDirectory
+    )
     {
         foreach (var sector in sectors)
         {
@@ -229,11 +258,13 @@ public static class CadRevealComposerRunner
             else
             {
                 var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-                yield return sector with { DownloadSize = new FileInfo(filepath).Length };
+                yield return sector with
+                {
+                    DownloadSize = new FileInfo(filepath).Length
+                };
             }
         }
     }
-
 
     private static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
     {
@@ -242,24 +273,29 @@ public static class CadRevealComposerRunner
         var afterOptimizationTotalVertices = 0;
         var timer = Stopwatch.StartNew();
         // Optimize TriangleMesh meshes for least memory use
-        var processedGeometries = geometriesToProcess.AsParallel().AsOrdered().Select(primitive =>
-        {
-            if (primitive is not TriangleMesh triangleMesh)
+        var processedGeometries = geometriesToProcess
+            .AsParallel()
+            .AsOrdered()
+            .Select(primitive =>
             {
-                return primitive;
-            }
+                if (primitive is not TriangleMesh triangleMesh)
+                {
+                    return primitive;
+                }
 
-            Mesh newMesh = MeshTools.DeduplicateVertices(triangleMesh.Mesh);
-            Interlocked.Increment(ref meshCount);
-            Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
-            Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
-            return triangleMesh with { Mesh = newMesh };
-        }).ToList();
+                Mesh newMesh = MeshTools.DeduplicateVertices(triangleMesh.Mesh);
+                Interlocked.Increment(ref meshCount);
+                Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
+                Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
+                return triangleMesh with { Mesh = newMesh };
+            })
+            .ToList();
 
         using (new TeamCityLogBlock("Vertex Dedupe Stats"))
         {
             Console.WriteLine(
-                $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices,11}\nAfter:  {afterOptimizationTotalVertices,11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices,11:P2}\nTime: {timer.Elapsed}");
+                $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices, 11}\nAfter:  {afterOptimizationTotalVertices, 11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices, 11:P2}\nTime: {timer.Elapsed}"
+            );
         }
 
         return processedGeometries;

@@ -9,30 +9,30 @@ using System.Diagnostics;
 
 static internal class RvmStoreToCadRevealNodesConverter
 {
-    public static CadRevealNode[] RvmStoreToCadRevealNodes(RvmStore rvmStore,
-        TreeIndexGenerator treeIndexGenerator)
+    public static CadRevealNode[] RvmStoreToCadRevealNodes(RvmStore rvmStore, TreeIndexGenerator treeIndexGenerator)
     {
         var cadRevealRootNodes = rvmStore.RvmFiles
             .SelectMany(f => f.Model.Children)
-            .Select(root =>
-                CollectGeometryNodesRecursive(root, parent: null,
-                    treeIndexGenerator))
+            .Select(root => CollectGeometryNodesRecursive(root, parent: null, treeIndexGenerator))
             .ToArray();
 
         var subBoundingBox = cadRevealRootNodes
             .Select(x => x.BoundingBoxAxisAligned)
             .WhereNotNull()
-            .ToArray().Aggregate((a, b) => a.Encapsulate(b));
+            .ToArray()
+            .Aggregate((a, b) => a.Encapsulate(b));
 
-        Trace.Assert(subBoundingBox != null,
-            "Root node has no bounding box. Are there any meshes in the input?");
+        Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
         return allNodes;
     }
 
-    private static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode? parent,
-        TreeIndexGenerator treeIndexGenerator)
+    private static CadRevealNode CollectGeometryNodesRecursive(
+        RvmNode root,
+        CadRevealNode? parent,
+        TreeIndexGenerator treeIndexGenerator
+    )
     {
         var newNode = new CadRevealNode
         {
@@ -48,42 +48,49 @@ static internal class RvmStoreToCadRevealNodesConverter
 
         if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
         {
-            childrenCadNodes = root.Children.Select(child =>
-            {
-                switch (child)
+            childrenCadNodes = root.Children
+                .Select(child =>
                 {
-                    case RvmPrimitive rvmPrimitive:
-                        return CollectGeometryNodesRecursive(
-                            new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
-                            {
-                                Children = { rvmPrimitive }
-                            }, newNode, treeIndexGenerator);
-                    case RvmNode rvmNode:
-                        return CollectGeometryNodesRecursive(rvmNode, newNode, treeIndexGenerator);
-                    default:
-                        throw new Exception();
-                }
-            }).ToArray();
+                    switch (child)
+                    {
+                        case RvmPrimitive rvmPrimitive:
+                            return CollectGeometryNodesRecursive(
+                                new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
+                                {
+                                    Children = { rvmPrimitive }
+                                },
+                                newNode,
+                                treeIndexGenerator
+                            );
+                        case RvmNode rvmNode:
+                            return CollectGeometryNodesRecursive(rvmNode, newNode, treeIndexGenerator);
+                        default:
+                            throw new Exception();
+                    }
+                })
+                .ToArray();
         }
         else
         {
-            childrenCadNodes = root.Children.OfType<RvmNode>()
+            childrenCadNodes = root.Children
+                .OfType<RvmNode>()
                 .Select(n => CollectGeometryNodesRecursive(n, newNode, treeIndexGenerator))
                 .ToArray();
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
         }
 
         newNode.Geometries = rvmGeometries
-            .SelectMany(primitive =>
-                RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root))
+            .SelectMany(primitive => RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root))
             .ToArray();
 
         newNode.Children = childrenCadNodes;
 
-        var primitiveBoundingBoxes = root.Children.OfType<RvmPrimitive>()
-            .Select(x => x.CalculateAxisAlignedBoundingBox()?.ToCadRevealBoundingBox()).WhereNotNull().ToArray();
-        var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned)
-            .WhereNotNull();
+        var primitiveBoundingBoxes = root.Children
+            .OfType<RvmPrimitive>()
+            .Select(x => x.CalculateAxisAlignedBoundingBox()?.ToCadRevealBoundingBox())
+            .WhereNotNull()
+            .ToArray();
+        var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned).WhereNotNull();
 
         var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
         newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()

@@ -26,21 +26,13 @@ public class RvmPyramidConverterTests
             OffsetX: 5,
             OffsetY: 6,
             Height: 7
-            );
+        );
     }
 
     [Test]
     public void RvmPyramidConverter_WhenTopAndBottomIsEqualAndNoOffset_IsBox()
     {
-        var pyramid = _rvmPyramid with
-        {
-            BottomX = 1,
-            BottomY = 2,
-            TopX = 1,
-            TopY = 2,
-            OffsetX = 0,
-            OffsetY = 0,
-        };
+        var pyramid = _rvmPyramid with { BottomX = 1, BottomY = 2, TopX = 1, TopY = 2, OffsetX = 0, OffsetY = 0, };
 
         var geometries = pyramid.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 

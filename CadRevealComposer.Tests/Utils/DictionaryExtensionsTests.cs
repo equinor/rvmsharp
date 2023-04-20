@@ -1,8 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Utils;
-using NUnit.Framework;
-using System.Collections.Generic;
 
 public class DictionaryExtensionsTests
 {

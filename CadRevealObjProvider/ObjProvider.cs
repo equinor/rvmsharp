@@ -17,13 +17,15 @@ public class ObjProvider : IModelFormatProvider
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator)
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
         var objLoaderFactory = new ObjLoaderFactory();
         var objLoader = objLoaderFactory.Create();
         var meshes = new List<ObjMesh>();
-        foreach (FileInfo filePath in filesToParse.Where(x =>
-                     x.Extension.Equals(".obj", StringComparison.OrdinalIgnoreCase)))
+        foreach (
+            FileInfo filePath in filesToParse.Where(x => x.Extension.Equals(".obj", StringComparison.OrdinalIgnoreCase))
+        )
         {
             using var objFileStream = filePath.OpenRead();
             var result = objLoader.Load(objFileStream);
@@ -40,15 +42,17 @@ public class ObjProvider : IModelFormatProvider
         foreach (ObjMesh meshGroup in meshes)
         {
             var treeIndex = treeIndexGenerator.GetNextId();
-            nodes.Add(new CadRevealNode()
-            {
-                BoundingBoxAxisAligned = meshGroup.CalculateBoundingBox(),
-                Children = null,
-                TreeIndex = treeIndex,
-                Parent = null,
-                Name = meshGroup.Name,
-                Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
-            });
+            nodes.Add(
+                new CadRevealNode()
+                {
+                    BoundingBoxAxisAligned = meshGroup.CalculateBoundingBox(),
+                    Children = null,
+                    TreeIndex = treeIndex,
+                    Parent = null,
+                    Name = meshGroup.Name,
+                    Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
+                }
+            );
         }
 
         return nodes;
@@ -59,16 +63,22 @@ public class ObjProvider : IModelFormatProvider
         return new APrimitive[]
         {
             // Reveal does not use normals, so we discard them here.
-            new TriangleMesh(new Mesh(mesh.Vertices, mesh.Triangles, 0), treeIndex,
-                Color.Magenta /* TODO: Add color support */,
-                mesh.CalculateBoundingBox())
+            new TriangleMesh(
+                new Mesh(mesh.Vertices, mesh.Triangles, 0),
+                treeIndex,
+                Color.Magenta /* TODO: Add color support */
+                ,
+                mesh.CalculateBoundingBox()
+            )
         };
     }
 
-    public APrimitive[] ProcessGeometries(APrimitive[] geometries,
+    public APrimitive[] ProcessGeometries(
+        APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator)
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
         return geometries;
     }
@@ -80,6 +90,7 @@ public class ObjProvider : IModelFormatProvider
         public Vector3[] Vertices { get; init; } = Array.Empty<Vector3>();
 
         public Vector3[] Normals { get; init; } = Array.Empty<Vector3>();
+
         // public int[] ColorIndices { get; set; }
         // public Color[] Colors { get; set; }
 
@@ -91,10 +102,7 @@ public class ObjProvider : IModelFormatProvider
         }
     }
 
-    private record VertexData(
-        Vector3 Vertex,
-        Vector3 Normal
-    );
+    private record VertexData(Vector3 Vertex, Vector3 Normal);
 
     private static ObjMesh? ReadMeshFromGroup(Group group, LoadResult result)
     {
@@ -119,21 +127,31 @@ public class ObjProvider : IModelFormatProvider
                 generatedNormal = Vector3.Normalize(generatedNormal.Value);
             }
 
-
             var i1 = groupFace[0];
-            vertexData.Add(new VertexData(ToVector3(result.Vertices[i1.VertexIndex - 1]),
-                generatedNormal ?? ToVector3(result.Normals[i1.NormalIndex - 1])));
+            vertexData.Add(
+                new VertexData(
+                    ToVector3(result.Vertices[i1.VertexIndex - 1]),
+                    generatedNormal ?? ToVector3(result.Normals[i1.NormalIndex - 1])
+                )
+            );
             triangles.Add(index++);
             var i2 = groupFace[1];
-            vertexData.Add(new VertexData(ToVector3(result.Vertices[i2.VertexIndex - 1]),
-                generatedNormal ?? ToVector3(result.Normals[i2.NormalIndex - 1])));
+            vertexData.Add(
+                new VertexData(
+                    ToVector3(result.Vertices[i2.VertexIndex - 1]),
+                    generatedNormal ?? ToVector3(result.Normals[i2.NormalIndex - 1])
+                )
+            );
             triangles.Add(index++);
             var i3 = groupFace[2];
-            vertexData.Add(new VertexData(ToVector3(result.Vertices[i3.VertexIndex - 1]),
-                generatedNormal ?? ToVector3(result.Normals[i3.NormalIndex - 1])));
+            vertexData.Add(
+                new VertexData(
+                    ToVector3(result.Vertices[i3.VertexIndex - 1]),
+                    generatedNormal ?? ToVector3(result.Normals[i3.NormalIndex - 1])
+                )
+            );
             triangles.Add(index++);
         }
-
 
         var mesh = new ObjMesh()
         {

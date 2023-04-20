@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Commons\Commons.csproj" />
       <ProjectReference Include="..\HierarchyComposer\HierarchyComposer.csproj" />
     </ItemGroup>
 

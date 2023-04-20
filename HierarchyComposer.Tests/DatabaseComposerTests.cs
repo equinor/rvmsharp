@@ -57,13 +57,11 @@ public class DatabaseComposerTests
             }
         };
 
-
         databaseComposer.ComposeDatabase(nodes, TestFilePath);
 
         Assert.That(TestFilePath, Does.Exist.IgnoreDirectories);
 
         var databaseFileInfo = new FileInfo(TestFilePath);
-        Assert.That(databaseFileInfo,
-            Has.Length.GreaterThan(0)); // Simple check that anything happened to the database.
+        Assert.That(databaseFileInfo, Has.Length.GreaterThan(0)); // Simple check that anything happened to the database.
     }
 }

@@ -1,6 +1,5 @@
 namespace CadRevealComposer.Tests;
 
-
 [TestFixture]
 public class ProgramTests
 {

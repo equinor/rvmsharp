@@ -6,9 +6,7 @@ using CadRevealComposer.IdProviders;
 public class ObjProviderTests
 {
     [SetUp]
-    public void Setup()
-    {
-    }
+    public void Setup() { }
 
     [Test]
     [Explicit("Temp test, requires non-checked in obj file")]
@@ -16,7 +14,10 @@ public class ObjProviderTests
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
-        new ObjProvider().ParseFiles(new [] { new FileInfo("TestData/HDA_subset.obj")}, treeIndexGenerator, instanceIdGenerator);
-
+        new ObjProvider().ParseFiles(
+            new[] { new FileInfo("TestData/HDA_subset.obj") },
+            treeIndexGenerator,
+            instanceIdGenerator
+        );
     }
 }

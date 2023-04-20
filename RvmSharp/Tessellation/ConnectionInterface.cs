@@ -36,136 +36,141 @@ internal class ConnectionInterface
         switch (geo)
         {
             case RvmPyramid pyramid:
+            {
+                var bx = 0.5f * pyramid.BottomX;
+                var by = 0.5f * pyramid.BottomY;
+                var tx = 0.5f * pyramid.TopX;
+                var ty = 0.5f * pyramid.TopY;
+                var ox = 0.5f * pyramid.OffsetX;
+                var oy = 0.5f * pyramid.OffsetY;
+                var h2 = 0.5f * pyramid.Height;
+                Vector3[,] quad =
                 {
-                    var bx = 0.5f * pyramid.BottomX;
-                    var by = 0.5f * pyramid.BottomY;
-                    var tx = 0.5f * pyramid.TopX;
-                    var ty = 0.5f * pyramid.TopY;
-                    var ox = 0.5f * pyramid.OffsetX;
-                    var oy = 0.5f * pyramid.OffsetY;
-                    var h2 = 0.5f * pyramid.Height;
-                    Vector3[,] quad =
                     {
-                        {
-                            new Vector3(-bx - ox, -by - oy, -h2),
-                            new Vector3(bx - ox, -by - oy, -h2),
-                            new Vector3(bx - ox, by - oy, -h2),
-                            new Vector3(-bx - ox, by - oy, -h2)
-                        },
-                        {
-                            new Vector3(-tx + ox, -ty + oy, h2),
-                            new Vector3(tx + ox, -ty + oy, h2),
-                            new Vector3(tx + ox, ty + oy, h2),
-                            new Vector3(-tx + ox, ty + oy, h2)
-                        },
-                    };
+                        new Vector3(-bx - ox, -by - oy, -h2),
+                        new Vector3(bx - ox, -by - oy, -h2),
+                        new Vector3(bx - ox, by - oy, -h2),
+                        new Vector3(-bx - ox, by - oy, -h2)
+                    },
+                    {
+                        new Vector3(-tx + ox, -ty + oy, h2),
+                        new Vector3(tx + ox, -ty + oy, h2),
+                        new Vector3(tx + ox, ty + oy, h2),
+                        new Vector3(-tx + ox, ty + oy, h2)
+                    },
+                };
 
-                    connectionInterface.InterfaceType = Type.Square;
-                    if (o < 4)
-                    {
-                        var oo = (o + 1) & 3;
-                        connectionInterface.SquareConnectionPoints[0] = Vector3.Transform(quad[0, o], geo.Matrix);
-                        connectionInterface.SquareConnectionPoints[1] = Vector3.Transform(quad[0, oo], geo.Matrix);
-                        connectionInterface.SquareConnectionPoints[2] = Vector3.Transform(quad[1, oo], geo.Matrix);
-                        connectionInterface.SquareConnectionPoints[3] = Vector3.Transform(quad[1, o], geo.Matrix);
-                    }
-                    else
-                    {
-                        for (var k = 0; k < 4; k++)
-                        {
-                            connectionInterface.SquareConnectionPoints[k] =
-                                Vector3.Transform(quad[o - 4, k], geo.Matrix);
-                        }
-                    }
-
-                    break;
+                connectionInterface.InterfaceType = Type.Square;
+                if (o < 4)
+                {
+                    var oo = (o + 1) & 3;
+                    connectionInterface.SquareConnectionPoints[0] = Vector3.Transform(quad[0, o], geo.Matrix);
+                    connectionInterface.SquareConnectionPoints[1] = Vector3.Transform(quad[0, oo], geo.Matrix);
+                    connectionInterface.SquareConnectionPoints[2] = Vector3.Transform(quad[1, oo], geo.Matrix);
+                    connectionInterface.SquareConnectionPoints[3] = Vector3.Transform(quad[1, o], geo.Matrix);
                 }
-            case RvmBox box:
+                else
                 {
-                    var xp = 0.5f * box.LengthX;
-                    var xm = -xp;
-                    var yp = 0.5f * box.LengthY;
-                    var ym = -yp;
-                    var zp = 0.5f * box.LengthZ;
-                    var zm = -zp;
-                    Vector3[,] V =
-                    {
-                        {
-                            new Vector3(xm, ym, zp),
-                            new Vector3(xm, yp, zp),
-                            new Vector3(xm, yp, zm),
-                            new Vector3(xm, ym, zm)
-                        },
-                        {
-                            new Vector3(xp, ym, zm),
-                            new Vector3(xp, yp, zm),
-                            new Vector3(xp, yp, zp),
-                            new Vector3(xp, ym, zp)
-                        },
-                        {
-                            new Vector3(xp, ym, zm),
-                            new Vector3(xp, ym, zp),
-                            new Vector3(xm, ym, zp),
-                            new Vector3(xm, ym, zm)
-                        },
-                        {
-                            new Vector3(xm, yp, zm),
-                            new Vector3(xm, yp, zp),
-                            new Vector3(xp, yp, zp),
-                            new Vector3(xp, yp, zm)
-                        },
-                        {
-                            new Vector3(xm, yp, zm),
-                            new Vector3(xp, yp, zm),
-                            new Vector3(xp, ym, zm),
-                            new Vector3(xm, ym, zm)
-                        },
-                        {
-                            new Vector3(xm, ym, zp),
-                            new Vector3(xp, ym, zp),
-                            new Vector3(xp, yp, zp),
-                            new Vector3(xm, yp, zp)
-                        }
-                    };
-
                     for (var k = 0; k < 4; k++)
                     {
-                        connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(V[o, k], geo.Matrix);
+                        connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(quad[o - 4, k], geo.Matrix);
                     }
-
-                    break;
                 }
-            case RvmRectangularTorus tor:
+
+                break;
+            }
+            case RvmBox box:
+            {
+                var xp = 0.5f * box.LengthX;
+                var xm = -xp;
+                var yp = 0.5f * box.LengthY;
+                var ym = -yp;
+                var zp = 0.5f * box.LengthZ;
+                var zm = -zp;
+                Vector3[,] V =
                 {
-                    var h2 = 0.5f * tor.Height;
-                    float[,] square =
                     {
-                        {tor.RadiusOuter, -h2},
-                        {tor.RadiusInner, -h2},
-                        {tor.RadiusInner, h2},
-                        {tor.RadiusOuter, h2},
-                    };
-                    if (o == 0)
+                        new Vector3(xm, ym, zp),
+                        new Vector3(xm, yp, zp),
+                        new Vector3(xm, yp, zm),
+                        new Vector3(xm, ym, zm)
+                    },
                     {
-                        for (var k = 0; k < 4; k++)
-                        {
-                            connectionInterface.SquareConnectionPoints[k] =
-                                Vector3.Transform(new Vector3(square[k, 0], 0.0f, square[k, 1]), geo.Matrix);
-                        }
+                        new Vector3(xp, ym, zm),
+                        new Vector3(xp, yp, zm),
+                        new Vector3(xp, yp, zp),
+                        new Vector3(xp, ym, zp)
+                    },
+                    {
+                        new Vector3(xp, ym, zm),
+                        new Vector3(xp, ym, zp),
+                        new Vector3(xm, ym, zp),
+                        new Vector3(xm, ym, zm)
+                    },
+                    {
+                        new Vector3(xm, yp, zm),
+                        new Vector3(xm, yp, zp),
+                        new Vector3(xp, yp, zp),
+                        new Vector3(xp, yp, zm)
+                    },
+                    {
+                        new Vector3(xm, yp, zm),
+                        new Vector3(xp, yp, zm),
+                        new Vector3(xp, ym, zm),
+                        new Vector3(xm, ym, zm)
+                    },
+                    {
+                        new Vector3(xm, ym, zp),
+                        new Vector3(xp, ym, zp),
+                        new Vector3(xp, yp, zp),
+                        new Vector3(xm, yp, zp)
                     }
-                    else
+                };
+
+                for (var k = 0; k < 4; k++)
+                {
+                    connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(V[o, k], geo.Matrix);
+                }
+
+                break;
+            }
+            case RvmRectangularTorus tor:
+            {
+                var h2 = 0.5f * tor.Height;
+                float[,] square =
+                {
+                    { tor.RadiusOuter, -h2 },
+                    { tor.RadiusInner, -h2 },
+                    { tor.RadiusInner, h2 },
+                    { tor.RadiusOuter, h2 },
+                };
+                if (o == 0)
+                {
+                    for (var k = 0; k < 4; k++)
                     {
-                        for (var k = 0; k < 4; k++)
-                        {
-                            connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(new Vector3(
+                        connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(
+                            new Vector3(square[k, 0], 0.0f, square[k, 1]),
+                            geo.Matrix
+                        );
+                    }
+                }
+                else
+                {
+                    for (var k = 0; k < 4; k++)
+                    {
+                        connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(
+                            new Vector3(
                                 (float)(square[k, 0] * Math.Cos(tor.Angle)),
                                 (float)(square[k, 0] * Math.Sin(tor.Angle)),
-                                square[k, 1]), geo.Matrix);
-                        }
+                                square[k, 1]
+                            ),
+                            geo.Matrix
+                        );
                     }
-
-                    break;
                 }
+
+                break;
+            }
             case RvmCircularTorus circularTorus:
                 connectionInterface.InterfaceType = Type.Circular;
                 connectionInterface.CircularRadius = scale * circularTorus.Radius;
@@ -177,14 +182,14 @@ internal class ConnectionInterface
                 break;
 
             case RvmSphericalDish sphericalDish:
-                {
-                    float baseRadius = sphericalDish.BaseRadius;
-                    var height = sphericalDish.Height;
-                    float sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
-                    connectionInterface.InterfaceType = Type.Circular;
-                    connectionInterface.CircularRadius = scale * sphereRadius;
-                    break;
-                }
+            {
+                float baseRadius = sphericalDish.BaseRadius;
+                var height = sphericalDish.Height;
+                float sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
+                connectionInterface.InterfaceType = Type.Circular;
+                connectionInterface.CircularRadius = scale * sphereRadius;
+                break;
+            }
             case RvmSnout snout:
                 connectionInterface.InterfaceType = Type.Circular;
                 var offset = ix == 0 ? connection.ConnectionIndex1 : connection.ConnectionIndex2;
@@ -218,7 +223,6 @@ internal class ConnectionInterface
         var thatOffset = isFirst ? connection.ConnectionIndex2 : connection.ConnectionIndex1;
         var thatIFace = GetInterface(thatGeo, (int)thatOffset);
 
-
         if (thisIFace.InterfaceType != thatIFace.InterfaceType)
             return false;
 
@@ -230,8 +234,10 @@ internal class ConnectionInterface
             bool found = false;
             for (var i = 0; i < 4; i++)
             {
-                if (Vector3.DistanceSquared(thisIFace.SquareConnectionPoints[j],
-                        thatIFace.SquareConnectionPoints[i]) < 0.001f * 0.001f)
+                if (
+                    Vector3.DistanceSquared(thisIFace.SquareConnectionPoints[j], thatIFace.SquareConnectionPoints[i])
+                    < 0.001f * 0.001f
+                )
                 {
                     found = true;
                 }

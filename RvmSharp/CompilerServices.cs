@@ -1,18 +1,18 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.ComponentModel;
 
 
 // ReSharper disable once CheckNamespace
 namespace System.Runtime.CompilerServices;
+
+using ComponentModel;
 
 /// <summary>
 /// Reserved to be used by the compiler for tracking metadata.
 /// This class should not be used by developers in source code.
 /// </summary>
 [EditorBrowsable(EditorBrowsableState.Never)]
-
 // Why is this added to RvmSharp?
 // C# 9 added support for the init and record keywords. When using C# 9
 // with target frameworks <= .NET 5.0, using these new features is not
@@ -25,6 +25,4 @@ namespace System.Runtime.CompilerServices;
 // keywords and records in any project.
 
 // ReSharper disable once UnusedType.Global
-internal static class IsExternalInit
-{
-}
+internal static class IsExternalInit { }

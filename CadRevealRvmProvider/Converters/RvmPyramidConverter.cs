@@ -12,7 +12,8 @@ public static class RvmPyramidConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmPyramid rvmPyramid,
         ulong treeIndex,
-        Color color)
+        Color color
+    )
     {
         if (IsBoxShaped(rvmPyramid))
         {
@@ -23,7 +24,8 @@ public static class RvmPyramidConverter
 
             var unitBoxScale = Vector3.Multiply(
                 scale,
-                new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height));
+                new Vector3(rvmPyramid.BottomX, rvmPyramid.BottomY, rvmPyramid.Height)
+            );
 
             var matrix = Matrix4x4Helpers.CalculateTransformMatrix(position, rotation, unitBoxScale);
 
@@ -31,7 +33,8 @@ public static class RvmPyramidConverter
                 matrix,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox());
+                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+            );
         }
         else
         {
@@ -39,7 +42,8 @@ public static class RvmPyramidConverter
                 rvmPyramid,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox());
+                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+            );
         }
     }
 
@@ -57,8 +61,8 @@ public static class RvmPyramidConverter
             return false;
 
         return rvmPyramid.BottomX.ApproximatelyEquals(rvmPyramid.TopX, tolerance)
-               && rvmPyramid.TopY.ApproximatelyEquals(rvmPyramid.BottomY, tolerance)
-               && rvmPyramid.OffsetX.ApproximatelyEquals(rvmPyramid.OffsetY, tolerance)
-               && rvmPyramid.OffsetX.ApproximatelyEquals(0, tolerance);
+            && rvmPyramid.TopY.ApproximatelyEquals(rvmPyramid.BottomY, tolerance)
+            && rvmPyramid.OffsetX.ApproximatelyEquals(rvmPyramid.OffsetY, tolerance)
+            && rvmPyramid.OffsetX.ApproximatelyEquals(0, tolerance);
     }
 }

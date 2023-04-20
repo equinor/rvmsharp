@@ -1,19 +1,27 @@
 ﻿namespace RvmSharp.Operations;
 
+using MathNet.Numerics.LinearAlgebra.Double;
 using System;
 using System.Diagnostics;
 using System.Numerics;
-using MathNet.Numerics.LinearAlgebra.Double;
-
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public sealed record Ellipse2DImplicitForm(double A, double B, double C, double D, double E, double F);
+
 public sealed record Ellipse2DPolarForm(
-    double semiMinorAxis, double semiMajorAxis, double theta, double x0, double y0,
-    Ellipse2DImplicitForm implicitEq);
+    double semiMinorAxis,
+    double semiMajorAxis,
+    double theta,
+    double x0,
+    double y0,
+    Ellipse2DImplicitForm implicitEq
+);
+
 public sealed record Ellipse3D(Ellipse2DPolarForm ellipse2DPolar, MatrixD planeToModelCoord, MatrixD modelToPlaneCoord);
+
 public sealed record PlaneImplicitForm(Vector3 normal, float d);
+
 public sealed record Cone(float baseR, Vector3 apex);
 
 // helper class for calculating conic sections (cones and cylinders)
@@ -22,12 +30,15 @@ public static class VectorAlgebraHelper
 {
     public static MatrixD ConvertMatrix4x4ToMatrixDouble(Matrix4x4 mat)
     {
-        return DenseMatrix.OfArray(new double[,] {
-           { mat.M11, mat.M12, mat.M13, mat.M14 },
-           { mat.M21, mat.M22, mat.M23, mat.M24 },
-           { mat.M31, mat.M32, mat.M33, mat.M34 },
-           { mat.M41, mat.M42, mat.M43, mat.M44 }
-        });
+        return DenseMatrix.OfArray(
+            new double[,]
+            {
+                { mat.M11, mat.M12, mat.M13, mat.M14 },
+                { mat.M21, mat.M22, mat.M23, mat.M24 },
+                { mat.M31, mat.M32, mat.M33, mat.M34 },
+                { mat.M41, mat.M42, mat.M43, mat.M44 }
+            }
+        );
     }
 
     public static VectorD Cross(VectorD left, VectorD right)
@@ -48,12 +59,15 @@ public static class VectorAlgebraHelper
 
     public static MatrixD CreateUniformScale(double s)
     {
-        return DenseMatrix.OfArray(new double[,] {
-           { s, 0, 0, 0 },
-           { 0, s, 0, 0 },
-           { 0, 0, s, 0 },
-           { 0, 0, 0, 1 }
-        });
+        return DenseMatrix.OfArray(
+            new double[,]
+            {
+                { s, 0, 0, 0 },
+                { 0, s, 0, 0 },
+                { 0, 0, s, 0 },
+                { 0, 0, 0, 1 }
+            }
+        );
     }
 
     public static (Vector3 right, Vector3 up, Vector3 view) calcVectorBasisFromPlane(Vector3 planeNormal)
@@ -71,7 +85,6 @@ public static class VectorAlgebraHelper
 
         return (right, up, view);
     }
-
 }
 
 public static class GeometryHelper
@@ -90,19 +103,33 @@ public static class GeometryHelper
 
     public static PlaneImplicitForm GetPlaneWithNormalPointingAwayFromOrigin(PlaneImplicitForm plane)
     {
-        PlaneImplicitForm newPlane = (plane.d > 0.0f)
-            ? new PlaneImplicitForm(-plane.normal, -plane.d)
-            : new PlaneImplicitForm(plane.normal, plane.d);
+        PlaneImplicitForm newPlane =
+            (plane.d > 0.0f)
+                ? new PlaneImplicitForm(-plane.normal, -plane.d)
+                : new PlaneImplicitForm(plane.normal, plane.d);
 
         return newPlane;
     }
 }
 
-
 public static class ConicSectionsHelper
 {
-    public static readonly Ellipse2DImplicitForm ZeroEllipseImplicit = new Ellipse2DImplicitForm(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    public static readonly Ellipse2DPolarForm ZeroEllipsePolar = new Ellipse2DPolarForm(0.0, 0.0, 0.0, 0.0, 0.0, ZeroEllipseImplicit);
+    public static readonly Ellipse2DImplicitForm ZeroEllipseImplicit = new Ellipse2DImplicitForm(
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+    );
+    public static readonly Ellipse2DPolarForm ZeroEllipsePolar = new Ellipse2DPolarForm(
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        ZeroEllipseImplicit
+    );
 
     public static Cone CreateConeFromSnout(float bottomRadius, float topRadius, Vector3 offset)
     {
@@ -147,7 +174,7 @@ public static class ConicSectionsHelper
     // take 6 sample points of the given circle
     // apply matPV transform so that they are located on the ellipse of interest
     // calculate coefficients A,B,C,D,E,F from the set of 6 transformed points
-    // OBS: in theory only 5 points are be necessary, but we use 6 points to make the algorithm less complicated 
+    // OBS: in theory only 5 points are be necessary, but we use 6 points to make the algorithm less complicated
 
     public static Ellipse2DImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius)
     {
@@ -173,16 +200,13 @@ public static class ConicSectionsHelper
         var index = 0;
         foreach (var th in thetas)
         {
-            circleSamples[index] = VectorD.Build.Dense(new double[] {
-                basisRadius * Math.Cos(th),
-                basisRadius * Math.Sin(th),
-                0.0,
-                1.0});
+            circleSamples[index] = VectorD.Build.Dense(
+                new double[] { basisRadius * Math.Cos(th), basisRadius * Math.Sin(th), 0.0, 1.0 }
+            );
             projSam[index] = matPV.Multiply(circleSamples[index]);
             projSam[index] = projSam[index].Divide(projSam[index][w]);
             index++;
         }
-
         // the coeff_6x6 matrix represents the following system of equations using points (xi,yi) with i 1..6
         // NB: (x0,y0) is by tradition used to define the center/origin, so to avoid confusion, points are indexed 1..6, not 0..5
 
@@ -195,7 +219,7 @@ public static class ConicSectionsHelper
 
         // the system has a trivial solution, i.e., the null vector
         // or possible other solutions defined as the "null space" or the "kernel" of the coefficient matrix
-
+        // csharpier-ignore
         MatrixD coeff_6x6 = DenseMatrix.OfArray(new double[,] {
                 { projSam[0][x] * projSam[0][x], projSam[0][x] * projSam[0][y], projSam[0][y] * projSam[0][y], projSam[0][x], projSam[0][y], 1.0 },
                 { projSam[1][x] * projSam[1][x], projSam[1][x] * projSam[1][y], projSam[1][y] * projSam[1][y], projSam[1][x], projSam[1][y], 1.0 },
@@ -232,7 +256,14 @@ public static class ConicSectionsHelper
             }
 
             // do not replace kernel by A..F here, maybe it was inverted!
-            return new Ellipse2DImplicitForm(kernel[0][0], kernel[0][1], kernel[0][2], kernel[0][3], kernel[0][4], kernel[0][5]);
+            return new Ellipse2DImplicitForm(
+                A: kernel[0][0],
+                B: kernel[0][1],
+                C: kernel[0][2],
+                D: kernel[0][3],
+                E: kernel[0][4],
+                F: kernel[0][5]
+            );
         }
         // the matrix does not have a null space, so the only solution is a null vector
         return ConicSectionsHelper.ZeroEllipseImplicit;
@@ -259,8 +290,18 @@ public static class ConicSectionsHelper
         double F = el.F;
 
         // aka semi major axis a
-        var semiRadius1 = -Math.Sqrt(2.0 * (A * E * E + C * D * D - B * D * E + (B * B - 4.0 * A * C) * F) * ((A + C) + Math.Sqrt((A - C) * (A - C) + B * B))) / (B * B - 4.0 * A * C);
-        var semiRadius2 = -Math.Sqrt(2.0 * (A * E * E + C * D * D - B * D * E + (B * B - 4.0 * A * C) * F) * ((A + C) - Math.Sqrt((A - C) * (A - C) + B * B))) / (B * B - 4.0 * A * C);
+        var semiRadius1 =
+            -Math.Sqrt(
+                2.0
+                    * (A * E * E + C * D * D - B * D * E + (B * B - 4.0 * A * C) * F)
+                    * ((A + C) + Math.Sqrt((A - C) * (A - C) + B * B))
+            ) / (B * B - 4.0 * A * C);
+        var semiRadius2 =
+            -Math.Sqrt(
+                2.0
+                    * (A * E * E + C * D * D - B * D * E + (B * B - 4.0 * A * C) * F)
+                    * ((A + C) - Math.Sqrt((A - C) * (A - C) + B * B))
+            ) / (B * B - 4.0 * A * C);
 
         //TODO: check if this possible switch affects theta
         var semiMajorRadius = Math.Max(semiRadius1, semiRadius2);
@@ -268,10 +309,14 @@ public static class ConicSectionsHelper
 
         B = (Math.Abs(B) < 0.00001) ? 0.0 : B;
         var diffAC = (Math.Abs(A - C) < 0.00001) ? 0.0 : (A - C);
-        var theta = (Math.Abs(B) > 0.00001) ?
-        //var theta = (Math.Abs(B) > 1.0e-12) ?
-            Math.Atan((C - A - Math.Sqrt((A - C) * (A - C) + B * B) / B)) :
-            (diffAC <= 0.0) ? 0.0 : Math.PI / 2.0;
+        var theta =
+            (Math.Abs(B) > 0.00001)
+                ?
+                //var theta = (Math.Abs(B) > 1.0e-12) ?
+                Math.Atan((C - A - Math.Sqrt((A - C) * (A - C) + B * B) / B))
+                : (diffAC <= 0.0)
+                    ? 0.0
+                    : Math.PI / 2.0;
         B = (Math.Abs(B) < 0.00001) ? 0.0 : theta;
 
         var x0 = (2 * C * D - A * E) / (B * B - 4.0 * A * C);
@@ -294,16 +339,13 @@ public static class ConicSectionsHelper
         // A * (x0 +k(Px-xo))^2 + B * (x0 + k(Px-x0)*(y0 + k(Py-y0)) + ... + E * (y0 + k(Py-y0)) + F = 0
         // some transformations of the expression
         // k^2 * (sqFactor) + k * linFactor + constFactor = 0
-        var sqFactor =
-            el.implicitEq.A * dx * dx +
-            el.implicitEq.B * dx * dy +
-            el.implicitEq.C * dy * dy;
+        var sqFactor = el.implicitEq.A * dx * dx + el.implicitEq.B * dx * dy + el.implicitEq.C * dy * dy;
         var linFactor =
-            el.implicitEq.A * 2.0 * el.x0 * dx +
-            el.implicitEq.B * (el.x0 * dx + el.y0 * dy) +
-            el.implicitEq.C * 2.0 * el.y0 * dy +
-            el.implicitEq.D * dx +
-            el.implicitEq.E * dy;
+            el.implicitEq.A * 2.0 * el.x0 * dx
+            + el.implicitEq.B * (el.x0 * dx + el.y0 * dy)
+            + el.implicitEq.C * 2.0 * el.y0 * dy
+            + el.implicitEq.D * dx
+            + el.implicitEq.E * dy;
         // this is the equation for the constant factor:
         // var constFactor =
         //    el.implicitEq.A * el.x0 * el.x0 +
@@ -316,19 +358,19 @@ public static class ConicSectionsHelper
         var constFactor = -1.0;
 
         var discriminant = linFactor * linFactor - 4.0 * sqFactor * constFactor;
-        
+
         if (discriminant <= 0.0 || Math.Abs(sqFactor) < 1e-18)
         {
             // distance is so small that it is almost impossible to represent numerically
             // k is probably like 1.0000000000000000000000000001
             // or it is too close to the center of the ellipse => bisetrix cannot be determined
             var d =
-                el.implicitEq.A * px * px +
-                el.implicitEq.B * px * py +
-                el.implicitEq.C * py * py +
-                el.implicitEq.D * px +
-                el.implicitEq.E * py +
-                el.implicitEq.F;
+                el.implicitEq.A * px * px
+                + el.implicitEq.B * px * py
+                + el.implicitEq.C * py * py
+                + el.implicitEq.D * px
+                + el.implicitEq.E * py
+                + el.implicitEq.F;
             Trace.Assert(d < 0.0 || Math.Abs(d) < 1e-9);
             return d;
         }
@@ -339,8 +381,11 @@ public static class ConicSectionsHelper
             var root1 = (-linFactor + discriminantSqrt) / (2.0 * sqFactor);
             var root2 = (-linFactor - discriminantSqrt) / (2.0 * sqFactor);
             var k = (root1 > 0) ? root1 : root2;
-            Trace.Assert(k > 0.0, "Error in point-ellipse distance calculation. " +
-                $"One root is expected to be positive, but it was not. Root1: {root1} and root2: {root2}");
+            Trace.Assert(
+                k > 0.0,
+                "Error in point-ellipse distance calculation. "
+                    + $"One root is expected to be positive, but it was not. Root1: {root1} and root2: {root2}"
+            );
 
             var xPointX = el.x0 + dx * k;
             var xPointY = el.y0 + dy * k;
@@ -370,34 +415,46 @@ public static class ConicSectionsHelper
         // project apex to the cap plane
         Vector3 originOfPlane = cone.apex - zn * xPlane.normal;
 
-        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, upVec.X, viewVec.X, originOfPlane.X},
-            { rightVec.Y, upVec.Y, viewVec.Y, originOfPlane.Y},
-            { rightVec.Z, upVec.Z, viewVec.Z, originOfPlane.Z},
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, upVec.X, viewVec.X, originOfPlane.X },
+                { rightVec.Y, upVec.Y, viewVec.Y, originOfPlane.Y },
+                { rightVec.Z, upVec.Z, viewVec.Z, originOfPlane.Z },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
-        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originOfPlane) },
-            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originOfPlane) },
-            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originOfPlane) },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originOfPlane) },
+                { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originOfPlane) },
+                { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originOfPlane) },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
         if (zn != 0.0)
         {
-            var view_mat = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(cone.apex, rightVec) },
-            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(cone.apex, upVec) },
-            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(cone.apex, viewVec) },
-            {0.0, 0.0, 0.0, 1.0}
-            });
-            var proj_mat = DenseMatrix.OfArray(new double[,] {
-            { zn, 0.0,  0.0, 0.0 },
-            { 0.0, zn,  0.0, 0.0 },
-            { 0.0, 0.0, 0.0, 0.0 },
-            { 0.0, 0.0, -1.0, 0.0}
-            });
+            var view_mat = DenseMatrix.OfArray(
+                new double[,]
+                {
+                    { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(cone.apex, rightVec) },
+                    { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(cone.apex, upVec) },
+                    { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(cone.apex, viewVec) },
+                    { 0.0, 0.0, 0.0, 1.0 }
+                }
+            );
+            var proj_mat = DenseMatrix.OfArray(
+                new double[,]
+                {
+                    { zn, 0.0, 0.0, 0.0 },
+                    { 0.0, zn, 0.0, 0.0 },
+                    { 0.0, 0.0, 0.0, 0.0 },
+                    { 0.0, 0.0, -1.0, 0.0 }
+                }
+            );
             var PV_mat = proj_mat * view_mat;
 
             Ellipse2DImplicitForm ellImpl = CalcEllipseImplicitForm(PV_mat, cone.baseR);
@@ -417,52 +474,70 @@ public static class ConicSectionsHelper
 
         (var rightVec, var upVec, var viewVec) = VectorAlgebraHelper.calcVectorBasisFromPlane(xPlane.normal);
 
-        var view_mat = DenseMatrix.OfArray(new double[,] {
-            { 1.0, 0.0, 0.0, -eye.X },
-            { 0.0, 1.0, 0.0, -eye.Y },
-            { 0.0, 0.0, 1.0, -eye.Z },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var view_mat = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { 1.0, 0.0, 0.0, -eye.X },
+                { 0.0, 1.0, 0.0, -eye.Y },
+                { 0.0, 0.0, 1.0, -eye.Z },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
-        var rot_to_plane = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, rightVec.Y, rightVec.Z, 0.0 },
-            { upVec.X, upVec.Y, upVec.Z, 0.0 },
-            { viewVec.X, viewVec.Y, viewVec.Z, 0.0 },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var rot_to_plane = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, rightVec.Y, rightVec.Z, 0.0 },
+                { upVec.X, upVec.Y, upVec.Z, 0.0 },
+                { viewVec.X, viewVec.Y, viewVec.Z, 0.0 },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
         // TODO: this should take account of oblique cylinders as well
-        var oblique_proj_mat = DenseMatrix.OfArray(new double[,] {
-            { 1.0, 0.0, 0.0, 0.0 },
-            { 0.0, 1.0, 0.0, 0.0 },
-            { -xPlane.normal.X / xPlane.normal.Z, -xPlane.normal.Y / xPlane.normal.Z, 0.0, 0.0 },
-            { 0.0, 0.0, 0.0, 1.0 }
-         });
+        var oblique_proj_mat = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { 1.0, 0.0, 0.0, 0.0 },
+                { 0.0, 1.0, 0.0, 0.0 },
+                { -xPlane.normal.X / xPlane.normal.Z, -xPlane.normal.Y / xPlane.normal.Z, 0.0, 0.0 },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
-        var proj = DenseMatrix.OfArray(new double[,] {
-            { 1.0, 0.0, 0.0, 0.0 },
-            { 0.0, 1.0, 0.0, 0.0 },
-            { 0.0, 0.0, 0.0, 0.0 },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var proj = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { 1.0, 0.0, 0.0, 0.0 },
+                { 0.0, 1.0, 0.0, 0.0 },
+                { 0.0, 0.0, 0.0, 0.0 },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
         var PV_mat = proj * rot_to_plane * oblique_proj_mat * view_mat;
 
         var ellipseImplicitForm = CalcEllipseImplicitForm(PV_mat, base_r);
 
-        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, upVec.X, viewVec.X, eye.X },
-            { rightVec.Y, upVec.Y, viewVec.Y, eye.Y },
-            { rightVec.Z, upVec.Z, viewVec.Z, eye.Z },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, upVec.X, viewVec.X, eye.X },
+                { rightVec.Y, upVec.Y, viewVec.Y, eye.Y },
+                { rightVec.Z, upVec.Z, viewVec.Z, eye.Z },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
-        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, eye) },
-            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, eye) },
-            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, eye) },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, eye) },
+                { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, eye) },
+                { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, eye) },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
         var ellipsePolar = ConvertEllipseImplicitToPolarForm(ellipseImplicitForm);
         return new Ellipse3D(ellipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
@@ -470,18 +545,24 @@ public static class ConicSectionsHelper
 
     public static Ellipse3D CalcEllipseIntersectionForCylinderWithZeroCapSlope(float radius, Vector3 origin)
     {
-        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
-                    { -1.0, 0.0, 0.0, origin.X },
-                    { 0.0, 1.0, 0.0, origin.Y },
-                    { 0.0, 0.0, -1.0, origin.Z },
-                    { 0.0, 0.0, 0.0, 1.0 }
-                });
-        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
-                    { -1.0, 0.0, 0.0, origin.X },
-                    { 0.0, 1.0, 0.0, -origin.Y },
-                    { 0.0, 0.0, -1.0, origin.Z },
-                    { 0.0, 0.0, 0.0, 1.0 }
-                });
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { -1.0, 0.0, 0.0, origin.X },
+                { 0.0, 1.0, 0.0, origin.Y },
+                { 0.0, 0.0, -1.0, origin.Z },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { -1.0, 0.0, 0.0, origin.X },
+                { 0.0, 1.0, 0.0, -origin.Y },
+                { 0.0, 0.0, -1.0, origin.Z },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
         var rsq = radius * radius;
         var elImplicit = new Ellipse2DImplicitForm(1.0 / rsq, 0.0, 1.0 / rsq, 0.0, 0.0, -1.0);
@@ -501,19 +582,25 @@ public static class ConicSectionsHelper
         // project apex to the cap plane
         Vector3 originModelCoord = cone.apex - zn * xPlane.normal;
 
-        var transformPlaneToModelCoord = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, upVec.X, viewVec.X, originModelCoord.X},
-            { rightVec.Y, upVec.Y, viewVec.Y, originModelCoord.Y},
-            { rightVec.Z, upVec.Z, viewVec.Z, originModelCoord.Z},
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var transformPlaneToModelCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, upVec.X, viewVec.X, originModelCoord.X },
+                { rightVec.Y, upVec.Y, viewVec.Y, originModelCoord.Y },
+                { rightVec.Z, upVec.Z, viewVec.Z, originModelCoord.Z },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
-        var transformModelToPlaneCoord = DenseMatrix.OfArray(new double[,] {
-            { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originModelCoord) },
-            { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originModelCoord) },
-            { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originModelCoord) },
-            { 0.0, 0.0, 0.0, 1.0 }
-        });
+        var transformModelToPlaneCoord = DenseMatrix.OfArray(
+            new double[,]
+            {
+                { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originModelCoord) },
+                { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originModelCoord) },
+                { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originModelCoord) },
+                { 0.0, 0.0, 0.0, 1.0 }
+            }
+        );
 
         return new Ellipse3D(ZeroEllipsePolar, transformPlaneToModelCoord, transformModelToPlaneCoord);
     }

@@ -10,10 +10,7 @@ using System.Numerics;
 
 public static class RvmSnoutConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmSnout rvmSnout,
-        ulong treeIndex,
-        Color color)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color)
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -26,10 +23,13 @@ public static class RvmSnoutConverter
 
         var bbox = rvmSnout.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
-        var length = scale.Z * MathF.Sqrt(
-            rvmSnout.Height * rvmSnout.Height +
-            rvmSnout.OffsetX * rvmSnout.OffsetX +
-            rvmSnout.OffsetY * rvmSnout.OffsetY);
+        var length =
+            scale.Z
+            * MathF.Sqrt(
+                rvmSnout.Height * rvmSnout.Height
+                    + rvmSnout.OffsetX * rvmSnout.OffsetX
+                    + rvmSnout.OffsetY * rvmSnout.OffsetY
+            );
         var halfLength = 0.5f * length;
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
@@ -42,8 +42,7 @@ public static class RvmSnoutConverter
         {
             if (rvmSnout.IsEccentric())
             {
-                throw new NotImplementedException(
-                    "Eccentric snout with shear primitive is missing from CadReveal");
+                throw new NotImplementedException("Eccentric snout with shear primitive is missing from CadReveal");
             }
 
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
@@ -59,11 +58,11 @@ public static class RvmSnoutConverter
                     scale,
                     treeIndex,
                     color,
-                    bbox);
+                    bbox
+                );
             }
 
-            throw new NotImplementedException(
-                "Cone with shear primitive is missing from CadReveal");
+            throw new NotImplementedException("Cone with shear primitive is missing from CadReveal");
         }
 
         if (rvmSnout.IsEccentric())
@@ -79,20 +78,11 @@ public static class RvmSnoutConverter
                 length,
                 treeIndex,
                 color,
-                bbox);
+                bbox
+            );
         }
 
-        return CreateCone(
-            rvmSnout,
-            rotation,
-            centerA,
-            centerB,
-            normal,
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox);
+        return CreateCone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
     }
 
     private static IEnumerable<APrimitive> CreateCone(
@@ -105,7 +95,8 @@ public static class RvmSnoutConverter
         float radiusB,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox)
+        BoundingBox bbox
+    )
     {
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
@@ -170,7 +161,8 @@ public static class RvmSnoutConverter
         float length,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox)
+        BoundingBox bbox
+    )
     {
         var halfLength = length / 2f;
         var diameterA = 2f * radiusA;
@@ -178,7 +170,8 @@ public static class RvmSnoutConverter
 
         var eccentricNormal = Vector3.Transform(
             Vector3.Normalize(new Vector3(rvmSnout.OffsetX, rvmSnout.OffsetY, rvmSnout.Height)),
-            rotation);
+            rotation
+        );
 
         var eccentricCenterA = position + eccentricNormal * halfLength;
         var eccentricCenterB = position - eccentricNormal * halfLength;
@@ -194,8 +187,11 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) =
-            PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, eccentricCenterA, eccentricCenterB);
+        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+            rvmSnout,
+            eccentricCenterA,
+            eccentricCenterB
+        );
 
         if (showCapA)
         {
@@ -240,7 +236,8 @@ public static class RvmSnoutConverter
         Vector3 scale,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox)
+        BoundingBox bbox
+    )
     {
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 

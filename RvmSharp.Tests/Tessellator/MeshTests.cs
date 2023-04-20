@@ -15,19 +15,10 @@ public class MeshTests
         // Arbitrary mesh
         int toleranceUnusedForPyramid = -1;
         return TessellatorBridge.Tessellate(
-            new RvmPyramid(2,
-                Matrix4x4.Identity,
-                BoundingBoxUnused,
-                1,
-                2,
-                3,
-                2,
-                0,
-                1,
-                1),
-            toleranceUnusedForPyramid);
+            new RvmPyramid(2, Matrix4x4.Identity, BoundingBoxUnused, 1, 2, 3, 2, 0, 1, 1),
+            toleranceUnusedForPyramid
+        );
     }
-
 
     [Test]
     public void Mesh_Equals_ByContent()

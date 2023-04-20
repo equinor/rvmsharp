@@ -9,8 +9,10 @@ using Tessellation;
 [TestFixture]
 public class TessellatorBridgeTests
 {
-    private static readonly RvmBoundingBox ArbitraryBoundingBox =
-        new RvmBoundingBox(Min: Vector3.Zero, Max: Vector3.One);
+    private static readonly RvmBoundingBox ArbitraryBoundingBox = new RvmBoundingBox(
+        Min: Vector3.Zero,
+        Max: Vector3.One
+    );
 
     [TestFixture]
     public class TessellateBoxTests
@@ -18,9 +20,14 @@ public class TessellatorBridgeTests
         [Test]
         public void TessellateBox_WithUnitBox_ReturnsExpected1x1Mesh()
         {
-            var unitBox = new RvmBox(1, Matrix4x4.Identity,
-                new RvmBoundingBox(Min: new Vector3(-0.5f, -0.5f, -0.5f), Max: new Vector3(0.5f, 0.5f, 0.5f)), 1, 1,
-                1);
+            var unitBox = new RvmBox(
+                1,
+                Matrix4x4.Identity,
+                new RvmBoundingBox(Min: new Vector3(-0.5f, -0.5f, -0.5f), Max: new Vector3(0.5f, 0.5f, 0.5f)),
+                1,
+                1,
+                1
+            );
 
             var randomToleranceValue = 0.1f;
             var box = TessellatorBridge.TessellateWithoutApplyingMatrix(unitBox, 1, randomToleranceValue);
@@ -52,7 +59,10 @@ public class TessellatorBridgeTests
             Assert.That(pyramid, Is.Not.Null);
 
             // Normals should never be NaN or infinite
-            Assert.That(pyramid.Normals, Has.All.Matches<Vector3>(x => x.X.IsFinite() && x.Y.IsFinite() && x.Z.IsFinite()));
+            Assert.That(
+                pyramid.Normals,
+                Has.All.Matches<Vector3>(x => x.X.IsFinite() && x.Y.IsFinite() && x.Z.IsFinite())
+            );
         }
     }
 

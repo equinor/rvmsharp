@@ -20,7 +20,9 @@ using Utils;
 public static class ExteriorSplitter
 {
     private record Primitive(APrimitive OriginalPrimitive);
-    private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive) : Primitive(OriginalPrimitive);
+
+    private sealed record TessellatedPrimitive(Triangle[] Triangles, APrimitive OriginalPrimitive)
+        : Primitive(OriginalPrimitive);
 
     private readonly record struct Node(BoundingBox? BoundingBox, Primitive[] Primitives);
 
@@ -54,17 +56,19 @@ public static class ExteriorSplitter
                 var bounds = new BoundingBox(
                     new Vector3(x, y, rayOriginMin.Z),
                     new Vector3(x + cellSize, y + cellSize, rayOriginMax.Z)
-                    );
+                );
 
                 // negative
                 yield return new RayEx(
                     bounds,
-                    new Ray(new Vector3(x + halfCell, y + halfCell, rayOriginMin.Z), Vector3.UnitZ));
+                    new Ray(new Vector3(x + halfCell, y + halfCell, rayOriginMin.Z), Vector3.UnitZ)
+                );
 
                 // positive
                 yield return new RayEx(
                     bounds,
-                    new Ray(new Vector3(x + halfCell, y + halfCell, rayOriginMax.Z), -Vector3.UnitZ));
+                    new Ray(new Vector3(x + halfCell, y + halfCell, rayOriginMax.Z), -Vector3.UnitZ)
+                );
             }
 
         // rays for XZ plane
@@ -79,12 +83,14 @@ public static class ExteriorSplitter
                 // negative
                 yield return new RayEx(
                     bounds,
-                    new Ray(new Vector3(x + halfCell, rayOriginMin.Y, z + halfCell), Vector3.UnitY));
+                    new Ray(new Vector3(x + halfCell, rayOriginMin.Y, z + halfCell), Vector3.UnitY)
+                );
 
                 // positive
                 yield return new RayEx(
                     bounds,
-                    new Ray(new Vector3(x + halfCell, rayOriginMax.Y, z + halfCell), -Vector3.UnitY));
+                    new Ray(new Vector3(x + halfCell, rayOriginMax.Y, z + halfCell), -Vector3.UnitY)
+                );
             }
 
         // rays for YZ plane
@@ -99,12 +105,14 @@ public static class ExteriorSplitter
                 // negative
                 yield return new RayEx(
                     bounds,
-                    new Ray(new Vector3(rayOriginMin.X, y + halfCell, z + halfCell), Vector3.UnitX));
+                    new Ray(new Vector3(rayOriginMin.X, y + halfCell, z + halfCell), Vector3.UnitX)
+                );
 
                 // positive
                 yield return new RayEx(
                     bounds,
-                    new Ray(new Vector3(rayOriginMax.X, y + halfCell, z + halfCell), -Vector3.UnitX));
+                    new Ray(new Vector3(rayOriginMax.X, y + halfCell, z + halfCell), -Vector3.UnitX)
+                );
             }
     }
 
@@ -156,17 +164,10 @@ public static class ExteriorSplitter
             }
         }
 
-        var exteriorNodeSet = CreateRays(bb.Min, bb.Max)
-            .AsParallel()
-            .SelectMany(TraceRay)
-            .ToHashSet();
+        var exteriorNodeSet = CreateRays(bb.Min, bb.Max).AsParallel().SelectMany(TraceRay).ToHashSet();
 
-        var exterior = exteriorNodeSet
-            .SelectMany(n => n.Primitives.Select(p => p.OriginalPrimitive))
-            .ToArray();
-        var interior = primitives
-            .Except(exterior)
-            .ToArray();
+        var exterior = exteriorNodeSet.SelectMany(n => n.Primitives.Select(p => p.OriginalPrimitive)).ToArray();
+        var interior = primitives.Except(exterior).ToArray();
 
         return (exterior, interior);
     }
@@ -191,9 +192,7 @@ public static class ExteriorSplitter
     {
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
-        var isHit = diff.X > 0f &&
-                    diff.Y > 0f &&
-                    diff.Z > 0f;
+        var isHit = diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
         if (isHit)
         {
             float distance;
@@ -260,22 +259,21 @@ public static class ExteriorSplitter
             var boundingBox = nodeGroup.ToArray().CalculateBoundingBox();
 
             var primitives = nodeGroup
-                .Select(p => p switch
-                {
-                    InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
-                    TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
-                    _ => new Primitive(p)
-                })
+                .Select(
+                    p =>
+                        p switch
+                        {
+                            InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
+                            TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
+                            _ => new Primitive(p)
+                        }
+                )
                 .WhereNotNull()
                 .ToArray();
 
             return new Node(boundingBox, primitives);
         }
 
-        return primitives
-            .GroupBy(p => p.TreeIndex)
-            .AsParallel()
-            .Select(ConvertNode)
-            .ToArray();
+        return primitives.GroupBy(p => p.TreeIndex).AsParallel().Select(ConvertNode).ToArray();
     }
 }

@@ -1,13 +1,13 @@
 ﻿namespace RvmSharp.Tessellation;
 
+using Primitives;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using static RvmSharp.Primitives.RvmFacetGroup;
-using Primitives;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
+using System.Numerics;
+using static Primitives.RvmFacetGroup;
 
 // ReSharper disable once UnusedType.Global -- Public API
 public static class TessellatorBridge
@@ -16,23 +16,27 @@ public static class TessellatorBridge
 
     public static (RvmMesh, Color)[] Tessellate(RvmNode group, float tolerance)
     {
-        var meshes = group.Children.OfType<RvmPrimitive>().Select(primitive =>
-        {
-#if DEBUG
-            // Assert that the decomposition works.
-            if (!Matrix4x4.Decompose(primitive.Matrix, out _, out _, out _))
+        var meshes = group.Children
+            .OfType<RvmPrimitive>()
+            .Select(primitive =>
             {
-                throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
-            }
+#if DEBUG
+                // Assert that the decomposition works.
+                if (!Matrix4x4.Decompose(primitive.Matrix, out _, out _, out _))
+                {
+                    throw new InvalidOperationException($"Could not decompose matrix for {@group.Name}");
+                }
 #endif
 
-            if (!PdmsColors.TryGetColorByCode(group.MaterialId, out var color))
-            {
-                color = Color.Magenta;
-            }
+                if (!PdmsColors.TryGetColorByCode(group.MaterialId, out var color))
+                {
+                    color = Color.Magenta;
+                }
 
-            return (mesh: Tessellate(primitive, tolerance), color);
-        }).Where(mc => mc.mesh != null).Select(m => (m.mesh!, m.color));
+                return (mesh: Tessellate(primitive, tolerance), color);
+            })
+            .Where(mc => mc.mesh != null)
+            .Select(m => (m.mesh!, m.color));
 
         return meshes.ToArray();
     }
@@ -83,23 +87,33 @@ public static class TessellatorBridge
             case RvmSphere sphere:
                 return Tessellate(sphere, sphere.Radius, (float)Math.PI, 0.0f, 1.0f, scale, tolerance);
             case RvmEllipticalDish ellipticalDish:
-                return Tessellate(ellipticalDish, ellipticalDish.BaseRadius, (float)Math.PI / 2, 0.0f,
-                    ellipticalDish.Height / ellipticalDish.BaseRadius, scale, tolerance);
+                return Tessellate(
+                    ellipticalDish,
+                    ellipticalDish.BaseRadius,
+                    (float)Math.PI / 2,
+                    0.0f,
+                    ellipticalDish.Height / ellipticalDish.BaseRadius,
+                    scale,
+                    tolerance
+                );
             case RvmSphericalDish sphericalDish:
+            {
+                var baseRadius = sphericalDish.BaseRadius;
+                var height = sphericalDish.Height;
+                var sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
+                var sinval = Math.Min(1.0f, Math.Max(-1.0, (baseRadius / sphereRadius)));
+                var arc = (float)Math.Asin(sinval);
+                if (baseRadius < height)
                 {
-                    var baseRadius = sphericalDish.BaseRadius;
-                    var height = sphericalDish.Height;
-                    var sphereRadius = (baseRadius * baseRadius + height * height) / (2.0f * height);
-                    var sinval = Math.Min(1.0f, Math.Max(-1.0, (baseRadius / sphereRadius)));
-                    var arc = (float)Math.Asin(sinval);
-                    if (baseRadius < height) { arc = (float)Math.PI - arc; }
-
-                    return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale,
-                        tolerance);
+                    arc = (float)Math.PI - arc;
                 }
+
+                return Tessellate(sphericalDish, sphereRadius, arc, height - sphereRadius, 1.0f, scale, tolerance);
+            }
             default:
                 throw new ArgumentOutOfRangeException(
-                    $"(Currently) Unsupported type for tessellation: {primitive.Kind}");
+                    $"(Currently) Unsupported type for tessellation: {primitive.Kind}"
+                );
         }
     }
 
@@ -112,7 +126,6 @@ public static class TessellatorBridge
         var ox = 0.5f * pyramid.OffsetX;
         var oy = 0.5f * pyramid.OffsetY;
         var halfHeight = 0.5f * pyramid.Height;
-
 
         Vector3[,] quad =
         {
@@ -156,8 +169,12 @@ public static class TessellatorBridge
         for (var i = 0; i < 6; i++)
         {
             var con = pyramid.Connections[i];
-            if (cap[i] == false || con == null ||
-                con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
+            if (
+                cap[i] == false
+                || con == null
+                || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide
+            )
+                continue;
 
             if (ConnectionInterface.DoInterfacesMatch(pyramid, con))
             {
@@ -209,8 +226,18 @@ public static class TessellatorBridge
         var indices = new int[3 * 2 * capCount];
         for (var i = 0; i < 4; i++)
         {
-            if (cap[i] == false) continue;
-            arrayPosition = TessellationHelpers.QuadIndices(indices, arrayPosition, o /*4 * i*/, 0, 1, 2, 3);
+            if (cap[i] == false)
+                continue;
+            arrayPosition = TessellationHelpers.QuadIndices(
+                indices,
+                arrayPosition,
+                o /*4 * i*/
+                ,
+                0,
+                1,
+                2,
+                3
+            );
             o += 4;
         }
 
@@ -234,12 +261,20 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
     {
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(rectangularTorus.Angle,
-            rectangularTorus.RadiusOuter, scale, tolerance);
+        var segments = TessellationHelpers.SagittaBasedSegmentCount(
+            rectangularTorus.Angle,
+            rectangularTorus.RadiusOuter,
+            scale,
+            tolerance
+        );
         var samples = segments + 1; // Assumed to be open, add extra sample.
 
-        var error = TessellationHelpers.SagittaBasedError(rectangularTorus.Angle, rectangularTorus.RadiusOuter,
-            scale, segments);
+        var error = TessellationHelpers.SagittaBasedError(
+            rectangularTorus.Angle,
+            rectangularTorus.RadiusOuter,
+            scale,
+            segments
+        );
         Debug.Assert(error <= tolerance);
 
         bool shell = true;
@@ -398,18 +433,29 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
     {
-        var segments_l = TessellationHelpers.SagittaBasedSegmentCount(circularTorus.Angle,
+        var segments_l = TessellationHelpers.SagittaBasedSegmentCount(
+            circularTorus.Angle,
             circularTorus.Offset + circularTorus.Radius,
-            scale, tolerance); // large radius, toroidal direction
-        // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
-        var segments_s = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, Math.Abs(circularTorus.Radius),
             scale,
-            tolerance); // small radius, poloidal direction
+            tolerance
+        ); // large radius, toroidal direction
+        // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
+        var segments_s = TessellationHelpers.SagittaBasedSegmentCount(
+            Math.PI * 2,
+            Math.Abs(circularTorus.Radius),
+            scale,
+            tolerance
+        ); // small radius, poloidal direction
 
         var error = Math.Max(
-            TessellationHelpers.SagittaBasedError(circularTorus.Angle, circularTorus.Offset + circularTorus.Radius,
-                scale, segments_l),
-            TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s));
+            TessellationHelpers.SagittaBasedError(
+                circularTorus.Angle,
+                circularTorus.Offset + circularTorus.Radius,
+                scale,
+                segments_l
+            ),
+            TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s)
+        );
         Debug.Assert(error <= tolerance);
 
         var samples_l = segments_l + 1; // Assumed to be open, add extra sample
@@ -447,13 +493,12 @@ public static class TessellatorBridge
             t1[2 * i + 1] = (float)Math.Sin((Math.PI * 2 / samples_s) * i + circularTorus.SampleStartAngle);
         }
 
-
         var vertices_n = ((shell ? samples_l : 0) + (cap[0] ? 1 : 0) + (cap[1] ? 1 : 0)) * samples_s;
         var vertices = new float[3 * vertices_n];
         var normals = new float[3 * vertices_n];
 
-        var triangles_n = (shell ? 2 * (samples_l - 1) * samples_s : 0) +
-                          (samples_s - 2) * ((cap[0] ? 1 : 0) + (cap[1] ? 1 : 0));
+        var triangles_n =
+            (shell ? 2 * (samples_l - 1) * samples_s : 0) + (samples_s - 2) * ((cap[0] ? 1 : 0) + (cap[1] ? 1 : 0));
         var indices = new int[3 * triangles_n];
 
         // generate vertices
@@ -611,8 +656,12 @@ public static class TessellatorBridge
         for (var i = 0; i < 6; i++)
         {
             var con = box.Connections[i];
-            if (faces[i] == false || con == null ||
-                con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide) continue;
+            if (
+                faces[i] == false
+                || con == null
+                || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide
+            )
+                continue;
 
             if (ConnectionInterface.DoInterfacesMatch(box, con))
             {
@@ -624,9 +673,9 @@ public static class TessellatorBridge
         var faces_n = 0;
         for (var i = 0; i < 6; i++)
         {
-            if (faces[i]) faces_n++;
+            if (faces[i])
+                faces_n++;
         }
-
 
         if (faces_n > 0)
         {
@@ -642,7 +691,8 @@ public static class TessellatorBridge
             var i_p = 0;
             for (var f = 0; f < 6; f++)
             {
-                if (!faces[f]) continue;
+                if (!faces[f])
+                    continue;
 
                 for (var i = 0; i < 4; i++)
                 {
@@ -656,9 +706,7 @@ public static class TessellatorBridge
 
             var tri = new RvmMesh(vertices, normals, indices, 0.0f);
 
-            if (!(i_v == 3 * vertices_n) ||
-                !(i_p == 3 * triangles_n) ||
-                !(o == vertices_n))
+            if (!(i_v == 3 * vertices_n) || !(i_p == 3 * triangles_n) || !(o == vertices_n))
             {
                 throw new Exception();
             }
@@ -684,10 +732,16 @@ public static class TessellatorBridge
             {
                 foreach (var vn in cont.Vertices)
                 {
-                    (bMin.X, bMin.Y, bMin.Z) = (Math.Min(bMin.X, vn.Vertex.X), Math.Min(bMin.Y, vn.Vertex.Y),
-                        Math.Min(bMin.Z, vn.Vertex.Z));
-                    (bMax.X, bMax.Y, bMax.Z) = (Math.Max(bMax.X, vn.Vertex.X), Math.Max(bMax.Y, vn.Vertex.Y),
-                        Math.Max(bMax.Z, vn.Vertex.Z));
+                    (bMin.X, bMin.Y, bMin.Z) = (
+                        Math.Min(bMin.X, vn.Vertex.X),
+                        Math.Min(bMin.Y, vn.Vertex.Y),
+                        Math.Min(bMin.Z, vn.Vertex.Z)
+                    );
+                    (bMax.X, bMax.Y, bMax.Z) = (
+                        Math.Max(bMax.X, vn.Vertex.X),
+                        Math.Max(bMax.Y, vn.Vertex.Y),
+                        Math.Max(bMax.Z, vn.Vertex.Z)
+                    );
                 }
             }
 
@@ -695,9 +749,9 @@ public static class TessellatorBridge
 
             var vo = vertices.Count;
 
-            var adjustedContours = poly.Contours.Select(v => new RvmContour(
-                v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()
-            )).ToArray();
+            var adjustedContours = poly.Contours
+                .Select(v => new RvmContour(v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()))
+                .ToArray();
 
             var outJob = TessNet.Tessellate(adjustedContours);
 
@@ -727,7 +781,6 @@ public static class TessellatorBridge
         bool shell = true;
         bool[] shouldCap = { true, true };
 
-
         for (int i = 0; i < 2; i++)
         {
             var con = cylinder.Connections[i];
@@ -749,8 +802,8 @@ public static class TessellatorBridge
         var vertices = new Vector3[vertCount];
         var normals = new Vector3[vertCount];
 
-        int triangles_n = (shell ? 2 * samples : 0) + (shouldCap[0] ? samples - 2 : 0) +
-                          (shouldCap[1] ? samples - 2 : 0);
+        int triangles_n =
+            (shell ? 2 * samples : 0) + (shouldCap[0] ? samples - 2 : 0) + (shouldCap[1] ? samples - 2 : 0);
         var indices = new int[triangles_n * 3];
 
         float[] t0 = new float[2 * samples];
@@ -773,11 +826,28 @@ public static class TessellatorBridge
         {
             for (int i = 0; i < samples; i++)
             {
-                l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0],
+                l = TessellationHelpers.Vertex(
+                    normals,
+                    vertices,
+                    l,
+                    t0[2 * i + 0],
+                    t0[2 * i + 1],
+                    0,
+                    t1[2 * i + 0],
                     t1[2 * i + 1],
-                    -h2);
-                l = TessellationHelpers.Vertex(normals, vertices, l, t0[2 * i + 0], t0[2 * i + 1], 0, t1[2 * i + 0],
-                    t1[2 * i + 1], h2);
+                    -h2
+                );
+                l = TessellationHelpers.Vertex(
+                    normals,
+                    vertices,
+                    l,
+                    t0[2 * i + 0],
+                    t0[2 * i + 1],
+                    0,
+                    t1[2 * i + 0],
+                    t1[2 * i + 1],
+                    h2
+                );
             }
         }
 
@@ -785,8 +855,13 @@ public static class TessellatorBridge
         {
             for (int i = 0; i < samples; i++)
             {
-                l = TessellationHelpers.Vertex(normals, vertices, l, new Vector3(0, 0, -1),
-                    new Vector3(t1[2 * i + 0], t1[2 * i + 1], -h2));
+                l = TessellationHelpers.Vertex(
+                    normals,
+                    vertices,
+                    l,
+                    new Vector3(0, 0, -1),
+                    new Vector3(t1[2 * i + 0], t1[2 * i + 1], -h2)
+                );
             }
         }
 
@@ -794,8 +869,13 @@ public static class TessellatorBridge
         {
             for (int i = 0; i < samples; i++)
             {
-                l = TessellationHelpers.Vertex(normals, vertices, l, new Vector3(0, 0, 1),
-                    new Vector3(t1[2 * i + 0], t1[2 * i + 1], h2));
+                l = TessellationHelpers.Vertex(
+                    normals,
+                    vertices,
+                    l,
+                    new Vector3(0, 0, 1),
+                    new Vector3(t1[2 * i + 0], t1[2 * i + 1], h2)
+                );
             }
         }
 
@@ -918,9 +998,8 @@ public static class TessellatorBridge
                 float s = (snout.OffsetX * t0[2 * i + 0] + snout.OffsetY * t0[2 * i + 1]);
                 float nx = t0[2 * i + 0];
                 float ny = t0[2 * i + 1];
-                float nz = Math.Abs(snout.Height) < 0.00001f
-                    ? 0
-                    : -(snout.RadiusTop - snout.RadiusBottom + s) / snout.Height;
+                float nz =
+                    Math.Abs(snout.Height) < 0.00001f ? 0 : -(snout.RadiusTop - snout.RadiusBottom + s) / snout.Height;
 
                 l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz, xb, yb, zb);
                 l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz, xt, yt, zt);
@@ -934,10 +1013,17 @@ public static class TessellatorBridge
             var nz = (float)(-Math.Cos(snout.BottomShearX) * Math.Cos(snout.BottomShearY));
             for (var i = 0; cap[0] && i < samples; i++)
             {
-                l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz,
+                l = TessellationHelpers.Vertex(
+                    normals,
+                    vertices,
+                    l,
+                    nx,
+                    ny,
+                    nz,
                     t1[2 * i + 0] - ox,
                     t1[2 * i + 1] - oy,
-                    -h2 + mb[0] * t1[2 * i + 0] + mb[1] * t1[2 * i + 1]);
+                    -h2 + mb[0] * t1[2 * i + 0] + mb[1] * t1[2 * i + 1]
+                );
             }
         }
 
@@ -948,10 +1034,17 @@ public static class TessellatorBridge
             var nz = (float)(Math.Cos(snout.TopShearX) * Math.Cos(snout.TopShearY));
             for (var i = 0; i < samples; i++)
             {
-                l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz,
+                l = TessellationHelpers.Vertex(
+                    normals,
+                    vertices,
+                    l,
+                    nx,
+                    ny,
+                    nz,
                     t2[2 * i + 0] + ox,
                     t2[2 * i + 1] + oy,
-                    h2 + mt[0] * t2[2 * i + 0] + mt[1] * t2[2 * i + 1]);
+                    h2 + mt[0] * t2[2 * i + 0] + mt[1] * t2[2 * i + 1]
+                );
             }
         }
 
@@ -969,7 +1062,6 @@ public static class TessellatorBridge
 
             o += 2 * samples;
         }
-
 
         var u1 = new int[samples];
         var u2 = new int[samples];
@@ -1001,8 +1093,15 @@ public static class TessellatorBridge
         return new RvmMesh(vertices, normals, indices, error);
     }
 
-    private static RvmMesh Tessellate(RvmPrimitive sphereBasedPrimitive, float radius, float arc, float shift_z,
-        float scale_z, float scale, float tolerance)
+    private static RvmMesh Tessellate(
+        RvmPrimitive sphereBasedPrimitive,
+        float radius,
+        float arc,
+        float shift_z,
+        float scale_z,
+        float scale,
+        float tolerance
+    )
     {
         var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
         var samples = segments; // Assumed to be closed
@@ -1018,7 +1117,6 @@ public static class TessellatorBridge
 
         var min_rings = 3; // arc <= half_pi ? 2 : 3;
         var rings = (int)(Math.Max(min_rings, scale_z * samples * arc * (1.0f / Math.PI * 2)));
-
 
         var u0 = new int[rings];
         var t0 = new float[2 * rings];
@@ -1043,7 +1141,6 @@ public static class TessellatorBridge
             s += u0[r];
         }
 
-
         var vertices_n = s;
         var vertices = new float[3 * vertices_n];
         var normals = new float[3 * vertices_n];
@@ -1062,8 +1159,7 @@ public static class TessellatorBridge
                 var phi = (float)(phi_scale * i + sphereBasedPrimitive.SampleStartAngle);
                 var nx = (float)(w * Math.Cos(phi));
                 var ny = (float)(w * Math.Sin(phi));
-                l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny,
-                    z);
+                l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny, z);
             }
         }
 

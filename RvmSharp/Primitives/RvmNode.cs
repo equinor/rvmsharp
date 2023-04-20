@@ -4,7 +4,6 @@ using Containers;
 using System.Collections.Generic;
 using System.Numerics;
 
-
 public record RvmNode(uint Version, string Name, Vector3 Translation, uint MaterialId) : RvmGroup(Version)
 {
     // ReSharper disable once CollectionNeverQueried.Global

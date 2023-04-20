@@ -8,11 +8,13 @@ namespace CadRevealComposer.Configuration;
 /// <param name="RevisionId"></param>
 /// <param name="InstancingThreshold">The amount of identical Meshes needed to be a candidate for instancing.</param>
 /// <param name="TemplateCountLimit">The maximal allowed number of templates exported.</param>
-public record ModelParameters(ProjectId ProjectId,
+public record ModelParameters(
+    ProjectId ProjectId,
     ModelId ModelId,
     RevisionId RevisionId,
     InstancingThreshold InstancingThreshold,
-    TemplateCountLimit TemplateCountLimit);
+    TemplateCountLimit TemplateCountLimit
+);
 
 public record ProjectId(long Value);
 

@@ -31,7 +31,8 @@ public static class TessNet
             }
 
             var cv = contour.Vertices
-                .Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal)).ToArray();
+                .Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal))
+                .ToArray();
             tess.AddContour(cv);
             var n = contour.Vertices[0].Normal;
             normal = new Vec3(n.X, n.Y, n.Z);
@@ -40,7 +41,6 @@ public static class TessNet
 
         if (!shouldTessellate)
             return new TessellateResult();
-
 
         var result = new TessellateResult();
 

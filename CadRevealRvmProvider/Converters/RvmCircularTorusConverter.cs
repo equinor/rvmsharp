@@ -5,15 +5,14 @@ using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
-using System;
-using System.Collections.Generic;
 
 public static class RvmCircularTorusConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color)
+        Color color
+    )
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -54,38 +53,34 @@ public static class RvmCircularTorusConverter
             var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisA));
             var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisB));
 
-            var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmCircularTorus, positionCapA, positionCapB);
+            var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+                rvmCircularTorus,
+                positionCapA,
+                positionCapB
+            );
 
             if (showCapA)
             {
                 var matrixCapA =
                     Matrix4x4.CreateScale(diameter, diameter, 1f)
-                    * Matrix4x4.CreateFromQuaternion(rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f))
+                    * Matrix4x4.CreateFromQuaternion(
+                        rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
+                    )
                     * Matrix4x4.CreateTranslation(positionCapA);
 
-                yield return new Circle(
-                    matrixCapA,
-                    normalCapA,
-                    treeIndex,
-                    color,
-                    bbox
-                );
+                yield return new Circle(matrixCapA, normalCapA, treeIndex, color, bbox);
             }
 
             if (showCapB)
             {
                 var matrixCapB =
                     Matrix4x4.CreateScale(diameter, diameter, 1f)
-                    * Matrix4x4.CreateFromQuaternion(arcRotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f))
+                    * Matrix4x4.CreateFromQuaternion(
+                        arcRotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
+                    )
                     * Matrix4x4.CreateTranslation(positionCapB);
 
-                yield return new Circle(
-                    matrixCapB,
-                    normalCapB,
-                    treeIndex,
-                    color,
-                    bbox
-                );
+                yield return new Circle(matrixCapB, normalCapB, treeIndex, color, bbox);
             }
         }
     }

@@ -12,7 +12,8 @@ public static class RvmRectangularTorusConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
-        Color color)
+        Color color
+    )
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -85,27 +86,9 @@ public static class RvmRectangularTorusConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
 
-        yield return new GeneralRing(
-            0f,
-            arcAngle,
-            matrixRingA,
-            normal,
-            thickness,
-            treeIndex,
-            color,
-            bbBox
-        );
+        yield return new GeneralRing(0f, arcAngle, matrixRingA, normal, thickness, treeIndex, color, bbBox);
 
-        yield return new GeneralRing(
-            0f,
-            arcAngle,
-            matrixRingB,
-            -normal,
-            thickness,
-            treeIndex,
-            color,
-            bbBox
-        );
+        yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
 
         // Add caps to the two ends of the torus, where the segment is "cut out"
         // This is not needed if the torus goes all the way around
@@ -126,11 +109,7 @@ public static class RvmRectangularTorusConverter
             var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
             var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
 
-            var scaleQuad = new Vector3(
-                height,
-                radiusOuter - radiusInner,
-                0
-            );
+            var scaleQuad = new Vector3(height, radiusOuter - radiusInner, 0);
 
             var quadMatrixA =
                 Matrix4x4.CreateScale(scaleQuad)
@@ -142,19 +121,9 @@ public static class RvmRectangularTorusConverter
                 * Matrix4x4.CreateFromQuaternion(rotationQuadB)
                 * Matrix4x4.CreateTranslation(centerQuadB);
 
-            yield return new Quad(
-                quadMatrixA,
-                treeIndex,
-                color,
-                bbBox
-            );
+            yield return new Quad(quadMatrixA, treeIndex, color, bbBox);
 
-            yield return new Quad(
-                quadMatrixB,
-                treeIndex,
-                color,
-                bbBox
-            );
+            yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
         }
     }
 }

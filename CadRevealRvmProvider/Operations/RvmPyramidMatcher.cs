@@ -41,9 +41,15 @@ public static class RvmPyramidMatcher
     private static readonly Quaternion RotatedZ180 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI);
     private static readonly Quaternion RotatedZ270 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2);
     private static readonly Quaternion RotatedX180 = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
-    private static readonly Quaternion RotatedX180Z90 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
-    private static readonly Quaternion RotatedX180Z180 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
-    private static readonly Quaternion RotatedX180Z270 = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2) * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+    private static readonly Quaternion RotatedX180Z90 =
+        Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2)
+        * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+    private static readonly Quaternion RotatedX180Z180 =
+        Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI)
+        * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
+    private static readonly Quaternion RotatedX180Z270 =
+        Quaternion.CreateFromAxisAngle(Vector3.UnitZ, 3 * MathF.PI / 2)
+        * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI);
 
     private static Quaternion GetRotation(PyramidVariation pyramidVariation)
     {
@@ -81,20 +87,23 @@ public static class RvmPyramidMatcher
 
         var scaledA = ScalePyramid(a, aToBScale);
 
-        return (scaledA.BottomX).ApproximatelyEquals(b.BottomX, threshold) &&
-               (scaledA.BottomY).ApproximatelyEquals(b.BottomY, threshold) &&
-               (scaledA.TopX).ApproximatelyEquals(b.TopX, threshold) &&
-               (scaledA.TopY).ApproximatelyEquals(b.TopY, threshold) &&
-               (scaledA.OffsetX).ApproximatelyEquals(b.OffsetX, threshold) &&
-               (scaledA.OffsetY).ApproximatelyEquals(b.OffsetY, threshold) &&
-               (scaledA.Height).ApproximatelyEquals(b.Height, threshold);
+        return (scaledA.BottomX).ApproximatelyEquals(b.BottomX, threshold)
+            && (scaledA.BottomY).ApproximatelyEquals(b.BottomY, threshold)
+            && (scaledA.TopX).ApproximatelyEquals(b.TopX, threshold)
+            && (scaledA.TopY).ApproximatelyEquals(b.TopY, threshold)
+            && (scaledA.OffsetX).ApproximatelyEquals(b.OffsetX, threshold)
+            && (scaledA.OffsetY).ApproximatelyEquals(b.OffsetY, threshold)
+            && (scaledA.Height).ApproximatelyEquals(b.Height, threshold);
     }
 
     private static RvmPyramid ScalePyramid(RvmPyramid pyramid, Vector3 scale)
     {
         return pyramid with
         {
-            BoundingBoxLocal = new RvmBoundingBox(pyramid.BoundingBoxLocal.Min * scale, pyramid.BoundingBoxLocal.Max * scale),
+            BoundingBoxLocal = new RvmBoundingBox(
+                pyramid.BoundingBoxLocal.Min * scale,
+                pyramid.BoundingBoxLocal.Max * scale
+            ),
             BottomX = pyramid.BottomX * scale.X,
             BottomY = pyramid.BottomY * scale.Y,
             TopX = pyramid.TopX * scale.X,
@@ -105,15 +114,15 @@ public static class RvmPyramidMatcher
         };
     }
 
-    private static RvmPyramid RotatePyramid(RvmPyramid pyramid,
-        PyramidVariation variation)
+    private static RvmPyramid RotatePyramid(RvmPyramid pyramid, PyramidVariation variation)
     {
         switch (variation)
         {
             case PyramidVariation.Original:
                 return pyramid;
             case PyramidVariation.RotatedZ90:
-                return pyramid with {
+                return pyramid with
+                {
                     BottomX = pyramid.BottomY,
                     BottomY = pyramid.BottomX,
                     TopX = pyramid.TopY,
@@ -122,12 +131,10 @@ public static class RvmPyramidMatcher
                     OffsetY = pyramid.OffsetX,
                 };
             case PyramidVariation.RotatedZ180:
-                return pyramid with {
-                    OffsetX = -pyramid.OffsetX,
-                    OffsetY = -pyramid.OffsetY,
-                };
+                return pyramid with { OffsetX = -pyramid.OffsetX, OffsetY = -pyramid.OffsetY, };
             case PyramidVariation.RotatedZ270:
-                return pyramid with {
+                return pyramid with
+                {
                     BottomX = pyramid.BottomY,
                     BottomY = pyramid.BottomX,
                     TopX = pyramid.TopY,
@@ -136,16 +143,18 @@ public static class RvmPyramidMatcher
                     OffsetY = -pyramid.OffsetX,
                 };
             case PyramidVariation.RotatedX180:
-                return pyramid with {
+                return pyramid with
+                {
                     BottomX = pyramid.TopX,
                     BottomY = pyramid.TopY,
                     TopX = pyramid.BottomX,
                     TopY = pyramid.BottomY,
                     OffsetX = pyramid.OffsetX,
-                    OffsetY = - pyramid.OffsetY,
+                    OffsetY = -pyramid.OffsetY,
                 };
             case PyramidVariation.RotatedX180Z90:
-                return pyramid with {
+                return pyramid with
+                {
                     BottomX = pyramid.TopY,
                     BottomY = pyramid.TopX,
                     TopX = pyramid.BottomY,
@@ -154,27 +163,27 @@ public static class RvmPyramidMatcher
                     OffsetY = pyramid.OffsetX,
                 };
             case PyramidVariation.RotatedX180Z180:
-                return pyramid with {
+                return pyramid with
+                {
                     BottomX = pyramid.TopX,
                     BottomY = pyramid.TopY,
                     TopX = pyramid.BottomX,
                     TopY = pyramid.BottomY,
-                    OffsetX = - pyramid.OffsetX,
+                    OffsetX = -pyramid.OffsetX,
                     OffsetY = pyramid.OffsetY,
                 };
             case PyramidVariation.RotatedX180Z270:
-                return pyramid with {
+                return pyramid with
+                {
                     BottomX = pyramid.TopY,
                     BottomY = pyramid.TopX,
                     TopX = pyramid.BottomY,
                     TopY = pyramid.BottomX,
-                    OffsetX = - pyramid.OffsetY,
-                    OffsetY = - pyramid.OffsetX,
+                    OffsetX = -pyramid.OffsetY,
+                    OffsetY = -pyramid.OffsetX,
                 };
             default:
                 throw new ArgumentOutOfRangeException(nameof(variation), variation, null);
         }
     }
-
-
 }

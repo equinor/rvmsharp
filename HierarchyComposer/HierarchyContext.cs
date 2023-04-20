@@ -14,13 +14,10 @@ public class HierarchyContext : DbContext
     // constructor runtime.
     private const string DefaultMigrationConnectionString = @"Data Source = D:\tmp\Hierarchy.db;";
 
-    public HierarchyContext()
-    {
-    }
+    public HierarchyContext() { }
 
-    public HierarchyContext(DbContextOptions options) : base(options)
-    {
-    }
+    public HierarchyContext(DbContextOptions options)
+        : base(options) { }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -33,19 +30,19 @@ public class HierarchyContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-
         modelBuilder.Entity<PDMSEntry>().ToTable("PDMSEntries");
         modelBuilder.Entity<AABB>().ToTable("AABBs");
         modelBuilder.Entity<NodePDMSEntry>().HasKey(e => new { e.NodeId, e.PDMSEntryId });
-        modelBuilder.Entity<NodePDMSEntry>()
+        modelBuilder
+            .Entity<NodePDMSEntry>()
             .HasOne(e => e.Node)
             .WithMany(n => n.NodePDMSEntry)
             .HasForeignKey(e => e.NodeId);
-        modelBuilder.Entity<NodePDMSEntry>()
+        modelBuilder
+            .Entity<NodePDMSEntry>()
             .HasOne(e => e.PDMSEntry)
             .WithMany(e => e.NodePDMSEntry)
             .HasForeignKey(e => e.PDMSEntryId);
         modelBuilder.Entity<Node>().ToTable("Nodes");
-
     }
 }

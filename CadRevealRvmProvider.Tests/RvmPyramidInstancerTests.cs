@@ -1,7 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Tests;
 
-using Operations;
 using CadRevealComposer;
+using Operations;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -15,23 +15,20 @@ public class RvmPyramidInstancerTests
     public void Process_WhenTwoIdenticalMeshes_IgnoresOneOfThem()
     {
         // Arbitrary arguments.
-        var rvmPyramid = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, 1, 1,
-            1, 1, 1, 1, 1);
+        var rvmPyramid = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, 1, 1, 1, 1, 1, 1, 1);
 
         // Arbitrary arguments.
-        var rvmPyramidNotMatching = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, 1, 1,
-            1, 1, 2, 2, 1);
+        var rvmPyramidNotMatching = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, 1, 1, 1, 1, 2, 2, 1);
 
         // Mark: These two input pyramids will be identical as they are Records with identical values.
         ProtoMeshFromRvmPyramid[] protoPyramids = new[]
         {
             new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromRvmPyramid(rvmPyramid,0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromRvmPyramid(rvmPyramidNotMatching,0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
+            new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
+            new ProtoMeshFromRvmPyramid(rvmPyramidNotMatching, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
         };
 
-        var res =
-            RvmPyramidInstancer.Process(protoPyramids, _ => true);
+        var res = RvmPyramidInstancer.Process(protoPyramids, _ => true);
 
         Assert.That(res, Has.Exactly(2).Items.InstanceOf<RvmPyramidInstancer.InstancedResult>());
     }
@@ -39,7 +36,8 @@ public class RvmPyramidInstancerTests
     [Test]
     public void TwoPyramidsWithSimilarProportionsAreTheSame()
     {
-        var rvmPyramidA = new RvmPyramid(Version: 2,
+        var rvmPyramidA = new RvmPyramid(
+            Version: 2,
             Matrix: Matrix4x4.Identity,
             BoundingBoxLocal: _throwawayBoundingBox,
             BottomX: 2,
@@ -48,10 +46,11 @@ public class RvmPyramidInstancerTests
             TopY: 1,
             OffsetX: 2,
             OffsetY: 3,
-            Height: 1);
+            Height: 1
+        );
 
-
-        var rvmPyramidAHalfScaled = new RvmPyramid(Version: 2,
+        var rvmPyramidAHalfScaled = new RvmPyramid(
+            Version: 2,
             Matrix: Matrix4x4.Identity,
             BoundingBoxLocal: _throwawayBoundingBox,
             BottomX: 1,
@@ -60,16 +59,16 @@ public class RvmPyramidInstancerTests
             0.5f,
             1,
             1.5f,
-            2f);
+            2f
+        );
 
-        var rvmPyramidCUnique =
-            rvmPyramidA with
-            {
-                TopX = rvmPyramidA.TopX + 1
-            }; // Change proportions of a dimension (Should not match)
+        var rvmPyramidCUnique = rvmPyramidA with { TopX = rvmPyramidA.TopX + 1 }; // Change proportions of a dimension (Should not match)
 
         var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }
-            .Select(rvmPyramid => new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)))
+            .Select(
+                rvmPyramid =>
+                    new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
+            )
             .ToArray();
 
         Assert.That(rvmPyramidA, Is.Not.EqualTo(rvmPyramidAHalfScaled));

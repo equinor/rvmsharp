@@ -35,7 +35,9 @@ public readonly record struct Ray(Vector3 Origin, Vector3 Direction)
             return false;
         }
 
-        var t = (Vector3.Dot(planeNormal, triangle.V1) - Vector3.Dot(planeNormal, Origin)) / Vector3.Dot(planeNormal, Direction);
+        var t =
+            (Vector3.Dot(planeNormal, triangle.V1) - Vector3.Dot(planeNormal, Origin))
+            / Vector3.Dot(planeNormal, Direction);
         if (t < 0)
         {
             return false;
@@ -50,9 +52,11 @@ public readonly record struct Ray(Vector3 Origin, Vector3 Direction)
         var v3pi = intersectionPoint - triangle.V3;
 
         // Check if intersection point is on any corner
-        if (v1pi.EqualsWithinTolerance(Vector3.Zero, tolerance) ||
-            v2pi.EqualsWithinTolerance(Vector3.Zero, tolerance) ||
-            v3pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
+        if (
+            v1pi.EqualsWithinTolerance(Vector3.Zero, tolerance)
+            || v2pi.EqualsWithinTolerance(Vector3.Zero, tolerance)
+            || v3pi.EqualsWithinTolerance(Vector3.Zero, tolerance)
+        )
         {
             return true;
         }
@@ -64,24 +68,30 @@ public readonly record struct Ray(Vector3 Origin, Vector3 Direction)
         // Check if intersection point is on any of the sides
         if (v1v2Crossv1pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
         {
-            if ((triangle.V2 - intersectionPoint).AngleTo(v1v2).ApproximatelyEquals(0) &&
-                v1pi.AngleTo(v1v2).ApproximatelyEquals(0))
+            if (
+                (triangle.V2 - intersectionPoint).AngleTo(v1v2).ApproximatelyEquals(0)
+                && v1pi.AngleTo(v1v2).ApproximatelyEquals(0)
+            )
             {
                 return true;
             }
         }
         if (v2v3Crossv2pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
         {
-            if ((triangle.V3 - intersectionPoint).AngleTo(v2v3).ApproximatelyEquals(0) &&
-                v2pi.AngleTo(v2v3).ApproximatelyEquals(0))
+            if (
+                (triangle.V3 - intersectionPoint).AngleTo(v2v3).ApproximatelyEquals(0)
+                && v2pi.AngleTo(v2v3).ApproximatelyEquals(0)
+            )
             {
                 return true;
             }
         }
         if (v3v1Crossv3pi.EqualsWithinTolerance(Vector3.Zero, tolerance))
         {
-            if ((triangle.V1 - intersectionPoint).AngleTo(v3v1).ApproximatelyEquals(0) &&
-                v3pi.AngleTo(v3v1).ApproximatelyEquals(0))
+            if (
+                (triangle.V1 - intersectionPoint).AngleTo(v3v1).ApproximatelyEquals(0)
+                && v3pi.AngleTo(v3v1).ApproximatelyEquals(0)
+            )
             {
                 return true;
             }

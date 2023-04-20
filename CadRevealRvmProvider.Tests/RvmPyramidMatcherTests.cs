@@ -1,7 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Tests;
 
-using Operations;
 using CadRevealComposer.Utils;
+using Operations;
 using RvmSharp.Primitives;
 using System.Numerics;
 
@@ -9,27 +9,51 @@ using System.Numerics;
 public class RvmPyramidMatcherTests
 {
     [Test]
-    [TestCase(1, 1, 1, 1, 0, 0, 1,
-        1, 1, 1, 1, 0, 0, 1,
-        ExpectedResult = true)]
-    [TestCase(1, 1, 1, 1, 0, 0, 1,
-        2, 2, 2, 2, 0, 0, 1,
-        ExpectedResult = true)]
-    [TestCase(1, 1, 1, 1, 0, 0, 1,
-        2, 2, 3, 2, 0, 0, 1,
-        ExpectedResult = false)]
-    [TestCase(1, 1, 1, 2, 0, 0, 1,
-        2, 2, 4, 2, 0, 0, 1,
-        ExpectedResult = true)]
-    public bool MatchPyramids(float aBottomX, float aBottomY, float aTopX, float aTopY, float aOffsetX,
+    [TestCase(1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, ExpectedResult = true)]
+    [TestCase(1, 1, 1, 1, 0, 0, 1, 2, 2, 2, 2, 0, 0, 1, ExpectedResult = true)]
+    [TestCase(1, 1, 1, 1, 0, 0, 1, 2, 2, 3, 2, 0, 0, 1, ExpectedResult = false)]
+    [TestCase(1, 1, 1, 2, 0, 0, 1, 2, 2, 4, 2, 0, 0, 1, ExpectedResult = true)]
+    public bool MatchPyramids(
+        float aBottomX,
+        float aBottomY,
+        float aTopX,
+        float aTopY,
+        float aOffsetX,
         float aOffsetY,
-        float aHeight, float bBottomX, float bBottomY, float bTopX, float bTopY, float bOffsetX, float bOffsetY,
-        float bHeight)
+        float aHeight,
+        float bBottomX,
+        float bBottomY,
+        float bTopX,
+        float bTopY,
+        float bOffsetX,
+        float bOffsetY,
+        float bHeight
+    )
     {
-        var pyramidA = new RvmPyramid(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One),
-            aBottomX, aBottomY, aTopX, aTopY, aOffsetX, aOffsetY, aHeight);
-        var pyramidB = new RvmPyramid(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One),
-            bBottomX, bBottomY, bTopX, bTopY, bOffsetX, bOffsetY, bHeight);
+        var pyramidA = new RvmPyramid(
+            1,
+            Matrix4x4.Identity,
+            new RvmBoundingBox(-Vector3.One, Vector3.One),
+            aBottomX,
+            aBottomY,
+            aTopX,
+            aTopY,
+            aOffsetX,
+            aOffsetY,
+            aHeight
+        );
+        var pyramidB = new RvmPyramid(
+            1,
+            Matrix4x4.Identity,
+            new RvmBoundingBox(-Vector3.One, Vector3.One),
+            bBottomX,
+            bBottomY,
+            bTopX,
+            bTopY,
+            bOffsetX,
+            bOffsetY,
+            bHeight
+        );
 
         var result = RvmPyramidMatcher.Match(pyramidA, pyramidB, out var transform);
         if (result)
@@ -50,5 +74,4 @@ public class RvmPyramidMatcherTests
 
         return result;
     }
-
 }

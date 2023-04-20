@@ -1,28 +1,29 @@
 ﻿namespace CadRevealRvmProvider;
 
 using BatchUtils;
-using Converters;
-using Operations;
-using Tessellation;
 using Ben.Collections.Specialized;
-using Commons;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using Commons;
+using Converters;
+using Operations;
 using RvmSharp.Primitives;
 using System.Diagnostics;
+using Tessellation;
 
 public class RvmProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator)
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
-        var workload = RvmWorkload.CollectWorkload( filesToParse.Select(x => x.FullName).ToArray());
+        var workload = RvmWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
 
         Console.WriteLine("Reading RvmData");
         var rvmTimer = Stopwatch.StartNew();
@@ -44,7 +45,8 @@ public class RvmProvider : IModelFormatProvider
             return new List<CadRevealNode>();
         }
         Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))");
+            $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
+        );
 
         var stopwatch = Stopwatch.StartNew();
         var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, treeIndexGenerator);
@@ -53,17 +55,27 @@ public class RvmProvider : IModelFormatProvider
         return nodes;
     }
 
-    public APrimitive[] ProcessGeometries(APrimitive[] geometries,
+    public APrimitive[] ProcessGeometries(
+        APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator)
+        InstanceIdGenerator instanceIdGenerator
+    )
     {
         var stopwatch = Stopwatch.StartNew();
 
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
-            .Select(p => new RvmFacetGroupWithProtoMesh(p, p.FacetGroup.Version, p.FacetGroup.Matrix,
-                p.FacetGroup.BoundingBoxLocal, p.FacetGroup.Polygons))
+            .Select(
+                p =>
+                    new RvmFacetGroupWithProtoMesh(
+                        p,
+                        p.FacetGroup.Version,
+                        p.FacetGroup.Matrix,
+                        p.FacetGroup.BoundingBoxLocal,
+                        p.FacetGroup.Polygons
+                    )
+            )
             .Cast<RvmFacetGroup>()
             .ToArray();
 
@@ -81,7 +93,8 @@ public class RvmProvider : IModelFormatProvider
             facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
                 facetGroupsWithEmbeddedProtoMeshes,
                 facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value,
-                modelParameters.TemplateCountLimit.Value);
+                modelParameters.TemplateCountLimit.Value
+            );
             Console.WriteLine($"Facet groups instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
@@ -92,7 +105,9 @@ public class RvmProvider : IModelFormatProvider
         if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
         {
             var diffCount = protoMeshesFromPyramids.Length - uniqueProtoMeshesFromPyramid.Length;
-            Console.WriteLine($"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc).");
+            Console.WriteLine(
+                $"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc)."
+            );
         }
         RvmPyramidInstancer.Result[] pyramidInstancingResult;
         if (composerParameters.NoInstancing)
@@ -107,7 +122,8 @@ public class RvmProvider : IModelFormatProvider
         {
             pyramidInstancingResult = RvmPyramidInstancer.Process(
                 uniqueProtoMeshesFromPyramid,
-                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value);
+                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value
+            );
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();
         }
@@ -119,10 +135,7 @@ public class RvmProvider : IModelFormatProvider
             instanceIdGenerator
         );
 
-        var geometriesIncludingMeshes = geometries
-            .Where(g => g is not ProtoMesh)
-            .Concat(meshes)
-            .ToArray();
+        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh).Concat(meshes).ToArray();
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
@@ -133,5 +146,4 @@ public class RvmProvider : IModelFormatProvider
 
         return geometriesIncludingMeshes;
     }
-
 }

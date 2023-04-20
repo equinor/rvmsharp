@@ -1,8 +1,8 @@
 namespace RvmSharp.Primitives;
 
+using Operations;
 using System;
 using System.Numerics;
-using Operations;
 
 public record RvmSnout(
     uint Version,
@@ -16,23 +16,17 @@ public record RvmSnout(
     float BottomShearX,
     float BottomShearY,
     float TopShearX,
-    float TopShearY) : RvmPrimitive(Version,
-    RvmPrimitiveKind.Snout,
-    Matrix,
-    BoundingBoxLocal)
+    float TopShearY
+) : RvmPrimitive(Version, RvmPrimitiveKind.Snout, Matrix, BoundingBoxLocal)
 {
     public bool HasShear()
     {
-        return BottomShearX != 0 ||
-               BottomShearY != 0 ||
-               TopShearX != 0 ||
-               TopShearY != 0;
+        return BottomShearX != 0 || BottomShearY != 0 || TopShearX != 0 || TopShearY != 0;
     }
 
     public bool IsEccentric()
     {
-        return OffsetX != 0 ||
-               OffsetY != 0;
+        return OffsetX != 0 || OffsetY != 0;
     }
 
     public (Quaternion rotation, Vector3 normal, float slope) GetTopSlope()
@@ -51,7 +45,7 @@ public record RvmSnout(
     }
 
     public Ellipse3D GetTopCapEllipse()
-    { 
+    {
         // plane that is defined by the top cap
         var topCapCenter = 0.5f * new Vector3(OffsetX, OffsetY, Height);
         var xPlane = GeometryHelper.GetPlaneFromShearAndPoint(TopShearX, TopShearY, topCapCenter);
@@ -94,10 +88,7 @@ public record RvmSnout(
             }
             else
             {
-                return ConicSectionsHelper.CalcEllipseIntersectionForCylinder(
-                    xPlane,
-                    RadiusBottom,
-                    capCenter);
+                return ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
             }
         }
     }

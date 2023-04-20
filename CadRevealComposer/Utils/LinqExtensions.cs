@@ -12,7 +12,8 @@ public static class LinqExtensions
     /// Remove any "null" values, and change the type of the <see cref="IEnumerable{T}"/> from T? to T!
     /// </summary>
     [Pure]
-    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable) where T : class
+    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable)
+        where T : class
     {
         return enumerable.Where(e => e is not null)!;
     }
@@ -21,7 +22,8 @@ public static class LinqExtensions
     /// Remove any "null" values, and change the type of the <see cref="ParallelQuery{T}"/> from T? to T!
     /// </summary>
     [Pure]
-    public static ParallelQuery<T> WhereNotNull<T>(this ParallelQuery<T?> parallelQuery) where T : class
+    public static ParallelQuery<T> WhereNotNull<T>(this ParallelQuery<T?> parallelQuery)
+        where T : class
     {
         return parallelQuery.Where(e => e is not null)!;
     }
@@ -31,7 +33,8 @@ public static class LinqExtensions
     /// </summary>
     /// <remarks>This both does a where and a select, and might have a slight performance impact.</remarks>
     [Pure]
-    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable) where T : struct
+    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T?> enumerable)
+        where T : struct
     {
         return enumerable.Where(e => e != null).Select(e => e!.Value);
     }
@@ -40,14 +43,17 @@ public static class LinqExtensions
     /// Remove any "null" values, and change the type of the <see cref="ParallelQuery{T}"/> from T? to T!
     /// </summary>
     [Pure]
-    public static ParallelQuery<T> WhereNotNull<T>(this ParallelQuery<T?> parallelQuery) where T : struct
+    public static ParallelQuery<T> WhereNotNull<T>(this ParallelQuery<T?> parallelQuery)
+        where T : struct
     {
         return parallelQuery.Where(e => e != null).Select(e => e!.Value);
     }
 
-
     [Pure]
-    public static ImmutableSortedSet<T> ToImmutableSortedSetFast<T>(this IEnumerable<T> enumerable, IComparer<T>? comparer = null)
+    public static ImmutableSortedSet<T> ToImmutableSortedSetFast<T>(
+        this IEnumerable<T> enumerable,
+        IComparer<T>? comparer = null
+    )
     {
         // This is twice as fast as "ToImmutableSortedSet". No known issues.
         var builder = ImmutableSortedSet.CreateBuilder<T>();

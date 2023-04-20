@@ -14,10 +14,14 @@ public class PDMSEntry : IEquatable<PDMSEntry>
     public void RawInsert(SQLiteCommand command)
     {
         command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES (@Id, @Key, @Value);";
-        command.Parameters.AddRange(new[]
-        {
-            new SQLiteParameter("@Id", Id), new SQLiteParameter("@Key", Key), new SQLiteParameter("@Value", Value)
-        });
+        command.Parameters.AddRange(
+            new[]
+            {
+                new SQLiteParameter("@Id", Id),
+                new SQLiteParameter("@Key", Key),
+                new SQLiteParameter("@Value", Value)
+            }
+        );
         command.ExecuteNonQuery();
     }
 
@@ -42,7 +46,6 @@ public class PDMSEntry : IEquatable<PDMSEntry>
             command.ExecuteNonQuery();
         }
     }
-
 
     public bool Equals(PDMSEntry? other)
     {

@@ -8,7 +8,6 @@ public class FbxSdkWrapper : IDisposable
     private IntPtr sdk;
     private IntPtr version;
 
-
     private bool isValidSdk = false;
 
     public FbxSdkWrapper()
@@ -62,7 +61,6 @@ public class FbxSdkWrapper : IDisposable
         return true;
     }
 
-
     [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_create")]
     private static extern IntPtr manager_create();
 
@@ -73,7 +71,6 @@ public class FbxSdkWrapper : IDisposable
     {
         sdk = manager_create();
     }
-
 
     [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_destroy")]
     private static extern void manager_destroy(IntPtr manager);

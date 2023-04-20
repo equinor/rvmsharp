@@ -4,19 +4,17 @@ using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-
 
 public class FbxNodeToCadRevealNodeConverter
 {
-    public static IEnumerable<CadRevealNode> ConvertRecursive(FbxNode node,
+    public static IEnumerable<CadRevealNode> ConvertRecursive(
+        FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         FbxImporter fbxSdk,
-        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup)
+        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup
+    )
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
@@ -30,9 +28,14 @@ public class FbxNodeToCadRevealNodeConverter
             if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
             {
                 var bb = instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform);
-                var instancedMeshCopy = new InstancedMesh(instanceData.instanceId, instanceData.templateMesh,
-                    transform, id, Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                    bb);
+                var instancedMeshCopy = new InstancedMesh(
+                    instanceData.instanceId,
+                    instanceData.templateMesh,
+                    transform,
+                    id,
+                    Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
+                    bb
+                );
                 geometries.Add(instancedMeshCopy);
             }
             else
@@ -47,18 +50,26 @@ public class FbxNodeToCadRevealNodeConverter
                     var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
 
                     meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
-                    var instancedMesh = new InstancedMesh(instanceId, mesh,
+                    var instancedMesh = new InstancedMesh(
+                        instanceId,
+                        mesh,
                         transform,
                         id,
                         Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                        bb);
+                        bb
+                    );
 
                     geometries.Add(instancedMesh);
                 }
             }
         }
 
-        yield return new CadRevealNode { TreeIndex = id, Name = name, Geometries = geometries.ToArray() };
+        yield return new CadRevealNode
+        {
+            TreeIndex = id,
+            Name = name,
+            Geometries = geometries.ToArray()
+        };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
         for (var i = 0; i < childCount; i++)
@@ -69,7 +80,8 @@ public class FbxNodeToCadRevealNodeConverter
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxSdk,
-                meshInstanceLookup);
+                meshInstanceLookup
+            );
             foreach (CadRevealNode cadRevealNode in childCadRevealNodes)
             {
                 yield return cadRevealNode;

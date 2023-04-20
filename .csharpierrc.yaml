@@ -1,0 +1,3 @@
+# https://github.com/belav/csharpier/blob/master/Docs/Configuration.md
+
+printWidth: 120 # Suggested Max width (If lines are unbreakable it has no effect)
