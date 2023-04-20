@@ -1,0 +1,33 @@
+﻿name: Validate PR
+on:
+  pull_request:
+    branches: [ master ]
+jobs:
+  check_formatting:
+    runs-on: windows-latest
+    name: Check Formatting
+    steps:
+      - uses: actions/checkout@v3
+      - run: |
+          dotnet tool restore
+          dotnet csharpier --check .
+
+  build:
+    name: Build and test
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        dotnet-version: [ '7.0.x', '6.0.x' ]
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore /warnaserror
+      - name: Test
+        run: dotnet test --no-restore --verbosity normal
