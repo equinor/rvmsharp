@@ -262,13 +262,17 @@ public class SectorSplitterOctree : ISectorSplitter
             1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
             2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
             3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            //4 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
             _ => nodes.ToArray(),
         };
+        if (!selectedNodes.Any())
+        {
+            yield break;
+        }
+        if (actualDepth == 3)
+            budget = budget * 2; // Double the budget for depth 3, this is experimental
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(
-            x => x.Diagonal * (1 - (0.01 * x.EstimatedTriangleCount))
-        );
-
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
         var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();
         for (int i = 0; i < nodeArray.Length; i++)
