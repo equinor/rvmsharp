@@ -167,7 +167,7 @@ public static class SplittingUtils
                     g.Key,
                     geometries,
                     geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                    EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,
+                    EstimatedTriangleCount: DrawCallEstimator.EstimateTriangleCount(geometries),
                     boundingBox
                 );
             })

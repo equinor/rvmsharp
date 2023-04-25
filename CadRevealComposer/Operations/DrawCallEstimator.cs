@@ -92,6 +92,23 @@ public static class DrawCallEstimator
         return (estimatedTriangleCount, estimatedDrawCallCount);
     }
 
+    public static long EstimateTriangleCount(APrimitive[] geometry)
+    {
+        var renderPrimitives = geometry.SelectMany(g => g.GetRenderPrimitives()).ToArray();
+        var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();
+
+        var estimatedTriangleMeshTriangleCount = geometry.OfType<TriangleMesh>()
+            .Select(tm => (long)tm.Mesh.TriangleCount).Sum();
+
+        var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
+        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TemplateMesh.TriangleCount).Sum();
+
+        var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +
+                                     estimatedInstancedMeshTriangleCount;
+
+        return estimatedTriangleCount;
+    }
+
     /// <summary>
     /// Based on the knowledge of I3dWriter and ObjExporter.
     /// </summary>
