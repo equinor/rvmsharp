@@ -97,14 +97,18 @@ public static class DrawCallEstimator
         var renderPrimitives = geometry.SelectMany(g => g.GetRenderPrimitives()).ToArray();
         var estimatedPrimitiveTriangleCount = renderPrimitives.Select(p => (long)p.GetTriangleCount()).Sum();
 
-        var estimatedTriangleMeshTriangleCount = geometry.OfType<TriangleMesh>()
-            .Select(tm => (long)tm.Mesh.TriangleCount).Sum();
+        var estimatedTriangleMeshTriangleCount = geometry
+            .OfType<TriangleMesh>()
+            .Select(tm => (long)tm.Mesh.TriangleCount)
+            .Sum();
 
         var instancedMeshes = geometry.OfType<InstancedMesh>().ToArray();
-        var estimatedInstancedMeshTriangleCount = instancedMeshes.Select(im => (long)im.TemplateMesh.TriangleCount).Sum();
+        var estimatedInstancedMeshTriangleCount = instancedMeshes
+            .Select(im => (long)im.TemplateMesh.TriangleCount)
+            .Sum();
 
-        var estimatedTriangleCount = estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount +
-                                     estimatedInstancedMeshTriangleCount;
+        var estimatedTriangleCount =
+            estimatedPrimitiveTriangleCount + estimatedTriangleMeshTriangleCount + estimatedInstancedMeshTriangleCount;
 
         return estimatedTriangleCount;
     }
