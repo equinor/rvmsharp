@@ -8,7 +8,8 @@ jobs:
     name: Check Formatting
     steps:
       - uses: actions/checkout@v3
-      - run: |
+      - name: Check formatting using csharpier
+        run: |
           dotnet tool restore
           dotnet csharpier --check .
 
