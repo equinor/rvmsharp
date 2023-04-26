@@ -5,6 +5,7 @@ using Primitives;
 public record Node(
     ulong NodeId,
     APrimitive[] Geometries,
+    int priority,
     long EstimatedByteSize,
     long EstimatedTriangleCount,
     BoundingBox BoundingBox

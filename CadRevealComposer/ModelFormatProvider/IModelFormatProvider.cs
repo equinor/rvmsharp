@@ -14,8 +14,8 @@ public interface IModelFormatProvider
         InstanceIdGenerator instanceIdGenerator
     );
 
-    public APrimitive[] ProcessGeometries(
-        APrimitive[] geometries,
+    public (APrimitive, int)[] ProcessGeometries(
+        (APrimitive, int)[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
         InstanceIdGenerator instanceIdGenerator

@@ -31,7 +31,7 @@ public static class CadRevealComposerRunner
         var totalTimeElapsed = Stopwatch.StartNew();
 
         var nodesToProcess = new List<CadRevealNode>();
-        var geometriesToProcess = new List<APrimitive>();
+        var geometriesToProcess = new List<(APrimitive, int)>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
@@ -57,7 +57,10 @@ public static class CadRevealComposerRunner
                     var inputGeometries = cadRevealNodes
                         .AsParallel()
                         .AsOrdered()
-                        .SelectMany(x => x.Geometries)
+                        .SelectMany(
+                            x => x.Geometries,
+                            (x, g) => (g, x.Attributes.Count > 0 && x.Attributes["Discipline"].Equals("PIPE") ? 1 : 2)
+                        )
                         .ToArray();
 
                     var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
@@ -101,7 +104,7 @@ public static class CadRevealComposerRunner
     }
 
     public static void ProcessPrimitives(
-        APrimitive[] allPrimitives,
+        (APrimitive, int)[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
@@ -138,7 +141,7 @@ public static class CadRevealComposerRunner
 
         PrintSectorStats(sectorsWithDownloadSize);
 
-        var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives);
+        var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives.Select(x => x.Item1).ToArray());
         SceneCreator.WriteSceneFile(
             sectorsWithDownloadSize,
             modelParameters,
@@ -266,7 +269,9 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
+    private static List<(APrimitive, int)> OptimizeVertexCountInMeshes(
+        IEnumerable<(APrimitive, int)> geometriesToProcess
+    )
     {
         var meshCount = 0;
         var beforeOptimizationTotalVertices = 0;
@@ -278,7 +283,7 @@ public static class CadRevealComposerRunner
             .AsOrdered()
             .Select(primitive =>
             {
-                if (primitive is not TriangleMesh triangleMesh)
+                if (primitive.Item1 is not TriangleMesh triangleMesh)
                 {
                     return primitive;
                 }
@@ -287,9 +292,10 @@ public static class CadRevealComposerRunner
                 Interlocked.Increment(ref meshCount);
                 Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
                 Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
-                return triangleMesh with { Mesh = newMesh };
+
+                return ((APrimitive)(triangleMesh with { Mesh = newMesh }), primitive.Item2);
             })
-            .ToList();
+            .ToList<(APrimitive, int)>();
 
         using (new TeamCityLogBlock("Vertex Dedupe Stats"))
         {

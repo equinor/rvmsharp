@@ -16,7 +16,7 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors((APrimitive, int)[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
@@ -115,7 +115,18 @@ public class SectorSplitterOctree : ISectorSplitter
                 )
                 .ToList();
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-            subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
+
+            if (actualDepth == 1)
+            {
+                var restNodes = nodes.Except(mainVoxelNodes).ToArray();
+                var prioritizedNodes = restNodes.Where(x => x.priority == 1).ToArray();
+                mainVoxelNodes = mainVoxelNodes.Concat(prioritizedNodes).ToArray();
+                subVoxelNodes = restNodes.Except(prioritizedNodes).ToArray();
+            }
+            else
+            {
+                subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
+            }
         }
 
         if (!subVoxelNodes.Any())

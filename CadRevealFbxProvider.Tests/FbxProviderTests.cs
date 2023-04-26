@@ -123,7 +123,7 @@ public class FbxProviderTests
 
         var geometriesToProcess = nodesToProcess.SelectMany(x => x.Geometries);
         CadRevealComposerRunner.ProcessPrimitives(
-            geometriesToProcess.ToArray(),
+            geometriesToProcess.Select(x => (x, 1)).ToArray(),
             outputDirectory,
             modelParameters,
             composerParameters,

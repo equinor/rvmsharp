@@ -32,4 +32,9 @@ public class SectorSplitterSingle : ISectorSplitter
             null
         );
     }
+
+    public IEnumerable<InternalSector> SplitIntoSectors((APrimitive, int)[] allGeometries)
+    {
+        throw new NotImplementedException();
+    }
 }

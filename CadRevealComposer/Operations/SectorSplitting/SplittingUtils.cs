@@ -151,13 +151,15 @@ public static class SplittingUtils
         return (regularNodes, outlierNodes);
     }
 
-    public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
+    public static Node[] ConvertPrimitivesToNodes((APrimitive, int)[] primitives)
     {
         return primitives
-            .GroupBy(p => p.TreeIndex)
+            .GroupBy(p => p.Item1.TreeIndex)
             .Select(g =>
             {
-                var geometries = g.ToArray();
+                var geometries = g.Select(x => x.Item1).ToArray();
+                var priority = g.Select(x => x.Item2).Min();
+
                 var boundingBox = geometries.CalculateBoundingBox();
                 if (boundingBox == null)
                 {
@@ -166,6 +168,7 @@ public static class SplittingUtils
                 return new Node(
                     g.Key,
                     geometries,
+                    priority,
                     geometries.Sum(DrawCallEstimator.EstimateByteSize),
                     EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,
                     boundingBox

@@ -55,8 +55,8 @@ public class RvmProvider : IModelFormatProvider
         return nodes;
     }
 
-    public APrimitive[] ProcessGeometries(
-        APrimitive[] geometries,
+    public (APrimitive, int)[] ProcessGeometries(
+        (APrimitive, int)[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
         InstanceIdGenerator instanceIdGenerator
@@ -65,6 +65,7 @@ public class RvmProvider : IModelFormatProvider
         var stopwatch = Stopwatch.StartNew();
 
         var facetGroupsWithEmbeddedProtoMeshes = geometries
+            .Select(x => x.Item1)
             .OfType<ProtoMeshFromFacetGroup>()
             .Select(
                 p =>
@@ -99,7 +100,7 @@ public class RvmProvider : IModelFormatProvider
             stopwatch.Restart();
         }
 
-        var protoMeshesFromPyramids = geometries.OfType<ProtoMeshFromRvmPyramid>().ToArray();
+        var protoMeshesFromPyramids = geometries.Select(x => x.Item1).OfType<ProtoMeshFromRvmPyramid>().ToArray();
         // We have models where several pyramids on the same "part" are completely identical.
         var uniqueProtoMeshesFromPyramid = protoMeshesFromPyramids.Distinct().ToArray();
         if (uniqueProtoMeshesFromPyramid.Length < protoMeshesFromPyramids.Length)
@@ -135,7 +136,11 @@ public class RvmProvider : IModelFormatProvider
             instanceIdGenerator
         );
 
-        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh).Concat(meshes).ToArray();
+        var geometriesIncludingMeshes = geometries
+            .Select(x => x.Item1)
+            .Where(g => g is not ProtoMesh)
+            .Concat(meshes)
+            .ToArray();
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
@@ -144,6 +149,12 @@ public class RvmProvider : IModelFormatProvider
 
         stopwatch.Restart();
 
-        return geometriesIncludingMeshes;
+        var tupleList = new List<(APrimitive, int)>();
+        for (int i = 0; i < geometriesIncludingMeshes.Length; i++)
+        {
+            tupleList.Add((geometriesIncludingMeshes[i], geometries[i].Item2));
+        }
+
+        return tupleList.ToArray();
     }
 }
