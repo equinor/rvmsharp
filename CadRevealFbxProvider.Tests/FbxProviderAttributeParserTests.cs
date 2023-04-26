@@ -20,22 +20,28 @@ public class FbxProviderAttributeParserTests
     [Test]
     public void MissingKeyAttributesTest()
     {
-        Assert.Throws<Exception>(() =>
-        {
-            string infoTextFilename = attributeDirectory.FullName.ToString() + "\\missing_key_attribute.csv";
-            var lines = File.ReadAllLines(infoTextFilename);
-            new ScaffoldingAttributeParser().ParseAttributes(lines);
-        }, "Was expecting an exception saying that the key attribute is missing, but got none");
+        Assert.Throws<Exception>(
+            () =>
+            {
+                string infoTextFilename = attributeDirectory.FullName.ToString() + "\\missing_key_attribute.csv";
+                var lines = File.ReadAllLines(infoTextFilename);
+                new ScaffoldingAttributeParser().ParseAttributes(lines);
+            },
+            "Was expecting an exception saying that the key attribute is missing, but got none"
+        );
     }
 
     [Test]
     public void WrongNumberAttributesTest()
     {
-        Assert.Throws<Exception>(() =>
-        {
-            string infoTextFilename = attributeDirectory.FullName.ToString() + "\\wrong_attribute_count.csv";
-            var lines = File.ReadAllLines(infoTextFilename);
-            new ScaffoldingAttributeParser().ParseAttributes(lines);
-        },"Was expecting an exception saying that the attribute count is off, but got none");
+        Assert.Throws<Exception>(
+            () =>
+            {
+                string infoTextFilename = attributeDirectory.FullName.ToString() + "\\wrong_attribute_count.csv";
+                var lines = File.ReadAllLines(infoTextFilename);
+                new ScaffoldingAttributeParser().ParseAttributes(lines);
+            },
+            "Was expecting an exception saying that the attribute count is off, but got none"
+        );
     }
 }

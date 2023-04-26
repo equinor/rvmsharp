@@ -84,12 +84,11 @@ public class FbxNodeToCadRevealNodeConverter
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxSdk,
-
                 meshInstanceLookup
             );
             children.Add(childCadRevealNode);
 
-            if(childCadRevealNode.Children != null)
+            if (childCadRevealNode.Children != null)
             {
                 foreach (CadRevealNode cadRevealNode in childCadRevealNode.Children)
                 {

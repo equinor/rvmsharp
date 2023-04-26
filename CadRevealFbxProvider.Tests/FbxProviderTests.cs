@@ -20,14 +20,18 @@ public class FbxProviderTests
     private static readonly DirectoryInfo inputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
 
     private static readonly ModelParameters modelParameters = new ModelParameters(
-                new ProjectId(1),
-                new ModelId(1),
-                new RevisionId(1),
-                new InstancingThreshold(1),
-                new TemplateCountLimit(100));
+        new ProjectId(1),
+        new ModelId(1),
+        new RevisionId(1),
+        new InstancingThreshold(1),
+        new TemplateCountLimit(100)
+    );
     private static readonly ComposerParameters composerParameters = new ComposerParameters("", false, true, false);
 
-    private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>() { new FbxProvider() };
+    private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
+    {
+        new FbxProvider()
+    };
 
     [Test]
     public void FbxImporterSdkInitTest()
@@ -67,16 +71,19 @@ public class FbxProviderTests
     [Test]
     public void ModelAndAttributeFileMismatchGivesErrorMessage()
     {
-        Assert.Throws<Exception>(() =>
-        {
-
-            CadRevealComposerRunner.Process(
-            inputDirectoryMismatch,
-            outputDirectoryMismatch,
-            modelParameters,
-            composerParameters,
-            providers);
-         }, "An exception was expected, saying that the model and attribute file do not match, but got none.");
+        Assert.Throws<Exception>(
+            () =>
+            {
+                CadRevealComposerRunner.Process(
+                    inputDirectoryMismatch,
+                    outputDirectoryMismatch,
+                    modelParameters,
+                    composerParameters,
+                    providers
+                );
+            },
+            "An exception was expected, saying that the model and attribute file do not match, but got none."
+        );
     }
 
     [Test]
@@ -85,11 +92,12 @@ public class FbxProviderTests
         Assert.Throws<Exception>(() =>
         {
             CadRevealComposerRunner.Process(
-            inputDirectoryIncorrect,
-            outputDirectoryIncorrect,
-            modelParameters,
-            composerParameters,
-            providers);
+                inputDirectoryIncorrect,
+                outputDirectoryIncorrect,
+                modelParameters,
+                composerParameters,
+                providers
+            );
         });
     }
 
@@ -97,11 +105,12 @@ public class FbxProviderTests
     public void SampleModel_SmokeTest()
     {
         CadRevealComposerRunner.Process(
-        inputDirectoryCorrect,
-        outputDirectoryCorrect,
-        modelParameters,
-        composerParameters,
-        providers);
+            inputDirectoryCorrect,
+            outputDirectoryCorrect,
+            modelParameters,
+            composerParameters,
+            providers
+        );
     }
 
     [Test]
@@ -139,14 +148,17 @@ public class FbxProviderTests
             treeIndexGenerator,
             instanceIndexGenerator,
             testLoader,
-            lookupA);
+            lookupA
+        );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
         // this test model should have a bounding box for each node
-        foreach ( var node in flatNodes) {
-            if(node.Geometries.Length>0) Assert.That(node.BoundingBoxAxisAligned != null);
+        foreach (var node in flatNodes)
+        {
+            if (node.Geometries.Length > 0)
+                Assert.That(node.BoundingBoxAxisAligned != null);
         }
-        
+
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
@@ -155,6 +167,8 @@ public class FbxProviderTests
             composerParameters,
             treeIndexGenerator
         );
-        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\"");
+        Console.WriteLine(
+            $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\""
+        );
     }
 }

@@ -95,7 +95,8 @@ public static class FbxWorkload
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxImporter,
-                lookupA);
+                lookupA
+            );
 
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
@@ -115,7 +116,7 @@ public static class FbxWorkload
                     {
                         var id = match.Groups[1].Value;
 
-                        if(attributes.ContainsKey(id))
+                        if (attributes.ContainsKey(id))
                         {
                             totalMismatch = false;
                             foreach (var kvp in attributes[id])
@@ -130,7 +131,10 @@ public static class FbxWorkload
                     }
                 }
 
-                if (totalMismatch) throw new Exception($"FBX model file {fbxFilename} and corresponding attribute file {infoTextFilename} completely mismatch.");
+                if (totalMismatch)
+                    throw new Exception(
+                        $"FBX model file {fbxFilename} and corresponding attribute file {infoTextFilename} completely mismatch."
+                    );
             }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));
