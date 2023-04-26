@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "CadRevealComposer.Exe": {
-      "commandName": "Project",
-      "commandLineArgs": "-i \"D:\\Models\\hda\\HDA_RVM\" -o \"C:\\Users\\VES\\Documents\\Projects\\Reveal3.3\\reveal\\examples\\public\\primitives1\" --ModelId 1 --RevisionId 1 --ProjectId 1"
-    }
-  }
-}
