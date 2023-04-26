@@ -209,14 +209,12 @@ public static class ConicSectionsHelper
         }
         // the coeff_6x6 matrix represents the following system of equations using points (xi,yi) with i 1..6
         // NB: (x0,y0) is by tradition used to define the center/origin, so to avoid confusion, points are indexed 1..6, not 0..5
-
         // A*x1^2 + B*x1*y1 + C*y1^2 + D*x1 + E*y1 + F*1 = 0
         // A*x2^2 + B*x2*y2 + C*y2^2 + D*x2 + E*y2 + F*1 = 0
         // A*x3^2 + B*x3*y3 + C*y3^2 + D*x3 + E*y3 + F*1 = 0
         // A*x4^2 + B*x4*y4 + C*y4^2 + D*x4 + E*y4 + F*1 = 0
         // A*x5^2 + B*x5*y5 + C*y5^2 + D*x5 + E*y5 + F*1 = 0
         // A*x6^2 + B*x6*y6 + C*y6^2 + D*x6 + E*y6 + F*1 = 0
-
         // the system has a trivial solution, i.e., the null vector
         // or possible other solutions defined as the "null space" or the "kernel" of the coefficient matrix
         // csharpier-ignore

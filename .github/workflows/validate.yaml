@@ -8,9 +8,14 @@ jobs:
     name: Check Formatting
     steps:
       - uses: actions/checkout@v3
-      - name: Check formatting using csharpier
+      - name: Install tools
         run: |
           dotnet tool restore
+      - name: Print csharpier version
+        run: |
+          dotnet csharpier --version
+      - name: Check formatting using csharpier
+        run: |
           dotnet csharpier --check .
 
   build:
