@@ -16,6 +16,7 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
+    private const float SplitDetailsThreshold = 0.005f; // arbitrary value for splitting out details from last nodes
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -217,12 +218,12 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var sectorId = (uint)sectorIdGenerator.GetNextId();
 
-        var smallNodes = nodes.Where(n => n.Diagonal < 0.2f).ToArray();
+        var smallNodes = nodes.Where(n => n.Diagonal < SplitDetailsThreshold).ToArray();
         var largeNodes = nodes.Except(smallNodes).ToArray();
 
         var subtreeBoundingBox = nodes.CalculateBoundingBox();
 
-        if (largeNodes.Length > 0)
+        if (largeNodes.Length > 0 && smallNodes.Any(n => n.Diagonal > 0))
         {
             yield return CreateSector(largeNodes, sectorId, parentSectorId, parentPath, depth, subtreeBoundingBox);
 
