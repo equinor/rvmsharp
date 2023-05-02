@@ -85,9 +85,9 @@ public class SectorSplitterOctree : ISectorSplitter
         int depthToStartSplittingGeometry
     )
     {
-        /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
+        /*
+         * Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
          * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
-         * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
          */
 
         if (nodes.Length == 0)
@@ -121,71 +121,11 @@ public class SectorSplitterOctree : ISectorSplitter
 
         if (!subVoxelNodes.Any())
         {
-            var sectorId = (uint)sectorIdGenerator.GetNextId();
-            var path = $"{parentPath}/{sectorId}";
+            var lastSectors = HandleLastNodes(nodes, actualDepth, parentSectorId, parentPath, sectorIdGenerator);
 
-            var smallNodes = nodes.Where(n => n.Diagonal < 0.2f).ToArray();
-            var largeNodes = nodes.Except(smallNodes).ToArray();
-
-            if (largeNodes.Length > 0)
+            foreach (var sector in lastSectors)
             {
-                var largeMinDiagonal = largeNodes.Min(n => n.Diagonal);
-                var largeMaxDiagonal = largeNodes.Max(n => n.Diagonal);
-                var largeGeometries = largeNodes.SelectMany(n => n.Geometries).ToArray();
-                var largeBb = largeNodes.CalculateBoundingBox();
-                yield return new InternalSector(
-                    sectorId,
-                    parentSectorId,
-                    actualDepth,
-                    path,
-                    largeMinDiagonal,
-                    largeMaxDiagonal,
-                    largeGeometries,
-                    largeBb,
-                    subtreeBoundingBox
-                );
-
-                if (smallNodes.Length > 0)
-                {
-                    var smallMinDiagonal = smallNodes.Min(n => n.Diagonal);
-                    var smallGeometries = smallNodes.SelectMany(n => n.Geometries).ToArray();
-                    var smallMaxDiagonal = smallNodes.Max(n => n.Diagonal);
-
-                    var smallBb = smallNodes.CalculateBoundingBox();
-
-                    var smallSectorId = (uint)sectorIdGenerator.GetNextId();
-                    var smallPath = $"{path}/{smallSectorId}";
-
-                    yield return new InternalSector(
-                        smallSectorId,
-                        sectorId,
-                        actualDepth + 1,
-                        smallPath,
-                        smallMinDiagonal,
-                        smallMaxDiagonal,
-                        smallGeometries,
-                        smallBb,
-                        smallBb
-                    );
-                }
-            }
-            else
-            {
-                var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
-                var minDiagonal = nodes.Min(x => x.Diagonal);
-                var maxDiagonal = nodes.Max(x => x.Diagonal);
-
-                yield return new InternalSector(
-                    sectorId,
-                    parentSectorId,
-                    actualDepth,
-                    path,
-                    minDiagonal,
-                    maxDiagonal,
-                    geometries,
-                    subtreeBoundingBox,
-                    subtreeBoundingBox
-                );
+                yield return sector;
             }
         }
         else
@@ -199,24 +139,17 @@ public class SectorSplitterOctree : ISectorSplitter
             if (geometries.Any() || subVoxelNodes.Any())
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
-                var path = $"{parentPath}/{sectorId}";
-                var geometryBb = geometries.CalculateBoundingBox();
 
-                var minDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Min(x => x.Diagonal) : 0;
-                var maxDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Max(x => x.Diagonal) : 0;
-                yield return new InternalSector(
+                yield return CreateSector(
+                    mainVoxelNodes,
                     sectorId,
                     parentSectorId,
+                    parentPath,
                     actualDepth,
-                    path,
-                    minDiagonal,
-                    maxDiagonal,
-                    geometries,
-                    subtreeBoundingBox,
-                    geometryBb
+                    subtreeBoundingBox
                 );
 
-                parentPathForChildren = path;
+                parentPathForChildren = $"{parentPath}/{sectorId}";
                 parentSectorIdForChildren = sectorId;
             }
 
@@ -272,6 +205,77 @@ public class SectorSplitterOctree : ISectorSplitter
                 }
             }
         }
+    }
+
+    private IEnumerable<InternalSector> HandleLastNodes(
+        Node[] nodes,
+        int depth,
+        uint? parentSectorId,
+        string parentPath,
+        SequentialIdGenerator sectorIdGenerator
+    )
+    {
+        var sectorId = (uint)sectorIdGenerator.GetNextId();
+
+        var smallNodes = nodes.Where(n => n.Diagonal < 0.2f).ToArray();
+        var largeNodes = nodes.Except(smallNodes).ToArray();
+
+        var subtreeBoundingBox = nodes.CalculateBoundingBox();
+
+        if (largeNodes.Length > 0)
+        {
+            yield return CreateSector(largeNodes, sectorId, parentSectorId, parentPath, depth, subtreeBoundingBox);
+
+            if (smallNodes.Length <= 0)
+            {
+                yield break;
+            }
+
+            var smallNodesSectorId = (uint)sectorIdGenerator.GetNextId();
+            var smallNodesParentPath = $"{parentPath}/{sectorId}";
+
+            yield return CreateSector(
+                smallNodes,
+                smallNodesSectorId,
+                sectorId,
+                smallNodesParentPath,
+                depth + 1,
+                smallNodes.CalculateBoundingBox()
+            );
+        }
+        else
+        {
+            yield return CreateSector(nodes, sectorId, parentSectorId, parentPath, depth, subtreeBoundingBox);
+        }
+    }
+
+    private InternalSector CreateSector(
+        Node[] nodes,
+        uint sectorId,
+        uint? parentSectorId,
+        string parentPath,
+        int depth,
+        BoundingBox subtreeBoundingBox
+    )
+    {
+        var path = $"{parentPath}/{sectorId}";
+
+        var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
+        var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
+        var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+        var geometryBoundingBox = geometries.CalculateBoundingBox();
+
+        return new InternalSector(
+            sectorId,
+            parentSectorId,
+            depth,
+            path,
+            minDiagonal,
+            maxDiagonal,
+            geometries,
+            subtreeBoundingBox,
+            geometryBoundingBox
+        );
     }
 
     private static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
