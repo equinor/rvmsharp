@@ -60,7 +60,6 @@ public static class CadRevealComposerRunner
                     {
                         if (cadRevealNode.Parent?.Name.Contains("/A00-AREA") == true)
                         {
-
                             if (regex.IsMatch(cadRevealNode.Name))
                             {
                                 cadRevealNode.Attributes.Add("SurfaceUnitVolume", "true");
