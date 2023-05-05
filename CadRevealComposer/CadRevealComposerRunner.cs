@@ -66,7 +66,6 @@ public static class CadRevealComposerRunner
                                 cadRevealNode.Attributes.Add(cadRevealNode.Name.TrimStart('/'), "true");
                             }
                         }
-
                     }
 
                     // Add Surface Unit Metadata
@@ -80,7 +79,7 @@ public static class CadRevealComposerRunner
                             SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, filePath);
                         }
                     });
-                    
+
                     // collect all nodes for later sector division of the entire scene
                     nodesToProcess.AddRange(cadRevealNodes);
 

@@ -15,8 +15,8 @@ public static class SurfaceUnitMetaDataWriter
     public static void AddMetaData(IEnumerable<CadRevealNode> allNodes, string filePath)
     {
         var rvmNodes = allNodes
-            .Where(n => n.Attributes.ContainsKey("RefNo")).ToDictionary((k) => k.Attributes["RefNo"], (v) => v);
-
+            .Where(n => n.Attributes.ContainsKey("RefNo"))
+            .ToDictionary((k) => k.Attributes["RefNo"], (v) => v);
 
         var config = new CsvConfiguration(CultureInfo.InvariantCulture) { Delimiter = ";", };
         using var reader = new StreamReader(filePath);
