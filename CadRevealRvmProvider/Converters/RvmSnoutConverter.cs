@@ -35,6 +35,12 @@ public static class RvmSnoutConverter
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
+        if (radiusA <= 0 && radiusB <= 0)
+        {
+            Console.WriteLine($"Snout was removed, because the radii were: {radiusA} and {radiusB}");
+            return Array.Empty<APrimitive>();
+        }
+
         var centerA = position + normal * halfLength;
         var centerB = position - normal * halfLength;
 
