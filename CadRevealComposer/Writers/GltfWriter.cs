@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Writers;
 
+using Commons.Utils;
 using Primitives;
 using SharpGLTF.IO;
 using SharpGLTF.Schema2;
@@ -817,6 +818,10 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, Matrix4x4 matrix, ref int bufferPos)
     {
+        foreach (float f in matrix.AsEnumerableRowMajor())
+        {
+            ThrowIfValueIsNotFinite(f);
+        }
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Matrix4x4.cs
         // writes Matrix4x4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref matrix, 1));
