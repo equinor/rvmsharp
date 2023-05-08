@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -21,7 +22,7 @@ public static class RvmRectangularTorusConverter
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
-        (Vector3 normal, float rotationAngle) = rotation.DecomposeQuaternion();
+        (Vector3 normal, float _) = rotation.DecomposeQuaternion();
 
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
         var radiusOuter = rvmRectangularTorus.RadiusOuter * scale.X;
@@ -86,9 +87,29 @@ public static class RvmRectangularTorusConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
 
-        yield return new GeneralRing(0f, arcAngle, matrixRingA, normal, thickness, treeIndex, color, bbBox);
+        if (matrixRingA.IsDecomposable())
+        {
+            yield return new GeneralRing(0f, arcAngle, matrixRingA, normal, thickness, treeIndex, color, bbBox);
+        }
+        else
+        {
+            // This should not happen, but happens in so few models as of now that we think we can ignore it.
+            Console.WriteLine(
+                $"Failed to decompose matrix for {nameof(matrixRingA)} of node {treeIndex} geometry: {rvmRectangularTorus}"
+            );
+        }
 
-        yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
+        if (matrixRingB.IsDecomposable())
+        {
+            yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
+        }
+        else
+        {
+            // This should not happen, but happens in so few models as of now that we think we can ignore it.
+            Console.WriteLine(
+                $"Failed to decompose matrix for {nameof(matrixRingB)} of node {treeIndex} geometry: {rvmRectangularTorus}"
+            );
+        }
 
         // Add caps to the two ends of the torus, where the segment is "cut out"
         // This is not needed if the torus goes all the way around

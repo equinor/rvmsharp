@@ -3,6 +3,7 @@ namespace CadRevealRvmProvider.Converters;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -285,16 +286,26 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return new GeneralRing(
-                Angle: 0f,
-                ArcAngle: 2f * MathF.PI,
-                matrixCapA,
-                normal,
-                Thickness: 1f,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            if (matrixCapA.IsDecomposable())
+            {
+                yield return new GeneralRing(
+                    Angle: 0f,
+                    ArcAngle: 2f * MathF.PI,
+                    matrixCapA,
+                    normal,
+                    Thickness: 1f,
+                    treeIndex,
+                    color,
+                    bbox // Why we use the same bbox as RVM source
+                );
+            }
+            else
+            {
+                // This should not happen, but happens in so few models as of now that we think we can ignore it.
+                Console.WriteLine(
+                    $"Failed to decompose matrix for {nameof(matrixCapA)} of node {treeIndex} geometry: {rvmSnout}"
+                );
+            }
         }
 
         if (showCapB)
@@ -304,16 +315,26 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            yield return new GeneralRing(
-                Angle: 0f,
-                ArcAngle: 2f * MathF.PI,
-                matrixCapB,
-                -normal,
-                Thickness: 1f,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            if (matrixCapB.IsDecomposable())
+            {
+                yield return new GeneralRing(
+                    Angle: 0f,
+                    ArcAngle: 2f * MathF.PI,
+                    matrixCapB,
+                    -normal,
+                    Thickness: 1f,
+                    treeIndex,
+                    color,
+                    bbox // Why we use the same bbox as RVM source
+                );
+            }
+            else
+            {
+                // This should not happen, but happens in so few models as of now that we think we can ignore it.
+                Console.WriteLine(
+                    $"Failed to decompose matrix for {nameof(matrixCapB)} of node {treeIndex} geometry: {rvmSnout}"
+                );
+            }
         }
     }
 }
