@@ -132,9 +132,7 @@ public static class FbxWorkload
                 }
 
                 if (totalMismatch)
-                    throw new Exception(
-                        $"FBX model file {fbxFilename} and corresponding attribute file {infoTextFilename} completely mismatch."
-                    );
+                    throw new Exception($"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch.");
             }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));
