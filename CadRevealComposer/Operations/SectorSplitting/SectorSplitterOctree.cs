@@ -209,6 +209,12 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
+    /*
+     * This method is intended to avoid the problem that we allways fill leaf sectors
+     * to the brim with content. This means that we can have a sector with both large and
+     * tiny parts. If this is the case we sometimes want to avoid loading all the tiny
+     * parts until we are closer to the sector.
+     */
     private IEnumerable<InternalSector> HandleLastNodes(
         Node[] nodes,
         int depth,
@@ -220,7 +226,7 @@ public class SectorSplitterOctree : ISectorSplitter
         var sectorId = (uint)sectorIdGenerator.GetNextId();
 
         var smallNodes = nodes.Where(n => n.Diagonal < SplitDetailsThreshold).ToArray();
-        var largeNodes = nodes.Except(smallNodes).ToArray();
+        var largeNodes = nodes.Where(n => n.Diagonal >= SplitDetailsThreshold).ToArray();
 
         var subtreeBoundingBox = nodes.CalculateBoundingBox();
 
