@@ -29,9 +29,7 @@ public class ScaffoldingAttributeParser
         if (attributeRawData.First().ColumnCount == expectedColCount)
         {
             var colCount = attributeRawData.First().ColumnCount;
-            throw new Exception(
-                $"Attribute file contains {colCount}, expected a {expectedColCount} attributes."
-            );
+            throw new Exception($"Attribute file contains {colCount}, expected a {expectedColCount} attributes.");
         }
 
         var attributesDictionary = attributeRawData.ToDictionary(
