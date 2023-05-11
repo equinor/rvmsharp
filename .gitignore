@@ -9,6 +9,9 @@
 **/bin/**
 **/obj/**
 
+# Launch Settings
+/CadRevealComposer.Exe/Properties/launchSettings.json
+
 # Ignore test data because of large or confidential files.
 /TestData/*
 

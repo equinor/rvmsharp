@@ -8,7 +8,7 @@ using System.Drawing;
 
 public class FbxNodeToCadRevealNodeConverter
 {
-    public static IEnumerable<CadRevealNode> ConvertRecursive(
+    public static CadRevealNode ConvertRecursive(
         FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -18,6 +18,7 @@ public class FbxNodeToCadRevealNodeConverter
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
+        BoundingBox? nodeBoundingBox = null;
 
         var name = FbxNodeWrapper.GetNodeName(node);
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
@@ -37,6 +38,11 @@ public class FbxNodeToCadRevealNodeConverter
                     bb
                 );
                 geometries.Add(instancedMeshCopy);
+
+                if (nodeBoundingBox != null)
+                    nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
+                else
+                    nodeBoundingBox = bb;
             }
             else
             {
@@ -60,32 +66,55 @@ public class FbxNodeToCadRevealNodeConverter
                     );
 
                     geometries.Add(instancedMesh);
+                    if (nodeBoundingBox != null)
+                        nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
+                    else
+                        nodeBoundingBox = bb;
                 }
             }
         }
 
-        yield return new CadRevealNode
-        {
-            TreeIndex = id,
-            Name = name,
-            Geometries = geometries.ToArray()
-        };
-
         var childCount = FbxNodeWrapper.GetChildCount(node);
+        List<CadRevealNode> children = new List<CadRevealNode>();
         for (var i = 0; i < childCount; i++)
         {
-            var child = FbxNodeWrapper.GetChild(i, node);
-            var childCadRevealNodes = ConvertRecursive(
+            FbxNode child = FbxNodeWrapper.GetChild(i, node);
+            CadRevealNode childCadRevealNode = ConvertRecursive(
                 child,
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxSdk,
                 meshInstanceLookup
             );
-            foreach (CadRevealNode cadRevealNode in childCadRevealNodes)
+            children.Add(childCadRevealNode);
+
+            if (childCadRevealNode.Children != null)
             {
-                yield return cadRevealNode;
+                foreach (CadRevealNode cadRevealNode in childCadRevealNode.Children)
+                {
+                    var childBoundingBox = cadRevealNode.BoundingBoxAxisAligned;
+                    if (childBoundingBox != null)
+                    {
+                        if (nodeBoundingBox != null)
+                        {
+                            nodeBoundingBox = nodeBoundingBox.Encapsulate(childBoundingBox);
+                        }
+                        else
+                        {
+                            nodeBoundingBox = childBoundingBox;
+                        }
+                    }
+                }
             }
         }
+
+        return new CadRevealNode
+        {
+            TreeIndex = id,
+            Name = name,
+            Geometries = geometries.ToArray(),
+            BoundingBoxAxisAligned = nodeBoundingBox,
+            Children = children.ToArray()
+        };
     }
 }

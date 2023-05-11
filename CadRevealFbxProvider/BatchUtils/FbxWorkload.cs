@@ -89,17 +89,25 @@ public static class FbxWorkload
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
             var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-            var nodesToProcess = FbxNodeToCadRevealNodeConverter
-                .ConvertRecursive(rootNodeOfModel, treeIndexGenerator, instanceIdGenerator, fbxImporter, lookupA)
-                .ToList();
+
+            var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
+                rootNodeOfModel,
+                treeIndexGenerator,
+                instanceIdGenerator,
+                fbxImporter,
+                lookupA
+            );
+
+            var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
             // attach attribute info to the nodes if there is any
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                var data = new ScaffoldingAttributeParser().ParseAttributes(lines);
-                var flatNodes = nodesToProcess.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
+                var attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
+
+                bool totalMismatch = true;
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)
                 {
@@ -107,9 +115,11 @@ public static class FbxWorkload
                     if (match.Success)
                     {
                         var id = match.Groups[1].Value;
-                        if (data.TryGetValue(id, out Dictionary<string, string>? value))
+
+                        if (attributes.ContainsKey(id))
                         {
-                            foreach (var kvp in value)
+                            totalMismatch = false;
+                            foreach (var kvp in attributes[id])
                             {
                                 cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
                             }
@@ -120,15 +130,18 @@ public static class FbxWorkload
                         }
                     }
                 }
+
+                if (totalMismatch)
+                    throw new Exception(
+                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch."
+                    );
             }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));
-            return nodesToProcess;
+            return flatNodes;
         }
 
-        var fbxNodes = workload.SelectMany(LoadFbxFile).ToArray();
-
-        var fbxNodesFlat = fbxNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+        var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
 
         if (stringInternPool != null)
         {
