@@ -152,7 +152,7 @@ end {
     Move-Item -Path $OutputDirectory/* -Destination $t -Force
     Write-Host "Success. Output copied to ""$OutputDirectory"". Total time: $($scriptTimer.Elapsed)"
 
-    # The key is not really a secret :)
+    # The key below is the Azure Storage Emulators well-known key: https://learn.microsoft.com/en-us/azure/storage/common/storage-use-emulator#authorize-with-shared-key-credentials
     $azConnection = "AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;DefaultEndpointsProtocol=http;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;"
     az storage container create -n "$PlantCode-$PlatformSectionId" --connection-string $azConnection
     az storage blob upload-batch -d "$PlantCode-$PlatformSectionId" --connection-string $azConnection -s "$OutputDirectory 1/$PlantCode-$PlatformSectionId" --overwrite
