@@ -8,9 +8,12 @@ using Operations;
 using Operations.SectorSplitting;
 using Primitives;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Data.Entity;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -129,7 +132,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
+        var sectorInfos = sectors.SelectMany(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -219,7 +222,7 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    private static IEnumerable<SceneCreator.SectorInfo> SerializeSector(InternalSector p, string outputDirectory)
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
@@ -240,8 +243,35 @@ public static class CadRevealComposerRunner
         );
 
         if (sectorFilename != null)
+        {
             SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
-        return sectorInfo;
+
+            // Shadow sector
+
+            var shadowSectorFileName = "shadow_" + sectorFilename;
+            var pinkGeometries = p.Geometries.Select(g => g with { Color = Color.Magenta }).ToList();
+
+            var shadowSectorInfo = new SceneCreator.SectorInfo(
+                SectorId: p.SectorId + 192,
+                ParentSectorId: p.ParentSectorId,
+                Depth: p.Depth,
+                Path: p.Path,
+                Filename: shadowSectorFileName,
+                EstimatedTriangleCount: estimatedTriangleCount,
+                EstimatedDrawCalls: estimatedDrawCalls,
+                MinNodeDiagonal: p.MinNodeDiagonal,
+                MaxNodeDiagonal: p.MaxNodeDiagonal,
+                Geometries: pinkGeometries,
+                SubtreeBoundingBox: p.SubtreeBoundingBox,
+                GeometryBoundingBox: p.GeometryBoundingBox
+            );
+
+            SceneCreator.ExportSectorGeometries(pinkGeometries, shadowSectorFileName, outputDirectory);
+
+            yield return shadowSectorInfo;
+        }
+
+        yield return sectorInfo;
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
