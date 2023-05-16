@@ -36,19 +36,24 @@ public class SectorSplitterOctree : ISectorSplitter
         //Order nodes by diagonal size
         var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
 
-        var sectors = SplitIntoSectorsRecursive(
-                sortedNodes,
-                1,
-                rootPath,
-                rootSectorId,
-                sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
-            )
-            .ToArray();
+        var firstLayerNodeGroups = SplitFirstLayerIntoNodeGroups(sortedNodes, boundingBoxEncapsulatingMostNodes);
 
-        foreach (var sector in sectors)
+        foreach (var nodeGroup in firstLayerNodeGroups)
         {
-            yield return sector;
+            var sectors = SplitIntoSectorsRecursive(
+                    nodeGroup.ToArray(),
+                    1,
+                    rootPath,
+                    rootSectorId,
+                    sectorIdGenerator,
+                    CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes) - 1
+                )
+                .ToArray();
+
+            foreach (var sector in sectors)
+            {
+                yield return sector;
+            }
         }
 
         // Add outliers to special outliers sector
@@ -76,6 +81,65 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield return sector;
             }
         }
+    }
+
+    private List<List<Node>> SplitFirstLayerIntoNodeGroups(Node[] nodes, BoundingBox boundingBox)
+    {
+        // if cubish, do nothing
+        // else split into cubes
+        float xSide = boundingBox.Extents.X;
+        float ySide = boundingBox.Extents.Y;
+        float zSide = boundingBox.Extents.Z;
+
+        float equalThreshold = 0.2f;
+
+        if (
+            MathF.Abs(xSide - ySide) / (2 * xSide) > equalThreshold
+            || MathF.Abs(ySide - zSide) / (2 * ySide) > equalThreshold
+            || MathF.Abs(zSide - xSide) / (2 * zSide) > equalThreshold
+        )
+        {
+            float shortestSide = MathF.Min(xSide, MathF.Min(ySide, zSide));
+
+            int numberOfBoxesOnX = xSide.Equals(shortestSide) ? 1 : (int)(xSide / shortestSide) + 1;
+            int numberOfBoxesOnY = ySide.Equals(shortestSide) ? 1 : (int)(ySide / shortestSide) + 1;
+            int numberOfBoxesOnZ = zSide.Equals(shortestSide) ? 1 : (int)(zSide / shortestSide) + 1;
+
+            var xDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<Node>>>>();
+
+            for (int x = 0; x < numberOfBoxesOnX; x++)
+            {
+                xDict.Add(x, new Dictionary<int, Dictionary<int, List<Node>>>());
+
+                for (int y = 0; y < numberOfBoxesOnY; y++)
+                {
+                    var yDict = xDict[x];
+                    yDict.Add(y, new Dictionary<int, List<Node>>());
+
+                    for (int z = 0; z < numberOfBoxesOnZ; z++)
+                    {
+                        var zDict = yDict[y];
+                        zDict.Add(z, new List<Node>());
+                    }
+                }
+            }
+
+            foreach (var node in nodes)
+            {
+                var nodeCenter = (node.BoundingBox.Center);
+
+                var xMapped = (int)((nodeCenter.X - boundingBox.Min.X) / shortestSide);
+                var yMapped = (int)((nodeCenter.Y - boundingBox.Min.Y) / shortestSide);
+                var zMapped = (int)((nodeCenter.Z - boundingBox.Min.Z) / shortestSide);
+
+                xDict[xMapped][yMapped][zMapped].Add(node);
+            }
+
+            var test = xDict.Values.SelectMany(y => y.Values).SelectMany(z => z.Values).ToList();
+            return test;
+        }
+
+        return new List<List<Node>> { nodes.ToList() };
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
