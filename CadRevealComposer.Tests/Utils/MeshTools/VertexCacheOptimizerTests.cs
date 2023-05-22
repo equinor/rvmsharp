@@ -187,16 +187,15 @@ public class VertexCacheOptimizerTests
 
         uint[] output = new uint[inpt.Length];
         VertexCacheOptimizer.OptimizeVertexCacheFifo(output, inpt, 24, 16);
-        Assert.That(output, Is.Not.EquivalentTo(inpt));
-        Assert.That(expectedFifo, Is.EquivalentTo(output));
+        Assert.That(output, Is.Not.EqualTo(inpt));
+        Assert.That(expectedFifo, Is.EqualTo(output));
     }
 
     [Test]
     public void OptimizeVertexCache_WithValidInput_GivesValuesFromReferenceImplementation()
     {
         // @formatter:off
-        uint[] inpt =
-        {
+        uint[] inpt = new uint[] {
             0,
             1,
             2,
@@ -282,8 +281,7 @@ public class VertexCacheOptimizerTests
             17,
             16
         };
-        uint[] expectedNotFifo =
-        {
+        uint[] expectedNotFifo = new uint[] {
             0,
             1,
             2,
@@ -372,7 +370,7 @@ public class VertexCacheOptimizerTests
         // @formatter:on
         uint[] output = new uint[inpt.Length];
         VertexCacheOptimizer.OptimizeVertexCache(output, inpt, 24);
-        Assert.That(output, Is.Not.EquivalentTo(inpt));
-        Assert.That(output, Is.EquivalentTo(expectedNotFifo));
+        Assert.That(output, Is.Not.EqualTo(inpt));
+        Assert.That(output, Is.EqualTo(expectedNotFifo));
     }
 }
