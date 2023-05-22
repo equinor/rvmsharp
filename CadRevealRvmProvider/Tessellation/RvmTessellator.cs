@@ -3,6 +3,7 @@
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
 using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
@@ -25,8 +26,10 @@ public class RvmTessellator
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
-            var mesh = Tessellate(p.RvmPrimitive);
-            return new TriangleMesh(ConvertRvmMesh(mesh), p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
+            var rvmMesh = Tessellate(p.RvmPrimitive);
+            var mesh = ConvertRvmMesh(rvmMesh);
+            mesh = Simplify.SimplifyMeshLossy(mesh, 0.2f);
+            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
@@ -99,7 +102,16 @@ public class RvmTessellator
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
-        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
+        Console.WriteLine(
+            $"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}. Meshopt: {Simplify.sw.Elapsed}"
+        );
+
+        Console.WriteLine(
+            $"Before Total Vertices: {Simplify.SimplificationBefore}\nAfter total Vertices: {Simplify.SimplificationAfter}\n Percent:{(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):F2}"
+        );
+        Console.WriteLine(
+            $"Before Total Vertices: {Simplify.SimplificationBefore}\nAfter total Vertices: {Simplify.SimplificationAfter}\n Percent:{(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):F2}"
+        );
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }
