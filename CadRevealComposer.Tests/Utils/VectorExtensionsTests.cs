@@ -49,6 +49,26 @@ class VectorExtensionsTests
     }
 
     [Test]
+    public void Round()
+    {
+        var vec3 = new Vector3(0.0001f, 1.001f, 1);
+        var res = new Vector3(0f, 1.001f, 1);
+
+        Assert.That(vec3.Round(3), Is.EqualTo(res));
+        Assert.That(vec3, Is.Not.EqualTo(res));
+    }
+
+    [Test]
+    public void RoundInPlace()
+    {
+        var vec3 = new Vector3(0.0001f, 1.001f, 1);
+        var res = new Vector3(0f, 1.001f, 1);
+
+        Assert.That(vec3.RoundInPlace(3), Is.EqualTo(res));
+        Assert.That(vec3, Is.EqualTo(res));
+    }
+
+    [Test]
     public void EqualsWithinFactor()
     {
         Assert.IsTrue(Vector3.One.EqualsWithinFactor(Vector3.One, 0f));

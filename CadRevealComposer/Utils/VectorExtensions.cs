@@ -58,6 +58,46 @@ public static class VectorExtensions
     }
 
     /// <summary>
+    /// An equals function that aligns components within a "Grid" cell.
+    /// That means that you cannot have an equality list of many nearly equal Vec3s in a row,
+    /// since when one leaves the "grid cell" its in its own cell.
+    /// </summary>
+    /// <param name="v">this</param>
+    /// <param name="other">Other</param>
+    /// <param name="precisionDigits">The number of fractional digits to keep</param>
+    /// <returns>True if equal given the precision</returns>
+    public static bool EqualsWithinGridTolerance(this Vector3 v, Vector3 other, int precisionDigits)
+    {
+        return v.RoundInPlace(precisionDigits).Equals(other.RoundInPlace(precisionDigits));
+    }
+
+    /// <summary>
+    /// Rounds XYZ elements of the vector to specified number of fractional digits, and rounds midpoint values to the nearest even number.
+    /// </summary>
+    /// <param name="v">The vertex to be rounded.</param>
+    /// <param name="precisionDigits">The number of fractional digits to keep</param>
+    /// <returns>The same Vertex</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static ref Vector3 RoundInPlace(this ref Vector3 v, int precisionDigits)
+    {
+        v.X = MathF.Round(v.X, precisionDigits);
+        v.Y = MathF.Round(v.Y, precisionDigits);
+        v.Z = MathF.Round(v.Z, precisionDigits);
+        return ref v;
+    }
+
+    /// <summary><inheritdoc cref="RoundInPlace"/>
+    /// Returns a new Vector3, and does not modify the input
+    /// </summary>
+    /// <param name="v">The vertex to be rounded.</param>
+    /// <param name="precisionDigits">The number of fractional digits to keep</param>
+    /// <returns>A new vertex</returns>
+    public static Vector3 Round(this Vector3 v, int precisionDigits)
+    {
+        return v.RoundInPlace(precisionDigits);
+    }
+
+    /// <summary>
     /// Checks that each vector component from both vectors are within the given factor.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
