@@ -120,7 +120,7 @@ public static class DrawCallEstimator
 
     private static long CalculateTriangleMeshByteSize(TriangleMesh triangleMesh)
     {
-        var triangleCost = triangleMesh.Mesh.Triangles.Length * sizeof(int);
+        var triangleCost = triangleMesh.Mesh.Indices.Length * sizeof(int);
 
         var verticesLength = triangleMesh.Mesh.Vertices.Length;
         var positionsCost =

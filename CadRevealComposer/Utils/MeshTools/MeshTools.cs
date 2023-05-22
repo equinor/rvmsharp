@@ -20,7 +20,7 @@ public static class MeshTools
         var alreadyFoundVerticesToIndexMap = new Dictionary<Vector3, uint>(comparer);
 
         var newVertices = new List<Vector3>();
-        var indicesCopy = input.Triangles.ToArray();
+        var indicesCopy = input.Indices.ToArray();
 
         // The index in the oldVertexIndexToNewIndexRemap array is the old index, and the value is the new index. (Think of it as a dict)
         var oldVertexIndexToNewIndexRemap = new uint[input.Vertices.Count()];
