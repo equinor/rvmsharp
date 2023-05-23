@@ -102,16 +102,29 @@ public class RvmTessellator
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
-        Console.WriteLine(
-            $"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}. Meshopt: {Simplify.sw.Elapsed}"
-        );
 
         Console.WriteLine(
-            $"Before Total Vertices: {Simplify.SimplificationBefore}\nAfter total Vertices: {Simplify.SimplificationAfter}\n Percent:{(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):F2}"
+            $"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}."
         );
-        Console.WriteLine(
-            $"Before Total Vertices: {Simplify.SimplificationBefore}\nAfter total Vertices: {Simplify.SimplificationAfter}\n Percent:{(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):F2}"
-        );
+        
+        using (new TeamCityLogBlock("Mesh Reduction Stats"))
+        {
+            Console.WriteLine(
+                $"""
+                    Before Total Vertices: {Simplify.SimplificationBefore,10}
+                    After total Vertices:  {Simplify.SimplificationAfter,10}
+                    Percent of Before Verts: {(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):P2}
+                    """
+            );
+            Console.WriteLine("");
+            Console.WriteLine(
+                $"""
+                    Before Total Triangles: {Simplify.SimplificationBeforeTriangleCount,10}
+                    After total Triangles:  {Simplify.SimplificationAfterTriangleCount,10}
+                    Percent of Before Tris: {1.0- (Simplify.SimplificationAfterTriangleCount / (float)Simplify.SimplificationBeforeTriangleCount):P2}
+                    """
+            );
+        }
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }

@@ -3,7 +3,6 @@
 using g3;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
@@ -98,8 +97,8 @@ public static class Simplify
 
     public static int SimplificationBefore = 0;
     public static int SimplificationAfter = 0;
-
-    public static Stopwatch sw = new Stopwatch();
+    public static int SimplificationBeforeTriangleCount = 0;
+    public static int SimplificationAfterTriangleCount = 0;
 
     /// <summary>
     /// Lossy Simplification of the Mesh.
@@ -111,6 +110,7 @@ public static class Simplify
     public static Mesh SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
     {
         Interlocked.Add(ref SimplificationBefore, mesh.Vertices.Length);
+        Interlocked.Add(ref SimplificationBeforeTriangleCount, mesh.TriangleCount);
 
         MeshTools.MeshTools.ReducePrecisionInPlace(mesh);
 
@@ -139,6 +139,7 @@ public static class Simplify
             var reducedMesh = ConvertDMesh3ToMesh(dMesh);
             var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
             Interlocked.Add(ref SimplificationAfter, lastPassMesh.Vertices.Length);
+            Interlocked.Add(ref SimplificationAfterTriangleCount, lastPassMesh.TriangleCount);
             return lastPassMesh;
         }
         catch (Exception e)
