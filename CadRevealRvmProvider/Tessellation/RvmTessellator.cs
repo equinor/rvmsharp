@@ -121,7 +121,7 @@ public class RvmTessellator
                 $"""
                     Before Total Triangles: {Simplify.SimplificationBeforeTriangleCount,10}
                     After total Triangles:  {Simplify.SimplificationAfterTriangleCount,10}
-                    Percent of Before Tris: {1.0- (Simplify.SimplificationAfterTriangleCount / (float)Simplify.SimplificationBeforeTriangleCount):P2}
+                    Percent of Before Tris: {(Simplify.SimplificationAfterTriangleCount / (float)Simplify.SimplificationBeforeTriangleCount):P2}
                     """
             );
         }
