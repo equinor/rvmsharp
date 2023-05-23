@@ -48,7 +48,8 @@ dotnet.exe run --configuration Release --project "RvmSharp.Exe/RvmSharp.Exe.cspr
 
 ## Cad Reveal Composer
 
-The CAD Reveal Composer is a fast converter for RVM files into the Reveal formats used by the [cognite/reveal](https://github.com/cognitedata/reveal) 3D Viewer.
+The CAD Reveal Composer is a fast converter for RVM files into the Reveal formats used by
+the [cognite/reveal](https://github.com/cognitedata/reveal) 3D Viewer.
 
 It can be invoked using the script below:
 
@@ -63,6 +64,7 @@ Invoke from IDE
 ```
 
 Invoke from CLI
+
 ```cli
 dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.exe" -i $AFolderWithRvmAndTxtFiles -o $OutputDirectory --ProjectId 1 --ModelId 1 --RevisionId 1
 ```
@@ -73,16 +75,36 @@ Equinor has published the Huldra dataset, including RVM files to the public.
 
 <https://data.equinor.com/dataset/Huldra>
 
-Visit this link and create a user to download a complete source dataset of an oil platform, including RVM files that can be used with `rvmsharp`.
+Visit this link and create a user to download a complete source dataset of an oil platform, including RVM files that can
+be used with `rvmsharp`.
 
 ## Contribution
 
-If you find some nice optimizations or tricks, do not hesitate to create an issue discussing if it should be contributed to the `rvmsharp` project.
+If you find some nice optimizations or tricks, do not hesitate to create an issue discussing if it should be contributed
+to the `rvmsharp` project.
 
-While any contributions are appreciated please make an issue to discuss the approach before coding a major change. This helps both us and you set expectations :)
+While any contributions are appreciated please make an issue to discuss the approach before coding a major change. This
+helps both us and you set expectations :)
+
+### Formatting
+
+We use csharpier for formatting.
+
+You can run it manually by running the following in your command line.
+
+```ps
+dotnet tool restore
+dotnet csharpier .
+```
+
+Install the addon for your IDE, and enable formatting when saving files to avoid spending time on formatting!
+
+> Remark:<br>
+> You need to run `dotnet tool restore` to install and update csharpier for the IDE addons to work as expected.
 
 ## Credits
 
 This project is based on [rvmparser](https://github.com/cdyk/rvmparser) by @cdyk
 
-This repository contains sample data from the Equinor ASA - Huldra Dataset <https://data.equinor.com/dataset/Huldra>. A copy of the license can be found [here](./TestSamples/Huldra/Equinor_open_data_sharing_license_-_Huldra.pdf).
+This repository contains sample data from the Equinor ASA - Huldra Dataset <https://data.equinor.com/dataset/Huldra>. A
+copy of the license can be found [here](./TestSamples/Huldra/Equinor_open_data_sharing_license_-_Huldra.pdf).
