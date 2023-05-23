@@ -97,7 +97,7 @@ public class RvmTessellator
             .Concat(pyramidsNotInstanced)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
-            .Where(t => t.Mesh.Triangles.Length > 0) // ignore empty meshes
+            .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
 
