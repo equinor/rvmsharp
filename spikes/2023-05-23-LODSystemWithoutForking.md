@@ -1,5 +1,7 @@
 # Implementing a LOD system without forking Reveal
 
+## [Reference branch](https://github.com/equinor/rvmsharp/tree/Spike/LodInReveal)
+
 ## Goal
 
 To be able to make a LOD system we would like to switch between sectors containing detailed and rough model parts. Ideally we would like to achieve this by only editing the Echo3DWeb code, and leave the Reveal code untouched.
@@ -27,7 +29,11 @@ if (zone === CutoffZone.Near) {
 
 ## Evidence
 
-![LOD System](images/LOD.gif)
+![LOD System](images/LODSystemWithoutForking/LOD.gif)
+
+The magenta sectors are hacked in and are just a colored duplicates of the detailed sectors.
+
+The code for creating the magenta sectors can be found in this [branch](https://github.com/equinor/rvmsharp/tree/Temp/Shadow).
 
 ## Conclusion
 
@@ -42,3 +48,4 @@ Sometimes there is a frame between unloading a detailed/shadow sector and loadin
 
 - Optimize the weighting for user experience
   - This is most likely only possible when we have an actual rough model available.
+  
