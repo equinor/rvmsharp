@@ -103,24 +103,22 @@ public class RvmTessellator
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
 
-        Console.WriteLine(
-            $"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}."
-        );
-        
+        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
+
         using (new TeamCityLogBlock("Mesh Reduction Stats"))
         {
             Console.WriteLine(
                 $"""
-                    Before Total Vertices: {Simplify.SimplificationBefore,10}
-                    After total Vertices:  {Simplify.SimplificationAfter,10}
+                    Before Total Vertices: {Simplify.SimplificationBefore, 10}
+                    After total Vertices:  {Simplify.SimplificationAfter, 10}
                     Percent of Before Verts: {(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):P2}
                     """
             );
             Console.WriteLine("");
             Console.WriteLine(
                 $"""
-                    Before Total Triangles: {Simplify.SimplificationBeforeTriangleCount,10}
-                    After total Triangles:  {Simplify.SimplificationAfterTriangleCount,10}
+                    Before Total Triangles: {Simplify.SimplificationBeforeTriangleCount, 10}
+                    After total Triangles:  {Simplify.SimplificationAfterTriangleCount, 10}
                     Percent of Before Tris: {(Simplify.SimplificationAfterTriangleCount / (float)Simplify.SimplificationBeforeTriangleCount):P2}
                     """
             );
