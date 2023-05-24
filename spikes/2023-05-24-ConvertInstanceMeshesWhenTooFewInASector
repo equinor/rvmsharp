@@ -4,10 +4,20 @@
 
 ## Goal
 
+Try to avoid using instance meshes where there are too few occuring internally in a sector. This will hopefully have a positive effect on the performance.
+
 ## Method
 
+During splitting, just before the sector is completed, the number of instances per instance id is checked. If the number is lower than a set threshold, convert them to triangle meshes instead. 
+
+The threshold is currently just an arbitrary set number.
+
 ## Evidence
+
+How should this be tested?
 
 ## Conclusion
 
 ## Next steps
+
+Find a threshold that makes sense. 
