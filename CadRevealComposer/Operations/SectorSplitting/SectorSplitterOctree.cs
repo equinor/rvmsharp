@@ -5,6 +5,7 @@ using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Dynamic;
 using System.Linq;
 using Utils;
 
@@ -270,6 +271,32 @@ public class SectorSplitterOctree : ISectorSplitter
         var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
+
+        int numberOfInstancesThreshold = 10;
+        var instances = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
+
+        var instanceKeyListToDrop = new List<ulong>();
+
+        foreach (var instanceGroup in instances)
+        {
+            if (instanceGroup.Count() < numberOfInstancesThreshold)
+            {
+                instanceKeyListToDrop.Add(instanceGroup.Key);
+            }
+        }
+
+        geometries = geometries
+            .Select(g =>
+            {
+                if (g is InstancedMesh && instanceKeyListToDrop.Contains(((InstancedMesh)g).InstanceId))
+                {
+                    var instanceMesh = (InstancedMesh)g;
+
+                    return new TriangleMesh(instanceMesh.TemplateMesh, g.TreeIndex, g.Color, g.AxisAlignedBoundingBox);
+                }
+                return g;
+            })
+            .ToArray();
 
         return new InternalSector(
             sectorId,
