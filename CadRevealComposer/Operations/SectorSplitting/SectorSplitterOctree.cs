@@ -288,11 +288,14 @@ public class SectorSplitterOctree : ISectorSplitter
         geometries = geometries
             .Select(g =>
             {
-                if (g is InstancedMesh && instanceKeyListToDrop.Contains(((InstancedMesh)g).InstanceId))
+                if (g is InstancedMesh instanceMesh && instanceKeyListToDrop.Contains(instanceMesh.InstanceId))
                 {
-                    var instanceMesh = (InstancedMesh)g;
-
-                    return new TriangleMesh(instanceMesh.TemplateMesh, g.TreeIndex, g.Color, g.AxisAlignedBoundingBox);
+                    return new TriangleMesh(
+                        instanceMesh.TemplateMesh,
+                        instanceMesh.TreeIndex,
+                        instanceMesh.Color,
+                        instanceMesh.AxisAlignedBoundingBox
+                    );
                 }
                 return g;
             })
