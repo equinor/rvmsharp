@@ -6,11 +6,15 @@
 
 Try to avoid using instance meshes where there are too few occuring internally in a sector. This will hopefully have a positive effect on the performance.
 
+This is a balancing act between having too many instances (too many batches) and too few instances (too much memory).
+
 ## Method
 
-During splitting, just before the sector is completed, the number of instances per instance id is checked. If the number is lower than a set threshold, convert them to triangle meshes instead. 
+During splitting, just before the sector is completed, the number of instances per instance id is checked. If the number is lower than a set threshold, convert them to triangle meshes instead. The threshold is currently just an arbitrary set number.
 
-The threshold is currently just an arbitrary set number.
+The number of extra triangles created is counted while splitting into sectors. The number is equal to the triangle count of the instance template times number of instance meshes which is converted to triangle meshes. Remember that converting the template does not increase the number of triangles.
+
+Counting the number of batches is a bit less robust. By printing when the should batch flag is set, the number of prints in displayed in the console. Even if the number is not accurate, the trend is quite visible and if you stay at the same place in the model you will get the same result every time (if the size of your window is the same).
 
 ## Evidence
 
