@@ -1,6 +1,6 @@
 # Convert InstanceMeshes when too few in a sector
 
-## [Refernce branch](https://github.com/equinor/rvmsharp/tree/Spike/ConvertInstanceMeshesWhenTooFew)
+## [Reference branch](https://github.com/equinor/rvmsharp/tree/Spike/ConvertInstanceMeshesWhenTooFew)
 
 ## Goal
 
