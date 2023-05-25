@@ -20,6 +20,13 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float SplitDetailsThreshold = 0.1f; // arbitrary value for splitting out details from last nodes
     private const int MinimumNumberOfSmallPartsBeforeSplitting = 1000;
 
+    // SPIKE
+    private int NumberOfInstancesThreshold = 0;
+
+    private int _totalExtraTriangles = 0;
+
+    //
+
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
@@ -77,6 +84,9 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield return sector;
             }
         }
+
+        Console.WriteLine($"###### Instance number threshold: {NumberOfInstancesThreshold}");
+        Console.WriteLine($"###### Extra triangles: {_totalExtraTriangles}");
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
@@ -272,18 +282,24 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        int numberOfInstancesThreshold = 10;
         var instances = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
 
         var instanceKeyListToDrop = new List<ulong>();
 
+        int extraTriangles = 0;
+
         foreach (var instanceGroup in instances)
         {
-            if (instanceGroup.Count() < numberOfInstancesThreshold)
+            if (instanceGroup.Count() < NumberOfInstancesThreshold)
             {
+                // Extra triangles = the number of the triangles in the instance times number of converted minus the original template
+                extraTriangles +=
+                    ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * (instanceGroup.Count() - 1);
                 instanceKeyListToDrop.Add(instanceGroup.Key);
             }
         }
+
+        _totalExtraTriangles += extraTriangles;
 
         geometries = geometries
             .Select(g =>
@@ -297,6 +313,7 @@ public class SectorSplitterOctree : ISectorSplitter
                         instanceMesh.AxisAlignedBoundingBox
                     );
                 }
+
                 return g;
             })
             .ToArray();
