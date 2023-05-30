@@ -65,6 +65,13 @@ Counting the number of batches is a bit less robust. By printing when the should
 
 ## Conclusion
 
+The graphs produced indicate that we can save a lot of batches by setting the threshold. The amount of extra triangles will increase, but the number is actually quite small. Considering the total triangles on Huldra is about 30 million, we would get an 0.1% more triangles by not using instancing at all. 
+
+This indicates that setting a threshold to limit batching is a sensible improvement, which should have a positive effect performance while having a negligible effect on memory. 
+
 ## Next steps
 
-Find a threshold that makes sense.
+- Find a threshold that is satisfactory
+- Explore being more specific by ananlyzing the instances in the sector, to determine which instances are worth keeping
+  - A few, but large ones, are probably more important than many small
+- Are instances that closer to eachother more valuable?
