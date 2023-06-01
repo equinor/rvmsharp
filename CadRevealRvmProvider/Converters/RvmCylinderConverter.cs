@@ -84,7 +84,8 @@ public static class RvmCylinderConverter
             radius,
             treeIndex,
             color,
-            bbox
+            bbox,
+            rotation
         );
 
         if (showCapA)

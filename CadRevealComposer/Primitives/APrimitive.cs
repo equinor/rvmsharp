@@ -26,7 +26,8 @@ public sealed record Cone(
     float RadiusB,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
+    BoundingBox AxisAlignedBoundingBox,
+    Quaternion Rotation
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record EccentricCone(

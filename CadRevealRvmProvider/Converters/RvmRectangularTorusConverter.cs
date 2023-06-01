@@ -57,7 +57,8 @@ public static class RvmRectangularTorusConverter
             radiusOuter,
             treeIndex,
             color,
-            bbBox
+            bbBox,
+            rotation
         );
 
         // If inner radius equals 0, then the geometry is basically a cylinder segment, and the inner cone is unnecessary
@@ -73,7 +74,8 @@ public static class RvmRectangularTorusConverter
                 radiusInner,
                 treeIndex,
                 color,
-                bbBox
+                bbBox,
+                rotation
             );
         }
 

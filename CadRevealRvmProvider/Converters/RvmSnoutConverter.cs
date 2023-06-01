@@ -119,7 +119,8 @@ public static class RvmSnoutConverter
             radiusB,
             treeIndex,
             color,
-            bbox
+            bbox,
+            rotation
         );
 
         var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);

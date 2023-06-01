@@ -2,11 +2,15 @@ namespace CadRevealComposer.Operations.SectorSplitting;
 
 using IdProviders;
 using Primitives;
+using RvmSharp.Primitives;
+using RvmSharp.Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Dynamic;
 using System.Linq;
+using System.Numerics;
+using Tessellation;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -282,41 +286,106 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        var instances = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
+        int primitivesThreshold = int.MaxValue;
+        float tessellatingTolerance = 0.05f;
 
-        var instanceKeyListToDrop = new List<ulong>();
+        var numberOfCones = geometries.Count(g => g is Cone);
+        var numberOfEccentricCone = geometries.Count(g => g is EccentricCone);
+        var numberOfEllipsoidSegment = geometries.Count(g => g is EllipsoidSegment);
+        var numberOfGeneralCylinder = geometries.Count(g => g is GeneralCylinder);
+        var numberOfTorusSegment = geometries.Count(g => g is TorusSegment);
 
-        int extraTriangles = 0;
-
-        foreach (var instanceGroup in instances)
+        if (numberOfCones > 0 && numberOfCones < primitivesThreshold)
         {
-            if (instanceGroup.Count() < NumberOfInstancesThreshold)
-            {
-                // Extra triangles = the number of the triangles in the instance times number of converted minus the original template
-                extraTriangles +=
-                    ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * (instanceGroup.Count() - 1);
-                instanceKeyListToDrop.Add(instanceGroup.Key);
-            }
+            Console.WriteLine($"######### Converting cones to mesh, found {numberOfCones} cones in the sector");
+            geometries = geometries
+                .Select(g => g is Cone cone ? ConvertToTriangleMesh(cone, tessellatingTolerance) : g)
+                .ToArray();
         }
 
-        _totalExtraTriangles += extraTriangles;
+        if (numberOfEccentricCone > 0 && numberOfEccentricCone < primitivesThreshold)
+        {
+            Console.WriteLine(
+                $"######### Converting eccentric cones to mesh, found {numberOfEccentricCone} eccentric cones in the sector"
+            );
+            geometries = geometries
+                .Select(g => g is EccentricCone cone ? ConvertToTriangleMesh(cone, tessellatingTolerance) : g)
+                .ToArray();
+        }
 
-        geometries = geometries
-            .Select(g =>
-            {
-                if (g is InstancedMesh instanceMesh && instanceKeyListToDrop.Contains(instanceMesh.InstanceId))
-                {
-                    return new TriangleMesh(
-                        instanceMesh.TemplateMesh,
-                        instanceMesh.TreeIndex,
-                        instanceMesh.Color,
-                        instanceMesh.AxisAlignedBoundingBox
-                    );
-                }
+        if (numberOfEllipsoidSegment > 0 && numberOfEllipsoidSegment < primitivesThreshold)
+        {
+            Console.WriteLine(
+                $"######### Converting ellipsoid segments to mesh, found {numberOfEllipsoidSegment} ellipsoid segments in the sector"
+            );
+            geometries = geometries
+                .Select(
+                    g =>
+                        g is EllipsoidSegment ellipsoidSegment
+                            ? ConvertToTriangleMesh(ellipsoidSegment, tessellatingTolerance)
+                            : g
+                )
+                .ToArray();
+        }
 
-                return g;
-            })
-            .ToArray();
+        if (numberOfGeneralCylinder > 0 && numberOfGeneralCylinder < primitivesThreshold)
+        {
+            Console.WriteLine(
+                $"######### Converting general cylinders to mesh, found {numberOfGeneralCylinder} general cylinders in the sector"
+            );
+            geometries = geometries
+                .Select(g => g is GeneralCylinder cylinder ? ConvertToTriangleMesh(cylinder, tessellatingTolerance) : g)
+                .ToArray();
+        }
+
+        //// Gets stuck?
+        // if (numberOfTorusSegment > 0 && numberOfTorusSegment < primitivesThreshold)
+        // {
+        //     Console.WriteLine(
+        //         $"######### Converting torus segments to mesh, found {numberOfTorusSegment} torus segments in the sector"
+        //     );
+        //     geometries = geometries
+        //         .Select(
+        //             g => g is TorusSegment torusSegment ? ConvertToTriangleMesh(torusSegment, tessellatingTolerance) : g
+        //         )
+        //         .ToArray();
+        // }
+
+        // var instances = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
+        //
+        // var instanceKeyListToDrop = new List<ulong>();
+
+        // int extraTriangles = 0;
+        //
+        // foreach (var instanceGroup in instances)
+        // {
+        //     if (instanceGroup.Count() < NumberOfInstancesThreshold)
+        //     {
+        //         // Extra triangles = the number of the triangles in the instance times number of converted minus the original template
+        //         extraTriangles +=
+        //             ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * (instanceGroup.Count() - 1);
+        //         instanceKeyListToDrop.Add(instanceGroup.Key);
+        //     }
+        // }
+        //
+        // _totalExtraTriangles += extraTriangles;
+        //
+        // geometries = geometries
+        //     .Select(g =>
+        //     {
+        //         if (g is InstancedMesh instanceMesh && instanceKeyListToDrop.Contains(instanceMesh.InstanceId))
+        //         {
+        //             return new TriangleMesh(
+        //                 instanceMesh.TemplateMesh,
+        //                 instanceMesh.TreeIndex,
+        //                 instanceMesh.Color,
+        //                 instanceMesh.AxisAlignedBoundingBox
+        //             );
+        //         }
+        //
+        //         return g;
+        //     })
+        //     .ToArray();
 
         return new InternalSector(
             sectorId,
@@ -334,6 +403,119 @@ public class SectorSplitterOctree : ISectorSplitter
     private static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
         return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
+    }
+
+    private TriangleMesh ConvertToTriangleMesh(Cone cone, float tolerance)
+    {
+        var matrix =
+            Matrix4x4.CreateScale(1f)
+            * Matrix4x4.CreateFromQuaternion(cone.Rotation)
+            * Matrix4x4.CreateTranslation(cone.AxisAlignedBoundingBox.Center);
+
+        var bb = new RvmBoundingBox(cone.AxisAlignedBoundingBox.Min, cone.AxisAlignedBoundingBox.Max);
+
+        var rvmCylinder = new RvmCylinder(1, matrix, bb, cone.RadiusA, Vector3.Distance(cone.CenterB, cone.CenterA));
+
+        var result = TessellatorBridge.Tessellate(rvmCylinder, tolerance);
+
+        if (result == null)
+            throw new Exception();
+
+        return ConvertRvmMeshToTriangleMesh(result, cone);
+    }
+
+    private TriangleMesh ConvertToTriangleMesh(EccentricCone cone, float tolerance)
+    {
+        var matrix =
+            Matrix4x4.CreateScale(1f)
+            * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
+            * Matrix4x4.CreateTranslation(cone.AxisAlignedBoundingBox.Center);
+
+        var bb = new RvmBoundingBox(cone.AxisAlignedBoundingBox.Min, cone.AxisAlignedBoundingBox.Max);
+
+        var rvmCylinder = new RvmCylinder(1, matrix, bb, cone.RadiusA, Vector3.Distance(cone.CenterA, cone.CenterB));
+        var result = TessellatorBridge.Tessellate(rvmCylinder, tolerance);
+
+        if (result == null)
+            throw new Exception();
+
+        return ConvertRvmMeshToTriangleMesh(result, cone);
+    }
+
+    private TriangleMesh ConvertToTriangleMesh(EllipsoidSegment ellipsoidSegment, float tolerance)
+    {
+        var matrix =
+            Matrix4x4.CreateScale(1f)
+            * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
+            * Matrix4x4.CreateTranslation(ellipsoidSegment.Center);
+
+        var bb = new RvmBoundingBox(
+            ellipsoidSegment.AxisAlignedBoundingBox.Min,
+            ellipsoidSegment.AxisAlignedBoundingBox.Max
+        );
+
+        var rvmSphere = new RvmSphere(1, matrix, bb, ellipsoidSegment.HorizontalRadius);
+        var result = TessellatorBridge.Tessellate(rvmSphere, tolerance);
+
+        if (result == null)
+            throw new Exception();
+
+        return ConvertRvmMeshToTriangleMesh(result, ellipsoidSegment);
+    }
+
+    private TriangleMesh ConvertToTriangleMesh(GeneralCylinder cylinder, float tolerance)
+    {
+        var matrix =
+            Matrix4x4.CreateScale(1f)
+            * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
+            * Matrix4x4.CreateTranslation(cylinder.AxisAlignedBoundingBox.Center);
+
+        var bb = new RvmBoundingBox(cylinder.AxisAlignedBoundingBox.Min, cylinder.AxisAlignedBoundingBox.Max);
+
+        var rvmCylinder = new RvmCylinder(
+            1,
+            matrix,
+            bb,
+            cylinder.Radius,
+            Vector3.Distance(cylinder.CenterA, cylinder.CenterB)
+        );
+        var result = TessellatorBridge.Tessellate(rvmCylinder, tolerance);
+
+        if (result == null)
+            throw new Exception();
+
+        return ConvertRvmMeshToTriangleMesh(result, cylinder);
+    }
+
+    private TriangleMesh ConvertToTriangleMesh(TorusSegment torus, float tolerance)
+    {
+        var matrix =
+            Matrix4x4.CreateScale(1f)
+            * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
+            * Matrix4x4.CreateTranslation(torus.AxisAlignedBoundingBox.Center);
+
+        var bb = new RvmBoundingBox(torus.AxisAlignedBoundingBox.Min, torus.AxisAlignedBoundingBox.Max);
+
+        var rvmCircularTorus = new RvmCircularTorus(1, matrix, bb, 0, torus.Radius, torus.ArcAngle);
+        var result = TessellatorBridge.Tessellate(rvmCircularTorus, tolerance);
+
+        if (result == null)
+            throw new Exception();
+
+        return ConvertRvmMeshToTriangleMesh(result, torus);
+    }
+
+    private TriangleMesh ConvertRvmMeshToTriangleMesh(RvmMesh rvmMesh, APrimitive primitive)
+    {
+        var mesh = new Mesh(rvmMesh.Vertices, rvmMesh.Triangles, rvmMesh.Error);
+        var triangleMesh = new TriangleMesh(
+            mesh,
+            primitive.TreeIndex,
+            primitive.Color,
+            primitive.AxisAlignedBoundingBox
+        );
+
+        return triangleMesh;
     }
 
     private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
