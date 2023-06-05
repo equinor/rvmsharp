@@ -34,7 +34,7 @@ During splitting the number of each type of primitive is counted and compared wi
 
 ## Conclusion
 
-The graph produced indicates that we can save some batches, even by setting the threshold reasonably low.
+The graph produced indicates that we can save some batches, even by setting the threshold reasonably low. Maybe a threshold of about 20 would be reasonable. 
 
 ## Next steps
 
