@@ -5,7 +5,7 @@
 
     internal class Options
     {
-        public Options(IEnumerable<string> inputs, string filter, string output, float tolerance, uint nodeId)
+        public Options(IEnumerable<string> inputs, string filter, string output, float tolerance, uint? nodeId)
         {
             Inputs = inputs;
             Filter = filter;
