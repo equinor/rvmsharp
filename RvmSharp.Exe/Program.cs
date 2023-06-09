@@ -43,12 +43,20 @@
             var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(node =>
                 CollectGeometryNodes(node))).ToArray();
             progressBar = new ProgressBar(leafs.Length, "Tessellating");
-            var meshes = leafs.AsParallel().Select(leaf =>
+            var meshes = leafs.AsParallel().Select((leaf, i) =>
             {
+                var nodeId = options.NodeId + 1 + (uint)i;
                 progressBar.Message = leaf.Name;
-                var tesselatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
+                var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
+                if (nodeId.HasValue)
+                {
+                    foreach (Mesh tessellatedMesh in tessellatedMeshes)
+                    {
+                        tessellatedMesh.ApplySingleColor(nodeId.Value);
+                    }
+                }
                 progressBar.Tick();
-                return (leaf.Name, tesselatedMeshes);
+                return (leaf.Name, tesselatedMeshes: tessellatedMeshes);
             }).ToArray();
             progressBar.Dispose();
             progressBar = new ProgressBar(meshes.Length, "Exporting");

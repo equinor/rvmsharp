@@ -3,6 +3,7 @@
     using System;
     using System.Globalization;
     using System.IO;
+    using System.Numerics;
     using System.Text;
     using Tessellation;
 
@@ -35,10 +36,20 @@
 
         public void WriteMesh(Mesh mesh)
         {
-            foreach (var v in mesh.Vertices)
+            var writeColors = mesh.VertexColors.Length > 0;
+            
+            for (int i = 0; i < mesh.Vertices.Length; i++)
             {
-                _writer.WriteLine("v " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + (-v.Y).ToString("0.000000", CultureInfo.InvariantCulture));
+                Vector3 v = mesh.Vertices[i];
+                _writer.Write($"v {v.X.ToString("0.000000", CultureInfo.InvariantCulture)} {v.Z.ToString("0.000000", CultureInfo.InvariantCulture)} {(-v.Y).ToString("0.000000", CultureInfo.InvariantCulture)}");
+                if (writeColors)
+                {
+                    Vector3 c = mesh.VertexColors[i];
+                    _writer.Write($" {c.X.ToString("0.000000", CultureInfo.InvariantCulture)} {c.Y.ToString("0.000000", CultureInfo.InvariantCulture)} {c.Z.ToString("0.000000", CultureInfo.InvariantCulture)}");
+                }
+                _writer.WriteLine();
             }
+
             foreach (var v in mesh.Normals)
             {
                 _writer.WriteLine("vn " + v.X.ToString("0.000000", CultureInfo.InvariantCulture) + " " + v.Z.ToString("0.000000", CultureInfo.InvariantCulture) + " " + (-v.Y).ToString("0.000000", CultureInfo.InvariantCulture));
