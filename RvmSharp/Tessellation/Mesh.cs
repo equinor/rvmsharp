@@ -8,7 +8,7 @@
     {
         public readonly float Error;
         public readonly Vector3[] Vertices;
-        public Vector3[] VertexColors;
+        public readonly Vector3[] VertexColors;
         public readonly Vector3[] Normals;
         public readonly int[] Triangles;
 
