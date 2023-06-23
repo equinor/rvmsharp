@@ -36,7 +36,7 @@ public record BoundingBox(Vector3 Min, Vector3 Max)
     }
 };
 
-public class CadRevealNode
+public record CadRevealNode
 {
     public ulong TreeIndex;
     public string Name { get; init; } = ""; // TODO: Required field

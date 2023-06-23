@@ -30,9 +30,10 @@ public static class CadRevealComposerRunner
     {
         var totalTimeElapsed = Stopwatch.StartNew();
 
-        var nodesToProcess = new List<CadRevealNode>();
+        var nodesToExport = new List<CadRevealNode>();
         var geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
+        var notUsedTreeIndexGenerator = new TreeIndexGenerator(); // Todo, not needed any more. Consider removing.
         var instanceIdGenerator = new InstanceIdGenerator();
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
@@ -40,7 +41,7 @@ public static class CadRevealComposerRunner
             var timer = Stopwatch.StartNew();
             IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
-                treeIndexGenerator,
+                notUsedTreeIndexGenerator,
                 instanceIdGenerator
             );
             if (cadRevealNodes != null)
@@ -51,10 +52,23 @@ public static class CadRevealComposerRunner
 
                 if (cadRevealNodes.Count > 0)
                 {
-                    // collect all nodes for later sector division of the entire scene
-                    nodesToProcess.AddRange(cadRevealNodes);
+                    Console.WriteLine(
+                        "Excluding nodes with filter(s): '"
+                            + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
+                            + "'"
+                    );
+                    Console.WriteLine("Was " + cadRevealNodes.Count + " nodes.");
+                    var filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
+                        cadRevealNodes,
+                        modelParameters.NodeNameExcludeGlobs.Values,
+                        treeIndexGenerator
+                    );
+                    Console.WriteLine("After filterins is " + filteredNodes.Count + " nodes.");
 
-                    var inputGeometries = cadRevealNodes
+                    // collect all nodes for later sector division of the entire scene
+                    nodesToExport.AddRange(filteredNodes);
+
+                    var inputGeometries = filteredNodes
                         .AsParallel()
                         .AsOrdered()
                         .SelectMany(x => x.Geometries)
@@ -76,7 +90,7 @@ public static class CadRevealComposerRunner
             // Exporting hierarchy on side thread to allow it to run in parallel
             var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToExport);
             Console.WriteLine(
                 $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
             );

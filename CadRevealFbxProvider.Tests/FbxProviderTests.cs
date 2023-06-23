@@ -24,7 +24,8 @@ public class FbxProviderTests
         new ModelId(1),
         new RevisionId(1),
         new InstancingThreshold(1),
-        new TemplateCountLimit(100)
+        new TemplateCountLimit(100),
+        new NodeNameExcludeGlobs(Array.Empty<string>())
     );
     private static readonly ComposerParameters composerParameters = new ComposerParameters("", false, true, false);
 

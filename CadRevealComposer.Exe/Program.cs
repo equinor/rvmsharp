@@ -46,7 +46,13 @@ public static class Program
             new ModelId(options.ModelId),
             new RevisionId(options.RevisionId),
             new InstancingThreshold(options.InstancingThreshold),
-            new TemplateCountLimit(options.TemplateCountLimit)
+            new TemplateCountLimit(options.TemplateCountLimit),
+            new NodeNameExcludeGlobs(
+                options.NodeExcludeGlobs.Split(
+                    ";", // TODO: ARbitrary splitting character. Maybe comma is good enough. Maybe even the cli tool handles this for me?
+                    StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
+                )
+            )
         );
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");

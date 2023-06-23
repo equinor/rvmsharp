@@ -71,6 +71,13 @@ public class CommandLineOptions
     [Option(longName: "SingleSector", shortName: 's', Required = false, HelpText = "Create a single sector.")]
     public bool SingleSector { get; init; }
 
+    [Option(
+        longName: "NodeExcludeGlobs",
+        Required = false,
+        HelpText = "A semicolon separated list of globs for node names to exclude by"
+    )]
+    public string NodeExcludeGlobs { get; init; } = "";
+
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
 
