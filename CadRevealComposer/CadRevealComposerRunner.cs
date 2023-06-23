@@ -62,13 +62,20 @@ public static class CadRevealComposerRunner
                                     + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
                                     + "'"
                             );
-                            Console.WriteLine("Was " + cadRevealNodes.Count + " nodes.");
                             filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
                                 cadRevealNodes,
                                 modelParameters.NodeNameExcludeGlobs.Values,
                                 treeIndexGenerator
                             );
-                            Console.WriteLine("After filterins is " + filteredNodes.Count + " nodes.");
+                            int filteredNodesCount = (cadRevealNodes.Count - filteredNodes.Count);
+
+                            Console.WriteLine("Filter stats:\n" + "Filtered out " + filteredNodesCount + " nodes.");
+                            if (filteredNodesCount == 0)
+                            {
+                                Console.Error.WriteLine(
+                                    "Filter seems to not have filtered anything away. Consider removing the filter if this is intentional."
+                                );
+                            }
                         }
                     }
 
