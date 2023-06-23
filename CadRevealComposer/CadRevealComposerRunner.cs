@@ -52,18 +52,25 @@ public static class CadRevealComposerRunner
 
                 if (cadRevealNodes.Count > 0)
                 {
-                    Console.WriteLine(
-                        "Excluding nodes with filter(s): '"
-                            + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
-                            + "'"
-                    );
-                    Console.WriteLine("Was " + cadRevealNodes.Count + " nodes.");
-                    var filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
-                        cadRevealNodes,
-                        modelParameters.NodeNameExcludeGlobs.Values,
-                        treeIndexGenerator
-                    );
-                    Console.WriteLine("After filterins is " + filteredNodes.Count + " nodes.");
+                    var filteredNodes = cadRevealNodes;
+                    if (modelParameters.NodeNameExcludeGlobs.Values.Any())
+                    {
+                        using (new TeamCityLogBlock("Filtering " + modelFormatProvider.GetType()))
+                        {
+                            Console.WriteLine(
+                                "Excluding nodes with filter(s): '"
+                                    + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
+                                    + "'"
+                            );
+                            Console.WriteLine("Was " + cadRevealNodes.Count + " nodes.");
+                            filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
+                                cadRevealNodes,
+                                modelParameters.NodeNameExcludeGlobs.Values,
+                                treeIndexGenerator
+                            );
+                            Console.WriteLine("After filterins is " + filteredNodes.Count + " nodes.");
+                        }
+                    }
 
                     // collect all nodes for later sector division of the entire scene
                     nodesToExport.AddRange(filteredNodes);
