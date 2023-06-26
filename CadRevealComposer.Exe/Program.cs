@@ -47,12 +47,7 @@ public static class Program
             new RevisionId(options.RevisionId),
             new InstancingThreshold(options.InstancingThreshold),
             new TemplateCountLimit(options.TemplateCountLimit),
-            new NodeNameExcludeGlobs(
-                options.NodeExcludeGlobs.Split(
-                    ";", // TODO: ARbitrary splitting character. Maybe comma is good enough. Maybe even the cli tool handles this for me?
-                    StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries
-                )
-            )
+            new NodeNameExcludeGlobs(options.NodeExcludeGlobs.Select(x => x.Trim()).ToArray())
         );
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");

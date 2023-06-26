@@ -6,6 +6,7 @@ namespace CadRevealComposer.Exe;
 
 using CommandLine;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 
@@ -74,9 +75,9 @@ public class CommandLineOptions
     [Option(
         longName: "NodeExcludeGlobs",
         Required = false,
-        HelpText = "A semicolon separated list of globs for node names to exclude by"
+        HelpText = "A list (space separated) of nodes names to exclude, in a glob form with * for wildcard and ? for single character. Not case sensitive."
     )]
-    public string NodeExcludeGlobs { get; init; } = "";
+    public IEnumerable<string> NodeExcludeGlobs { get; init; } = Array.Empty<string>();
 
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
