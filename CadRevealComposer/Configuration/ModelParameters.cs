@@ -27,4 +27,5 @@ public record RevisionId(long Value);
 public record InstancingThreshold(uint Value);
 
 public record TemplateCountLimit(uint Value);
+
 public record NodeNameExcludeGlobs(string[] Values);
