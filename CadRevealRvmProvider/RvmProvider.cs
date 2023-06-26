@@ -19,7 +19,6 @@ public class RvmProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
-        TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator
     )
     {
@@ -49,7 +48,7 @@ public class RvmProvider : IModelFormatProvider
         );
 
         var stopwatch = Stopwatch.StartNew();
-        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, treeIndexGenerator);
+        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore);
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
         return nodes;

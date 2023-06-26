@@ -10,7 +10,6 @@ public interface IModelFormatProvider
 {
     IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
-        TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator
     );
 

@@ -2,6 +2,9 @@ namespace CadRevealComposer.Tests.Operations;
 
 using CadRevealComposer.Operations;
 using IdProviders;
+using Primitives;
+using System.Drawing;
+using System.Numerics;
 
 public class NodeFilteringTests
 {
@@ -32,6 +35,7 @@ public class NodeFilteringTests
         Assert.That(filteredNodes[1].Name, Is.EqualTo("cde"));
         Assert.That(filteredNodes[1].TreeIndex, Is.EqualTo(1));
         Assert.That(filteredNodes[1].Children, Is.Empty);
+        Assert.That(filteredNodes[1].Geometries[0].TreeIndex, Is.EqualTo(1)); // Keep geometries, and reindex them too!
         Assert.That(filteredNodes[1].Parent, Is.EqualTo(filteredNodes[0]));
 
         Assert.That(filteredNodes[2].TreeIndex, Is.EqualTo(2));
@@ -50,13 +54,21 @@ public class NodeFilteringTests
         {
             TreeIndex = 2,
             Name = "cde",
-            Parent = root1
+            Parent = root1,
+            Geometries = new[]
+            {
+                new Box(Matrix4x4.Identity, 2, Color.Aqua, new BoundingBox(-Vector3.One, Vector3.One))
+            }
         };
         var data3 = new CadRevealNode()
         {
             TreeIndex = 3,
             Name = "fgh",
-            Parent = data2
+            Parent = data2,
+            Geometries = new[]
+            {
+                new Box(Matrix4x4.Identity, 3, Color.Aqua, new BoundingBox(-Vector3.One, Vector3.One))
+            }
         };
         data2.Children = new[] { data3 };
         root1.Children = new[] { data2 };

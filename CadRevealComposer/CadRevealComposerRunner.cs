@@ -33,7 +33,6 @@ public static class CadRevealComposerRunner
         var nodesToExport = new List<CadRevealNode>();
         var geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
-        var notUsedTreeIndexGenerator = new TreeIndexGenerator(); // Todo, not needed any more. Consider removing.
         var instanceIdGenerator = new InstanceIdGenerator();
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
@@ -41,7 +40,6 @@ public static class CadRevealComposerRunner
             var timer = Stopwatch.StartNew();
             IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
-                notUsedTreeIndexGenerator,
                 instanceIdGenerator
             );
             if (cadRevealNodes != null)
@@ -52,7 +50,7 @@ public static class CadRevealComposerRunner
 
                 if (cadRevealNodes.Count > 0)
                 {
-                    var filteredNodes = cadRevealNodes;
+                    IReadOnlyList<CadRevealNode> filteredNodes;
                     if (modelParameters.NodeNameExcludeGlobs.Values.Any())
                     {
                         using (new TeamCityLogBlock("Filtering " + modelFormatProvider.GetType()))
@@ -77,6 +75,23 @@ public static class CadRevealComposerRunner
                                 );
                             }
                         }
+                    }
+                    else
+                    {
+                        // Add tree-indexes. Assuming this is sequential for the entire dataset.
+                        filteredNodes = cadRevealNodes
+                            .Select(node =>
+                            {
+                                var treeIndex = treeIndexGenerator.GetNextId();
+                                return node with
+                                {
+                                    TreeIndex = treeIndex,
+                                    Geometries = node.Geometries
+                                        .Select(geom => geom with { TreeIndex = treeIndex })
+                                        .ToArray()
+                                };
+                            })
+                            .ToArray();
                     }
 
                     // collect all nodes for later sector division of the entire scene

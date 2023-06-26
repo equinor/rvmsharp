@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Operations;
 
 using IdProviders;
+using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,21 +45,27 @@ public static class NodeFiltering
         TreeIndexGenerator treeIndexGenerator
     )
     {
-        // TODO: Make this a real glob filter?
         if (filters.Any(filter => filter.IsMatch(root.Name)))
             return null;
+
         // Remap the treeindex hierarchy
         var newTreeIndex = treeIndexGenerator.GetNextId();
-        var newRoot = root with { TreeIndex = newTreeIndex, Parent = parent };
-        var children = new List<CadRevealNode>();
+        var newRoot = root with
+        {
+            TreeIndex = newTreeIndex,
+            Parent = parent,
+            Geometries = root.Geometries.Select(x => x with { TreeIndex = newTreeIndex }).ToArray()
+        };
+
+        var newChildren = new List<CadRevealNode>();
         foreach (CadRevealNode child in root.Children ?? ArraySegment<CadRevealNode>.Empty)
         {
             var childFiltered = TraverseFilter(child, newRoot, filters, treeIndexGenerator);
             if (childFiltered != null)
-                children.Add(childFiltered);
+                newChildren.Add(childFiltered);
         }
 
-        newRoot.Children = children.ToArray();
+        newRoot.Children = newChildren.ToArray();
         return newRoot;
     }
 

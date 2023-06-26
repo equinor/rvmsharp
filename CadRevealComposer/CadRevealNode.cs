@@ -38,7 +38,7 @@ public record BoundingBox(Vector3 Min, Vector3 Max)
 
 public record CadRevealNode
 {
-    public ulong TreeIndex;
+    public ulong TreeIndex { get; init; }
     public string Name { get; init; } = ""; // TODO: Required field
 
     // TODO support Store, Model, File and maybe not RVM
