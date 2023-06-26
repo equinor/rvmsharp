@@ -4,6 +4,7 @@ using IdProviders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 public static class NodeFiltering
 {
@@ -15,10 +16,11 @@ public static class NodeFiltering
     /// </summary>
     public static List<CadRevealNode> FilterAndReindexNodesByGlobs(
         IEnumerable<CadRevealNode> nodes,
-        string[] filters,
+        string[] globFilters,
         TreeIndexGenerator treeIndexGenerator
     )
     {
+        var regexFilters = globFilters.Select(ConvertGlobToRegex).ToArray();
         var roots = nodes.Where(x => x.Parent == null);
         List<CadRevealNode> list = new();
         foreach (CadRevealNode root in roots)
@@ -26,7 +28,7 @@ public static class NodeFiltering
             var rootFiltered = TraverseFilter(
                 root,
                 parent: null, /*Roots have no parent*/
-                filters,
+                regexFilters,
                 treeIndexGenerator
             );
             if (rootFiltered != null)
@@ -38,12 +40,12 @@ public static class NodeFiltering
     public static CadRevealNode? TraverseFilter(
         CadRevealNode root,
         CadRevealNode? parent,
-        string[] filters,
+        Regex[] filters,
         TreeIndexGenerator treeIndexGenerator
     )
     {
         // TODO: Make this a real glob filter?
-        if (filters.Any(filter => root.Name.Contains(filter, StringComparison.OrdinalIgnoreCase)))
+        if (filters.Any(filter => filter.IsMatch(root.Name)))
             return null;
         // Remap the treeindex hierarchy
         var newTreeIndex = treeIndexGenerator.GetNextId();
@@ -58,5 +60,14 @@ public static class NodeFiltering
 
         newRoot.Children = children.ToArray();
         return newRoot;
+    }
+
+    private static Regex ConvertGlobToRegex(string glob)
+    {
+        // Naive glob implementation inspired from https://stackoverflow.com/a/4146349
+        return new Regex(
+            "^" + Regex.Escape(glob).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
+            RegexOptions.IgnoreCase | RegexOptions.Singleline
+        );
     }
 }
