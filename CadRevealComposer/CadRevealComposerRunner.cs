@@ -42,75 +42,71 @@ public static class CadRevealComposerRunner
                 inputFolderPath.EnumerateFiles(),
                 instanceIdGenerator
             );
-            if (cadRevealNodes != null)
+            
+            Console.WriteLine(
+                $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
+            );
+
+            if (cadRevealNodes.Count > 0)
             {
-                Console.WriteLine(
-                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
-                );
-
-                if (cadRevealNodes.Count > 0)
+                IReadOnlyList<CadRevealNode> filteredNodes;
+                if (modelParameters.NodeNameExcludeGlobs.Values.Any())
                 {
-                    IReadOnlyList<CadRevealNode> filteredNodes;
-                    if (modelParameters.NodeNameExcludeGlobs.Values.Any())
+                    using (new TeamCityLogBlock("Filtering " + modelFormatProvider.GetType()))
                     {
-                        using (new TeamCityLogBlock("Filtering " + modelFormatProvider.GetType()))
-                        {
-                            Console.WriteLine(
-                                "Excluding nodes with filter(s): '"
-                                    + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
-                                    + "'"
-                            );
-                            filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
-                                cadRevealNodes,
-                                modelParameters.NodeNameExcludeGlobs.Values,
-                                treeIndexGenerator
-                            );
-                            int filteredNodesCount = (cadRevealNodes.Count - filteredNodes.Count);
+                        Console.WriteLine(
+                            "Excluding nodes with filter(s): '"
+                            + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
+                            + "'"
+                        );
+                        filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
+                            cadRevealNodes,
+                            modelParameters.NodeNameExcludeGlobs.Values,
+                            treeIndexGenerator
+                        );
+                        int filteredNodesCount = (cadRevealNodes.Count - filteredNodes.Count);
 
-                            Console.WriteLine("Filter stats:\n" + "Filtered out " + filteredNodesCount + " nodes.");
-                            if (filteredNodesCount == 0)
-                            {
-                                Console.Error.WriteLine(
-                                    "Filter seems to not have filtered anything away. Consider removing the filter if this is intentional."
-                                );
-                            }
+                        Console.WriteLine("Filter stats:\n" + "Filtered out " + filteredNodesCount + " nodes.");
+                        if (filteredNodesCount == 0)
+                        {
+                            Console.Error.WriteLine(
+                                "Filter seems to not have filtered anything away. Consider removing the filter if this is intentional."
+                            );
                         }
                     }
-                    else
-                    {
-                        // Add tree-indexes. Assuming this is sequential for the entire dataset.
-                        filteredNodes = cadRevealNodes
-                            .Select(node =>
-                            {
-                                var treeIndex = treeIndexGenerator.GetNextId();
-                                return node with
-                                {
-                                    TreeIndex = treeIndex,
-                                    Geometries = node.Geometries
-                                        .Select(geom => geom with { TreeIndex = treeIndex })
-                                        .ToArray()
-                                };
-                            })
-                            .ToArray();
-                    }
-
-                    // collect all nodes for later sector division of the entire scene
-                    nodesToExport.AddRange(filteredNodes);
-
-                    var inputGeometries = filteredNodes
-                        .AsParallel()
-                        .AsOrdered()
-                        .SelectMany(x => x.Geometries)
-                        .ToArray();
-
-                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
-                        inputGeometries,
-                        composerParameters,
-                        modelParameters,
-                        instanceIdGenerator
-                    );
-                    geometriesToProcess.AddRange(geometriesIncludingMeshes);
                 }
+                else
+                {
+                    filteredNodes = cadRevealNodes;
+                }
+
+                // Add tree-indexes. Assuming this is sequential for the entire dataset.
+                var nodesWithTreeindexes = filteredNodes
+                    .Where(x => x.Parent == null)
+                    .SelectMany(
+                        x =>
+                            CadRevealNode.GetAllNodesFlat(
+                                NodeFiltering.TraverseAddTreeIndexes(x, null, treeIndexGenerator)
+                            )
+                    )
+                    .ToArray();
+
+                // collect all nodes for later sector division of the entire scene
+                nodesToExport.AddRange(nodesWithTreeindexes);
+
+                var inputGeometries = nodesWithTreeindexes
+                    .AsParallel()
+                    .AsOrdered()
+                    .SelectMany(x => x.Geometries)
+                    .ToArray();
+
+                var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                    inputGeometries,
+                    composerParameters,
+                    modelParameters,
+                    instanceIdGenerator
+                );
+                geometriesToProcess.AddRange(geometriesIncludingMeshes);
             }
         }
 

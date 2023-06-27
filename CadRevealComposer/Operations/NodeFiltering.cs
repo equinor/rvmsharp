@@ -1,7 +1,6 @@
 namespace CadRevealComposer.Operations;
 
 using IdProviders;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,25 +28,24 @@ public static class NodeFiltering
             var rootFiltered = TraverseFilter(
                 root,
                 parent: null, /*Roots have no parent*/
-                regexFilters,
-                treeIndexGenerator
+                regexFilters
             );
             if (rootFiltered != null)
-                list.AddRange(CadRevealNode.GetAllNodesFlat(rootFiltered));
+            {
+                var withTreeIndexes = TraverseAddTreeIndexes(rootFiltered, null, treeIndexGenerator);
+                list.AddRange(CadRevealNode.GetAllNodesFlat(withTreeIndexes));
+            }
         }
+
         return list;
     }
 
-    public static CadRevealNode? TraverseFilter(
+    public static CadRevealNode TraverseAddTreeIndexes(
         CadRevealNode root,
         CadRevealNode? parent,
-        Regex[] filters,
         TreeIndexGenerator treeIndexGenerator
     )
     {
-        if (filters.Any(filter => filter.IsMatch(root.Name)))
-            return null;
-
         // Remap the treeindex hierarchy
         var newTreeIndex = treeIndexGenerator.GetNextId();
         var newRoot = root with
@@ -56,11 +54,32 @@ public static class NodeFiltering
             Parent = parent,
             Geometries = root.Geometries.Select(x => x with { TreeIndex = newTreeIndex }).ToArray()
         };
+        List<CadRevealNode> newChildren = new();
+        foreach (CadRevealNode child in root.Children ?? ArraySegment<CadRevealNode>.Empty)
+        {
+            var childFiltered = TraverseAddTreeIndexes(child, newRoot, treeIndexGenerator);
+            newChildren.Add(childFiltered);
+        }
+        // Mutating so the "Parent" is correct for the children...
+        newRoot.Children = newChildren.ToArray();
+        return newRoot;
+    }
+
+    public static CadRevealNode? TraverseFilter(CadRevealNode root, CadRevealNode? parent, Regex[] filters)
+    {
+        if (filters.Any(filter => filter.IsMatch(root.Name)))
+            return null;
+
+        // Remap the treeindex hierarchy
+        var newRoot = root with
+        {
+            Parent = parent,
+        };
 
         var newChildren = new List<CadRevealNode>();
         foreach (CadRevealNode child in root.Children ?? ArraySegment<CadRevealNode>.Empty)
         {
-            var childFiltered = TraverseFilter(child, newRoot, filters, treeIndexGenerator);
+            var childFiltered = TraverseFilter(child, newRoot, filters);
             if (childFiltered != null)
                 newChildren.Add(childFiltered);
         }
