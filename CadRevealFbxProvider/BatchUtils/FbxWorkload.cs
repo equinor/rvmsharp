@@ -90,12 +90,14 @@ public static class FbxWorkload
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
             var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
 
+            var geometriesThatShouldBeInstanced = FbxGeometryUtils.GetAllGeomPointersWithTwoOrMoreUses(rootNodeOfModel);
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxImporter,
-                lookupA
+                lookupA,
+                geometriesThatShouldBeInstanced
             );
 
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();

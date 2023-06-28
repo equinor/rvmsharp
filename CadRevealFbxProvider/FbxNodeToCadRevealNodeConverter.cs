@@ -13,7 +13,8 @@ public class FbxNodeToCadRevealNodeConverter
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         FbxImporter fbxSdk,
-        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup
+        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
+        HashSet<IntPtr> geometriesThatShouldBeInstanced
     )
     {
         var id = treeIndexGenerator.GetNextId();
@@ -51,21 +52,34 @@ public class FbxNodeToCadRevealNodeConverter
                 {
                     var mesh = meshData.Value.Mesh;
                     var meshPtr = meshData.Value.MeshPtr;
-                    ulong instanceId = instanceIdGenerator.GetNextId();
 
                     var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
+                    if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
+                    {
+                        ulong instanceId = instanceIdGenerator.GetNextId();
+                        meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+                        var instancedMesh = new InstancedMesh(
+                            instanceId,
+                            mesh,
+                            transform,
+                            id,
+                            Color.Magenta, // TODO: Temp debug color to distinguish first Instance
+                            bb
+                        );
+                        geometries.Add(instancedMesh);
+                    }
+                    else
+                    {
+                        var triangleMesh = new TriangleMesh(
+                            mesh,
+                            id,
+                            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
+                            bb
+                        );
 
-                    meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
-                    var instancedMesh = new InstancedMesh(
-                        instanceId,
-                        mesh,
-                        transform,
-                        id,
-                        Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                        bb
-                    );
+                        geometries.Add(triangleMesh);
+                    }
 
-                    geometries.Add(instancedMesh);
                     if (nodeBoundingBox != null)
                         nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
                     else
@@ -84,7 +98,8 @@ public class FbxNodeToCadRevealNodeConverter
                 treeIndexGenerator,
                 instanceIdGenerator,
                 fbxSdk,
-                meshInstanceLookup
+                meshInstanceLookup,
+                geometriesThatShouldBeInstanced
             );
             children.Add(childCadRevealNode);
 

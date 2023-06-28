@@ -1,9 +1,11 @@
 namespace CadRevealFbxProvider.Tests;
 
+using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Numerics;
 
@@ -52,6 +54,16 @@ public class FbxProviderTests
         using var test = new FbxImporter();
         var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
         Iterate(RootNode, test);
+    }
+
+    [Test]
+    public void Fbx_Importer_GetUniqueMeshesInFileCount()
+    {
+        using var test = new FbxImporter();
+        var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+
+        var data = FbxGeometryUtils.GetAllGeomPointersWithTwoOrMoreUses(RootNode);
+        Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
     private void Iterate(FbxNode root, FbxImporter fbxImporter)
@@ -148,7 +160,8 @@ public class FbxProviderTests
             treeIndexGenerator,
             instanceIndexGenerator,
             testLoader,
-            lookupA
+            lookupA,
+            geometriesThatShouldBeInstanced: new HashSet<IntPtr>()
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
@@ -160,6 +173,7 @@ public class FbxProviderTests
         }
 
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
+        Assert.That(geometriesToProcess, Has.All.TypeOf<TriangleMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
             outputDirectoryCorrect,
