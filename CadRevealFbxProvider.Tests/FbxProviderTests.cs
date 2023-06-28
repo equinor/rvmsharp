@@ -6,7 +6,6 @@ using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Primitives;
-using CadRevealComposer.Tessellation;
 using System.Numerics;
 
 [TestFixture]
@@ -153,15 +152,11 @@ public class FbxProviderTests
 
         using var testLoader = new FbxImporter();
         var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
-        var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
-            instanceIndexGenerator,
-            testLoader,
-            lookupA,
-            geometriesThatShouldBeInstanced: new HashSet<IntPtr>()
+            instanceIndexGenerator
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
@@ -173,7 +168,8 @@ public class FbxProviderTests
         }
 
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
-        Assert.That(geometriesToProcess, Has.All.TypeOf<TriangleMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
+        Assert.That(geometriesToProcess, Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
+        Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
             outputDirectoryCorrect,

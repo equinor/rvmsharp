@@ -1,18 +1,35 @@
 ﻿namespace CadRevealFbxProvider;
 
+using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Drawing;
 
-public class FbxNodeToCadRevealNodeConverter
+public static class FbxNodeToCadRevealNodeConverter
 {
     public static CadRevealNode ConvertRecursive(
         FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator
+    )
+    {
+        var meshInstanceLookup = new Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)>();
+        HashSet<IntPtr> geometriesThatShouldBeInstanced = FbxGeometryUtils.GetAllGeomPointersWithTwoOrMoreUses(node);
+        return ConvertRecursiveInternal(
+            node,
+            treeIndexGenerator,
+            instanceIdGenerator,
+            meshInstanceLookup,
+            geometriesThatShouldBeInstanced
+        );
+    }
+
+    private static CadRevealNode ConvertRecursiveInternal(
+        FbxNode node,
+        TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
-        FbxImporter fbxSdk,
         Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
         HashSet<IntPtr> geometriesThatShouldBeInstanced
     )
@@ -93,11 +110,10 @@ public class FbxNodeToCadRevealNodeConverter
         for (var i = 0; i < childCount; i++)
         {
             FbxNode child = FbxNodeWrapper.GetChild(i, node);
-            CadRevealNode childCadRevealNode = ConvertRecursive(
+            CadRevealNode childCadRevealNode = ConvertRecursiveInternal(
                 child,
                 treeIndexGenerator,
                 instanceIdGenerator,
-                fbxSdk,
                 meshInstanceLookup,
                 geometriesThatShouldBeInstanced
             );
