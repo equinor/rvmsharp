@@ -83,12 +83,8 @@ public static class CadRevealComposerRunner
                 // Add tree-indexes. Assuming this is sequential for the entire dataset.
                 var nodesWithTreeindexes = filteredNodes
                     .Where(x => x.Parent == null)
-                    .SelectMany(
-                        x =>
-                            CadRevealNode.GetAllNodesFlat(
-                                NodeFiltering.TraverseAddTreeIndexes(x, null, treeIndexGenerator)
-                            )
-                    )
+                    .Select(x => NodeFiltering.TraverseAddTreeIndexes(x, null, treeIndexGenerator))
+                    .SelectMany(CadRevealNode.GetAllNodesFlat)
                     .ToArray();
 
                 // collect all nodes for later sector division of the entire scene
