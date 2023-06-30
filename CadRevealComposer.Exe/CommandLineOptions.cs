@@ -75,7 +75,9 @@ public class CommandLineOptions
     [Option(
         longName: "NodeNameExcludeGlobs",
         Required = false,
-        HelpText = "A list (space separated) of nodes names to exclude, in a glob form with * for wildcard and ? for single character. Not case sensitive."
+        HelpText = "A list of string nodes names to exclude, in a glob form with * for wildcard "
+            + "and ? for single character. Not case sensitive. Uses space as a separator, unless you add \" around."
+            + " Example with two filters: --NodeNameExcludeGlobs \"*pipe*\" \"*mat-handling*\""
     )]
     public IEnumerable<string> NodeExcludeGlobs { get; init; } = Array.Empty<string>();
 
