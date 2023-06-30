@@ -42,7 +42,7 @@ public static class CadRevealComposerRunner
                 inputFolderPath.EnumerateFiles(),
                 instanceIdGenerator
             );
-            
+
             Console.WriteLine(
                 $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
             );
@@ -56,8 +56,8 @@ public static class CadRevealComposerRunner
                     {
                         Console.WriteLine(
                             "Excluding nodes with filter(s): '"
-                            + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
-                            + "'"
+                                + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
+                                + "'"
                         );
                         filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
                             cadRevealNodes,
