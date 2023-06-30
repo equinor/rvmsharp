@@ -1,5 +1,7 @@
 namespace CadRevealObjProvider.Tests;
 
+using CadRevealComposer;
+using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 
 [TestFixture]
@@ -13,6 +15,12 @@ public class ObjProviderTests
     public void ObjProviderTests_SmokeTest()
     {
         var instanceIdGenerator = new InstanceIdGenerator();
-        new ObjProvider().ParseFiles(new[] { new FileInfo("TestData/HDA_subset.obj") }, instanceIdGenerator);
+        var treeIndexGenerator = new TreeIndexGenerator();
+        new ObjProvider().ParseFiles(
+            new[] { new FileInfo("TestData/HDA_subset.obj") },
+            treeIndexGenerator,
+            instanceIdGenerator,
+            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>()))
+        );
     }
 }

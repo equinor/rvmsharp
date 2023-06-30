@@ -73,7 +73,7 @@ public class CommandLineOptions
     public bool SingleSector { get; init; }
 
     [Option(
-        longName: "NodeExcludeGlobs",
+        longName: "NodeNameExcludeGlobs",
         Required = false,
         HelpText = "A list (space separated) of nodes names to exclude, in a glob form with * for wildcard and ? for single character. Not case sensitive."
     )]

@@ -8,18 +8,22 @@ using System.Drawing;
 
 public class FbxNodeToCadRevealNodeConverter
 {
-    public static CadRevealNode ConvertRecursive(
+    public static CadRevealNode? ConvertRecursive(
         FbxNode node,
+        TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
-        FbxImporter fbxSdk,
+        NodeNameFiltering nodeNameFiltering,
         Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup
     )
     {
-        var id = ulong.MaxValue;
         List<APrimitive> geometries = new List<APrimitive>();
         BoundingBox? nodeBoundingBox = null;
 
         var name = FbxNodeWrapper.GetNodeName(node);
+        if (nodeNameFiltering.ShouldExcludeNode(name))
+            return null;
+
+        var id = treeIndexGenerator.GetNextId();
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
         var transform = FbxNodeWrapper.GetTransform(node);
 
@@ -78,7 +82,15 @@ public class FbxNodeToCadRevealNodeConverter
         for (var i = 0; i < childCount; i++)
         {
             FbxNode child = FbxNodeWrapper.GetChild(i, node);
-            CadRevealNode childCadRevealNode = ConvertRecursive(child, instanceIdGenerator, fbxSdk, meshInstanceLookup);
+            CadRevealNode? childCadRevealNode = ConvertRecursive(
+                child,
+                treeIndexGenerator,
+                instanceIdGenerator,
+                nodeNameFiltering,
+                meshInstanceLookup
+            );
+            if (childCadRevealNode == null)
+                continue;
             children.Add(childCadRevealNode);
 
             if (childCadRevealNode.Children != null)

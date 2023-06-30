@@ -68,7 +68,9 @@ public static class FbxWorkload
 
     public static IReadOnlyList<CadRevealNode> ReadFbxData(
         IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
+        TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
         IStringInternPool? stringInternPool = null
     )
@@ -91,10 +93,14 @@ public static class FbxWorkload
 
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
+                treeIndexGenerator,
                 instanceIdGenerator,
-                fbxImporter,
+                nodeNameFiltering,
                 lookupA
             );
+
+            if (rootNodeConverted == null)
+                return Array.Empty<CadRevealNode>();
 
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 

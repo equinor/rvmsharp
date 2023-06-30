@@ -16,7 +16,9 @@ public class ObjProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
-        InstanceIdGenerator instanceIdGenerator
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     )
     {
         var objLoaderFactory = new ObjLoaderFactory();
@@ -40,16 +42,18 @@ public class ObjProvider : IModelFormatProvider
         var nodes = new List<CadRevealNode>();
         foreach (ObjMesh meshGroup in meshes)
         {
-            var tempTreeIndex = ulong.MaxValue;
+            var treeIndex = treeIndexGenerator.GetNextId();
+            if(nodeNameFiltering.ShouldExcludeNode(meshGroup.Name)) 
+                continue;
             nodes.Add(
                 new CadRevealNode()
                 {
                     BoundingBoxAxisAligned = meshGroup.CalculateBoundingBox(),
                     Children = null,
-                    TreeIndex = tempTreeIndex,
+                    TreeIndex = treeIndex,
                     Parent = null,
                     Name = meshGroup.Name,
-                    Geometries = ConvertObjMeshToAPrimitive(meshGroup, tempTreeIndex)
+                    Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
                 }
             );
         }

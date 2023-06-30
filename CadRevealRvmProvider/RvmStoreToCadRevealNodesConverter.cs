@@ -9,11 +9,16 @@ using System.Diagnostics;
 
 static internal class RvmStoreToCadRevealNodesConverter
 {
-    public static CadRevealNode[] RvmStoreToCadRevealNodes(RvmStore rvmStore)
+    public static CadRevealNode[] RvmStoreToCadRevealNodes(
+        RvmStore rvmStore,
+        TreeIndexGenerator treeIndexGenerator,
+        NodeNameFiltering nodeNameFiltering
+    )
     {
         var cadRevealRootNodes = rvmStore.RvmFiles
             .SelectMany(f => f.Model.Children)
-            .Select(root => CollectGeometryNodesRecursive(root, parent: null))
+            .Select(root => CollectGeometryNodesRecursive(root, parent: null, treeIndexGenerator, nodeNameFiltering))
+            .WhereNotNull()
             .ToArray();
 
         var subBoundingBox = cadRevealRootNodes
@@ -28,11 +33,19 @@ static internal class RvmStoreToCadRevealNodesConverter
         return allNodes;
     }
 
-    private static CadRevealNode CollectGeometryNodesRecursive(RvmNode root, CadRevealNode? parent)
+    private static CadRevealNode? CollectGeometryNodesRecursive(
+        RvmNode root,
+        CadRevealNode? parent,
+        TreeIndexGenerator treeIndexGenerator,
+        NodeNameFiltering nodeNameFiltering
+    )
     {
+        if (nodeNameFiltering.ShouldExcludeNode(root.Name))
+            return null;
+
         var newNode = new CadRevealNode
         {
-            TreeIndex = ulong.MaxValue, // Expecting treeIndex to be set later
+            TreeIndex = treeIndexGenerator.GetNextId(),
             Parent = parent,
             Children = null,
             Name = root.Name,
@@ -55,21 +68,30 @@ static internal class RvmStoreToCadRevealNodesConverter
                                 {
                                     Children = { rvmPrimitive }
                                 },
-                                newNode
+                                newNode,
+                                treeIndexGenerator,
+                                nodeNameFiltering
                             );
                         case RvmNode rvmNode:
-                            return CollectGeometryNodesRecursive(rvmNode, newNode);
+                            return CollectGeometryNodesRecursive(
+                                rvmNode,
+                                newNode,
+                                treeIndexGenerator,
+                                nodeNameFiltering
+                            );
                         default:
                             throw new Exception();
                     }
                 })
+                .WhereNotNull()
                 .ToArray();
         }
         else
         {
             childrenCadNodes = root.Children
                 .OfType<RvmNode>()
-                .Select(n => CollectGeometryNodesRecursive(n, newNode))
+                .Select(n => CollectGeometryNodesRecursive(n, newNode, treeIndexGenerator, nodeNameFiltering))
+                .WhereNotNull()
                 .ToArray();
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
         }

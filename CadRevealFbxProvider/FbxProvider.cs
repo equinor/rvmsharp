@@ -15,7 +15,9 @@ public class FbxProvider : IModelFormatProvider
 {
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
-        InstanceIdGenerator instanceIdGenerator
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     )
     {
         var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
@@ -37,7 +39,9 @@ public class FbxProvider : IModelFormatProvider
 
         var nodes = FbxWorkload.ReadFbxData(
             workload,
+            treeIndexGenerator,
             instanceIdGenerator,
+            nodeNameFiltering,
             progressReport,
             stringInternPool
         );

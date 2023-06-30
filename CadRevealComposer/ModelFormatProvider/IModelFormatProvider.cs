@@ -10,7 +10,9 @@ public interface IModelFormatProvider
 {
     IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
-        InstanceIdGenerator instanceIdGenerator
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     );
 
     public APrimitive[] ProcessGeometries(

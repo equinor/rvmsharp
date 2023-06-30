@@ -121,7 +121,12 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(inputDirectoryCorrect.EnumerateFiles(), instanceIndexGenerator);
+        var nodes = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryCorrect.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>()))
+        );
         Assert.That(nodes.Count() == 28);
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
         Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
@@ -142,12 +147,13 @@ public class FbxProviderTests
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
+            treeIndexGenerator,
             instanceIndexGenerator,
-            testLoader,
+            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>())),
             lookupA
         );
 
-        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
+        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
         // this test model should have a bounding box for each node
         foreach (var node in flatNodes)
         {

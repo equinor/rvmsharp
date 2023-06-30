@@ -35,12 +35,16 @@ public static class CadRevealComposerRunner
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
+        var filtering = new NodeNameFiltering(modelParameters.NodeNameExcludeGlobs);
+
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
             IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
-                instanceIdGenerator
+                treeIndexGenerator,
+                instanceIdGenerator,
+                filtering
             );
 
             Console.WriteLine(
@@ -49,52 +53,10 @@ public static class CadRevealComposerRunner
 
             if (cadRevealNodes.Count > 0)
             {
-                IReadOnlyList<CadRevealNode> filteredNodes;
-                if (modelParameters.NodeNameExcludeGlobs.Values.Any())
-                {
-                    using (new TeamCityLogBlock("Filtering " + modelFormatProvider.GetType()))
-                    {
-                        Console.WriteLine(
-                            "Excluding nodes with filter(s): '"
-                                + string.Join("', '", modelParameters.NodeNameExcludeGlobs.Values)
-                                + "'"
-                        );
-                        filteredNodes = NodeFiltering.FilterAndReindexNodesByGlobs(
-                            cadRevealNodes,
-                            modelParameters.NodeNameExcludeGlobs.Values,
-                            treeIndexGenerator
-                        );
-                        int filteredNodesCount = (cadRevealNodes.Count - filteredNodes.Count);
-
-                        Console.WriteLine("Filter stats:\n" + "Filtered out " + filteredNodesCount + " nodes.");
-                        if (filteredNodesCount == 0)
-                        {
-                            Console.Error.WriteLine(
-                                "Filter seems to not have filtered anything away. Consider removing the filter if this is intentional."
-                            );
-                        }
-                    }
-                }
-                else
-                {
-                    filteredNodes = cadRevealNodes;
-                }
-
-                // Add tree-indexes. Assuming this is sequential for the entire dataset.
-                var nodesWithTreeindexes = filteredNodes
-                    .Where(x => x.Parent == null)
-                    .Select(x => NodeFiltering.TraverseAddTreeIndexes(x, null, treeIndexGenerator))
-                    .SelectMany(CadRevealNode.GetAllNodesFlat)
-                    .ToArray();
-
                 // collect all nodes for later sector division of the entire scene
-                nodesToExport.AddRange(nodesWithTreeindexes);
+                nodesToExport.AddRange(cadRevealNodes);
 
-                var inputGeometries = nodesWithTreeindexes
-                    .AsParallel()
-                    .AsOrdered()
-                    .SelectMany(x => x.Geometries)
-                    .ToArray();
+                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
                 var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                     inputGeometries,
