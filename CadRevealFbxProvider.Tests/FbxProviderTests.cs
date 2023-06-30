@@ -52,7 +52,21 @@ public class FbxProviderTests
     {
         using var test = new FbxImporter();
         var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
-        Iterate(RootNode, test);
+        Iterate(RootNode);
+    }
+
+    private void Iterate(FbxNode root)
+    {
+        Console.WriteLine(FbxNodeWrapper.GetNodeName(root));
+        var childCount = FbxNodeWrapper.GetChildCount(root);
+        Matrix4x4 t = FbxNodeWrapper.GetTransform(root);
+        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
+        FbxMeshWrapper.GetGeometricData(root);
+        for (var i = 0; i < childCount; i++)
+        {
+            var child = FbxNodeWrapper.GetChild(i, root);
+            Iterate(child);
+        }
     }
 
     [Test]
@@ -63,20 +77,6 @@ public class FbxProviderTests
 
         var data = FbxGeometryUtils.GetAllGeomPointersWithTwoOrMoreUses(RootNode);
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
-    }
-
-    private void Iterate(FbxNode root, FbxImporter fbxImporter)
-    {
-        Console.WriteLine(FbxNodeWrapper.GetNodeName(root));
-        var childCount = FbxNodeWrapper.GetChildCount(root);
-        Matrix4x4 t = FbxNodeWrapper.GetTransform(root);
-        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
-        FbxMeshWrapper.GetGeometricData(root);
-        for (var i = 0; i < childCount; i++)
-        {
-            var child = FbxNodeWrapper.GetChild(i, root);
-            Iterate(child, fbxImporter);
-        }
     }
 
     [Test]
@@ -167,7 +167,7 @@ public class FbxProviderTests
                 Assert.That(node.BoundingBoxAxisAligned != null);
         }
 
-        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
+        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
         Assert.That(geometriesToProcess, Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
         Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
         CadRevealComposerRunner.ProcessPrimitives(
