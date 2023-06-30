@@ -50,7 +50,11 @@ public class RvmProvider : IModelFormatProvider
         );
 
         var stopwatch = Stopwatch.StartNew();
-        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, treeIndexGenerator, nodeNameFiltering);
+        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
+            rvmStore,
+            treeIndexGenerator,
+            nodeNameFiltering
+        );
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
         return nodes;

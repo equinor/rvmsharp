@@ -68,6 +68,8 @@ public static class CadRevealComposerRunner
             }
         }
 
+        filtering.PrintFilteringStatsToConsole();
+
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
             // Exporting hierarchy on side thread to allow it to run in parallel

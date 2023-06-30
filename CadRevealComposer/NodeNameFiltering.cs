@@ -1,8 +1,10 @@
 ﻿namespace CadRevealComposer;
 
 using Configuration;
+using System;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Utils;
 
 public class NodeNameFiltering
 {
@@ -34,5 +36,30 @@ public class NodeNameFiltering
             ExcludedNodes++;
 
         return shouldExclude;
+    }
+
+    public void PrintFilteringStatsToConsole()
+    {
+        using (new TeamCityLogBlock("Filtering Stats"))
+        {
+            if (!_nodeNameExcludeGlobs.Any())
+                Console.WriteLine("Had no filters. No filtering done.");
+
+            Console.WriteLine(
+                "Using these regexes (converted from globs): '"
+                    + string.Join("', '", _nodeNameExcludeGlobs.Select(x => x.ToString()))
+                    + "'"
+            );
+            Console.WriteLine(
+                "Checked "
+                    + CheckedNodes
+                    + " nodes and filtered out "
+                    + ExcludedNodes
+                    + $". That is {ExcludedNodes / (float)CheckedNodes:P1} nodes removed."
+                    // Technically it should be fast-ish to check all child counts of removed nodes but no use-case for
+                    // it yet. Just adding a remark here to avoid questions
+                    + "\nRemark: We dont check any children of excluded nodes so the amount of excluded nodes is unknown"
+            );
+        }
     }
 }

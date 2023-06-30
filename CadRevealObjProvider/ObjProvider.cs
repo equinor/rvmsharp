@@ -43,7 +43,7 @@ public class ObjProvider : IModelFormatProvider
         foreach (ObjMesh meshGroup in meshes)
         {
             var treeIndex = treeIndexGenerator.GetNextId();
-            if(nodeNameFiltering.ShouldExcludeNode(meshGroup.Name)) 
+            if (nodeNameFiltering.ShouldExcludeNode(meshGroup.Name))
                 continue;
             nodes.Add(
                 new CadRevealNode()
