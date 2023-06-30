@@ -121,11 +121,7 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(
-            inputDirectoryCorrect.EnumerateFiles(),
-            treeIndexGenerator,
-            instanceIndexGenerator
-        );
+        var nodes = modelFormatProviderFbx.ParseFiles(inputDirectoryCorrect.EnumerateFiles(), instanceIndexGenerator);
         Assert.That(nodes.Count() == 28);
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
         Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
@@ -146,7 +142,6 @@ public class FbxProviderTests
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
-            treeIndexGenerator,
             instanceIndexGenerator,
             testLoader,
             lookupA
