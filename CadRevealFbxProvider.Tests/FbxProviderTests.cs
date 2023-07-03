@@ -194,7 +194,7 @@ public class FbxProviderTests
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            minInstanceCountThreshold: 5 // <-- This is the tested value
+            minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
