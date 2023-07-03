@@ -7,7 +7,7 @@ using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 
-static internal class RvmStoreToCadRevealNodesConverter
+internal static class RvmStoreToCadRevealNodesConverter
 {
     public static CadRevealNode[] RvmStoreToCadRevealNodes(RvmStore rvmStore, TreeIndexGenerator treeIndexGenerator)
     {
