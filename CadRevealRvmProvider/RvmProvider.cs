@@ -36,7 +36,7 @@ public class RvmProvider : IModelFormatProvider
         });
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = RvmWorkload.ReadRvmAttributesFile(workload, progressReport, stringInternPool);
+        var rvmStore = RvmWorkload.ReadRvmFiles(workload, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
