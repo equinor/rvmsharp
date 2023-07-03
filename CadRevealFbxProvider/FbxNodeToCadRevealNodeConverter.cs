@@ -23,6 +23,7 @@ public static class FbxNodeToCadRevealNodeConverter
         );
         return ConvertRecursiveInternal(
             node,
+            parent: null,
             treeIndexGenerator,
             instanceIdGenerator,
             meshInstanceLookup,
@@ -32,6 +33,7 @@ public static class FbxNodeToCadRevealNodeConverter
 
     private static CadRevealNode ConvertRecursiveInternal(
         FbxNode node,
+        CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
@@ -40,12 +42,12 @@ public static class FbxNodeToCadRevealNodeConverter
     {
         var id = treeIndexGenerator.GetNextId();
         List<APrimitive> geometries = new List<APrimitive>();
-        BoundingBox? nodeBoundingBox = null;
 
         var name = FbxNodeWrapper.GetNodeName(node);
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
         var transform = FbxNodeWrapper.GetTransform(node);
 
+        BoundingBox? nodeBoundingBox = null;
         if (nodeGeometryPtr != IntPtr.Zero)
         {
             if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
@@ -109,6 +111,14 @@ public static class FbxNodeToCadRevealNodeConverter
             }
         }
 
+        var cadRevealNode = new CadRevealNode
+        {
+            TreeIndex = id,
+            Name = name,
+            Parent = parent,
+            Geometries = geometries.ToArray(),
+        };
+
         var childCount = FbxNodeWrapper.GetChildCount(node);
         List<CadRevealNode> children = new List<CadRevealNode>();
         for (var i = 0; i < childCount; i++)
@@ -116,40 +126,29 @@ public static class FbxNodeToCadRevealNodeConverter
             FbxNode child = FbxNodeWrapper.GetChild(i, node);
             CadRevealNode childCadRevealNode = ConvertRecursiveInternal(
                 child,
+                cadRevealNode,
                 treeIndexGenerator,
                 instanceIdGenerator,
                 meshInstanceLookup,
                 geometriesThatShouldBeInstanced
             );
             children.Add(childCadRevealNode);
+        }
 
-            if (childCadRevealNode.Children != null)
+        cadRevealNode.Children = children.ToArray();
+
+        // Calculate bounding box based on child's bounds if any
+        foreach (CadRevealNode childRevealNode in cadRevealNode.Children)
+        {
+            var childBoundingBox = childRevealNode.BoundingBoxAxisAligned;
+            if (childBoundingBox != null)
             {
-                foreach (CadRevealNode cadRevealNode in childCadRevealNode.Children)
-                {
-                    var childBoundingBox = cadRevealNode.BoundingBoxAxisAligned;
-                    if (childBoundingBox != null)
-                    {
-                        if (nodeBoundingBox != null)
-                        {
-                            nodeBoundingBox = nodeBoundingBox.Encapsulate(childBoundingBox);
-                        }
-                        else
-                        {
-                            nodeBoundingBox = childBoundingBox;
-                        }
-                    }
-                }
+                nodeBoundingBox =
+                    nodeBoundingBox != null ? nodeBoundingBox.Encapsulate(childBoundingBox) : childBoundingBox;
             }
         }
 
-        return new CadRevealNode
-        {
-            TreeIndex = id,
-            Name = name,
-            Geometries = geometries.ToArray(),
-            BoundingBoxAxisAligned = nodeBoundingBox,
-            Children = children.ToArray()
-        };
+        cadRevealNode.BoundingBoxAxisAligned = nodeBoundingBox;
+        return cadRevealNode;
     }
 }
