@@ -12,11 +12,15 @@ public static class FbxNodeToCadRevealNodeConverter
     public static CadRevealNode ConvertRecursive(
         FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        int minInstanceCountThreshold = 2
     )
     {
         var meshInstanceLookup = new Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)>();
-        HashSet<IntPtr> geometriesThatShouldBeInstanced = FbxGeometryUtils.GetAllGeomPointersWithTwoOrMoreUses(node);
+        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(
+            node,
+            minInstanceCountThreshold
+        );
         return ConvertRecursiveInternal(
             node,
             treeIndexGenerator,
@@ -31,7 +35,7 @@ public static class FbxNodeToCadRevealNodeConverter
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
-        HashSet<IntPtr> geometriesThatShouldBeInstanced
+        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced
     )
     {
         var id = treeIndexGenerator.GetNextId();

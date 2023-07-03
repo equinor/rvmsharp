@@ -75,7 +75,7 @@ public class FbxProviderTests
         using var test = new FbxImporter();
         var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
 
-        var data = FbxGeometryUtils.GetAllGeomPointersWithTwoOrMoreUses(RootNode);
+        var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(RootNode);
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
@@ -180,5 +180,26 @@ public class FbxProviderTests
         Console.WriteLine(
             $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\""
         );
+    }
+
+    [Test]
+    public void SampleModel_Load_WithInstanceThresholdHigh()
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        using var testLoader = new FbxImporter();
+        var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+
+        var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
+            rootNode,
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            minInstanceCountThreshold: 5 // <-- This is the tested value
+        );
+
+        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
+        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
+        Assert.That(geometriesToProcess, Has.Exactly(2).TypeOf<TriangleMesh>());
+        Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());
     }
 }
