@@ -46,8 +46,7 @@ public static class Program
             new ModelId(options.ModelId),
             new RevisionId(options.RevisionId),
             new InstancingThreshold(options.InstancingThreshold),
-            new TemplateCountLimit(options.TemplateCountLimit),
-            new NodeNameExcludeGlobs(options.NodeExcludeGlobs.Select(x => x.Trim()).ToArray())
+            new TemplateCountLimit(options.TemplateCountLimit)
         );
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");
@@ -55,7 +54,8 @@ public static class Program
             Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
             options.NoInstancing,
             options.SingleSector,
-            options.SplitIntoZones
+            options.SplitIntoZones,
+            new NodeNameExcludeGlobs(options.NodeExcludeGlobs.Select(x => x.Trim()).ToArray())
         );
 
         if (options.SplitIntoZones)

@@ -35,7 +35,7 @@ public static class CadRevealComposerRunner
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
-        var filtering = new NodeNameFiltering(modelParameters.NodeNameExcludeGlobs);
+        var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeGlobs);
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
