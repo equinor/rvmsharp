@@ -26,7 +26,7 @@ public class FbxProviderTests
         new InstancingThreshold(1),
         new TemplateCountLimit(100)
     );
-    private static readonly ComposerParameters composerParameters = new ComposerParameters("", false, true, false);
+    private static readonly ComposerParameters composerParameters = new ComposerParameters(false, true, false);
 
     private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
     {

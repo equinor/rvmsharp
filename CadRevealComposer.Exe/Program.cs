@@ -51,7 +51,6 @@ public static class Program
         var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
         var toolsPath = Path.Combine(programPath!, "tools");
         var toolsParameters = new ComposerParameters(
-            Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
             options.NoInstancing,
             options.SingleSector,
             options.SplitIntoZones
@@ -60,12 +59,6 @@ public static class Program
         if (options.SplitIntoZones)
         {
             throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
-        }
-
-        if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
-        {
-            Console.WriteLine($"Not found: {toolsParameters.Mesh2CtmToolPath}");
-            return 1;
         }
 
         var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider(), new FbxProvider() };
