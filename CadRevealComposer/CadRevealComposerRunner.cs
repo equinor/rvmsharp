@@ -13,6 +13,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
@@ -127,6 +128,8 @@ public static class CadRevealComposerRunner
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
+
+        WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
@@ -332,5 +335,28 @@ public static class CadRevealComposerRunner
         }
 
         return processedGeometries;
+    }
+
+    /// <summary>
+    /// Writes the input parameters to a file to easier replicate a run.
+    /// </summary>
+    private static void WriteParametersToParamsFile(
+        ModelParameters modelParameters,
+        ComposerParameters composerParameters,
+        DirectoryInfo outputDirectory
+    )
+    {
+        var json = new
+        {
+            note = "This file is not considered stable api. It is meant for humans to read, not computers. See 'scene.json' for a more stable file.",
+            modelParameters,
+            composerParameters,
+            timestampUtc = DateTimeOffset.UtcNow
+        };
+
+        File.WriteAllText(
+            Path.Join(outputDirectory.FullName, "params.json"),
+            JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true })
+        );
     }
 }
