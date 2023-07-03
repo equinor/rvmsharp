@@ -3,6 +3,7 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using Commons;
 using System.Text.RegularExpressions;
 

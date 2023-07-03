@@ -1,8 +1,8 @@
 namespace CadRevealObjProvider.Tests;
 
-using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 
 [TestFixture]
 public class ObjProviderTests
@@ -20,7 +20,7 @@ public class ObjProviderTests
             new[] { new FileInfo("TestData/HDA_subset.obj") },
             treeIndexGenerator,
             instanceIdGenerator,
-            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>()))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
     }
 }

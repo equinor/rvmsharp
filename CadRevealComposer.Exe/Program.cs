@@ -52,7 +52,7 @@ public static class Program
             options.NoInstancing,
             options.SingleSector,
             options.SplitIntoZones,
-            new NodeNameExcludeGlobs(options.NodeExcludeGlobs.Select(x => x.Trim()).ToArray())
+            new NodeNameExcludeRegex(options.NodeExcludeRegex)
         );
 
         if (options.SplitIntoZones)

@@ -3,6 +3,7 @@
 using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Drawing;

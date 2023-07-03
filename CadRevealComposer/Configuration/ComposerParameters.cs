@@ -4,7 +4,7 @@ public record ComposerParameters(
     bool NoInstancing,
     bool SingleSector,
     bool SplitIntoZones,
-    NodeNameExcludeGlobs NodeNameExcludeGlobs
+    NodeNameExcludeRegex NodeNameExcludeRegex
 );
 
-public record NodeNameExcludeGlobs(string[] Values);
+public record NodeNameExcludeRegex(string? Value);

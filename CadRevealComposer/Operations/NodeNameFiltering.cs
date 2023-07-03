@@ -1,30 +1,23 @@
-﻿namespace CadRevealComposer;
+﻿namespace CadRevealComposer.Operations;
 
 using Configuration;
 using System;
-using System.Linq;
 using System.Text.RegularExpressions;
 using Utils;
 
 public class NodeNameFiltering
 {
-    private readonly Regex[] _nodeNameExcludeGlobs;
+    private readonly Regex? _nodeNameExcludeGlobs;
 
     private long _checkedNodes = 0;
     private long _excludedNodes = 0;
 
-    public NodeNameFiltering(NodeNameExcludeGlobs modelParametersNodeNameExcludeGlobs)
+    public NodeNameFiltering(NodeNameExcludeRegex modelParametersNodeNameExcludeGlobs)
     {
-        _nodeNameExcludeGlobs = modelParametersNodeNameExcludeGlobs.Values.Select(ConvertGlobToRegex).ToArray();
-    }
-
-    private static Regex ConvertGlobToRegex(string glob)
-    {
-        // Naive glob implementation inspired from https://stackoverflow.com/a/4146349
-        return new Regex(
-            "^" + Regex.Escape(glob).Replace(@"\*", ".*").Replace(@"\?", ".") + "$",
-            RegexOptions.IgnoreCase | RegexOptions.Singleline
-        );
+        if (modelParametersNodeNameExcludeGlobs.Value != null)
+        {
+            _nodeNameExcludeGlobs = new Regex(modelParametersNodeNameExcludeGlobs.Value, RegexOptions.IgnoreCase);
+        }
     }
 
     public bool ShouldExcludeNode(string nodeName)
@@ -32,7 +25,7 @@ public class NodeNameFiltering
         // Basic stat-keeping.
         _checkedNodes++;
 
-        var shouldExclude = _nodeNameExcludeGlobs.Any(x => x.IsMatch(nodeName));
+        var shouldExclude = _nodeNameExcludeGlobs?.IsMatch(nodeName) == true;
 
         if (shouldExclude)
             _excludedNodes++;
@@ -44,17 +37,13 @@ public class NodeNameFiltering
     {
         using (new TeamCityLogBlock("Filtering Stats"))
         {
-            if (!_nodeNameExcludeGlobs.Any())
+            if (_nodeNameExcludeGlobs == null)
             {
                 Console.WriteLine("Had no Node name filter. No filtering done.");
                 return;
             }
 
-            Console.WriteLine(
-                "Using these regexes (converted from globs): '"
-                    + string.Join("', '", _nodeNameExcludeGlobs.Select(x => x.ToString()))
-                    + "'"
-            );
+            Console.WriteLine("Using this regex: " + _nodeNameExcludeGlobs);
             Console.WriteLine(
                 "Checked "
                     + _checkedNodes

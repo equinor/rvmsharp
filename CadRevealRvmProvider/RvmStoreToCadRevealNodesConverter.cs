@@ -2,6 +2,7 @@ namespace CadRevealRvmProvider.Converters;
 
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;

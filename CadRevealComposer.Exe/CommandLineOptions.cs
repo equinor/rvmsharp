@@ -6,7 +6,6 @@ namespace CadRevealComposer.Exe;
 
 using CommandLine;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
 
@@ -75,11 +74,9 @@ public class CommandLineOptions
     [Option(
         longName: "NodeNameExcludeGlobs",
         Required = false,
-        HelpText = "A list of string nodes names to exclude from export, as a glob with * for wildcard"
-            + " and ? for single character. Not case sensitive. Uses space as item separator, unless you wrap in \"."
-            + "\nExample with two filters: --NodeNameExcludeGlobs \"*pipe*\" \"*mat-handling*\""
+        HelpText = "A regex matching node names to _exclude_ from export. Not case sensitive."
     )]
-    public IEnumerable<string> NodeExcludeGlobs { get; init; } = Array.Empty<string>();
+    public string? NodeExcludeRegex { get; init; } = null;
 
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }

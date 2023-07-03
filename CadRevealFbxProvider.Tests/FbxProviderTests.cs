@@ -5,6 +5,7 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using System.Numerics;
 
@@ -31,7 +32,7 @@ public class FbxProviderTests
         false,
         true,
         false,
-        new NodeNameExcludeGlobs(Array.Empty<string>())
+        new NodeNameExcludeRegex(null)
     );
 
     private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
@@ -140,14 +141,15 @@ public class FbxProviderTests
             inputDirectoryCorrect.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>()))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
-        Assert.That(nodes.Count() == 28);
+
+        Assert.That(nodes, Has.Count.EqualTo(28));
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
-        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(23));
+        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(23));
+        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(23));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
-        Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
+        Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
     }
 
     [Test]
@@ -163,7 +165,7 @@ public class FbxProviderTests
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>()))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
@@ -200,7 +202,7 @@ public class FbxProviderTests
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>())),
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
             minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.,
         );
 
