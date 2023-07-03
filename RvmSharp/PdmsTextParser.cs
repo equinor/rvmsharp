@@ -23,7 +23,7 @@ public static class PdmsTextParser
         public StatefulReader(string filename)
             : base(filename) { }
 
-        override public string? ReadLine()
+        public override string? ReadLine()
         {
             var line = base.ReadLine();
             LineNumber++;
