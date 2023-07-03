@@ -10,7 +10,7 @@ public class NodeNameFilteringTests
     [Test]
     [TestCase("my_regex", ExpectedResult = true)]
     [TestCase("something_els", ExpectedResult = false)]
-    [TestCase("contains_my_regex_1", ExpectedResult = true)] // Regex is by default "contains" unless it starts with ^ or ends with dollar
+    [TestCase("contains_my_regex_1", ExpectedResult = true)] // A Regex is by default "contains" unless it starts with ^ or ends with dollar
     [TestCase("my_rEgEx_case_insensitive", ExpectedResult = true)]
     [TestCase("", ExpectedResult = false)]
     [TestCase("My regex", ExpectedResult = false)]
