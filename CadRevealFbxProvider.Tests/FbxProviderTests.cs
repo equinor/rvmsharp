@@ -1,10 +1,11 @@
 namespace CadRevealFbxProvider.Tests;
 
+using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
-using CadRevealComposer.Tessellation;
+using CadRevealComposer.Primitives;
 using System.Numerics;
 
 [TestFixture]
@@ -27,7 +28,6 @@ public class FbxProviderTests
         new TemplateCountLimit(100)
     );
     private static readonly ComposerParameters composerParameters = new ComposerParameters(
-        "",
         false,
         true,
         false,
@@ -57,10 +57,10 @@ public class FbxProviderTests
     {
         using var test = new FbxImporter();
         var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
-        Iterate(RootNode, test);
+        Iterate(RootNode);
     }
 
-    private void Iterate(FbxNode root, FbxImporter fbxImporter)
+    private void Iterate(FbxNode root)
     {
         Console.WriteLine(FbxNodeWrapper.GetNodeName(root));
         var childCount = FbxNodeWrapper.GetChildCount(root);
@@ -70,8 +70,18 @@ public class FbxProviderTests
         for (var i = 0; i < childCount; i++)
         {
             var child = FbxNodeWrapper.GetChild(i, root);
-            Iterate(child, fbxImporter);
+            Iterate(child);
         }
+    }
+
+    [Test]
+    public void Fbx_Importer_GetUniqueMeshesInFileCount()
+    {
+        using var test = new FbxImporter();
+        var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+
+        var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(RootNode);
+        Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
     [Test]
@@ -148,14 +158,12 @@ public class FbxProviderTests
 
         using var testLoader = new FbxImporter();
         var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
-        var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>())),
-            lookupA
+            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>()))
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
@@ -166,7 +174,9 @@ public class FbxProviderTests
                 Assert.That(node.BoundingBoxAxisAligned != null);
         }
 
-        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
+        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
+        Assert.That(geometriesToProcess, Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
+        Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
             outputDirectoryCorrect,
@@ -177,5 +187,26 @@ public class FbxProviderTests
         Console.WriteLine(
             $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\""
         );
+    }
+
+    [Test]
+    public void SampleModel_Load_WithInstanceThresholdHigh()
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        using var testLoader = new FbxImporter();
+        var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
+            rootNode,
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeGlobs(Array.Empty<string>())),
+            minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.,
+        );
+
+        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
+        var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
+        Assert.That(geometriesToProcess, Has.Exactly(2).TypeOf<TriangleMesh>());
+        Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());
     }
 }

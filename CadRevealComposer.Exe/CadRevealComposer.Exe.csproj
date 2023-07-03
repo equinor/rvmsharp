@@ -12,11 +12,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="..\tools\OpenCTM\mesh2ctm.exe" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-		<None Include="..\tools\OpenCTM\mesh2ctm.osx" Link="tools/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
 		<ProjectReference Include="..\CadRevealObjProvider\CadRevealObjProvider.csproj" />
 		<ProjectReference Include="..\CadRevealRvmProvider\CadRevealRvmProvider.csproj" />

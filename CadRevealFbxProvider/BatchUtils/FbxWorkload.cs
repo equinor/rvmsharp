@@ -3,7 +3,6 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
-using CadRevealComposer.Tessellation;
 using Commons;
 using System.Text.RegularExpressions;
 
@@ -89,14 +88,11 @@ public static class FbxWorkload
             (string fbxFilename, string? infoTextFilename) = filePair;
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
-            var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
-
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
                 treeIndexGenerator,
                 instanceIdGenerator,
-                nodeNameFiltering,
-                lookupA
+                nodeNameFiltering
             );
 
             if (rootNodeConverted == null)

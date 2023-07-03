@@ -1,19 +1,44 @@
 ﻿namespace CadRevealFbxProvider;
 
+using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Drawing;
 
-public class FbxNodeToCadRevealNodeConverter
+public static class FbxNodeToCadRevealNodeConverter
 {
     public static CadRevealNode? ConvertRecursive(
         FbxNode node,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         NodeNameFiltering nodeNameFiltering,
-        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup
+        int minInstanceCountThreshold = 2
+    )
+    {
+        var meshInstanceLookup = new Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)>();
+        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(
+            node,
+            minInstanceCountThreshold
+        );
+        return ConvertRecursiveInternal(
+            node,
+            treeIndexGenerator,
+            instanceIdGenerator,
+            meshInstanceLookup,
+            nodeNameFiltering,
+            geometriesThatShouldBeInstanced
+        );
+    }
+
+    private static CadRevealNode? ConvertRecursiveInternal(
+        FbxNode node,
+        TreeIndexGenerator treeIndexGenerator,
+        InstanceIdGenerator instanceIdGenerator,
+        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
+        NodeNameFiltering nodeNameFiltering,
+        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced
     )
     {
         List<APrimitive> geometries = new List<APrimitive>();
@@ -54,21 +79,34 @@ public class FbxNodeToCadRevealNodeConverter
                 {
                     var mesh = meshData.Value.Mesh;
                     var meshPtr = meshData.Value.MeshPtr;
-                    ulong instanceId = instanceIdGenerator.GetNextId();
 
                     var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
+                    if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
+                    {
+                        ulong instanceId = instanceIdGenerator.GetNextId();
+                        meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+                        var instancedMesh = new InstancedMesh(
+                            instanceId,
+                            mesh,
+                            transform,
+                            id,
+                            Color.Magenta, // TODO: Temp debug color to distinguish first Instance
+                            bb
+                        );
+                        geometries.Add(instancedMesh);
+                    }
+                    else
+                    {
+                        var triangleMesh = new TriangleMesh(
+                            mesh,
+                            id,
+                            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
+                            bb
+                        );
 
-                    meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
-                    var instancedMesh = new InstancedMesh(
-                        instanceId,
-                        mesh,
-                        transform,
-                        id,
-                        Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                        bb
-                    );
+                        geometries.Add(triangleMesh);
+                    }
 
-                    geometries.Add(instancedMesh);
                     if (nodeBoundingBox != null)
                         nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
                     else
@@ -82,12 +120,13 @@ public class FbxNodeToCadRevealNodeConverter
         for (var i = 0; i < childCount; i++)
         {
             FbxNode child = FbxNodeWrapper.GetChild(i, node);
-            CadRevealNode? childCadRevealNode = ConvertRecursive(
+            CadRevealNode? childCadRevealNode = ConvertRecursiveInternal(
                 child,
                 treeIndexGenerator,
                 instanceIdGenerator,
+                meshInstanceLookup,
                 nodeNameFiltering,
-                meshInstanceLookup
+                geometriesThatShouldBeInstanced
             );
             if (childCadRevealNode == null)
                 continue;
