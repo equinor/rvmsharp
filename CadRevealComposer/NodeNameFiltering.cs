@@ -10,8 +10,8 @@ public class NodeNameFiltering
 {
     private readonly Regex[] _nodeNameExcludeGlobs;
 
-    private long CheckedNodes = 0;
-    private long ExcludedNodes = 0;
+    private long _checkedNodes = 0;
+    private long _excludedNodes = 0;
 
     public NodeNameFiltering(NodeNameExcludeGlobs modelParametersNodeNameExcludeGlobs)
     {
@@ -29,11 +29,13 @@ public class NodeNameFiltering
 
     public bool ShouldExcludeNode(string nodeName)
     {
-        // Naive statkeeping.
-        CheckedNodes++;
+        // Basic stat-keeping.
+        _checkedNodes++;
+
         var shouldExclude = _nodeNameExcludeGlobs.Any(x => x.IsMatch(nodeName));
+
         if (shouldExclude)
-            ExcludedNodes++;
+            _excludedNodes++;
 
         return shouldExclude;
     }
@@ -43,7 +45,10 @@ public class NodeNameFiltering
         using (new TeamCityLogBlock("Filtering Stats"))
         {
             if (!_nodeNameExcludeGlobs.Any())
-                Console.WriteLine("Had no filters. No filtering done.");
+            {
+                Console.WriteLine("Had no Node name filter. No filtering done.");
+                return;
+            }
 
             Console.WriteLine(
                 "Using these regexes (converted from globs): '"
@@ -52,10 +57,10 @@ public class NodeNameFiltering
             );
             Console.WriteLine(
                 "Checked "
-                    + CheckedNodes
+                    + _checkedNodes
                     + " nodes and filtered out "
-                    + ExcludedNodes
-                    + $". That is {ExcludedNodes / (float)CheckedNodes:P1} nodes removed."
+                    + _excludedNodes
+                    + $". That is {_excludedNodes / (float)_checkedNodes:P1} nodes removed."
                     // Technically it should be fast-ish to check all child counts of removed nodes but no use-case for
                     // it yet. Just adding a remark here to avoid questions
                     + "\nRemark: We dont check any children of excluded nodes so the amount of excluded nodes is unknown"
