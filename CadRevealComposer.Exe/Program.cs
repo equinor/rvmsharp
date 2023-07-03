@@ -9,7 +9,6 @@ using ModelFormatProvider;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 public static class Program
@@ -48,8 +47,7 @@ public static class Program
             new InstancingThreshold(options.InstancingThreshold),
             new TemplateCountLimit(options.TemplateCountLimit)
         );
-        var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
-        var toolsPath = Path.Combine(programPath!, "tools");
+
         var toolsParameters = new ComposerParameters(
             options.NoInstancing,
             options.SingleSector,
