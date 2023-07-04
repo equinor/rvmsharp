@@ -48,6 +48,16 @@ public static class Program
             new TemplateCountLimit(options.TemplateCountLimit)
         );
 
+        if (options.NodeExcludeRegex != null)
+        {
+            // Ensure regex is valid.
+            if (!RegexUtils.IsValidRegex(options.NodeExcludeRegex))
+                throw new ArgumentException(
+                    $"The {nameof(options.NodeExcludeRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.NodeExcludeRegex}"
+                );
+        }
+
         var toolsParameters = new ComposerParameters(
             options.NoInstancing,
             options.SingleSector,
