@@ -92,7 +92,6 @@ public static class FbxWorkload
                 treeIndexGenerator,
                 instanceIdGenerator
             );
-
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
             // attach attribute info to the nodes if there is any
