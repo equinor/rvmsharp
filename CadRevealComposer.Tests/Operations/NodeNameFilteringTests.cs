@@ -5,13 +5,15 @@ using Configuration;
 
 public class NodeNameFilteringTests
 {
-    readonly NodeNameFiltering _nnfWithExampleRegex = new NodeNameFiltering(new NodeNameExcludeRegex("my_regex"));
+    readonly NodeNameFiltering _nnfWithExampleRegex = new NodeNameFiltering(
+        new NodeNameExcludeRegex("mech\\-tempsteel")
+    );
 
     [Test]
-    [TestCase("my_regex", ExpectedResult = true)]
+    [TestCase("mech-tempsteel", ExpectedResult = true)]
     [TestCase("something_els", ExpectedResult = false)]
-    [TestCase("contains_my_regex_1", ExpectedResult = true)] // A Regex is by default "contains" unless it starts with ^ or ends with dollar
-    [TestCase("my_rEgEx_case_insensitive", ExpectedResult = true)]
+    [TestCase("contains_mech-tempsteel_1", ExpectedResult = true)] // A Regex is by default "contains" unless it starts with ^ or ends with dollar
+    [TestCase("mEcH-tempsteel_case_insensitive", ExpectedResult = true)]
     [TestCase("", ExpectedResult = false)]
     [TestCase("My regex", ExpectedResult = false)]
     public bool ShouldExcludeNode_TestCases(string nodeName) => _nnfWithExampleRegex.ShouldExcludeNode(nodeName);
