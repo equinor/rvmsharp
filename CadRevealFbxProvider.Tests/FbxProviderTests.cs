@@ -172,8 +172,9 @@ public class FbxProviderTests
         // this test model should have a bounding box for each node
         foreach (var node in flatNodes)
         {
-            if (node.Geometries.Length > 0)
-                Assert.That(node.BoundingBoxAxisAligned != null);
+            Assert.That(node.BoundingBoxAxisAligned, Is.Not.Null);
+            if (node.Name != "RootNode")
+                Assert.That(node.Parent, Is.Not.Null); // All nodes except the root should have a parent
         }
 
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
@@ -186,6 +187,7 @@ public class FbxProviderTests
             composerParameters,
             treeIndexGenerator
         );
+
         Console.WriteLine(
             $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\""
         );
