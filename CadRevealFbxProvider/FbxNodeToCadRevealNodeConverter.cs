@@ -41,82 +41,16 @@ public static class FbxNodeToCadRevealNodeConverter
     )
     {
         var id = treeIndexGenerator.GetNextId();
-        List<APrimitive> geometries = new List<APrimitive>();
-
         var name = FbxNodeWrapper.GetNodeName(node);
-        var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
-        var transform = FbxNodeWrapper.GetTransform(node);
 
-        BoundingBox? nodeBoundingBox = null;
-        if (nodeGeometryPtr != IntPtr.Zero)
-        {
-            if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
-            {
-                var bb = instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform);
-                var instancedMeshCopy = new InstancedMesh(
-                    instanceData.instanceId,
-                    instanceData.templateMesh,
-                    transform,
-                    id,
-                    Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                    bb
-                );
-                geometries.Add(instancedMeshCopy);
-
-                if (nodeBoundingBox != null)
-                    nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
-                else
-                    nodeBoundingBox = bb;
-            }
-            else
-            {
-                var meshData = FbxMeshWrapper.GetGeometricData(node);
-                if (meshData.HasValue)
-                {
-                    var mesh = meshData.Value.Mesh;
-                    var meshPtr = meshData.Value.MeshPtr;
-
-                    var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
-                    if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
-                    {
-                        ulong instanceId = instanceIdGenerator.GetNextId();
-                        meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
-                        var instancedMesh = new InstancedMesh(
-                            instanceId,
-                            mesh,
-                            transform,
-                            id,
-                            Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                            bb
-                        );
-                        geometries.Add(instancedMesh);
-                    }
-                    else
-                    {
-                        var triangleMesh = new TriangleMesh(
-                            mesh,
-                            id,
-                            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-                            bb
-                        );
-
-                        geometries.Add(triangleMesh);
-                    }
-
-                    if (nodeBoundingBox != null)
-                        nodeBoundingBox = nodeBoundingBox.Encapsulate(bb);
-                    else
-                        nodeBoundingBox = bb;
-                }
-            }
-        }
+        var geometry = ReadGeometry(id, node, instanceIdGenerator, meshInstanceLookup, geometriesThatShouldBeInstanced);
 
         var cadRevealNode = new CadRevealNode
         {
             TreeIndex = id,
             Name = name,
             Parent = parent,
-            Geometries = geometries.ToArray(),
+            Geometries = geometry != null ? new[] { geometry } : Array.Empty<APrimitive>(),
         };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
@@ -135,20 +69,98 @@ public static class FbxNodeToCadRevealNodeConverter
             children.Add(childCadRevealNode);
         }
 
-        cadRevealNode.Children = children.ToArray();
-
         // Calculate bounding box based on child's bounds if any
-        foreach (CadRevealNode childRevealNode in cadRevealNode.Children)
+        var axisAlignedBoundingBoxIncludingChildNodes = ExtendBoundingBoxWithChildrenBounds(
+            children,
+            geometry?.AxisAlignedBoundingBox
+        );
+
+        cadRevealNode.Children = children.ToArray();
+        cadRevealNode.BoundingBoxAxisAligned = axisAlignedBoundingBoxIncludingChildNodes;
+        return cadRevealNode;
+    }
+
+    private static BoundingBox? ExtendBoundingBoxWithChildrenBounds(
+        List<CadRevealNode> children,
+        BoundingBox? optionalStartingBoundingBox
+    )
+    {
+        foreach (CadRevealNode childRevealNode in children)
         {
             var childBoundingBox = childRevealNode.BoundingBoxAxisAligned;
             if (childBoundingBox != null)
             {
-                nodeBoundingBox =
-                    nodeBoundingBox != null ? nodeBoundingBox.Encapsulate(childBoundingBox) : childBoundingBox;
+                optionalStartingBoundingBox =
+                    optionalStartingBoundingBox != null
+                        ? optionalStartingBoundingBox.Encapsulate(childBoundingBox)
+                        : childBoundingBox;
             }
         }
 
-        cadRevealNode.BoundingBoxAxisAligned = nodeBoundingBox;
-        return cadRevealNode;
+        return optionalStartingBoundingBox;
+    }
+
+    private static APrimitive? ReadGeometry(
+        ulong treeIndex,
+        FbxNode node,
+        InstanceIdGenerator instanceIdGenerator,
+        IDictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
+        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced
+    )
+    {
+        var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
+        var transform = FbxNodeWrapper.GetTransform(node);
+
+        if (nodeGeometryPtr == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
+        {
+            var instancedMeshCopy = new InstancedMesh(
+                instanceData.instanceId,
+                instanceData.templateMesh,
+                transform,
+                treeIndex,
+                Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
+                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform)
+            );
+            return instancedMeshCopy;
+        }
+
+        var meshData = FbxMeshWrapper.GetGeometricData(node);
+        if (!meshData.HasValue)
+        {
+            throw new Exception("IntPtr" + nodeGeometryPtr + " was expected to have a mesh, but we found none.");
+        }
+
+        var mesh = meshData.Value.Mesh;
+        var meshPtr = meshData.Value.MeshPtr;
+
+        var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
+        if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
+        {
+            ulong instanceId = instanceIdGenerator.GetNextId();
+            meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+            var instancedMesh = new InstancedMesh(
+                instanceId,
+                mesh,
+                transform,
+                treeIndex,
+                Color.Magenta, // TODO: Temp debug color to distinguish first Instance
+                bb
+            );
+            return instancedMesh;
+        }
+
+        var triangleMesh = new TriangleMesh(
+            mesh,
+            treeIndex,
+            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
+            bb
+        );
+
+        return triangleMesh;
     }
 }
