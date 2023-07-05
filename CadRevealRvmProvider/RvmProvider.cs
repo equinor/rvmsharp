@@ -6,6 +6,7 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
@@ -20,7 +21,8 @@ public class RvmProvider : IModelFormatProvider
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     )
     {
         var workload = RvmWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
@@ -35,7 +37,7 @@ public class RvmProvider : IModelFormatProvider
         });
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = RvmWorkload.ReadRvmAttributesFile(workload, progressReport, stringInternPool);
+        var rvmStore = RvmWorkload.ReadRvmFiles(workload, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
@@ -49,7 +51,11 @@ public class RvmProvider : IModelFormatProvider
         );
 
         var stopwatch = Stopwatch.StartNew();
-        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, treeIndexGenerator);
+        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
+            rvmStore,
+            treeIndexGenerator,
+            nodeNameFiltering
+        );
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
         return nodes;

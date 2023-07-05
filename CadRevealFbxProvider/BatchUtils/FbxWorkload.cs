@@ -3,6 +3,7 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using Commons;
 using System.Text.RegularExpressions;
 
@@ -69,6 +70,7 @@ public static class FbxWorkload
         IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
         IStringInternPool? stringInternPool = null
     )
@@ -90,8 +92,13 @@ public static class FbxWorkload
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
                 treeIndexGenerator,
-                instanceIdGenerator
+                instanceIdGenerator,
+                nodeNameFiltering
             );
+
+            if (rootNodeConverted == null)
+                return Array.Empty<CadRevealNode>();
+
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
             // attach attribute info to the nodes if there is any

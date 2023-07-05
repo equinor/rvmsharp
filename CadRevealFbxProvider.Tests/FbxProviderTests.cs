@@ -5,6 +5,7 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using System.Numerics;
 
@@ -27,7 +28,12 @@ public class FbxProviderTests
         new InstancingThreshold(1),
         new TemplateCountLimit(100)
     );
-    private static readonly ComposerParameters composerParameters = new ComposerParameters(false, true, false);
+    private static readonly ComposerParameters composerParameters = new ComposerParameters(
+        false,
+        true,
+        false,
+        new NodeNameExcludeRegex(null)
+    );
 
     private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
     {
@@ -134,14 +140,16 @@ public class FbxProviderTests
         var nodes = modelFormatProviderFbx.ParseFiles(
             inputDirectoryCorrect.EnumerateFiles(),
             treeIndexGenerator,
-            instanceIndexGenerator
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
-        Assert.That(nodes.Count() == 28);
+
+        Assert.That(nodes, Has.Count.EqualTo(28));
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
-        Assert.That(nodes[27].Attributes.Count(), Is.EqualTo(23));
+        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(23));
+        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(23));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
-        Assert.That(nodes[2].Attributes["Description"].Equals("Ladder"));
+        Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
     }
 
     [Test]
@@ -156,11 +164,11 @@ public class FbxProviderTests
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
-            instanceIndexGenerator
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
 
-        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
-
+        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
         // this test model should have a bounding box for each node
         foreach (var node in flatNodes)
         {
@@ -192,15 +200,15 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         using var testLoader = new FbxImporter();
         var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
-
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.,
         );
 
-        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
+        var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
         Assert.That(geometriesToProcess, Has.Exactly(2).TypeOf<TriangleMesh>());
         Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());

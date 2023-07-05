@@ -6,6 +6,7 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
@@ -16,7 +17,8 @@ public class FbxProvider : IModelFormatProvider
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     )
     {
         var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
@@ -40,6 +42,7 @@ public class FbxProvider : IModelFormatProvider
             workload,
             treeIndexGenerator,
             instanceIdGenerator,
+            nodeNameFiltering,
             progressReport,
             stringInternPool
         );

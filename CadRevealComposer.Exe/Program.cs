@@ -9,7 +9,6 @@ using ModelFormatProvider;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 public static class Program
@@ -48,12 +47,22 @@ public static class Program
             new InstancingThreshold(options.InstancingThreshold),
             new TemplateCountLimit(options.TemplateCountLimit)
         );
-        var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
-        var toolsPath = Path.Combine(programPath!, "tools");
+
+        if (options.NodeExcludeRegex != null)
+        {
+            // Ensure regex is valid.
+            if (!RegexUtils.IsValidRegex(options.NodeExcludeRegex))
+                throw new ArgumentException(
+                    $"The {nameof(options.NodeExcludeRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.NodeExcludeRegex}"
+                );
+        }
+
         var toolsParameters = new ComposerParameters(
             options.NoInstancing,
             options.SingleSector,
-            options.SplitIntoZones
+            options.SplitIntoZones,
+            new NodeNameExcludeRegex(options.NodeExcludeRegex)
         );
 
         if (options.SplitIntoZones)
