@@ -48,13 +48,13 @@ public static class Program
             new TemplateCountLimit(options.TemplateCountLimit)
         );
 
-        if (options.NodeExcludeRegex != null)
+        if (options.NodeNameExcludeRegex != null)
         {
             // Ensure regex is valid.
-            if (!RegexUtils.IsValidRegex(options.NodeExcludeRegex))
+            if (!RegexUtils.IsValidRegex(options.NodeNameExcludeRegex))
                 throw new ArgumentException(
-                    $"The {nameof(options.NodeExcludeRegex)} is not a valid regex. Check its syntax. "
-                        + $"The input was: {options.NodeExcludeRegex}"
+                    $"The {nameof(options.NodeNameExcludeRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.NodeNameExcludeRegex}"
                 );
         }
 
@@ -62,7 +62,7 @@ public static class Program
             options.NoInstancing,
             options.SingleSector,
             options.SplitIntoZones,
-            new NodeNameExcludeRegex(options.NodeExcludeRegex)
+            new NodeNameExcludeRegex(options.NodeNameExcludeRegex)
         );
 
         if (options.SplitIntoZones)

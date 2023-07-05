@@ -7,7 +7,7 @@ param (
     [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
     [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Int32]] $InstancingThreshold = $null, # Optional. Must be > 0 if defined.
-    [Parameter(Mandatory = $false)][AllowNull()][string] $NodeNameFilterRegex = $null, # Optional.
+    [Parameter(Mandatory = $false)][AllowNull()][string] $NodeNameExcludeRegex = $null, # Optional.
     [switch] $SplitIntoZones = $false, # Used for large in extents assets to have separate splitting roots.
     [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
     [switch] $Force = $false
@@ -75,9 +75,9 @@ end {
         $composerArgs += $SplitIntoZones
     }
     
-    if ($NodeNameFilterRegex) {
-        $composerArgs += "--NodeNameFilterRegex"
-        $composerArgs += $NodeNameFilterRegex
+    if ($NodeNameExcludeRegex) {
+        $composerArgs += "--NodeNameExcludeRegex"
+        $composerArgs += $NodeNameExcludeRegex
     }
 
     # Note: The arg containing only " -- " separates the args to the dotnet compiler and the args to CadRevealComposer
