@@ -72,11 +72,11 @@ public class CommandLineOptions
     public bool SingleSector { get; init; }
 
     [Option(
-        longName: "NodeNameExcludeGlobs",
+        longName: "NodeNameExcludeRegex",
         Required = false,
         HelpText = "A regex matching node names to _exclude_ from export. Not case sensitive."
     )]
-    public string? NodeExcludeRegex { get; init; } = null;
+    public string? NodeNameExcludeRegex { get; init; } = null;
 
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
