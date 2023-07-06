@@ -134,7 +134,7 @@ public class DatabaseComposer
 -- The following pragmas are expected to only count for this current connection. And has no effect on the hierarchy server.
 PRAGMA journal_mode = OFF;
 PRAGMA synchronous = OFF;
-PRAGMA cache_size = -1000000; -- -1000000 = 1 gigabyte
+PRAGMA cache_size = -1000000; -- -1000000kb = 1 gigabyte
 PRAGMA locking_mode = EXCLUSIVE;
 PRAGMA temp_store = MEMORY;
 """;
