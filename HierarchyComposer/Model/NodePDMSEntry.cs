@@ -1,6 +1,7 @@
 ﻿namespace HierarchyComposer.Model;
 
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SQLite;
 
 public class NodePDMSEntry
@@ -30,12 +31,25 @@ public class NodePDMSEntry
         pdmsEntryIdParameter.ParameterName = "$PDMSEntryId";
 
         command.Parameters.AddRange(new[] { nodeIdParameter, pdmsEntryIdParameter });
-
+        int transactionSize = 0;
+        command.Transaction = command.Connection.BeginTransaction(IsolationLevel.Serializable);
         foreach (NodePDMSEntry pdmsEntry in nodePdmsEntries)
         {
+            transactionSize++;
+
             nodeIdParameter.Value = pdmsEntry.NodeId;
             pdmsEntryIdParameter.Value = pdmsEntry.PDMSEntryId;
             command.ExecuteNonQuery();
+            if (transactionSize > 1_000_000)
+            {
+                // Split transactions for potentially more speed, and less memory use (not actually verified).
+                transactionSize = 0;
+                command.Transaction.Commit();
+                command.Transaction.Dispose();
+                command.Transaction = command.Connection.BeginTransaction(IsolationLevel.Serializable);
+            }
         }
+        command.Transaction.Commit();
+        command.Transaction.Dispose();
     }
 }

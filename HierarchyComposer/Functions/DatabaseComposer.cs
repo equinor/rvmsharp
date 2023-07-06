@@ -111,12 +111,37 @@ public class DatabaseComposer
             nodes[jsonNode.NodeId].Parent = nodes[jsonNode.ParentId.Value];
         }
 
-        var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
+        var nodePdmsEntries = nodes.Values
+            .Where(n => n.NodePDMSEntry != null)
+            .SelectMany(n => n.NodePDMSEntry!)
+            .ToArray();
 
         var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
         using var connection = new SQLiteConnection(connectionString);
         connection.Open();
+
+        // ReSharper disable AccessToDisposedClosure
+        MopTimer.RunAndMeasure(
+            "Setting Pragmas",
+            _logger,
+            () =>
+            {
+                // https://avi.im/blag/2021/fast-sqlite-inserts/
+                // Attempts at maxing insert speeds of sqlite
+                using var cmd = new SQLiteCommand(null, connection);
+                cmd.CommandText = """
+-- The following pragmas are expected to only count for this current connection. And has no effect on the hierarchy server.
+PRAGMA journal_mode = OFF;
+PRAGMA synchronous = OFF;
+PRAGMA cache_size = -1000000; -- -1000000 = 1 gigabyte
+PRAGMA locking_mode = EXCLUSIVE;
+PRAGMA temp_store = MEMORY;
+""";
+                // Profiled to have up to 20% insert improvement on my machine -- NIH
+                cmd.ExecuteNonQuery();
+            }
+        );
 
         // ReSharper disable AccessToDisposedClosure
         MopTimer.RunAndMeasure(
@@ -138,12 +163,13 @@ public class DatabaseComposer
             _logger,
             () =>
             {
-                using var transaction = connection.BeginTransaction();
-
-                using var cmd = new SQLiteCommand(null, connection, transaction);
+                var timer = Stopwatch.StartNew();
+                using var cmd = new SQLiteCommand(null, connection);
                 NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
-
-                transaction.Commit();
+                Console.WriteLine(
+                    $"NodePDMSEntries timing: Inserted {nodePdmsEntries.Count()} rows in {timer.Elapsed}. "
+                        + $"({nodePdmsEntries.Length / timer.Elapsed.TotalSeconds:F0} per second.)"
+                );
             }
         );
 
