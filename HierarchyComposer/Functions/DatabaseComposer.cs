@@ -126,7 +126,7 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
 
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = new SQLiteCommand(null, connection, transaction);
                 PDMSEntry.RawInsertBatch(cmd, pdmsEntries.Values);
 
                 transaction.Commit();
@@ -140,7 +140,7 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
 
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = new SQLiteCommand(null, connection, transaction);
                 NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
 
                 transaction.Commit();
@@ -153,7 +153,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = new SQLiteCommand(null, connection, transaction);
                 AABB.RawInsertBatch(cmd, aabbs.Values);
 
                 transaction.Commit();
@@ -166,7 +166,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = new SQLiteCommand(null, connection, transaction);
                 Node.RawInsertBatch(cmd, nodes.Values);
 
                 transaction.Commit();
@@ -179,9 +179,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = new SQLiteCommand(connection);
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
-                cmd.ExecuteNonQuery();
+                using var cmd = new SQLiteCommand(null, connection, transaction);
                 cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
@@ -200,7 +198,7 @@ public class DatabaseComposer
             () =>
             {
                 // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = new SQLiteCommand(null, connection);
                 // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
                 cmd.CommandText = "pragma analyze";
                 cmd.ExecuteNonQuery();
@@ -221,7 +219,7 @@ public class DatabaseComposer
 #else
                 // Vacuum completely recreates the database but removes all "Extra Data" from it.
                 // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
-                using var vacuumCmds = new SQLiteCommand(connection);
+                using var vacuumCmds = new SQLiteCommand(null, connection);
 
                 vacuumCmds.CommandText = "PRAGMA page_count";
                 var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar();
