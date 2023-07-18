@@ -8,6 +8,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Commons\Commons.csproj" />
         <ProjectReference Include="..\HierarchyComposer\HierarchyComposer.csproj" />
+        <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
     </ItemGroup>
 
     <ItemGroup>

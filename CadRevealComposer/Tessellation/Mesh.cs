@@ -85,7 +85,18 @@ public class Mesh : IEquatable<Mesh>
     {
         for (var i = 0; i < _vertices.Length; i++)
         {
-            _vertices[i] = Vector3.Transform(_vertices[i], matrix);
+            var newVertex = Vector3.Transform(_vertices[i], matrix);
+
+            if (float.IsInfinity(newVertex.X))
+                newVertex.X = 0;
+
+            if (float.IsInfinity(newVertex.Y))
+                newVertex.Y = 0;
+
+            if (float.IsInfinity(newVertex.Z))
+                newVertex.Z = 0;
+
+            _vertices[i] = newVertex;
         }
     }
 

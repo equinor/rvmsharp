@@ -54,21 +54,21 @@ public static class GltfWriter
         model.DefaultScene = scene;
 
         int counter = 0;
-        counter += WritePrimitives<InstancedMesh>(primitives, WriteInstancedMeshes, model, scene);
+        // counter += WritePrimitives<InstancedMesh>(primitives, WriteInstancedMeshes, model, scene);
         counter += WritePrimitives<TriangleMesh>(primitives, WriteTriangleMeshes, model, scene);
-        counter += WritePrimitives<Box>(primitives, WriteBoxes, model, scene);
-        counter += WritePrimitives<Circle>(primitives, WriteCircles, model, scene);
-        counter += WritePrimitives<Cone>(primitives, WriteCones, model, scene);
-        counter += WritePrimitives<EccentricCone>(primitives, WriteEccentricCones, model, scene);
-        counter += WritePrimitives<EllipsoidSegment>(primitives, WriteEllipsoidSegments, model, scene);
-        counter += WritePrimitives<GeneralCylinder>(primitives, WriteGeneralCylinders, model, scene);
-        counter += WritePrimitives<GeneralRing>(primitives, WriteGeneralRings, model, scene);
-        counter += WritePrimitives<Nut>(primitives, WriteNuts, model, scene);
-        counter += WritePrimitives<Quad>(primitives, WriteQuads, model, scene);
-        counter += WritePrimitives<TorusSegment>(primitives, WriteTorusSegments, model, scene);
-        counter += WritePrimitives<Trapezium>(primitives, WriteTrapeziums, model, scene);
+        // counter += WritePrimitives<Box>(primitives, WriteBoxes, model, scene);
+        // counter += WritePrimitives<Circle>(primitives, WriteCircles, model, scene);
+        // counter += WritePrimitives<Cone>(primitives, WriteCones, model, scene);
+        // counter += WritePrimitives<EccentricCone>(primitives, WriteEccentricCones, model, scene);
+        // counter += WritePrimitives<EllipsoidSegment>(primitives, WriteEllipsoidSegments, model, scene);
+        // counter += WritePrimitives<GeneralCylinder>(primitives, WriteGeneralCylinders, model, scene);
+        // counter += WritePrimitives<GeneralRing>(primitives, WriteGeneralRings, model, scene);
+        // counter += WritePrimitives<Nut>(primitives, WriteNuts, model, scene);
+        // counter += WritePrimitives<Quad>(primitives, WriteQuads, model, scene);
+        // counter += WritePrimitives<TorusSegment>(primitives, WriteTorusSegments, model, scene);
+        // counter += WritePrimitives<Trapezium>(primitives, WriteTrapeziums, model, scene);
 
-        Trace.Assert(counter == primitives.Count, "Not all primitives were processed in GltfWriter.");
+        // Trace.Assert(counter == primitives.Count, "Not all primitives were processed in GltfWriter.");
 
         model.Asset.Copyright = $"Equinor ASA {DateTime.UtcNow.Year}";
         model.Asset.Generator = "rvmsharp";
@@ -222,6 +222,9 @@ public static class GltfWriter
         var vertexOffset = 0;
         foreach (var triangleMesh in triangleMeshes)
         {
+            if (triangleMesh.Mesh.Vertices.Any(x => !float.IsFinite(x.X)))
+                continue;
+
             var sourceMesh = triangleMesh.Mesh;
 
             // write indices

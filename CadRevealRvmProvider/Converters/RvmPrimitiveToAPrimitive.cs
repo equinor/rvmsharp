@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
+using System.Drawing;
 
 public class RvmPrimitiveToAPrimitive
 {
@@ -18,28 +19,28 @@ public class RvmPrimitiveToAPrimitive
         switch (rvmPrimitive)
         {
             case RvmBox rvmBox:
-                return rvmBox.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmBox.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmCylinder rvmCylinder:
-                return rvmCylinder.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmCylinder.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmEllipticalDish rvmEllipticalDish:
-                return rvmEllipticalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmEllipticalDish.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmFacetGroup rvmFacetGroup:
-                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmLine:
                 // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
                 return Array.Empty<APrimitive>();
             case RvmPyramid rvmPyramid:
-                return rvmPyramid.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmPyramid.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmCircularTorus circularTorus:
-                return circularTorus.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return circularTorus.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmSphere rvmSphere:
-                return rvmSphere.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmSphere.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmSphericalDish rvmSphericalDish:
-                return rvmSphericalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmSphericalDish.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmSnout rvmSnout:
-                return rvmSnout.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmSnout.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             case RvmRectangularTorus rvmRectangularTorus:
-                return rvmRectangularTorus.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmRectangularTorus.ConvertToRevealPrimitive(treeIndex, Color.WhiteSmoke); //rvmNode.GetColor());
             default:
                 throw new ArgumentOutOfRangeException(nameof(rvmPrimitive), rvmPrimitive, nameof(rvmPrimitive));
         }
