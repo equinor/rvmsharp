@@ -16,7 +16,6 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
-    private const int NumberOfInstancesThreshold = 10; // Minimum number of instances, otherwise convert to mesh
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -234,9 +233,8 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        // Convert instances to mesh to avoid too much batching
-        // See spike document TODO: Update after spike document merge
-        geometries = ConvertInstancesWhenTooFew(geometries);
+        var tooFewInstancesHandler = new TooFewInstancesHandler();
+        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
 
         return new InternalSector(
             sectorId,
@@ -248,38 +246,6 @@ public class SectorSplitterOctree : ISectorSplitter
             geometries,
             subtreeBoundingBox,
             geometryBoundingBox
-        );
-    }
-
-    private APrimitive[] ConvertInstancesWhenTooFew(APrimitive[] geometries)
-    {
-        var instances = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
-
-        var instanceKeyListToConvert = (
-            from instanceGroup in instances
-            where instanceGroup.Count() > NumberOfInstancesThreshold
-            select instanceGroup.Key
-        ).ToList();
-
-        return geometries
-            .Select(g =>
-            {
-                if (g is InstancedMesh instanceMesh && instanceKeyListToConvert.Contains(instanceMesh.InstanceId))
-                {
-                    return ConvertInstanceToMesh(instanceMesh, instanceMesh);
-                }
-                return g;
-            })
-            .ToArray();
-    }
-
-    private TriangleMesh ConvertInstanceToMesh(InstancedMesh instanceMesh, APrimitive primitive)
-    {
-        return new TriangleMesh(
-            instanceMesh.TemplateMesh,
-            primitive.TreeIndex,
-            primitive.Color,
-            primitive.AxisAlignedBoundingBox
         );
     }
 
