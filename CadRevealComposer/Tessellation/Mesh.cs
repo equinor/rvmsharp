@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -36,11 +37,23 @@ public class Mesh : IEquatable<Mesh>
         Array.Copy(indexes, _indices, indexes.Length);
     }
 
+    /// <summary>
+    /// Create a mesh using vertives, indices and error
+    /// Note: Verticies and indices are referenced and not copied
+    /// </summary>
+    /// <param name="vertices"></param>
+    /// <param name="indices"></param>
+    /// <param name="error"></param>
     public Mesh(Vector3[] vertices, uint[] indices, float error)
     {
         Error = error;
         _vertices = vertices;
         _indices = indices;
+    }
+
+    public Mesh Clone()
+    {
+        return new Mesh(_vertices.ToArray(), _indices.ToArray(), Error);
     }
 
     /// <summary>
@@ -81,20 +94,19 @@ public class Mesh : IEquatable<Mesh>
         return new BoundingBox(min, max);
     }
 
+    /// <summary>
+    /// Applies the Matrix4x4 to the current mesh instance
+    /// </summary>
+    /// <param name="matrix"></param>
     public void Apply(Matrix4x4 matrix)
     {
         for (var i = 0; i < _vertices.Length; i++)
         {
             var newVertex = Vector3.Transform(_vertices[i], matrix);
 
-            if (float.IsInfinity(newVertex.X))
-                newVertex.X = 0;
-
-            if (float.IsInfinity(newVertex.Y))
-                newVertex.Y = 0;
-
-            if (float.IsInfinity(newVertex.Z))
-                newVertex.Z = 0;
+            Debug.Assert(float.IsFinite(newVertex.X));
+            Debug.Assert(float.IsFinite(newVertex.Y));
+            Debug.Assert(float.IsFinite(newVertex.Z));
 
             _vertices[i] = newVertex;
         }
