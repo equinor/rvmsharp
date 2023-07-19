@@ -233,12 +233,8 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        var numberOfTriangleMeshes = geometries.Count(x => x is TriangleMesh);
-
         var tooFewInstancesHandler = new TooFewInstancesHandler();
         geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
-
-        var numberOfTriangleMeshes2 = geometries.Count(x => x is TriangleMesh);
 
         return new InternalSector(
             sectorId,
