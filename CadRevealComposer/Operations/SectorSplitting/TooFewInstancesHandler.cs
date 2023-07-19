@@ -12,8 +12,7 @@ public class TooFewInstancesHandler
 {
     // Minimum number of a instances of a template in a sector, otherwise convert to mesh
     // See spike document for data of what this number means TODO: Update after spike document merge
-    private const int NumberOfInstancesThreshold = 10000; // Minimum number of instances, otherwise convert to mesh
-    private const int NumberOfTrianglesThrehold = 1000;
+    private const int NumberOfTrianglesThrehold = 500; // Convert to mesh if triangles saved are less than threshold
 
     public APrimitive[] ConvertInstancesWhenTooFew(APrimitive[] geometries)
     {
@@ -27,12 +26,6 @@ public class TooFewInstancesHandler
             })
             .Select(g => g.Key)
             .ToArray();
-
-        //var instanceKeyListToConvert = (
-        //    from instanceGroup in instances
-        //    where instanceGroup.Count() < NumberOfInstancesThreshold
-        //    select instanceGroup.Key
-        //).ToList();
 
         return geometries
             .Select(g =>
