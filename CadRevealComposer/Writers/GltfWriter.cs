@@ -222,9 +222,6 @@ public static class GltfWriter
         var vertexOffset = 0;
         foreach (var triangleMesh in triangleMeshes)
         {
-            if (triangleMesh.Mesh.Vertices.Any(x => !float.IsFinite(x.X)))
-                continue;
-
             var sourceMesh = triangleMesh.Mesh;
 
             // write indices
