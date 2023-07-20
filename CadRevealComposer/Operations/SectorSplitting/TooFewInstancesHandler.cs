@@ -1,6 +1,8 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
+using System;
+using System.Diagnostics;
 using System.Linq;
 
 /// <summary>
@@ -64,6 +66,14 @@ public class TooFewInstancesHandler
         float a = 30; // Steepness
         float b = 300; // Y asymptote, ish the min number of triangles
         float c = 5; // X asymptote, ish the min number of instances
+
+        if (b < 0 || a < 0)
+            Console.WriteLine(
+                $"Warning: Both A and B should probably be larger than zero, are you sure this is correct?"
+            );
+
+        if (c < 0)
+            throw new ArgumentException($"The value of C needs to be larger than zero. It was: {c}");
 
         int numberOfInstances = instanceGroup.Count();
         int numberOfTriangles = ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * numberOfInstances;
