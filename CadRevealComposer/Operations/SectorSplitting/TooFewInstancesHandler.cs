@@ -10,22 +10,11 @@ using System.Linq;
 /// </summary>
 public class TooFewInstancesHandler
 {
-    // Minimum number of a instances of a template in a sector, otherwise convert to mesh
-    // See spike document for data of what this number means TODO: Update after spike document merge
-    private const int NumberOfTrianglesThrehold = 500; // Convert to mesh if triangles saved are less than threshold
-
     public APrimitive[] ConvertInstancesWhenTooFew(APrimitive[] geometries)
     {
         var instanceGroups = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
 
-        var instanceKeyListToConvert = instanceGroups
-            .Where(x =>
-            {
-                var sumOfTriangles = ((InstancedMesh)x.First()).TemplateMesh.TriangleCount * x.Count();
-                return sumOfTriangles < NumberOfTrianglesThrehold;
-            })
-            .Select(g => g.Key)
-            .ToArray();
+        var instanceKeyListToConvert = instanceGroups.Where(ShouldConvert).Select(g => g.Key).ToArray();
 
         return geometries
             .Select(g =>
@@ -52,5 +41,41 @@ public class TooFewInstancesHandler
             instanceMesh.Color,
             instanceMesh.AxisAlignedBoundingBox
         );
+    }
+
+    /// <summary>
+    /// Uses the curve y = a^2 / (x - b) + c to check if the instance group should be converted or not
+    ///
+    /// a = Curve steepness, higher values gives a more rounded "turn"
+    /// b = The Y asymptote, higher value moves the curve to the right
+    /// c = The X asymptote, higher value moves the curve up
+    ///
+    /// X-axis: Number of total triangles in the instance group
+    /// Y-axis: Number of instances
+    ///
+    /// Only the first quadrant part of the curve is relevant, so everything to the left of the Y asymptote is set to be converted
+    ///
+    /// Use, for instance, WolframAlpha or Geogebra to plot the curve and points for tweaking
+    /// </summary>
+    /// <param name="instanceGroup"></param>
+    /// <returns></returns>
+    private bool ShouldConvert(IGrouping<ulong, APrimitive> instanceGroup)
+    {
+        float a = 30; // Steepness
+        float b = 300; // Y asymptote, ish the min number of triangles
+        float c = 5; // X asymptote, ish the min number of instances
+
+        int numberOfInstances = instanceGroup.Count();
+        int numberOfTriangles = ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * numberOfInstances;
+
+        if (numberOfTriangles - b <= 0) // Everything to the left of the curve should be converted
+            return true;
+
+        if (numberOfInstances < (a * a) * (1 / (numberOfTriangles - b)) + c)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
