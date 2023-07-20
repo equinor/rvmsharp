@@ -48,9 +48,7 @@ public class TooFewInstancesHandler
     /// <summary>
     /// Uses the curve y = a^2 / (x - b) + c to check if the instance group should be converted or not
     ///
-    /// a = Curve steepness, higher values gives a more rounded "turn"
-    /// b = The Y asymptote, higher value moves the curve to the right
-    /// c = The X asymptote, higher value moves the curve up
+    /// a = Curve steepness, higher values gives a more rounded "turn". The Curve will pass through the point (a, a)
     ///
     /// X-axis: Number of total triangles in the instance group
     /// Y-axis: Number of instances
@@ -63,25 +61,21 @@ public class TooFewInstancesHandler
     /// <returns></returns>
     private bool ShouldConvert(IGrouping<ulong, APrimitive> instanceGroup)
     {
-        float a = 30; // Steepness
-        float b = 300; // Y asymptote, ish the min number of triangles
-        float c = 5; // X asymptote, ish the min number of instances
+        int numberOfInstancesThreshold = 100; // Always keep when the number of instances is exceeding the threshold
+        int numberOfTrianglesThreshold = 2000; // Alwyas keep when the number of triangles is exceeding the threshold
 
-        if (b < 0 || a < 0)
-            Console.WriteLine(
-                $"Warning: Both A and B should probably be larger than zero, are you sure this is correct?"
-            );
+        float a = 50; // Steepness
 
-        if (c < 0)
-            throw new ArgumentException($"The value of C needs to be larger than zero. It was: {c}");
+        if (a < 0)
+            throw new ArgumentException($"The value of C needs to be larger than zero. It was: {a}");
 
         int numberOfInstances = instanceGroup.Count();
         int numberOfTriangles = ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * numberOfInstances;
 
-        if (numberOfTriangles - b <= 0) // Everything to the left of the curve should be converted
-            return true;
+        if (numberOfInstances > numberOfInstancesThreshold || numberOfTriangles > numberOfTrianglesThreshold)
+            return false;
 
-        if (numberOfInstances < (a * a) * (1 / (numberOfTriangles - b)) + c)
+        if (numberOfInstances < (a * a) / numberOfTriangles)
         {
             return true;
         }
