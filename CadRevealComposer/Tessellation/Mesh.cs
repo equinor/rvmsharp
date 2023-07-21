@@ -38,7 +38,7 @@ public class Mesh : IEquatable<Mesh>
     }
 
     /// <summary>
-    /// Create a mesh using vertives, indices and error
+    /// Create a mesh using vertices, indices and error
     /// Note: Verticies and indices are referenced and not copied
     /// </summary>
     /// <param name="vertices"></param>
@@ -51,6 +51,11 @@ public class Mesh : IEquatable<Mesh>
         _indices = indices;
     }
 
+    /// <summary>
+    /// Create a mesh using vertices, indices and error
+    /// This creates a copy
+    /// </summary>
+    /// <returns></returns>
     public Mesh Clone()
     {
         return new Mesh(_vertices.ToArray(), _indices.ToArray(), Error);
