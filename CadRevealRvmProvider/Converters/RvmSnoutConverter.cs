@@ -11,11 +11,24 @@ using System.Numerics;
 
 public static class RvmSnoutConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmSnout rvmSnout,
+        ulong treeIndex,
+        Color color,
+        PrimitiveAttributes? attributes = null
+    )
     {
-        if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
+        if (
+            !rvmSnout.Matrix.DecomposeAndNormalize(
+                out var scale,
+                out var rotation,
+                out var position
+            )
+        )
         {
-            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
+            throw new Exception(
+                "Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix
+            );
         }
 
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
@@ -38,7 +51,9 @@ public static class RvmSnoutConverter
 
         if (radiusA <= 0 && radiusB <= 0)
         {
-            Console.WriteLine($"Snout was removed, because the radii were: {radiusA} and {radiusB}");
+            Console.WriteLine(
+                $"Snout was removed, because the radii were: {radiusA} and {radiusB}"
+            );
             return Array.Empty<APrimitive>();
         }
 
@@ -49,7 +64,9 @@ public static class RvmSnoutConverter
         {
             if (rvmSnout.IsEccentric())
             {
-                throw new NotImplementedException("Eccentric snout with shear primitive is missing from CadReveal");
+                throw new NotImplementedException(
+                    "Eccentric snout with shear primitive is missing from CadReveal"
+                );
             }
 
             var isCylinderShaped = rvmSnout.RadiusTop.ApproximatelyEquals(rvmSnout.RadiusBottom);
@@ -65,11 +82,14 @@ public static class RvmSnoutConverter
                     scale,
                     treeIndex,
                     color,
-                    bbox
+                    bbox,
+                    attributes
                 );
             }
 
-            throw new NotImplementedException("Cone with shear primitive is missing from CadReveal");
+            throw new NotImplementedException(
+                "Cone with shear primitive is missing from CadReveal"
+            );
         }
 
         if (rvmSnout.IsEccentric())
@@ -85,11 +105,24 @@ public static class RvmSnoutConverter
                 length,
                 treeIndex,
                 color,
-                bbox
+                bbox,
+                attributes
             );
         }
 
-        return CreateCone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+        return CreateCone(
+            rvmSnout,
+            rotation,
+            centerA,
+            centerB,
+            normal,
+            radiusA,
+            radiusB,
+            treeIndex,
+            color,
+            bbox,
+            attributes
+        );
     }
 
     private static IEnumerable<APrimitive> CreateCone(
@@ -102,7 +135,8 @@ public static class RvmSnoutConverter
         float radiusB,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        PrimitiveAttributes attributes
     )
     {
         var diameterA = 2f * radiusA;
@@ -119,10 +153,15 @@ public static class RvmSnoutConverter
             radiusB,
             treeIndex,
             color,
-            bbox
+            bbox,
+            attributes
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+            rvmSnout,
+            centerA,
+            centerB
+        );
 
         if (showCapA)
         {
@@ -168,7 +207,8 @@ public static class RvmSnoutConverter
         float length,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        PrimitiveAttributes attributes
     )
     {
         var halfLength = length / 2f;
@@ -191,7 +231,8 @@ public static class RvmSnoutConverter
             radiusB,
             treeIndex,
             color,
-            bbox
+            bbox,
+            attributes
         );
 
         var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
@@ -212,7 +253,8 @@ public static class RvmSnoutConverter
                 normal,
                 treeIndex,
                 color,
-                bbox // Why we use the same bbox as RVM source
+                bbox, // Why we use the same bbox as RVM source
+                attributes
             );
         }
 
@@ -228,7 +270,8 @@ public static class RvmSnoutConverter
                 -normal,
                 treeIndex,
                 color,
-                bbox // Why we use the same bbox as RVM source
+                bbox, // Why we use the same bbox as RVM source
+                attributes
             );
         }
     }
@@ -243,7 +286,8 @@ public static class RvmSnoutConverter
         Vector3 scale,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        PrimitiveAttributes attributes
     )
     {
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
@@ -280,67 +324,58 @@ public static class RvmSnoutConverter
             (float)semiMinorAxisA,
             treeIndex,
             color,
-            bbox
+            bbox,
+            attributes
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+            rvmSnout,
+            centerA,
+            centerB
+        );
 
         if (showCapA)
         {
             var matrixCapA =
-                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f)
+                Matrix4x4.CreateScale(
+                    new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f
+                )
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationA)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            if (matrixCapA.IsDecomposable())
-            {
-                yield return new GeneralRing(
-                    Angle: 0f,
-                    ArcAngle: 2f * MathF.PI,
-                    matrixCapA,
-                    normal,
-                    Thickness: 1f,
-                    treeIndex,
-                    color,
-                    bbox // Why we use the same bbox as RVM source
-                );
-            }
-            else
-            {
-                // This should not happen, but happens in so few models as of now that we think we can ignore it.
-                Console.WriteLine(
-                    $"Failed to decompose matrix for {nameof(matrixCapA)} of node {treeIndex} geometry: {rvmSnout}"
-                );
-            }
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                matrixCapA,
+                normal,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox, // Why we use the same bbox as RVM source
+                attributes
+            );
         }
 
         if (showCapB)
         {
             var matrixCapB =
-                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
+                Matrix4x4.CreateScale(
+                    new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f
+                )
                 * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            if (matrixCapB.IsDecomposable())
-            {
-                yield return new GeneralRing(
-                    Angle: 0f,
-                    ArcAngle: 2f * MathF.PI,
-                    matrixCapB,
-                    -normal,
-                    Thickness: 1f,
-                    treeIndex,
-                    color,
-                    bbox // Why we use the same bbox as RVM source
-                );
-            }
-            else
-            {
-                // This should not happen, but happens in so few models as of now that we think we can ignore it.
-                Console.WriteLine(
-                    $"Failed to decompose matrix for {nameof(matrixCapB)} of node {treeIndex} geometry: {rvmSnout}"
-                );
-            }
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                matrixCapB,
+                -normal,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox, // Why we use the same bbox as RVM source
+                attributes
+            );
         }
     }
 }

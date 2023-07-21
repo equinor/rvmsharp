@@ -13,12 +13,22 @@ public static class RvmRectangularTorusConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
-        Color color
+        Color color,
+        PrimitiveAttributes? attr = null
     )
     {
-        if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
+        if (
+            !rvmRectangularTorus.Matrix.DecomposeAndNormalize(
+                out var scale,
+                out var rotation,
+                out var position
+            )
+        )
         {
-            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
+            throw new Exception(
+                "Failed to decompose matrix to transform. Input Matrix: "
+                    + rvmRectangularTorus.Matrix
+            );
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
@@ -29,7 +39,9 @@ public static class RvmRectangularTorusConverter
 
         if (radiusOuter <= 0)
         {
-            Console.WriteLine($"Rectangular Torus was removed, because outer radius was: {radiusOuter}");
+            Console.WriteLine(
+                $"Rectangular Torus was removed, because outer radius was: {radiusOuter}"
+            );
             yield break;
         }
 
@@ -57,7 +69,8 @@ public static class RvmRectangularTorusConverter
             radiusOuter,
             treeIndex,
             color,
-            bbBox
+            bbBox,
+            attr
         );
 
         // If inner radius equals 0, then the geometry is basically a cylinder segment, and the inner cone is unnecessary
@@ -73,7 +86,8 @@ public static class RvmRectangularTorusConverter
                 radiusInner,
                 treeIndex,
                 color,
-                bbBox
+                bbBox,
+                attr
             );
         }
 
@@ -87,29 +101,29 @@ public static class RvmRectangularTorusConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerB);
 
-        if (matrixRingA.IsDecomposable())
-        {
-            yield return new GeneralRing(0f, arcAngle, matrixRingA, normal, thickness, treeIndex, color, bbBox);
-        }
-        else
-        {
-            // This should not happen, but happens in so few models as of now that we think we can ignore it.
-            Console.WriteLine(
-                $"Failed to decompose matrix for {nameof(matrixRingA)} of node {treeIndex} geometry: {rvmRectangularTorus}"
-            );
-        }
+        yield return new GeneralRing(
+            0f,
+            arcAngle,
+            matrixRingA,
+            normal,
+            thickness,
+            treeIndex,
+            color,
+            bbBox,
+            attr
+        );
 
-        if (matrixRingB.IsDecomposable())
-        {
-            yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
-        }
-        else
-        {
-            // This should not happen, but happens in so few models as of now that we think we can ignore it.
-            Console.WriteLine(
-                $"Failed to decompose matrix for {nameof(matrixRingB)} of node {treeIndex} geometry: {rvmRectangularTorus}"
-            );
-        }
+        yield return new GeneralRing(
+            0f,
+            arcAngle,
+            matrixRingB,
+            -normal,
+            thickness,
+            treeIndex,
+            color,
+            bbBox,
+            attr
+        );
 
         // Add caps to the two ends of the torus, where the segment is "cut out"
         // This is not needed if the torus goes all the way around
@@ -142,9 +156,9 @@ public static class RvmRectangularTorusConverter
                 * Matrix4x4.CreateFromQuaternion(rotationQuadB)
                 * Matrix4x4.CreateTranslation(centerQuadB);
 
-            yield return new Quad(quadMatrixA, treeIndex, color, bbBox);
+            yield return new Quad(quadMatrixA, treeIndex, color, bbBox, attr);
 
-            yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
+            yield return new Quad(quadMatrixB, treeIndex, color, bbBox, attr);
         }
     }
 }

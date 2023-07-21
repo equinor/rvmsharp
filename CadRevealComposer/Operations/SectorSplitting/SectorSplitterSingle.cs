@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
+using CadRevealComposer.IdProviders;
 using Primitives;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,11 @@ using Utils;
 
 public class SectorSplitterSingle : ISectorSplitter
 {
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        SequentialIdGenerator sequentialIdGenerator,
+        bool generateRootSector
+    )
     {
         yield return CreateRootSector(0, allGeometries);
     }

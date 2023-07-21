@@ -11,15 +11,17 @@ public abstract record ProtoMesh(
     RvmPrimitive RvmPrimitive,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    PrimitiveAttributes? Attributes = null
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, Attributes);
 
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    PrimitiveAttributes? Attributes = null
+) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox, Attributes);
 
 public sealed record ProtoMeshFromRvmPyramid(
     RvmPyramid Pyramid,
@@ -37,4 +39,4 @@ public record RvmFacetGroupWithProtoMesh(
     Matrix4x4 Matrix,
     RvmBoundingBox BoundingBoxLocal,
     RvmFacetGroup.RvmPolygon[] Polygons
-) : RvmFacetGroup(Version, Matrix, BoundingBoxLocal, Polygons);
+) : RvmFacetGroup(Version, Matrix, BoundingBoxLocal, Polygons, ProtoMesh.Attributes);

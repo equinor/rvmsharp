@@ -26,7 +26,7 @@ public class RvmTessellator
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
         {
             var mesh = Tessellate(p.RvmPrimitive);
-            return new TriangleMesh(ConvertRvmMesh(mesh), p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
+            return new TriangleMesh(ConvertRvmMesh(mesh), p.TreeIndex, p.Color, p.AxisAlignedBoundingBox, p.Attributes);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult

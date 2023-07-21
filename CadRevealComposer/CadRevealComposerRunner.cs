@@ -7,16 +7,21 @@ using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
+using SharpGLTF.Validation;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Tessellation;
 using Utils;
+using static System.Collections.Specialized.BitVector32;
 
 public static class CadRevealComposerRunner
 {
@@ -32,17 +37,21 @@ public static class CadRevealComposerRunner
 
         var nodesToProcess = new List<CadRevealNode>();
         var geometriesToProcess = new List<APrimitive>();
+        var shadowGeometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
-            IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
+            var nodes = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIdGenerator
             );
+
+            var cadRevealNodes = nodes.Item1;
+            var shadowNodes = nodes.Item2;
             if (cadRevealNodes != null)
             {
                 Console.WriteLine(
@@ -57,8 +66,61 @@ public static class CadRevealComposerRunner
                     var inputGeometries = cadRevealNodes
                         .AsParallel()
                         .AsOrdered()
+                        //.Where(x => x.Attributes.Any() && x.Attributes["Discipline"] == "PIPE")
                         .SelectMany(x => x.Geometries)
                         .ToArray();
+                    //var hmm = shadowNodes
+                    //    .AsParallel()
+                    //    .AsOrdered()
+                    //    .SelectMany(x => x.Geometries.Select(y => new { x.Name }))
+                    //    .Distinct()
+                    //    .ToArray();
+
+                    var shadowInputGeometries = shadowNodes
+                        .AsParallel()
+                        .AsOrdered()
+                        .SelectMany(x => x.Geometries)
+                        .ToArray();
+
+                    //var test = cadRevealNodes
+                    //    .AsParallel()
+                    //    .AsOrdered()
+                    //    .SelectMany(
+                    //        x => x.Geometries,
+                    //            //x.Geometries.Select(
+                    //            //    y =>
+                    //            new APrimitive()
+                    //            {
+                    //                APrimitives = x.Geometries,
+                    //                Discipline = x.Attributes.Any() ? x.Attributes["Discipline"] : "",
+                    //                Type = x.Attributes.Any() ? x.Attributes["Type"] : ""
+                    //            }
+                    //    //)
+                    //    )
+                    //    .ToArray();
+
+                    //var testOld = cadRevealNodes
+                    //    .AsParallel()
+                    //    .AsOrdered()
+                    //    .Select(
+                    //        x =>
+                    //            //x.Geometries.Select(
+                    //            //    y =>
+                    //            new APrimitive()
+                    //            {
+                    //                APrimitives = x.Geometries,
+                    //                Discipline = x.Attributes.Any() ? x.Attributes["Discipline"] : "",
+                    //                Type = x.Attributes.Any() ? x.Attributes["Type"] : ""
+                    //            }
+                    //    //)
+                    //    )
+                    //    .ToArray();
+
+                    //var inputGeometries = test.Where(
+                    //        t => t.Discipline == "PIPE" && (t.Type == "FLAN" || t.Type == "VALV")
+                    //    )
+                    //    .SelectMany(t => t.APrimitives)
+                    //    .ToArray();
 
                     var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                         inputGeometries,
@@ -67,6 +129,18 @@ public static class CadRevealComposerRunner
                         instanceIdGenerator
                     );
                     geometriesToProcess.AddRange(geometriesIncludingMeshes);
+
+                    //if (shadowNodes.Count > 0)
+                    {
+                        var shadows = modelFormatProvider.ProcessGeometries(
+                            shadowInputGeometries,
+                            composerParameters,
+                            modelParameters,
+                            instanceIdGenerator,
+                            true
+                        );
+                        shadowGeometriesToProcess.AddRange(shadows);
+                    }
                 }
             }
         }
@@ -84,8 +158,9 @@ public static class CadRevealComposerRunner
 
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        ProcessPrimitives(
+        OrganizePrimitivesIntoSectors(
             geometriesToProcess.ToArray(),
+            shadowGeometriesToProcess.ToArray(),
             outputDirectory,
             modelParameters,
             composerParameters,
@@ -100,8 +175,9 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(
+    public static void OrganizePrimitivesIntoSectors(
         APrimitive[] allPrimitives,
+        APrimitive[] shadowPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
@@ -124,12 +200,209 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var prioritizedTypes = allPrimitives
+            .Where(
+                x => x.Attributes != null && x.Attributes.Discipline == "PIPE"
+            //&& (x.Attributes.Type == "VALV" || x.Attributes.Type == "FLAN")
+            )
+            .ToArray();
+        var nodesWithoutPrioritized = allPrimitives.Except(prioritizedTypes).ToArray();
 
+        //var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var sectorIdGenerator = new SequentialIdGenerator();
+
+        var prioritizedSectors = splitter
+            .SplitIntoSectors(prioritizedTypes, sectorIdGenerator, true)
+            .OrderBy(x => x.SectorId)
+            .ToArray();
+
+        var sectors = splitter
+            .SplitIntoSectors(nodesWithoutPrioritized, sectorIdGenerator, false)
+            .OrderBy(x => x.SectorId)
+            .ToArray();
+        //prioritizedSectors.AddRange(normalsectors);
+        //var sectors = prioritizedSectors.ToArray();
+        // Add shadow sectors here
+
+        //        var sectorDict = new HashSet<int>(allPrimitives.Select(x => x.AxisAlignedBoundingBox.Extents.GetHashCode()));
+        //var allDict = allPrimitives.ToDictionary(c => c.TreeIndex, c => c);
+        //var shadowDict = new Dictionary<string, APrimitive>();
+        var shadowLookup = shadowPrimitives.ToLookup(p => p.Attributes?.GetHashCode().ToString(), p => p);
+        var mainLookup = allPrimitives.ToLookup(p => p.Attributes?.GetHashCode().ToString(), p => p);
+
+        //.Select(x => x.Attributes.Type)
+        //.Distinct();
+        //foreach (var shadow in shadowPrimitives)
+        //{
+        //    if (shadow.Attributes != null && !shadowDict.ContainsKey(shadow.Attributes.GetHashCode().ToString()))
+        //    {
+        //        shadowDict.Add(shadow.Attributes.GetHashCode().ToString(), shadow);
+        //    }
+        //}
+
+        //var shadows = shadowPrimitives
+        //    .Distinct()
+        //    .Select(x => new { key = x.AxisAlignedBoundingBox.Center.GetHashCode(), x });
+        //var shadowDict = shadows.ToDictionary(pair => pair.key, pair => pair.x);
+
+        var shadowSectors = new List<InternalSector>();
+
+        foreach (var sector in sectors)
+        {
+            //var prioritizedTypes = sector.Geometries.Where(
+            //    x =>
+            //        x.Attributes != null
+            //        && x.Attributes.Discipline == "PIPE"
+            //        && (x.Attributes.Type == "VALV" || x.Attributes.Type == "FLAN")
+            //);
+            //if (prioritizedTypes.Any())
+            //{
+            //    Console.WriteLine($"Sector {sector.SectorId} has {prioritizedTypes.Count()} nodes to prioritize.");
+            //}
+
+            var shadowGeometries = new List<APrimitive>();
+            const bool USE_PRE_GENERATED_SHADOW_GEOMETRIES = true;
+            foreach (var geometry in sector.Geometries)
+            {
+                if (!USE_PRE_GENERATED_SHADOW_GEOMETRIES)
+                {
+                    var nodeHash = geometry.Attributes?.GetHashCode().ToString();
+                    if (nodeHash == null)
+                        continue;
+                    var realArray = mainLookup[nodeHash];
+                    foreach (var node in realArray)
+                    {
+                        var geoMin = realArray.First().AxisAlignedBoundingBox.Min;
+                        var geoMax = realArray.First().AxisAlignedBoundingBox.Max;
+
+                        foreach (var shadowGeometry in realArray)
+                        {
+                            var boundingBox = shadowGeometry.AxisAlignedBoundingBox;
+                            var min = boundingBox.Min;
+                            var max = boundingBox.Max;
+                            geoMin = Vector3.Min(min, geoMin);
+                            geoMax = Vector3.Max(max, geoMax);
+                        }
+                        var hmm = realArray
+                            .Where(
+                                x =>
+                                    x is not TriangleMesh
+                                    && x is not Cone
+                                    && x is not GeneralCylinder
+                                    && x is not EccentricCone
+                                    && x is not EllipsoidSegment
+                            )
+                            .FirstOrDefault();
+                        //IF we're doing it this way, we need to add some handling for other types...
+
+                        if (hmm != null)
+                        {
+                            Matrix4x4? matrix = null;
+                            switch (hmm)
+                            {
+                                case Box box:
+                                    matrix = box.InstanceMatrix;
+                                    break;
+                                case TriangleMesh mesh:
+                                    break;
+                                case Circle circle:
+                                    matrix = circle.InstanceMatrix;
+                                    break;
+                                case GeneralRing circle:
+                                    matrix = circle.InstanceMatrix;
+                                    break;
+                                case TorusSegment circle:
+                                    matrix = circle.InstanceMatrix;
+                                    break;
+                                default:
+                                    break;
+                            }
+                            if (matrix != null)
+                            {
+                                //                            var matrix = (hmm as Box).InstanceMatrix;
+                                var theColor = realArray.Count() > 10 ? Color.Pink : Color.Yellow;
+                                var newBox = new Box(
+                                    (Matrix4x4)matrix,
+                                    hmm.TreeIndex,
+                                    theColor,
+                                    new BoundingBox(geoMin, geoMax)
+                                );
+                                shadowGeometries.Add(newBox);
+                            }
+                        }
+                        else
+                        {
+                            //Console.WriteLine("Warning something odd going on");
+                        }
+                    }
+                }
+                else
+                {
+                    if (geometry.Attributes != null)
+                    {
+                        var nodeHash = geometry.Attributes.GetHashCode().ToString();
+                        var shadowArray = shadowLookup[nodeHash];
+                        if (shadowArray.Count() == 0)
+                        {
+                            //Console.WriteLine($"No shadow node found for {geometry.Attributes.refNo}");
+                            continue;
+                        }
+
+                        var realArray = mainLookup[nodeHash];
+
+                        //var shadowGeometry = shadowDict[nodeHash];
+                        //if (shadowGeometry != null)
+                        var geoMin = shadowArray.First().AxisAlignedBoundingBox.Min;
+                        var geoMax = shadowArray.First().AxisAlignedBoundingBox.Max;
+
+                        var theColor = Color.AntiqueWhite;
+                        foreach (var shadowGeometry in shadowArray)
+                        {
+                            var boundingBox2 = shadowGeometry.AxisAlignedBoundingBox;
+                            var min = boundingBox2.Min;
+                            var max = boundingBox2.Max;
+                            geoMin = Vector3.Min(min, geoMin);
+                            geoMax = Vector3.Max(max, geoMax);
+                            theColor = shadowGeometry.Color;
+                            //shadowGeometries.Add(shadowGeometry);
+                        }
+
+                        var hmm = shadowArray.First();
+                        var matrix = (hmm as Box).InstanceMatrix;
+                        var boundingBox = new BoundingBox(geoMin, geoMax);
+                        //if (boundingBox.Diagonal > 0.0005)
+                        {
+                            var newBox = new Box(matrix, geometry.TreeIndex, theColor, boundingBox);
+                            shadowGeometries.Add(newBox);
+                        }
+                    }
+                    else { }
+                }
+            }
+            if (shadowGeometries.Count > 0)
+            {
+                var shadowSector = sector with { SectorId = sector.SectorId, Geometries = shadowGeometries.ToArray() };
+                shadowSectors.Add(shadowSector);
+            }
+        }
+        //sectors = sectors.Take<InternalSector>(1).ToArray();
+        //shadowSectors.Add(sectors.First());
+        //sectors = shadowSectors.ToArray();
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
+        var prioSectorInfos = prioritizedSectors.Select(
+            s => SerializeSector(s, outputDirectory.FullName, SectorKind.Prioritized)
+        ); // New
 
-        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
+        var shadowSectorInfos = shadowSectors.Select(
+            s => SerializeSector(s, outputDirectory.FullName, SectorKind.Shadow)
+        );
+        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName, SectorKind.Normal)).ToList();
+        sectorInfos.AddRange(shadowSectorInfos);
+        sectorInfos.AddRange(prioSectorInfos); // New
+        shadowSectors.AddRange(sectors);
+        shadowSectors.AddRange(prioritizedSectors); // New
+        sectors = shadowSectors.ToArray();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -219,19 +492,41 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    private static SceneCreator.SectorInfo SerializeSector(
+        InternalSector p,
+        string outputDirectory,
+        //bool isShadow = false
+        SectorKind sectorKind
+    )
     {
+        var sectorPostfix = String.Empty;
+        uint sectorNumbering = 0;
+        switch (sectorKind)
+        {
+            case SectorKind.Prioritized:
+                sectorPostfix = "_pri";
+                sectorNumbering = 0;
+                break;
+            case SectorKind.Normal:
+                sectorPostfix = "";
+                sectorNumbering = 0;
+                break;
+            case SectorKind.Shadow:
+                sectorPostfix = "_shadow";
+                sectorNumbering = 10000;
+                break;
+        }
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
-
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+        var sectorSubName = $"{p.SectorId}{sectorPostfix}";
+        var sectorFilename = p.Geometries.Any() ? $"sector_{sectorSubName}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
-            SectorId: p.SectorId,
+            SectorId: p.SectorId == 0 ? p.SectorId : p.SectorId + sectorNumbering,
             ParentSectorId: p.ParentSectorId,
             Depth: p.Depth,
             Path: p.Path,
             Filename: sectorFilename,
-            EstimatedTriangleCount: estimatedTriangleCount,
-            EstimatedDrawCalls: estimatedDrawCalls,
+            EstimatedTriangleCount: sectorKind == SectorKind.Normal ? estimatedTriangleCount : 1,
+            EstimatedDrawCalls: sectorKind == SectorKind.Normal ? estimatedDrawCalls : 1,
             MinNodeDiagonal: p.MinNodeDiagonal,
             MaxNodeDiagonal: p.MaxNodeDiagonal,
             Geometries: p.Geometries,
@@ -272,6 +567,7 @@ public static class CadRevealComposerRunner
         var beforeOptimizationTotalVertices = 0;
         var afterOptimizationTotalVertices = 0;
         var timer = Stopwatch.StartNew();
+
         // Optimize TriangleMesh meshes for least memory use
         var processedGeometries = geometriesToProcess
             .AsParallel()
@@ -297,7 +593,13 @@ public static class CadRevealComposerRunner
                 $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices, 11}\nAfter:  {afterOptimizationTotalVertices, 11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices, 11:P2}\nTime: {timer.Elapsed}"
             );
         }
-
         return processedGeometries;
     }
+}
+
+public enum SectorKind
+{
+    Prioritized,
+    Normal,
+    Shadow
 }

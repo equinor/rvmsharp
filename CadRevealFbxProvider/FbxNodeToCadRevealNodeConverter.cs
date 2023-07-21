@@ -35,7 +35,8 @@ public class FbxNodeToCadRevealNodeConverter
                     transform,
                     id,
                     Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                    bb
+                    bb,
+                    null
                 );
                 geometries.Add(instancedMeshCopy);
 

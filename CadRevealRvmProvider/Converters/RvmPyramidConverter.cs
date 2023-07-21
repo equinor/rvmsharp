@@ -12,7 +12,8 @@ public static class RvmPyramidConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmPyramid rvmPyramid,
         ulong treeIndex,
-        Color color
+        Color color,
+        PrimitiveAttributes? attr = null
     )
     {
         if (IsBoxShaped(rvmPyramid))
@@ -33,7 +34,8 @@ public static class RvmPyramidConverter
                 matrix,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(),
+                attr
             );
         }
         else

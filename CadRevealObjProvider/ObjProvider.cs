@@ -9,12 +9,13 @@ using CadRevealComposer.Tessellation;
 using ObjLoader.Loader.Data.Elements;
 using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Loaders;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
 public class ObjProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, IReadOnlyList<CadRevealNode>) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator
@@ -55,7 +56,7 @@ public class ObjProvider : IModelFormatProvider
             );
         }
 
-        return nodes;
+        return (nodes, new List<CadRevealNode>());
     }
 
     private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
@@ -77,7 +78,8 @@ public class ObjProvider : IModelFormatProvider
         APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        bool isShadow = false
     )
     {
         return geometries;

@@ -12,7 +12,8 @@ public static class RvmSphericalDishConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphericalDish rvmSphericalDish,
         ulong treeIndex,
-        Color color
+        Color color,
+        PrimitiveAttributes? attr = null
     )
     {
         if (!rvmSphericalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -38,13 +39,23 @@ public static class RvmSphericalDishConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
-        yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox);
+        yield return new EllipsoidSegment(
+            sphereRadius,
+            sphereRadius,
+            height,
+            center,
+            normal,
+            treeIndex,
+            color,
+            bbBox,
+            attr
+        );
 
         var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmSphericalDish, position);
 
         if (showCap)
         {
-            yield return new Circle(matrixCap, -normal, treeIndex, color, bbBox);
+            yield return new Circle(matrixCap, -normal, treeIndex, color, bbBox, attr);
         }
     }
 }

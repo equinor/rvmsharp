@@ -13,11 +13,12 @@ using Converters;
 using Operations;
 using RvmSharp.Primitives;
 using System.Diagnostics;
+using System.Drawing;
 using Tessellation;
 
 public class RvmProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, IReadOnlyList<CadRevealNode>) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator
@@ -42,7 +43,7 @@ public class RvmProvider : IModelFormatProvider
         if (workload.Length == 0)
         {
             // returns empty list if there are no rvm files to process
-            return new List<CadRevealNode>();
+            return (new List<CadRevealNode>(), new List<CadRevealNode>());
         }
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
@@ -50,20 +51,28 @@ public class RvmProvider : IModelFormatProvider
 
         var stopwatch = Stopwatch.StartNew();
         var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, treeIndexGenerator);
+        var shadowNodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
+            rvmStore,
+            treeIndexGenerator,
+            true
+        );
+
+        //shadowNodes = shadowNodes.Where(s => s.Geometries.Any(g => g.Color == Color.Yellow)).ToArray();
+
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
-        return nodes;
+        return (nodes, shadowNodes);
     }
 
     public APrimitive[] ProcessGeometries(
         APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        bool isShadow
     )
     {
         var stopwatch = Stopwatch.StartNew();
-
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
             .Select(
@@ -78,6 +87,10 @@ public class RvmProvider : IModelFormatProvider
             )
             .Cast<RvmFacetGroup>()
             .ToArray();
+        if (facetGroupsWithEmbeddedProtoMeshes.Length > 0 && isShadow)
+        {
+            Console.WriteLine("Processing FacetGroups as shadows");
+        }
 
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
         if (composerParameters.NoInstancing)

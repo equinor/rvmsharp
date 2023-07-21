@@ -17,30 +17,66 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        SequentialIdGenerator sectorIdGenerator,
+        bool generateRootSector
+    )
     {
-        var sectorIdGenerator = new SequentialIdGenerator();
+        //    var sectorIdGenerator = new SequentialIdGenerator();
+
+        //var allPrioritizedGeometries = allGeometries.Where(x => x.Attributes != null).ToArray();
+        //var allPrioritizedNodes = SplittingUtils.ConvertPrimitivesToNodes(allPrioritizedGeometries);
+        //var boundingBoxEncapsulatingPrioritizedNodes = allPrioritizedNodes.CalculateBoundingBox();
+
+        //        allGeometries = allGeometries.Except(allPrioritizedGeometries).ToArray();
+        allGeometries = allGeometries.ToArray();
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        var rootSectorId = 0u;
         var rootPath = "/0";
+        if (generateRootSector)
+        {
+            var nextId = (uint)sectorIdGenerator.GetNextId();
+            yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
+        }
 
-        yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
+        // Handle prioritized Nodes
+        /*
+                var prioritizedSectors = SplitIntoSectorsRecursive(
+                        allPrioritizedNodes,
+                        1,
+                        rootPath,
+                        rootSectorId,
+                        sectorIdGenerator,
+                        1,
+                        //CalculateStartSplittingDepth(boundingBoxEncapsulatingPrioritizedNodes),
+                        true // We want to prioritize these
+                    )
+                    .ToArray();
 
+                foreach (var sector in prioritizedSectors)
+                {
+                    yield return sector;
+                }
+                Console.WriteLine($"Note! Nodes prioritized - {prioritizedSectors.Length} prioritized sectors created.");
+        */
         //Order nodes by diagonal size
-        var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
 
+        var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
+        //var sortedNodesTemp = allPrioritizedNodes.Concat(sortedNodesTemp).ToArray();
         var sectors = SplitIntoSectorsRecursive(
                 sortedNodes,
                 1,
                 rootPath,
                 rootSectorId,
                 sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes),
+                false
             )
             .ToArray();
 
@@ -82,7 +118,8 @@ public class SectorSplitterOctree : ISectorSplitter
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        int depthToStartSplittingGeometry
+        int depthToStartSplittingGeometry,
+        bool hasPrioritizedNodes = false
     )
     {
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
@@ -112,7 +149,8 @@ public class SectorSplitterOctree : ISectorSplitter
             var additionalMainVoxelNodesByBudget = GetNodesByBudget(
                     nodes.ToArray(),
                     SectorEstimatedByteSizeBudget,
-                    actualDepth
+                    actualDepth,
+                    hasPrioritizedNodes
                 )
                 .ToList();
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
@@ -256,13 +294,21 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget, int actualDepth)
+    private static IEnumerable<Node> GetNodesByBudget(
+        IReadOnlyList<Node> nodes,
+        long budget,
+        int actualDepth,
+        bool hasPrioritizedNodes
+    )
     {
         var selectedNodes = actualDepth switch
         {
             1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
             2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            3
+                => !hasPrioritizedNodes
+                    ? nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray()
+                    : nodes.ToArray(),
             _ => nodes.ToArray(),
         };
 
@@ -270,7 +316,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();
-        var primitiveBudget = SectorEstimatedPrimitiveBudget;
+        var primitiveBudget = !hasPrioritizedNodes ? SectorEstimatedPrimitiveBudget : budget;
         for (int i = 0; i < nodeArray.Length; i++)
         {
             if (budgetLeft < 0 || primitiveBudget <= 0 && nodeArray.Length - i > 10)

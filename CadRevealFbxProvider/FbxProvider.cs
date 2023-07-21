@@ -13,7 +13,7 @@ using System.Diagnostics;
 
 public class FbxProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, IReadOnlyList<CadRevealNode>) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator
@@ -23,7 +23,7 @@ public class FbxProvider : IModelFormatProvider
         if (!workload.Any())
         {
             Console.WriteLine("Found no .fbx files. Skipping FBX Parser.");
-            return new List<CadRevealNode>();
+            return (new List<CadRevealNode>(), new List<CadRevealNode>());
         }
 
         var fbxTimer = Stopwatch.StartNew();
@@ -49,20 +49,21 @@ public class FbxProvider : IModelFormatProvider
         if (workload.Length == 0)
         {
             // returns empty list if there are no rvm files to process
-            return new List<CadRevealNode>();
+            return (new List<CadRevealNode>(), new List<CadRevealNode>());
         }
         Console.WriteLine(
             $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))"
         );
 
-        return nodes;
+        return (nodes, new List<CadRevealNode>());
     }
 
     public APrimitive[] ProcessGeometries(
         APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        bool isShadow = false
     )
     {
         return geometries;

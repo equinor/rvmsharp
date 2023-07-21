@@ -4,6 +4,7 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Numerics;
 
@@ -120,11 +121,9 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(
-            inputDirectoryCorrect.EnumerateFiles(),
-            treeIndexGenerator,
-            instanceIndexGenerator
-        );
+        var nodes = modelFormatProviderFbx
+            .ParseFiles(inputDirectoryCorrect.EnumerateFiles(), treeIndexGenerator, instanceIndexGenerator)
+            .Item1;
         Assert.That(nodes.Count() == 28);
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
         Assert.That(nodes[1].Attributes.Count(), Is.EqualTo(23));
@@ -160,8 +159,9 @@ public class FbxProviderTests
         }
 
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries);
-        CadRevealComposerRunner.ProcessPrimitives(
+        CadRevealComposerRunner.OrganizePrimitivesIntoSectors(
             geometriesToProcess.ToArray(),
+            Array.Empty<APrimitive>(),
             outputDirectoryCorrect,
             modelParameters,
             composerParameters,

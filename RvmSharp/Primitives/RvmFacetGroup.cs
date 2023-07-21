@@ -1,13 +1,15 @@
 namespace RvmSharp.Primitives;
 
+using CadRevealComposer.Primitives;
 using System.Numerics;
 
 public record RvmFacetGroup(
     uint Version,
     Matrix4x4 Matrix,
     RvmBoundingBox BoundingBoxLocal,
-    RvmFacetGroup.RvmPolygon[] Polygons
-) : RvmPrimitive(Version, RvmPrimitiveKind.FacetGroup, Matrix, BoundingBoxLocal)
+    RvmFacetGroup.RvmPolygon[] Polygons,
+    PrimitiveAttributes? Attributes = null
+) : RvmPrimitive(Version, RvmPrimitiveKind.FacetGroup, Matrix, BoundingBoxLocal, Attributes)
 {
     public record RvmContour((Vector3 Vertex, Vector3 Normal)[] Vertices);
 

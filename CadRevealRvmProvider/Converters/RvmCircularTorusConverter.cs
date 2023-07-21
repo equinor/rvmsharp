@@ -11,7 +11,8 @@ public static class RvmCircularTorusConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color
+        Color color,
+        PrimitiveAttributes? attr = null
     )
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -34,7 +35,8 @@ public static class RvmCircularTorusConverter
             TubeRadius: rvmCircularTorus.Radius,
             treeIndex,
             color,
-            bbox
+            bbox,
+            attr
         );
 
         if (isTorusSegment)
@@ -68,7 +70,7 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapA);
 
-                yield return new Circle(matrixCapA, normalCapA, treeIndex, color, bbox);
+                yield return new Circle(matrixCapA, normalCapA, treeIndex, color, bbox, attr);
             }
 
             if (showCapB)
@@ -80,7 +82,7 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapB);
 
-                yield return new Circle(matrixCapB, normalCapB, treeIndex, color, bbox);
+                yield return new Circle(matrixCapB, normalCapB, treeIndex, color, bbox, attr);
             }
         }
     }

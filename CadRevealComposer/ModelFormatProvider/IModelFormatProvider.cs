@@ -8,7 +8,7 @@ using System.IO;
 
 public interface IModelFormatProvider
 {
-    IReadOnlyList<CadRevealNode> ParseFiles(
+    (IReadOnlyList<CadRevealNode>, IReadOnlyList<CadRevealNode>) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator
@@ -18,6 +18,7 @@ public interface IModelFormatProvider
         APrimitive[] geometries,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        bool isShadow = false
     );
 }
