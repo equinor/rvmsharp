@@ -10,7 +10,6 @@
 
     <ItemGroup>
       <PackageReference Include="LibTessDotNet" Version="1.1.15" />
-      <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
     </ItemGroup>
 
     <ItemGroup>
