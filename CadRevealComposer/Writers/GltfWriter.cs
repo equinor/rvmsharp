@@ -121,7 +121,7 @@ public static class GltfWriter
             );
 
             // write indices
-            var indexBufferInt = MemoryMarshal.Cast<byte, uint>(indexBuffer.Content.AsSpan());
+            var indexBufferInt = MemoryMarshal.Cast<byte, int>(indexBuffer.Content.AsSpan());
             sourceMesh.Indices.CopyTo(indexBufferInt);
 
             // write vertices
@@ -227,11 +227,11 @@ public static class GltfWriter
             // write indices
             var indices = sourceMesh.Indices;
             var indexBufferSpan = MemoryMarshal
-                .Cast<byte, uint>(indexBuffer.Content.AsSpan())
+                .Cast<byte, int>(indexBuffer.Content.AsSpan())
                 .Slice(indexOffset, indices.Length);
             for (var i = 0; i < indices.Length; i++)
             {
-                indexBufferSpan[i] = (uint)vertexOffset + indices[i];
+                indexBufferSpan[i] = vertexOffset + indices[i];
             }
 
             // write vertices

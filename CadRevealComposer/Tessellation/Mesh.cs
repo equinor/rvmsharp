@@ -15,12 +15,12 @@ public class Mesh : IEquatable<Mesh>
     /// </summary>
     public Vector3[] Vertices => _vertices;
 
-    public uint[] Indices => _indices;
+    public int[] Indices => _indices;
 
     public int TriangleCount => _indices.Length / 3;
 
     private readonly Vector3[] _vertices;
-    private readonly uint[] _indices;
+    private readonly int[] _indices;
 
     public Mesh(IReadOnlyList<float> vertexes, int[] indexes, float error)
     {
@@ -32,11 +32,11 @@ public class Mesh : IEquatable<Mesh>
             _vertices[i] = new Vector3(vertexes[i * 3], vertexes[i * 3 + 1], vertexes[i * 3 + 2]);
         }
 
-        _indices = new uint[indexes.Length];
+        _indices = new int[indexes.Length];
         Array.Copy(indexes, _indices, indexes.Length);
     }
 
-    public Mesh(Vector3[] vertices, uint[] indices, float error)
+    public Mesh(Vector3[] vertices, int[] indices, float error)
     {
         Error = error;
         _vertices = vertices;

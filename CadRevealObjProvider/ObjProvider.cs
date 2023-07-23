@@ -90,7 +90,7 @@ public class ObjProvider : IModelFormatProvider
     public record ObjMesh
     {
         public string Name { get; init; } = "";
-        public uint[] Triangles { get; init; } = Array.Empty<uint>();
+        public int[] Triangles { get; init; } = Array.Empty<int>();
         public Vector3[] Vertices { get; init; } = Array.Empty<Vector3>();
 
         public Vector3[] Normals { get; init; } = Array.Empty<Vector3>();
@@ -110,9 +110,9 @@ public class ObjProvider : IModelFormatProvider
 
     private static ObjMesh? ReadMeshFromGroup(Group group, LoadResult result)
     {
-        var index = 0u;
+        var index = 0;
         var vertexData = new List<VertexData>();
-        var triangles = new List<uint>();
+        var triangles = new List<int>();
         foreach (Face groupFace in group.Faces)
         {
             Vector3? generatedNormal = null;
