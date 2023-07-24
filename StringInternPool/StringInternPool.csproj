@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Library</OutputType>
+        <Nullable>enable</Nullable>
+        <TargetFrameworks>net7.0;netstandard2.1</TargetFrameworks>
+        <WarningsAsErrors>nullable;</WarningsAsErrors>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
+
+</Project>

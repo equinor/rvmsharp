@@ -5,6 +5,7 @@ using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using Commons;
+using StringInternPool;
 using System.Text.RegularExpressions;
 
 public static class FbxWorkload

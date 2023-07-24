@@ -1,4 +1,4 @@
-namespace Commons;
+﻿namespace StringInternPool;
 
 using System;
 

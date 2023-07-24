@@ -1,6 +1,6 @@
 ﻿namespace RvmSharp;
 
-using Commons;
+using StringInternPool;
 using System;
 using System.Collections.Generic;
 using System.IO;

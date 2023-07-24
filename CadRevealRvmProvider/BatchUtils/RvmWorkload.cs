@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.BatchUtils;
 
-using Commons;
 using RvmSharp;
 using RvmSharp.Containers;
 using RvmSharp.Operations;
+using StringInternPool;
 using System.Text.RegularExpressions;
 
 public static class RvmWorkload
