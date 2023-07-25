@@ -283,25 +283,25 @@ public static class CadRevealComposerRunner
     {
         var shadowGeometry = new List<APrimitive>();
 
-        var testMatrix =
-            Matrix4x4.CreateScale(new Vector3(0.1f))
-            * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
-            * Matrix4x4.CreateTranslation(Vector3.Zero);
-
         foreach (var geometry in realGeometries)
         {
+            // if (geometry is TriangleMesh)
+            // {
+            //     shadowGeometry.Add(geometry);
+            //     continue;
+            // }
+
+            Matrix4x4 shadowBoxMatrix;
+
             switch (geometry)
             {
-                case TriangleMesh:
-                    shadowGeometry.Add(geometry);
-                    break;
                 case GeneralCylinder cylinder:
 
                     if (
                         !cylinder.InstanceMatrix.DecomposeAndNormalize(
-                            out var scale,
-                            out var rotation,
-                            out var position
+                            out _,
+                            out var cylinderRotation,
+                            out var cylinderPosition
                         )
                     )
                     {
@@ -310,34 +310,49 @@ public static class CadRevealComposerRunner
                         );
                     }
 
-                    var height = Vector3.Distance(cylinder.CenterA, cylinder.CenterB);
-                    var newScale = new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, height);
+                    var cylinderHeight = Vector3.Distance(cylinder.CenterA, cylinder.CenterB);
+                    var newScale = new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, cylinderHeight);
 
-                    var newMatrix =
+                    shadowBoxMatrix =
                         Matrix4x4.CreateScale(newScale)
-                        * Matrix4x4.CreateFromQuaternion(rotation)
-                        * Matrix4x4.CreateTranslation(position);
+                        * Matrix4x4.CreateFromQuaternion(cylinderRotation)
+                        * Matrix4x4.CreateTranslation(cylinderPosition);
 
-                    var shadowBox = new Box(
-                        newMatrix,
-                        geometry.TreeIndex,
-                        geometry.Color,
-                        geometry.AxisAlignedBoundingBox
-                    );
-                    shadowGeometry.Add(shadowBox);
-                    shadowGeometry.Add(cylinder);
+                    break;
+                case Cone cone:
+
+                    if (!cone.InstanceMatrix.DecomposeAndNormalize(out _, out var coneRotation, out var conePosition))
+                    {
+                        throw new Exception(
+                            "Failed to decompose matrix to transform. Input Matrix: " + cone.InstanceMatrix
+                        );
+                    }
+
+                    var coneHeight = Vector3.Distance(cone.CenterA, cone.CenterB);
+                    var radius = float.Max(cone.RadiusA, cone.RadiusB);
+                    var shadowConeScale = new Vector3(radius * 2, radius * 2, coneHeight);
+
+                    shadowBoxMatrix =
+                        Matrix4x4.CreateScale(shadowConeScale)
+                        * Matrix4x4.CreateFromQuaternion(coneRotation)
+                        * Matrix4x4.CreateTranslation(conePosition);
+
                     break;
                 default:
-                    var testBox = new Box(
-                        testMatrix,
-                        geometry.TreeIndex,
-                        geometry.Color,
-                        geometry.AxisAlignedBoundingBox
-                    );
-
-                    shadowGeometry.Add(testBox);
+                    shadowBoxMatrix =
+                        Matrix4x4.CreateScale(new Vector3(0.1f))
+                        * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
+                        * Matrix4x4.CreateTranslation(Vector3.Zero);
                     break;
             }
+
+            var shadowBox = new Box(
+                shadowBoxMatrix,
+                geometry.TreeIndex,
+                geometry.Color,
+                geometry.AxisAlignedBoundingBox
+            );
+            shadowGeometry.Add(shadowBox);
         }
 
         return shadowGeometry.ToArray();
