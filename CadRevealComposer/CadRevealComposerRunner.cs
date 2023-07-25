@@ -7,6 +7,7 @@ using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
+using Shadow;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -291,68 +292,7 @@ public static class CadRevealComposerRunner
             //     continue;
             // }
 
-            Matrix4x4 shadowBoxMatrix;
-
-            switch (geometry)
-            {
-                case GeneralCylinder cylinder:
-
-                    if (
-                        !cylinder.InstanceMatrix.DecomposeAndNormalize(
-                            out _,
-                            out var cylinderRotation,
-                            out var cylinderPosition
-                        )
-                    )
-                    {
-                        throw new Exception(
-                            "Failed to decompose matrix to transform. Input Matrix: " + cylinder.InstanceMatrix
-                        );
-                    }
-
-                    var cylinderHeight = Vector3.Distance(cylinder.CenterA, cylinder.CenterB);
-                    var newScale = new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, cylinderHeight);
-
-                    shadowBoxMatrix =
-                        Matrix4x4.CreateScale(newScale)
-                        * Matrix4x4.CreateFromQuaternion(cylinderRotation)
-                        * Matrix4x4.CreateTranslation(cylinderPosition);
-
-                    break;
-                case Cone cone:
-
-                    if (!cone.InstanceMatrix.DecomposeAndNormalize(out _, out var coneRotation, out var conePosition))
-                    {
-                        throw new Exception(
-                            "Failed to decompose matrix to transform. Input Matrix: " + cone.InstanceMatrix
-                        );
-                    }
-
-                    var coneHeight = Vector3.Distance(cone.CenterA, cone.CenterB);
-                    var radius = float.Max(cone.RadiusA, cone.RadiusB);
-                    var shadowConeScale = new Vector3(radius * 2, radius * 2, coneHeight);
-
-                    shadowBoxMatrix =
-                        Matrix4x4.CreateScale(shadowConeScale)
-                        * Matrix4x4.CreateFromQuaternion(coneRotation)
-                        * Matrix4x4.CreateTranslation(conePosition);
-
-                    break;
-                default:
-                    shadowBoxMatrix =
-                        Matrix4x4.CreateScale(new Vector3(0.1f))
-                        * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
-                        * Matrix4x4.CreateTranslation(Vector3.Zero);
-                    break;
-            }
-
-            var shadowBox = new Box(
-                shadowBoxMatrix,
-                geometry.TreeIndex,
-                geometry.Color,
-                geometry.AxisAlignedBoundingBox
-            );
-            shadowGeometry.Add(shadowBox);
+            shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
         }
 
         return shadowGeometry.ToArray();
