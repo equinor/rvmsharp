@@ -75,6 +75,7 @@ public static class RvmCylinderConverter
         var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmCylinder, centerA, centerB);
 
         yield return new Cone(
+            InstanceMatrix: rvmCylinder.Matrix,
             Angle: 0f,
             ArcAngle: 2f * MathF.PI,
             centerA,

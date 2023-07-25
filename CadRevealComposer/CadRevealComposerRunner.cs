@@ -11,8 +11,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
@@ -128,7 +130,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
+        var sectorInfos = sectors.SelectMany(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -218,7 +220,7 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    private static IEnumerable<SceneCreator.SectorInfo> SerializeSector(InternalSector p, string outputDirectory)
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
@@ -239,8 +241,106 @@ public static class CadRevealComposerRunner
         );
 
         if (sectorFilename != null)
+        {
             SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
-        return sectorInfo;
+
+            var shadowSectorFilename = "shadow_" + sectorFilename;
+
+            var shadowSectorInfo = CreateShadowSector(p, shadowSectorFilename);
+            SceneCreator.ExportSectorGeometries(shadowSectorInfo.Geometries, shadowSectorFilename, outputDirectory);
+
+            yield return shadowSectorInfo;
+        }
+        yield return sectorInfo;
+    }
+
+    private static SceneCreator.SectorInfo CreateShadowSector(InternalSector realSector, string shadowSectorFilename)
+    {
+        var estimatedTriangleCount = 8;
+        var estimatedDrawCalls = 1;
+
+        var shadowGeometries = CreateShadowGeometries(realSector.Geometries);
+
+        var shadowSectorInfo = new SceneCreator.SectorInfo(
+            SectorId: realSector.SectorId + 10000,
+            ParentSectorId: realSector.ParentSectorId,
+            Depth: realSector.Depth,
+            Path: realSector.Path,
+            Filename: shadowSectorFilename,
+            EstimatedTriangleCount: estimatedTriangleCount,
+            EstimatedDrawCalls: estimatedDrawCalls,
+            MinNodeDiagonal: realSector.MinNodeDiagonal, // TODO
+            MaxNodeDiagonal: realSector.MaxNodeDiagonal, // TODO
+            Geometries: shadowGeometries,
+            SubtreeBoundingBox: realSector.SubtreeBoundingBox, // TODO can be the same?
+            GeometryBoundingBox: realSector.GeometryBoundingBox // TODO can be the same?
+        );
+
+        return shadowSectorInfo;
+    }
+
+    private static APrimitive[] CreateShadowGeometries(APrimitive[] realGeometries)
+    {
+        var shadowGeometry = new List<APrimitive>();
+
+        var testMatrix =
+            Matrix4x4.CreateScale(new Vector3(0.1f))
+            * Matrix4x4.CreateFromQuaternion(Quaternion.Identity)
+            * Matrix4x4.CreateTranslation(Vector3.Zero);
+
+        foreach (var geometry in realGeometries)
+        {
+            switch (geometry)
+            {
+                case TriangleMesh:
+                    shadowGeometry.Add(geometry);
+                    break;
+                case GeneralCylinder cylinder:
+
+                    if (
+                        !cylinder.InstanceMatrix.DecomposeAndNormalize(
+                            out var scale,
+                            out var rotation,
+                            out var position
+                        )
+                    )
+                    {
+                        throw new Exception(
+                            "Failed to decompose matrix to transform. Input Matrix: " + cylinder.InstanceMatrix
+                        );
+                    }
+
+                    var height = Vector3.Distance(cylinder.CenterA, cylinder.CenterB);
+                    var newScale = new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, height);
+
+                    var newMatrix =
+                        Matrix4x4.CreateScale(newScale)
+                        * Matrix4x4.CreateFromQuaternion(rotation)
+                        * Matrix4x4.CreateTranslation(position);
+
+                    var shadowBox = new Box(
+                        newMatrix,
+                        geometry.TreeIndex,
+                        geometry.Color,
+                        geometry.AxisAlignedBoundingBox
+                    );
+                    shadowGeometry.Add(shadowBox);
+                    shadowGeometry.Add(cylinder);
+                    break;
+                default:
+                    var testBox = new Box(
+                        testMatrix,
+                        geometry.TreeIndex,
+                        geometry.Color,
+                        geometry.AxisAlignedBoundingBox
+                    );
+
+                    shadowGeometry.Add(testBox);
+                    break;
+            }
+        }
+
+        return shadowGeometry.ToArray();
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(

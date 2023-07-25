@@ -25,6 +25,7 @@ public static class RvmSphereConverter
         var radius = rvmSphere.Radius * scale.X;
         var diameter = radius * 2f;
         yield return new EllipsoidSegment(
+            rvmSphere.Matrix,
             radius,
             radius,
             diameter,
