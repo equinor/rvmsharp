@@ -5,9 +5,9 @@ using System;
 using System.Numerics;
 using Utils;
 
-public static class ConeShadowCreator
+public static class EccentricConeCreator
 {
-    public static APrimitive CreateShadow(this Cone cone)
+    public static APrimitive CreateShadow(this EccentricCone cone)
     {
         if (!cone.InstanceMatrix.DecomposeAndNormalize(out _, out var rotation, out var position))
         {

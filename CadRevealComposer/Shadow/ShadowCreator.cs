@@ -1,6 +1,7 @@
 namespace CadRevealComposer.Shadow;
 
 using Primitives;
+using System;
 using System.Numerics;
 
 public static class ShadowCreator
@@ -9,11 +10,22 @@ public static class ShadowCreator
     {
         switch (primitive)
         {
+            case TriangleMesh triangleMesh: // TODO: Find a way to enclose with rotated box? AABB creates way too large shadow boxes
+                return triangleMesh;
+            case Box box: // Boxes can stay as they are
+                return box;
             case GeneralCylinder cylinder:
                 return cylinder.CreateShadow();
             case Cone cone:
                 return cone.CreateShadow();
+            case EccentricCone eccentricCone:
+                return eccentricCone.CreateShadow();
+            case EllipsoidSegment ellipsoidSegment:
+                return ellipsoidSegment.CreateShadow();
+            // Dummies used while developing
             default:
+
+                // throw new Exception("Some primitives were not handled when creating shadows");
 
                 var dummyScale = new Vector3(0.1f);
                 var dummyRotation = Quaternion.Identity;

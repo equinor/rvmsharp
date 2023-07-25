@@ -286,13 +286,21 @@ public static class CadRevealComposerRunner
 
         foreach (var geometry in realGeometries)
         {
-            // if (geometry is TriangleMesh)
-            // {
-            //     shadowGeometry.Add(geometry);
-            //     continue;
-            // }
-
-            shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
+            switch (geometry)
+            {
+                // Skip circles because they are only used as caps, and shadow boxes does not need them
+                case Circle:
+                    continue;
+                // Boxes can stay as they are
+                default:
+                    // if (geometry is TriangleMesh)
+                    // {
+                    //     shadowGeometry.Add(geometry);
+                    //     continue;
+                    // }
+                    shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
+                    break;
+            }
         }
 
         return shadowGeometry.ToArray();

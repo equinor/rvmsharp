@@ -9,7 +9,7 @@ public static class CylinderShadowCreator
 {
     public static APrimitive CreateShadow(this GeneralCylinder cylinder)
     {
-        if (!cylinder.InstanceMatrix.DecomposeAndNormalize(out _, out var cylinderRotation, out var cylinderPosition))
+        if (!cylinder.InstanceMatrix.DecomposeAndNormalize(out _, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + cylinder.InstanceMatrix);
         }
@@ -19,8 +19,8 @@ public static class CylinderShadowCreator
 
         var shadowBoxMatrix =
             Matrix4x4.CreateScale(newScale)
-            * Matrix4x4.CreateFromQuaternion(cylinderRotation)
-            * Matrix4x4.CreateTranslation(cylinderPosition);
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(position);
 
         return new Box(shadowBoxMatrix, cylinder.TreeIndex, cylinder.Color, cylinder.AxisAlignedBoundingBox);
     }
