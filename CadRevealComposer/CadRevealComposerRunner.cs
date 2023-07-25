@@ -288,16 +288,11 @@ public static class CadRevealComposerRunner
         {
             switch (geometry)
             {
-                // Skip circles because they are only used as caps, and shadow boxes does not need them
+                // Skip circles and rings because they are only used as caps, and shadow boxes do not need them
                 case Circle:
+                case GeneralRing:
                     continue;
-                // Boxes can stay as they are
                 default:
-                    // if (geometry is TriangleMesh)
-                    // {
-                    //     shadowGeometry.Add(geometry);
-                    //     continue;
-                    // }
                     shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
                     break;
             }

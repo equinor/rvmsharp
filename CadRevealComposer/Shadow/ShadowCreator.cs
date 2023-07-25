@@ -10,18 +10,27 @@ public static class ShadowCreator
     {
         switch (primitive)
         {
-            case TriangleMesh triangleMesh: // TODO: Find a way to enclose with rotated box? AABB creates way too large shadow boxes
-                return triangleMesh;
-            case Box box: // Boxes can stay as they are
-                return box;
-            case GeneralCylinder cylinder:
-                return cylinder.CreateShadow();
-            case Cone cone:
-                return cone.CreateShadow();
-            case EccentricCone eccentricCone:
-                return eccentricCone.CreateShadow();
-            case EllipsoidSegment ellipsoidSegment:
-                return ellipsoidSegment.CreateShadow();
+            // case TriangleMesh triangleMesh: // TODO: Find a way to enclose with rotated box? AABB creates way too large shadow boxes
+            //     return triangleMesh;
+            // case Box box: // Boxes can stay as they are
+            //     return box;
+            // case GeneralCylinder cylinder:
+            //     return cylinder.CreateShadow();
+            // case Cone cone:
+            //     return cone.CreateShadow();
+            // case EccentricCone eccentricCone:
+            //     return eccentricCone.CreateShadow();
+            // case EllipsoidSegment ellipsoidSegment:
+            //     return ellipsoidSegment.CreateShadow();
+            // case Nut nut: // Nut is currently not used
+            //     return nut;
+            case TorusSegment torusSegment:
+                return torusSegment.CreateShadow();
+            case Quad quad: // Can stay as they are
+                return quad;
+            case Trapezium trapezium: // Can stay as they are
+                return trapezium;
+
             // Dummies used while developing
             default:
 
