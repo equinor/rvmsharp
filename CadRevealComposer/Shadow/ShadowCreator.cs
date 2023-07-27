@@ -2,7 +2,6 @@ namespace CadRevealComposer.Shadow;
 
 using Primitives;
 using System;
-using System.Numerics;
 
 public static class ShadowCreator
 {
@@ -10,48 +9,50 @@ public static class ShadowCreator
     {
         switch (primitive)
         {
-            // case TriangleMesh triangleMesh: // TODO: Find a way to enclose with rotated box? AABB creates way too large shadow boxes
-            //     return triangleMesh;
-            // case Box box: // Boxes can stay as they are
-            //     return box;
-            // case GeneralCylinder cylinder:
-            //     return cylinder.CreateShadow();
-            // case Cone cone:
-            //     return cone.CreateShadow();
-            // case EccentricCone eccentricCone:
-            //     return eccentricCone.CreateShadow();
-            // case EllipsoidSegment ellipsoidSegment:
-            //     return ellipsoidSegment.CreateShadow();
-            // case Nut nut: // Nut is currently not used
-            //     return nut;
+            case InstancedMesh instancedMesh: // TODO: It is uneccessary to calculate the box for every instance, as the template is the same for each group
+                return instancedMesh.CreateShadow();
+            case TriangleMesh triangleMesh: // TODO: Find a way to enclose with rotated box? AABB creates way too large shadow boxes
+                return triangleMesh;
+            case Box box: // Boxes can stay as they are
+                return box;
+            case GeneralCylinder cylinder:
+                return cylinder.CreateShadow();
+            case Cone cone:
+                return cone.CreateShadow();
+            case EccentricCone eccentricCone:
+                return eccentricCone.CreateShadow();
+            case EllipsoidSegment ellipsoidSegment:
+                return ellipsoidSegment.CreateShadow();
+            case Nut nut: // Nut is currently not used
+                return nut;
             case TorusSegment torusSegment:
                 return torusSegment.CreateShadow();
-            case Quad quad: // Can stay as they are
+            case Quad quad: // TODO: Can stay as they are?
                 return quad;
-            case Trapezium trapezium: // Can stay as they are
+            case Trapezium trapezium: // TODO: Can stay as they are
                 return trapezium;
 
             // Dummies used while developing
             default:
 
-                // throw new Exception("Some primitives were not handled when creating shadows");
+                throw new Exception("Some primitives were not handled when creating shadows");
 
-                var dummyScale = new Vector3(0.1f);
-                var dummyRotation = Quaternion.Identity;
-                var dummyPosition = Vector3.Zero;
+            //var dummyScale = new Vector3(0.1f);
+            //var dummyRotation = Quaternion.Identity;
+            //var dummyPosition = Vector3.Zero;
 
-                var dummyMatrix =
-                    Matrix4x4.CreateScale(dummyScale)
-                    * Matrix4x4.CreateFromQuaternion(dummyRotation)
-                    * Matrix4x4.CreateTranslation(dummyPosition);
+            //var dummyMatrix =
+            //    Matrix4x4.CreateScale(dummyScale)
+            //    * Matrix4x4.CreateFromQuaternion(dummyRotation)
+            //    * Matrix4x4.CreateTranslation(dummyPosition);
 
-                var dummyBox = new Box(
-                    dummyMatrix,
-                    primitive.TreeIndex,
-                    primitive.Color,
-                    primitive.AxisAlignedBoundingBox
-                );
-                return dummyBox;
+            //var dummyBox = new Box(
+            //    dummyMatrix,
+            //    primitive.TreeIndex,
+            //    primitive.Color,
+            //    primitive.AxisAlignedBoundingBox
+            //);
+            //return dummyBox;
         }
     }
 }
