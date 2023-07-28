@@ -12,10 +12,8 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
@@ -170,16 +168,41 @@ public static class CadRevealComposerRunner
             "μ DLsize",
             "v DLsize"
         );
+
+        var shadowSectors = sectorsWithDownloadSize
+            .Where(x => x.Filename != null && x.Filename!.StartsWith("shadow"))
+            .ToArray();
+        var realSectors = sectorsWithDownloadSize.Except(shadowSectors).ToArray();
+
+        Console.WriteLine($"Found {realSectors.Count()} real sectors and {shadowSectors.Count()} shadow sectors");
+
         // Add stuff you would like for a quick overview here:
         using (new TeamCityLogBlock("Sector Stats"))
         {
-            Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
+            Console.WriteLine($"Total sector Count: {sectorsWithDownloadSize.Length}");
+            Console.WriteLine($"Total real sector Count: {realSectors.Length}");
+            Console.WriteLine($"Total shadow sector Count: {shadowSectors.Length}");
+
             Console.WriteLine(
                 $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB"
             );
             Console.WriteLine(
+                $"Sum all real sectors .glb size megabytes: {BytesToMegabytes(realSectors.Sum(x => x.DownloadSize)):F2}MB"
+            );
+            Console.WriteLine(
+                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(shadowSectors.Sum(x => x.DownloadSize)):F2}MB"
+            );
+
+            Console.WriteLine(
                 $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}"
             );
+            Console.WriteLine(
+                $"Real Sectors Estimated Triangle Count: {realSectors.Sum(x => x.EstimatedTriangleCount)}"
+            );
+            Console.WriteLine(
+                $"Shadow Sectors Estimated Triangle Count: {shadowSectors.Sum(x => x.EstimatedTriangleCount)}"
+            );
+
             Console.WriteLine($"Depth Stats:");
             Console.WriteLine(
                 $"|{headers.Item1, 5}|{headers.Item2, 7}|{headers.Item3, 10}|{headers.Item4, 11}|{headers.Item5, 10}|{headers.Item6, 10}|{headers.Item7, 10}|{headers.Item8, 17}|{headers.Item9, 10}|{headers.Item10, 8}|"
@@ -257,13 +280,12 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo CreateShadowSector(InternalSector realSector, string shadowSectorFilename)
     {
-        var estimatedTriangleCount = 8;
-        var estimatedDrawCalls = 1;
-
         var shadowGeometries = CreateShadowGeometries(realSector.Geometries);
 
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(shadowGeometries);
+
         var shadowSectorInfo = new SceneCreator.SectorInfo(
-            SectorId: realSector.SectorId + 10000,
+            SectorId: realSector.SectorId + 10000, // TODO
             ParentSectorId: realSector.ParentSectorId,
             Depth: realSector.Depth,
             Path: realSector.Path,
