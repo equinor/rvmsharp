@@ -292,11 +292,11 @@ public static class CadRevealComposerRunner
             Filename: shadowSectorFilename,
             EstimatedTriangleCount: estimatedTriangleCount,
             EstimatedDrawCalls: estimatedDrawCalls,
-            MinNodeDiagonal: realSector.MinNodeDiagonal, // TODO
-            MaxNodeDiagonal: realSector.MaxNodeDiagonal, // TODO
+            MinNodeDiagonal: realSector.MinNodeDiagonal,
+            MaxNodeDiagonal: realSector.MaxNodeDiagonal,
             Geometries: shadowGeometries,
-            SubtreeBoundingBox: realSector.SubtreeBoundingBox, // TODO can be the same?
-            GeometryBoundingBox: realSector.GeometryBoundingBox // TODO can be the same?
+            SubtreeBoundingBox: realSector.SubtreeBoundingBox,
+            GeometryBoundingBox: realSector.GeometryBoundingBox
         );
 
         return shadowSectorInfo;
@@ -305,6 +305,8 @@ public static class CadRevealComposerRunner
     private static APrimitive[] CreateShadowGeometries(APrimitive[] realGeometries)
     {
         var shadowGeometry = new List<APrimitive>();
+
+        // TODO: Investigate, can everything made into a box be instances now?
 
         foreach (var geometry in realGeometries)
         {
