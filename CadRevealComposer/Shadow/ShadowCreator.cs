@@ -27,10 +27,6 @@ public static class ShadowCreator
                 return nut;
             case TorusSegment torusSegment:
                 return torusSegment.CreateShadow();
-            case Quad quad: // TODO: Can stay as they are?
-                return quad;
-            case Trapezium trapezium: // TODO: Can stay as they are
-                return trapezium;
 
             // Dummies used while developing
             default:

@@ -312,9 +312,10 @@ public static class CadRevealComposerRunner
         {
             switch (geometry)
             {
-                // Skip circles and rings because they are only used as caps, and shadow boxes do not need them
+                // Skip circles, rings and quads because they are only used as caps, and shadow boxes do not need them
                 case Circle:
                 case GeneralRing:
+                case Quad:
                     continue;
                 default:
                     shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
