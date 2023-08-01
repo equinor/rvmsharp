@@ -23,9 +23,6 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
 
-        var mediumPrioritizedNodes = allNodes.Where(x => x.Priority == NodePriority.Medium).ToArray();
-        var highPrioritizedNodes = allNodes.Where(x => x.Priority == NodePriority.High).ToArray();
-
         var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
@@ -283,8 +280,11 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
-            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
+            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1 || x.Priority == NodePriority.High).ToArray(),
+            2
+                => nodes
+                    .Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2 || x.Priority == NodePriority.Medium)
+                    .ToArray(),
             3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
             _ => nodes.ToArray(),
         };
