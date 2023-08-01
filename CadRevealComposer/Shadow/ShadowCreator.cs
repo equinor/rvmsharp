@@ -12,7 +12,7 @@ public static class ShadowCreator
             case InstancedMesh instancedMesh: // TODO: It is uneccessary to calculate the box for every instance, as the template is the same for each group
                 return instancedMesh.CreateShadow();
             case TriangleMesh triangleMesh:
-                return triangleMesh.CreateShadow();
+                return triangleMesh; // TODO
             case Box box: // Boxes can stay as they are
                 return box;
             case GeneralCylinder cylinder:
