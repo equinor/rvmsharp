@@ -25,7 +25,7 @@ public static class TriangleMeshShadowCreator
 
         if (largeSizeCounts >= 2)
         {
-            return SimplifyTriangleMesh(triangleMesh);
+            return triangleMesh;
         }
 
         var scale = bbSize;
