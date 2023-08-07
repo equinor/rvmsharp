@@ -1,6 +1,6 @@
 ﻿namespace CadRevealComposer;
 
-using CadRevealFbxProvider.BatchUtils;
+using CadRevealComposer.Utils.MeshTools;
 using Configuration;
 using IdProviders;
 using ModelFormatProvider;
