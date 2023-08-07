@@ -48,6 +48,7 @@ public static class RvmRectangularTorusConverter
         var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
         yield return new Cone(
+            rvmRectangularTorus.Matrix,
             0,
             arcAngle,
             centerA,
@@ -64,6 +65,7 @@ public static class RvmRectangularTorusConverter
         if (radiusInner > 0)
         {
             yield return new Cone(
+                rvmRectangularTorus.Matrix,
                 0,
                 arcAngle,
                 centerA,

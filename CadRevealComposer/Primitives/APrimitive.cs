@@ -17,6 +17,7 @@ public sealed record Circle(
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record Cone(
+    Matrix4x4 InstanceMatrix,
     float Angle,
     float ArcAngle,
     Vector3 CenterA,
@@ -30,6 +31,7 @@ public sealed record Cone(
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record EccentricCone(
+    Matrix4x4 InstanceMatrix,
     Vector3 CenterA,
     Vector3 CenterB,
     Vector3 Normal,
@@ -41,6 +43,7 @@ public sealed record EccentricCone(
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record EllipsoidSegment(
+    Matrix4x4 InstanceMatrix,
     float HorizontalRadius,
     float VerticalRadius,
     float Height,
@@ -52,6 +55,7 @@ public sealed record EllipsoidSegment(
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record GeneralCylinder(
+    Matrix4x4 InstanceMatrix,
     float Angle,
     float ArcAngle,
     Vector3 CenterA,

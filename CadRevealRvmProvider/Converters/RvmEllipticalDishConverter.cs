@@ -35,6 +35,7 @@ public static class RvmEllipticalDishConverter
             * Matrix4x4.CreateTranslation(position);
 
         yield return new EllipsoidSegment(
+            rvmEllipticalDish.Matrix,
             horizontalRadius,
             verticalRadius,
             verticalRadius,
