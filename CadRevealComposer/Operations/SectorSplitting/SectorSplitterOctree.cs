@@ -234,7 +234,7 @@ public class SectorSplitterOctree : ISectorSplitter
         string rootPath
     )
     {
-        // TODO: Currently creates one (or zero) sector
+        // TODO: Currently creates one (or zero) sector(s)
         var path = $"{rootPath}/{prioritizedSectorId}";
 
         var minDiagonal = highlyPrioritizedNodes.Any() ? highlyPrioritizedNodes.Min(n => n.Diagonal) : 0;
@@ -320,7 +320,7 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1 || x.Priority == NodePriority.High).ToArray(),
+            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
             2
                 => nodes
                     .Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2 || x.Priority == NodePriority.Medium)

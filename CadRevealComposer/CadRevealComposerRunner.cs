@@ -39,7 +39,7 @@ public static class CadRevealComposerRunner
         var nodePriorityFiltering = new PriorityMapping(
             composerParameters.PrioritizedDisciplinesRegex,
             composerParameters.PrioritizedNodeNamesRegex
-        ); // TODO: Add in composerParameters
+        );
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
@@ -231,7 +231,7 @@ public static class CadRevealComposerRunner
     {
         var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
 
-        if (p.Prioritized)
+        if (p.Prioritized && sectorFilename != null)
         {
             sectorFilename = $"pri_{sectorFilename}";
         }

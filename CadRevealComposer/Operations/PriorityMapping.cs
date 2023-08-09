@@ -12,7 +12,7 @@ public enum NodePriority
 
 public class PriorityMapping
 {
-    private readonly Regex? _disciplineRegex; //
+    private readonly Regex? _disciplineRegex;
     private readonly Regex? _nodeNameRegex;
 
     public PriorityMapping(PrioritizedDisciplinesRegex disciplineRegex, PrioritizedNodeNamesRegex nodeNameRegex)
