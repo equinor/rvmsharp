@@ -9,7 +9,7 @@ public static class ShadowCreator
     {
         switch (primitive)
         {
-            case InstancedMesh instancedMesh: // TODO: It is uneccessary to calculate the box for every instance, as the template is the same for each group
+            case InstancedMesh instancedMesh: // TODO: It is probably uneccessary to calculate the box for every instance, as the template is the same for each group
                 return instancedMesh.CreateShadow();
             case TriangleMesh triangleMesh:
                 return triangleMesh.CreateShadow();
@@ -28,27 +28,8 @@ public static class ShadowCreator
             case TorusSegment torusSegment:
                 return torusSegment.CreateShadow();
 
-            // Dummies used while developing
             default:
-
                 throw new Exception("Some primitives were not handled when creating shadows");
-
-            //var dummyScale = new Vector3(0.1f);
-            //var dummyRotation = Quaternion.Identity;
-            //var dummyPosition = Vector3.Zero;
-
-            //var dummyMatrix =
-            //    Matrix4x4.CreateScale(dummyScale)
-            //    * Matrix4x4.CreateFromQuaternion(dummyRotation)
-            //    * Matrix4x4.CreateTranslation(dummyPosition);
-
-            //var dummyBox = new Box(
-            //    dummyMatrix,
-            //    primitive.TreeIndex,
-            //    primitive.Color,
-            //    primitive.AxisAlignedBoundingBox
-            //);
-            //return dummyBox;
         }
     }
 }

@@ -16,14 +16,14 @@ public static class EllipsoidSegmentShadowCreator
             );
         }
 
-        var shadowConeScale = new Vector3(
+        var scale = new Vector3(
             ellipsoidSegment.HorizontalRadius * 2,
             ellipsoidSegment.HorizontalRadius * 2,
             ellipsoidSegment.Height
         );
 
         var shadowBoxMatrix =
-            Matrix4x4.CreateScale(shadowConeScale)
+            Matrix4x4.CreateScale(scale)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 

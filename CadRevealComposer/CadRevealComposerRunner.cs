@@ -306,8 +306,6 @@ public static class CadRevealComposerRunner
     {
         var shadowGeometry = new List<APrimitive>();
 
-        // TODO: Investigate, can everything made into a box be instances now?
-
         foreach (var geometry in realGeometries)
         {
             switch (geometry)

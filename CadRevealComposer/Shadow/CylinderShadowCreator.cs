@@ -14,11 +14,11 @@ public static class CylinderShadowCreator
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + cylinder.InstanceMatrix);
         }
 
-        var cylinderHeight = Vector3.Distance(cylinder.CenterA, cylinder.CenterB);
-        var newScale = new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, cylinderHeight);
+        var height = Vector3.Distance(cylinder.CenterA, cylinder.CenterB);
+        var scale = new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, height);
 
         var shadowBoxMatrix =
-            Matrix4x4.CreateScale(newScale)
+            Matrix4x4.CreateScale(scale)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 

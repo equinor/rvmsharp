@@ -7,7 +7,7 @@ using Utils;
 
 public static class TorusSegmentShadowCreator
 {
-    private const float SizeThreshold = 10f;
+    private const float SizeThreshold = 10f; // Arbitrary value
 
     public static APrimitive CreateShadow(this TorusSegment torusSegment)
     {
@@ -22,10 +22,8 @@ public static class TorusSegmentShadowCreator
         if (torusSegment.Radius > SizeThreshold)
             return torusSegment;
 
-        // TODO Control this
         var height = torusSegment.TubeRadius * 2 * 0.001f;
         var side = torusSegment.Radius * 2 * 0.001f;
-
         var scale = new Vector3(side, side, height);
 
         var shadowBoxMatrix =

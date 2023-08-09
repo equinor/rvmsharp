@@ -14,12 +14,12 @@ public static class ConeShadowCreator
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + cone.InstanceMatrix);
         }
 
-        var coneHeight = Vector3.Distance(cone.CenterA, cone.CenterB);
+        var height = Vector3.Distance(cone.CenterA, cone.CenterB);
         var radius = float.Max(cone.RadiusA, cone.RadiusB);
-        var shadowConeScale = new Vector3(radius * 2, radius * 2, coneHeight);
+        var scale = new Vector3(radius * 2, radius * 2, height);
 
         var shadowBoxMatrix =
-            Matrix4x4.CreateScale(shadowConeScale)
+            Matrix4x4.CreateScale(scale)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
