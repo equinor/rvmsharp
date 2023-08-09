@@ -283,12 +283,14 @@ public static class CadRevealComposerRunner
         {
             SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
 
-            var shadowSectorFilename = "shadow_" + sectorFilename;
+            if (!p.Prioritized)
+            {
+                var shadowSectorFilename = "shadow_" + sectorFilename;
+                var shadowSectorInfo = CreateShadowSector(p, shadowSectorFilename);
+                SceneCreator.ExportSectorGeometries(shadowSectorInfo.Geometries, shadowSectorFilename, outputDirectory);
 
-            var shadowSectorInfo = CreateShadowSector(p, shadowSectorFilename);
-            SceneCreator.ExportSectorGeometries(shadowSectorInfo.Geometries, shadowSectorFilename, outputDirectory);
-
-            yield return shadowSectorInfo;
+                yield return shadowSectorInfo;
+            }
         }
         yield return sectorInfo;
     }
