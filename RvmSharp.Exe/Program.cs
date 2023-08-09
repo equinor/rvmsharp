@@ -11,6 +11,7 @@
     using Exporters;
     using Operations;
     using Primitives;
+    using System.Text;
     using System.Text.RegularExpressions;
 
     static class Program
@@ -40,20 +41,24 @@
             progressBar.Tick();
             progressBar.Dispose();
 
+            var nodeIdOffset = 0;
+            if (File.Exists(options.NodeIdFile))
+            {
+                using var reader = new StreamReader(File.OpenRead(options.NodeIdFile), Encoding.ASCII);
+                nodeIdOffset = Convert.ToInt32(reader.ReadToEnd());
+            }
+            
             var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(node =>
                 CollectGeometryNodes(node))).ToArray();
             progressBar = new ProgressBar(leafs.Length, "Tessellating");
             var meshes = leafs.AsParallel().Select((leaf, i) =>
             {
-                var nodeId = options.NodeId + 1 + (uint)i;
+                var nodeId = nodeIdOffset + 1 + i;
                 progressBar.Message = leaf.Name;
                 var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
-                if (nodeId.HasValue)
+                foreach (Mesh tessellatedMesh in tessellatedMeshes)
                 {
-                    foreach (Mesh tessellatedMesh in tessellatedMeshes)
-                    {
-                        tessellatedMesh.ApplySingleColor(nodeId.Value);
-                    }
+                        tessellatedMesh.ApplySingleColor(nodeId);
                 }
                 progressBar.Tick();
                 return (leaf.Name, tesselatedMeshes: tessellatedMeshes);
@@ -72,6 +77,11 @@
 
             progressBar.Dispose();
 
+            using var writer = new StreamWriter(File.Create(options.NodeIdFile), Encoding.ASCII);
+            {
+                writer.WriteLine(nodeIdOffset + leafs.Length);
+            }
+            
             Console.WriteLine("Done!");
             return 0;
         }
