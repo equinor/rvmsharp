@@ -229,9 +229,15 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
     {
+        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+
+        if (p.Prioritized)
+        {
+            sectorFilename = $"pri_{sectorFilename}";
+        }
+
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,
