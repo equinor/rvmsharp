@@ -8,9 +8,10 @@
     {
         public readonly float Error;
         public readonly Vector3[] Vertices;
-        public readonly Vector3[] VertexColors;
         public readonly Vector3[] Normals;
         public readonly int[] Triangles;
+        
+        public Vector3[] VertexColors;
 
         public Mesh(float[] vertexData, float[] normalData, int[] triangleData, float error)
         {
@@ -44,7 +45,7 @@
             VertexColors = Array.Empty<Vector3>();
         }
 
-        public Mesh(Vector3[] vertices, Vector3[] normals, int[] triangles, Vector3[] vertexColors, float error)
+        private Mesh(Vector3[] vertices, Vector3[] normals, int[] triangles, Vector3[] vertexColors, float error)
         {
             if (vertices.Length != normals.Length)
                 throw new ArgumentException("Vertex and normal arrays must have equal length");
@@ -68,7 +69,7 @@
             }
         }
 
-        public void ApplySingleColor(uint value)
+        public void ApplySingleColor(int value)
         {
             if (value > 0xffffff)
             {
