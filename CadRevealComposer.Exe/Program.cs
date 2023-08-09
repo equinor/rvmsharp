@@ -58,11 +58,31 @@ public static class Program
                 );
         }
 
+        if (options.PrioritizedDisciplineRegex != null)
+        { // Ensure regex is valid.
+            if (!RegexUtils.IsValidRegex(options.PrioritizedDisciplineRegex))
+                throw new ArgumentException(
+                    $"The {nameof(options.PrioritizedDisciplineRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.PrioritizedDisciplineRegex}"
+                );
+        }
+
+        if (options.PrioritizedNodeNameRegex != null)
+        { // Ensure regex is valid.
+            if (!RegexUtils.IsValidRegex(options.PrioritizedNodeNameRegex))
+                throw new ArgumentException(
+                    $"The {nameof(options.PrioritizedNodeNameRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.PrioritizedNodeNameRegex}"
+                );
+        }
+
         var toolsParameters = new ComposerParameters(
             options.NoInstancing,
             options.SingleSector,
             options.SplitIntoZones,
-            new NodeNameExcludeRegex(options.NodeNameExcludeRegex)
+            new NodeNameExcludeRegex(options.NodeNameExcludeRegex),
+            new PrioritizedDisciplinesRegex(options.PrioritizedDisciplineRegex),
+            new PrioritizedNodeNamesRegex(options.PrioritizedNodeNameRegex)
         );
 
         if (options.SplitIntoZones)

@@ -32,7 +32,9 @@ public class FbxProviderTests
         false,
         true,
         false,
-        new NodeNameExcludeRegex(null)
+        new NodeNameExcludeRegex(null),
+        new PrioritizedDisciplinesRegex(null),
+        new PrioritizedNodeNamesRegex(null)
     );
 
     private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
@@ -141,7 +143,8 @@ public class FbxProviderTests
             inputDirectoryCorrect.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            new PriorityMapping(new PrioritizedDisciplinesRegex(null), new PrioritizedNodeNamesRegex(null))
         );
 
         Assert.That(nodes, Has.Count.EqualTo(28));

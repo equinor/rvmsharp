@@ -3,22 +3,34 @@ namespace CadRevealRvmProvider.Converters;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
+using System.Drawing;
 
 internal static class RvmStoreToCadRevealNodesConverter
 {
     public static CadRevealNode[] RvmStoreToCadRevealNodes(
         RvmStore rvmStore,
         TreeIndexGenerator treeIndexGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        PriorityMapping priorityMapping
     )
     {
         var cadRevealRootNodes = rvmStore.RvmFiles
             .SelectMany(f => f.Model.Children)
-            .Select(root => CollectGeometryNodesRecursive(root, parent: null, treeIndexGenerator, nodeNameFiltering))
+            .Select(
+                root =>
+                    CollectGeometryNodesRecursive(
+                        root,
+                        parent: null,
+                        treeIndexGenerator,
+                        nodeNameFiltering,
+                        priorityMapping
+                    )
+            )
             .WhereNotNull()
             .ToArray();
 
@@ -38,7 +50,8 @@ internal static class RvmStoreToCadRevealNodesConverter
         RvmNode root,
         CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        PriorityMapping priorityMapping
     )
     {
         if (nodeNameFiltering.ShouldExcludeNode(root.Name))
@@ -71,14 +84,16 @@ internal static class RvmStoreToCadRevealNodesConverter
                                 },
                                 newNode,
                                 treeIndexGenerator,
-                                nodeNameFiltering
+                                nodeNameFiltering,
+                                priorityMapping
                             );
                         case RvmNode rvmNode:
                             return CollectGeometryNodesRecursive(
                                 rvmNode,
                                 newNode,
                                 treeIndexGenerator,
-                                nodeNameFiltering
+                                nodeNameFiltering,
+                                priorityMapping
                             );
                         default:
                             throw new Exception();
@@ -91,7 +106,16 @@ internal static class RvmStoreToCadRevealNodesConverter
         {
             childrenCadNodes = root.Children
                 .OfType<RvmNode>()
-                .Select(n => CollectGeometryNodesRecursive(n, newNode, treeIndexGenerator, nodeNameFiltering))
+                .Select(
+                    n =>
+                        CollectGeometryNodesRecursive(
+                            n,
+                            newNode,
+                            treeIndexGenerator,
+                            nodeNameFiltering,
+                            priorityMapping
+                        )
+                )
                 .WhereNotNull()
                 .ToArray();
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
@@ -114,6 +138,21 @@ internal static class RvmStoreToCadRevealNodesConverter
         newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
             ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
             : null;
+
+        if (newNode.Attributes.Count > 0)
+        {
+            var discipline = newNode.Attributes["Discipline"];
+            var name = newNode.Name;
+            var priority = priorityMapping.GetPriority(discipline, name);
+
+            var geometriesWithPriority = new List<APrimitive>();
+            foreach (var geometry in newNode.Geometries)
+            {
+                geometriesWithPriority.Add(geometry with { NodePriority = priority });
+            }
+
+            newNode.Geometries = geometriesWithPriority.ToArray();
+        }
 
         return newNode;
     }
