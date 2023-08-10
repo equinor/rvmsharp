@@ -6,7 +6,7 @@ using System.Numerics;
 
 public static class TriangleMeshShadowCreator
 {
-    private const float SizeTreshold = 3.0f; // Arbitrary number
+    private const float SizeTreshold = 1.0f; // Arbitrary number
 
     public static APrimitive CreateShadow(this TriangleMesh triangleMesh)
     {
@@ -43,7 +43,7 @@ public static class TriangleMeshShadowCreator
     private static TriangleMesh SimplifyTriangleMesh(TriangleMesh triangleMesh)
     {
         var mesh = triangleMesh.Mesh;
-        var simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, 5.0f);
+        var simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, 1.0f);
 
         return new TriangleMesh(
             simplifiedMesh,
