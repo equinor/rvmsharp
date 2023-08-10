@@ -6,7 +6,8 @@ using System.Numerics;
 
 public static class TriangleMeshShadowCreator
 {
-    private const float SizeTreshold = 1.0f; // Arbitrary number
+    // Public to be accessible by tests
+    public const float SizeTreshold = 1.0f; // Arbitrary number
 
     public static APrimitive CreateShadow(this TriangleMesh triangleMesh)
     {
