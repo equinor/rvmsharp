@@ -22,8 +22,8 @@ public static class TorusSegmentShadowCreator
         if (torusSegment.Radius > SizeThreshold)
             return torusSegment;
 
-        var height = torusSegment.TubeRadius * 2 * 0.001f;
-        var side = torusSegment.Radius * 2 * 0.001f;
+        var height = torusSegment.TubeRadius * 2;
+        var side = torusSegment.Radius * 2;
         var scale = new Vector3(side, side, height);
 
         var shadowBoxMatrix =
