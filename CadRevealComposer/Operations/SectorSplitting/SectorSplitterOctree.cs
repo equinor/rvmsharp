@@ -32,13 +32,20 @@ public class SectorSplitterOctree : ISectorSplitter
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
 
-        var prioritizedSectorId = (uint)sectorIdGenerator.GetNextId();
-
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
         if (highlyPrioritizedNodes.Any())
         {
-            yield return CreatePrioritizedSectors(prioritizedSectorId, rootSectorId, highlyPrioritizedNodes, rootPath);
+            var prioritizedSectors = CreatePrioritizedSectors(
+                rootSectorId,
+                highlyPrioritizedNodes,
+                rootPath,
+                sectorIdGenerator
+            );
+            foreach (var prioritizedSector in prioritizedSectors)
+            {
+                yield return prioritizedSector;
+            }
         }
 
         //Order nodes by diagonal size
@@ -95,6 +102,11 @@ public class SectorSplitterOctree : ISectorSplitter
         int depthToStartSplittingGeometry
     )
     {
+        if (nodes[0].Priority == NodePriority.High)
+        {
+            Console.WriteLine("msad");
+        }
+
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
          * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
          * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
@@ -227,35 +239,26 @@ public class SectorSplitterOctree : ISectorSplitter
         return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
     }
 
-    private InternalSector CreatePrioritizedSectors(
-        uint prioritizedSectorId,
+    private IEnumerable<InternalSector> CreatePrioritizedSectors(
         uint parentSectorId,
         Node[] highlyPrioritizedNodes,
-        string rootPath
+        string rootPath,
+        SequentialIdGenerator sectorIdGenerator
     )
     {
-        // TODO: Currently creates one (or zero) sector(s)
-        var path = $"{rootPath}/{prioritizedSectorId}";
+        var boundingBox = highlyPrioritizedNodes.CalculateBoundingBox();
+        var startingDepth = CalculateStartSplittingDepth(boundingBox);
 
-        var minDiagonal = highlyPrioritizedNodes.Any() ? highlyPrioritizedNodes.Min(n => n.Diagonal) : 0;
-        var maxDiagonal = highlyPrioritizedNodes.Any() ? highlyPrioritizedNodes.Max(n => n.Diagonal) : 0;
-        var geometries = highlyPrioritizedNodes.SelectMany(n => n.Geometries).ToArray();
-        var geometryBoundingBox = geometries.CalculateBoundingBox();
-
-        var subtreeBoundingBox = highlyPrioritizedNodes.CalculateBoundingBox();
-
-        return new InternalSector(
-            prioritizedSectorId,
-            parentSectorId,
+        var sectors = SplitIntoSectorsRecursive(
+            highlyPrioritizedNodes,
             1,
-            path,
-            minDiagonal,
-            maxDiagonal,
-            geometries,
-            subtreeBoundingBox,
-            geometryBoundingBox,
-            true
+            rootPath,
+            parentSectorId,
+            sectorIdGenerator,
+            startingDepth
         );
+
+        return sectors.Select(sector => sector with { Prioritized = true });
     }
 
     private InternalSector CreateSector(
@@ -320,7 +323,7 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
+            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1 || x.Priority == NodePriority.High).ToArray(),
             2
                 => nodes
                     .Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2 || x.Priority == NodePriority.Medium)
