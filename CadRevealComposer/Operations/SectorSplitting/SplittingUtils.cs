@@ -173,4 +173,36 @@ public static class SplittingUtils
             })
             .ToArray();
     }
+
+    public static InternalSector CreateSector(
+        Node[] nodes,
+        uint sectorId,
+        uint? parentSectorId,
+        string parentPath,
+        int depth,
+        BoundingBox subtreeBoundingBox
+    )
+    {
+        var path = $"{parentPath}/{sectorId}";
+
+        var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
+        var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
+        var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+        var geometryBoundingBox = geometries.CalculateBoundingBox();
+
+        var tooFewInstancesHandler = new TooFewInstancesHandler();
+        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+
+        return new InternalSector(
+            sectorId,
+            parentSectorId,
+            depth,
+            path,
+            minDiagonal,
+            maxDiagonal,
+            geometries,
+            subtreeBoundingBox,
+            geometryBoundingBox
+        );
+    }
 }

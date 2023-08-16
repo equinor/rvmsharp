@@ -1,30 +1,28 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
+using CadRevealComposer.Configuration;
 using IdProviders;
 using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using Utils;
 
 public class SectorSplitterLinear : ISectorSplitter
 {
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        Node[] allNodes,
+        uint parentId,
+        string parentPath,
+        SequentialIdGenerator sectorIdGenerator
+    )
     {
-        var sectorIdGenerator = new SequentialIdGenerator();
-        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
-        var rootPath = "/0";
-
         var boundingBox = allNodes.CalculateBoundingBox();
-
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-        yield return CreateRootSector(rootSectorId, rootPath, boundingBox);
 
         var bbMax = boundingBox.Max;
         var bbMin = boundingBox.Min;
 
-        int sectorSideSize = 5; // Size of box, assume cubes
+        int sectorSideSize = 10; // Size of box, assume cubes
 
         var xSize = bbMax.X - bbMin.X;
         var ySize = bbMax.Y - bbMin.Y;
@@ -81,8 +79,8 @@ public class SectorSplitterLinear : ISectorSplitter
                     yield return CreateSector(
                         nodes.ToArray(),
                         sectorId,
-                        rootSectorId,
-                        rootPath,
+                        parentId,
+                        parentPath,
                         1,
                         nodes.CalculateBoundingBox()
                     );

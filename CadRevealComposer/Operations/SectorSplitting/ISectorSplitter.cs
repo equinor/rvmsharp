@@ -1,9 +1,14 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
-using Primitives;
+using CadRevealComposer.IdProviders;
 using System.Collections.Generic;
 
 public interface ISectorSplitter
 {
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries);
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        Node[] nodes,
+        uint parentId,
+        string parentPath,
+        SequentialIdGenerator sectorIdGenerator
+    );
 }

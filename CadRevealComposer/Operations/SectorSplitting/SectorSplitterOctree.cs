@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {
@@ -17,47 +16,24 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        Node[] nodes,
+        uint parentId,
+        string parentPath,
+        SequentialIdGenerator sectorIdGenerator
+    )
     {
-        var sectorIdGenerator = new SequentialIdGenerator();
-
-        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
-        var highlyPrioritizedNodes = allNodes.Where(x => x.Priority == NodePriority.High).ToArray();
-        var nodes = allNodes.Except(highlyPrioritizedNodes).ToArray();
-
-        var (regularNodes, outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
-        var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
-        var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
-
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-        var rootPath = "/0";
-
-        yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
-
-        if (highlyPrioritizedNodes.Any())
-        {
-            var prioritizedSectors = CreatePrioritizedSectors(
-                rootSectorId,
-                highlyPrioritizedNodes,
-                rootPath,
-                sectorIdGenerator
-            );
-            foreach (var prioritizedSector in prioritizedSectors)
-            {
-                yield return prioritizedSector;
-            }
-        }
-
+        var boundingBoxEncapsulatingAllNodes = nodes.CalculateBoundingBox();
         //Order nodes by diagonal size
-        var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
+        var sortedNodes = nodes.OrderByDescending(n => n.Diagonal).ToArray();
 
         var sectors = SplitIntoSectorsRecursive(
                 sortedNodes,
                 1,
-                rootPath,
-                rootSectorId,
+                parentId,
+                parentPath,
                 sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                CalculateStartSplittingDepth(boundingBoxEncapsulatingAllNodes)
             )
             .ToArray();
 
@@ -65,53 +41,25 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             yield return sector;
         }
-
-        // Add outliers to special outliers sector
-        var excludedOutliersCount = outlierNodes.Length;
-        if (excludedOutliersCount > 0)
-        {
-            var boundingBoxEncapsulatingOutlierNodes = outlierNodes.CalculateBoundingBox();
-
-            Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
-            var outlierSectors = SplitIntoSectorsRecursive(
-                    outlierNodes.ToArray(),
-                    20, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
-                    rootPath,
-                    rootSectorId,
-                    sectorIdGenerator,
-                    CalculateStartSplittingDepth(boundingBoxEncapsulatingOutlierNodes)
-                )
-                .ToArray();
-
-            foreach (var sector in outlierSectors)
-            {
-                Console.WriteLine(
-                    $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
-                );
-                yield return sector;
-            }
-        }
     }
 
+    /// <summary>
+    /// Recursively divides space 1into eight voxels of about equal size
+    /// (each dimension X,Y,Z is divided in half). Note: Voxels might have
+    /// partial overlap, to place nodes that is between two sectors without
+    /// duplicating the data. Important: Geometries are grouped by NodeId and
+    /// the group as a whole is placed into the same voxel(that encloses all
+    /// the geometries in the group).
+    /// </summary>
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
         Node[] nodes,
         int recursiveDepth,
-        string parentPath,
         uint? parentSectorId,
+        string parentPath,
         SequentialIdGenerator sectorIdGenerator,
         int depthToStartSplittingGeometry
     )
     {
-        if (nodes[0].Priority == NodePriority.High)
-        {
-            Console.WriteLine("msad");
-        }
-
-        /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
-         * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
-         * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
-         */
-
         if (nodes.Length == 0)
         {
             yield break;
@@ -145,7 +93,7 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
 
-            yield return CreateSector(
+            yield return SplittingUtils.CreateSector(
                 mainVoxelNodes,
                 sectorId,
                 parentSectorId,
@@ -167,7 +115,7 @@ public class SectorSplitterOctree : ISectorSplitter
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
 
-                yield return CreateSector(
+                yield return SplittingUtils.CreateSector(
                     mainVoxelNodes,
                     sectorId,
                     parentSectorId,
@@ -191,8 +139,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 var sectors = SplitIntoSectorsRecursive(
                     subVoxelNodes,
                     recursiveDepth + 1,
-                    parentPathForChildren,
                     parentSectorIdForChildren,
+                    parentPathForChildren,
                     sectorIdGenerator,
                     depthToStartSplittingGeometry
                 );
@@ -221,8 +169,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 var sectors = SplitIntoSectorsRecursive(
                     voxelGroup.ToArray(),
                     recursiveDepth + 1,
-                    parentPathForChildren,
                     parentSectorIdForChildren,
+                    parentPathForChildren,
                     sectorIdGenerator,
                     depthToStartSplittingGeometry
                 );
@@ -252,45 +200,13 @@ public class SectorSplitterOctree : ISectorSplitter
         var sectors = SplitIntoSectorsRecursive(
             highlyPrioritizedNodes,
             1,
-            rootPath,
             parentSectorId,
+            rootPath,
             sectorIdGenerator,
             startingDepth
         );
 
         return sectors.Select(sector => sector with { Prioritized = true });
-    }
-
-    private InternalSector CreateSector(
-        Node[] nodes,
-        uint sectorId,
-        uint? parentSectorId,
-        string parentPath,
-        int depth,
-        BoundingBox subtreeBoundingBox
-    )
-    {
-        var path = $"{parentPath}/{sectorId}";
-
-        var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
-        var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
-        var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
-        var geometryBoundingBox = geometries.CalculateBoundingBox();
-
-        var tooFewInstancesHandler = new TooFewInstancesHandler();
-        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
-
-        return new InternalSector(
-            sectorId,
-            parentSectorId,
-            depth,
-            path,
-            minDiagonal,
-            maxDiagonal,
-            geometries,
-            subtreeBoundingBox,
-            geometryBoundingBox
-        );
     }
 
     private static int CalculateStartSplittingDepth(BoundingBox boundingBox)

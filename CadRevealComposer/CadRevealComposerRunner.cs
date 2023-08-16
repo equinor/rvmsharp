@@ -119,20 +119,7 @@ public static class CadRevealComposerRunner
     {
         var stopwatch = Stopwatch.StartNew();
 
-        ISectorSplitter splitter;
-        if (composerParameters.SingleSector)
-        {
-            splitter = new SectorSplitterSingle();
-        }
-        else if (composerParameters.SplitIntoZones)
-        {
-            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
-        }
-        else
-        {
-            splitter = new SectorSplitterOctree();
-        }
-
+        var splitter = new SectorSplitter();
         var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
