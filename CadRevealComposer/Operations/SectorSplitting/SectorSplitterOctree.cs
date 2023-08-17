@@ -239,11 +239,8 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1 || x.Priority == NodePriority.High).ToArray(),
-            2
-                => nodes
-                    .Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2 || x.Priority == NodePriority.Medium)
-                    .ToArray(),
+            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
+            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
             3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
             _ => nodes.ToArray(),
         };
