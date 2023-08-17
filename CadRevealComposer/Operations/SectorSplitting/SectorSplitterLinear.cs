@@ -1,12 +1,10 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using CadRevealComposer.Configuration;
 using IdProviders;
 using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Utils;
 
 public class SectorSplitterLinear : ISectorSplitter
 {
@@ -76,7 +74,7 @@ public class SectorSplitterLinear : ISectorSplitter
 
                     var sectorId = (uint)sectorIdGenerator.GetNextId();
 
-                    yield return CreateSector(
+                    yield return SplittingUtils.CreateSector(
                         nodes.ToArray(),
                         sectorId,
                         parentId,
@@ -92,37 +90,5 @@ public class SectorSplitterLinear : ISectorSplitter
     private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
         return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
-    }
-
-    private InternalSector CreateSector(
-        Node[] nodes,
-        uint sectorId,
-        uint? parentSectorId,
-        string parentPath,
-        int depth,
-        BoundingBox subtreeBoundingBox
-    )
-    {
-        var path = $"{parentPath}/{sectorId}";
-
-        var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
-        var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
-        var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
-        var geometryBoundingBox = geometries.CalculateBoundingBox();
-
-        var tooFewInstancesHandler = new TooFewInstancesHandler();
-        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
-
-        return new InternalSector(
-            sectorId,
-            parentSectorId,
-            depth,
-            path,
-            minDiagonal,
-            maxDiagonal,
-            geometries,
-            subtreeBoundingBox,
-            geometryBoundingBox
-        );
     }
 }
