@@ -9,6 +9,9 @@ public static class ConeShadowCreator
 {
     public static APrimitive CreateShadow(this Cone cone)
     {
+        if (cone.ArcAngle < Math.PI) // Too small arc angle will give a box that is too large
+            return cone;
+
         if (!cone.InstanceMatrix.DecomposeAndNormalize(out _, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + cone.InstanceMatrix);
