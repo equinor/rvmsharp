@@ -182,33 +182,6 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
-    {
-        return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
-    }
-
-    private IEnumerable<InternalSector> CreatePrioritizedSectors(
-        uint parentSectorId,
-        Node[] highlyPrioritizedNodes,
-        string rootPath,
-        SequentialIdGenerator sectorIdGenerator
-    )
-    {
-        var boundingBox = highlyPrioritizedNodes.CalculateBoundingBox();
-        var startingDepth = CalculateStartSplittingDepth(boundingBox);
-
-        var sectors = SplitIntoSectorsRecursive(
-            highlyPrioritizedNodes,
-            1,
-            parentSectorId,
-            rootPath,
-            sectorIdGenerator,
-            startingDepth
-        );
-
-        return sectors.Select(sector => sector with { Prioritized = true });
-    }
-
     private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
     {
         // If we start splitting too low in the octree, we might end up with way too many sectors

@@ -1,15 +1,14 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
-using CadRevealComposer.IdProviders;
-using CadRevealComposer.Primitives;
-using SQLitePCL;
+using IdProviders;
+using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 public class SectorSplitter
 {
-    private SequentialIdGenerator _sectorIdGenerator;
+    private readonly SequentialIdGenerator _sectorIdGenerator;
 
     public SectorSplitter()
     {
@@ -32,13 +31,14 @@ public class SectorSplitter
         var (regularNodes, outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var nodeGroupsByPriority = regularNodes.GroupBy(x => x.Priority).ToDictionary(g => g.Key, g => g.ToArray());
 
+        var octreeSplitter = new SectorSplitterOctree();
+
         if (outlierNodes.Any())
         {
-            var outlierSectors = HandleOutliers(outlierNodes, rootId, rootPath);
+            var outlierSectors = HandleOutliers(outlierNodes, rootId, rootPath, octreeSplitter);
             allSectors.AddRange(outlierSectors);
         }
 
-        var octreeSplitter = new SectorSplitterOctree();
         var regularSectors = octreeSplitter.SplitIntoSectors(
             nodeGroupsByPriority[NodePriority.Default],
             rootId,
@@ -61,11 +61,18 @@ public class SectorSplitter
         return allSectors.ToArray();
     }
 
-    private InternalSector[] HandleOutliers(Node[] outlierNodes, uint parentId, string parentPath)
+    private InternalSector[] HandleOutliers(
+        Node[] outlierNodes,
+        uint parentId,
+        string parentPath,
+        ISectorSplitter splitter
+    )
     {
         Console.WriteLine($"Warning, adding {outlierNodes.Length} outliers to special sector(s).");
 
-        var outlierSectors = SplitWithOctree(outlierNodes, parentId, parentPath); // TODO: StartDepth? 20
+        var outlierSectors = splitter
+            .SplitIntoSectors(outlierNodes, parentId, parentPath, _sectorIdGenerator)
+            .ToArray();
 
         foreach (var sector in outlierSectors)
         {
@@ -75,18 +82,6 @@ public class SectorSplitter
         }
 
         return outlierSectors.ToArray();
-    }
-
-    private InternalSector[] SplitWithOctree(Node[] nodes, uint parentId, string parentPath)
-    {
-        var splitter = new SectorSplitterOctree();
-        var sectors = splitter.SplitIntoSectors(nodes, parentId, parentPath, _sectorIdGenerator);
-        return sectors.ToArray();
-    }
-
-    private InternalSector[] SplitWithLinear(APrimitive[] primitives, uint parentId, string parentPath)
-    {
-        throw new NotImplementedException();
     }
 
     private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
