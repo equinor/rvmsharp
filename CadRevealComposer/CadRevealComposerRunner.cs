@@ -14,6 +14,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
@@ -203,6 +204,28 @@ public static class CadRevealComposerRunner
                 $"Shadow Sectors Estimated Triangle Count: {shadowSectors.Sum(x => x.EstimatedTriangleCount)}"
             );
 
+            Console.WriteLine(
+                $"Shadow Sectors Estimated Triangle Count: {shadowSectors.Sum(x => x.EstimatedTriangleCount)}"
+            );
+
+            Console.WriteLine($"Real sectors Primitives Count: {realSectors.SelectMany(x => x.Geometries).Count()}");
+            Console.WriteLine(
+                $"Real sectors Triangle Mesh Count: {realSectors.SelectMany(x => x.Geometries.Where(g => g is TriangleMesh)).Count()}"
+            );
+            Console.WriteLine(
+                $"Real sectors Instanced Mesh Count: {realSectors.SelectMany(x => x.Geometries.Where(g => g is InstancedMesh)).Count()}"
+            );
+
+            Console.WriteLine(
+                $"Shadow sectors Primitives Count: {shadowSectors.SelectMany(x => x.Geometries).Count()}"
+            );
+            Console.WriteLine(
+                $"Shadow sectors Triangle Mesh Count: {shadowSectors.SelectMany(x => x.Geometries.Where(g => g is TriangleMesh)).Count()}"
+            );
+            Console.WriteLine(
+                $"Shadow sectors Instanced Mesh Count: {shadowSectors.SelectMany(x => x.Geometries.Where(g => g is InstancedMesh)).Count()}"
+            );
+
             Console.WriteLine($"Depth Stats:");
             Console.WriteLine(
                 $"|{headers.Item1, 5}|{headers.Item2, 7}|{headers.Item3, 10}|{headers.Item4, 11}|{headers.Item5, 10}|{headers.Item6, 10}|{headers.Item7, 10}|{headers.Item8, 17}|{headers.Item9, 10}|{headers.Item10, 8}|"
@@ -285,7 +308,7 @@ public static class CadRevealComposerRunner
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(shadowGeometries);
 
         var shadowSectorInfo = new SceneCreator.SectorInfo(
-            SectorId: realSector.SectorId + 10000, // TODO
+            SectorId: realSector.SectorId + 100000, // TODO
             ParentSectorId: realSector.ParentSectorId,
             Depth: realSector.Depth,
             Path: realSector.Path,
@@ -304,24 +327,82 @@ public static class CadRevealComposerRunner
 
     private static APrimitive[] CreateShadowGeometries(APrimitive[] realGeometries)
     {
-        var shadowGeometry = new List<APrimitive>();
-
-        foreach (var geometry in realGeometries)
+        var groups = realGeometries.GroupBy(x => x.TreeIndex).ToDictionary(x => x.Key, x => x.ToArray());
+        foreach (var group in groups)
         {
-            switch (geometry)
+            if (group.Value.Any(x => x is TriangleMesh or InstancedMesh))
+                continue;
+
+            if (group.Value.Length > 2)
             {
-                // Skip circles, rings and quads because they are only used as caps, and shadow boxes do not need them
-                case Circle:
-                case GeneralRing:
-                case Quad:
-                    continue;
-                default:
-                    shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
-                    break;
+                var firstPrimitive = group.Value.First();
+
+                Vector3 min = firstPrimitive.AxisAlignedBoundingBox.Min;
+                Vector3 max = firstPrimitive.AxisAlignedBoundingBox.Max;
+
+                foreach (var primitive in group.Value)
+                {
+                    var bbMin = primitive.AxisAlignedBoundingBox.Min;
+                    var bbMax = primitive.AxisAlignedBoundingBox.Max;
+
+                    if (bbMin.X < min.X)
+                        min.X = bbMin.X;
+                    if (bbMin.Y < min.Y)
+                        min.Y = bbMin.Y;
+                    if (bbMin.Z < min.Z)
+                        min.Z = bbMin.Z;
+
+                    if (bbMax.X > max.X)
+                        max.X = bbMax.X;
+                    if (bbMax.Y > max.Y)
+                        max.Y = bbMax.Y;
+                    if (bbMax.Z > max.Z)
+                        max.Z = bbMax.Z;
+                }
+
+                var shadowBB = new BoundingBox(min, max);
+
+                var scale = shadowBB.Extents;
+                var rotation = Quaternion.Identity;
+                var position = shadowBB.Center;
+
+                var shadowBoxMatrix =
+                    Matrix4x4.CreateScale(scale)
+                    * Matrix4x4.CreateFromQuaternion(rotation)
+                    * Matrix4x4.CreateTranslation(position);
+
+                var shadowPrimitive = new Box(
+                    shadowBoxMatrix,
+                    firstPrimitive.TreeIndex,
+                    firstPrimitive.Color,
+                    shadowBB
+                );
+
+                var shadowPrimitiveArray = new APrimitive[] { shadowPrimitive };
+                groups[group.Key] = shadowPrimitiveArray;
             }
         }
 
-        return shadowGeometry.ToArray();
+        return groups.SelectMany(x => x.Value).ToArray();
+
+        //var shadowGeometry = new List<APrimitive>();
+
+        //foreach (var geometry in realGeometries)
+        //{
+        //    switch (geometry)
+        //    {
+        //        // Skip circles, rings and quads because they are only used as caps, and shadow boxes do not need them
+        //        case Circle:
+        //        case GeneralRing:
+        //        case Quad:
+        //            continue;
+        //        default:
+        //            shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
+        //            break;
+        //    }
+        //}
+
+        //return shadowGeometry.ToArray();
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
