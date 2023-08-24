@@ -88,12 +88,20 @@ public static class FbxWorkload
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
+            Dictionary<string, Dictionary<string, string>>? attributes = null;
+            if(infoTextFilename != null)
+            {
+                var lines = File.ReadAllLines(infoTextFilename);
+                attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
+            }
+
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
                 treeIndexGenerator,
                 instanceIdGenerator,
-                nodeNameFiltering
+                nodeNameFiltering,
+                attributes
             );
 
             if (rootNodeConverted == null)
@@ -102,12 +110,8 @@ public static class FbxWorkload
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
             // attach attribute info to the nodes if there is any
-            if (infoTextFilename != null)
+            if (attributes != null)
             {
-                var lines = File.ReadAllLines(infoTextFilename);
-
-                var attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
-
                 bool totalMismatch = true;
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)
@@ -129,6 +133,7 @@ public static class FbxWorkload
                         {
                             Console.WriteLine($"Data Id {id} does not exist in the attribute file.");
                         }
+
                     }
                 }
 

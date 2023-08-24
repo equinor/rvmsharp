@@ -8,6 +8,8 @@ public class ScaffoldingAttributeParser
 
     public Dictionary<string, Dictionary<string, string>> ParseAttributes(string[] fileLines)
     {
+        Console.WriteLine("Reading attribute file.");
+
         var attributeRawData = CsvReader.ReadFromText(
             String.Join(Environment.NewLine, fileLines),
             new CsvOptions()

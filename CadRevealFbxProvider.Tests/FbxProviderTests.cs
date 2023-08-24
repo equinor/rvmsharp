@@ -165,7 +165,8 @@ public class FbxProviderTests
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
@@ -205,6 +206,7 @@ public class FbxProviderTests
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null,
             minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.,
         );
 

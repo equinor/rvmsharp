@@ -7,6 +7,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Drawing;
+using System.Text.RegularExpressions;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -15,6 +16,7 @@ public static class FbxNodeToCadRevealNodeConverter
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         NodeNameFiltering nodeNameFiltering,
+        Dictionary<string, Dictionary<string, string>>? attributes,
         int minInstanceCountThreshold = 2
     )
     {
@@ -30,7 +32,8 @@ public static class FbxNodeToCadRevealNodeConverter
             instanceIdGenerator,
             meshInstanceLookup,
             nodeNameFiltering,
-            geometriesThatShouldBeInstanced
+            geometriesThatShouldBeInstanced,
+            attributes
         );
     }
 
@@ -41,7 +44,8 @@ public static class FbxNodeToCadRevealNodeConverter
         InstanceIdGenerator instanceIdGenerator,
         Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
         NodeNameFiltering nodeNameFiltering,
-        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced
+        IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced,
+        Dictionary<string, Dictionary<string, string>>? attributes
     )
     {
         var name = FbxNodeWrapper.GetNodeName(node);
@@ -51,6 +55,27 @@ public static class FbxNodeToCadRevealNodeConverter
         var id = treeIndexGenerator.GetNextId();
         var geometry = ReadGeometry(id, node, instanceIdGenerator, meshInstanceLookup, geometriesThatShouldBeInstanced);
 
+        var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
+
+        if(attributes != null)
+        {
+            var match = fbxNameIdRegex.Match(name);
+            if (match.Success)
+            {
+                var idNode = match.Groups[1].Value;
+
+                if (attributes[idNode].ContainsKey("Work order"))
+                {
+                    if (attributes[idNode]["Work order"].Length == 0)
+                    {
+                        Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
+                        return null;
+                    }
+                    
+                }
+            }
+        }
+        
         var cadRevealNode = new CadRevealNode
         {
             TreeIndex = id,
@@ -71,7 +96,8 @@ public static class FbxNodeToCadRevealNodeConverter
                 instanceIdGenerator,
                 meshInstanceLookup,
                 nodeNameFiltering,
-                geometriesThatShouldBeInstanced
+                geometriesThatShouldBeInstanced,
+                attributes
             );
 
             if (childCadRevealNode != null)
