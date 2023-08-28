@@ -51,10 +51,14 @@ public static class CadRevealComposerRunner
                 $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
             );
 
-            if (cadRevealNodes.Count > 0)
+            if (cadRevealNodes.Count
+                > 0
+               )
             {
                 // collect all nodes for later sector division of the entire scene
-                nodesToExport.AddRange(cadRevealNodes);
+                nodesToExport.
+                    
+                    AddRange(cadRevealNodes);
 
                 var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
