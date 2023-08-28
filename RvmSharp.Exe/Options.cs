@@ -26,7 +26,7 @@
         [Option('t', "tolerance", Default = 0.1f, Required = false, HelpText = "Tessellation tolerance")]
         public float Tolerance { get; }
         
-        [Option("nodeidfile", Default = null, Required = false, HelpText = "Node ID to start counting from, if this parameter is set Node Id will be stored in vertex color channels of the meshes")]
+        [Option("nodeidfile", Default = null, Required = false, HelpText = "ASCII file containing node ID to start counting from. Node Id will be stored in vertex color channels of the meshes")]
         public string NodeIdFile { get; }
     }
 }
