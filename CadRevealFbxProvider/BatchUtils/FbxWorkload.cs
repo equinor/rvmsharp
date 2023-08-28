@@ -89,7 +89,7 @@ public static class FbxWorkload
             (string fbxFilename, string? infoTextFilename) = filePair;
 
             Dictionary<string, Dictionary<string, string>>? attributes = null;
-            if(infoTextFilename != null)
+            if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
                 attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
@@ -133,7 +133,6 @@ public static class FbxWorkload
                         {
                             Console.WriteLine($"Data Id {id} does not exist in the attribute file.");
                         }
-
                     }
                 }
 
