@@ -57,7 +57,7 @@ public static class FbxNodeToCadRevealNodeConverter
 
         var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
 
-        if(attributes != null)
+        if (attributes != null)
         {
             var match = fbxNameIdRegex.Match(name);
             if (match.Success)
@@ -71,7 +71,6 @@ public static class FbxNodeToCadRevealNodeConverter
                         Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
                         return null;
                     }
-                    
                 }
                 else
                 {
@@ -80,7 +79,7 @@ public static class FbxNodeToCadRevealNodeConverter
                 }
             }
         }
-        
+
         var cadRevealNode = new CadRevealNode
         {
             TreeIndex = id,
