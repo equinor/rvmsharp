@@ -64,7 +64,7 @@ public static class FbxNodeToCadRevealNodeConverter
             {
                 var idNode = match.Groups[1].Value;
 
-                if (attributes[idNode].ContainsKey("Work order"))
+                if (attributes.ContainsKey(idNode) && attributes[idNode].ContainsKey("Work order"))
                 {
                     if (attributes[idNode]["Work order"].Length == 0)
                     {
@@ -72,6 +72,11 @@ public static class FbxNodeToCadRevealNodeConverter
                         return null;
                     }
                     
+                }
+                else
+                {
+                    Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
+                    return null;
                 }
             }
         }
