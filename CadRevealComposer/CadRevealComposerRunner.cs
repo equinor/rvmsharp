@@ -226,6 +226,13 @@ public static class CadRevealComposerRunner
                 $"Shadow sectors Instanced Mesh Count: {shadowSectors.SelectMany(x => x.Geometries.Where(g => g is InstancedMesh)).Count()}"
             );
 
+            Console.WriteLine($"Total number of nodes: {TotalNumberOfnodes}");
+            Console.WriteLine($"Count of nodes with more than one primitive: {CountOfSectors}");
+            Console.WriteLine($"Nodes with a single primitive: {SinglePrimitiveNodes}");
+            Console.WriteLine($"Nodes with a single triangle: {SinglePrimitiveTriangle}");
+            Console.WriteLine($"Nodes with a single instance: {SinglePrimitiveInstance}");
+            Console.WriteLine($"Nodes with a multiple geometries: {MultipleGeometries}");
+
             Console.WriteLine($"Depth Stats:");
             Console.WriteLine(
                 $"|{headers.Item1, 5}|{headers.Item2, 7}|{headers.Item3, 10}|{headers.Item4, 11}|{headers.Item5, 10}|{headers.Item6, 10}|{headers.Item7, 10}|{headers.Item8, 17}|{headers.Item9, 10}|{headers.Item10, 8}|"
@@ -325,16 +332,45 @@ public static class CadRevealComposerRunner
         return shadowSectorInfo;
     }
 
+    public static int CountOfSectors = 0;
+    public static int TotalNumberOfnodes = 0;
+    public static int SinglePrimitiveNodes = 0;
+    public static int SinglePrimitiveTriangle = 0;
+    public static int SinglePrimitiveInstance = 0;
+    public static int MultipleGeometries = 0;
+
     private static APrimitive[] CreateShadowGeometries(APrimitive[] realGeometries)
     {
         var groups = realGeometries.GroupBy(x => x.TreeIndex).ToDictionary(x => x.Key, x => x.ToArray());
         foreach (var group in groups)
         {
-            if (group.Value.Any(x => x is TriangleMesh or InstancedMesh))
+            TotalNumberOfnodes++;
+            int primitivesCount = group.Value.Where(x => x is not TriangleMesh or InstancedMesh).Count();
+            int triangleCount = group.Value.Where(x => x is TriangleMesh).Count();
+            int instancedCount = group.Value.Where(x => x is InstancedMesh).Count();
+
+            if (group.Value.Count() == 1)
+            {
+                if (group.Value.First() is TriangleMesh)
+                    SinglePrimitiveTriangle++;
+                else if (group.Value.First() is InstancedMesh)
+                    SinglePrimitiveInstance++;
+
+                SinglePrimitiveNodes++;
+            }
+            else
+            {
+                if (group.Value.Count() >= 1)
+                    MultipleGeometries++;
+            }
+
+            if (group.Value.All(x => x is InstancedMesh || x is TriangleMesh))
                 continue;
 
-            if (group.Value.Length > 2)
+            if (group.Value.Length > 1)
             {
+                CountOfSectors++;
+
                 var firstPrimitive = group.Value.First();
 
                 Vector3 min = firstPrimitive.AxisAlignedBoundingBox.Min;
