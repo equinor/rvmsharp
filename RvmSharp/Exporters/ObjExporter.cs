@@ -37,6 +37,11 @@
         public void WriteMesh(Mesh mesh)
         {
             var writeColors = mesh.VertexColors.Length > 0;
+
+            if (writeColors && mesh.Vertices.Length != mesh.VertexColors.Length)
+            {
+                throw new ArgumentException("Vertex and color arrays must have equal length");
+            }
             
             for (int i = 0; i < mesh.Vertices.Length; i++)
             {
