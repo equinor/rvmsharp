@@ -10,6 +10,7 @@ using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Drawing;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -57,40 +58,9 @@ public static class FbxNodeToCadRevealNodeConverter
         var id = treeIndexGenerator.GetNextId();
         var geometry = ReadGeometry(id, node, instanceIdGenerator, meshInstanceLookup, geometriesThatShouldBeInstanced);
 
-        var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
-
         if (attributes != null)
-        {
-            var match = fbxNameIdRegex.Match(name);
-            if (match.Success)
-            {
-                var idNode = match.Groups[1].Value;
-
-                // Some models contain trash, i.e., objects that were intended to be removed were not deleted,
-                // but landed somewhere far away from the model).
-                // This is likely to happen in the future according to our domain expert.
-                //
-                // As a consequence, the bounding box becomes very big(encompasses the trash as well) and
-                // becomes unusable for the GoTo functionality.
-                //
-                // Our domain expert confirmed that we can(hopefully) fix this issue by ignoring all parts that
-                // do now have attributes(empty fields) in the attribute file.
-
-                if (attributes.ContainsKey(idNode) && attributes[idNode].ContainsKey("Work order"))
-                {
-                    if (attributes[idNode]["Work order"].Length == 0)
-                    {
-                        Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
-                        return null;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
-                    return null;
-                }
-            }
-        }
+            if (!validateNodeAttributes(attributes, name))
+                return null;
 
         var cadRevealNode = new CadRevealNode
         {
@@ -214,5 +184,41 @@ public static class FbxNodeToCadRevealNodeConverter
         );
 
         return triangleMesh;
+    }
+
+    // Some models contain trash, i.e., objects that were intended to be removed were not deleted,
+    // but landed somewhere far away from the model).
+    // This is likely to happen in the future according to our domain expert.
+    //
+    // As a consequence, the bounding box becomes very big(encompasses the trash as well) and
+    // becomes unusable for the GoTo functionality.
+    //
+    // Our domain expert confirmed that we can(hopefully) fix this issue by ignoring all parts that
+    // do now have attributes(empty fields) in the attribute file.
+    private static bool validateNodeAttributes(Dictionary<string, Dictionary<string, string>> attributes, string name)
+    {
+        var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
+
+        var match = fbxNameIdRegex.Match(name);
+        if (match.Success)
+        {
+            var idNode = match.Groups[1].Value;
+
+            if (attributes.ContainsKey(idNode) && attributes[idNode].ContainsKey("Work order"))
+            {
+                if (attributes[idNode]["Work order"].Length == 0)
+                {
+                    Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
+                    return false;
+                }
+            }
+            else
+            {
+                Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
+                return false;
+            }
+        }
+
+        return true;
     }
 }
