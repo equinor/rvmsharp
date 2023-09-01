@@ -67,12 +67,12 @@ public class ObjExporterTests
     [Test]
     public void WriteMesh_WithoutColor()
     {
-        const string expectedString = """
-                                      v 1.000000 3.000000 -2.000000
-                                      vn 1.000000 3.000000 -2.000000
-                                      s off
-                                      f 2//2 3//3 1//1
-                                      """;
+        string expectedString = """
+                                v 1.000000 3.000000 -2.000000
+                                vn 1.000000 3.000000 -2.000000
+                                s off
+                                f 2//2 3//3 1//1
+                                """.ReplaceLineEndings();
 
         Vector3[] vertices = { new(1, 2, 3) };
         Vector3[] normals = { new(1, 2, 3) };
@@ -93,12 +93,12 @@ public class ObjExporterTests
     [Test]
     public void WriteMesh_WithColor()
     {
-        const string expectedString = """
-                                      v 3.000000 5.000000 -4.000000 0.111111 0.222222 0.333333
-                                      vn 6.000000 8.000000 -7.000000
-                                      s off
-                                      f 2//2 3//3 1//1
-                                      """;
+        string expectedString = """
+                                v 3.000000 5.000000 -4.000000 0.111111 0.222222 0.333333
+                                vn 6.000000 8.000000 -7.000000
+                                s off
+                                f 2//2 3//3 1//1
+                                """.ReplaceLineEndings();
 
         Vector3[] vertices = { new(3, 4, 5) };
         Vector3[] normals = { new(6, 7, 8) };
