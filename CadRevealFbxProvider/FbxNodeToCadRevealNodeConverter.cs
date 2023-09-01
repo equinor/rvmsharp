@@ -6,7 +6,9 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Drawing;
+using System.IO;
 using System.Text.RegularExpressions;
 
 public static class FbxNodeToCadRevealNodeConverter
@@ -63,6 +65,16 @@ public static class FbxNodeToCadRevealNodeConverter
             if (match.Success)
             {
                 var idNode = match.Groups[1].Value;
+
+                // Some models contain trash, i.e., objects that were intended to be removed were not deleted,
+                // but landed somewhere far away from the model).
+                // This is likely to happen in the future according to our domain expert.
+                //
+                // As a consequence, the bounding box becomes very big(encompasses the trash as well) and
+                // becomes unusable for the GoTo functionality.
+                //
+                // Our domain expert confirmed that we can(hopefully) fix this issue by ignoring all parts that
+                // do now have attributes(empty fields) in the attribute file.
 
                 if (attributes.ContainsKey(idNode) && attributes[idNode].ContainsKey("Work order"))
                 {
