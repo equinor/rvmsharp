@@ -11,7 +11,7 @@ public class GeometryDistributionStatsTests
         // Arrange
         var primitives = new APrimitive[]
         {
-            // ReSharper disable AssignNullToNotNullAttribute -- Not important in this test
+            // ReSharper disable AssignNullToNotNullAttribute -- We only need instances of the types, the data does not matter in the test
             new Box(default, default, default, default),
             new Cone(default, default, default, default, default, default, default, default, default, default),
             new Cone(default, default, default, default, default, default, default, default, default, default),
