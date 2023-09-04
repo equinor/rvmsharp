@@ -68,7 +68,7 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapA);
 
-                yield return new Circle(matrixCapA, normalCapA, treeIndex, color, bbox);
+                yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalCapA, treeIndex, color);
             }
 
             if (showCapB)
@@ -80,7 +80,7 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapB);
 
-                yield return new Circle(matrixCapB, normalCapB, treeIndex, color, bbox);
+                yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color);
             }
         }
     }
