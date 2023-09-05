@@ -11,8 +11,10 @@ using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public static class PrimitiveCapHelper
 {
-    public static int GlobalCount_SnoutCaps_Hidden = 0;
-    public static int GlobalCount_SnoutCaps_Shown = 0;
+    public static int GlobalCount_Caps_Hidden = 0;
+    public static int GlobalCount_Caps_Shown = 0;
+
+    private static float Buffer = 0.01f;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
@@ -25,7 +27,7 @@ public static class PrimitiveCapHelper
         Vector3 capCenterB
     )
     {
-        const float connectionDistanceTolerance = 0.000_05f; // Arbitrary value
+        const float connectionDistanceTolerance = 0.001f; // Arbitrary value
 
         bool showCapA = true,
             showCapB = true;
@@ -120,10 +122,12 @@ public static class PrimitiveCapHelper
             // TODO: Is it possible to find out which sides to compare with?
             if (cylinderRadius < halfLengthX && cylinderRadius < halfLengthY && cylinderRadius < halfLengthZ)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -155,10 +159,12 @@ public static class PrimitiveCapHelper
             // TODO: Is it possible to find out which sides to compare with?
             if (snoutMajorAxis < halfLengthX && snoutMajorAxis < halfLengthY && snoutMajorAxis < halfLengthZ)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -176,19 +182,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (cylinderRadius2 >= cylinderRadius1)
+            if (cylinderRadius2 + Buffer >= cylinderRadius1)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (cylinderRadius1 >= cylinderRadius2)
+            if (cylinderRadius1 + Buffer >= cylinderRadius2)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -206,19 +215,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (torusRadius2 >= torusRadius1)
+            if (torusRadius2 + Buffer >= torusRadius1)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (torusRadius1 >= torusRadius2)
+            if (torusRadius1 + Buffer >= torusRadius2)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -236,19 +248,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (cylinderRadius >= circularTorusRadius)
+            if (cylinderRadius + Buffer >= circularTorusRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (circularTorusRadius >= cylinderRadius)
+            if (circularTorusRadius + Buffer >= cylinderRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -276,19 +291,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (semiMinorRadius >= torusRadius)
+            if (semiMinorRadius + Buffer >= torusRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (torusRadius >= semiMajorRadius)
+            if (torusRadius + Buffer >= semiMajorRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -306,19 +324,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (rvmSphericalDishRadius >= cylinderRadius)
+            if (rvmSphericalDishRadius + Buffer >= cylinderRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (cylinderRadius >= rvmSphericalDishRadius)
+            if (cylinderRadius + Buffer >= rvmSphericalDishRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -336,19 +357,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (ellipticalDishRadius >= cylinderRadius)
+            if (ellipticalDishRadius + Buffer >= cylinderRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (cylinderRadius >= ellipticalDishRadius)
+            if (cylinderRadius + Buffer >= ellipticalDishRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -376,19 +400,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (semiMinorRadius >= cylinderRadius)
+            if (semiMinorRadius + Buffer >= cylinderRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (cylinderRadius >= semiMajorRadius)
+            if (cylinderRadius + Buffer >= semiMajorRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -416,19 +443,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (semiMinorRadius >= ellipticalDishRadius)
+            if (semiMinorRadius + Buffer >= ellipticalDishRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (ellipticalDishRadius >= semiMajorRadius)
+            if (ellipticalDishRadius + Buffer >= semiMajorRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -531,12 +561,12 @@ public static class PrimitiveCapHelper
             var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.ellipse2DPolar, px, py);
             if (d > 0.1) // 0.1mm
             {
-                GlobalCount_SnoutCaps_Shown++;
+                GlobalCount_Caps_Shown++;
                 return false;
             }
         }
 
-        GlobalCount_SnoutCaps_Hidden++;
+        GlobalCount_Caps_Hidden++;
         return true;
     }
 
@@ -564,19 +594,22 @@ public static class PrimitiveCapHelper
 
         if (isPrim1CurrentPrimitive)
         {
-            if (sphericalDishRadius >= semiMajorRadius)
+            if (sphericalDishRadius + Buffer >= semiMajorRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
         else
         {
-            if (semiMinorRadius >= sphericalDishRadius)
+            if (semiMinorRadius + Buffer >= sphericalDishRadius)
             {
+                GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
+        GlobalCount_Caps_Shown++;
         return false;
     }
 }

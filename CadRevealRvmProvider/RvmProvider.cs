@@ -145,8 +145,8 @@ public class RvmProvider : IModelFormatProvider
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
-        Console.WriteLine($"Show number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Shown}");
-        Console.WriteLine($"Hide number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Hidden}");
+        Console.WriteLine($"Show number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Shown}");
+        Console.WriteLine($"Hide number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Hidden}");
 
         stopwatch.Restart();
 

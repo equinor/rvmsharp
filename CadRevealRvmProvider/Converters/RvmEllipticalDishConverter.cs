@@ -50,6 +50,13 @@ public static class RvmEllipticalDishConverter
         if (showCap)
         {
             yield return new Circle(matrixCap, -normal, treeIndex, color, bbBox);
+
+            var matrixBox =
+                Matrix4x4.CreateScale(horizontalRadius * 2, horizontalRadius * 2, 0.001f)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(position);
+
+            yield return new Box(matrixBox, treeIndex, Color.Magenta, bbBox);
         }
     }
 }

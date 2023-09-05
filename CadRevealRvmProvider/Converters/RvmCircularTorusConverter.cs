@@ -69,6 +69,13 @@ public static class RvmCircularTorusConverter
                     * Matrix4x4.CreateTranslation(positionCapA);
 
                 yield return new Circle(matrixCapA, normalCapA, treeIndex, color, bbox);
+
+                var matrixBox =
+                    Matrix4x4.CreateScale(diameter, diameter, 0.001f)
+                    * Matrix4x4.CreateFromQuaternion(rotation)
+                    * Matrix4x4.CreateTranslation(positionCapA);
+
+                yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
             }
 
             if (showCapB)
@@ -81,6 +88,13 @@ public static class RvmCircularTorusConverter
                     * Matrix4x4.CreateTranslation(positionCapB);
 
                 yield return new Circle(matrixCapB, normalCapB, treeIndex, color, bbox);
+
+                var matrixBox =
+                    Matrix4x4.CreateScale(diameter, diameter, 0.001f)
+                    * Matrix4x4.CreateFromQuaternion(rotation)
+                    * Matrix4x4.CreateTranslation(positionCapB);
+
+                yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
             }
         }
     }
