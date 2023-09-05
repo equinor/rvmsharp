@@ -80,7 +80,11 @@ public static class SceneCreator
                 SectorFileName = sector.Filename,
                 MaxDiagonalLength = maxDiagonalLength,
                 MinDiagonalLength = minDiagonalLength,
-                DownloadSize = sector.DownloadSize
+                DownloadSize = sector.DownloadSize,
+                SectorEchoDevMetadata = new SectorEchoDevMetadata()
+                {
+                    GeometryDistributions = new GeometryDistributionStats(sector.Geometries)
+                }
             };
         }
 
