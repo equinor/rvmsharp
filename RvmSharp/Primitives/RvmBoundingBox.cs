@@ -54,10 +54,11 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
     }
 
     /// <summary>
-    /// Use the BoundingBox and align with the rotation to make the best fitting axis aligned Bounding Box.
-    /// Returns null for RvmLine, as bounding boxes are all over the place for that primitive.
+    /// Transforms a local axis aligned bounding box to a world space axis aligned bounding box
     /// </summary>
-    /// <returns>Bounding box in World Space.</returns>
+    /// <param name="localBoundingBox">An axis aligned bounding box in the primitive's local space</param>
+    /// <param name="matrix"></param>
+    /// <returns>An axis aligned bounding box in world space</returns>
     public static RvmBoundingBox CalculateAxisAlignedBoundingBox(RvmBoundingBox localBoundingBox, Matrix4x4 matrix)
     {
         var box = localBoundingBox.GenerateBoxVertexes();
