@@ -241,7 +241,7 @@ public class FbxProviderTests
         Assert.That(nodes, Has.Count.EqualTo(26));
 
         // Ladders have no attributes, should thus be ignored
-        for(int i= 0; i<26; i++)
+        for (int i = 0; i < 26; i++)
         {
             Assert.That(nodes[i].Name, !Is.EqualTo("Ladder"));
         }
