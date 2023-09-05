@@ -98,6 +98,24 @@ public static class PrimitiveCapHelper
             }
         }
 
+        if (!showCapA)
+        {
+            GlobalCount_Caps_Hidden++;
+        }
+        else
+        {
+            GlobalCount_Caps_Shown++;
+        }
+
+        if (!showCapB)
+        {
+            GlobalCount_Caps_Hidden++;
+        }
+
+        {
+            GlobalCount_Caps_Shown++;
+        }
+
         return (showCapA, showCapB);
     }
 
@@ -122,12 +140,12 @@ public static class PrimitiveCapHelper
             // TODO: Is it possible to find out which sides to compare with?
             if (cylinderRadius < halfLengthX && cylinderRadius < halfLengthY && cylinderRadius < halfLengthZ)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -159,12 +177,12 @@ public static class PrimitiveCapHelper
             // TODO: Is it possible to find out which sides to compare with?
             if (snoutMajorAxis < halfLengthX && snoutMajorAxis < halfLengthY && snoutMajorAxis < halfLengthZ)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -184,7 +202,7 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius2 + Buffer >= cylinderRadius1)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -192,12 +210,12 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius1 + Buffer >= cylinderRadius2)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -217,7 +235,7 @@ public static class PrimitiveCapHelper
         {
             if (torusRadius2 + Buffer >= torusRadius1)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -225,12 +243,12 @@ public static class PrimitiveCapHelper
         {
             if (torusRadius1 + Buffer >= torusRadius2)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -250,7 +268,7 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius + Buffer >= circularTorusRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -258,12 +276,12 @@ public static class PrimitiveCapHelper
         {
             if (circularTorusRadius + Buffer >= cylinderRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -293,7 +311,7 @@ public static class PrimitiveCapHelper
         {
             if (semiMinorRadius + Buffer >= torusRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -301,12 +319,12 @@ public static class PrimitiveCapHelper
         {
             if (torusRadius + Buffer >= semiMajorRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -326,7 +344,7 @@ public static class PrimitiveCapHelper
         {
             if (rvmSphericalDishRadius + Buffer >= cylinderRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -334,12 +352,12 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius + Buffer >= rvmSphericalDishRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -359,7 +377,7 @@ public static class PrimitiveCapHelper
         {
             if (ellipticalDishRadius + Buffer >= cylinderRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -367,12 +385,12 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius + Buffer >= ellipticalDishRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -402,7 +420,7 @@ public static class PrimitiveCapHelper
         {
             if (semiMinorRadius + Buffer >= cylinderRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -410,12 +428,12 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius + Buffer >= semiMajorRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -445,7 +463,7 @@ public static class PrimitiveCapHelper
         {
             if (semiMinorRadius + Buffer >= ellipticalDishRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -453,12 +471,12 @@ public static class PrimitiveCapHelper
         {
             if (ellipticalDishRadius + Buffer >= semiMajorRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -561,12 +579,12 @@ public static class PrimitiveCapHelper
             var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.ellipse2DPolar, px, py);
             if (d > 0.1) // 0.1mm
             {
-                GlobalCount_Caps_Shown++;
+                // GlobalCount_Caps_Shown++;
                 return false;
             }
         }
 
-        GlobalCount_Caps_Hidden++;
+        // GlobalCount_Caps_Hidden++;
         return true;
     }
 
@@ -596,7 +614,7 @@ public static class PrimitiveCapHelper
         {
             if (sphericalDishRadius + Buffer >= semiMajorRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -604,12 +622,12 @@ public static class PrimitiveCapHelper
         {
             if (semiMinorRadius + Buffer >= sphericalDishRadius)
             {
-                GlobalCount_Caps_Hidden++;
+                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        GlobalCount_Caps_Shown++;
+        // GlobalCount_Caps_Shown++;
         return false;
     }
 }
