@@ -14,10 +14,14 @@ public static class PrimitiveCapHelper
     public static int GlobalCount_Caps_Hidden = 0;
     public static int GlobalCount_Caps_Shown = 0;
 
-    private static float Buffer = 0.01f;
+    public static int GlobalCount_OneCaps = 0;
+
+    private static float Buffer = 0.023f;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
+        GlobalCount_OneCaps++;
+
         return CalculateCapVisibility(primitive, capCenter, Vector3.Zero).showCapA;
     }
 
@@ -111,7 +115,7 @@ public static class PrimitiveCapHelper
         {
             GlobalCount_Caps_Hidden++;
         }
-
+        else
         {
             GlobalCount_Caps_Shown++;
         }
@@ -145,7 +149,6 @@ public static class PrimitiveCapHelper
             }
         }
 
-        // GlobalCount_Caps_Shown++;
         return false;
     }
 
