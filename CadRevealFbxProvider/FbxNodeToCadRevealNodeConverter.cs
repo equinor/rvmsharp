@@ -204,17 +204,15 @@ public static class FbxNodeToCadRevealNodeConverter
         {
             var idNode = match.Groups[1].Value;
 
-            if (attributes.ContainsKey(idNode) && attributes[idNode].ContainsKey("Work order"))
+            if (attributes.ContainsKey(idNode) && attributes[idNode] == null)
             {
-                if (attributes[idNode]["Work order"].Length == 0)
-                {
-                    Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
-                    return false;
-                }
+                Console.WriteLine("Skipping node without valid attributes: " + idNode + " : " + name);
+                return false;
             }
-            else
+
+            if (!attributes.ContainsKey(idNode))
             {
-                Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
+                Console.WriteLine("Skipping node without existing attributes: " + idNode + " : " + name);
                 return false;
             }
         }

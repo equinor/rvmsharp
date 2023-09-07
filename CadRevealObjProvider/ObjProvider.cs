@@ -15,7 +15,7 @@ using System.Numerics;
 
 public class ObjProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -59,7 +59,7 @@ public class ObjProvider : IModelFormatProvider
             );
         }
 
-        return nodes;
+        return (nodes, null);
     }
 
     private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)

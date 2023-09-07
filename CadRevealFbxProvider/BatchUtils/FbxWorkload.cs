@@ -4,8 +4,10 @@ using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Utils;
 using Commons;
 using System.Text.RegularExpressions;
+using static CadRevealComposer.Operations.CameraPositioning;
 
 public static class FbxWorkload
 {
@@ -66,7 +68,7 @@ public static class FbxWorkload
         return result.ToArray();
     }
 
-    public static IReadOnlyList<CadRevealNode> ReadFbxData(
+    public static (IReadOnlyList<CadRevealNode>, ModelMetadata?) ReadFbxData(
         IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -83,16 +85,19 @@ public static class FbxWorkload
             Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
             throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
         }
+        ModelMetadata? metadata = null;
 
         IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
             Dictionary<string, Dictionary<string, string>>? attributes = null;
+
+            // there could be an explicit test / determination if this current fbx is scaffolding or not
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                (attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
@@ -163,6 +168,6 @@ public static class FbxWorkload
         //progressReport?.Report(("Aligning geometry", 1, 2));
         //RvmAlign.Align(rvmStore);
         //progressReport?.Report(("Import finished", 2, 2));
-        return fbxNodesFlat;
+        return (fbxNodesFlat, metadata);
     }
 }

@@ -37,15 +37,21 @@ public static class CadRevealComposerRunner
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
 
+        ModelMetadata? metadata = null;
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
-            IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
+            (IReadOnlyList<CadRevealNode> cadRevealNodes, var metadataTemp) = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIdGenerator,
                 filtering
             );
+
+            if (metadataTemp != null)
+            {
+                metadata = metadataTemp;
+            }
 
             Console.WriteLine(
                 $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
@@ -66,6 +72,11 @@ public static class CadRevealComposerRunner
                 );
                 geometriesToProcess.AddRange(geometriesIncludingMeshes);
             }
+        }
+
+        if (metadata != null)
+        {
+            SceneCreator.ExportModelMetadata(outputDirectory, metadata);
         }
 
         filtering.PrintFilteringStatsToConsole();
