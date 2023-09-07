@@ -38,6 +38,7 @@ public static class CadRevealComposerRunner
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
         var nodePriorityFiltering = new PriorityMapping(
             composerParameters.PrioritizedDisciplinesRegex,
+            composerParameters.LowPrioritizedDisciplineRegex,
             composerParameters.PrioritizedNodeNamesRegex
         );
 

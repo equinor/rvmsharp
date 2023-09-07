@@ -5,6 +5,8 @@ using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
 using Utils;
 
@@ -99,7 +101,6 @@ public class SectorSplitterOctree : ISectorSplitter
          * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
          * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
          */
-
         if (nodes.Length == 0)
         {
             yield break;
@@ -320,16 +321,24 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
+            1
+                => nodes
+                    .Where(x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1) >= MinDiagonalSizeAtDepth_1)
+                    .ToArray(),
             2
                 => nodes
-                    .Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2 || x.Priority == NodePriority.Medium)
+                    .Where(x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1) >= MinDiagonalSizeAtDepth_2)
                     .ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            3
+                => nodes
+                    .Where(x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1) >= MinDiagonalSizeAtDepth_3)
+                    .ToArray(),
             _ => nodes.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(
+            x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1)
+        );
 
         var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();

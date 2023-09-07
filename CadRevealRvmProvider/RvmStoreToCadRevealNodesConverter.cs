@@ -42,7 +42,18 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
+        foreach (CadRevealNode cadRevealRootNode in cadRevealRootNodes)
+        {
+            var allChildren = CadRevealNode.GetAllNodesFlat(cadRevealRootNode);
+            var pri = priorityMapping.GetPriority(cadRevealRootNode.Attributes.GetValueOrNull(("Discipline")) ?? "lol"); // TODO
+            foreach (CadRevealNode node in allChildren)
+            {
+                node.Geometries = node.Geometries.Select(g => g with { NodePriority = pri }).ToArray();
+            }
+        }
+
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+
         return allNodes;
     }
 
@@ -138,21 +149,6 @@ internal static class RvmStoreToCadRevealNodesConverter
         newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
             ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
             : null;
-
-        if (newNode.Attributes.Count > 0)
-        {
-            var discipline = newNode.Attributes["Discipline"];
-            var name = newNode.Name;
-            var priority = priorityMapping.GetPriority(discipline, name);
-
-            var geometriesWithPriority = new List<APrimitive>();
-            foreach (var geometry in newNode.Geometries)
-            {
-                geometriesWithPriority.Add(geometry with { NodePriority = priority });
-            }
-
-            newNode.Geometries = geometriesWithPriority.ToArray();
-        }
 
         return newNode;
     }

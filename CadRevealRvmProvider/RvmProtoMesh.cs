@@ -1,6 +1,8 @@
 namespace CadRevealRvmProvider;
 
 using CadRevealComposer;
+using CadRevealComposer.Operations;
+using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
 using System.Drawing;
@@ -11,22 +13,25 @@ public abstract record ProtoMesh(
     RvmPrimitive RvmPrimitive,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority Priority
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, Priority);
 
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority Priority
+) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox, Priority);
 
 public sealed record ProtoMeshFromRvmPyramid(
     RvmPyramid Pyramid,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority Priority
+) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox, Priority);
 
 /// <summary>
 /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.

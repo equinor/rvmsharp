@@ -34,6 +34,7 @@ public class FbxProviderTests
         false,
         new NodeNameExcludeRegex(null),
         new PrioritizedDisciplinesRegex(null),
+        new LowPrioritizedDisciplineRegex(null),
         new PrioritizedNodeNamesRegex(null)
     );
 
@@ -144,7 +145,11 @@ public class FbxProviderTests
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null)),
-            new PriorityMapping(new PrioritizedDisciplinesRegex(null), new PrioritizedNodeNamesRegex(null))
+            new PriorityMapping(
+                new PrioritizedDisciplinesRegex(null),
+                new LowPrioritizedDisciplineRegex(null),
+                new PrioritizedNodeNamesRegex(null)
+            )
         );
 
         Assert.That(nodes, Has.Count.EqualTo(28));

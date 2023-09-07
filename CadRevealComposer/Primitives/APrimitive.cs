@@ -160,5 +160,5 @@ public abstract record APrimitive(
     ulong TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox,
-    NodePriority NodePriority = NodePriority.Default
+    NodePriority NodePriority
 );

@@ -67,6 +67,15 @@ public static class Program
                 );
         }
 
+        if (options.LowPrioritizedDisciplineRegex != null)
+        { // Ensure regex is valid.
+            if (!RegexUtils.IsValidRegex(options.LowPrioritizedDisciplineRegex))
+                throw new ArgumentException(
+                    $"The {nameof(options.LowPrioritizedDisciplineRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.LowPrioritizedDisciplineRegex}"
+                );
+        }
+
         if (options.PrioritizedNodeNameRegex != null)
         { // Ensure regex is valid.
             if (!RegexUtils.IsValidRegex(options.PrioritizedNodeNameRegex))
@@ -82,6 +91,7 @@ public static class Program
             options.SplitIntoZones,
             new NodeNameExcludeRegex(options.NodeNameExcludeRegex),
             new PrioritizedDisciplinesRegex(options.PrioritizedDisciplineRegex),
+            new LowPrioritizedDisciplineRegex(options.LowPrioritizedDisciplineRegex),
             new PrioritizedNodeNamesRegex(options.PrioritizedNodeNameRegex)
         );
 

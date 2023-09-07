@@ -86,6 +86,13 @@ public class CommandLineOptions
     public string? PrioritizedDisciplineRegex { get; init; } = null;
 
     [Option(
+        longName: "LowPrioritizedDiscipline",
+        Required = false,
+        HelpText = "A regex matching disciplines to be prioritized lower in sector splitting. Not case sensitive."
+    )]
+    public string? LowPrioritizedDisciplineRegex { get; init; } = null;
+
+    [Option(
         longName: "PrioritizedNodeName",
         Required = false,
         HelpText = "A regex matching node names to be prioritized in sector splitting. Not case sensitive."
