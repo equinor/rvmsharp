@@ -54,6 +54,21 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
+        allNodes = allNodes
+            .Select(node =>
+            {
+                var type = node.Attributes.GetValueOrNull("Type") ?? "lol";
+                if (type.Equals("VALV"))
+                {
+                    node.Geometries = node.Geometries
+                        .Select(g => g with { NodePriority = NodePriority.Medium })
+                        .ToArray();
+                }
+
+                return node;
+            })
+            .ToArray();
+
         return allNodes;
     }
 

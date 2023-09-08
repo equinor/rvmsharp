@@ -321,18 +321,9 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1
-                => nodes
-                    .Where(x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1) >= MinDiagonalSizeAtDepth_1)
-                    .ToArray(),
-            2
-                => nodes
-                    .Where(x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1) >= MinDiagonalSizeAtDepth_2)
-                    .ToArray(),
-            3
-                => nodes
-                    .Where(x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1) >= MinDiagonalSizeAtDepth_3)
-                    .ToArray(),
+            1 => nodes.Where(x => x.Diagonal * GetPriorityWeighting(x) >= MinDiagonalSizeAtDepth_1).ToArray(),
+            2 => nodes.Where(x => x.Diagonal * GetPriorityWeighting(x) >= MinDiagonalSizeAtDepth_2).ToArray(),
+            3 => nodes.Where(x => x.Diagonal * GetPriorityWeighting(x) >= MinDiagonalSizeAtDepth_3).ToArray(),
             _ => nodes.ToArray(),
         };
 
@@ -355,5 +346,15 @@ public class SectorSplitterOctree : ISectorSplitter
             primitiveBudget -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
             yield return node;
         }
+    }
+
+    private static float GetPriorityWeighting(Node node)
+    {
+        if (node.Priority == NodePriority.Low)
+            return 0.5f;
+        if (node.Priority == NodePriority.Medium)
+            return 10.0f;
+
+        return 1;
     }
 }
