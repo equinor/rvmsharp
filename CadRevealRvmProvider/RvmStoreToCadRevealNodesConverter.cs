@@ -9,6 +9,7 @@ using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Text;
 
 internal static class RvmStoreToCadRevealNodesConverter
 {
@@ -60,9 +61,20 @@ internal static class RvmStoreToCadRevealNodesConverter
                 var type = node.Attributes.GetValueOrNull("Type") ?? "lol";
                 if (type.Equals("VALV"))
                 {
-                    node.Geometries = node.Geometries
-                        .Select(g => g with { NodePriority = NodePriority.Medium })
+                    var geometries = node.Geometries;
+                    var sortedGeometries = geometries
+                        .OrderByDescending(x => x.AxisAlignedBoundingBox.Diagonal)
                         .ToArray();
+
+                    int numberOfGeometriesToPrioritize = 5; // Arbitrary number
+                    if (sortedGeometries.Length < numberOfGeometriesToPrioritize)
+                        numberOfGeometriesToPrioritize = sortedGeometries.Length;
+
+                    for (int i = 0; i < numberOfGeometriesToPrioritize; i++)
+                    {
+                        sortedGeometries[i] = sortedGeometries[i] with { NodePriority = NodePriority.Medium };
+                    }
+                    node.Geometries = sortedGeometries;
                 }
 
                 return node;
