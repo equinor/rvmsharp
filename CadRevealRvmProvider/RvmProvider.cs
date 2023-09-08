@@ -149,6 +149,7 @@ public class RvmProvider : IModelFormatProvider
             $"Show number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Shown - PrimitiveCapHelper.GlobalCount_OneCaps}"
         );
         Console.WriteLine($"Hide number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Hidden}");
+        Console.WriteLine($"Caps Without connection: {PrimitiveCapHelper.GlobalCount_NoConnections}");
 
         stopwatch.Restart();
 

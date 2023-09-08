@@ -15,8 +15,9 @@ public static class PrimitiveCapHelper
     public static int GlobalCount_Caps_Shown = 0;
 
     public static int GlobalCount_OneCaps = 0;
+    public static int GlobalCount_NoConnections = 0;
 
-    private static float Buffer = 0.023f;
+    private static float Buffer = 100f;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
@@ -35,6 +36,11 @@ public static class PrimitiveCapHelper
 
         bool showCapA = true,
             showCapB = true;
+
+        if (primitive.Connections.All(x => x == null))
+        {
+            GlobalCount_NoConnections++;
+        }
 
         foreach (var connection in primitive.Connections.WhereNotNull())
         {
