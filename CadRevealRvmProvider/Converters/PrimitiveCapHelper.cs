@@ -11,17 +11,31 @@ using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
 public static class PrimitiveCapHelper
 {
+    public static int GlobalCount_TotalNumberOfCaps_Tested = 0;
+
     public static int GlobalCount_Caps_Hidden = 0;
     public static int GlobalCount_Caps_Shown = 0;
 
     public static int GlobalCount_OneCaps = 0;
     public static int GlobalCount_NoConnections = 0;
 
-    private static float Buffer = 100f;
+    private static float Buffer = 0.1f;
+
+    public static int GlobalCount_NoHitInSwitch = 0;
+    public static int GlobalCount_WithoutBuffer = 0;
+
+    public static int GlobalCount_CylinderTest = 0;
+
+    public static int GlobalCount_BothTrue = 0;
+
+    public static int GlobalCount_BothFalse = 0;
+
+    public static int GlobalCount_ZeroHeightCylinder = 0;
 
     public static bool CalculateCapVisibility(RvmPrimitive primitive, Vector3 capCenter)
     {
         GlobalCount_OneCaps++;
+        GlobalCount_TotalNumberOfCaps_Tested--; // Subtracting one, since it will add 2 later
 
         return CalculateCapVisibility(primitive, capCenter, Vector3.Zero).showCapA;
     }
@@ -32,14 +46,49 @@ public static class PrimitiveCapHelper
         Vector3 capCenterB
     )
     {
-        const float connectionDistanceTolerance = 0.001f; // Arbitrary value
+        Interlocked.Increment(ref GlobalCount_TotalNumberOfCaps_Tested);
+        Interlocked.Increment(ref GlobalCount_TotalNumberOfCaps_Tested);
+
+        const float connectionDistanceTolerance = 0.00005f; // Arbitrary value
 
         bool showCapA = true,
             showCapB = true;
 
-        if (primitive.Connections.All(x => x == null))
+        if (primitive.Connections.Count() == 0 || primitive.Connections.All(x => x == null))
         {
             GlobalCount_NoConnections++;
+            if (capCenterB != Vector3.Zero)
+            {
+                GlobalCount_NoConnections++;
+            }
+        }
+        else
+        {
+            var count = 0;
+            var positionSum = Vector3.Zero;
+
+            var testLocation = Vector3.Zero;
+            bool testLocationSet = false;
+
+            for (int i = 0; i < primitive.Connections.Count(); i++)
+            {
+                if (primitive.Connections[i] != null)
+                {
+                    positionSum += primitive.Connections[i].Position;
+                    if (!testLocationSet)
+                    {
+                        testLocation = primitive.Connections[i].Position;
+                        testLocationSet = true;
+                    }
+                    count++;
+                }
+            }
+            var averagePosition = positionSum / count;
+
+            if (averagePosition.EqualsWithinTolerance(testLocation, 0.0001f))
+            {
+                GlobalCount_NoConnections++;
+            }
         }
 
         foreach (var connection in primitive.Connections.WhereNotNull())
@@ -59,42 +108,67 @@ public static class PrimitiveCapHelper
 
             var connectionIndex2 = isSorted ? connection.ConnectionIndex2 : connection.ConnectionIndex1;
 
-            var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, connectionDistanceTolerance);
-            var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, connectionDistanceTolerance);
+            var diffA = MathF.Abs((connection.Position - capCenterA).Length());
+            var diffB = MathF.Abs((connection.Position - capCenterB).Length());
+
+            var isCapCenterA = diffA < diffB;
+            var isCapCenterB = diffB < diffA;
+
+            //var isCapCenterA = connection.Position.EqualsWithinTolerance(capCenterA, connectionDistanceTolerance);
+            //var isCapCenterB = connection.Position.EqualsWithinTolerance(capCenterB, connectionDistanceTolerance);
+
+            if (isCapCenterA && isCapCenterB)
+            {
+                GlobalCount_BothTrue++;
+            }
+
+            if (!isCapCenterA && !isCapCenterB)
+            {
+                if (primitive is RvmCylinder)
+                {
+                    var cylinder = (RvmCylinder)primitive;
+
+                    if (cylinder.Radius == 0 || cylinder.Height == 0)
+                        GlobalCount_ZeroHeightCylinder++;
+                }
+
+                GlobalCount_BothFalse++;
+            }
 
             var isPrim1CurrentPrimitive = ReferenceEquals(primitive, prim1);
 
             var showCap = (prim1, prim2) switch
             {
-                (RvmBox a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
-                (RvmBox a, RvmSnout b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
-                (RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
-                (RvmCircularTorus a, RvmCircularTorus b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
-                (RvmCircularTorus a, RvmCylinder b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
-                (RvmCircularTorus a, RvmSnout b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
-                (RvmCylinder a, RvmSphericalDish b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
-                (RvmCylinder a, RvmEllipticalDish b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
-                (RvmCylinder a, RvmSnout b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
-                (RvmEllipticalDish a, RvmSnout b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
-                (RvmSnout a, RvmSnout b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(
-                        a,
-                        b,
-                        connectionIndex1,
-                        connectionIndex2,
-                        isPrim1CurrentPrimitive
-                    ),
-                (RvmSnout a, RvmSphericalDish b)
-                    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1, isPrim1CurrentPrimitive),
-                _ => true
+                _ => false
+                //(RvmBox a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                //(RvmBox a, RvmSnout b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
+                //(RvmCylinder a, RvmCylinder b) => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                //(RvmCircularTorus a, RvmCircularTorus b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                //(RvmCircularTorus a, RvmCylinder b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                //(RvmCircularTorus a, RvmSnout b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
+                //(RvmCylinder a, RvmSphericalDish b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                //(RvmCylinder a, RvmEllipticalDish b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, isPrim1CurrentPrimitive),
+                //(RvmCylinder a, RvmSnout b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
+                //(RvmEllipticalDish a, RvmSnout b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex2, isPrim1CurrentPrimitive),
+                //(RvmSnout a, RvmSnout b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(
+                //        a,
+                //        b,
+                //        connectionIndex1,
+                //        connectionIndex2,
+                //        isPrim1CurrentPrimitive
+                //    ),
+                //(RvmSnout a, RvmSphericalDish b)
+                //    => !OtherPrimitiveHasLargerOrEqualCap(a, b, connectionIndex1, isPrim1CurrentPrimitive),
+                //_ => TempMethod()
             };
 
             if (showCap is false && isCapCenterA)
@@ -110,23 +184,30 @@ public static class PrimitiveCapHelper
 
         if (!showCapA)
         {
-            GlobalCount_Caps_Hidden++;
+            Interlocked.Increment(ref GlobalCount_Caps_Hidden);
         }
         else
         {
-            GlobalCount_Caps_Shown++;
+            Interlocked.Increment(ref GlobalCount_Caps_Shown);
         }
 
         if (!showCapB)
         {
-            GlobalCount_Caps_Hidden++;
+            Interlocked.Increment(ref GlobalCount_Caps_Hidden);
         }
         else
         {
-            GlobalCount_Caps_Shown++;
+            Interlocked.Increment(ref GlobalCount_Caps_Shown);
         }
 
         return (showCapA, showCapB);
+    }
+
+    private static bool TempMethod()
+    {
+        GlobalCount_NoHitInSwitch++;
+
+        return false;
     }
 
     private static bool OtherPrimitiveHasLargerOrEqualCap(
@@ -135,6 +216,8 @@ public static class PrimitiveCapHelper
         bool isPrim1CurrentPrimitive
     )
     {
+        GlobalCount_WithoutBuffer++;
+
         rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
 
@@ -150,7 +233,6 @@ public static class PrimitiveCapHelper
             // TODO: Is it possible to find out which sides to compare with?
             if (cylinderRadius < halfLengthX && cylinderRadius < halfLengthY && cylinderRadius < halfLengthZ)
             {
-                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -165,6 +247,8 @@ public static class PrimitiveCapHelper
         bool isPrim1CurrentPrimitive
     )
     {
+        GlobalCount_WithoutBuffer++;
+
         rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
 
@@ -186,7 +270,6 @@ public static class PrimitiveCapHelper
             // TODO: Is it possible to find out which sides to compare with?
             if (snoutMajorAxis < halfLengthX && snoutMajorAxis < halfLengthY && snoutMajorAxis < halfLengthZ)
             {
-                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -201,6 +284,8 @@ public static class PrimitiveCapHelper
         bool isPrim1CurrentPrimitive
     )
     {
+        GlobalCount_CylinderTest++;
+
         rvmCylinder1.Matrix.DecomposeAndNormalize(out var cylinderScale1, out _, out _);
         rvmCylinder2.Matrix.DecomposeAndNormalize(out var cylinderScale2, out _, out _);
 
@@ -211,7 +296,6 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius2 + Buffer >= cylinderRadius1)
             {
-                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -219,12 +303,10 @@ public static class PrimitiveCapHelper
         {
             if (cylinderRadius1 + Buffer >= cylinderRadius2)
             {
-                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        // GlobalCount_Caps_Shown++;
         return false;
     }
 
@@ -497,6 +579,8 @@ public static class PrimitiveCapHelper
         bool isPrim1CurrentPrimitive
     )
     {
+        GlobalCount_WithoutBuffer++;
+
         var isSnoutCapTop1 = rvmSnoutCapIndex1 == 1;
         var isSnoutCapTop2 = rvmSnoutCapIndex2 == 1;
 
@@ -623,7 +707,6 @@ public static class PrimitiveCapHelper
         {
             if (sphericalDishRadius + Buffer >= semiMajorRadius)
             {
-                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
@@ -631,12 +714,10 @@ public static class PrimitiveCapHelper
         {
             if (semiMinorRadius + Buffer >= sphericalDishRadius)
             {
-                // GlobalCount_Caps_Hidden++;
                 return true;
             }
         }
 
-        // GlobalCount_Caps_Shown++;
         return false;
     }
 }

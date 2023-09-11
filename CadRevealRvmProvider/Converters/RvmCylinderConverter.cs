@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using Microsoft.EntityFrameworkCore.Update;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -14,6 +15,12 @@ public static class RvmCylinderConverter
         Color color
     )
     {
+        if (rvmCylinder.Height == 0 || rvmCylinder.Radius == 0)
+        {
+            Console.WriteLine("Removed cylinder becuse height or radius were 0");
+            yield break;
+        }
+
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
