@@ -8,7 +8,7 @@ using System.Numerics;
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 [TestFixture]
-public class PrimitiveCapHelperTests
+public class CapVisibilityTests
 {
     private RvmCylinder _cylinder = null!;
     private RvmSnout _snout = null!;
