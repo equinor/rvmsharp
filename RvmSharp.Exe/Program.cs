@@ -50,20 +50,26 @@
             
             var leafs = rvmStore.RvmFiles.SelectMany(rvm => rvm.Model.Children.SelectMany(node =>
                 CollectGeometryNodes(node))).ToArray();
+            List<string> warnings = new();
             progressBar = new ProgressBar(leafs.Length, "Tessellating");
             var meshes = leafs.AsParallel().Select((leaf, i) =>
             {
                 var nodeId = nodeIdOffset + 1 + i;
                 progressBar.Message = leaf.Name;
+                removeInvalidGeometries(leaf, warnings);
                 var tessellatedMeshes = TessellatorBridge.Tessellate(leaf, options.Tolerance);
                 foreach (Mesh tessellatedMesh in tessellatedMeshes)
                 {
-                        tessellatedMesh.ApplySingleColor(nodeId);
+                    tessellatedMesh.ApplySingleColor(nodeId);
                 }
                 progressBar.Tick();
                 return (leaf.Name, tesselatedMeshes: tessellatedMeshes);
             }).ToArray();
             progressBar.Dispose();
+            foreach (string warning in warnings)
+            {
+                Console.WriteLine(warning);
+            }
             progressBar = new ProgressBar(meshes.Length, "Exporting");
 
             using var objExporter = new ObjExporter(options.Output);
@@ -84,6 +90,37 @@
             
             Console.WriteLine("Done!");
             return 0;
+        }
+
+        /// <summary>
+        /// Removes any invalid geometries that are known to crash the tesselator with this error:
+        /// Unhandled exception. System.AggregateException: One or more errors occurred. (Array dimensions exceeded supported range.)
+        /// ---&gt; System.OutOfMemoryException: Array dimensions exceeded supported range.ELBOW 1 of BRANCH 1 of PIPE /P170-2-530
+        /// at RvmSharp.Tessellation.TessellatorBridge.Tessellate(RvmPrimitive sphereBasedPrimitive, Single radius, Single arc, Single shift_z, Single scale_z, Single scale, Single tolerance) in /Users/EFWA/git/vorker-model-slicer/rvmsharp/RvmSharp/Tessellation/TessellatorBridge.cs:line 994
+        /// </summary>
+        /// <param name="rvmNode">Node to check for error (invalid geometry)</param>
+        private static void removeInvalidGeometries(RvmNode rvmNode, List<string> warnings)
+        {
+            if (rvmNode.Children.Count > 0)
+            {
+                List<RvmGroup> toRemove = new();
+                foreach (RvmGroup child in rvmNode.Children)
+                {
+                    if (child is RvmEllipticalDish dish)
+                    {
+                        if (dish.BaseRadius == 0)
+                        {
+                            warnings.Add($"WARNING: Removing invalid geometry in {rvmNode.Name}.");
+                            toRemove.Add(child);
+                        }
+                    }
+                }
+
+                foreach (RvmGroup item in toRemove)
+                {
+                    rvmNode.Children.Remove(item);
+                }
+            }
         }
 
         private static (string rvmFilename, string? txtFilename)[] CollectWorkload(Options options)
