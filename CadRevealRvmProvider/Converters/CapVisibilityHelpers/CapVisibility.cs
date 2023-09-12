@@ -11,7 +11,7 @@ public static class CapVisibility
     public static int CapsShown;
     public static int CapsWithoutConnections;
 
-    public static readonly float CapComparingBuffer = 0.0f;
+    public static readonly float CapComparingBuffer = 0.01f;
 
     /// <summary>
     /// Checks cap visibility on RvmPrimitives with one cap
@@ -21,8 +21,8 @@ public static class CapVisibility
     /// <returns></returns>
     public static bool IsCapVisible(RvmPrimitive primitive, Vector3 capCenter)
     {
-        TotalNumberOfCapsTested--; // Subtracting one, since two will be add later
-        CapsShown--; // Subtracting one, since "CapB" will return as shown later
+        TotalNumberOfCapsTested--; // Subtracting one, since two will be counted later
+        CapsShown--; // Subtracting one, since "CapB" will be counted as shown later
 
         return IsCapsVisible(primitive, capCenter, Vector3.Zero).showCapA;
     }
@@ -41,43 +41,7 @@ public static class CapVisibility
     )
     {
         TotalNumberOfCapsTested += 2;
-
-        if (primitive.Connections.Length == 0 || primitive.Connections.All(x => x == null))
-        {
-            CapsWithoutConnections++;
-            if (capCenterB != Vector3.Zero)
-            {
-                CapsWithoutConnections++;
-            }
-        }
-        else
-        {
-            var count = 0;
-            var positionSum = Vector3.Zero;
-
-            var testLocation = Vector3.Zero;
-            bool testLocationSet = false;
-
-            foreach (var connection in primitive.Connections)
-            {
-                if (connection != null)
-                {
-                    positionSum += connection.Position;
-                    if (!testLocationSet)
-                    {
-                        testLocation = connection.Position;
-                        testLocationSet = true;
-                    }
-                    count++;
-                }
-            }
-            var averagePosition = positionSum / count;
-
-            if (averagePosition.EqualsWithinTolerance(testLocation, 0.0001f))
-            {
-                CapsWithoutConnections++;
-            }
-        }
+        CountNoConnections(primitive, capCenterB != Vector3.Zero);
 
         bool mustShowCapA = true;
         bool mustShowCapB = true;
@@ -148,5 +112,33 @@ public static class CapVisibility
             CapsHidden++;
 
         return (mustShowCapA, mustShowCapB);
+    }
+
+    private static void CountNoConnections(RvmPrimitive primitive, bool hasTwoCaps)
+    {
+        if (primitive.Connections.All(x => x == null))
+        {
+            CapsWithoutConnections++;
+            if (hasTwoCaps)
+            {
+                CapsWithoutConnections++;
+            }
+        }
+        else
+        {
+            var allConnections = primitive.Connections.WhereNotNull().ToArray();
+            if (allConnections.Length > 1)
+            {
+                var firstItem = allConnections.First();
+                bool allTheSame = allConnections.All(x => x.Position.Equals(firstItem.Position));
+
+                if (allTheSame)
+                    CapsWithoutConnections++; // If all connections are the same, assume that one cap does not have a connection
+            }
+            else
+            {
+                CapsWithoutConnections++; // Just one connection means that one cap does not have a connection
+            }
+        }
     }
 }

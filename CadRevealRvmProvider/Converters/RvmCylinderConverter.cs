@@ -17,7 +17,6 @@ public static class RvmCylinderConverter
     {
         if (rvmCylinder.Radius == 0)
         {
-            Console.WriteLine("Removed cylinder because radius were 0");
             yield break;
         }
 
