@@ -145,19 +145,10 @@ public class RvmProvider : IModelFormatProvider
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
-        Console.WriteLine(
-            $"Show number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Shown - PrimitiveCapHelper.GlobalCount_OneCaps}"
-        );
+        Console.WriteLine($"Show number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Shown}");
         Console.WriteLine($"Hide number of caps: {PrimitiveCapHelper.GlobalCount_Caps_Hidden}");
         Console.WriteLine($"Caps Without connection: {PrimitiveCapHelper.GlobalCount_NoConnections}");
         Console.WriteLine($"Total number of caps tested: {PrimitiveCapHelper.GlobalCount_TotalNumberOfCaps_Tested}");
-        Console.WriteLine($"No hit in switch: {PrimitiveCapHelper.GlobalCount_NoHitInSwitch}");
-        Console.WriteLine($"One caps: {PrimitiveCapHelper.GlobalCount_OneCaps}");
-        Console.WriteLine($"No buffer tested: {PrimitiveCapHelper.GlobalCount_WithoutBuffer}");
-        Console.WriteLine($"Cylinders: {PrimitiveCapHelper.GlobalCount_CylinderTest}");
-        Console.WriteLine($"Both true: {PrimitiveCapHelper.GlobalCount_BothTrue}");
-        Console.WriteLine($"Both false: {PrimitiveCapHelper.GlobalCount_BothFalse}");
-        Console.WriteLine($"Zero height cylinder: {PrimitiveCapHelper.GlobalCount_ZeroHeightCylinder}");
 
         stopwatch.Restart();
 

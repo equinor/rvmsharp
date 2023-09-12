@@ -138,12 +138,6 @@ public static class RvmSnoutConverter
                 color,
                 bbox // Why we use the same bbox as RVM source
             );
-
-            var matrixBox =
-                Matrix4x4.CreateScale(diameterA, diameterA, 0.001f)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerA);
-            yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
         }
 
         if (showCapB)
@@ -160,12 +154,6 @@ public static class RvmSnoutConverter
                 color,
                 bbox // Why we use the same bbox as RVM source
             );
-
-            var matrixBox =
-                Matrix4x4.CreateScale(diameterB, diameterB, 0.001f)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerB);
-            yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
         }
     }
 
@@ -226,12 +214,6 @@ public static class RvmSnoutConverter
                 color,
                 bbox // Why we use the same bbox as RVM source
             );
-
-            var matrixBox =
-                Matrix4x4.CreateScale(diameterA, diameterA, 0.001f)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(eccentricCenterA);
-            yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
         }
 
         if (showCapB)
@@ -248,12 +230,6 @@ public static class RvmSnoutConverter
                 color,
                 bbox // Why we use the same bbox as RVM source
             );
-
-            var matrixBox =
-                Matrix4x4.CreateScale(diameterB, diameterB, 0.001f)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(eccentricCenterB);
-            yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
         }
     }
 
@@ -328,13 +304,6 @@ public static class RvmSnoutConverter
                     color,
                     bbox // Why we use the same bbox as RVM source
                 );
-
-                var matrixBox =
-                    Matrix4x4.CreateScale((float)semiMinorAxisA, (float)semiMajorAxisA, 0.001f)
-                    * Matrix4x4.CreateFromQuaternion(rotation)
-                    * Matrix4x4.CreateTranslation(centerA);
-
-                yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
             }
             else
             {
@@ -364,13 +333,6 @@ public static class RvmSnoutConverter
                     color,
                     bbox // Why we use the same bbox as RVM source
                 );
-
-                var matrixBox =
-                    Matrix4x4.CreateScale((float)semiMinorAxisB, (float)semiMajorAxisB, 0.001f)
-                    * Matrix4x4.CreateFromQuaternion(rotation)
-                    * Matrix4x4.CreateTranslation(centerB);
-
-                yield return new Box(matrixBox, treeIndex, Color.Magenta, bbox);
             }
             else
             {

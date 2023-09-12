@@ -15,9 +15,9 @@ public static class RvmCylinderConverter
         Color color
     )
     {
-        if (rvmCylinder.Height == 0 || rvmCylinder.Radius == 0)
+        if (rvmCylinder.Radius == 0)
         {
-            Console.WriteLine("Removed cylinder becuse height or radius were 0");
+            Console.WriteLine("Removed cylinder because radius were 0");
             yield break;
         }
 
@@ -102,12 +102,6 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateTranslation(centerA);
 
             yield return new Circle(InstanceMatrix: matrixCapA, Normal: normalA, treeIndex, color, bbox);
-
-            // var matrixBox =
-            //     Matrix4x4.CreateScale(diameter, diameter, 0.001f)
-            //     * Matrix4x4.CreateFromQuaternion(rotation)
-            //     * Matrix4x4.CreateTranslation(centerA);
-            // yield return new Box(matrixBox, treeIndex, Color.Yellow, bbox);
         }
 
         if (showCapB)
@@ -118,12 +112,6 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateTranslation(centerB);
 
             yield return new Circle(InstanceMatrix: matrixCapB, Normal: normalB, treeIndex, color, bbox);
-
-            // var matrixBox =
-            //     Matrix4x4.CreateScale(diameter, diameter, 0.001f)
-            //     * Matrix4x4.CreateFromQuaternion(rotation)
-            //     * Matrix4x4.CreateTranslation(centerA);
-            // yield return new Box(matrixBox, treeIndex, Color.Yellow, bbox);
         }
     }
 }

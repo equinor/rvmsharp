@@ -45,13 +45,6 @@ public static class RvmSphericalDishConverter
         if (showCap)
         {
             yield return new Circle(matrixCap, -normal, treeIndex, color, bbBox);
-
-            var matrixBox =
-                Matrix4x4.CreateScale(baseDiameter, baseDiameter, 0.001f)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(position);
-
-            yield return new Box(matrixBox, treeIndex, Color.Magenta, bbBox);
         }
     }
 }
