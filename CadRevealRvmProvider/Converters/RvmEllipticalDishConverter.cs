@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -45,7 +46,7 @@ public static class RvmEllipticalDishConverter
             bbBox
         );
 
-        var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmEllipticalDish, position);
+        var showCap = CapVisibility.IsCapVisible(rvmEllipticalDish, position);
 
         if (showCap)
         {

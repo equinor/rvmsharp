@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -40,7 +41,7 @@ public static class RvmSphericalDishConverter
 
         yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox);
 
-        var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmSphericalDish, position);
+        var showCap = CapVisibility.IsCapVisible(rvmSphericalDish, position);
 
         if (showCap)
         {

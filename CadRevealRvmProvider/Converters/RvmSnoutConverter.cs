@@ -3,6 +3,7 @@ namespace CadRevealRvmProvider.Converters;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
@@ -122,7 +123,7 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
         if (showCapA)
         {
@@ -194,11 +195,7 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            rvmSnout,
-            eccentricCenterA,
-            eccentricCenterB
-        );
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
         if (showCapA)
         {
@@ -283,7 +280,7 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
         if (showCapA)
         {

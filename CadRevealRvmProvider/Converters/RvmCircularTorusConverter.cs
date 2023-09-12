@@ -2,6 +2,7 @@ namespace CadRevealRvmProvider.Converters;
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -53,11 +54,7 @@ public static class RvmCircularTorusConverter
             var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisA));
             var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisB));
 
-            var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-                rvmCircularTorus,
-                positionCapA,
-                positionCapB
-            );
+            var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmCircularTorus, positionCapA, positionCapB);
 
             if (showCapA)
             {
