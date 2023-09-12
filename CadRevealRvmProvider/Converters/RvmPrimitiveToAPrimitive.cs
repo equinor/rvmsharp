@@ -17,6 +17,25 @@ public class RvmPrimitiveToAPrimitive
 
         switch (rvmPrimitive)
         {
+            case RvmFacetGroup rvmFacetGroup:
+                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+            case RvmLine:
+                return ArraySegment<APrimitive>.Empty;
+
+            default:
+                return new[]
+                {
+                    new ProtoMeshFromPrimitive(
+                        rvmPrimitive,
+                        treeIndex,
+                        rvmNode.GetColor(),
+                        rvmPrimitive.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+                    )
+                };
+        }
+
+        switch (rvmPrimitive)
+        {
             case RvmBox rvmBox:
                 return rvmBox.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmCylinder rvmCylinder:

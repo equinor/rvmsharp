@@ -16,6 +16,7 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
+    private const float MinDiagonalSizeAtDepth_4 = 0.1f; // arbitrary value for min size at depth 4
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -263,6 +264,7 @@ public class SectorSplitterOctree : ISectorSplitter
             1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
             2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
             3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            4 => nodes.Where(x => x.Diagonal > MinDiagonalSizeAtDepth_4).ToArray(),
             _ => nodes.ToArray(),
         };
 

@@ -21,6 +21,7 @@ public class RvmTessellator
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult,
+        ProtoMeshFromPrimitive[] primitivesNotTessellated,
         InstanceIdGenerator instanceIdGenerator
     )
     {
@@ -28,7 +29,8 @@ public class RvmTessellator
         {
             var rvmMesh = Tessellate(p.RvmPrimitive);
             var mesh = ConvertRvmMesh(rvmMesh);
-            mesh = Simplify.SimplifyMeshLossy(mesh, 0.2f);
+            // if (p.RvmPrimitive is RvmFacetGroup)
+            mesh = Simplify.SimplifyMeshLossy(mesh, 0.05f);
             return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
 
@@ -98,6 +100,7 @@ public class RvmTessellator
         stopwatch.Restart();
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
+            .Concat(primitivesNotTessellated)
             .AsParallel()
             .Select(TessellateAndCreateTriangleMesh)
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
@@ -132,7 +135,7 @@ public class RvmTessellator
         RvmMesh mesh;
         try
         {
-            mesh = TessellatorBridge.Tessellate(primitive, 0f) ?? RvmMesh.Empty;
+            mesh = TessellatorBridge.Tessellate(primitive, 0.05f) ?? RvmMesh.Empty;
         }
         catch
         {

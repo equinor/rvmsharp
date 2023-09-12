@@ -14,6 +14,9 @@ public abstract record ProtoMesh(
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
+public sealed record ProtoMeshFromPrimitive(RvmPrimitive RvmPrimitive, ulong TreeIndex, Color color,
+    BoundingBox AxisAlignedBoundingBox) : ProtoMesh(RvmPrimitive, TreeIndex, color, AxisAlignedBoundingBox);
+
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,
     ulong TreeIndex,

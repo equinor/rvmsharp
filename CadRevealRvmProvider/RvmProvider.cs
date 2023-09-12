@@ -138,6 +138,7 @@ public class RvmProvider : IModelFormatProvider
         var meshes = RvmTessellator.TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
             pyramidInstancingResult,
+            geometries.OfType<ProtoMeshFromPrimitive>().ToArray(),
             instanceIdGenerator
         );
 
