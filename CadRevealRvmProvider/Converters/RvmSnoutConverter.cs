@@ -125,7 +125,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA)
+        if (showCapA && radiusA > 0)
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -141,7 +141,7 @@ public static class RvmSnoutConverter
             );
         }
 
-        if (showCapB)
+        if (showCapB && radiusB > 0)
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(diameterB)
@@ -197,7 +197,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
-        if (showCapA)
+        if (showCapA && radiusA > 0)
         {
             var matrixEccentricCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -213,7 +213,7 @@ public static class RvmSnoutConverter
             );
         }
 
-        if (showCapB)
+        if (showCapB && radiusB > 0)
         {
             var matrixEccentricCapB =
                 Matrix4x4.CreateScale(diameterB)
@@ -282,7 +282,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA)
+        if (showCapA && semiMajorAxisA > 0)
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f)
@@ -311,7 +311,7 @@ public static class RvmSnoutConverter
             }
         }
 
-        if (showCapB)
+        if (showCapB && semiMajorAxisB > 0)
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)

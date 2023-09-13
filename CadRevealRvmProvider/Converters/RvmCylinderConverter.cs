@@ -15,11 +15,6 @@ public static class RvmCylinderConverter
         Color color
     )
     {
-        if (rvmCylinder.Radius == 0)
-        {
-            yield break;
-        }
-
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
@@ -95,6 +90,9 @@ public static class RvmCylinderConverter
                 bbox
             );
         }
+
+        if (radius == 0) //Don't add caps if radius is zero
+            yield break;
 
         if (showCapA)
         {
