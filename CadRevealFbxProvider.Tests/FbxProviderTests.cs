@@ -15,6 +15,13 @@ public class FbxProviderTests
     private static readonly DirectoryInfo outputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
     private static readonly DirectoryInfo inputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
 
+    private static readonly DirectoryInfo outputDirectoryMissingAttr = new DirectoryInfo(
+        @".\TestSamples\missingattributes"
+    );
+    private static readonly DirectoryInfo inputDirectoryMissingAttr = new DirectoryInfo(
+        @".\TestSamples\missingattributes"
+    );
+
     private static readonly DirectoryInfo outputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\missingkey");
     private static readonly DirectoryInfo inputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\missingkey");
 
@@ -165,7 +172,8 @@ public class FbxProviderTests
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
@@ -205,6 +213,7 @@ public class FbxProviderTests
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null,
             minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.,
         );
 
@@ -212,5 +221,29 @@ public class FbxProviderTests
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
         Assert.That(geometriesToProcess, Has.Exactly(2).TypeOf<TriangleMesh>());
         Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());
+    }
+
+    [Test]
+    public void NodeMissingAttributesTest()
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+
+        var nodes = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryMissingAttr.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // there are 28 attributes, out of which 2 should be ignored
+        Assert.That(nodes, Has.Count.EqualTo(26));
+
+        // Ladders have no attributes, should thus be ignored
+        for (int i = 0; i < 26; i++)
+        {
+            Assert.That(nodes[i].Name, !Is.EqualTo("Ladder"));
+        }
     }
 }

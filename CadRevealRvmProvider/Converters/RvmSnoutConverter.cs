@@ -5,6 +5,7 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using Commons.Utils;
+using MathNet.Numerics.Distributions;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -132,13 +133,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return new Circle(
-                matrixCapA,
-                normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
         if (showCapB && radiusB > 0)
@@ -148,13 +143,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            yield return new Circle(
-                matrixCapB,
-                -normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield return CircleConverterHelper.ConvertCircle(matrixCapB, -normal, treeIndex, color);
         }
     }
 
@@ -204,13 +193,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(eccentricCenterA);
 
-            yield return new Circle(
-                matrixEccentricCapA,
-                normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
         if (showCapB && radiusB > 0)
@@ -220,13 +203,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(eccentricCenterB);
 
-            yield return new Circle(
-                matrixEccentricCapB,
-                -normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapB, -normal, treeIndex, color);
         }
     }
 

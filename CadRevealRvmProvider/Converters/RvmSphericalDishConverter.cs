@@ -45,7 +45,7 @@ public static class RvmSphericalDishConverter
 
         if (showCap)
         {
-            yield return new Circle(matrixCap, -normal, treeIndex, color, bbBox);
+            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
         }
     }
 }
