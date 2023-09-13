@@ -351,7 +351,7 @@ public class SectorSplitterOctree : ISectorSplitter
         if (node.Priority == NodePriority.Low)
             return 0.5f;
         if (node.Priority == NodePriority.Medium)
-            return 20.0f;
+            return 100.0f;
 
         return 1;
     }
