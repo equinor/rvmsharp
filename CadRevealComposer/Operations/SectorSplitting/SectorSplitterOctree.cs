@@ -5,8 +5,6 @@ using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Drawing;
 using System.Linq;
 using Utils;
 
@@ -353,7 +351,7 @@ public class SectorSplitterOctree : ISectorSplitter
         if (node.Priority == NodePriority.Low)
             return 0.5f;
         if (node.Priority == NodePriority.Medium)
-            return 10.0f;
+            return 20.0f;
 
         return 1;
     }
