@@ -38,7 +38,17 @@ public static class RvmSphericalDishConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
-        yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox);
+        yield return new EllipsoidSegment(
+            rvmSphericalDish.Matrix,
+            sphereRadius,
+            sphereRadius,
+            height,
+            center,
+            normal,
+            treeIndex,
+            color,
+            bbBox
+        );
 
         var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmSphericalDish, position);
 

@@ -30,8 +30,8 @@ public static class RvmCircularTorusConverter
         yield return new TorusSegment(
             arcAngle,
             rvmCircularTorus.Matrix,
-            Radius: rvmCircularTorus.Offset,
-            TubeRadius: rvmCircularTorus.Radius,
+            Radius: rvmCircularTorus.Offset, // * scale.X scaling doesn't look correct in reveal, but it is the correct thing to do
+            TubeRadius: rvmCircularTorus.Radius, // * scale.X scaling doesn't look correct in reveal, but it is the correct thing to do
             treeIndex,
             color,
             bbox

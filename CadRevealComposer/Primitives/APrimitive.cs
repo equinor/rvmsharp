@@ -1,22 +1,31 @@
 namespace CadRevealComposer.Primitives;
 
+using Operations;
+using Operations.SectorSplitting;
 using System.Drawing;
 using System.Numerics;
 using Tessellation;
 
 // Reveal GLTF model
-public sealed record Box(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record Box(
+    Matrix4x4 InstanceMatrix,
+    ulong TreeIndex,
+    Color Color,
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record Circle(
     Matrix4x4 InstanceMatrix,
     Vector3 Normal,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record Cone(
+    Matrix4x4 InstanceMatrix,
     float Angle,
     float ArcAngle,
     Vector3 CenterA,
@@ -26,10 +35,12 @@ public sealed record Cone(
     float RadiusB,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record EccentricCone(
+    Matrix4x4 InstanceMatrix,
     Vector3 CenterA,
     Vector3 CenterB,
     Vector3 Normal,
@@ -37,10 +48,12 @@ public sealed record EccentricCone(
     float RadiusB,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record EllipsoidSegment(
+    Matrix4x4 InstanceMatrix,
     float HorizontalRadius,
     float VerticalRadius,
     float Height,
@@ -48,10 +61,12 @@ public sealed record EllipsoidSegment(
     Vector3 Normal,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record GeneralCylinder(
+    Matrix4x4 InstanceMatrix,
     float Angle,
     float ArcAngle,
     Vector3 CenterA,
@@ -62,8 +77,9 @@ public sealed record GeneralCylinder(
     float Radius,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record GeneralRing(
     float Angle,
@@ -73,14 +89,25 @@ public sealed record GeneralRing(
     float Thickness,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
-public sealed record Nut(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record Nut(
+    Matrix4x4 InstanceMatrix,
+    ulong TreeIndex,
+    Color Color,
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
-public sealed record Quad(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record Quad(
+    Matrix4x4 InstanceMatrix,
+    ulong TreeIndex,
+    Color Color,
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record TorusSegment(
     float ArcAngle,
@@ -89,8 +116,9 @@ public sealed record TorusSegment(
     float TubeRadius,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 public sealed record Trapezium(
     Vector3 Vertex1,
@@ -99,8 +127,9 @@ public sealed record Trapezium(
     Vector3 Vertex4,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
 /// <summary>
 /// Defines an "Instance" of a Template. A instance that shares a Geometry representation with other instances of a shared "Template" reference.
@@ -119,10 +148,21 @@ public sealed record InstancedMesh(
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
-public sealed record TriangleMesh(Mesh Mesh, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+public sealed record TriangleMesh(
+    Mesh Mesh,
+    ulong TreeIndex,
+    Color Color,
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
-public abstract record APrimitive(ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox);
+public abstract record APrimitive(
+    ulong TreeIndex,
+    Color Color,
+    BoundingBox AxisAlignedBoundingBox,
+    NodePriority NodePriority = NodePriority.Default
+);

@@ -28,6 +28,7 @@ public class DrawCallEstimatorTests
         var geometry = new APrimitive[]
         {
             new Cone(
+                Matrix4x4.Identity,
                 0f,
                 0f,
                 Vector3.One,
@@ -40,6 +41,7 @@ public class DrawCallEstimatorTests
                 new BoundingBox(-Vector3.One, Vector3.One)
             ),
             new GeneralCylinder(
+                Matrix4x4.Identity,
                 0f,
                 0f,
                 Vector3.One,
@@ -64,6 +66,7 @@ public class DrawCallEstimatorTests
         var geometry = new APrimitive[]
         {
             new Cone(
+                Matrix4x4.Identity,
                 0f,
                 0f,
                 Vector3.One,
@@ -85,6 +88,7 @@ public class DrawCallEstimatorTests
                 new BoundingBox(-Vector3.One, Vector3.One)
             ),
             new GeneralCylinder(
+                Matrix4x4.Identity,
                 0f,
                 0f,
                 Vector3.One,

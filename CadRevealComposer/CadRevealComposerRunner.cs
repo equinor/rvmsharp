@@ -1,12 +1,13 @@
 ﻿namespace CadRevealComposer;
 
-using CadRevealFbxProvider.BatchUtils;
+using CadRevealComposer.Utils.MeshTools;
 using Configuration;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
+using Shadow;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -36,6 +37,10 @@ public static class CadRevealComposerRunner
         var instanceIdGenerator = new InstanceIdGenerator();
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
+        var nodePriorityFiltering = new PriorityMapping(
+            composerParameters.PrioritizedDisciplinesRegex,
+            composerParameters.PrioritizedNodeNamesRegex
+        );
 
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
@@ -44,7 +49,8 @@ public static class CadRevealComposerRunner
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIdGenerator,
-                filtering
+                filtering,
+                nodePriorityFiltering
             );
 
             Console.WriteLine(
@@ -56,7 +62,11 @@ public static class CadRevealComposerRunner
                 // collect all nodes for later sector division of the entire scene
                 nodesToExport.AddRange(cadRevealNodes);
 
-                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+                var inputGeometries = cadRevealNodes
+                    .AsParallel()
+                    .AsOrdered()
+                    .SelectMany(node => node.Geometries)
+                    .ToArray();
 
                 var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                     inputGeometries,
@@ -128,7 +138,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
+        var sectorInfos = sectors.SelectMany(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
 
         Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -167,16 +177,41 @@ public static class CadRevealComposerRunner
             "μ DLsize",
             "v DLsize"
         );
+
+        var shadowSectors = sectorsWithDownloadSize
+            .Where(x => x.Filename != null && x.Filename!.StartsWith("shadow"))
+            .ToArray();
+        var realSectors = sectorsWithDownloadSize.Except(shadowSectors).ToArray();
+
+        Console.WriteLine($"Found {realSectors.Count()} real sectors and {shadowSectors.Count()} shadow sectors");
+
         // Add stuff you would like for a quick overview here:
         using (new TeamCityLogBlock("Sector Stats"))
         {
-            Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
+            Console.WriteLine($"Total sector Count: {sectorsWithDownloadSize.Length}");
+            Console.WriteLine($"Total real sector Count: {realSectors.Length}");
+            Console.WriteLine($"Total shadow sector Count: {shadowSectors.Length}");
+
             Console.WriteLine(
                 $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB"
             );
             Console.WriteLine(
+                $"Sum all real sectors .glb size megabytes: {BytesToMegabytes(realSectors.Sum(x => x.DownloadSize)):F2}MB"
+            );
+            Console.WriteLine(
+                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(shadowSectors.Sum(x => x.DownloadSize)):F2}MB"
+            );
+
+            Console.WriteLine(
                 $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}"
             );
+            Console.WriteLine(
+                $"Real Sectors Estimated Triangle Count: {realSectors.Sum(x => x.EstimatedTriangleCount)}"
+            );
+            Console.WriteLine(
+                $"Shadow Sectors Estimated Triangle Count: {shadowSectors.Sum(x => x.EstimatedTriangleCount)}"
+            );
+
             Console.WriteLine($"Depth Stats:");
             Console.WriteLine(
                 $"|{headers.Item1, 5}|{headers.Item2, 7}|{headers.Item3, 10}|{headers.Item4, 11}|{headers.Item5, 10}|{headers.Item6, 10}|{headers.Item7, 10}|{headers.Item8, 17}|{headers.Item9, 10}|{headers.Item10, 8}|"
@@ -218,11 +253,17 @@ public static class CadRevealComposerRunner
         }
     }
 
-    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    private static IEnumerable<SceneCreator.SectorInfo> SerializeSector(InternalSector p, string outputDirectory)
     {
+        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+
+        if (p.Prioritized && sectorFilename != null)
+        {
+            sectorFilename = $"pri_{sectorFilename}";
+        }
+
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,
@@ -239,8 +280,62 @@ public static class CadRevealComposerRunner
         );
 
         if (sectorFilename != null)
+        {
             SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
-        return sectorInfo;
+
+            var shadowSectorFilename = "shadow_" + sectorFilename;
+            var shadowSectorInfo = CreateShadowSector(p, shadowSectorFilename);
+            SceneCreator.ExportSectorGeometries(shadowSectorInfo.Geometries, shadowSectorFilename, outputDirectory);
+
+            yield return shadowSectorInfo;
+        }
+        yield return sectorInfo;
+    }
+
+    private static SceneCreator.SectorInfo CreateShadowSector(InternalSector realSector, string shadowSectorFilename)
+    {
+        var shadowGeometries = CreateShadowGeometries(realSector.Geometries);
+
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(shadowGeometries);
+
+        var shadowSectorInfo = new SceneCreator.SectorInfo(
+            SectorId: realSector.SectorId + 10000, // TODO
+            ParentSectorId: realSector.ParentSectorId,
+            Depth: realSector.Depth,
+            Path: realSector.Path,
+            Filename: shadowSectorFilename,
+            EstimatedTriangleCount: estimatedTriangleCount,
+            EstimatedDrawCalls: estimatedDrawCalls,
+            MinNodeDiagonal: realSector.MinNodeDiagonal,
+            MaxNodeDiagonal: realSector.MaxNodeDiagonal,
+            Geometries: shadowGeometries,
+            SubtreeBoundingBox: realSector.SubtreeBoundingBox,
+            GeometryBoundingBox: realSector.GeometryBoundingBox
+        );
+
+        return shadowSectorInfo;
+    }
+
+    private static APrimitive[] CreateShadowGeometries(APrimitive[] realGeometries)
+    {
+        var shadowGeometry = new List<APrimitive>();
+
+        foreach (var geometry in realGeometries)
+        {
+            switch (geometry)
+            {
+                // Skip circles, rings and quads because they are only used as caps, and shadow boxes do not need them
+                case Circle:
+                case GeneralRing:
+                case Quad:
+                    continue;
+                default:
+                    shadowGeometry.Add(ShadowCreator.CreateShadow(geometry));
+                    break;
+            }
+        }
+
+        return shadowGeometry.ToArray();
     }
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(

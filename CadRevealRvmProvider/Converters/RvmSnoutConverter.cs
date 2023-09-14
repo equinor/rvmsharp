@@ -111,6 +111,7 @@ public static class RvmSnoutConverter
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
         yield return new Cone(
+            InstanceMatrix: rvmSnout.Matrix,
             Angle: 0f,
             ArcAngle: 2f * MathF.PI,
             centerA,
@@ -173,6 +174,7 @@ public static class RvmSnoutConverter
         var eccentricCenterB = position - eccentricNormal * halfLength;
 
         yield return new EccentricCone(
+            rvmSnout.Matrix,
             eccentricCenterA,
             eccentricCenterB,
             normal, // TODO CHECK WHY NOT eccentricNormal
@@ -228,8 +230,8 @@ public static class RvmSnoutConverter
         var (planeRotationA, planeNormalA, planeSlopeA) = rvmSnout.GetTopSlope();
         var (planeRotationB, planeNormalB, planeSlopeB) = rvmSnout.GetBottomSlope();
 
-        (var ellipsePolarA, _, _) = rvmSnout.GetTopCapEllipse();
-        (var ellipsePolarB, _, _) = rvmSnout.GetBottomCapEllipse();
+        var (ellipsePolarA, _, _) = rvmSnout.GetTopCapEllipse();
+        var (ellipsePolarB, _, _) = rvmSnout.GetBottomCapEllipse();
 
         var semiMinorAxisA = ellipsePolarA.semiMinorAxis * scale.X;
         var semiMajorAxisA = ellipsePolarA.semiMajorAxis * scale.X;
@@ -247,6 +249,7 @@ public static class RvmSnoutConverter
         var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB);
 
         yield return new GeneralCylinder(
+            InstanceMatrix: rvmSnout.Matrix,
             Angle: 0f,
             ArcAngle: 2f * MathF.PI,
             extendedCenterA,
