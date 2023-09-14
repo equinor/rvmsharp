@@ -66,7 +66,7 @@ internal static class RvmStoreToCadRevealNodesConverter
                         .OrderByDescending(x => x.AxisAlignedBoundingBox.Diagonal)
                         .ToArray();
 
-                    int numberOfGeometriesToPrioritize = 1000; // Arbitrary number
+                    int numberOfGeometriesToPrioritize = 5; // Arbitrary number
                     if (sortedGeometries.Length < numberOfGeometriesToPrioritize)
                         numberOfGeometriesToPrioritize = sortedGeometries.Length;
 
