@@ -1,5 +1,18 @@
 namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 
-using RvmSharp.Primitives;
+using CadRevealComposer.Primitives;
 
-public record CapData(RvmPrimitive Primitive, uint CapIndex, bool IsCurrentPrimitive) { }
+public class CapData<T>
+    where T : APrimitive
+{
+    public T Primitive { get; }
+    public uint CapIndex { get; }
+    public bool IsCurrentPrimitive { get; }
+
+    public CapData(T primitive, uint capIndex, bool isCurrentPrimitive)
+    {
+        Primitive = primitive;
+        CapIndex = capIndex;
+        IsCurrentPrimitive = isCurrentPrimitive;
+    }
+}
