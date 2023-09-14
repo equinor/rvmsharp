@@ -94,7 +94,7 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return new Circle(InstanceMatrix: matrixCapA, Normal: normalA, treeIndex, color, bbox);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalA, treeIndex, color);
         }
 
         if (showCapB)
@@ -104,7 +104,7 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            yield return new Circle(InstanceMatrix: matrixCapB, Normal: normalB, treeIndex, color, bbox);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalB, treeIndex, color);
         }
     }
 }

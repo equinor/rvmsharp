@@ -4,6 +4,7 @@ using Configuration;
 using System;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Utils;
 
 public class Scene
 {
@@ -88,6 +89,18 @@ public class Sector
     public long DownloadSize { get; set; }
 
     #endregion
+
+    /// <summary>
+    /// Stores echo developer metadata, not used by reveal but may be used by Echo in dev.
+    /// NOT reliable, if we want data to be used in algorithms move them somewhere else.
+    /// </summary>
+    [JsonPropertyName("sectorEchoDevMetadata")]
+    public SectorEchoDevMetadata? SectorEchoDevMetadata { get; set; } = null;
+}
+
+public class SectorEchoDevMetadata
+{
+    public GeometryDistributionStats? GeometryDistributions { get; set; } = null;
 }
 
 public record SerializableBoundingBox(
