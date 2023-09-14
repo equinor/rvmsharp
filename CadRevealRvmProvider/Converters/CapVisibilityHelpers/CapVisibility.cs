@@ -11,9 +11,10 @@ public static class CapVisibility
     public static int CapsShown;
     public static int CapsWithoutConnections;
 
-    // This allows caps to be hidden even if it is a tiny bit larger than the connected cap
-    // This value should be so low that it doesn't impact user experience by hiding caps
-    // that are clearly visible
+    /// <summary>
+    /// Allows caps to be hidden even if it is a bit larger than the connected cap.
+    /// This value should be so low that it doesn't impact user experience by hiding caps that are clearly visible
+    /// </summary>
     public static readonly float CapOverlapTolerance = 0.01f; // 0.01 is 1 cm
 
     /// <summary>
