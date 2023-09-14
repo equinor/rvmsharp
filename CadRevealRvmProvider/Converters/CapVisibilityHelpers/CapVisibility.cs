@@ -11,7 +11,10 @@ public static class CapVisibility
     public static int CapsShown;
     public static int CapsWithoutConnections;
 
-    public static readonly float CapComparingBuffer = 0.01f;
+    // This allows caps to be hidden even if it is a tiny bit larger than the connected cap
+    // This value should be so low that it doesn't impact user experience by hiding caps
+    // that are clearly visible
+    public static readonly float CapOverlapTolerance = 0.01f; // 0.01 is 1 cm
 
     /// <summary>
     /// Checks cap visibility on RvmPrimitives with one cap
@@ -63,33 +66,82 @@ public static class CapVisibility
 
             var isPrim1CurrentPrimitive = ReferenceEquals(primitive, prim1);
 
-            var capData1 = new CapData(prim1, connectionIndex1, isPrim1CurrentPrimitive);
-            var capData2 = new CapData(prim2, connectionIndex2, !isPrim1CurrentPrimitive);
-
             var diffA = Vector3.Distance(connection.Position, capCenterA);
             var diffB = Vector3.Distance(connection.Position, capCenterB);
 
             var isCapCenterA = diffA <= diffB;
             var isCapCenterB = diffB < diffA;
 
-            ICapComparer? capComparer = (capData1.Primitive, capData2.Primitive) switch
+            CapData<T> CreateCapData<T>(T node, uint capIndex, bool isCurrentPrimitive)
+                where T : RvmPrimitive
             {
-                (RvmBox, RvmCylinder) => new BoxCylinderComparer(),
-                (RvmBox, RvmSnout) => new BoxSnoutComparer(),
-                (RvmCylinder, RvmCylinder) => new CylinderCylinderComparer(),
-                (RvmCircularTorus, RvmCircularTorus) => new TorusTorusComparer(),
-                (RvmCircularTorus, RvmCylinder) => new TorusCylinderComparer(),
-                (RvmCircularTorus, RvmSnout) => new TorusSnoutComparer(),
-                (RvmCylinder, RvmSphericalDish) => new CylinderSphericalDishComparer(),
-                (RvmCylinder, RvmEllipticalDish) => new CylinderEllipticalDishComparer(),
-                (RvmCylinder, RvmSnout) => new CylinderSnoutComparer(),
-                (RvmEllipticalDish, RvmSnout) => new EllipticalDishSnoutComparer(),
-                (RvmSnout, RvmSnout) => new SnoutSnoutComparer(),
-                (RvmSnout, RvmSphericalDish) => new SnoutSphericalDishComparer(),
-                _ => null
-            };
+                return new CapData<T>(node, capIndex, isCurrentPrimitive);
+            }
 
-            bool showCap = capComparer?.ShowCap(capData1, capData2) ?? true;
+            bool showCap = (prim1, prim2) switch
+            {
+                (RvmBox box, RvmCylinder cylinder)
+                    => BoxCylinderComparer.ShowCap(
+                        CreateCapData(box, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(cylinder, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmBox box, RvmSnout snout)
+                    => BoxSnoutComparer.ShowCap(
+                        CreateCapData(box, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(snout, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCylinder cylinder1, RvmCylinder cylinder2)
+                    => CylinderCylinderComparer.ShowCap(
+                        CreateCapData(cylinder1, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(cylinder2, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCircularTorus torus1, RvmCircularTorus torus2)
+                    => TorusTorusComparer.ShowCap(
+                        CreateCapData(torus1, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(torus2, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCircularTorus torus, RvmCylinder cylinder)
+                    => TorusCylinderComparer.ShowCap(
+                        CreateCapData(torus, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(cylinder, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCircularTorus torus, RvmSnout snout)
+                    => TorusSnoutComparer.ShowCap(
+                        CreateCapData(torus, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(snout, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCylinder cylinder, RvmSphericalDish dish)
+                    => CylinderSphericalDishComparer.ShowCap(
+                        CreateCapData(cylinder, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(dish, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCylinder cylinder, RvmEllipticalDish dish)
+                    => CylinderEllipticalDishComparer.ShowCap(
+                        CreateCapData(cylinder, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(dish, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmCylinder cylinder, RvmSnout snout)
+                    => CylinderSnoutComparer.ShowCap(
+                        CreateCapData(cylinder, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(snout, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmEllipticalDish dish, RvmSnout snout)
+                    => EllipticalDishSnoutComparer.ShowCap(
+                        CreateCapData(dish, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(snout, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmSnout snout1, RvmSnout snout2)
+                    => SnoutSnoutComparer.ShowCap(
+                        CreateCapData(snout1, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(snout2, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                (RvmSnout snout, RvmSphericalDish dish)
+                    => SnoutSphericalDishComparer.ShowCap(
+                        CreateCapData(snout, connectionIndex1, isPrim1CurrentPrimitive),
+                        CreateCapData(dish, connectionIndex2, isPrim1CurrentPrimitive)
+                    ),
+                _ => true
+            };
 
             if (showCap is false && isCapCenterA)
             {

@@ -7,12 +7,12 @@ using System.Numerics;
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
 
-public class SnoutSnoutComparer : ICapComparer
+public static class SnoutSnoutComparer
 {
-    public bool ShowCap(CapData snoutCapData1, CapData snoutCapData2)
+    public static bool ShowCap(CapData<RvmSnout> snoutCapData1, CapData<RvmSnout> snoutCapData2)
     {
-        var rvmSnout1 = (RvmSnout)snoutCapData1.Primitive;
-        var rvmSnout2 = (RvmSnout)snoutCapData2.Primitive;
+        var rvmSnout1 = snoutCapData1.Primitive;
+        var rvmSnout2 = snoutCapData2.Primitive;
 
         var isSnoutCapTop1 = snoutCapData1.CapIndex == 1;
         var isSnoutCapTop2 = snoutCapData2.CapIndex == 1;

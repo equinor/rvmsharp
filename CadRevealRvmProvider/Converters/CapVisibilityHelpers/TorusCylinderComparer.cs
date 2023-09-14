@@ -5,10 +5,10 @@ using RvmSharp.Primitives;
 
 public class TorusCylinderComparer : ICapComparer
 {
-    public bool ShowCap(CapData torusCapData, CapData cylinderCapData)
+    public static bool ShowCap(CapData<RvmCircularTorus> torusCapData, CapData<RvmCylinder> cylinderCapData)
     {
-        var rvmCircularTorus = (RvmCircularTorus)torusCapData.Primitive;
-        var rvmCylinder = (RvmCylinder)cylinderCapData.Primitive;
+        var rvmCircularTorus = torusCapData.Primitive;
+        var rvmCylinder = cylinderCapData.Primitive;
 
         rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
@@ -18,14 +18,14 @@ public class TorusCylinderComparer : ICapComparer
 
         if (torusCapData.IsCurrentPrimitive)
         {
-            if (cylinderRadius + CapVisibility.CapComparingBuffer >= circularTorusRadius)
+            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= circularTorusRadius)
             {
                 return false;
             }
         }
         else
         {
-            if (circularTorusRadius + CapVisibility.CapComparingBuffer >= cylinderRadius)
+            if (circularTorusRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
             {
                 return false;
             }

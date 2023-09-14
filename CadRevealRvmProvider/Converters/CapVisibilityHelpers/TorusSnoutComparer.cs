@@ -4,12 +4,12 @@ using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 
-public class TorusSnoutComparer : ICapComparer
+public static class TorusSnoutComparer
 {
-    public bool ShowCap(CapData torusCapData, CapData snoutCapData)
+    public static bool ShowCap(CapData<RvmCircularTorus> torusCapData, CapData<RvmSnout> snoutCapData)
     {
-        var rvmCircularTorus = (RvmCircularTorus)torusCapData.Primitive;
-        var rvmSnout = (RvmSnout)snoutCapData.Primitive;
+        var rvmCircularTorus = torusCapData.Primitive;
+        var rvmSnout = snoutCapData.Primitive;
 
         rvmCircularTorus.Matrix.DecomposeAndNormalize(out var circularTorusScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -28,14 +28,14 @@ public class TorusSnoutComparer : ICapComparer
 
         if (torusCapData.IsCurrentPrimitive)
         {
-            if (semiMinorRadius + CapVisibility.CapComparingBuffer >= torusRadius)
+            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= torusRadius)
             {
                 return false;
             }
         }
         else
         {
-            if (torusRadius + CapVisibility.CapComparingBuffer >= semiMajorRadius)
+            if (torusRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
             {
                 return false;
             }

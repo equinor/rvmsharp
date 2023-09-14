@@ -4,12 +4,12 @@ using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 
-public class CylinderSnoutComparer : ICapComparer
+public static class CylinderSnoutComparer
 {
-    public bool ShowCap(CapData cylinderCapData, CapData snoutCapData)
+    public static bool ShowCap(CapData<RvmCylinder> cylinderCapData, CapData<RvmSnout> snoutCapData)
     {
-        var rvmCylinder = (RvmCylinder)cylinderCapData.Primitive;
-        var rvmSnout = (RvmSnout)snoutCapData.Primitive;
+        var rvmCylinder = cylinderCapData.Primitive;
+        var rvmSnout = snoutCapData.Primitive;
 
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -28,14 +28,14 @@ public class CylinderSnoutComparer : ICapComparer
 
         if (cylinderCapData.IsCurrentPrimitive)
         {
-            if (semiMinorRadius + CapVisibility.CapComparingBuffer >= cylinderRadius)
+            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
             {
                 return false;
             }
         }
         else
         {
-            if (cylinderRadius + CapVisibility.CapComparingBuffer >= semiMajorRadius)
+            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
             {
                 return false;
             }

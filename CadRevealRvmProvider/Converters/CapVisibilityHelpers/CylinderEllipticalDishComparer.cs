@@ -3,12 +3,12 @@ namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 
-public class CylinderEllipticalDishComparer : ICapComparer
+public static class CylinderEllipticalDishComparer
 {
-    public bool ShowCap(CapData cylinderCapData, CapData ellipticalDishCapData)
+    public static bool ShowCap(CapData<RvmCylinder> cylinderCapData, CapData<RvmEllipticalDish> ellipticalDishCapData)
     {
-        var rvmCylinder = (RvmCylinder)cylinderCapData.Primitive;
-        var rvmEllipticalDish = (RvmEllipticalDish)ellipticalDishCapData.Primitive;
+        var rvmCylinder = cylinderCapData.Primitive;
+        var rvmEllipticalDish = ellipticalDishCapData.Primitive;
 
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);
         rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var ellipticalDishScale, out _, out _);
@@ -18,14 +18,14 @@ public class CylinderEllipticalDishComparer : ICapComparer
 
         if (cylinderCapData.IsCurrentPrimitive)
         {
-            if (ellipticalDishRadius + CapVisibility.CapComparingBuffer >= cylinderRadius)
+            if (ellipticalDishRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
             {
                 return false;
             }
         }
         else
         {
-            if (cylinderRadius + CapVisibility.CapComparingBuffer >= ellipticalDishRadius)
+            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= ellipticalDishRadius)
             {
                 return false;
             }

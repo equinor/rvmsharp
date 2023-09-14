@@ -3,12 +3,12 @@ namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 
-public class TorusTorusComparer : ICapComparer
+public static class TorusTorusComparer
 {
-    public bool ShowCap(CapData torusCapData1, CapData torusCapData2)
+    public static bool ShowCap(CapData<RvmCircularTorus> torusCapData1, CapData<RvmCircularTorus> torusCapData2)
     {
-        var rvmCircularTorus1 = (RvmCircularTorus)torusCapData1.Primitive;
-        var rvmCircularTorus2 = (RvmCircularTorus)torusCapData2.Primitive;
+        var rvmCircularTorus1 = torusCapData1.Primitive;
+        var rvmCircularTorus2 = torusCapData2.Primitive;
 
         rvmCircularTorus1.Matrix.DecomposeAndNormalize(out var torusScale1, out _, out _);
         rvmCircularTorus2.Matrix.DecomposeAndNormalize(out var torusScale2, out _, out _);
@@ -18,14 +18,14 @@ public class TorusTorusComparer : ICapComparer
 
         if (torusCapData1.IsCurrentPrimitive)
         {
-            if (torusRadius2 + CapVisibility.CapComparingBuffer >= torusRadius1)
+            if (torusRadius2 + CapVisibility.CapOverlapTolerance >= torusRadius1)
             {
                 return false;
             }
         }
         else
         {
-            if (torusRadius1 + CapVisibility.CapComparingBuffer >= torusRadius2)
+            if (torusRadius1 + CapVisibility.CapOverlapTolerance >= torusRadius2)
             {
                 return false;
             }

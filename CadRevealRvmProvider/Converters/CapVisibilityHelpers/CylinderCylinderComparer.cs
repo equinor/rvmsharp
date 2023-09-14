@@ -3,12 +3,12 @@ namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 
-public class CylinderCylinderComparer : ICapComparer
+public static class CylinderCylinderComparer
 {
-    public bool ShowCap(CapData cylinderData1, CapData cylinderData2)
+    public static bool ShowCap(CapData<RvmCylinder> cylinderData1, CapData<RvmCylinder> cylinderData2)
     {
-        var rvmCylinder1 = (RvmCylinder)cylinderData1.Primitive;
-        var rvmCylinder2 = (RvmCylinder)cylinderData2.Primitive;
+        var rvmCylinder1 = cylinderData1.Primitive;
+        var rvmCylinder2 = cylinderData2.Primitive;
 
         rvmCylinder1.Matrix.DecomposeAndNormalize(out var cylinderScale1, out _, out _);
         rvmCylinder2.Matrix.DecomposeAndNormalize(out var cylinderScale2, out _, out _);
@@ -18,14 +18,14 @@ public class CylinderCylinderComparer : ICapComparer
 
         if (cylinderData1.IsCurrentPrimitive)
         {
-            if (cylinderRadius2 + CapVisibility.CapComparingBuffer >= cylinderRadius1)
+            if (cylinderRadius2 + CapVisibility.CapOverlapTolerance >= cylinderRadius1)
             {
                 return false;
             }
         }
         else
         {
-            if (cylinderRadius1 + CapVisibility.CapComparingBuffer >= cylinderRadius2)
+            if (cylinderRadius1 + CapVisibility.CapOverlapTolerance >= cylinderRadius2)
             {
                 return false;
             }

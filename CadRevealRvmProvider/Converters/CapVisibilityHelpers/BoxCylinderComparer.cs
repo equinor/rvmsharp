@@ -3,12 +3,12 @@ namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 
-public class BoxCylinderComparer : ICapComparer
+public static class BoxCylinderComparer
 {
-    public bool ShowCap(CapData boxCapData, CapData cylinderCapData)
+    public static bool ShowCap(CapData<RvmBox> boxCapData, CapData<RvmCylinder> cylinderCapData)
     {
-        var rvmBox = (RvmBox)boxCapData.Primitive;
-        var rvmCylinder = (RvmCylinder)cylinderCapData.Primitive;
+        var rvmBox = boxCapData.Primitive;
+        var rvmCylinder = cylinderCapData.Primitive;
 
         rvmBox.Matrix.DecomposeAndNormalize(out var boxScale, out _, out _);
         rvmCylinder.Matrix.DecomposeAndNormalize(out var cylinderScale, out _, out _);

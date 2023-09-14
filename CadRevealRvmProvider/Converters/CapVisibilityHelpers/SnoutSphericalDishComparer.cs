@@ -4,12 +4,12 @@ using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 
-public class SnoutSphericalDishComparer : ICapComparer
+public static class SnoutSphericalDishComparer
 {
-    public bool ShowCap(CapData snoutCapData, CapData sphericalDishCapData)
+    public static bool ShowCap(CapData<RvmSnout> snoutCapData, CapData<RvmSphericalDish> sphericalDishCapData)
     {
-        var rvmSnout = (RvmSnout)snoutCapData.Primitive;
-        var rvmSphericalDish = (RvmSphericalDish)sphericalDishCapData.Primitive;
+        var rvmSnout = snoutCapData.Primitive;
+        var rvmSphericalDish = sphericalDishCapData.Primitive;
 
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
         rvmSphericalDish.Matrix.DecomposeAndNormalize(out var sphericalDishScale, out _, out _);
@@ -28,14 +28,14 @@ public class SnoutSphericalDishComparer : ICapComparer
 
         if (snoutCapData.IsCurrentPrimitive)
         {
-            if (sphericalDishRadius + CapVisibility.CapComparingBuffer >= semiMajorRadius)
+            if (sphericalDishRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
             {
                 return false;
             }
         }
         else
         {
-            if (semiMinorRadius + CapVisibility.CapComparingBuffer >= sphericalDishRadius)
+            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= sphericalDishRadius)
             {
                 return false;
             }

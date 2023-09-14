@@ -4,12 +4,12 @@ using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 
-public class EllipticalDishSnoutComparer : ICapComparer
+public static class EllipticalDishSnoutComparer
 {
-    public bool ShowCap(CapData ellipticalDishCapData, CapData snoutCapData)
+    public static bool ShowCap(CapData<RvmEllipticalDish> ellipticalDishCapData, CapData<RvmSnout> snoutCapData)
     {
-        var rvmEllipticalDish = (RvmEllipticalDish)ellipticalDishCapData.Primitive;
-        var rvmSnout = (RvmSnout)snoutCapData.Primitive;
+        var rvmEllipticalDish = ellipticalDishCapData.Primitive;
+        var rvmSnout = snoutCapData.Primitive;
 
         rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var ellipticalDishScale, out _, out _);
         rvmSnout.Matrix.DecomposeAndNormalize(out var snoutScale, out _, out _);
@@ -28,14 +28,14 @@ public class EllipticalDishSnoutComparer : ICapComparer
 
         if (ellipticalDishCapData.IsCurrentPrimitive)
         {
-            if (semiMinorRadius + CapVisibility.CapComparingBuffer >= ellipticalDishRadius)
+            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= ellipticalDishRadius)
             {
                 return false;
             }
         }
         else
         {
-            if (ellipticalDishRadius + CapVisibility.CapComparingBuffer >= semiMajorRadius)
+            if (ellipticalDishRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
             {
                 return false;
             }
