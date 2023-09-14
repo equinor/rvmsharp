@@ -3,7 +3,7 @@ namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 
-public class TorusCylinderComparer : ICapComparer
+public static class TorusCylinderComparer
 {
     public static bool ShowCap(CapData<RvmCircularTorus> torusCapData, CapData<RvmCylinder> cylinderCapData)
     {
