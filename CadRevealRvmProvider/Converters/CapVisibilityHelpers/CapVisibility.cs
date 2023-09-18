@@ -141,7 +141,7 @@ public static class CapVisibility
                         CreateCapData(snout, connectionIndex1, isPrim1CurrentPrimitive),
                         CreateCapData(dish, connectionIndex2, !isPrim1CurrentPrimitive)
                     ),
-                _ => true
+                _ => true // Some cases are not tested (Box + EllipticalDish, etc.). Caps should in this case be shown
             };
 
             if (showCap is false && isCapCenterA)
