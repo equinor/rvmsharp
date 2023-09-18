@@ -166,9 +166,12 @@ public class RvmProvider : IModelFormatProvider
             .SelectMany(RvmNode.GetAllPrimitivesFlat)
             .GroupBy(x => x.GetType());
 
-        foreach (var group in allRvmPrimitivesGroups)
+        using (new TeamCityLogBlock("RvmPrimitive Count"))
         {
-            Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
+            foreach (var group in allRvmPrimitivesGroups)
+            {
+                Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
+            }
         }
     }
 }
