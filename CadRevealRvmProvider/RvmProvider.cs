@@ -13,6 +13,7 @@ using Commons;
 using Converters;
 using Converters.CapVisibilityHelpers;
 using Operations;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using Tessellation;
@@ -47,6 +48,8 @@ public class RvmProvider : IModelFormatProvider
             // returns empty list if there are no rvm files to process
             return new List<CadRevealNode>();
         }
+
+        LogRvmPrimitives(rvmStore);
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
         );
@@ -154,5 +157,18 @@ public class RvmProvider : IModelFormatProvider
         stopwatch.Restart();
 
         return geometriesIncludingMeshes;
+    }
+
+    private static void LogRvmPrimitives(RvmStore rvmStore)
+    {
+        var allRvmPrimitivesGroups = rvmStore.RvmFiles
+            .SelectMany(f => f.Model.Children)
+            .SelectMany(RvmNode.GetAllPrimitivesFlat)
+            .GroupBy(x => x.GetType());
+
+        foreach (var group in allRvmPrimitivesGroups)
+        {
+            Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
+        }
     }
 }
