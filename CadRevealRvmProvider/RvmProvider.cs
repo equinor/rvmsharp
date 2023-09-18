@@ -11,6 +11,7 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
 using Converters;
+using Converters.CapVisibilityHelpers;
 using Operations;
 using RvmSharp.Primitives;
 using System.Diagnostics;
@@ -145,8 +146,10 @@ public class RvmProvider : IModelFormatProvider
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
-        Console.WriteLine($"Show number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Shown}");
-        Console.WriteLine($"Hide number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Hidden}");
+        Console.WriteLine($"Show number of caps: {CapVisibility.CapsShown}");
+        Console.WriteLine($"Hide number of caps: {CapVisibility.CapsHidden}");
+        Console.WriteLine($"Caps Without connection: {CapVisibility.CapsWithoutConnections}");
+        Console.WriteLine($"Total number of caps tested: {CapVisibility.TotalNumberOfCapsTested}");
 
         stopwatch.Restart();
 

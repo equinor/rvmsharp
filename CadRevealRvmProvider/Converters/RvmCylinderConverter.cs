@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -72,20 +73,26 @@ public static class RvmCylinderConverter
         var centerA = position + normalA * halfHeight;
         var centerB = position + normalB * halfHeight;
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmCylinder, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmCylinder, centerA, centerB);
 
-        yield return new Cone(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radius,
-            radius,
-            treeIndex,
-            color,
-            bbox
-        );
+        if (height != 0) // If height is zero, just return a Circle only
+        {
+            yield return new Cone(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                centerA,
+                centerB,
+                localToWorldXAxis,
+                radius,
+                radius,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
+
+        if (radius == 0) //Don't add caps if radius is zero
+            yield break;
 
         if (showCapA)
         {
@@ -97,7 +104,7 @@ public static class RvmCylinderConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalA, treeIndex, color);
         }
 
-        if (showCapB)
+        if (showCapB && height != 0) // If height is zero, return a Circle only
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(diameter, diameter, 1f)

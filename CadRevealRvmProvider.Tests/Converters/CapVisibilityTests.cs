@@ -1,13 +1,14 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Converters;
 
 using CadRevealRvmProvider.Converters;
+using CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System.Numerics;
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 [TestFixture]
-public class PrimitiveCapHelperTests
+public class CapVisibilityTests
 {
     private RvmCylinder _cylinder = null!;
     private RvmSnout _snout = null!;
@@ -45,11 +46,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasRectangularSide | RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            new Vector3(0, -1, 0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, 0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -70,11 +67,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasRectangularSide | RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            new Vector3(0, -1, 0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, 0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -95,11 +88,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasRectangularSide | RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -120,11 +109,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            new Vector3(0, -1, -0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -145,11 +130,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            new Vector3(0, -1, -0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -170,11 +151,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -195,11 +172,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            new Vector3(0, -1, -0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -220,11 +193,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            new Vector3(0, -1, -0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -245,11 +214,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -270,11 +235,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            new Vector3(0, -1, -0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -295,11 +256,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            new Vector3(0, -1, -0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -320,11 +277,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -345,11 +298,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            new Vector3(0, -1, -0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -370,11 +319,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            new Vector3(0, -1, -0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -395,11 +340,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -420,11 +361,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            new Vector3(0, -1, -0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -445,11 +382,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            new Vector3(0, -1, -0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -470,11 +403,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _cylinder,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -496,11 +425,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasRectangularSide | RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            Vector3.Zero,
-            new Vector3(0, -1, 0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -521,11 +446,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasRectangularSide | RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            new Vector3(0, -1, 0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -546,7 +467,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasRectangularSide | RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_snout, Vector3.Zero, Vector3.Zero);
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -567,11 +488,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            Vector3.Zero,
-            new Vector3(0, -1, 0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -592,11 +509,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            new Vector3(0, -1, 0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -617,7 +530,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_snout, Vector3.Zero, Vector3.Zero);
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -638,11 +551,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            Vector3.Zero,
-            new Vector3(0, -1, 0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -663,11 +572,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            new Vector3(0, -1, 0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -688,7 +593,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_snout, Vector3.Zero, Vector3.Zero);
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -709,11 +614,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            Vector3.Zero,
-            new Vector3(0, -1, 0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -734,11 +635,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            new Vector3(0, -1, 0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -759,7 +656,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_snout, Vector3.Zero, Vector3.Zero);
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -780,11 +677,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            Vector3.Zero,
-            new Vector3(0, -1, 0)
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
         Assert.IsFalse(showCapA);
         Assert.IsTrue(showCapB);
@@ -805,11 +698,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _snout,
-            new Vector3(0, -1, 0),
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsFalse(showCapB);
@@ -876,11 +765,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            snout1,
-            snout1CapCenter,
-            snout1CapCenterB
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(snout1, snout1CapCenter, snout1CapCenterB);
         Assert.That(showCapA, Is.False);
         Assert.That(showCapB, Is.True);
     }
@@ -948,11 +833,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            snout1,
-            snout1CapCenter,
-            snout1CapCenterB
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(snout1, snout1CapCenter, snout1CapCenterB);
         Assert.That(showCapA, Is.False);
         Assert.That(showCapB, Is.True);
     }
@@ -1120,11 +1001,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            snout2,
-            snout2CapCenter,
-            snout2CapCenterB
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(snout2, snout2CapCenter, snout2CapCenterB);
         Assert.That(showCapA, Is.False);
         Assert.That(showCapB, Is.True);
     }
@@ -1271,11 +1148,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            snout1,
-            snout1CapCenter,
-            snout1CapCenterB
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(snout1, snout1CapCenter, snout1CapCenterB);
         Assert.That(showCapA, Is.False);
         Assert.That(showCapB, Is.True);
     }
@@ -1369,11 +1242,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            snout1,
-            snout1CapCenter,
-            snout1CapCenterB
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(snout1, snout1CapCenter, snout1CapCenterB);
         Assert.That(showCapA, Is.False);
         Assert.That(showCapB, Is.True);
     }
@@ -1466,7 +1335,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapASnout1, bool showCapBSnout1) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapASnout1, bool showCapBSnout1) = CapVisibility.IsCapsVisible(
             snout1,
             snout1CapCenter,
             snout1CapCenterB
@@ -1495,7 +1364,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapASnout2, bool showCapBSnout2) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapASnout2, bool showCapBSnout2) = CapVisibility.IsCapsVisible(
             snout2,
             snout2CapCenter,
             snout2CapCenterB
@@ -1522,7 +1391,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(_snout, Vector3.Zero, Vector3.Zero);
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -1544,7 +1413,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             Vector3.Zero,
             new Vector3(0, -1, -0)
@@ -1569,7 +1438,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             new Vector3(0, -1, -0),
             Vector3.Zero
@@ -1594,11 +1463,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            _circularTorus,
-            Vector3.Zero,
-            Vector3.Zero
-        );
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_circularTorus, Vector3.Zero, Vector3.Zero);
 
         Assert.IsTrue(showCapA);
         Assert.IsTrue(showCapB);
@@ -1619,7 +1484,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             Vector3.Zero,
             new Vector3(0, -1, -0)
@@ -1644,7 +1509,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             new Vector3(0, -1, -0),
             Vector3.Zero
@@ -1669,7 +1534,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             Vector3.Zero,
             new Vector3(0, -1, -0)
@@ -1694,7 +1559,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             Vector3.Zero,
             new Vector3(0, -1, -0)
@@ -1719,7 +1584,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             new Vector3(0, -1, -0),
             Vector3.Zero
@@ -1744,7 +1609,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        (bool showCapA, bool showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
+        (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(
             _circularTorus,
             Vector3.Zero,
             new Vector3(0, -1, -0)
@@ -1770,7 +1635,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, Vector3.Zero);
+        bool showCap = CapVisibility.IsCapVisible(_sphericalDish, Vector3.Zero);
 
         Assert.IsFalse(showCap);
     }
@@ -1790,7 +1655,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_sphericalDish, Vector3.Zero);
+        bool showCap = CapVisibility.IsCapVisible(_sphericalDish, Vector3.Zero);
 
         Assert.IsTrue(showCap);
     }
@@ -1811,7 +1676,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, Vector3.Zero);
+        bool showCap = CapVisibility.IsCapVisible(_ellipticalDish, Vector3.Zero);
 
         Assert.IsFalse(showCap);
     }
@@ -1831,7 +1696,7 @@ public class PrimitiveCapHelperTests
             RvmConnection.ConnectionType.HasCircularSide
         );
 
-        bool showCap = PrimitiveCapHelper.CalculateCapVisibility(_ellipticalDish, Vector3.Zero);
+        bool showCap = CapVisibility.IsCapVisible(_ellipticalDish, Vector3.Zero);
 
         Assert.IsTrue(showCap);
     }

@@ -3,6 +3,7 @@ namespace CadRevealRvmProvider.Converters;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using Commons.Utils;
 using MathNet.Numerics.Distributions;
 using RvmSharp.Primitives;
@@ -123,9 +124,9 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA)
+        if (showCapA && radiusA > 0)
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -135,7 +136,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (showCapB)
+        if (showCapB && radiusB > 0)
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(diameterB)
@@ -183,13 +184,9 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            rvmSnout,
-            eccentricCenterA,
-            eccentricCenterB
-        );
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
-        if (showCapA)
+        if (showCapA && radiusA > 0)
         {
             var matrixEccentricCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -199,7 +196,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
-        if (showCapB)
+        if (showCapB && radiusB > 0)
         {
             var matrixEccentricCapB =
                 Matrix4x4.CreateScale(diameterB)
@@ -260,9 +257,9 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA)
+        if (showCapA && semiMajorAxisA > 0)
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f)
@@ -291,7 +288,7 @@ public static class RvmSnoutConverter
             }
         }
 
-        if (showCapB)
+        if (showCapB && semiMajorAxisB > 0)
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
