@@ -137,10 +137,10 @@ public static class FbxWorkload
                                     cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
                                 }
                             }
-                            else {
+                            else
+                            {
                                 Console.WriteLine($"Data Id {id} has missing attributes.");
                             }
-                            
                         }
                         else
                         {
