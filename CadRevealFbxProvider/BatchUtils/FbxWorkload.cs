@@ -129,10 +129,18 @@ public static class FbxWorkload
                         if (attributes.ContainsKey(id))
                         {
                             totalMismatch = false;
-                            foreach (var kvp in attributes[id])
+                            var attributes_id = attributes[id];
+                            if (attributes_id != null)
                             {
-                                cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                                foreach (var kvp in attributes_id)
+                                {
+                                    cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                                }
                             }
+                            else {
+                                Console.WriteLine($"Data Id {id} has missing attributes.");
+                            }
+                            
                         }
                         else
                         {
