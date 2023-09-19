@@ -91,7 +91,7 @@ public static class FbxWorkload
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
-            Dictionary<string, Dictionary<string, string>>? attributes = null;
+            Dictionary<string, Dictionary<string, string>?>? attributes = null;
 
             // there could be an explicit test / determination if this current fbx is scaffolding or not
             if (infoTextFilename != null)
