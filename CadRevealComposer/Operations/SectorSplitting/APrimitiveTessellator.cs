@@ -21,6 +21,8 @@ public static class APrimitiveTessellator
                 return Tessellate(cone);
             case TorusSegment torus:
                 return Tessellate(torus);
+            case Cone cone:
+                return Tessellate(cone);
             default:
                 return primitive with { Color = Color.WhiteSmoke };
         }
@@ -201,6 +203,65 @@ public static class APrimitiveTessellator
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
         return new TriangleMesh(mesh, torus.TreeIndex, Color.Gold, torus.AxisAlignedBoundingBox);
+    }
+
+    private static APrimitive Tessellate(Cone cone, float error = 0)
+    {
+        if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
+        {
+            return cone;
+        }
+
+        uint segments = 12;
+        var vertices = new List<Vector3>();
+        var indices = new List<uint>();
+
+        var centerA = cone.CenterA;
+        var radiusA = cone.RadiusA;
+        var centerB = cone.CenterB;
+        var radiusB = cone.RadiusB;
+
+        var normal = Vector3.Normalize(centerB - centerA);
+
+        var angleIncrement = (2 * MathF.PI) / segments;
+
+        var startVector = CreateOrthogonalUnitVector(normal);
+
+        for (uint i = 0; i < segments; i++)
+        {
+            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
+
+            var v = Vector3.Transform(startVector, q);
+
+            var vNorm = Vector3.Normalize(v);
+
+            vertices.Add(centerA + vNorm * radiusA);
+            vertices.Add(centerB + vNorm * radiusB);
+
+            if (i < segments - 1)
+            {
+                indices.Add(i * 2);
+                indices.Add(i * 2 + 1);
+                indices.Add(i * 2 + 2);
+
+                indices.Add(i * 2 + 1);
+                indices.Add(i * 2 + 2);
+                indices.Add(i * 2 + 3);
+            }
+            else
+            {
+                indices.Add(i * 2);
+                indices.Add(i * 2 + 1);
+                indices.Add(0);
+
+                indices.Add(i * 2 + 1);
+                indices.Add(0);
+                indices.Add(1);
+            }
+        }
+
+        var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
+        return new TriangleMesh(mesh, cone.TreeIndex, Color.Red, cone.AxisAlignedBoundingBox);
     }
 
     private static Vector3 CreateOrthogonalUnitVector(Vector3 vector)
