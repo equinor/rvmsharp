@@ -20,13 +20,13 @@ public class RvmMesh : IEquatable<RvmMesh>
 
     public Vector3[] Normals => _normals;
 
-    public uint[] Triangles => _triangles;
+    public int[] Triangles => _triangles;
 
     public int TriangleCount => _triangles.Length / 3;
 
     private readonly Vector3[] _vertices;
     private readonly Vector3[] _normals;
-    private readonly uint[] _triangles;
+    private readonly int[] _triangles;
 
     public RvmMesh(IReadOnlyList<float> vertexData, IReadOnlyList<float> normalData, int[] triangleData, float error)
     {
@@ -42,11 +42,11 @@ public class RvmMesh : IEquatable<RvmMesh>
             _normals[i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
         }
 
-        _triangles = new uint[triangleData.Length];
+        _triangles = new int[triangleData.Length];
         Array.Copy(triangleData, _triangles, triangleData.Length);
     }
 
-    public RvmMesh(Vector3[] vertices, Vector3[] normals, uint[] triangles, float error)
+    public RvmMesh(Vector3[] vertices, Vector3[] normals, int[] triangles, float error)
     {
         if (vertices.Length != normals.Length)
             throw new ArgumentException("Vertex and normal arrays must have equal length");
@@ -74,7 +74,7 @@ public class RvmMesh : IEquatable<RvmMesh>
 
     public static RvmMesh Merge(RvmMesh mesh1, RvmMesh mesh2)
     {
-        var mesh1VertexCount = (uint)mesh1.Vertices.Length;
+        var mesh1VertexCount = mesh1.Vertices.Length;
         var vertices = mesh1.Vertices.Concat(mesh2.Vertices).ToArray();
         var normals = mesh1.Normals.Concat(mesh2.Normals).ToArray();
         var triangles = mesh1.Triangles.Concat(mesh2.Triangles.Select(t => t + mesh1VertexCount)).ToArray();

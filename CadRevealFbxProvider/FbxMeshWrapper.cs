@@ -63,7 +63,7 @@ public static class FbxMeshWrapper
                     nn[i] = new Vector3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
                 }
 
-                var ii = indices.Select(a => (uint)a).ToArray();
+                var ii = indices.ToArray();
 
                 const float error = 0f; // We have no tessellation error info for FBX files.
 

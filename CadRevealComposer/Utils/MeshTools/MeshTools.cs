@@ -17,20 +17,20 @@ public static class MeshTools
     public static Mesh DeduplicateVertices(Mesh input)
     {
         var comparer = new XyzVector3EqualityComparer();
-        var alreadyFoundVerticesToIndexMap = new Dictionary<Vector3, uint>(comparer);
+        var alreadyFoundVerticesToIndexMap = new Dictionary<Vector3, int>(comparer);
 
         var newVertices = new List<Vector3>();
         var indicesCopy = input.Indices.ToArray();
 
         // The index in the oldVertexIndexToNewIndexRemap array is the old index, and the value is the new index. (Think of it as a dict)
-        var oldVertexIndexToNewIndexRemap = new uint[input.Vertices.Count()];
+        var oldVertexIndexToNewIndexRemap = new int[input.Vertices.Count()];
 
         for (uint i = 0; i < input.Vertices.Count(); i++)
         {
             var vertex = input.Vertices[(int)i];
-            if (!alreadyFoundVerticesToIndexMap.TryGetValue(vertex, out uint newIndex))
+            if (!alreadyFoundVerticesToIndexMap.TryGetValue(vertex, out int newIndex))
             {
-                newIndex = (uint)newVertices.Count;
+                newIndex = newVertices.Count;
                 newVertices.Add(vertex);
                 alreadyFoundVerticesToIndexMap.Add(vertex, newIndex);
             }

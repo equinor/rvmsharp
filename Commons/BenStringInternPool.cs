@@ -1,6 +1,7 @@
 namespace Commons;
 
 using Ben.Collections.Specialized;
+using StringInternPool;
 using System;
 
 /// <summary>
