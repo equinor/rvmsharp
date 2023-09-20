@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using Tessellation;
+using Utils;
 
 public static class APrimitiveTessellator
 {
@@ -18,6 +19,8 @@ public static class APrimitiveTessellator
                 return Tessellate(box);
             case EccentricCone cone:
                 return Tessellate(cone);
+            case TorusSegment torus:
+                return Tessellate(torus);
             default:
                 return primitive with { Color = Color.WhiteSmoke };
         }
@@ -80,7 +83,7 @@ public static class APrimitiveTessellator
 
         for (uint i = 0; i < segments; i++)
         {
-            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i - MathF.PI / 2f);
+            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
 
             var v = Vector3.Transform(startVector, q);
 
@@ -113,6 +116,91 @@ public static class APrimitiveTessellator
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
         return new TriangleMesh(mesh, cone.TreeIndex, Color.Magenta, cone.AxisAlignedBoundingBox);
+    }
+
+    private static APrimitive Tessellate(TorusSegment torus, float error = 0)
+    {
+        var vertices = new List<Vector3>();
+        var indices = new List<uint>();
+
+        var arcAngle = torus.ArcAngle;
+        var offset = torus.Radius;
+        var tubeRadius = torus.TubeRadius;
+        var matrix = torus.InstanceMatrix;
+
+        uint segments = 12;
+        uint turnSegments = 4; // var turnSegments = (int)(torus.ArcAngle / (MathF.PI / 8));
+
+        var turnIncrement = arcAngle / turnSegments;
+
+        var angleIncrement = (2 * MathF.PI) / segments;
+
+        var startVectors = new List<Vector3>(); // start vectors at the circles at each turn segment
+        var startCenters = new List<Vector3>(); // the center of the turn segment circles
+        var startNormals = new List<Vector3>();
+
+        for (int i = 0; i < turnSegments + 1; i++)
+        {
+            var turnAngle = i * turnIncrement;
+            var normal = Vector3.UnitZ;
+            var q = Quaternion.CreateFromAxisAngle(normal, turnAngle);
+
+            var v = Vector3.Transform(Vector3.UnitX, q);
+
+            startVectors.Add(v);
+            startCenters.Add(Vector3.Zero + v * (offset));
+            startNormals.Add(Vector3.Normalize(Vector3.Cross(normal, v)));
+        }
+
+        for (int j = 0; j < turnSegments + 1; j++)
+        {
+            var startVector = startVectors[j];
+            var center = startCenters[j];
+            var turnNormal = startNormals[j];
+
+            for (int i = 0; i < segments; i++)
+            {
+                var q = Quaternion.CreateFromAxisAngle(turnNormal, angleIncrement * i);
+
+                var v = Vector3.Transform(startVector, q);
+
+                var vNorm = Vector3.Normalize(v);
+
+                vertices.Add(center + vNorm * tubeRadius);
+            }
+        }
+
+        for (uint j = 0; j < turnSegments; j++)
+        {
+            for (uint i = 0; i < segments; i++)
+            {
+                if (i < segments - 1)
+                {
+                    indices.Add(j * segments + i);
+                    indices.Add(j * segments + i + 1);
+                    indices.Add((j + 1) * segments + i);
+
+                    indices.Add((j + 1) * segments + i);
+                    indices.Add(j * segments + i + 1);
+                    indices.Add((j + 1) * segments + i + 1);
+                }
+                else
+                {
+                    indices.Add(j * segments + i);
+                    indices.Add(j * segments);
+                    indices.Add((j + 1) * segments + i);
+
+                    indices.Add(j * segments);
+                    indices.Add((j + 1) * segments + i);
+                    indices.Add((j + 1) * segments);
+                }
+            }
+        }
+
+        var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
+
+        var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
+        return new TriangleMesh(mesh, torus.TreeIndex, Color.Gold, torus.AxisAlignedBoundingBox);
     }
 
     private static Vector3 CreateOrthogonalUnitVector(Vector3 vector)
