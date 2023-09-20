@@ -72,6 +72,7 @@ public static class CadRevealComposerRunner
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
+            return;
             // Exporting hierarchy on side thread to allow it to run in parallel
             var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
