@@ -37,8 +37,8 @@ public static class SceneCreator
 
     public static void ExportModelMetadata(DirectoryInfo outputDirectory, ModelMetadata metadata)
     {
-        var metadataPath = Path.Join(outputDirectory.FullName, "modelMetada.json");
-        var metadataString = ModelMetadata.MakeSerializable(metadata);
+        var metadataPath = Path.Join(outputDirectory.FullName, "modelMetadata.json");
+        var metadataString = ModelMetadata.Serialize(metadata);
         File.WriteAllText(metadataPath, metadataString);
     }
 

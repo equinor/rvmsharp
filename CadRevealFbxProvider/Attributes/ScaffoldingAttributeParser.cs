@@ -1,7 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
-using CadRevealComposer;
 using Csv;
+using System.Text.Json;
 
 public class ScaffoldingAttributeParser
 {
@@ -13,7 +13,7 @@ public class ScaffoldingAttributeParser
     public static readonly int NumberOfAttributesPerPart = 20;
     public static readonly int NumberOfModelAttributes = 4;
 
-    public (Dictionary<string, Dictionary<string, string>?>, ModelMetadata) ParseAttributes(string[] fileLines)
+    public (Dictionary<string, Dictionary<string, string>> attributesDictionary, ScaffoldingMetadata scaffoldingMetadata) ParseAttributes(string[] fileLines)
     {
         Console.WriteLine("Reading attribute file.");
 
@@ -27,11 +27,11 @@ public class ScaffoldingAttributeParser
                 TrimData = true,
                 Separator = ';'
             }
-        );
+        ).ToArray();
 
-        var indexIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
+        var itemCodeIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
 
-        if (indexIdColumn < 0)
+        if (itemCodeIdColumn < 0)
             throw new Exception("Key header \"" + AttributeKey + "\" is missing in the attribute file.");
 
         if (attributeRawData.First().ColumnCount == AttributeTableColCount)
@@ -40,82 +40,45 @@ public class ScaffoldingAttributeParser
             throw new Exception($"Attribute file contains {colCount}, expected a {AttributeTableColCount} attributes.");
         }
 
-        var metadata = new Dictionary<string, string>();
+        var entireScaffoldingMetadata = new ScaffoldingMetadata();
 
         var attributesDictionary = attributeRawData.ToDictionary(
-            x => x.Values[indexIdColumn],
+            x => x.Values[itemCodeIdColumn],
             v =>
             {
                 var kvp = new Dictionary<string, string>();
-
                 for (int col = 0; col < v.ColumnCount; col++)
                 {
-                    if (indexIdColumn == col)
-                        continue;
-
-                    if (ScaffoldingMetadata.ModelAttributes.Any(s => v.Headers[col].Contains(s)))
-                    {
-                        var metadataEntryKey = v.Headers[col];
-                        var mappedKey = ScaffoldingMetadata.AttributeMap[metadataEntryKey];
-                        var attrValue = v.Values[col];
-                        if (attrValue.Length > 0)
-                        {
-                            var valueExists = metadata.ContainsKey(mappedKey);
-                            if (valueExists)
-                            {
-                                var existingValue = metadata[mappedKey];
-                                if (attrValue != existingValue)
-                                {
-                                    throw new Exception(
-                                        "Attribute file contains multiple work orders ("
-                                            + attrValue
-                                            + ","
-                                            + existingValue
-                                            + ")"
-                                    );
-                                }
-                            }
-                            else
-                            {
-                                metadata.Add(mappedKey, attrValue);
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("Invalid attribute line: " + v[indexIdColumn].ToString());
-                            return null;
-                        }
-                    }
-                    else
-                    {
-                        var header = v.Headers[col];
-                        var value = v.Values[col];
-                        kvp[header] = value;
-                    }
-                }
-                if (metadata.Count < ScaffoldingMetadata.ModelAttributes.Length)
-                {
-                    Console.WriteLine("Invalid metadata: " + v[indexIdColumn].ToString());
-                    return null;
+                    if (itemCodeIdColumn == col)
+                        continue; // Ignore it
+                    var key = v.Headers[col].Trim();
+                    var value = v.Values[col].Trim();
+                    entireScaffoldingMetadata.TryAddValue(key, value);
+                    kvp[key] = value;
                 }
 
                 return kvp;
             }
         );
 
+
         // total weight is stored in the last line of the attribute table
         var lastAttributeLine = attributeRawData.Last();
 
         if (lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
-            var mappedKey = ScaffoldingMetadata.AttributeMap[HeaderTotalWeight];
-            metadata.Add(mappedKey, lastAttributeLine[TotalWeightIndex]);
+            entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, lastAttributeLine[TotalWeightIndex].Trim());
         }
         else
         {
             throw new Exception("Attribute file does not contain total weight");
         }
 
-        return (attributesDictionary, new ModelMetadata(metadata));
+        if (entireScaffoldingMetadata.HasExpectedValues())
+        {
+            Console.Error.WriteLine("Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata));
+        }
+
+        return (attributesDictionary, entireScaffoldingMetadata);
     }
 }

@@ -22,7 +22,16 @@ public class ModelMetadata
         return this.metadata.Count;
     }
 
-    public static string MakeSerializable(ModelMetadata metadata)
+    public void Add(ModelMetadata modelMetadata)
+    {
+        foreach (var kvp in modelMetadata.metadata)
+        {
+            // This will throw if the key already exists!:)
+            this.metadata.Add(kvp.Key, kvp.Value);
+        }
+    }
+
+    public static string Serialize(ModelMetadata metadata)
     {
         return JsonSerializer.Serialize(metadata.metadata, new JsonSerializerOptions { WriteIndented = true });
     }

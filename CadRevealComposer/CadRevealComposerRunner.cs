@@ -37,20 +37,21 @@ public static class CadRevealComposerRunner
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
 
-        ModelMetadata? metadata = null;
+        ModelMetadata metadataFromAllFiles = new ModelMetadata(new ());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
-            (IReadOnlyList<CadRevealNode> cadRevealNodes, var metadataTemp) = modelFormatProvider.ParseFiles(
+            (IReadOnlyList<CadRevealNode> cadRevealNodes, var generalMetadata) = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIdGenerator,
                 filtering
             );
 
-            if (metadataTemp != null)
+            if (generalMetadata != null)
             {
-                metadata = metadataTemp;
+                // TODO: Log that we added some metadate
+                metadataFromAllFiles.Add(generalMetadata);
             }
 
             Console.WriteLine(
@@ -74,9 +75,9 @@ public static class CadRevealComposerRunner
             }
         }
 
-        if (metadata != null)
+        if (metadataFromAllFiles.Count() > 0)
         {
-            SceneCreator.ExportModelMetadata(outputDirectory, metadata);
+            SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
         }
 
         filtering.PrintFilteringStatsToConsole();
