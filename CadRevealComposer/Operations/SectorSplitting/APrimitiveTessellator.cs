@@ -317,8 +317,8 @@ public static class APrimitiveTessellator
 
         var planeA = cylinder.PlaneA;
         var planeB = cylinder.PlaneB;
-        var planeANormal = new Vector3(planeA.X, planeA.Y, planeA.Z);
-        var planeBNormal = new Vector3(planeB.X, planeB.Y, planeB.Z);
+        var planeANormal = Vector3.Normalize(new Vector3(planeA.X, planeA.Y, planeA.Z));
+        var planeBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
 
         var extendedCenterA = cylinder.CenterA;
         var extendedCenterB = cylinder.CenterB;
@@ -328,26 +328,52 @@ public static class APrimitiveTessellator
         var anglePlaneA = AngleBetween(normal, planeANormal);
         var anglePlaneB = AngleBetween(normal, planeBNormal);
 
-        var extendedHeightA = radius * (anglePlaneA / MathF.PI);
-        var extendedHeightB = radius * (anglePlaneB / MathF.PI);
+        // anglePlaneA = anglePlaneA > MathF.PI / 2 ? anglePlaneA - MathF.PI / 2 : anglePlaneA;
+        // anglePlaneB = anglePlaneB > MathF.PI / 2 ? anglePlaneB - MathF.PI / 2 : anglePlaneB;
 
-        var centerA = extendedCenterA - extendedHeightA * normal * 0.5f;
-        var centerB = extendedCenterB + extendedHeightB * normal * 0.5f;
+        anglePlaneA -= MathF.PI / 2;
+        anglePlaneB -= MathF.PI / 2;
+
+        var extendedHeightA = MathF.Sin(anglePlaneA) * radius;
+        var extendedHeightB = MathF.Sin(anglePlaneB) * radius;
+
+        var centerA = extendedCenterA + extendedHeightA * normal;
+        var centerB = extendedCenterB - extendedHeightB * normal;
 
         var angleIncrement = (2 * MathF.PI) / segments;
 
-        var startVector = CreateOrthogonalUnitVector(normal);
+        var startVectorA = CreateOrthogonalUnitVector(normal);
+        // var startVectorA = planeANormal;
+        var startVectorB = CreateOrthogonalUnitVector(normal);
+        // var startVectorB = planeBNormal;
+
+        // var pA = new Plane(planeANormal, Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero));
+        // var pB = new Plane(planeBNormal, Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero));
+
+        var pA = new Plane(
+            planeANormal,
+            planeA.W + Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero)
+        );
+        var pB = new Plane(planeB);
 
         for (uint i = 0; i < segments; i++)
         {
-            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
+            var qA = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
+            var qB = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
 
-            var v = Vector3.Transform(startVector, q);
+            var vA = Vector3.Transform(startVectorA, qA);
+            var vB = Vector3.Transform(startVectorB, qB);
 
-            var vNorm = Vector3.Normalize(v);
+            var vANormalized = Vector3.Normalize(vA);
+            var vBNormalized = Vector3.Normalize(vB);
 
-            vertices.Add(centerA + vNorm * radius);
-            vertices.Add(centerB + vNorm * radius);
+            var pointA = centerA + vANormalized * radius;
+            float distanceToPlaneA = ComputeDistance(pointA, pA);
+            var pointB = centerB + vBNormalized * radius;
+            float distanceToPlaneB = ComputeDistance(pointB, pB);
+
+            vertices.Add(pointA + distanceToPlaneA * normal);
+            vertices.Add(pointB);
 
             if (i < segments - 1)
             {
@@ -373,6 +399,12 @@ public static class APrimitiveTessellator
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
         return new TriangleMesh(mesh, cylinder.TreeIndex, Color.LimeGreen, cylinder.AxisAlignedBoundingBox);
+    }
+
+    private static float ComputeDistance(Vector3 point, Plane plane)
+    {
+        float dot = Vector3.Dot(plane.Normal, point);
+        return dot - plane.D;
     }
 
     private static float AngleBetween(Vector3 v1, Vector3 v2)
