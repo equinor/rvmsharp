@@ -23,6 +23,8 @@ public static class APrimitiveTessellator
                 return Tessellate(torus);
             case Cone cone:
                 return Tessellate(cone);
+            case GeneralCylinder cylinder:
+                return Tessellate(cylinder);
             default:
                 return primitive with { Color = Color.WhiteSmoke };
         }
@@ -304,6 +306,84 @@ public static class APrimitiveTessellator
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
         return new TriangleMesh(mesh, cone.TreeIndex, Color.Red, cone.AxisAlignedBoundingBox);
+    }
+
+    private static APrimitive Tessellate(GeneralCylinder cylinder, float error = 0)
+    {
+        int segments = 12;
+
+        var vertices = new List<Vector3>();
+        var indices = new List<uint>();
+
+        var planeA = cylinder.PlaneA;
+        var planeB = cylinder.PlaneB;
+        var planeANormal = new Vector3(planeA.X, planeA.Y, planeA.Z);
+        var planeBNormal = new Vector3(planeB.X, planeB.Y, planeB.Z);
+
+        var extendedCenterA = cylinder.CenterA;
+        var extendedCenterB = cylinder.CenterB;
+        var radius = cylinder.Radius;
+        var normal = Vector3.Normalize(extendedCenterB - extendedCenterA);
+
+        var anglePlaneA = AngleBetween(normal, planeANormal);
+        var anglePlaneB = AngleBetween(normal, planeBNormal);
+
+        var extendedHeightA = radius * (anglePlaneA / MathF.PI);
+        var extendedHeightB = radius * (anglePlaneB / MathF.PI);
+
+        var centerA = extendedCenterA - extendedHeightA * normal * 0.5f;
+        var centerB = extendedCenterB + extendedHeightB * normal * 0.5f;
+
+        var angleIncrement = (2 * MathF.PI) / segments;
+
+        var startVector = CreateOrthogonalUnitVector(normal);
+
+        for (uint i = 0; i < segments; i++)
+        {
+            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
+
+            var v = Vector3.Transform(startVector, q);
+
+            var vNorm = Vector3.Normalize(v);
+
+            vertices.Add(centerA + vNorm * radius);
+            vertices.Add(centerB + vNorm * radius);
+
+            if (i < segments - 1)
+            {
+                indices.Add(i * 2);
+                indices.Add(i * 2 + 1);
+                indices.Add(i * 2 + 2);
+
+                indices.Add(i * 2 + 1);
+                indices.Add(i * 2 + 2);
+                indices.Add(i * 2 + 3);
+            }
+            else
+            {
+                indices.Add(i * 2);
+                indices.Add(i * 2 + 1);
+                indices.Add(0);
+
+                indices.Add(i * 2 + 1);
+                indices.Add(0);
+                indices.Add(1);
+            }
+        }
+
+        var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
+        return new TriangleMesh(mesh, cylinder.TreeIndex, Color.LimeGreen, cylinder.AxisAlignedBoundingBox);
+    }
+
+    private static float AngleBetween(Vector3 v1, Vector3 v2)
+    {
+        if (v1.EqualsWithinFactor(v2, 0.1f))
+            return 0;
+
+        if ((v1 * -1).EqualsWithinFactor(v2, 0.1f))
+            return MathF.PI;
+
+        return MathF.Acos(Vector3.Dot(v1, v2) / (v1.Length() * v2.Length()));
     }
 
     private static Vector3 CreateOrthogonalUnitVector(Vector3 vector)
