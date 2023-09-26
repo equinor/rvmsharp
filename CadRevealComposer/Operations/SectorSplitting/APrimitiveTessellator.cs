@@ -348,32 +348,39 @@ public static class APrimitiveTessellator
         var extendedHeightA = MathF.Sin(anglePlaneA) * radius;
         var extendedHeightB = MathF.Sin(anglePlaneB) * radius;
 
+        float hypoA = radius;
+        float hypoB = radius;
+
+        if (anglePlaneA != 0)
+        {
+            hypoA = extendedHeightA * (1f / MathF.Sin(anglePlaneA));
+        }
+
+        if (anglePlaneB != 0)
+        {
+            hypoB = extendedHeightB * (1f / MathF.Sin(anglePlaneB));
+        }
+
         var centerA = extendedCenterA + extendedHeightA * normal;
         var centerB = extendedCenterB - extendedHeightB * normal;
 
         var angleIncrement = (2 * MathF.PI) / segments;
 
-        var startVectorA = CreateOrthogonalUnitVector(normal);
-        // var startVectorA = planeANormal;
-        var startVectorB = CreateOrthogonalUnitVector(normal);
-        // var startVectorB = planeBNormal;
+        var actualPlaneNormalA = Vector3.Cross(Vector3.Cross(normal, planeANormal), planeANormal);
+        var actualPlaneNormalB = Vector3.Cross(Vector3.Cross(normal, planeBNormal), planeBNormal);
+        //yield return DebugDrawVector(actualPlaneNormalA, centerA);
+        //yield return DebugDrawVector(actualPlaneNormalB, centerB);
 
-        // var pA = new Plane(planeANormal, Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero));
-        // var pB = new Plane(planeBNormal, Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero));
+        //yield return DebugDrawVector(planeANormal, centerA);
+        //yield return DebugDrawVector(planeBNormal, centerB);
 
-        yield return DebugDrawVector(planeANormal, centerA);
-        yield return DebugDrawVector(planeBNormal, centerB);
-
-        var pA = new Plane(
-            planeANormal,
-            planeA.W + Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero)
-        );
-        var pB = new Plane(planeB);
+        var startVectorA = Vector3.Normalize(planeANormal);
+        var startVectorB = Vector3.Normalize((-1) * planeBNormal);
 
         for (uint i = 0; i < segments; i++)
         {
-            var qA = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
-            var qB = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
+            var qA = Quaternion.CreateFromAxisAngle(actualPlaneNormalA, angleIncrement * i);
+            var qB = Quaternion.CreateFromAxisAngle(actualPlaneNormalB, angleIncrement * i);
 
             var vA = Vector3.Transform(startVectorA, qA);
             var vB = Vector3.Transform(startVectorB, qB);
@@ -381,13 +388,11 @@ public static class APrimitiveTessellator
             var vANormalized = Vector3.Normalize(vA);
             var vBNormalized = Vector3.Normalize(vB);
 
-            var pointA = centerA + vANormalized * radius;
-            float distanceToPlaneA = ComputeDistance(pointA, pA);
-            var pointB = centerB + vBNormalized * radius;
-            float distanceToPlaneB = ComputeDistance(pointB, pB);
+            var distanceFromCenterA = radius + (hypoA - radius) * MathF.Cos(i * angleIncrement);
+            var distanceFromCenterB = radius + (hypoB - radius) * MathF.Cos(i * angleIncrement);
 
-            vertices.Add(pointA + distanceToPlaneA * normal);
-            vertices.Add(pointB);
+            vertices.Add(centerA + vANormalized * distanceFromCenterA);
+            vertices.Add(centerB + vBNormalized * distanceFromCenterB);
 
             if (i < segments - 1)
             {
