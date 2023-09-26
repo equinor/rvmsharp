@@ -6,31 +6,42 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.ExceptionServices;
 using Tessellation;
 using Utils;
 
 public static class APrimitiveTessellator
 {
-    public static APrimitive TryToTessellate(APrimitive primitive)
+    public static IEnumerable<APrimitive> TryToTessellate(APrimitive primitive)
     {
+        var result = new List<APrimitive>();
+
         switch (primitive)
         {
             case Box box:
-                return Tessellate(box);
+                result.AddRange(Tessellate(box));
+                break;
             case EccentricCone cone:
-                return Tessellate(cone);
+                result.AddRange(Tessellate(cone));
+                break;
             case TorusSegment torus:
-                return Tessellate(torus);
+                result.AddRange(Tessellate(torus));
+                break;
             case Cone cone:
-                return Tessellate(cone);
+                result.AddRange(Tessellate(cone));
+                break;
             case GeneralCylinder cylinder:
-                return Tessellate(cylinder);
+                result.AddRange(Tessellate(cylinder));
+                break;
             default:
-                return primitive with { Color = Color.WhiteSmoke };
+                result.Add(primitive with { Color = Color.WhiteSmoke });
+                break;
         }
+
+        return result;
     }
 
-    private static TriangleMesh Tessellate(Box box, float error = 0f)
+    private static IEnumerable<APrimitive> Tessellate(Box box, float error = 0f)
     {
         var vertices = new Vector3[]
         {
@@ -65,10 +76,10 @@ public static class APrimitiveTessellator
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices, error);
-        return new TriangleMesh(mesh, box.TreeIndex, Color.Aqua, box.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, box.TreeIndex, Color.Aqua, box.AxisAlignedBoundingBox);
     }
 
-    private static APrimitive Tessellate(EccentricCone cone, float error = 0)
+    private static IEnumerable<APrimitive> Tessellate(EccentricCone cone, float error = 0)
     {
         int segments = 12;
 
@@ -119,10 +130,10 @@ public static class APrimitiveTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        return new TriangleMesh(mesh, cone.TreeIndex, Color.Magenta, cone.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, cone.TreeIndex, Color.Magenta, cone.AxisAlignedBoundingBox);
     }
 
-    private static APrimitive Tessellate(TorusSegment torus, float error = 0)
+    private static IEnumerable<APrimitive> Tessellate(TorusSegment torus, float error = 0)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -204,14 +215,14 @@ public static class APrimitiveTessellator
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
-        return new TriangleMesh(mesh, torus.TreeIndex, Color.Gold, torus.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, torus.TreeIndex, Color.Gold, torus.AxisAlignedBoundingBox);
     }
 
-    private static APrimitive Tessellate(Cone cone, float error = 0)
+    private static IEnumerable<APrimitive> Tessellate(Cone cone, float error = 0)
     {
         if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
         {
-            return cone;
+            yield return cone;
         }
 
         uint totalSegments = 12; // Number of segments if the cone is complete
@@ -305,10 +316,10 @@ public static class APrimitiveTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        return new TriangleMesh(mesh, cone.TreeIndex, Color.Red, cone.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, cone.TreeIndex, Color.Red, cone.AxisAlignedBoundingBox);
     }
 
-    private static APrimitive Tessellate(GeneralCylinder cylinder, float error = 0)
+    private static IEnumerable<APrimitive> Tessellate(GeneralCylinder cylinder, float error = 0)
     {
         int segments = 12;
 
@@ -349,6 +360,9 @@ public static class APrimitiveTessellator
 
         // var pA = new Plane(planeANormal, Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero));
         // var pB = new Plane(planeBNormal, Vector3.Distance(cylinder.AxisAlignedBoundingBox.Center, Vector3.Zero));
+
+        yield return DebugDrawVector(planeANormal, centerA);
+        yield return DebugDrawVector(planeBNormal, centerB);
 
         var pA = new Plane(
             planeANormal,
@@ -398,7 +412,7 @@ public static class APrimitiveTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        return new TriangleMesh(mesh, cylinder.TreeIndex, Color.LimeGreen, cylinder.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, cylinder.TreeIndex, Color.LimeGreen, cylinder.AxisAlignedBoundingBox);
     }
 
     private static float ComputeDistance(Vector3 point, Plane plane)
@@ -436,5 +450,109 @@ public static class APrimitiveTessellator
             return Vector3.UnitX;
 
         throw new Exception($"Could not find orthogonal vector of {v.ToString()}");
+    }
+
+    private static APrimitive DebugDrawVector(Vector3 direction, Vector3 startPoint, float length = 1.0f)
+    {
+        var endPoint = startPoint + direction * length;
+        var baseDiameter = length / 10f;
+        var baseLength = length * (4.0f / 5.0f);
+        var arrowLength = length / 5.0f;
+        var arrowDiameter = length / 5f;
+
+        var unitDirection = Vector3.Normalize(direction);
+
+        var baseCenterA = startPoint;
+        var baseCenterB = startPoint + unitDirection * baseLength;
+        var arrowCenterA = baseCenterB;
+        var arrowCenterB = arrowCenterA + unitDirection * arrowLength;
+
+        uint segments = 6;
+
+        var vertices = new List<Vector3>();
+        var indices = new List<uint>();
+
+        var angleIncrement = (2 * MathF.PI) / segments;
+
+        var startVector = CreateOrthogonalUnitVector(unitDirection);
+
+        for (uint i = 0; i < segments; i++)
+        {
+            var q = Quaternion.CreateFromAxisAngle(unitDirection, angleIncrement * i);
+            var v = Vector3.Transform(startVector, q);
+            var vNormalized = Vector3.Normalize(v);
+
+            vertices.Add(baseCenterA + vNormalized * baseDiameter);
+        }
+
+        for (uint i = 0; i < segments; i++)
+        {
+            var q = Quaternion.CreateFromAxisAngle(unitDirection, angleIncrement * i);
+            var v = Vector3.Transform(startVector, q);
+            var vNormalized = Vector3.Normalize(v);
+
+            vertices.Add(baseCenterB + vNormalized * baseDiameter);
+        }
+
+        for (uint i = 0; i < segments; i++)
+        {
+            var q = Quaternion.CreateFromAxisAngle(unitDirection, angleIncrement * i);
+            var v = Vector3.Transform(startVector, q);
+            var vNormalized = Vector3.Normalize(v);
+
+            vertices.Add(arrowCenterA + vNormalized * arrowDiameter);
+        }
+
+        vertices.Add(arrowCenterB);
+
+        for (uint j = 0; j < 2; j++)
+        {
+            for (uint i = 0; i < segments; i++)
+            {
+                if (i < segments - 1)
+                {
+                    indices.Add(j * segments + i);
+                    indices.Add(j * segments + i + 1);
+                    indices.Add((j + 1) * segments + i);
+
+                    indices.Add((j + 1) * segments + i);
+                    indices.Add(j * segments + i + 1);
+                    indices.Add((j + 1) * segments + i + 1);
+                }
+                else
+                {
+                    indices.Add(j * segments + i);
+                    indices.Add(j * segments);
+                    indices.Add((j + 1) * segments + i);
+
+                    indices.Add(j * segments);
+                    indices.Add((j + 1) * segments + i);
+                    indices.Add((j + 1) * segments);
+                }
+            }
+        }
+
+        uint firstBaseVertex = (uint)vertices.Count - 1 - segments;
+        uint arrowPoint = (uint)vertices.Count - 1;
+        for (uint i = 0; i < segments; i++)
+        {
+            if (i < segments - 1)
+            {
+                indices.Add(firstBaseVertex + i);
+                indices.Add(((firstBaseVertex + i + 1)));
+                indices.Add(arrowPoint);
+            }
+            else
+            {
+                indices.Add(firstBaseVertex + i);
+                indices.Add(firstBaseVertex);
+                indices.Add(arrowPoint);
+            }
+        }
+
+        var boundingBox = new BoundingBox(baseCenterB - Vector3.One, baseCenterB + Vector3.One);
+
+        var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
+        return new TriangleMesh(mesh, 0, Color.Magenta, boundingBox);
     }
 }

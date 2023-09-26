@@ -19,7 +19,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
-        allGeometries = allGeometries.Select(x => APrimitiveTessellator.TryToTessellate(x)).ToArray();
+        allGeometries = allGeometries.SelectMany(x => APrimitiveTessellator.TryToTessellate(x)).ToArray();
 
         var sectorIdGenerator = new SequentialIdGenerator();
 
