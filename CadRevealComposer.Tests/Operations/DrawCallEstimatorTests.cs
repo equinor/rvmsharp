@@ -50,7 +50,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                Quaternion.Identity
             )
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
@@ -95,7 +96,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                Quaternion.Identity
             )
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);

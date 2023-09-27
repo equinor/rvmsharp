@@ -240,8 +240,10 @@ public static class RvmSnoutConverter
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
 
-        var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height);
-        var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB);
+        var planeA = new Vector4(planeNormalA, 0); // 1 + extendedHeightB + height); // TODO Isn't used by reveal?
+        var planeB = new Vector4(-planeNormalB, 0); //1 + extendedHeightB); // TODO Isn't used by reveal?
+        //var planeA = new Vector4(Vector3.UnitX, 1 + extendedHeightB + height);
+        //var planeB = new Vector4(-Vector3.UnitY, 1 + extendedHeightB);
 
         yield return new GeneralCylinder(
             Angle: 0f,
@@ -254,7 +256,8 @@ public static class RvmSnoutConverter
             (float)semiMinorAxisA,
             treeIndex,
             color,
-            bbox
+            bbox,
+            rotation
         );
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);

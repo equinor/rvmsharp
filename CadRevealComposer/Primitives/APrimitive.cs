@@ -62,7 +62,8 @@ public sealed record GeneralCylinder(
     float Radius,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
+    BoundingBox AxisAlignedBoundingBox,
+    Quaternion Rotation
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record GeneralRing(

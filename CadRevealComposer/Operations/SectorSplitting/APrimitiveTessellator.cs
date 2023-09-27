@@ -18,18 +18,18 @@ public static class APrimitiveTessellator
 
         switch (primitive)
         {
-            case Box box:
-                result.AddRange(Tessellate(box));
-                break;
-            case EccentricCone cone:
-                result.AddRange(Tessellate(cone));
-                break;
-            case TorusSegment torus:
-                result.AddRange(Tessellate(torus));
-                break;
-            case Cone cone:
-                result.AddRange(Tessellate(cone));
-                break;
+            //case Box box:
+            //    result.AddRange(Tessellate(box));
+            //    break;
+            //case EccentricCone cone:
+            //    result.AddRange(Tessellate(cone));
+            //    break;
+            //case TorusSegment torus:
+            //    result.AddRange(Tessellate(torus));
+            //    break;
+            //case Cone cone:
+            //    result.AddRange(Tessellate(cone));
+            //    break;
             case GeneralCylinder cylinder:
                 result.AddRange(Tessellate(cylinder));
                 break;
@@ -223,6 +223,7 @@ public static class APrimitiveTessellator
         if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
         {
             yield return cone;
+            yield break;
         }
 
         uint totalSegments = 12; // Number of segments if the cone is complete
@@ -287,6 +288,11 @@ public static class APrimitiveTessellator
             var vertexA = centerA + vNorm * radiusA;
             var vertexB = centerB + vNorm * radiusB;
 
+            if (!float.IsFinite(vertexA.X) || !float.IsFinite(vertexB.X))
+            {
+                Console.WriteLine("nkajsnd");
+            }
+
             vertices.Add(centerA + vNorm * radiusA);
             vertices.Add(centerB + vNorm * radiusB);
         }
@@ -321,6 +327,11 @@ public static class APrimitiveTessellator
 
     private static IEnumerable<APrimitive> Tessellate(GeneralCylinder cylinder, float error = 0)
     {
+        if (cylinder.TreeIndex == 21864)
+        {
+            Console.WriteLine("mkl");
+        }
+
         int segments = 12;
 
         var vertices = new List<Vector3>();
@@ -328,8 +339,31 @@ public static class APrimitiveTessellator
 
         var planeA = cylinder.PlaneA;
         var planeB = cylinder.PlaneB;
-        var planeANormal = Vector3.Normalize(new Vector3(planeA.X, planeA.Y, planeA.Z));
-        var planeBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
+
+        var localPlaneANormal = Vector3.Normalize(new Vector3(planeA.X, planeA.Y, planeA.Z));
+        var localPlaneBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
+
+        var localXAxis = Vector3.Normalize(cylinder.LocalXAxis);
+        var rotation = cylinder.Rotation;
+
+        Quaternion q;
+        //var angleBetweenXs = AngleBetween(Vector3.UnitX, localXAxis);
+        //var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
+        //q.X = cross.X;
+        //q.Y = cross.Y;
+        //q.Z = cross.Z;
+
+        //q.W = MathF.Sqrt(1 * 1 * 1 * 1) + Vector3.Dot(Vector3.UnitX, localXAxis);
+
+        //q = Quaternion.Normalize(q);
+
+        //var q = Quaternion.CreateFromAxisAngle(cross, angleBetweenXs);
+
+        var planeANormal = Vector3.Normalize(Vector3.Transform(localPlaneANormal, rotation));
+        var planeBNormal = Vector3.Normalize(-Vector3.Transform(localPlaneBNormal, rotation));
+
+        //var planeANormal = localPlaneANormal;
+        //var planeBNormal = localPlaneBNormal;
 
         var extendedCenterA = cylinder.CenterA;
         var extendedCenterB = cylinder.CenterB;
@@ -339,11 +373,8 @@ public static class APrimitiveTessellator
         var anglePlaneA = AngleBetween(normal, planeANormal);
         var anglePlaneB = AngleBetween(normal, planeBNormal);
 
-        // anglePlaneA = anglePlaneA > MathF.PI / 2 ? anglePlaneA - MathF.PI / 2 : anglePlaneA;
-        // anglePlaneB = anglePlaneB > MathF.PI / 2 ? anglePlaneB - MathF.PI / 2 : anglePlaneB;
-
-        anglePlaneA -= MathF.PI / 2;
-        anglePlaneB -= MathF.PI / 2;
+        //anglePlaneA -= MathF.PI / 2;
+        //anglePlaneB -= MathF.PI / 2;
 
         var extendedHeightA = MathF.Sin(anglePlaneA) * radius;
         var extendedHeightB = MathF.Sin(anglePlaneB) * radius;
@@ -364,23 +395,29 @@ public static class APrimitiveTessellator
         var centerA = extendedCenterA + extendedHeightA * normal;
         var centerB = extendedCenterB - extendedHeightB * normal;
 
+        if (!float.IsFinite(centerA.X) || !float.IsFinite(centerB.X))
+        {
+            Console.WriteLine("jn");
+        }
+
         var angleIncrement = (2 * MathF.PI) / segments;
 
-        var actualPlaneNormalA = Vector3.Cross(Vector3.Cross(normal, planeANormal), planeANormal);
-        var actualPlaneNormalB = Vector3.Cross(Vector3.Cross(normal, planeBNormal), planeBNormal);
         //yield return DebugDrawVector(actualPlaneNormalA, centerA);
         //yield return DebugDrawVector(actualPlaneNormalB, centerB);
 
         //yield return DebugDrawVector(planeANormal, centerA);
         //yield return DebugDrawVector(planeBNormal, centerB);
 
-        var startVectorA = Vector3.Normalize(planeANormal);
-        var startVectorB = Vector3.Normalize((-1) * planeBNormal);
+        //yield return DebugDrawPlane(planeA, centerA);
+        //yield return DebugDrawPlane(planeB, centerB);
+
+        var startVectorA = Vector3.Normalize(CreateOrthogonalUnitVector(planeANormal));
+        var startVectorB = Vector3.Normalize(CreateOrthogonalUnitVector(planeBNormal));
 
         for (uint i = 0; i < segments; i++)
         {
-            var qA = Quaternion.CreateFromAxisAngle(actualPlaneNormalA, angleIncrement * i);
-            var qB = Quaternion.CreateFromAxisAngle(actualPlaneNormalB, angleIncrement * i);
+            var qA = Quaternion.CreateFromAxisAngle(planeANormal, angleIncrement * i);
+            var qB = Quaternion.CreateFromAxisAngle(planeBNormal, angleIncrement * i);
 
             var vA = Vector3.Transform(startVectorA, qA);
             var vB = Vector3.Transform(startVectorB, qB);
@@ -388,8 +425,9 @@ public static class APrimitiveTessellator
             var vANormalized = Vector3.Normalize(vA);
             var vBNormalized = Vector3.Normalize(vB);
 
-            var distanceFromCenterA = radius + (hypoA - radius) * MathF.Cos(i * angleIncrement);
-            var distanceFromCenterB = radius + (hypoB - radius) * MathF.Cos(i * angleIncrement);
+            // TODO
+            var distanceFromCenterA = radius + MathF.Abs((hypoA - radius) * MathF.Cos(i * angleIncrement));
+            var distanceFromCenterB = radius + MathF.Abs((hypoB - radius) * MathF.Cos(i * angleIncrement));
 
             vertices.Add(centerA + vANormalized * distanceFromCenterA);
             vertices.Add(centerB + vBNormalized * distanceFromCenterB);
@@ -434,7 +472,8 @@ public static class APrimitiveTessellator
         if ((v1 * -1).EqualsWithinFactor(v2, 0.1f))
             return MathF.PI;
 
-        return MathF.Acos(Vector3.Dot(v1, v2) / (v1.Length() * v2.Length()));
+        var result = MathF.Acos(Vector3.Dot(v1, v2) / (v1.Length() * v2.Length()));
+        return float.IsFinite(result) ? result : MathF.PI;
     }
 
     private static Vector3 CreateOrthogonalUnitVector(Vector3 vector)
@@ -459,7 +498,6 @@ public static class APrimitiveTessellator
 
     private static APrimitive DebugDrawVector(Vector3 direction, Vector3 startPoint, float length = 1.0f)
     {
-        var endPoint = startPoint + direction * length;
         var baseDiameter = length / 10f;
         var baseLength = length * (4.0f / 5.0f);
         var arrowLength = length / 5.0f;
@@ -559,5 +597,31 @@ public static class APrimitiveTessellator
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
         return new TriangleMesh(mesh, 0, Color.Magenta, boundingBox);
+    }
+
+    private static TriangleMesh DebugDrawPlane(Vector4 plane, Vector3 startPoint)
+    {
+        var planeNormal = new Vector3(plane.X, plane.Y, plane.Z);
+
+        var startVector = CreateOrthogonalUnitVector(planeNormal);
+
+        var vertices = new List<Vector3>();
+
+        for (int i = 0; i < 4; i++)
+        {
+            var q = Quaternion.CreateFromAxisAngle(planeNormal, i * MathF.PI / 2.0f);
+
+            vertices.Add(Vector3.Transform(startVector, q) + startPoint);
+        }
+
+        var indices = new uint[] { 0, 1, 2, 0, 2, 3 };
+
+        var boundingBox = new BoundingBox(startPoint - Vector3.One, startPoint + Vector3.One);
+
+        if (!float.IsFinite(boundingBox.Center.X))
+            Console.WriteLine("mksdlf");
+
+        var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
+        return new TriangleMesh(mesh, 0, Color.Aquamarine, boundingBox);
     }
 }
