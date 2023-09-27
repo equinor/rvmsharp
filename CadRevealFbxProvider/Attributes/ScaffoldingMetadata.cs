@@ -11,10 +11,14 @@ public class ScaffoldingMetadata
     public const string TotalWeightFieldName = "Scaffolding_TotalWeight";
     public string TotalWeight { get; set; }
 
-    public static readonly string[] ModelAttributes =
+    public static readonly string[] ModelAttributesPerPart =
     {
-        "Work order", "Scaff build Operation number", "Dismantle Operation number"
+        "Work order",
+        "Scaff build Operation number",
+        "Dismantle Operation number"
     };
+
+    public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
 
     public enum AttributeEnum
     {
@@ -24,27 +28,36 @@ public class ScaffoldingMetadata
         TotalWeight
     }
 
-    public static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<string, AttributeEnum>
+    public static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<
+        string,
+        AttributeEnum
+    >
     {
         { "Work order", AttributeEnum.WorkOrderId },
-        { "Scaff build Operation number",  AttributeEnum.BuildOperationId },
-        { "Dismantle Operation number",  AttributeEnum.DismantleOperationId },
-        { "Grand total",  AttributeEnum.TotalWeight }
+        { "Scaff build Operation number", AttributeEnum.BuildOperationId },
+        { "Dismantle Operation number", AttributeEnum.DismantleOperationId },
+        { "Grand total", AttributeEnum.TotalWeight }
     };
-
 
     public void GuardForInvalidValues(string newValue, string existingValue)
     {
-        if (newValue == existingValue) return;
+        if (newValue == existingValue)
+            return;
 
         if (!string.IsNullOrWhiteSpace(existingValue))
             throw new Exception(
-                "We already had a value for the key, but got a different one now. This is unexpected. Values was: " +
-                newValue + " and " + existingValue);
+                "We already had a value for the key, but got a different one now. This is unexpected. Values was: "
+                    + newValue
+                    + " and "
+                    + existingValue
+            );
     }
 
     public bool TryAddValue(string key, string value)
     {
+        if (!ColumnToAttributeMap.ContainsKey(key))
+            return false;
+
         var mappedKey = ColumnToAttributeMap[key];
         if (!string.IsNullOrWhiteSpace(value))
         {
@@ -78,8 +91,12 @@ public class ScaffoldingMetadata
 
     public bool HasExpectedValues()
     {
-        if (string.IsNullOrEmpty(WorkOrder) || string.IsNullOrEmpty(BuildOperationNumber) ||
-            string.IsNullOrEmpty(DismantleOperationNumber) || string.IsNullOrEmpty(TotalWeight))
+        if (
+            string.IsNullOrEmpty(WorkOrder)
+            || string.IsNullOrEmpty(BuildOperationNumber)
+            || string.IsNullOrEmpty(DismantleOperationNumber)
+            || string.IsNullOrEmpty(TotalWeight)
+        )
         {
             return false;
         }
@@ -87,7 +104,22 @@ public class ScaffoldingMetadata
         return true;
     }
 
-    public void WriteToGenericMetadataDict(Dictionary<string,string> targetDict)
+    public static bool HasExpectedValuesFromAttributesPerPart(Dictionary<string, string> targetDict)
+    {
+        foreach (var modelAttribute in ModelAttributesPerPart)
+        {
+            if (!targetDict.ContainsKey(modelAttribute))
+                return false;
+
+            var value = targetDict.TryGetValue(modelAttribute, out string? existingValue) ? existingValue : null;
+            if (string.IsNullOrEmpty(value))
+                return false;
+        }
+
+        return true;
+    }
+
+    public void WriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
         targetDict.Add("Scaffolding_WorkOrder_WorkOrderNumber", this.WorkOrder);
         targetDict.Add("Scaffolding_WorkOrder_BuildOperationNumber", this.BuildOperationNumber);

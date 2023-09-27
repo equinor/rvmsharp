@@ -156,7 +156,7 @@ public class FbxProviderTests
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
         Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
         Assert.That(metadata, Is.Not.Null);
-        Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingAttributeParser.NumberOfModelAttributes));
+        Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes));
     }
 
     [Test]
@@ -237,11 +237,9 @@ public class FbxProviderTests
             new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
 
-        // there are 28 attributes, out of which 2 should be ignored
-        Assert.That(nodes, Has.Count.EqualTo(26));
-
         // Ladders have no attributes, should thus be ignored
-        for (int i = 0; i < 26; i++)
+        Assert.That(nodes, Has.Count.EqualTo(26));
+        for (int i = 0; i < nodes.Count; i++)
         {
             Assert.That(nodes[i].Name, !Is.EqualTo("Ladder"));
         }

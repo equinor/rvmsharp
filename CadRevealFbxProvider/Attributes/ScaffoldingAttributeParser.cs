@@ -10,24 +10,28 @@ public class ScaffoldingAttributeParser
     private static readonly string HeaderTotalWeight = "Grand total";
     private static readonly int AttributeTableColCount = 23;
 
-    public static readonly int NumberOfAttributesPerPart = 20;
-    public static readonly int NumberOfModelAttributes = 4;
+    public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
 
-    public (Dictionary<string, Dictionary<string, string>> attributesDictionary, ScaffoldingMetadata scaffoldingMetadata) ParseAttributes(string[] fileLines)
+    public (
+        Dictionary<string, Dictionary<string, string>> attributesDictionary,
+        ScaffoldingMetadata scaffoldingMetadata
+    ) ParseAttributes(string[] fileLines)
     {
         Console.WriteLine("Reading attribute file.");
 
-        var attributeRawData = CsvReader.ReadFromText(
-            String.Join(Environment.NewLine, fileLines),
-            new CsvOptions()
-            {
-                HeaderMode = HeaderMode.HeaderPresent,
-                RowsToSkip = 0,
-                SkipRow = (ReadOnlyMemory<char> row, int idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
-                TrimData = true,
-                Separator = ';'
-            }
-        ).ToArray();
+        var attributeRawData = CsvReader
+            .ReadFromText(
+                String.Join(Environment.NewLine, fileLines),
+                new CsvOptions()
+                {
+                    HeaderMode = HeaderMode.HeaderPresent,
+                    RowsToSkip = 0,
+                    SkipRow = (ReadOnlyMemory<char> row, int idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
+                    TrimData = true,
+                    Separator = ';'
+                }
+            )
+            .ToArray();
 
         var itemCodeIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
 
@@ -42,28 +46,33 @@ public class ScaffoldingAttributeParser
 
         var entireScaffoldingMetadata = new ScaffoldingMetadata();
 
-        var attributesDictionary = attributeRawData.ToDictionary(
-            x => x.Values[itemCodeIdColumn],
-            v =>
-            {
-                var kvp = new Dictionary<string, string>();
-                for (int col = 0; col < v.ColumnCount; col++)
-                {
-                    if (itemCodeIdColumn == col)
-                        continue; // Ignore it
-                    var key = v.Headers[col].Trim();
-                    var value = v.Values[col].Trim();
-                    entireScaffoldingMetadata.TryAddValue(key, value);
-                    kvp[key] = value;
-                }
-
-                return kvp;
-            }
-        );
-
-
-        // total weight is stored in the last line of the attribute table
+        // total weight (model metadata, not per-part attribute) is stored in the last line of the attribute table
         var lastAttributeLine = attributeRawData.Last();
+        // last line is skipped here, since it is not a per-part attribute
+        var attributesDictionary = attributeRawData
+            .SkipLast(1)
+            .ToDictionary(
+                x => x.Values[itemCodeIdColumn],
+                v =>
+                {
+                    var kvp = new Dictionary<string, string>();
+                    for (int col = 0; col < v.ColumnCount; col++)
+                    {
+                        if (itemCodeIdColumn == col)
+                            continue; // Ignore it
+                        var key = v.Headers[col].Trim();
+                        var value = v.Values[col].Trim();
+                        entireScaffoldingMetadata.TryAddValue(key, value);
+                        kvp[key] = value;
+                    }
+                    if (!ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(kvp))
+                    {
+                        Console.WriteLine("Invalid attribute line: " + v[itemCodeIdColumn].ToString());
+                        return null;
+                    }
+                    return kvp;
+                }
+            );
 
         if (lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
@@ -74,9 +83,11 @@ public class ScaffoldingAttributeParser
             throw new Exception("Attribute file does not contain total weight");
         }
 
-        if (entireScaffoldingMetadata.HasExpectedValues())
+        if (!entireScaffoldingMetadata.HasExpectedValues())
         {
-            Console.Error.WriteLine("Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata));
+            Console.Error.WriteLine(
+                "Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata)
+            );
         }
 
         return (attributesDictionary, entireScaffoldingMetadata);

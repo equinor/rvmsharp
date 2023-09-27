@@ -28,8 +28,13 @@ public class FbxProviderAttributeParserTests
             }
         }
         // expects three lines with missing attributes
-        Assert.That(countNodesWithMissingAttrib, Is.EqualTo(4));
-        Assert.That(metadata.Count, Is.EqualTo(ScaffoldingAttributeParser.NumberOfModelAttributes));
+        Assert.That(countNodesWithMissingAttrib, Is.EqualTo(3));
+        Assert.That(metadata.HasExpectedValues());
+
+        Assert.That(
+            ScaffoldingMetadata.ModelAttributesPerPart.Length + 1,
+            Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes)
+        );
     }
 
     [Test]
