@@ -3,7 +3,7 @@
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
-using CadRevealComposer.Tessellation;
+using CadRevealComposer.Operations;
 using Commons;
 using System.Text.RegularExpressions;
 
@@ -70,6 +70,7 @@ public static class FbxWorkload
         IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
         IStringInternPool? stringInternPool = null
     )
@@ -87,26 +88,30 @@ public static class FbxWorkload
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
-            var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
-            var lookupA = new Dictionary<IntPtr, (Mesh, ulong)>();
+            Dictionary<string, Dictionary<string, string>>? attributes = null;
+            if (infoTextFilename != null)
+            {
+                var lines = File.ReadAllLines(infoTextFilename);
+                attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
+            }
 
+            var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
                 treeIndexGenerator,
                 instanceIdGenerator,
-                fbxImporter,
-                lookupA
+                nodeNameFiltering,
+                attributes
             );
+
+            if (rootNodeConverted == null)
+                return Array.Empty<CadRevealNode>();
 
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
             // attach attribute info to the nodes if there is any
-            if (infoTextFilename != null)
+            if (attributes != null)
             {
-                var lines = File.ReadAllLines(infoTextFilename);
-
-                var attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
-
                 bool totalMismatch = true;
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)

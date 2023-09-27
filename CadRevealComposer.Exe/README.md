@@ -7,10 +7,6 @@ The Cad Reveal Composer project uses the rvmsharp parser to read RVM data, and c
 - PDMS: Plant Design Management System
 - RVM: AVEVA Plant Design Management System Model project file
 - OBJ file: contains meshes, text format
-- CTM file: contains meshes, compressed binary format
-- I3D file: contains primitives and pointers to meshes in CTM file, compressed binary format
-- F3D file: contains level of detail
-
 
 ## Input
 
@@ -20,15 +16,11 @@ Geometry data is read from RVM files and PDMS metadata from TXT files (tag data 
 
 | File               | Note                                                                     |
 | ------------------ | ------------------------------------------------------------------------ |
-| debug_sectors.json | Sector information.                                                      |
-| debug_zones.png    | Image showing how the model is divided into zones in the XY plane.       |
 | hierarchy.db       | SQLite database, contains node metadata. Used by hierarchy REST service. |
 | initialCamera.json | Initial camera position for the 3D model. Automatically calculated.      |
 | sector.json        | Describes all sectors (Cognite Reveal format).                           |
 
-- OBJ files are temporary files and are converted to CTM files.
-- CTM files and I3D files together constitutes the 3D model.
-- I3D files contains all geometries, and pointers to meshes. Meshes are stored in CTM files.
+- .glb files together constitutes the 3D model, including the primitives using gltf extensions.
 
 ## Processing pipeline
 
@@ -45,12 +37,6 @@ As of now Cad Reveal Composer recursively splits space into eight subvoxels usin
 Applicable for some installations spread over a large area, like Melkøya and Tjeldbergodden. Zone splitting detects several processing plants spread apart within the model.
 
 Each zone is used as a basis for sector splitting.
-
-#### Exterior splitting
-
-Given a set of geometries separate them into exterior and interior. The exterior is found using ray tracing from the outside hitting the exterior geometries. The rest is considered interior geometries.
-
-The exterior geometries are prioritized in sector loading.
 
 #### Geometry: tesselation
 

@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
@@ -10,38 +11,54 @@ public class Mesh : IEquatable<Mesh>
 {
     public float Error { get; }
 
-    private static readonly float MeshEqualityPrecision = 0.001f;
-
+    /// <summary>
+    /// Vertices are only positions Vector3 for now. We dont support normals or uvs.
+    /// </summary>
     public Vector3[] Vertices => _vertices;
 
-    public uint[] Triangles => _triangles;
+    public uint[] Indices => _indices;
 
-    public int TriangleCount => _triangles.Length / 3;
+    public int TriangleCount => _indices.Length / 3;
 
     private readonly Vector3[] _vertices;
-    private readonly uint[] _triangles;
+    private readonly uint[] _indices;
 
-    public Mesh(IReadOnlyList<float> vertexData, IReadOnlyList<float> normalData, int[] triangleData, float error)
+    public Mesh(IReadOnlyList<float> vertexes, int[] indexes, float error)
     {
         Error = error;
-        if (vertexData.Count != normalData.Count)
-            throw new ArgumentException("Vertex and normal arrays must have equal length");
 
-        _vertices = new Vector3[vertexData.Count / 3];
-        for (var i = 0; i < vertexData.Count / 3; i++)
+        _vertices = new Vector3[vertexes.Count / 3];
+        for (var i = 0; i < vertexes.Count / 3; i++)
         {
-            _vertices[i] = new Vector3(vertexData[i * 3], vertexData[i * 3 + 1], vertexData[i * 3 + 2]);
+            _vertices[i] = new Vector3(vertexes[i * 3], vertexes[i * 3 + 1], vertexes[i * 3 + 2]);
         }
 
-        _triangles = new uint[triangleData.Length];
-        Array.Copy(triangleData, _triangles, triangleData.Length);
+        _indices = new uint[indexes.Length];
+        Array.Copy(indexes, _indices, indexes.Length);
     }
 
-    public Mesh(Vector3[] vertices, uint[] triangles, float error)
+    /// <summary>
+    /// Create a mesh using vertices, indices and error
+    /// Note: Verticies and indices are referenced and not copied
+    /// </summary>
+    /// <param name="vertices"></param>
+    /// <param name="indices"></param>
+    /// <param name="error"></param>
+    public Mesh(Vector3[] vertices, uint[] indices, float error)
     {
         Error = error;
         _vertices = vertices;
-        _triangles = triangles;
+        _indices = indices;
+    }
+
+    /// <summary>
+    /// Create a mesh using vertices, indices and error
+    /// This creates a copy
+    /// </summary>
+    /// <returns></returns>
+    public Mesh Clone()
+    {
+        return new Mesh(_vertices.ToArray(), _indices.ToArray(), Error);
     }
 
     /// <summary>
@@ -82,18 +99,28 @@ public class Mesh : IEquatable<Mesh>
         return new BoundingBox(min, max);
     }
 
+    /// <summary>
+    /// Applies the Matrix4x4 to the current mesh instance
+    /// </summary>
+    /// <param name="matrix"></param>
     public void Apply(Matrix4x4 matrix)
     {
         for (var i = 0; i < _vertices.Length; i++)
         {
-            _vertices[i] = Vector3.Transform(_vertices[i], matrix);
+            var newVertex = Vector3.Transform(_vertices[i], matrix);
+
+            Debug.Assert(float.IsFinite(newVertex.X));
+            Debug.Assert(float.IsFinite(newVertex.Y));
+            Debug.Assert(float.IsFinite(newVertex.Z));
+
+            _vertices[i] = newVertex;
         }
     }
 
     #region Equality Comparers
 
     /// <summary>
-    /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc. Has a float tolerance, so there might be issues with  tiny meshes.
+    /// Compare this Mesh with another Mesh by values (Sequence equals for collections etc)
     /// </summary>
     public bool Equals(Mesh? other)
     {
@@ -108,8 +135,8 @@ public class Mesh : IEquatable<Mesh>
         }
 
         return Error.Equals(other.Error)
-            && Vertices.SequenceEqual(other.Vertices, new ToleranceVector3EqualityComparer(MeshEqualityPrecision))
-            && Triangles.SequenceEqual(other.Triangles);
+            && Vertices.SequenceEqual(other.Vertices)
+            && Indices.SequenceEqual(other.Indices);
     }
 
     public override bool Equals(object? obj)
@@ -126,51 +153,15 @@ public class Mesh : IEquatable<Mesh>
     {
         var errorHashCode = Error.GetHashCode();
         var verticesHashCode = GetStructuralHashCode(_vertices);
-        var trianglesHashCode = GetStructuralHashCode(_triangles);
-        unchecked
-        {
-            // https://stackoverflow.com/a/1646913 (Replacement for HashCode.Combine since its not available on dotnet standard 2.0)
-            int hash = 17;
-            hash = hash * 31 + errorHashCode;
-            hash = hash * 31 + verticesHashCode;
-            hash = hash * 31 + trianglesHashCode;
-            return hash;
-        }
+        var indicesHashCode = GetStructuralHashCode(_indices);
+
+        return HashCode.Combine(errorHashCode, verticesHashCode, indicesHashCode);
 
         // Helper to get structural (ListContent-based) hash code
         static int GetStructuralHashCode<T>(IReadOnlyList<T> input)
             where T : IEquatable<T>
         {
             return ((IStructuralEquatable)input).GetHashCode(EqualityComparer<T>.Default);
-        }
-    }
-
-    private class ToleranceVector3EqualityComparer : IEqualityComparer<Vector3>
-    {
-        private readonly float _tolerance;
-
-        public ToleranceVector3EqualityComparer(float tolerance = 0.001f)
-        {
-            _tolerance = tolerance;
-        }
-
-        public bool Equals(Vector3 x, Vector3 y)
-        {
-            return Math.Abs(x.X - y.X) < _tolerance
-                && Math.Abs(x.Y - y.Y) < _tolerance
-                && Math.Abs(x.Z - y.Z) < _tolerance;
-        }
-
-        public int GetHashCode(Vector3 obj)
-        {
-            unchecked
-            {
-                int hash = 17;
-                hash = hash * 31 + obj.X.GetHashCode();
-                hash = hash * 31 + obj.Y.GetHashCode();
-                hash = hash * 31 + obj.Z.GetHashCode();
-                return hash;
-            }
         }
     }
 

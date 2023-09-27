@@ -229,13 +229,13 @@ public static class ExteriorSplitter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IEnumerable<Triangle> CollectTrianglesForMesh(Mesh mesh)
     {
-        var triangleCount = mesh.Triangles.Length / 3;
+        var triangleCount = mesh.Indices.Length / 3;
         var vertices = mesh.Vertices;
         for (var i = 0; i < triangleCount; i++)
         {
-            var v1 = vertices[mesh.Triangles[i * 3]];
-            var v2 = vertices[mesh.Triangles[i * 3 + 1]];
-            var v3 = vertices[mesh.Triangles[i * 3 + 2]];
+            var v1 = vertices[mesh.Indices[i * 3]];
+            var v2 = vertices[mesh.Indices[i * 3 + 1]];
+            var v3 = vertices[mesh.Indices[i * 3 + 2]];
             yield return new Triangle(v1, v2, v3);
         }
     }

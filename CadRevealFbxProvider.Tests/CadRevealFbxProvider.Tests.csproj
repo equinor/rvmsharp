@@ -28,6 +28,12 @@
     <None Update="TestSamples\correct\fbx_test_model.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestSamples\missingattributes\fbx_test_model.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestSamples\missingattributes\fbx_test_model.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestSamples\missingkey\fbx_test_model.fbx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

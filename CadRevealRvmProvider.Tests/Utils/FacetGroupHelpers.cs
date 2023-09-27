@@ -61,7 +61,7 @@ public class FacetGroupHelpers
     public void ExportAllUnmatchedFacetGroupsAsObjs()
     {
         var workload = RvmWorkload.CollectWorkload(new[] { @"d:\Models\hda\HDA_RVM" });
-        var rvmStore = RvmWorkload.ReadRvmData(workload);
+        var rvmStore = RvmWorkload.ReadRvmFiles(workload);
         var rvmNodes = rvmStore.RvmFiles.Select(f => f.Model).SelectMany(m => m.Children);
         var facetGroups = rvmNodes.SelectMany(GetAllFacetGroups).ToArray();
 

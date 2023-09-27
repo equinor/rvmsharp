@@ -1,6 +1,8 @@
 namespace CadRevealObjProvider.Tests;
 
+using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 
 [TestFixture]
 public class ObjProviderTests
@@ -12,12 +14,13 @@ public class ObjProviderTests
     [Explicit("Temp test, requires non-checked in obj file")]
     public void ObjProviderTests_SmokeTest()
     {
-        var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
+        var treeIndexGenerator = new TreeIndexGenerator();
         new ObjProvider().ParseFiles(
             new[] { new FileInfo("TestData/HDA_subset.obj") },
             treeIndexGenerator,
-            instanceIdGenerator
+            instanceIdGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
     }
 }

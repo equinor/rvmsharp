@@ -6,11 +6,14 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
 using Converters;
+using Converters.CapVisibilityHelpers;
 using Operations;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using Tessellation;
@@ -20,7 +23,8 @@ public class RvmProvider : IModelFormatProvider
     public IReadOnlyList<CadRevealNode> ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     )
     {
         var workload = RvmWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
@@ -35,7 +39,7 @@ public class RvmProvider : IModelFormatProvider
         });
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
-        var rvmStore = RvmWorkload.ReadRvmData(workload, progressReport, stringInternPool);
+        var rvmStore = RvmWorkload.ReadRvmFiles(workload, progressReport, stringInternPool);
         var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
@@ -44,12 +48,18 @@ public class RvmProvider : IModelFormatProvider
             // returns empty list if there are no rvm files to process
             return new List<CadRevealNode>();
         }
+
+        LogRvmPrimitives(rvmStore);
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
         );
 
         var stopwatch = Stopwatch.StartNew();
-        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(rvmStore, treeIndexGenerator);
+        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
+            rvmStore,
+            treeIndexGenerator,
+            nodeNameFiltering
+        );
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
         return nodes;
@@ -139,11 +149,29 @@ public class RvmProvider : IModelFormatProvider
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
-        Console.WriteLine($"Show number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Shown}");
-        Console.WriteLine($"Hide number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Hidden}");
+        Console.WriteLine($"Show number of caps: {CapVisibility.CapsShown}");
+        Console.WriteLine($"Hide number of caps: {CapVisibility.CapsHidden}");
+        Console.WriteLine($"Caps Without connection: {CapVisibility.CapsWithoutConnections}");
+        Console.WriteLine($"Total number of caps tested: {CapVisibility.TotalNumberOfCapsTested}");
 
         stopwatch.Restart();
 
         return geometriesIncludingMeshes;
+    }
+
+    private static void LogRvmPrimitives(RvmStore rvmStore)
+    {
+        var allRvmPrimitivesGroups = rvmStore.RvmFiles
+            .SelectMany(f => f.Model.Children)
+            .SelectMany(RvmNode.GetAllPrimitivesFlat)
+            .GroupBy(x => x.GetType());
+
+        using (new TeamCityLogBlock("RvmPrimitive Count"))
+        {
+            foreach (var group in allRvmPrimitivesGroups)
+            {
+                Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
+            }
+        }
     }
 }
