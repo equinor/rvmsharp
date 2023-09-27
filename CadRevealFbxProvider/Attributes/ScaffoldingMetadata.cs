@@ -42,7 +42,7 @@ public class ScaffoldingMetadata
         { "Grand total", AttributeEnum.TotalWeight }
     };
 
-    public void GuardForInvalidValues(string newValue, string existingValue)
+    public void GuardForInvalidValues(string newValue, string? existingValue)
     {
         if (newValue == existingValue)
             return;
