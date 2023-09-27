@@ -37,7 +37,7 @@ public static class CadRevealComposerRunner
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
 
-        ModelMetadata metadataFromAllFiles = new ModelMetadata(new ());
+        ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();

@@ -4,12 +4,15 @@ using System.Collections.Generic;
 
 public class ScaffoldingMetadata
 {
-    public string WorkOrder { get; set; }
-    public string BuildOperationNumber { get; set; }
-    public string DismantleOperationNumber { get; set; }
+    public string? WorkOrder { get; set; }
+    public string? BuildOperationNumber { get; set; }
+    public string? DismantleOperationNumber { get; set; }
 
+    public const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
+    public const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
+    public const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
     public const string TotalWeightFieldName = "Scaffolding_TotalWeight";
-    public string TotalWeight { get; set; }
+    public string? TotalWeight { get; set; }
 
     public static readonly string[] ModelAttributesPerPart =
     {
@@ -119,11 +122,15 @@ public class ScaffoldingMetadata
         return true;
     }
 
-    public void WriteToGenericMetadataDict(Dictionary<string, string> targetDict)
+    public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-        targetDict.Add("Scaffolding_WorkOrder_WorkOrderNumber", this.WorkOrder);
-        targetDict.Add("Scaffolding_WorkOrder_BuildOperationNumber", this.BuildOperationNumber);
-        targetDict.Add("Scaffolding_WorkOrder_DismantleOperationNumber", this.DismantleOperationNumber);
-        targetDict.Add(ScaffoldingMetadata.TotalWeightFieldName, this.TotalWeight);
+        if (!HasExpectedValues())
+            throw new Exception("Cannot write metadata: invalid content");
+
+        // the if above ensures that the fields and not null
+        targetDict.Add(WorkOrderFieldName, WorkOrder!);
+        targetDict.Add(BuildOpFieldName, BuildOperationNumber!);
+        targetDict.Add(DismantleOpFieldName, DismantleOperationNumber!);
+        targetDict.Add(TotalWeightFieldName, TotalWeight!);
     }
 }

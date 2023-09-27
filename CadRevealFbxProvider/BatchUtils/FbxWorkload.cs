@@ -102,7 +102,7 @@ public static class FbxWorkload
                 // TODO: Should we crash if we dont have expected values?
                 if (scaffoldingMetadata.HasExpectedValues())
                 {
-                    scaffoldingMetadata.WriteToGenericMetadataDict(metadata);
+                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
             }
 

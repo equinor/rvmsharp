@@ -13,7 +13,7 @@ public class ScaffoldingAttributeParser
     public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
 
     public (
-        Dictionary<string, Dictionary<string, string>> attributesDictionary,
+        Dictionary<string, Dictionary<string, string>?> attributesDictionary,
         ScaffoldingMetadata scaffoldingMetadata
     ) ParseAttributes(string[] fileLines)
     {
