@@ -52,6 +52,9 @@
     <None Update="TestSamples\attributes\missing_key_attribute.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestSamples\attributes\missing_total_weight.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestSamples\attributes\wrong_attribute_count.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
