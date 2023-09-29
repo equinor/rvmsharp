@@ -18,18 +18,18 @@ public static class APrimitiveTessellator
 
         switch (primitive)
         {
-            //case Box box:
-            //    result.AddRange(Tessellate(box));
-            //    break;
-            //case EccentricCone cone:
-            //    result.AddRange(Tessellate(cone));
-            //    break;
-            //case TorusSegment torus:
-            //    result.AddRange(Tessellate(torus));
-            //    break;
-            //case Cone cone:
-            //    result.AddRange(Tessellate(cone));
-            //    break;
+            case Box box:
+                result.AddRange(Tessellate(box));
+                break;
+            case EccentricCone cone:
+                result.AddRange(Tessellate(cone));
+                break;
+            case TorusSegment torus:
+                result.AddRange(Tessellate(torus));
+                break;
+            case Cone cone:
+                result.AddRange(Tessellate(cone));
+                break;
             case GeneralCylinder cylinder:
                 result.AddRange(Tessellate(cylinder));
                 break;
@@ -344,9 +344,74 @@ public static class APrimitiveTessellator
         var localPlaneBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
 
         var localXAxis = Vector3.Normalize(cylinder.LocalXAxis);
-        var rotation = cylinder.Rotation;
+        var qqq = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.1f);
 
-        Quaternion q;
+        var testV1 = Vector3.Transform(Vector3.UnitX, qqq);
+        var testV2 = Vector3.Transform(localXAxis, qqq);
+
+        Quaternion rotation;
+        if (Vector3.Dot(Vector3.UnitX, localXAxis) > 0.99999f)
+        {
+            rotation = Quaternion.Identity;
+        }
+        else if (Vector3.Dot(Vector3.UnitX, localXAxis) < -0.99999f)
+        {
+            rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
+        }
+        else
+        {
+            // var cross = Vector3.Normalize(Vector3.Cross(localXAxis, Vector3.UnitX));
+            //
+            // var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
+            //
+            // var testQ = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(cross, angle));
+            //
+            // // var rotation = cylinder.Rotation;
+            // rotation = testQ;
+
+            // var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
+            //
+            // Quaternion q;
+            // q.X = cross.X;
+            // q.Y = cross.Y;
+            // q.Z = cross.Z;
+            //
+            // q.W =
+            //     MathF.Sqrt((Vector3.UnitX.LengthSquared()) * (localXAxis.LengthSquared()))
+            //     + Vector3.Dot(Vector3.UnitX, localXAxis);
+            //
+            // rotation = Quaternion.Inverse(q);
+
+            // float k_cos_theta = Vector3.Dot(Vector3.UnitX, localXAxis);
+            // float k = MathF.Sqrt(Vector3.UnitX.LengthSquared() * localXAxis.LengthSquared());
+            //
+            // if ((k_cos_theta / k).ApproximatelyEquals(-1f, 0.01f))
+            // {
+            //     rotation = Quaternion.Normalize(new Quaternion(0, 1, 1, 0));
+            // }
+            //
+            // rotation = Quaternion.Normalize(
+            //     Quaternion.CreateFromAxisAngle(Vector3.Cross(Vector3.UnitX, localXAxis), k_cos_theta + k)
+            // );
+
+            var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
+            var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
+
+            rotation = new Quaternion(
+                MathF.Cos(angle),
+                MathF.Sin(angle / 2f) * cross.X,
+                MathF.Sin(angle / 2f) * cross.Y,
+                MathF.Sin(angle / 2f) * cross.Z
+            );
+        }
+
+        Console.WriteLine("-------------------------------------------------------");
+        // Console.WriteLine($"Test: {testQ.ToString()}");
+        Console.WriteLine($"Rotation: {cylinder.Rotation.ToString()}");
+        Console.WriteLine($"Our rotation: {rotation.ToString()}");
+        // Console.WriteLine($"Processed unit x: {Vector3.Transform(Vector3.UnitX, testQ)}");
+        Console.WriteLine("-------------------------------------------------------");
+
         //var angleBetweenXs = AngleBetween(Vector3.UnitX, localXAxis);
         //var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
         //q.X = cross.X;

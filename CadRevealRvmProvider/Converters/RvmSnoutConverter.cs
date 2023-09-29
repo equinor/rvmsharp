@@ -240,8 +240,8 @@ public static class RvmSnoutConverter
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
 
-        var planeA = new Vector4(planeNormalA, 0); // 1 + extendedHeightB + height); // TODO Isn't used by reveal?
-        var planeB = new Vector4(-planeNormalB, 0); //1 + extendedHeightB); // TODO Isn't used by reveal?
+        var planeA = new Vector4(planeNormalA, 0); // 1 + extendedHeightB + height); // TODO W isn't used by reveal?
+        var planeB = new Vector4(-planeNormalB, 0); //1 + extendedHeightB); // TODO W isn't used by reveal?
         //var planeA = new Vector4(Vector3.UnitX, 1 + extendedHeightB + height);
         //var planeB = new Vector4(-Vector3.UnitY, 1 + extendedHeightB);
 
