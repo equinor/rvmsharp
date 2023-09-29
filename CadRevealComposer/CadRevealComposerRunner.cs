@@ -5,6 +5,7 @@ using Configuration;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
+using Operations.Novelty;
 using Operations.SectorSplitting;
 using Primitives;
 using System;
@@ -50,7 +51,7 @@ public static class CadRevealComposerRunner
 
             if (generalMetadata != null)
             {
-                // TODO: Log that we added some metadate
+                // TODO: Log that we added some metadata
                 metadataFromAllFiles.Add(generalMetadata);
             }
 
@@ -63,7 +64,13 @@ public static class CadRevealComposerRunner
                 // collect all nodes for later sector division of the entire scene
                 nodesToExport.AddRange(cadRevealNodes);
 
-                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+                var cadRevealNodesWithFun = FunMode.SwitchPrimitives(cadRevealNodes, inputFolderPath);
+
+                var inputGeometries = cadRevealNodesWithFun
+                    .AsParallel()
+                    .AsOrdered()
+                    .SelectMany(x => x.Geometries)
+                    .ToArray();
 
                 var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                     inputGeometries,
