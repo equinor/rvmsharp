@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
-internal class GeneralCylinderTessallator
+internal class GeneralCylinderTesselletor
 {
     public static IEnumerable<APrimitive> Tessellate(GeneralCylinder cylinder, float error = 0)
     {

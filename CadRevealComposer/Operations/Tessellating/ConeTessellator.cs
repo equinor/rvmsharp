@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
-internal class ConeTessallator
+internal class ConeTessellator
 {
     public static IEnumerable<APrimitive> Tessellate(Cone cone, float error = 0)
     {
