@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
-internal class GeneralCylinderTesselletor
+public static class GeneralCylinderTesselletor
 {
     public static IEnumerable<APrimitive> Tessellate(GeneralCylinder cylinder, float error = 0)
     {
@@ -22,74 +22,69 @@ internal class GeneralCylinderTesselletor
         var localPlaneANormal = Vector3.Normalize(new Vector3(planeA.X, planeA.Y, planeA.Z));
         var localPlaneBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
 
-        var localXAxis = Vector3.Normalize(cylinder.LocalXAxis);
-        var qqq = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.1f);
+        var rotation = cylinder.Rotation;
 
-        var testV1 = Vector3.Transform(Vector3.UnitX, qqq);
-        var testV2 = Vector3.Transform(localXAxis, qqq);
+        //var localXAxis = Vector3.Normalize(cylinder.LocalXAxis);
+        //var qqq = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.1f);
 
-        Quaternion rotation;
-        if (Vector3.Dot(Vector3.UnitX, localXAxis) > 0.99999f)
-        {
-            rotation = Quaternion.Identity;
-        }
-        else if (Vector3.Dot(Vector3.UnitX, localXAxis) < -0.99999f)
-        {
-            rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
-        }
-        else
-        {
-            // var cross = Vector3.Normalize(Vector3.Cross(localXAxis, Vector3.UnitX));
-            //
-            // var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
-            //
-            // var testQ = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(cross, angle));
-            //
-            // // var rotation = cylinder.Rotation;
-            // rotation = testQ;
+        //var testV1 = Vector3.Transform(Vector3.UnitX, qqq);
+        //var testV2 = Vector3.Transform(localXAxis, qqq);
 
-            // var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
-            //
-            // Quaternion q;
-            // q.X = cross.X;
-            // q.Y = cross.Y;
-            // q.Z = cross.Z;
-            //
-            // q.W =
-            //     MathF.Sqrt((Vector3.UnitX.LengthSquared()) * (localXAxis.LengthSquared()))
-            //     + Vector3.Dot(Vector3.UnitX, localXAxis);
-            //
-            // rotation = Quaternion.Inverse(q);
+        //Quaternion rotation;
+        //if (Vector3.Dot(Vector3.UnitX, localXAxis) > 0.99999f)
+        //{
+        //    rotation = Quaternion.Identity;
+        //}
+        //else if (Vector3.Dot(Vector3.UnitX, localXAxis) < -0.99999f)
+        //{
+        //    rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
+        //}
+        //else
+        //{
+        // var cross = Vector3.Normalize(Vector3.Cross(localXAxis, Vector3.UnitX));
+        //
+        // var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
+        //
+        // var testQ = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(cross, angle));
+        //
+        // // var rotation = cylinder.Rotation;
+        // rotation = testQ;
 
-            // float k_cos_theta = Vector3.Dot(Vector3.UnitX, localXAxis);
-            // float k = MathF.Sqrt(Vector3.UnitX.LengthSquared() * localXAxis.LengthSquared());
-            //
-            // if ((k_cos_theta / k).ApproximatelyEquals(-1f, 0.01f))
-            // {
-            //     rotation = Quaternion.Normalize(new Quaternion(0, 1, 1, 0));
-            // }
-            //
-            // rotation = Quaternion.Normalize(
-            //     Quaternion.CreateFromAxisAngle(Vector3.Cross(Vector3.UnitX, localXAxis), k_cos_theta + k)
-            // );
+        // var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
+        //
+        // Quaternion q;
+        // q.X = cross.X;
+        // q.Y = cross.Y;
+        // q.Z = cross.Z;
+        //
+        // q.W =
+        //     MathF.Sqrt((Vector3.UnitX.LengthSquared()) * (localXAxis.LengthSquared()))
+        //     + Vector3.Dot(Vector3.UnitX, localXAxis);
+        //
+        // rotation = Quaternion.Inverse(q);
 
-            var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
-            var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
+        // float k_cos_theta = Vector3.Dot(Vector3.UnitX, localXAxis);
+        // float k = MathF.Sqrt(Vector3.UnitX.LengthSquared() * localXAxis.LengthSquared());
+        //
+        // if ((k_cos_theta / k).ApproximatelyEquals(-1f, 0.01f))
+        // {
+        //     rotation = Quaternion.Normalize(new Quaternion(0, 1, 1, 0));
+        // }
+        //
+        // rotation = Quaternion.Normalize(
+        //     Quaternion.CreateFromAxisAngle(Vector3.Cross(Vector3.UnitX, localXAxis), k_cos_theta + k)
+        // );
 
-            rotation = new Quaternion(
-                MathF.Cos(angle),
-                MathF.Sin(angle / 2f) * cross.X,
-                MathF.Sin(angle / 2f) * cross.Y,
-                MathF.Sin(angle / 2f) * cross.Z
-            );
-        }
+        //    var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
+        //    var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
 
-        Console.WriteLine("-------------------------------------------------------");
-        // Console.WriteLine($"Test: {testQ.ToString()}");
-        Console.WriteLine($"Rotation: {cylinder.Rotation.ToString()}");
-        Console.WriteLine($"Our rotation: {rotation.ToString()}");
-        // Console.WriteLine($"Processed unit x: {Vector3.Transform(Vector3.UnitX, testQ)}");
-        Console.WriteLine("-------------------------------------------------------");
+        //    rotation = new Quaternion(
+        //        MathF.Cos(angle),
+        //        MathF.Sin(angle / 2f) * cross.X,
+        //        MathF.Sin(angle / 2f) * cross.Y,
+        //        MathF.Sin(angle / 2f) * cross.Z
+        //    );
+        //}
 
         //var angleBetweenXs = AngleBetween(Vector3.UnitX, localXAxis);
         //var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
@@ -139,12 +134,14 @@ internal class GeneralCylinderTesselletor
         var centerA = extendedCenterA + extendedHeightA * normal;
         var centerB = extendedCenterB - extendedHeightB * normal;
 
-        if (!float.IsFinite(centerA.X) || !float.IsFinite(centerB.X))
-        {
-            Console.WriteLine("jn");
-        }
+        //if (!float.IsFinite(centerA.X) || !float.IsFinite(centerB.X))
+        //{
+        //    Console.WriteLine("jn");
+        //}
 
         var angleIncrement = (2 * MathF.PI) / segments;
+
+        var localXAxis = cylinder.LocalXAxis;
 
         //yield return DebugDrawVector(actualPlaneNormalA, centerA);
         //yield return DebugDrawVector(actualPlaneNormalB, centerB);
@@ -155,8 +152,8 @@ internal class GeneralCylinderTesselletor
         //yield return DebugDrawPlane(planeA, centerA);
         //yield return DebugDrawPlane(planeB, centerB);
 
-        var startVectorA = Vector3.Normalize(TessellationUtils.CreateOrthogonalUnitVector(planeANormal));
-        var startVectorB = Vector3.Normalize(TessellationUtils.CreateOrthogonalUnitVector(planeBNormal));
+        var startVectorA = Vector3.Normalize(Vector3.Cross(Vector3.Cross(localXAxis, planeANormal), planeANormal));
+        var startVectorB = Vector3.Normalize(Vector3.Cross(Vector3.Cross(localXAxis, planeBNormal), planeBNormal));
 
         for (uint i = 0; i < segments; i++)
         {
