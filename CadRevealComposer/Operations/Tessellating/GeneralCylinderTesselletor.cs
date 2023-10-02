@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using Utils;
 
 public static class GeneralCylinderTesselletor
 {
@@ -18,91 +19,15 @@ public static class GeneralCylinderTesselletor
 
         var planeA = cylinder.PlaneA;
         var planeB = cylinder.PlaneB;
+        var localXAxis = cylinder.LocalXAxis;
 
         var localPlaneANormal = Vector3.Normalize(new Vector3(planeA.X, planeA.Y, planeA.Z));
         var localPlaneBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
 
         var rotation = cylinder.Rotation;
 
-        //var localXAxis = Vector3.Normalize(cylinder.LocalXAxis);
-        //var qqq = Quaternion.CreateFromAxisAngle(Vector3.UnitY, 0.1f);
-
-        //var testV1 = Vector3.Transform(Vector3.UnitX, qqq);
-        //var testV2 = Vector3.Transform(localXAxis, qqq);
-
-        //Quaternion rotation;
-        //if (Vector3.Dot(Vector3.UnitX, localXAxis) > 0.99999f)
-        //{
-        //    rotation = Quaternion.Identity;
-        //}
-        //else if (Vector3.Dot(Vector3.UnitX, localXAxis) < -0.99999f)
-        //{
-        //    rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, MathF.PI);
-        //}
-        //else
-        //{
-        // var cross = Vector3.Normalize(Vector3.Cross(localXAxis, Vector3.UnitX));
-        //
-        // var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
-        //
-        // var testQ = Quaternion.Normalize(Quaternion.CreateFromAxisAngle(cross, angle));
-        //
-        // // var rotation = cylinder.Rotation;
-        // rotation = testQ;
-
-        // var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
-        //
-        // Quaternion q;
-        // q.X = cross.X;
-        // q.Y = cross.Y;
-        // q.Z = cross.Z;
-        //
-        // q.W =
-        //     MathF.Sqrt((Vector3.UnitX.LengthSquared()) * (localXAxis.LengthSquared()))
-        //     + Vector3.Dot(Vector3.UnitX, localXAxis);
-        //
-        // rotation = Quaternion.Inverse(q);
-
-        // float k_cos_theta = Vector3.Dot(Vector3.UnitX, localXAxis);
-        // float k = MathF.Sqrt(Vector3.UnitX.LengthSquared() * localXAxis.LengthSquared());
-        //
-        // if ((k_cos_theta / k).ApproximatelyEquals(-1f, 0.01f))
-        // {
-        //     rotation = Quaternion.Normalize(new Quaternion(0, 1, 1, 0));
-        // }
-        //
-        // rotation = Quaternion.Normalize(
-        //     Quaternion.CreateFromAxisAngle(Vector3.Cross(Vector3.UnitX, localXAxis), k_cos_theta + k)
-        // );
-
-        //    var angle = MathF.Acos(Vector3.Dot(localXAxis, Vector3.UnitX));
-        //    var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
-
-        //    rotation = new Quaternion(
-        //        MathF.Cos(angle),
-        //        MathF.Sin(angle / 2f) * cross.X,
-        //        MathF.Sin(angle / 2f) * cross.Y,
-        //        MathF.Sin(angle / 2f) * cross.Z
-        //    );
-        //}
-
-        //var angleBetweenXs = AngleBetween(Vector3.UnitX, localXAxis);
-        //var cross = Vector3.Normalize(Vector3.Cross(Vector3.UnitX, localXAxis));
-        //q.X = cross.X;
-        //q.Y = cross.Y;
-        //q.Z = cross.Z;
-
-        //q.W = MathF.Sqrt(1 * 1 * 1 * 1) + Vector3.Dot(Vector3.UnitX, localXAxis);
-
-        //q = Quaternion.Normalize(q);
-
-        //var q = Quaternion.CreateFromAxisAngle(cross, angleBetweenXs);
-
         var planeANormal = Vector3.Normalize(Vector3.Transform(localPlaneANormal, rotation));
         var planeBNormal = Vector3.Normalize(-Vector3.Transform(localPlaneBNormal, rotation));
-
-        //var planeANormal = localPlaneANormal;
-        //var planeBNormal = localPlaneBNormal;
 
         var extendedCenterA = cylinder.CenterA;
         var extendedCenterB = cylinder.CenterB;
@@ -112,48 +37,52 @@ public static class GeneralCylinderTesselletor
         var anglePlaneA = TessellationUtils.AngleBetween(normal, planeANormal);
         var anglePlaneB = TessellationUtils.AngleBetween(normal, planeBNormal);
 
-        //anglePlaneA -= MathF.PI / 2;
-        //anglePlaneB -= MathF.PI / 2;
-
         var extendedHeightA = MathF.Sin(anglePlaneA) * radius;
         var extendedHeightB = MathF.Sin(anglePlaneB) * radius;
+
+        var centerA = extendedCenterA + extendedHeightA * normal;
+        var centerB = extendedCenterB - extendedHeightB * normal;
+
+        var angleIncrement = (2 * MathF.PI) / segments;
+
+        var startVectorA = Vector3.Normalize(Vector3.Cross(Vector3.Cross(normal, planeANormal), planeANormal));
+        var startVectorB = Vector3.Normalize(Vector3.Cross(Vector3.Cross(-normal, planeBNormal), planeBNormal));
+
+        if (startVectorA.IsFinite() && !startVectorB.IsFinite())
+        {
+            startVectorB = -Vector3.Normalize(Vector3.Cross(Vector3.Cross(startVectorA, normal), normal));
+            yield return TessellationUtils.DebugDrawVector(startVectorB, centerB, Color.Aqua);
+        }
+        else if (!startVectorA.IsFinite() && startVectorB.IsFinite())
+        {
+            startVectorA = -Vector3.Normalize(Vector3.Cross(Vector3.Cross(startVectorB, normal), normal));
+            yield return TessellationUtils.DebugDrawVector(startVectorB, centerB, Color.Bisque);
+        }
+
+        if (!startVectorA.IsFinite())
+        {
+            startVectorA = TessellationUtils.CreateOrthogonalUnitVector(normal);
+            yield return TessellationUtils.DebugDrawVector(startVectorA, centerA, Color.Aqua);
+        }
+
+        if (!startVectorB.IsFinite())
+        {
+            startVectorB = TessellationUtils.CreateOrthogonalUnitVector(normal);
+            yield return TessellationUtils.DebugDrawVector(startVectorB, centerB, Color.Blue);
+        }
 
         float hypoA = radius;
         float hypoB = radius;
 
         if (anglePlaneA != 0)
         {
-            hypoA = extendedHeightA * (1f / MathF.Sin(anglePlaneA));
+            hypoA = MathF.Abs(radius / MathF.Cos(anglePlaneA));
         }
 
         if (anglePlaneB != 0)
         {
-            hypoB = extendedHeightB * (1f / MathF.Sin(anglePlaneB));
+            hypoB = MathF.Abs(radius / MathF.Cos(anglePlaneB));
         }
-
-        var centerA = extendedCenterA + extendedHeightA * normal;
-        var centerB = extendedCenterB - extendedHeightB * normal;
-
-        //if (!float.IsFinite(centerA.X) || !float.IsFinite(centerB.X))
-        //{
-        //    Console.WriteLine("jn");
-        //}
-
-        var angleIncrement = (2 * MathF.PI) / segments;
-
-        var localXAxis = cylinder.LocalXAxis;
-
-        //yield return DebugDrawVector(actualPlaneNormalA, centerA);
-        //yield return DebugDrawVector(actualPlaneNormalB, centerB);
-
-        //yield return DebugDrawVector(planeANormal, centerA);
-        //yield return DebugDrawVector(planeBNormal, centerB);
-
-        //yield return DebugDrawPlane(planeA, centerA);
-        //yield return DebugDrawPlane(planeB, centerB);
-
-        var startVectorA = Vector3.Normalize(Vector3.Cross(Vector3.Cross(localXAxis, planeANormal), planeANormal));
-        var startVectorB = Vector3.Normalize(Vector3.Cross(Vector3.Cross(localXAxis, planeBNormal), planeBNormal));
 
         for (uint i = 0; i < segments; i++)
         {

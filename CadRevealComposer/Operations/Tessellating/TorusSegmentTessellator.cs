@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -39,8 +40,8 @@ public static class TorusSegmentTessellator
         {
             var turnAngle = i * turnIncrement;
             var normal = Vector3.UnitZ;
-            var q = Quaternion.CreateFromAxisAngle(normal, turnAngle);
 
+            var q = Quaternion.CreateFromAxisAngle(normal, turnAngle);
             var v = Vector3.Transform(Vector3.UnitX, q);
 
             startVectors.Add(v);

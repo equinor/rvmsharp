@@ -1,11 +1,11 @@
 namespace CadRevealComposer.Operations.Tessellating;
 
 using Primitives;
+using Tessellation;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
-using Tessellation;
 
 public static class BoxTessellator
 {

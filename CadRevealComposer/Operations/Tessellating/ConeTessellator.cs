@@ -49,6 +49,8 @@ public static class ConeTessellator
 
             var v = Vector3.Transform(startVector, q);
 
+            // yield return TessellationUtils.DebugDrawVector(v, centerA);
+
             var vNorm = Vector3.Normalize(v);
 
             vertices.Add(centerA + vNorm * radiusA);

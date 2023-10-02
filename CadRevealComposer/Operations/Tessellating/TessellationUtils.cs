@@ -6,6 +6,7 @@ using CadRevealComposer.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Numerics;
 
@@ -43,7 +44,7 @@ internal class TessellationUtils
         throw new Exception($"Could not find orthogonal vector of {v.ToString()}");
     }
 
-    public static APrimitive DebugDrawVector(Vector3 direction, Vector3 startPoint, float length = 1.0f)
+    public static APrimitive DebugDrawVector(Vector3 direction, Vector3 startPoint, Color color, float length = 1.0f)
     {
         var baseDiameter = length / 10f;
         var baseLength = length * (4.0f / 5.0f);
@@ -143,7 +144,7 @@ internal class TessellationUtils
         var boundingBox = new BoundingBox(baseCenterB - Vector3.One, baseCenterB + Vector3.One);
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
-        return new TriangleMesh(mesh, 0, Color.Magenta, boundingBox);
+        return new TriangleMesh(mesh, 0, color, boundingBox);
     }
 
     public static TriangleMesh DebugDrawPlane(Vector4 plane, Vector3 startPoint)
@@ -172,4 +173,3 @@ internal class TessellationUtils
         return new TriangleMesh(mesh, 0, Color.Aquamarine, boundingBox);
     }
 }
-
