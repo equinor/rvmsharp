@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
-internal class EccentricConeTessellator
+public static class EccentricConeTessellator
 {
     public static IEnumerable<APrimitive> Tessellate(EccentricCone cone, float error = 0)
     {

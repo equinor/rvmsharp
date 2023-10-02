@@ -8,7 +8,7 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 
-internal class TorusSegmentTessellator
+public static class TorusSegmentTessellator
 {
     public static IEnumerable<APrimitive> Tessellate(TorusSegment torus, float error = 0)
     {
@@ -21,7 +21,11 @@ internal class TorusSegmentTessellator
         var matrix = torus.InstanceMatrix;
 
         uint segments = 12;
-        uint turnSegments = 4; // var turnSegments = (int)(torus.ArcAngle / (MathF.PI / 8));
+        uint totalTurnSegments = 12;
+
+        int turnSegments = (int)(totalTurnSegments * (arcAngle / (2 * MathF.PI)));
+        if (turnSegments == 0)
+            turnSegments = 1;
 
         var turnIncrement = arcAngle / turnSegments;
 

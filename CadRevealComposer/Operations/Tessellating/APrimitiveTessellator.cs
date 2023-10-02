@@ -1,6 +1,5 @@
-namespace CadRevealComposer.Operations.SectorSplitting;
+namespace CadRevealComposer.Operations.Tessellating;
 
-using CadRevealComposer.Operations.Tessellating;
 using Primitives;
 using System.Collections.Generic;
 using System.Drawing;
