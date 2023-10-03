@@ -76,11 +76,9 @@ public static class CadRevealComposerRunner
             }
         }
 
-        if (metadataFromAllFiles.Count() > 0)
-        {
-            Console.WriteLine("Exporting model metadata");
-            SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
-        }
+        // If there is no metadata for this model, the json will be empty
+        Console.WriteLine("Exporting model metadata");
+        SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
 
         filtering.PrintFilteringStatsToConsole();
 
