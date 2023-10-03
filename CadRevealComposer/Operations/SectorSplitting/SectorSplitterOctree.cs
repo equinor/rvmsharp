@@ -19,9 +19,14 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
+    private TooFewInstancesHandler _tooFewInstancesHandler;
+    private TooFewPrimitivesHandler _tooFewPrimitivesHandler;
+
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
+        _tooFewInstancesHandler = new TooFewInstancesHandler();
+        _tooFewPrimitivesHandler = new TooFewPrimitivesHandler();
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
@@ -76,6 +81,16 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield return sector;
             }
         }
+
+        Console.WriteLine(
+            $"Tried to convert {_tooFewPrimitivesHandler.TriedConvertedGroupsOfPrimitives} out of {_tooFewPrimitivesHandler.TotalGroupsOfPrimitive} total groups of primitives"
+        );
+        Console.WriteLine(
+            $"Successfully converted {_tooFewPrimitivesHandler.SuccessfullyConvertedGroupsOfPrimitives} groups of primitives"
+        );
+        Console.WriteLine(
+            $"This resulted in {_tooFewPrimitivesHandler.AdditionalNumberOfTriangles} additional triangles"
+        );
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
@@ -235,11 +250,8 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        var tooFewInstancesHandler = new TooFewInstancesHandler();
-        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
-
-        var tooFewPrimitivesHandler = new TooFewPrimitivesHandler();
-        geometries = tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
+        geometries = _tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        geometries = _tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
 
         return new InternalSector(
             sectorId,

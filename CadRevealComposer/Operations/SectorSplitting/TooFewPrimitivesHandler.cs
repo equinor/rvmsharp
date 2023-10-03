@@ -9,6 +9,11 @@ public class TooFewPrimitivesHandler
 {
     private const int NumberOfPrimitivesThreshold = 10;
 
+    public int TotalGroupsOfPrimitive { get; private set; }
+    public int TriedConvertedGroupsOfPrimitives { get; private set; }
+    public int SuccessfullyConvertedGroupsOfPrimitives { get; private set; }
+    public int AdditionalNumberOfTriangles { get; private set; }
+
     public APrimitive[] ConvertPrimitivesWhenTooFew(APrimitive[] geometries)
     {
         var newGeometries = new List<APrimitive>();
@@ -16,9 +21,22 @@ public class TooFewPrimitivesHandler
 
         foreach (var group in primitiveGroups)
         {
+            TotalGroupsOfPrimitive++;
             if (group.Count() < NumberOfPrimitivesThreshold)
             {
+                TriedConvertedGroupsOfPrimitives++;
+
                 var convertedGeometries = group.SelectMany(APrimitiveTessellator.TryToTessellate).ToArray();
+
+                if (convertedGeometries.First() is TriangleMesh)
+                {
+                    SuccessfullyConvertedGroupsOfPrimitives++;
+                    foreach (var convertedGeometry in convertedGeometries)
+                    {
+                        AdditionalNumberOfTriangles += ((TriangleMesh)convertedGeometry).Mesh.TriangleCount;
+                    }
+                }
+
                 newGeometries.AddRange(convertedGeometries);
             }
             else
