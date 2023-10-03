@@ -7,10 +7,11 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using System.Runtime.InteropServices.JavaScript;
 
 public static class ConeTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(Cone cone, float error = 0)
+    public static IEnumerable<APrimitive> Tessellate(Cone cone)
     {
         if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
         {
@@ -19,6 +20,7 @@ public static class ConeTessellator
         }
 
         uint totalSegments = 12; // Number of segments if the cone is complete
+
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
 
@@ -28,11 +30,10 @@ public static class ConeTessellator
         var radiusB = cone.RadiusB;
         var arcAngle = cone.ArcAngle;
 
-        var normal = Vector3.Normalize(centerB - centerA);
+        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, float.Max(radiusA, radiusB), 1f, 0.05f);
+        var error = TessellationUtils.SagittaBasedError(arcAngle, float.Max(radiusA, radiusB), 1f, segments);
 
-        int segments = (int)(totalSegments * (arcAngle / (2 * MathF.PI)));
-        if (segments == 0)
-            segments = 1;
+        var normal = Vector3.Normalize(centerB - centerA);
 
         bool isComplete = segments == totalSegments;
 
@@ -48,8 +49,6 @@ public static class ConeTessellator
             var q = Quaternion.CreateFromAxisAngle(normal, -angleIncrement * i);
 
             var v = Vector3.Transform(startVector, q);
-
-            // yield return TessellationUtils.DebugDrawVector(v, centerA);
 
             var vNorm = Vector3.Normalize(v);
 

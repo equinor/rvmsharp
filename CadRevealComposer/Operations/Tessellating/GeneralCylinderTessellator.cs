@@ -8,11 +8,15 @@ using System.Drawing;
 using System.Numerics;
 using Utils;
 
-public static class GeneralCylinderTesselletor
+public static class GeneralCylinderTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(GeneralCylinder cylinder, float error = 0)
+    public static IEnumerable<APrimitive> Tessellate(GeneralCylinder cylinder)
     {
-        int segments = 12;
+        var arcAngle = cylinder.ArcAngle;
+        var radius = cylinder.Radius;
+
+        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, radius, 1f, 0.05f);
+        var error = TessellationUtils.SagittaBasedError(arcAngle, radius, 1f, segments);
 
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -31,7 +35,6 @@ public static class GeneralCylinderTesselletor
 
         var extendedCenterA = cylinder.CenterA;
         var extendedCenterB = cylinder.CenterB;
-        var radius = cylinder.Radius;
         var normal = Vector3.Normalize(extendedCenterB - extendedCenterA);
 
         var anglePlaneA = TessellationUtils.AngleBetween(normal, planeANormal);

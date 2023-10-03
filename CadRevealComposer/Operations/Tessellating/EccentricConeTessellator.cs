@@ -9,10 +9,8 @@ using System.Numerics;
 
 public static class EccentricConeTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(EccentricCone cone, float error = 0)
+    public static IEnumerable<APrimitive> Tessellate(EccentricCone cone)
     {
-        int segments = 12;
-
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
 
@@ -21,6 +19,9 @@ public static class EccentricConeTessellator
         var radiusA = cone.RadiusA;
         var centerB = cone.CenterB;
         var radiusB = cone.RadiusB;
+
+        var segments = TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, 0.05f);
+        var error = TessellationUtils.SagittaBasedError(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, segments);
 
         var angleIncrement = (2 * MathF.PI) / segments;
 

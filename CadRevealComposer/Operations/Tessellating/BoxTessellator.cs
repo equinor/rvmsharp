@@ -9,7 +9,7 @@ using System.Numerics;
 
 public static class BoxTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(Box box, float error = 0f)
+    public static IEnumerable<APrimitive> Tessellate(Box box)
     {
         var vertices = new Vector3[]
         {
@@ -43,7 +43,7 @@ public static class BoxTessellator
 
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
-        var mesh = new Mesh(transformedVertices, indices, error);
+        var mesh = new Mesh(transformedVertices, indices, 0f);
         yield return new TriangleMesh(mesh, box.TreeIndex, Color.Aqua, box.AxisAlignedBoundingBox);
     }
 }

@@ -26,7 +26,7 @@ public static class APrimitiveTessellator
                 result.AddRange(ConeTessellator.Tessellate(cone));
                 break;
             case GeneralCylinder cylinder:
-                result.AddRange(GeneralCylinderTesselletor.Tessellate(cylinder));
+                result.AddRange(GeneralCylinderTessellator.Tessellate(cylinder));
                 break;
             default:
                 result.Add(primitive with { Color = Color.WhiteSmoke });

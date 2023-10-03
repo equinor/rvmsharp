@@ -8,35 +8,41 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using Utils;
 
 public static class TorusSegmentTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(TorusSegment torus, float error = 0)
+    public static IEnumerable<APrimitive> Tessellate(TorusSegment torus)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
+
+        if (!torus.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out _))
+        {
+            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + torus.InstanceMatrix);
+        }
 
         var arcAngle = torus.ArcAngle;
         var offset = torus.Radius;
         var tubeRadius = torus.TubeRadius;
         var matrix = torus.InstanceMatrix;
 
-        uint segments = 12;
-        uint totalTurnSegments = 12;
+        var toroidalSegments = (uint)
+            TessellationUtils.SagittaBasedSegmentCount(arcAngle, offset + tubeRadius, scale.X, 0.05f);
+        var error = TessellationUtils.SagittaBasedError(arcAngle, tubeRadius, scale.X, (int)toroidalSegments);
 
-        int turnSegments = (int)(totalTurnSegments * (arcAngle / (2 * MathF.PI)));
-        if (turnSegments == 0)
-            turnSegments = 1;
+        var poloidalSegments = (uint)
+            TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, tubeRadius, scale.X, 0.05f);
 
-        var turnIncrement = arcAngle / turnSegments;
+        var turnIncrement = arcAngle / toroidalSegments;
 
-        var angleIncrement = (2 * MathF.PI) / segments;
+        var angleIncrement = (2 * MathF.PI) / poloidalSegments;
 
         var startVectors = new List<Vector3>(); // start vectors at the circles at each turn segment
         var startCenters = new List<Vector3>(); // the center of the turn segment circles
         var startNormals = new List<Vector3>();
 
-        for (int i = 0; i < turnSegments + 1; i++)
+        for (int i = 0; i < toroidalSegments + 1; i++)
         {
             var turnAngle = i * turnIncrement;
             var normal = Vector3.UnitZ;
@@ -49,13 +55,13 @@ public static class TorusSegmentTessellator
             startNormals.Add(Vector3.Normalize(Vector3.Cross(normal, v)));
         }
 
-        for (int j = 0; j < turnSegments + 1; j++)
+        for (int j = 0; j < toroidalSegments + 1; j++)
         {
             var startVector = startVectors[j];
             var center = startCenters[j];
             var turnNormal = startNormals[j];
 
-            for (int i = 0; i < segments; i++)
+            for (int i = 0; i < poloidalSegments; i++)
             {
                 var q = Quaternion.CreateFromAxisAngle(turnNormal, angleIncrement * i);
 
@@ -67,29 +73,29 @@ public static class TorusSegmentTessellator
             }
         }
 
-        for (uint j = 0; j < turnSegments; j++)
+        for (uint j = 0; j < toroidalSegments; j++)
         {
-            for (uint i = 0; i < segments; i++)
+            for (uint i = 0; i < poloidalSegments; i++)
             {
-                if (i < segments - 1)
+                if (i < poloidalSegments - 1)
                 {
-                    indices.Add(j * segments + i);
-                    indices.Add(j * segments + i + 1);
-                    indices.Add((j + 1) * segments + i);
+                    indices.Add(j * poloidalSegments + i);
+                    indices.Add(j * poloidalSegments + i + 1);
+                    indices.Add((j + 1) * poloidalSegments + i);
 
-                    indices.Add((j + 1) * segments + i);
-                    indices.Add(j * segments + i + 1);
-                    indices.Add((j + 1) * segments + i + 1);
+                    indices.Add((j + 1) * poloidalSegments + i);
+                    indices.Add(j * poloidalSegments + i + 1);
+                    indices.Add((j + 1) * poloidalSegments + i + 1);
                 }
                 else
                 {
-                    indices.Add(j * segments + i);
-                    indices.Add(j * segments);
-                    indices.Add((j + 1) * segments + i);
+                    indices.Add(j * poloidalSegments + i);
+                    indices.Add(j * poloidalSegments);
+                    indices.Add((j + 1) * poloidalSegments + i);
 
-                    indices.Add(j * segments);
-                    indices.Add((j + 1) * segments + i);
-                    indices.Add((j + 1) * segments);
+                    indices.Add(j * poloidalSegments);
+                    indices.Add((j + 1) * poloidalSegments + i);
+                    indices.Add((j + 1) * poloidalSegments);
                 }
             }
         }
