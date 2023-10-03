@@ -1,13 +1,11 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using CadRevealComposer.Operations.Tessellating;
 using IdProviders;
 using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Tessellating;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -19,14 +17,12 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
-    private TooFewInstancesHandler _tooFewInstancesHandler;
-    private TooFewPrimitivesHandler _tooFewPrimitivesHandler;
+    private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
+    private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
-        _tooFewInstancesHandler = new TooFewInstancesHandler();
-        _tooFewPrimitivesHandler = new TooFewPrimitivesHandler();
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
