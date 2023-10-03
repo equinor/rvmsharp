@@ -50,7 +50,8 @@ public static class CadRevealComposerRunner
 
             if (generalMetadata != null)
             {
-                // TODO: Log that we added some metadate
+                // Log that we added some metadata
+                Console.WriteLine("Adding an entry to model metadata");
                 metadataFromAllFiles.Add(generalMetadata);
             }
 
@@ -77,6 +78,7 @@ public static class CadRevealComposerRunner
 
         if (metadataFromAllFiles.Count() > 0)
         {
+            Console.WriteLine("Exporting model metadata");
             SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
         }
 
