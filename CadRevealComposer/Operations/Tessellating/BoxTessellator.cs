@@ -44,6 +44,6 @@ public static class BoxTessellator
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices, 0f);
-        yield return new TriangleMesh(mesh, box.TreeIndex, Color.Aqua, box.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, box.TreeIndex, box.Color, box.AxisAlignedBoundingBox);
     }
 }

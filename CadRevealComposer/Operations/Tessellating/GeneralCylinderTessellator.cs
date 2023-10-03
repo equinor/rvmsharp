@@ -54,24 +54,20 @@ public static class GeneralCylinderTessellator
         if (startVectorA.IsFinite() && !startVectorB.IsFinite())
         {
             startVectorB = -Vector3.Normalize(Vector3.Cross(Vector3.Cross(startVectorA, normal), normal));
-            yield return TessellationUtils.DebugDrawVector(startVectorB, centerB, Color.Aqua);
         }
         else if (!startVectorA.IsFinite() && startVectorB.IsFinite())
         {
             startVectorA = -Vector3.Normalize(Vector3.Cross(Vector3.Cross(startVectorB, normal), normal));
-            yield return TessellationUtils.DebugDrawVector(startVectorB, centerB, Color.Bisque);
         }
 
         if (!startVectorA.IsFinite())
         {
             startVectorA = TessellationUtils.CreateOrthogonalUnitVector(normal);
-            yield return TessellationUtils.DebugDrawVector(startVectorA, centerA, Color.Aqua);
         }
 
         if (!startVectorB.IsFinite())
         {
             startVectorB = TessellationUtils.CreateOrthogonalUnitVector(normal);
-            yield return TessellationUtils.DebugDrawVector(startVectorB, centerB, Color.Blue);
         }
 
         float hypoA = radius;
@@ -128,6 +124,6 @@ public static class GeneralCylinderTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, cylinder.TreeIndex, Color.LimeGreen, cylinder.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, cylinder.TreeIndex, cylinder.Color, cylinder.AxisAlignedBoundingBox);
     }
 }

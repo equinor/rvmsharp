@@ -21,8 +21,6 @@ public class SectorSplitterOctree : ISectorSplitter
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
-        allGeometries = allGeometries.SelectMany(x => APrimitiveTessellator.TryToTessellate(x)).ToArray();
-
         var sectorIdGenerator = new SequentialIdGenerator();
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
@@ -239,6 +237,9 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var tooFewInstancesHandler = new TooFewInstancesHandler();
         geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+
+        var tooFewPrimitivesHandler = new TooFewPrimitivesHandler();
+        geometries = tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
 
         return new InternalSector(
             sectorId,

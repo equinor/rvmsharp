@@ -61,6 +61,6 @@ public static class EccentricConeTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, cone.TreeIndex, Color.Magenta, cone.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }
 }
