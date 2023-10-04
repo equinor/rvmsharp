@@ -21,6 +21,12 @@ public class TooFewPrimitivesHandler
 
         foreach (var group in primitiveGroups)
         {
+            if (group.FirstOrDefault() is TriangleMesh or InstancedMesh)
+            {
+                newGeometries.AddRange(group);
+                continue;
+            }
+
             TotalGroupsOfPrimitive++;
             if (group.Count() < NumberOfPrimitivesThreshold)
             {
