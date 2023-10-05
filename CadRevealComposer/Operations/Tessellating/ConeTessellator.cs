@@ -5,9 +5,7 @@ using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Numerics;
-using System.Runtime.InteropServices.JavaScript;
 
 public static class ConeTessellator
 {
@@ -18,8 +16,6 @@ public static class ConeTessellator
             yield return cone;
             yield break;
         }
-
-        uint totalSegments = 12; // Number of segments if the cone is complete
 
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -35,7 +31,7 @@ public static class ConeTessellator
 
         var normal = Vector3.Normalize(centerB - centerA);
 
-        bool isComplete = segments == totalSegments;
+        bool isComplete = arcAngle.ApproximatelyEquals(2 * MathF.PI);
 
         var angleIncrement = arcAngle / segments;
 
