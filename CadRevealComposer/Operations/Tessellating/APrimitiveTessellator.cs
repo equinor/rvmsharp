@@ -10,28 +10,33 @@ public static class APrimitiveTessellator
     {
         var result = new List<APrimitive>();
 
-        // TODO: Circle, Ring, EllipsoidSegment,
-
-
         switch (primitive)
         {
-            //case Box box:
-            //    result.AddRange(BoxTessellator.Tessellate(box));
-            //    break;
-            //case EccentricCone cone:
-            //    result.AddRange(EccentricConeTessellator.Tessellate(cone));
-            //    break;
-            //case TorusSegment torus:
-            //    result.AddRange(TorusSegmentTessellator.Tessellate(torus));
-            //    break;
-            //case Cone cone:
-            //    result.AddRange(ConeTessellator.Tessellate(cone));
-            //    break;
+            case Box box:
+                result.AddRange(BoxTessellator.Tessellate(box));
+                break;
+            case EccentricCone cone:
+                result.AddRange(EccentricConeTessellator.Tessellate(cone));
+                break;
+            case TorusSegment torus:
+                result.AddRange(TorusSegmentTessellator.Tessellate(torus));
+                break;
+            case Cone cone:
+                result.AddRange(ConeTessellator.Tessellate(cone));
+                break;
             case Circle circle:
                 result.AddRange(CircleTessellator.Tessellate(circle));
                 break;
+            case GeneralRing generalRing:
+                result.AddRange(GeneralRingTessellator.Tessellate(generalRing));
+                break;
 
-            //TODO Doesn't work properly, yet...
+            // TODO
+            //case EllipsoidSegment ellipsoidSegment:
+            //    result.AddRange(EllipsoidSegmentTessellator.Tessellate(ellipsoidSegment));
+            //    break;
+
+            // TODO Doesn't work properly, yet...
             // case GeneralCylinder cylinder:
             //     result.AddRange(GeneralCylinderTessellator.Tessellate(cylinder));
             //     break;
