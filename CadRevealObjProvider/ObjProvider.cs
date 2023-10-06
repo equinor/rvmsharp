@@ -4,6 +4,7 @@ using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using ObjLoader.Loader.Data.Elements;
@@ -14,10 +15,11 @@ using System.Numerics;
 
 public class ObjProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        NodeNameFiltering nodeNameFiltering
     )
     {
         var objLoaderFactory = new ObjLoaderFactory();
@@ -42,6 +44,8 @@ public class ObjProvider : IModelFormatProvider
         foreach (ObjMesh meshGroup in meshes)
         {
             var treeIndex = treeIndexGenerator.GetNextId();
+            if (nodeNameFiltering.ShouldExcludeNode(meshGroup.Name))
+                continue;
             nodes.Add(
                 new CadRevealNode()
                 {
@@ -55,7 +59,7 @@ public class ObjProvider : IModelFormatProvider
             );
         }
 
-        return nodes;
+        return (nodes, null);
     }
 
     private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)

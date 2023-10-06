@@ -71,6 +71,13 @@ public class CommandLineOptions
     [Option(longName: "SingleSector", shortName: 's', Required = false, HelpText = "Create a single sector.")]
     public bool SingleSector { get; init; }
 
+    [Option(
+        longName: "NodeNameExcludeRegex",
+        Required = false,
+        HelpText = "A regex matching node names to _exclude_ from export. Not case sensitive."
+    )]
+    public string? NodeNameExcludeRegex { get; init; } = null;
+
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
 

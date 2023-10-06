@@ -30,53 +30,64 @@ public static class CadRevealComposerRunner
     {
         var totalTimeElapsed = Stopwatch.StartNew();
 
-        var nodesToProcess = new List<CadRevealNode>();
+        var nodesToExport = new List<CadRevealNode>();
         var geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
+        var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
+
+        ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
-            IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
+            (IReadOnlyList<CadRevealNode> cadRevealNodes, var generalMetadata) = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
-                instanceIdGenerator
+                instanceIdGenerator,
+                filtering
             );
-            if (cadRevealNodes != null)
+
+            if (generalMetadata != null)
             {
-                Console.WriteLine(
-                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
+                // Log that we added some metadata
+                Console.WriteLine("Adding an entry to model metadata");
+                metadataFromAllFiles.Add(generalMetadata);
+            }
+
+            Console.WriteLine(
+                $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
+            );
+
+            if (cadRevealNodes.Count > 0)
+            {
+                // collect all nodes for later sector division of the entire scene
+                nodesToExport.AddRange(cadRevealNodes);
+
+                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+
+                var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                    inputGeometries,
+                    composerParameters,
+                    modelParameters,
+                    instanceIdGenerator
                 );
-
-                if (cadRevealNodes.Count > 0)
-                {
-                    // collect all nodes for later sector division of the entire scene
-                    nodesToProcess.AddRange(cadRevealNodes);
-
-                    var inputGeometries = cadRevealNodes
-                        .AsParallel()
-                        .AsOrdered()
-                        .SelectMany(x => x.Geometries)
-                        .ToArray();
-
-                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
-                        inputGeometries,
-                        composerParameters,
-                        modelParameters,
-                        instanceIdGenerator
-                    );
-                    geometriesToProcess.AddRange(geometriesIncludingMeshes);
-                }
+                geometriesToProcess.AddRange(geometriesIncludingMeshes);
             }
         }
+
+        // If there is no metadata for this model, the json will be empty
+        Console.WriteLine("Exporting model metadata");
+        SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
+
+        filtering.PrintFilteringStatsToConsole();
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
             // Exporting hierarchy on side thread to allow it to run in parallel
             var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToExport);
             Console.WriteLine(
                 $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
             );
