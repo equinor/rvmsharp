@@ -7,6 +7,7 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
+using CadRevealFbxProvider.Attributes;
 using System.Numerics;
 
 [TestFixture]
@@ -15,9 +16,6 @@ public class FbxProviderTests
     private static readonly DirectoryInfo outputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
     private static readonly DirectoryInfo inputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
 
-    private static readonly DirectoryInfo outputDirectoryMissingAttr = new DirectoryInfo(
-        @".\TestSamples\missingattributes"
-    );
     private static readonly DirectoryInfo inputDirectoryMissingAttr = new DirectoryInfo(
         @".\TestSamples\missingattributes"
     );
@@ -144,7 +142,7 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(
+        (var nodes, var metadata) = modelFormatProviderFbx.ParseFiles(
             inputDirectoryCorrect.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
@@ -153,10 +151,12 @@ public class FbxProviderTests
 
         Assert.That(nodes, Has.Count.EqualTo(28));
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(23));
-        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(23));
+        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
+        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
         Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
+        Assert.That(metadata, Is.Not.Null);
+        Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes));
     }
 
     [Test]
@@ -230,18 +230,16 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(
+        (var nodes, var metadata) = modelFormatProviderFbx.ParseFiles(
             inputDirectoryMissingAttr.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null))
         );
 
-        // there are 28 attributes, out of which 2 should be ignored
-        Assert.That(nodes, Has.Count.EqualTo(26));
-
         // Ladders have no attributes, should thus be ignored
-        for (int i = 0; i < 26; i++)
+        Assert.That(nodes, Has.Count.EqualTo(26));
+        for (int i = 0; i < nodes.Count; i++)
         {
             Assert.That(nodes[i].Name, !Is.EqualTo("Ladder"));
         }

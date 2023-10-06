@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using Utils;
 using Writers;
+using static CadRevealComposer.Operations.CameraPositioning;
 
 public static class SceneCreator
 {
@@ -32,6 +33,13 @@ public static class SceneCreator
     )
     {
         public long DownloadSize { get; init; }
+    }
+
+    public static void ExportModelMetadata(DirectoryInfo outputDirectory, ModelMetadata metadata)
+    {
+        var metadataPath = Path.Join(outputDirectory.FullName, "modelMetadata.json");
+        var metadataString = ModelMetadata.Serialize(metadata);
+        File.WriteAllText(metadataPath, metadataString);
     }
 
     public static void ExportHierarchyDatabase(string databasePath, IReadOnlyList<CadRevealNode> allNodes)
