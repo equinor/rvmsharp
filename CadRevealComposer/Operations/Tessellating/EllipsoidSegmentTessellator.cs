@@ -10,7 +10,6 @@ using System.Numerics;
 
 public static class EllipsoidSegmentTessellator
 {
-    private static float arc = (float)Math.PI / 2;
 
     public static IEnumerable<APrimitive> Tessellate(EllipsoidSegment ellipsoidSegment)
     {
