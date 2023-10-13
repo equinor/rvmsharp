@@ -124,6 +124,6 @@ public static class GeneralCylinderTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, cylinder.TreeIndex, cylinder.Color, cylinder.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, cylinder.TreeIndex, Color.DarkKhaki, cylinder.AxisAlignedBoundingBox);
     }
 }
