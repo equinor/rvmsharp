@@ -5,7 +5,6 @@ using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Numerics;
 
 public static class ConeTessellator
@@ -14,8 +13,7 @@ public static class ConeTessellator
     {
         if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
         {
-            yield return cone;
-            yield break;
+            throw new ArgumentException("Cannot tesselate a cone without height");
         }
 
         var vertices = new List<Vector3>();

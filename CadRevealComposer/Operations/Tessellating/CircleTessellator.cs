@@ -5,7 +5,6 @@ using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Numerics;
 
 public static class CircleTessellator

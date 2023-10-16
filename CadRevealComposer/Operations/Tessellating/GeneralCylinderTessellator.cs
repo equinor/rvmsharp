@@ -4,7 +4,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Numerics;
 using Utils;
 

@@ -1,11 +1,9 @@
 ﻿namespace CadRevealComposer.Operations.Tessellating;
 
-using CadRevealComposer.AlgebraExtensions;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Numerics;
 
 public static class EllipsoidSegmentTessellator
