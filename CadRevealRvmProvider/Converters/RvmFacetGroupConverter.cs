@@ -1,5 +1,6 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
 using System.Drawing;
@@ -16,7 +17,8 @@ public static class RvmFacetGroupConverter
             rvmFacetGroup,
             treeIndex,
             color,
-            rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+            rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(),
+            NodePriority.Default
         );
     }
 }

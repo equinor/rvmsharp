@@ -41,7 +41,8 @@ public class TooFewInstancesHandler
             newMesh,
             instanceMesh.TreeIndex,
             instanceMesh.Color,
-            instanceMesh.AxisAlignedBoundingBox
+            instanceMesh.AxisAlignedBoundingBox,
+            instanceMesh.NodePriority
         );
     }
 

@@ -22,14 +22,24 @@ public class SectorSplitterOctree : ISectorSplitter
         var sectorIdGenerator = new SequentialIdGenerator();
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
-        var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
+        var highlyPrioritizedNodes = allNodes.Where(x => x.Priority == NodePriority.High).ToArray();
+        var nodes = allNodes.Except(highlyPrioritizedNodes).ToArray();
+
+        var (regularNodes, outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
         var rootPath = "/0";
 
+        var prioritizedSectorId = (uint)sectorIdGenerator.GetNextId();
+
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
+
+        if (highlyPrioritizedNodes.Any())
+        {
+            yield return CreatePrioritizedSectors(prioritizedSectorId, rootSectorId, highlyPrioritizedNodes, rootPath);
+        }
 
         //Order nodes by diagonal size
         var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
@@ -89,7 +99,6 @@ public class SectorSplitterOctree : ISectorSplitter
          * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
          * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
          */
-
         if (nodes.Length == 0)
         {
             yield break;
@@ -217,6 +226,37 @@ public class SectorSplitterOctree : ISectorSplitter
         return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
     }
 
+    private InternalSector CreatePrioritizedSectors(
+        uint prioritizedSectorId,
+        uint parentSectorId,
+        Node[] highlyPrioritizedNodes,
+        string rootPath
+    )
+    {
+        // TODO: Currently creates one (or zero) sector(s)
+        var path = $"{rootPath}/{prioritizedSectorId}";
+
+        var minDiagonal = highlyPrioritizedNodes.Any() ? highlyPrioritizedNodes.Min(n => n.Diagonal) : 0;
+        var maxDiagonal = highlyPrioritizedNodes.Any() ? highlyPrioritizedNodes.Max(n => n.Diagonal) : 0;
+        var geometries = highlyPrioritizedNodes.SelectMany(n => n.Geometries).ToArray();
+        var geometryBoundingBox = geometries.CalculateBoundingBox();
+
+        var subtreeBoundingBox = highlyPrioritizedNodes.CalculateBoundingBox();
+
+        return new InternalSector(
+            prioritizedSectorId,
+            parentSectorId,
+            1,
+            path,
+            minDiagonal,
+            maxDiagonal,
+            geometries,
+            subtreeBoundingBox,
+            geometryBoundingBox,
+            true
+        );
+    }
+
     private InternalSector CreateSector(
         Node[] nodes,
         uint sectorId,
@@ -279,13 +319,15 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
-            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            1 => nodes.Where(x => x.Diagonal * GetPriorityWeighting(x) >= MinDiagonalSizeAtDepth_1).ToArray(),
+            2 => nodes.Where(x => x.Diagonal * GetPriorityWeighting(x) >= MinDiagonalSizeAtDepth_2).ToArray(),
+            3 => nodes.Where(x => x.Diagonal * GetPriorityWeighting(x) >= MinDiagonalSizeAtDepth_3).ToArray(),
             _ => nodes.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(
+            x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1)
+        );
 
         var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();
@@ -302,5 +344,15 @@ public class SectorSplitterOctree : ISectorSplitter
             primitiveBudget -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
             yield return node;
         }
+    }
+
+    private static float GetPriorityWeighting(Node node)
+    {
+        if (node.Priority == NodePriority.Low)
+            return 0.5f;
+        if (node.Priority == NodePriority.Medium)
+            return 30.0f;
+
+        return 1;
     }
 }

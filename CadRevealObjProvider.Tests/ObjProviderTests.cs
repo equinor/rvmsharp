@@ -20,7 +20,12 @@ public class ObjProviderTests
             new[] { new FileInfo("TestData/HDA_subset.obj") },
             treeIndexGenerator,
             instanceIdGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            new PriorityMapping(
+                new PrioritizedDisciplinesRegex(null),
+                new LowPrioritizedDisciplineRegex(null),
+                new PrioritizedNodeNamesRegex(null)
+            )
         );
     }
 }

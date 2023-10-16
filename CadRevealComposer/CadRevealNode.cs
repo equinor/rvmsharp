@@ -1,5 +1,7 @@
 namespace CadRevealComposer;
 
+using Operations;
+using Operations.SectorSplitting;
 using Primitives;
 using System;
 using System.Collections.Generic;
@@ -46,7 +48,6 @@ public class CadRevealNode
     public Dictionary<string, string> Attributes = new Dictionary<string, string>();
     public required CadRevealNode? Parent;
     public CadRevealNode[]? Children;
-
     public APrimitive[] Geometries = Array.Empty<APrimitive>();
 
     /// <summary>

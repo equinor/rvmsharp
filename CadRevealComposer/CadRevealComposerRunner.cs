@@ -36,6 +36,11 @@ public static class CadRevealComposerRunner
         var instanceIdGenerator = new InstanceIdGenerator();
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
+        var nodePriorityFiltering = new PriorityMapping(
+            composerParameters.PrioritizedDisciplinesRegex,
+            composerParameters.LowPrioritizedDisciplineRegex,
+            composerParameters.PrioritizedNodeNamesRegex
+        );
 
         ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
@@ -45,7 +50,8 @@ public static class CadRevealComposerRunner
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIdGenerator,
-                filtering
+                filtering,
+                nodePriorityFiltering
             );
 
             if (generalMetadata != null)
@@ -64,7 +70,11 @@ public static class CadRevealComposerRunner
                 // collect all nodes for later sector division of the entire scene
                 nodesToExport.AddRange(cadRevealNodes);
 
-                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+                var inputGeometries = cadRevealNodes
+                    .AsParallel()
+                    .AsOrdered()
+                    .SelectMany(node => node.Geometries)
+                    .ToArray();
 
                 var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                     inputGeometries,
@@ -232,9 +242,15 @@ public static class CadRevealComposerRunner
 
     private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
     {
+        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+
+        if (p.Prioritized && sectorFilename != null)
+        {
+            sectorFilename = $"pri_{sectorFilename}";
+        }
+
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SceneCreator.SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,
