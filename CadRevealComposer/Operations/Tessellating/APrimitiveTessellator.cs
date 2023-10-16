@@ -2,7 +2,6 @@ namespace CadRevealComposer.Operations.Tessellating;
 
 using Primitives;
 using System.Collections.Generic;
-using System.Drawing;
 
 public static class APrimitiveTessellator
 {
@@ -42,7 +41,7 @@ public static class APrimitiveTessellator
             //     result.AddRange(GeneralCylinderTessellator.Tessellate(cylinder));
             //     break;
             default:
-                result.Add(primitive with { Color = Color.Gray });
+                result.Add(primitive);
                 break;
         }
 

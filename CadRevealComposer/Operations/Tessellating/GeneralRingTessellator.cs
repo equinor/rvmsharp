@@ -23,7 +23,8 @@ public static class GeneralRingTessellator
         var transformedRadius = scale.X / 2f;
         var arcAngle = generalRing.ArcAngle;
 
-        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, transformedRadius, 1, 0.05f);
+        float tolerance = TessellationUtils.CalculateSagittaTolerance(transformedRadius);
+        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, transformedRadius, 1, tolerance);
         var error = TessellationUtils.SagittaBasedError(arcAngle, transformedRadius, 1, segments);
 
         var normal = -Vector3.UnitZ;

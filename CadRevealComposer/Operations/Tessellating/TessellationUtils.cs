@@ -3,6 +3,7 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -206,5 +207,14 @@ public static class TessellationUtils
         }
 
         return Math.Min(MaxSamples, (int)(Math.Max(MinSamples, Math.Ceiling(samples))));
+    }
+
+    public static float CalculateSagittaTolerance(float radius)
+    {
+        if (radius == 0) // Some geometries doesn't have radius, just set an arbitrary default value
+            return 1;
+
+        var value = radius * 0.04f + 0.02f; // Arbitrary calculation of tolerance
+        return value;
     }
 }

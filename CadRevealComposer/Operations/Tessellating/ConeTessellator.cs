@@ -27,7 +27,8 @@ public static class ConeTessellator
         var radiusB = cone.RadiusB;
         var arcAngle = cone.ArcAngle;
 
-        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, float.Max(radiusA, radiusB), 1f, 0.05f);
+        float tolerance = TessellationUtils.CalculateSagittaTolerance(float.Max(radiusA, radiusB));
+        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, float.Max(radiusA, radiusB), 1f, tolerance);
         var error = TessellationUtils.SagittaBasedError(arcAngle, float.Max(radiusA, radiusB), 1f, segments);
 
         var normal = Vector3.Normalize(centerB - centerA);

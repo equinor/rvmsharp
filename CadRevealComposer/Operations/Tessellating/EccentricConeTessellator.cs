@@ -20,7 +20,13 @@ public static class EccentricConeTessellator
         var centerB = cone.CenterB;
         var radiusB = cone.RadiusB;
 
-        var segments = TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, 0.05f);
+        var tolerance = TessellationUtils.CalculateSagittaTolerance(float.Max(radiusA, radiusB));
+        var segments = TessellationUtils.SagittaBasedSegmentCount(
+            2 * MathF.PI,
+            float.Max(radiusA, radiusB),
+            1f,
+            tolerance
+        );
         var error = TessellationUtils.SagittaBasedError(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, segments);
 
         var angleIncrement = (2 * MathF.PI) / segments;

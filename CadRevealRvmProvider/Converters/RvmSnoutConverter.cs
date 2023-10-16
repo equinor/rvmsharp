@@ -110,19 +110,23 @@ public static class RvmSnoutConverter
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        bool hasHeight = centerA != centerB;
 
-        yield return new Cone(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox
-        );
+        if (hasHeight)
+        {
+            yield return new Cone(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                centerA,
+                centerB,
+                localToWorldXAxis,
+                radiusA,
+                radiusB,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
@@ -136,7 +140,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (showCapB && radiusB > 0)
+        if (showCapB && radiusB > 0 && hasHeight)
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(diameterB)

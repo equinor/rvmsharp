@@ -2,10 +2,8 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using Utils;
@@ -27,12 +25,14 @@ public static class TorusSegmentTessellator
         var tubeRadius = torus.TubeRadius;
         var matrix = torus.InstanceMatrix;
 
+        float toroidalTolerance = TessellationUtils.CalculateSagittaTolerance(offset + tubeRadius);
         var toroidalSegments = (uint)
-            TessellationUtils.SagittaBasedSegmentCount(arcAngle, offset + tubeRadius, scale.X, 0.05f);
+            TessellationUtils.SagittaBasedSegmentCount(arcAngle, offset + tubeRadius, scale.X, toroidalTolerance);
         var error = TessellationUtils.SagittaBasedError(arcAngle, tubeRadius, scale.X, (int)toroidalSegments);
 
+        float poloidalTolerance = TessellationUtils.CalculateSagittaTolerance(tubeRadius * scale.X);
         var poloidalSegments = (uint)
-            TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, tubeRadius, scale.X, 0.05f);
+            TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, tubeRadius, scale.X, poloidalTolerance);
 
         var turnIncrement = arcAngle / toroidalSegments;
 

@@ -7,7 +7,7 @@ using Tessellating;
 
 public class TooFewPrimitivesHandler
 {
-    private const int NumberOfPrimitivesThreshold = 10;
+    private const int NumberOfPrimitivesThreshold = 10; // Arbitrary number
 
     public int TotalGroupsOfPrimitive { get; private set; }
     public int TriedConvertedGroupsOfPrimitives { get; private set; }

@@ -20,7 +20,8 @@ public static class CircleTessellator
         var normal = circle.Normal;
         var radius = scale.X / 2f;
 
-        var segments = TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, radius, 1, 0.05f);
+        float tolerance = TessellationUtils.CalculateSagittaTolerance(radius);
+        var segments = TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, radius, 1, tolerance);
         var error = TessellationUtils.SagittaBasedError(2 * MathF.PI, radius, 1, segments);
 
         var vertices = new List<Vector3>();
