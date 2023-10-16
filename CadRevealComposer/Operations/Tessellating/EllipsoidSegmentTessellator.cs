@@ -10,7 +10,6 @@ using System.Numerics;
 
 public static class EllipsoidSegmentTessellator
 {
-
     public static IEnumerable<APrimitive> Tessellate(EllipsoidSegment ellipsoidSegment)
     {
         var horizontalRad = ellipsoidSegment.HorizontalRadius;
@@ -149,7 +148,7 @@ public static class EllipsoidSegmentTessellator
         yield return new TriangleMesh(
             mesh,
             ellipsoidSegment.TreeIndex,
-            Color.HotPink,
+            ellipsoidSegment.Color,
             ellipsoidSegment.AxisAlignedBoundingBox
         );
     }

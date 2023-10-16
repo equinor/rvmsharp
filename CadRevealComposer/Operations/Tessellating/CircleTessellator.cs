@@ -56,6 +56,6 @@ public static class CircleTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, circle.TreeIndex, Color.RebeccaPurple, circle.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, circle.TreeIndex, circle.Color, circle.AxisAlignedBoundingBox);
     }
 }

@@ -103,6 +103,6 @@ public static class TorusSegmentTessellator
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, torus.TreeIndex, Color.Tan, torus.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(mesh, torus.TreeIndex, torus.Color, torus.AxisAlignedBoundingBox);
     }
 }

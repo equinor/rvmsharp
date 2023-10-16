@@ -79,6 +79,11 @@ public static class GeneralRingTessellator
         var transformedVertices = vertices.Select(v => Vector3.Transform(v, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, generalRing.TreeIndex, Color.Magenta, generalRing.AxisAlignedBoundingBox);
+        yield return new TriangleMesh(
+            mesh,
+            generalRing.TreeIndex,
+            generalRing.Color,
+            generalRing.AxisAlignedBoundingBox
+        );
     }
 }
