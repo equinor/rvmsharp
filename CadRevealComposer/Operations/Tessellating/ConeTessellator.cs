@@ -9,7 +9,7 @@ using System.Numerics;
 
 public static class ConeTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(Cone cone)
+    public static TriangleMesh Tessellate(Cone cone)
     {
         if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
         {
@@ -77,6 +77,6 @@ public static class ConeTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
+        return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }
 }

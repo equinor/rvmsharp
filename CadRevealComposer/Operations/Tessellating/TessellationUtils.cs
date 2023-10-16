@@ -48,7 +48,15 @@ public static class TessellationUtils
         throw new Exception($"Could not find orthogonal vector of {v.ToString()}");
     }
 
-    public static APrimitive DebugDrawVector(Vector3 direction, Vector3 startPoint, Color color, float length = 1.0f)
+    /// <summary>
+    /// Used for debugging vectors by creating a literal arrow as a triangle mesh
+    /// </summary>
+    /// <param name="direction"></param>
+    /// <param name="startPoint"></param>
+    /// <param name="color"></param>
+    /// <param name="length"></param>
+    /// <returns></returns>
+    public static TriangleMesh DebugDrawVector(Vector3 direction, Vector3 startPoint, Color color, float length = 1.0f)
     {
         var baseDiameter = length / 10f;
         var baseLength = length * (4.0f / 5.0f);
@@ -151,6 +159,12 @@ public static class TessellationUtils
         return new TriangleMesh(mesh, 0, color, boundingBox);
     }
 
+    /// <summary>
+    /// Used for debugging planes by creating a literal square in the plane as a triangle mesh
+    /// </summary>
+    /// <param name="plane"></param>
+    /// <param name="startPoint"></param>
+    /// <returns></returns>
     public static TriangleMesh DebugDrawPlane(Vector4 plane, Vector3 startPoint)
     {
         var planeNormal = new Vector3(plane.X, plane.Y, plane.Z);

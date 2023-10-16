@@ -10,7 +10,7 @@ using System.Numerics;
 
 public static class GeneralRingTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(GeneralRing generalRing)
+    public static TriangleMesh Tessellate(GeneralRing generalRing)
     {
         var matrix = generalRing.InstanceMatrix;
 
@@ -79,11 +79,6 @@ public static class GeneralRingTessellator
         var transformedVertices = vertices.Select(v => Vector3.Transform(v, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
-        yield return new TriangleMesh(
-            mesh,
-            generalRing.TreeIndex,
-            generalRing.Color,
-            generalRing.AxisAlignedBoundingBox
-        );
+        return new TriangleMesh(mesh, generalRing.TreeIndex, generalRing.Color, generalRing.AxisAlignedBoundingBox);
     }
 }

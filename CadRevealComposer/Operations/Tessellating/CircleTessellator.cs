@@ -9,7 +9,7 @@ using System.Numerics;
 
 public static class CircleTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(Circle circle)
+    public static TriangleMesh Tessellate(Circle circle)
     {
         if (!circle.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out var position))
         {
@@ -56,6 +56,6 @@ public static class CircleTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, circle.TreeIndex, circle.Color, circle.AxisAlignedBoundingBox);
+        return new TriangleMesh(mesh, circle.TreeIndex, circle.Color, circle.AxisAlignedBoundingBox);
     }
 }

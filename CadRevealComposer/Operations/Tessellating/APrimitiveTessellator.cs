@@ -12,30 +12,30 @@ public static class APrimitiveTessellator
         switch (primitive)
         {
             case Box box:
-                result.AddRange(BoxTessellator.Tessellate(box));
+                result.Add(BoxTessellator.Tessellate(box));
                 break;
             case EccentricCone cone:
-                result.AddRange(EccentricConeTessellator.Tessellate(cone));
+                result.Add(EccentricConeTessellator.Tessellate(cone));
                 break;
             case TorusSegment torus:
-                result.AddRange(TorusSegmentTessellator.Tessellate(torus));
+                result.Add(TorusSegmentTessellator.Tessellate(torus));
                 break;
             case Cone cone:
-                result.AddRange(ConeTessellator.Tessellate(cone));
+                result.Add(ConeTessellator.Tessellate(cone));
                 break;
             case Circle circle:
-                result.AddRange(CircleTessellator.Tessellate(circle));
+                result.Add(CircleTessellator.Tessellate(circle));
                 break;
             case GeneralRing generalRing:
-                result.AddRange(GeneralRingTessellator.Tessellate(generalRing));
+                result.Add(GeneralRingTessellator.Tessellate(generalRing));
                 break;
 
-            // TODO
+            // TODO Is complex and moved to own user story #131981
             //case EllipsoidSegment ellipsoidSegment:
             //    result.AddRange(EllipsoidSegmentTessellator.Tessellate(ellipsoidSegment));
             //    break;
 
-            // TODO .
+            // TODO Is complex and moved to own user story #131982
             // case GeneralCylinder cylinder:
             //     result.AddRange(GeneralCylinderTessellator.Tessellate(cylinder));
             //     break;

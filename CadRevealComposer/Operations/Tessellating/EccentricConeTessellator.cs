@@ -9,7 +9,7 @@ using System.Numerics;
 
 public static class EccentricConeTessellator
 {
-    public static IEnumerable<APrimitive> Tessellate(EccentricCone cone)
+    public static TriangleMesh Tessellate(EccentricCone cone)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -67,6 +67,6 @@ public static class EccentricConeTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
-        yield return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
+        return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }
 }
