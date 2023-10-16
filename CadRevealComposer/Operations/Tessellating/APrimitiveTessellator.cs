@@ -31,12 +31,11 @@ public static class APrimitiveTessellator
                 break;
 
             // TODO
-            // Makes a sphere, not an ellipsoid segment yet
             //case EllipsoidSegment ellipsoidSegment:
             //    result.AddRange(EllipsoidSegmentTessellator.Tessellate(ellipsoidSegment));
             //    break;
 
-            // TODO Doesn't work properly, yet...
+            // TODO .
             // case GeneralCylinder cylinder:
             //     result.AddRange(GeneralCylinderTessellator.Tessellate(cylinder));
             //     break;
