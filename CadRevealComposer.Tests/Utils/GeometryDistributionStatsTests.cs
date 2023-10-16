@@ -37,7 +37,6 @@ public class GeometryDistributionStatsTests
                 default,
                 default,
                 default,
-                default,
                 default
             ),
             new TorusSegment(default, default, default, default, default, default, default),

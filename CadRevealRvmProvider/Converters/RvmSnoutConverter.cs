@@ -260,8 +260,7 @@ public static class RvmSnoutConverter
             (float)semiMinorAxisA,
             treeIndex,
             color,
-            bbox,
-            rotation
+            bbox
         );
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);

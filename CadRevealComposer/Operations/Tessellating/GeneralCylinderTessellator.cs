@@ -28,7 +28,8 @@ public static class GeneralCylinderTessellator
         var localPlaneANormal = Vector3.Normalize(new Vector3(planeA.X, planeA.Y, planeA.Z));
         var localPlaneBNormal = Vector3.Normalize(new Vector3(planeB.X, planeB.Y, planeB.Z));
 
-        var rotation = cylinder.Rotation;
+        // TODO This one is wrong O:)
+        var rotation = Quaternion.Identity;
 
         var planeANormal = Vector3.Normalize(Vector3.Transform(localPlaneANormal, rotation));
         var planeBNormal = Vector3.Normalize(-Vector3.Transform(localPlaneBNormal, rotation));
