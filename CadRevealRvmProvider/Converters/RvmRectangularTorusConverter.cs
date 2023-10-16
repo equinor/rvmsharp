@@ -101,7 +101,7 @@ public static class RvmRectangularTorusConverter
 
         if (matrixRingB.IsDecomposable())
         {
-            yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, 0.1f, treeIndex, color, bbBox);
+            yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
         }
         else
         {
