@@ -21,7 +21,7 @@ public class TooFewPrimitivesHandler
 
         foreach (var group in primitiveGroups)
         {
-            if (group.FirstOrDefault() is TriangleMesh or InstancedMesh)
+            if (group.Key == typeof(TriangleMesh) || group.Key == typeof(InstancedMesh))
             {
                 newGeometries.AddRange(group);
                 continue;

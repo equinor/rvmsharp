@@ -1,5 +1,6 @@
 ﻿namespace RvmSharp.Tessellation;
 
+using Commons.Utils;
 using Primitives;
 using System;
 using System.Collections.Generic;
@@ -261,7 +262,7 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
     {
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(
+        var segments = SagittaUtils.SagittaBasedSegmentCount(
             rectangularTorus.Angle,
             rectangularTorus.RadiusOuter,
             scale,
@@ -269,7 +270,7 @@ public static class TessellatorBridge
         );
         var samples = segments + 1; // Assumed to be open, add extra sample.
 
-        var error = TessellationHelpers.SagittaBasedError(
+        var error = SagittaUtils.SagittaBasedError(
             rectangularTorus.Angle,
             rectangularTorus.RadiusOuter,
             scale,
@@ -433,14 +434,14 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
     {
-        var segments_l = TessellationHelpers.SagittaBasedSegmentCount(
+        var segments_l = SagittaUtils.SagittaBasedSegmentCount(
             circularTorus.Angle,
             circularTorus.Offset + circularTorus.Radius,
             scale,
             tolerance
         ); // large radius, toroidal direction
         // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
-        var segments_s = TessellationHelpers.SagittaBasedSegmentCount(
+        var segments_s = SagittaUtils.SagittaBasedSegmentCount(
             Math.PI * 2,
             Math.Abs(circularTorus.Radius),
             scale,
@@ -448,13 +449,13 @@ public static class TessellatorBridge
         ); // small radius, poloidal direction
 
         var error = Math.Max(
-            TessellationHelpers.SagittaBasedError(
+            SagittaUtils.SagittaBasedError(
                 circularTorus.Angle,
                 circularTorus.Offset + circularTorus.Radius,
                 scale,
                 segments_l
             ),
-            TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s)
+            SagittaUtils.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s)
         );
         Debug.Assert(error <= tolerance);
 
@@ -773,10 +774,10 @@ public static class TessellatorBridge
         //  return;
         //}
 
-        int segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, cylinder.Radius, scale, tolerance);
+        int segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, cylinder.Radius, scale, tolerance);
         int samples = segments; // Assumed to be closed
 
-        var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
 
         bool shell = true;
         bool[] shouldCap = { true, true };
@@ -927,10 +928,10 @@ public static class TessellatorBridge
     private static RvmMesh Tessellate(RvmSnout snout, float scale, float tolerance)
     {
         var radius_max = Math.Max(snout.RadiusBottom, snout.RadiusTop);
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
         var samples = segments; // assumed to be closed
 
-        var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
 
         bool shell = true;
         bool[] cap = { true, true };
@@ -1103,10 +1104,10 @@ public static class TessellatorBridge
         float tolerance
     )
     {
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
         var samples = segments; // Assumed to be closed
 
-        var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius, scale, samples);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius, scale, samples);
 
         bool is_sphere = false;
         if (Math.PI - 1e-3 <= arc)

@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using Commons.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -20,14 +21,9 @@ public static class EccentricConeTessellator
         var centerB = cone.CenterB;
         var radiusB = cone.RadiusB;
 
-        var tolerance = TessellationUtils.CalculateSagittaTolerance(float.Max(radiusA, radiusB));
-        var segments = TessellationUtils.SagittaBasedSegmentCount(
-            2 * MathF.PI,
-            float.Max(radiusA, radiusB),
-            1f,
-            tolerance
-        );
-        var error = TessellationUtils.SagittaBasedError(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, segments);
+        var tolerance = SagittaUtils.CalculateSagittaTolerance(float.Max(radiusA, radiusB));
+        var segments = SagittaUtils.SagittaBasedSegmentCount(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, tolerance);
+        var error = SagittaUtils.SagittaBasedError(2 * MathF.PI, float.Max(radiusA, radiusB), 1f, segments);
 
         var angleIncrement = (2 * MathF.PI) / segments;
 

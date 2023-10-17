@@ -3,6 +3,7 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using Commons.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,9 +23,9 @@ public static class GeneralRingTessellator
         var transformedRadius = scale.X / 2f;
         var arcAngle = generalRing.ArcAngle;
 
-        float tolerance = TessellationUtils.CalculateSagittaTolerance(transformedRadius);
-        var segments = TessellationUtils.SagittaBasedSegmentCount(arcAngle, transformedRadius, 1, tolerance);
-        var error = TessellationUtils.SagittaBasedError(arcAngle, transformedRadius, 1, segments);
+        float tolerance = SagittaUtils.CalculateSagittaTolerance(transformedRadius);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(arcAngle, transformedRadius, 1, tolerance);
+        var error = SagittaUtils.SagittaBasedError(arcAngle, transformedRadius, 1, segments);
 
         var normal = -Vector3.UnitZ;
         var startVector = Vector3.UnitY;

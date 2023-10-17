@@ -3,6 +3,7 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using Commons.Utils;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -19,9 +20,9 @@ public static class CircleTessellator
         var normal = circle.Normal;
         var radius = scale.X / 2f;
 
-        float tolerance = TessellationUtils.CalculateSagittaTolerance(radius);
-        var segments = TessellationUtils.SagittaBasedSegmentCount(2 * MathF.PI, radius, 1, tolerance);
-        var error = TessellationUtils.SagittaBasedError(2 * MathF.PI, radius, 1, segments);
+        float tolerance = SagittaUtils.CalculateSagittaTolerance(radius);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(2 * MathF.PI, radius, 1, tolerance);
+        var error = SagittaUtils.SagittaBasedError(2 * MathF.PI, radius, 1, segments);
 
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
