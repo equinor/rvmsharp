@@ -10,7 +10,7 @@ using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {
-    private const long SectorEstimatedByteSizeBudget = 1_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
     private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
     private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
@@ -276,7 +276,7 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget, int actualDepth)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long byteSizeBudget, int actualDepth)
     {
         var selectedNodes = actualDepth switch
         {
@@ -288,21 +288,24 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
 
-        var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();
-        var primitiveBudget = SectorEstimatedPrimitiveBudget;
-        var trianglesBudget = SectorEstimatesTrianglesBudget;
+        var byteSizeBudgetLeft = byteSizeBudget;
+        var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
+        var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            if ((budgetLeft < 0 || primitiveBudget <= 0 || trianglesBudget <= 0) && nodeArray.Length - i > 10)
+            if (
+                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
+                && nodeArray.Length - i > 10
+            )
             {
                 yield break;
             }
 
             var node = nodeArray[i];
-            budgetLeft -= node.EstimatedTriangleCount;
-            primitiveBudget -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
-            trianglesBudget -= node.EstimatedTriangleCount;
+            byteSizeBudgetLeft -= node.EstimatedByteSize;
+            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            trianglesBudgetLeft -= node.EstimatedTriangleCount;
 
             yield return node;
         }
