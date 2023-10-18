@@ -310,7 +310,7 @@ public static class RvmParser
                     if (Matrix4x4Helpers.MatrixContainsInfiniteValue(primitive.Matrix))
                     {
                         // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
-                        Console.WriteLine("Invalid matrix found for primitive of " + name + ". " + " Discarding this primitive")
+                        Console.WriteLine(
                     }
                     else
                     {
