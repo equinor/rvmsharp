@@ -311,6 +311,8 @@ public static class RvmParser
                     {
                         // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
                         Console.WriteLine(
+                            "Invalid matrix found for primitive of " + name + ". " + " Discarding this primitive"
+                        );
                     }
                     else
                     {
