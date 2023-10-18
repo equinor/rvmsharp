@@ -2,6 +2,7 @@
 
 using Containers;
 using Primitives;
+using RvmSharp.Operations;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -96,6 +97,27 @@ public static class RvmParser
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 1);
 
+        if (
+            !float.IsFinite(matrix.M11)
+            || !float.IsFinite(matrix.M12)
+            || !float.IsFinite(matrix.M13)
+            || !float.IsFinite(matrix.M14)
+            || !float.IsFinite(matrix.M21)
+            || !float.IsFinite(matrix.M22)
+            || !float.IsFinite(matrix.M23)
+            || !float.IsFinite(matrix.M24)
+            || !float.IsFinite(matrix.M31)
+            || !float.IsFinite(matrix.M32)
+            || !float.IsFinite(matrix.M33)
+            || !float.IsFinite(matrix.M34)
+            || !float.IsFinite(matrix.M41)
+            || !float.IsFinite(matrix.M42)
+            || !float.IsFinite(matrix.M43)
+            || !float.IsFinite(matrix.M44)
+        )
+        {
+            Console.WriteLine("Found invalid matrix " + matrix);
+        }
         var bBoxLocal = new RvmBoundingBox(Min: ReadVector3(stream), Max: ReadVector3(stream));
 
         RvmPrimitive primitive;
@@ -283,7 +305,17 @@ public static class RvmParser
                     group.AddChild(ReadCntb(stream));
                     break;
                 case "PRIM":
-                    group.AddChild(ReadPrimitive(stream));
+                    var primitive = ReadPrimitive(stream);
+
+                    if (Matrix4x4Helpers.MatrixContainsInfiniteValue(primitive.Matrix))
+                    {
+                        // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
+                        Console.WriteLine("Invalid matrix found for primitive of " + name + ". " + " Discarding this primitive")
+                    }
+                    else
+                    {
+                        group.AddChild(primitive);
+                    }
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {id}");
