@@ -110,7 +110,7 @@ public static class RvmSnoutConverter
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
-        bool hasHeight = centerA != centerB;
+        bool hasHeight = Vector3.Distance(centerA, centerB).ApproximatelyEquals(0, 0.0001f);
 
         if (hasHeight)
         {

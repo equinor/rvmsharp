@@ -12,9 +12,9 @@ public static class ConeTessellator
 {
     public static TriangleMesh Tessellate(Cone cone)
     {
-        if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
+        if (Vector3.Distance(cone.CenterB, cone.CenterA).ApproximatelyEquals(0, 0.0001f))
         {
-            throw new ArgumentException("Cannot tesselate a cone without height");
+            throw new ArgumentException("Cannot tessellate a cone without height");
         }
 
         var vertices = new List<Vector3>();
