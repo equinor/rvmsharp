@@ -1,9 +1,8 @@
-﻿namespace RvmSharp.Operations;
+namespace Commons.Utils;
 
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
-// ReSharper disable once InconsistentNaming
 public static class Matrix4x4Helpers
 {
     /// <summary>

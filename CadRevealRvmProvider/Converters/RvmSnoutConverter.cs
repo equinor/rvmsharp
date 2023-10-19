@@ -5,7 +5,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using Commons.Utils;
-using MathNet.Numerics.Distributions;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -20,7 +19,13 @@ public static class RvmSnoutConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+        if (!IsValid(scale, rotation, rvmSnout.RadiusTop, rvmSnout.RadiusBottom))
+        {
+            Console.WriteLine(
+                $"Removed snout because of invalid data. Scale: {scale.ToString()} Rotation: {rotation.ToString()} RadiusTop: {rvmSnout.RadiusTop} RadiusBottom: {rvmSnout.RadiusBottom}"
+            );
+            return Array.Empty<APrimitive>();
+        }
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -37,12 +42,6 @@ public static class RvmSnoutConverter
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
-
-        if (radiusA <= 0 && radiusB <= 0)
-        {
-            Console.WriteLine($"Snout was removed, because the radii were: {radiusA} and {radiusB}");
-            return Array.Empty<APrimitive>();
-        }
 
         var centerA = position + normal * halfLength;
         var centerB = position - normal * halfLength;
@@ -111,18 +110,23 @@ public static class RvmSnoutConverter
         var diameterB = 2f * radiusB;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
 
-        yield return new Cone(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox
-        );
+        bool hasHeight = !centerA.EqualsWithinTolerance(centerB, 0.0001f);
+
+        if (hasHeight) // If the height is zero, just return a cap
+        {
+            yield return new Cone(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                centerA,
+                centerB,
+                localToWorldXAxis,
+                radiusA,
+                radiusB,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
@@ -136,7 +140,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (showCapB && radiusB > 0)
+        if (showCapB && radiusB > 0 && hasHeight)
         {
             var matrixCapB =
                 Matrix4x4.CreateScale(diameterB)
@@ -173,16 +177,21 @@ public static class RvmSnoutConverter
         var eccentricCenterA = position + eccentricNormal * halfLength;
         var eccentricCenterB = position - eccentricNormal * halfLength;
 
-        yield return new EccentricCone(
-            eccentricCenterA,
-            eccentricCenterB,
-            normal, // TODO CHECK WHY NOT eccentricNormal
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox
-        );
+        bool hasHeight = eccentricCenterA.EqualsWithinTolerance(eccentricCenterB, 0.0001f);
+
+        if (hasHeight) // If the height is zero, just return a cap
+        {
+            yield return new EccentricCone(
+                eccentricCenterA,
+                eccentricCenterB,
+                normal, // TODO CHECK WHY NOT eccentricNormal
+                radiusA,
+                radiusB,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
@@ -196,7 +205,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
-        if (showCapB && radiusB > 0)
+        if (showCapB && radiusB > 0 && hasHeight)
         {
             var matrixEccentricCapB =
                 Matrix4x4.CreateScale(diameterB)
@@ -316,5 +325,21 @@ public static class RvmSnoutConverter
                 );
             }
         }
+    }
+
+    private static bool IsValid(Vector3 scale, Quaternion rotation, float radiusTop, float radiusBottom)
+    {
+        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0)
+            return false;
+
+        if (QuaternionHelpers.ContainsInfiniteValue(rotation))
+            return false;
+
+        if (radiusTop <= 0 && radiusBottom <= 0)
+            return false;
+
+        return true;
     }
 }

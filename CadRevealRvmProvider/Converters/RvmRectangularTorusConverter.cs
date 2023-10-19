@@ -20,18 +20,19 @@ public static class RvmRectangularTorusConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (!IsValid(scale, rotation, rvmRectangularTorus.RadiusOuter))
+        {
+            Console.WriteLine(
+                $"Removed Rectangular torus because of invalid data. Scale: {scale.ToString()} Rotation: {rotation.ToString()} OuterRadius: {rvmRectangularTorus.RadiusOuter}"
+            );
+            yield break;
+        }
 
         (Vector3 normal, float _) = rotation.DecomposeQuaternion();
 
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
         var radiusOuter = rvmRectangularTorus.RadiusOuter * scale.X;
-
-        if (radiusOuter <= 0)
-        {
-            Console.WriteLine($"Rectangular Torus was removed, because outer radius was: {radiusOuter}");
-            yield break;
-        }
 
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
 
@@ -146,5 +147,21 @@ public static class RvmRectangularTorusConverter
 
             yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
         }
+    }
+
+    private static bool IsValid(Vector3 scale, Quaternion rotation, float radiusOuter)
+    {
+        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0)
+            return false;
+
+        if (QuaternionHelpers.ContainsInfiniteValue(rotation))
+            return false;
+
+        if (radiusOuter <= 0)
+            return false;
+
+        return true;
     }
 }

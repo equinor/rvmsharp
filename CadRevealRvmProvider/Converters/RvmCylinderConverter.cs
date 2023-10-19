@@ -3,6 +3,7 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -20,46 +21,17 @@ public static class RvmCylinderConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (!IsValid(scale, rotation, rvmCylinder.Radius))
         {
-            Console.WriteLine($"Cylinder was removed due to invalid rotation values: {rotation}");
+            Console.WriteLine(
+                $"Removed cylinder because of invalid data. Scale: {scale.ToString()} Rotation: {rotation.ToString()} Radius: {rvmCylinder.Radius}"
+            );
             yield break;
         }
 
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
-        }
-
         var (normal, _) = rotation.DecomposeQuaternion();
-
         var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
-
-        /*
-        * One case of non-uniform XY-scale on a cylinder on JSB (JS P2) was throwing an exception. Since this was the only case,
-        * it was assumed that this was an error in incoming data.
-        *
-        * To fix this specific case the largest from X and Y is chosen as the scale. Other cases with non-uniform scales should still throw an exception.
-        *
-        * https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/72816/
-        */
-        var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y);
-
-        if (scale.X != 0 && scale.Y == 0)
-        {
-            Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
-        }
-        else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            throw new Exception("Cylinders with non-uniform scale is not implemented!");
-        }
+        var radius = rvmCylinder.Radius * scale.X;
 
         var diameter = 2f * radius;
         var height = rvmCylinder.Height * scale.Z;
@@ -113,5 +85,25 @@ public static class RvmCylinderConverter
 
             yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalB, treeIndex, color);
         }
+    }
+
+    private static bool IsValid(Vector3 scale, Quaternion rotation, float radius)
+    {
+        if (QuaternionHelpers.ContainsInfiniteValue(rotation))
+        {
+            return false;
+        }
+
+        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
+        {
+            throw new Exception("Cylinders with non-uniform scale is not implemented!");
+        }
+
+        if (radius <= 0)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

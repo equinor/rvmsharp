@@ -3,9 +3,11 @@ namespace CadRevealRvmProvider.Converters;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 
 public static class RvmCircularTorusConverter
 {
@@ -18,6 +20,14 @@ public static class RvmCircularTorusConverter
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCircularTorus.Matrix);
+        }
+
+        if (!IsValid(scale, rotation))
+        {
+            Console.WriteLine(
+                $"Removed CircularTorus because of invalid data. Scale: {scale.ToString()} Rotation: {rotation.ToString()}"
+            );
+            yield break;
         }
 
         var (normal, _) = rotation.DecomposeQuaternion();
@@ -80,5 +90,16 @@ public static class RvmCircularTorusConverter
                 yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color);
             }
         }
+    }
+
+    private static bool IsValid(Vector3 scale, Quaternion rotation)
+    {
+        if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0)
+            return false;
+
+        if (QuaternionHelpers.ContainsInfiniteValue(rotation))
+            return false;
+
+        return true;
     }
 }

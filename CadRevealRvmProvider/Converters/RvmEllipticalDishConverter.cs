@@ -3,6 +3,7 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -21,7 +22,13 @@ public static class RvmEllipticalDishConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmEllipticalDish.Matrix);
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+        if (!IsValid(scale, rotation, rvmEllipticalDish.BaseRadius))
+        {
+            Console.WriteLine(
+                $"Removed EllipticalDish because of invalid data. Scale: {scale.ToString()} Rotation: {rotation.ToString()} Radius: {rvmEllipticalDish.BaseRadius}"
+            );
+            yield break;
+        }
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -35,16 +42,19 @@ public static class RvmEllipticalDishConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
-        yield return new EllipsoidSegment(
-            horizontalRadius,
-            verticalRadius,
-            verticalRadius,
-            position,
-            normal,
-            treeIndex,
-            color,
-            bbBox
-        );
+        if (verticalRadius > 0)
+        {
+            yield return new EllipsoidSegment(
+                horizontalRadius,
+                verticalRadius,
+                verticalRadius,
+                position,
+                normal,
+                treeIndex,
+                color,
+                bbBox
+            );
+        }
 
         var showCap = CapVisibility.IsCapVisible(rvmEllipticalDish, position);
 
@@ -52,5 +62,21 @@ public static class RvmEllipticalDishConverter
         {
             yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
         }
+    }
+
+    private static bool IsValid(Vector3 scale, Quaternion rotation, float radius)
+    {
+        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0)
+            return false;
+
+        if (QuaternionHelpers.ContainsInfiniteValue(rotation))
+            return false;
+
+        if (radius <= 0)
+            return false;
+
+        return true;
     }
 }

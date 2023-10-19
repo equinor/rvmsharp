@@ -3,6 +3,7 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -20,6 +21,15 @@ public static class RvmSphericalDishConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphericalDish.Matrix);
         }
+
+        if (!IsValid(scale, rotation))
+        {
+            Console.WriteLine(
+                $"Removed SphericalDish because of invalid data. Scale: {scale.ToString()} Rotation: {rotation.ToString()}"
+            );
+            yield break;
+        }
+
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
         (Vector3 normal, _) = rotation.DecomposeQuaternion();
@@ -47,5 +57,18 @@ public static class RvmSphericalDishConverter
         {
             yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
         }
+    }
+
+    private static bool IsValid(Vector3 scale, Quaternion rotation)
+    {
+        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (scale.X <= 0 || scale.Y <= 0 || scale.Z <= 0)
+            return false;
+
+        if (QuaternionHelpers.ContainsInfiniteValue(rotation))
+            return false;
+
+        return true;
     }
 }

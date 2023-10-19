@@ -1,7 +1,6 @@
-﻿namespace RvmSharp.Tests.Operations;
+namespace Commons.Tests.Utils;
 
-using NUnit.Framework;
-using RvmSharp.Operations;
+using Commons.Utils;
 using System.Numerics;
 
 [TestFixture]
