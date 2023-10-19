@@ -244,8 +244,8 @@ public static class RvmSnoutConverter
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
 
-        var planeA = new Vector4(Vector3.UnitX, 1 + extendedHeightB + height); // TODO: W isn't used by Reveal
-        var planeB = new Vector4(-Vector3.UnitY, 1 + extendedHeightB); // TODO: W isn't used by Reveal
+        var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W isn't used by Reveal
+        var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W isn't used by Reveal
 
         yield return new GeneralCylinder(
             Angle: 0f,
