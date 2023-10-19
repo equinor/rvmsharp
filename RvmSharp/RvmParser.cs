@@ -13,6 +13,8 @@ using System.Text;
 
 public static class RvmParser
 {
+    private static int count1 = 0;
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ReadUint(Stream stream)
     {
@@ -285,7 +287,7 @@ public static class RvmParser
                     break;
                 case "PRIM":
                     var primitive = ReadPrimitive(stream);
-
+                    count1 += 1;
                     if (Matrix4x4Helpers.MatrixContainsInfiniteValue(primitive.Matrix))
                     {
                         // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
@@ -373,7 +375,7 @@ public static class RvmParser
 
             chunk = ReadChunkHeader(stream, out len, out dunno);
         }
-
+        Console.WriteLine("THE TOTAL AMOUNT OF IF CHECKS IS " + 16 * count1);
         return new RvmFile(
             header,
             new RvmModel(
