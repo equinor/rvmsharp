@@ -21,10 +21,9 @@ public static class TorusSegmentTessellator
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + torus.InstanceMatrix);
         }
 
-        if (torus.Radius <0 || torus.TubeRadius <= 0)
+        if (torus.Radius < 0 || torus.TubeRadius <= 0)
         {
-            throw new Exception($"Torus has invalid radius. Offset: {torus.Radius} Tube radius: {torus.TubeRadius}";
-
+            throw new Exception($"Torus has invalid radius. Offset: {torus.Radius} Tube radius: {torus.TubeRadius}");
         }
 
         var arcAngle = torus.ArcAngle;
