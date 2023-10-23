@@ -11,6 +11,7 @@ public static class SagittaUtils
     /// Calculates the "maximum deviation" in the mesh from the "ideal" primitive.
     /// If we round a cylinder to N segment faces, this method gives us the distance from the extents of a the center
     /// of a flat face to the extents of a perfect cylinder.
+    /// Arc is the "completeness" of the circle in radians
     /// See: https://en.wikipedia.org/wiki/Sagitta_(geometry)
     /// </summary>
     public static float SagittaBasedError(double arc, float radius, float scale, int segments)
@@ -21,6 +22,7 @@ public static class SagittaUtils
 
     /// <summary>
     /// Calculates the amount of segments we need to represent this primitive within a given tolerance.
+    /// Arc is the "completeness" of the circle in radians
     /// </summary>
     /// <example>
     /// Example: A small cylinder with a tolerance of 0.1 might be represented with 8 sides, but a large cylinder might need 32

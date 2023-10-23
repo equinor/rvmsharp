@@ -48,6 +48,9 @@ public static class ConeTessellator
             vertices.Add(centerB + vNorm * radiusB);
         }
 
+        // If the cone is not complete, the cone belongs to a rectangular torus
+        // This means that the resulting open sides should stay open, since it is handled
+        // by Quads from the RvmRectangularTorusConvert
         for (uint i = 0; i < segments; i++)
         {
             if (i < segments - 1 || !isComplete)

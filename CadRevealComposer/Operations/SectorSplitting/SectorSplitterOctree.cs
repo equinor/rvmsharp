@@ -5,6 +5,7 @@ using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using Utils;
 
@@ -246,10 +247,25 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
+        var geometriesCount = geometries.Length;
+
         // NOTE: This increases triangle count
         geometries = _tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewInstancesHandler from {geometriesCount} to {geometries}"
+            );
+        }
+
         // NOTE: This increases triangle count
         geometries = _tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewPrimitives from {geometriesCount} to {geometries.Length}"
+            );
+        }
 
         return new InternalSector(
             sectorId,
