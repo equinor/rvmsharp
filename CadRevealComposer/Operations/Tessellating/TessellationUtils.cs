@@ -44,7 +44,9 @@ public static class TessellationUtils
     }
 
     /// <summary>
-    /// Used for debugging vectors by creating a literal arrow as a triangle mesh
+    /// Used for debugging vectors by creating a literal arrow as a triangle mesh.
+    /// If you need to visualize a vector in the moddel, for instance a normal to a plane,
+    /// you can use this method to create a triangle mesh which is added to the model.
     /// </summary>
     /// <param name="direction"></param>
     /// <param name="startPoint"></param>
@@ -156,6 +158,7 @@ public static class TessellationUtils
 
     /// <summary>
     /// Used for debugging planes by creating a literal square in the plane as a triangle mesh
+    /// The square created will have a diagonal length = 2
     /// </summary>
     /// <param name="plane"></param>
     /// <param name="startPoint"></param>
@@ -178,9 +181,6 @@ public static class TessellationUtils
         var indices = new uint[] { 0, 1, 2, 0, 2, 3 };
 
         var boundingBox = new BoundingBox(startPoint - Vector3.One, startPoint + Vector3.One);
-
-        if (!float.IsFinite(boundingBox.Center.X))
-            Console.WriteLine("mksdlf");
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
         return new TriangleMesh(mesh, 0, Color.Aquamarine, boundingBox);

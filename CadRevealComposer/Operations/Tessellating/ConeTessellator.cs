@@ -12,11 +12,6 @@ public static class ConeTessellator
 {
     public static TriangleMesh Tessellate(Cone cone)
     {
-        if (Vector3.Distance(cone.CenterB, cone.CenterA) == 0)
-        {
-            throw new ArgumentException("Cannot tesselate a cone without height");
-        }
-
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
 
@@ -53,6 +48,9 @@ public static class ConeTessellator
             vertices.Add(centerB + vNorm * radiusB);
         }
 
+        // If the cone is not complete, the cone belongs to a rectangular torus
+        // This means that the resulting open sides should stay open, since it is handled
+        // by Quads from the RvmRectangularTorusConvert
         for (uint i = 0; i < segments; i++)
         {
             if (i < segments - 1 || !isComplete)

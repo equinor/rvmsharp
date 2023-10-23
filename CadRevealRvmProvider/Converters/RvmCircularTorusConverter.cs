@@ -20,6 +20,12 @@ public static class RvmCircularTorusConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCircularTorus.Matrix);
         }
 
+        if (rvmCircularTorus.Radius <= 0)
+        {
+            Console.WriteLine($"Removing CircularTorus because radius was: {rvmCircularTorus.Radius}");
+            yield break;
+        }
+
         var (normal, _) = rotation.DecomposeQuaternion();
 
         var bbox = rvmCircularTorus.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();

@@ -5,7 +5,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using Commons.Utils;
-using MathNet.Numerics.Distributions;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Drawing;
@@ -110,7 +109,7 @@ public static class RvmSnoutConverter
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
-        bool hasHeight = centerA != centerB;
+        bool hasHeight = rvmSnout.Height != 0;
 
         if (hasHeight)
         {
@@ -244,8 +243,8 @@ public static class RvmSnoutConverter
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
 
-        var planeA = new Vector4(Vector3.UnitX, 1 + extendedHeightB + height); // TODO: W isn't used by Reveal
-        var planeB = new Vector4(-Vector3.UnitY, 1 + extendedHeightB); // TODO: W isn't used by Reveal
+        var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W (last value in the Vector4) isn't used by Reveal
+        var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W (last value in the Vector4) isn't used by Reveal
 
         yield return new GeneralCylinder(
             Angle: 0f,
