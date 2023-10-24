@@ -38,7 +38,7 @@ public static class ConeTessellator
             if (isComplete && i == segments)
                 continue;
 
-            var q = Quaternion.CreateFromAxisAngle(normal, -angleIncrement * i);
+            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
 
             var v = Vector3.Transform(startVector, q);
 
@@ -56,8 +56,8 @@ public static class ConeTessellator
             if (i < segments - 1 || !isComplete)
             {
                 indices.Add(i * 2);
-                indices.Add(i * 2 + 1);
                 indices.Add(i * 2 + 2);
+                indices.Add(i * 2 + 1);
 
                 indices.Add(i * 2 + 1);
                 indices.Add(i * 2 + 2);
@@ -66,8 +66,8 @@ public static class ConeTessellator
             else
             {
                 indices.Add(i * 2);
-                indices.Add(i * 2 + 1);
                 indices.Add(0);
+                indices.Add(i * 2 + 1);
 
                 indices.Add(i * 2 + 1);
                 indices.Add(0);

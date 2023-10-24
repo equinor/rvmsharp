@@ -53,7 +53,7 @@ public static class TorusSegmentTessellator
 
             startVectors.Add(v);
             startCenters.Add(Vector3.Zero + v * (offset));
-            startNormals.Add(Vector3.Normalize(Vector3.Cross(normal, v)));
+            startNormals.Add(Vector3.Normalize(Vector3.Cross(v, normal)));
         }
 
         for (int j = 0; j < toroidalSegments + 1; j++)
@@ -66,11 +66,9 @@ public static class TorusSegmentTessellator
             {
                 var q = Quaternion.CreateFromAxisAngle(turnNormal, angleIncrement * i);
 
-                var v = Vector3.Transform(startVector, q);
+                var v = Vector3.Normalize(Vector3.Transform(startVector, q));
 
-                var vNorm = Vector3.Normalize(v);
-
-                vertices.Add(center + vNorm * tubeRadius);
+                vertices.Add(center + v * tubeRadius);
             }
         }
 
@@ -81,18 +79,18 @@ public static class TorusSegmentTessellator
                 if (i < poloidalSegments - 1)
                 {
                     indices.Add(j * poloidalSegments + i);
-                    indices.Add(j * poloidalSegments + i + 1);
                     indices.Add((j + 1) * poloidalSegments + i);
+                    indices.Add(j * poloidalSegments + i + 1);
 
-                    indices.Add((j + 1) * poloidalSegments + i);
                     indices.Add(j * poloidalSegments + i + 1);
+                    indices.Add((j + 1) * poloidalSegments + i);
                     indices.Add((j + 1) * poloidalSegments + i + 1);
                 }
                 else
                 {
                     indices.Add(j * poloidalSegments + i);
-                    indices.Add(j * poloidalSegments);
                     indices.Add((j + 1) * poloidalSegments + i);
+                    indices.Add(j * poloidalSegments);
 
                     indices.Add(j * poloidalSegments);
                     indices.Add((j + 1) * poloidalSegments + i);

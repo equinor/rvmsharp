@@ -41,8 +41,8 @@ public static class EccentricConeTessellator
             if (i < segments - 1)
             {
                 indices.Add(i * 2);
-                indices.Add(i * 2 + 1);
                 indices.Add(i * 2 + 2);
+                indices.Add(i * 2 + 1);
 
                 indices.Add(i * 2 + 1);
                 indices.Add(i * 2 + 2);
@@ -51,8 +51,8 @@ public static class EccentricConeTessellator
             else
             {
                 indices.Add(i * 2);
-                indices.Add(i * 2 + 1);
                 indices.Add(0);
+                indices.Add(i * 2 + 1);
 
                 indices.Add(i * 2 + 1);
                 indices.Add(0);
