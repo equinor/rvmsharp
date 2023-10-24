@@ -27,7 +27,7 @@ public static class BoxTessellator
             0,2,3,
             0,1,5,
             0,5,4,
-            1,2,6,
+            1,6,2,
             1,6,5,
             2,3,7,
             2,7,6,
