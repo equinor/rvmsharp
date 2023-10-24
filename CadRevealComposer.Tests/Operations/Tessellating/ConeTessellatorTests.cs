@@ -87,7 +87,7 @@ public class ConeTessellatorTests
 
             float determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
 
-            Console.WriteLine($"We're at number: {index / 3}");
+            Assert.GreaterOrEqual(determinant, 0.0f);
         }
     }
 }

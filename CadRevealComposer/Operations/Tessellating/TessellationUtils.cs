@@ -13,10 +13,10 @@ public static class TessellationUtils
 {
     public static float AngleBetween(Vector3 v1, Vector3 v2)
     {
-        if (v1.EqualsWithinFactor(v2, 0.1f))
+        if (v1.EqualsWithinFactor(v2, 0.01f)) // Arbitrarily chosen factor
             return 0;
 
-        if ((v1 * -1).EqualsWithinFactor(v2, 0.1f))
+        if ((v1 * -1).EqualsWithinFactor(v2, 0.01f)) // Arbitrarily chosen factor
             return MathF.PI;
 
         var result = MathF.Acos(Vector3.Dot(v1, v2) / (v1.Length() * v2.Length()));
@@ -40,7 +40,7 @@ public static class TessellationUtils
         if (v.Equals(Vector3.UnitZ) || v.Equals(-Vector3.UnitZ))
             return Vector3.UnitX;
 
-        throw new Exception($"Could not find orthogonal vector of {v.ToString()}");
+        throw new Exception($"Could not find orthogonal vector of {v}");
     }
 
     /// <summary>
