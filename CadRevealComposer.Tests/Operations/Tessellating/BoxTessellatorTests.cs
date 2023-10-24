@@ -28,6 +28,8 @@ public class BoxTessellatorTests
     [Test]
     public void WindingOrderTest()
     {
+        // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
+
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
         var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
@@ -37,6 +39,8 @@ public class BoxTessellatorTests
         var vertices = tessellatedBox.Mesh.Vertices;
         var indices = tessellatedBox.Mesh.Indices;
 
+        // Can calculate the determinant with this formula from:
+        // https://www.geeksforgeeks.org/determinant-of-a-matrix/
         //   | a d g |
         //   | b e h |
         //   | c f i |
@@ -61,12 +65,10 @@ public class BoxTessellatorTests
             float g = v3.X;
             float h = v3.Y;
             float i = v3.Z;
-            float j = v3.Z;
-            float k = v3.X;
 
             float determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
 
-            Assert.GreaterOrEqual(determinant, 0);
+            Assert.GreaterOrEqual(determinant, 0.0f);
         }
     }
 }
