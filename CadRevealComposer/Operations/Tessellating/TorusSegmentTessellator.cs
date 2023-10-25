@@ -22,13 +22,13 @@ public static class TorusSegmentTessellator
         }
 
         var arcAngle = torus.ArcAngle;
-        var offset = torus.Radius;
+        var radius = torus.Radius;
         var tubeRadius = torus.TubeRadius;
         var matrix = torus.InstanceMatrix;
 
-        float toroidalTolerance = SagittaUtils.CalculateSagittaTolerance((offset + tubeRadius) * 0.001f);
+        float toroidalTolerance = SagittaUtils.CalculateSagittaTolerance((radius + tubeRadius) * 0.001f);
         var toroidalSegments = (uint)
-            SagittaUtils.SagittaBasedSegmentCount(arcAngle, offset + tubeRadius, scale.X, toroidalTolerance);
+            SagittaUtils.SagittaBasedSegmentCount(arcAngle, radius + tubeRadius, scale.X, toroidalTolerance);
         var error = SagittaUtils.SagittaBasedError(arcAngle, tubeRadius, scale.X, (int)toroidalSegments);
 
         float poloidalTolerance = SagittaUtils.CalculateSagittaTolerance(tubeRadius * scale.X);
@@ -52,7 +52,7 @@ public static class TorusSegmentTessellator
             var v = Vector3.Transform(Vector3.UnitX, q);
 
             startVectors.Add(v);
-            startCenters.Add(Vector3.Zero + v * (offset));
+            startCenters.Add(Vector3.Zero + v * (radius));
             startNormals.Add(Vector3.Normalize(Vector3.Cross(v, normal)));
         }
 

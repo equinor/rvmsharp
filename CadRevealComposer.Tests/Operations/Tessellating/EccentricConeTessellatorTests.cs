@@ -24,6 +24,36 @@ public class EccentricConeTessellatorTests
     }
 
     [Test]
+    public void VerticesConformToConeEquation()
+    {
+        var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
+        var cone = new Cone(
+            0,
+            MathF.PI * 2,
+            Vector3.Zero,
+            Vector3.UnitY,
+            Vector3.UnitX,
+            1,
+            1,
+            1,
+            Color.Red,
+            dummyBoundingBox
+        );
+
+        var tessellatedCone = ConeTessellator.Tessellate(cone);
+
+        var vertices = tessellatedCone.Mesh.Vertices;
+
+        foreach (var vertex in vertices)
+        {
+            Assert.That(
+                cone.RadiusA * cone.RadiusA,
+                Is.EqualTo(vertex.X * vertex.X + vertex.Z * vertex.Z).Within(0.0001f)
+            );
+        }
+    }
+
+    [Test]
     public void WindingOrderTest()
     {
         // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
