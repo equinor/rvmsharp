@@ -6,6 +6,7 @@ using CadRevealComposer.Utils;
 using Commons.Utils;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Numerics;
 
@@ -27,8 +28,8 @@ public static class GeneralRingTessellator
         var segments = SagittaUtils.SagittaBasedSegmentCount(arcAngle, transformedRadius, 1, tolerance);
         var error = SagittaUtils.SagittaBasedError(arcAngle, transformedRadius, 1, segments);
 
-        var normal = -Vector3.UnitZ;
-        var startVector = Vector3.UnitY;
+        var normal = Vector3.UnitZ;
+        var startVector = Vector3.UnitX;
         var angleIncrement = arcAngle / segments;
 
         var vertices = new List<Vector3>();

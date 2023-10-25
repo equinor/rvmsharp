@@ -6,6 +6,7 @@ using CadRevealComposer.Utils;
 using Commons.Utils;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Numerics;
 
 public static class ConeTessellator
@@ -25,7 +26,7 @@ public static class ConeTessellator
         var segments = SagittaUtils.SagittaBasedSegmentCount(arcAngle, float.Max(radiusA, radiusB), 1f, tolerance);
         var error = SagittaUtils.SagittaBasedError(arcAngle, float.Max(radiusA, radiusB), 1f, segments);
 
-        var normal = Vector3.Normalize(centerB - centerA);
+        var normal = Vector3.Normalize(centerA - centerB);
 
         bool isComplete = arcAngle.ApproximatelyEquals(2 * MathF.PI);
 
