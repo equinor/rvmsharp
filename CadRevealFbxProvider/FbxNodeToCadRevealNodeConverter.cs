@@ -19,7 +19,7 @@ public static class FbxNodeToCadRevealNodeConverter
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         NodeNameFiltering nodeNameFiltering,
-        Dictionary<string, Dictionary<string, string>>? attributes,
+        Dictionary<string, Dictionary<string, string>?>? attributes,
         int minInstanceCountThreshold = 2
     )
     {
@@ -48,7 +48,7 @@ public static class FbxNodeToCadRevealNodeConverter
         Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
         NodeNameFiltering nodeNameFiltering,
         IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced,
-        Dictionary<string, Dictionary<string, string>>? attributes
+        Dictionary<string, Dictionary<string, string>?>? attributes
     )
     {
         var name = FbxNodeWrapper.GetNodeName(node);
@@ -195,7 +195,7 @@ public static class FbxNodeToCadRevealNodeConverter
     //
     // Our domain expert confirmed that we can(hopefully) fix this issue by ignoring all parts that
     // do now have attributes(empty fields) in the attribute file.
-    private static bool validateNodeAttributes(Dictionary<string, Dictionary<string, string>> attributes, string name)
+    private static bool validateNodeAttributes(Dictionary<string, Dictionary<string, string>?> attributes, string name)
     {
         var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
 
@@ -204,17 +204,15 @@ public static class FbxNodeToCadRevealNodeConverter
         {
             var idNode = match.Groups[1].Value;
 
-            if (attributes.ContainsKey(idNode) && attributes[idNode].ContainsKey("Work order"))
+            if (attributes.ContainsKey(idNode) && attributes[idNode] == null)
             {
-                if (attributes[idNode]["Work order"].Length == 0)
-                {
-                    Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
-                    return false;
-                }
+                Console.WriteLine("Skipping node without valid attributes: " + idNode + " : " + name);
+                return false;
             }
-            else
+
+            if (!attributes.ContainsKey(idNode))
             {
-                Console.WriteLine("Skipping node without valid WO: " + idNode + " : " + name);
+                Console.WriteLine("Skipping node without existing attributes: " + idNode + " : " + name);
                 return false;
             }
         }

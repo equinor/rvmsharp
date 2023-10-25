@@ -4,8 +4,11 @@ using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Utils;
 using Commons;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using System.Text.RegularExpressions;
+using static CadRevealComposer.Operations.CameraPositioning;
 
 public static class FbxWorkload
 {
@@ -66,7 +69,7 @@ public static class FbxWorkload
         return result.ToArray();
     }
 
-    public static IReadOnlyList<CadRevealNode> ReadFbxData(
+    public static (IReadOnlyList<CadRevealNode>, ModelMetadata?) ReadFbxData(
         IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -84,15 +87,23 @@ public static class FbxWorkload
             throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
         }
 
+        Dictionary<string, string> metadata = new();
+
         IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
         {
             (string fbxFilename, string? infoTextFilename) = filePair;
 
-            Dictionary<string, Dictionary<string, string>>? attributes = null;
+            Dictionary<string, Dictionary<string, string>?>? attributes = null;
+            // there could be an explicit test / determination if this current fbx is scaffolding or not
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                attributes = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                // TODO: Should we crash if we dont have expected values?
+                if (scaffoldingMetadata.HasExpectedValues())
+                {
+                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
+                }
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
@@ -124,9 +135,17 @@ public static class FbxWorkload
                         if (attributes.ContainsKey(id))
                         {
                             totalMismatch = false;
-                            foreach (var kvp in attributes[id])
+                            var attributes_id = attributes[id];
+                            if (attributes_id != null)
                             {
-                                cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                                foreach (var kvp in attributes_id)
+                                {
+                                    cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
+                                }
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Data Id {id} has missing attributes.");
                             }
                         }
                         else
@@ -163,6 +182,6 @@ public static class FbxWorkload
         //progressReport?.Report(("Aligning geometry", 1, 2));
         //RvmAlign.Align(rvmStore);
         //progressReport?.Report(("Import finished", 2, 2));
-        return fbxNodesFlat;
+        return (fbxNodesFlat, new ModelMetadata(metadata));
     }
 }
