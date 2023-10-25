@@ -19,6 +19,14 @@ public static class RvmSnoutConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
 
+        if (rvmSnout.RadiusBottom < 0 || rvmSnout.RadiusTop < 0)
+        {
+            Console.WriteLine(
+                $"Snout was removed due to invalid radii. RadiusTop: {rvmSnout.RadiusTop} RadiusBottom: {rvmSnout.RadiusBottom}"
+            );
+            yield break;
+        }
+
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
         var (normal, _) = rotation.DecomposeQuaternion();

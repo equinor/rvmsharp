@@ -38,6 +38,12 @@ public static class RvmCylinderConverter
             Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
         }
 
+        if (rvmCylinder.Radius < 0)
+        {
+            Console.WriteLine($"Cylinder was removed due to invalid radius. Radius: {rvmCylinder.Radius}");
+            yield break;
+        }
+
         var (normal, _) = rotation.DecomposeQuaternion();
 
         var bbox = rvmCylinder.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();

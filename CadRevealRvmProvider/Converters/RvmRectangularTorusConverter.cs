@@ -22,6 +22,14 @@ public static class RvmRectangularTorusConverter
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
+        if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner < 0)
+        {
+            Console.WriteLine(
+                $"Removing RectangularTorus because radius was invalid. Outer radius: {rvmRectangularTorus.RadiusOuter} Inner radius: {rvmRectangularTorus.RadiusInner}"
+            );
+            yield break;
+        }
+
         (Vector3 normal, float _) = rotation.DecomposeQuaternion();
 
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
