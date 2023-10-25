@@ -26,7 +26,7 @@ public static class TorusSegmentTessellator
         var tubeRadius = torus.TubeRadius;
         var matrix = torus.InstanceMatrix;
 
-        float toroidalTolerance = SagittaUtils.CalculateSagittaTolerance(offset + tubeRadius);
+        float toroidalTolerance = SagittaUtils.CalculateSagittaTolerance((offset + tubeRadius) * 0.001f);
         var toroidalSegments = (uint)
             SagittaUtils.SagittaBasedSegmentCount(arcAngle, offset + tubeRadius, scale.X, toroidalTolerance);
         var error = SagittaUtils.SagittaBasedError(arcAngle, tubeRadius, scale.X, (int)toroidalSegments);
@@ -72,7 +72,7 @@ public static class TorusSegmentTessellator
             }
         }
 
-        for (uint j = 0; j < toroidalSegments; j++)
+        for (uint j = 0; j < toroidalSegments - 1; j++)
         {
             for (uint i = 0; i < poloidalSegments; i++)
             {
@@ -95,6 +95,66 @@ public static class TorusSegmentTessellator
                     indices.Add(j * poloidalSegments);
                     indices.Add((j + 1) * poloidalSegments + i);
                     indices.Add((j + 1) * poloidalSegments);
+                }
+            }
+        }
+
+        bool isComplete = arcAngle.ApproximatelyEquals(2 * MathF.PI);
+        uint last = toroidalSegments - 1;
+        if (isComplete)
+        {
+            // Enclosing the last and first toroidal segments
+
+            for (uint i = 0; i < poloidalSegments; i++)
+            {
+                if (i < poloidalSegments - 1)
+                {
+                    // (0, 13, 1) => (x,0,x+1)
+                    indices.Add(last * poloidalSegments + i);
+                    indices.Add(i);
+                    indices.Add(last * poloidalSegments + i + 1);
+                    // (1, 13, 14) => (x+1,0,1)
+                    indices.Add(last * poloidalSegments + i + 1);
+                    indices.Add(i);
+                    indices.Add((last + 1) * poloidalSegments + i + 1);
+                }
+                else
+                {
+                    // i = poloidalsegments
+                    //(12,25,0) => (x+poloidal,poloidal,x)
+                    indices.Add(last * poloidalSegments + i);
+                    indices.Add(i);
+                    indices.Add(last * poloidalSegments);
+                    // (0,25,13) = > (x,poloidal,0)
+                    indices.Add(last * poloidalSegments);
+                    indices.Add(poloidalSegments);
+                    indices.Add(0);
+                }
+            }
+        }
+        else
+        {
+            for (uint i = 0; i < poloidalSegments; i++)
+            {
+                if (i < poloidalSegments - 1)
+                {
+                    indices.Add(last * poloidalSegments + i);
+                    indices.Add((last + 1) * poloidalSegments + i);
+                    indices.Add(last * poloidalSegments + i + 1);
+
+                    indices.Add(last * poloidalSegments + i + 1);
+                    indices.Add((last + 1) * poloidalSegments + i);
+                    indices.Add((last + 1) * poloidalSegments + i + 1);
+                }
+                else
+                {
+                    indices.Add(last * poloidalSegments + i);
+                    indices.Add((last + 1) * poloidalSegments + i);
+                    indices.Add(last * poloidalSegments);
+
+                    indices.Add(last * poloidalSegments);
+                    indices.Add((last + 1) * poloidalSegments + i);
+                    indices.Add((last + 1) * poloidalSegments);
                 }
             }
         }
