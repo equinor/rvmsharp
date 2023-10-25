@@ -5,6 +5,7 @@ using Configuration;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
+using Operations.MeshSwitch;
 using Operations.SectorSplitting;
 using Primitives;
 using System;
@@ -64,7 +65,12 @@ public static class CadRevealComposerRunner
                 // collect all nodes for later sector division of the entire scene
                 nodesToExport.AddRange(cadRevealNodes);
 
-                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+                var cadRevealNodesWithSwitch = MeshSwitch.SwitchMesh(cadRevealNodes, inputFolderPath);
+                var inputGeometries = cadRevealNodesWithSwitch
+                    .AsParallel()
+                    .AsOrdered()
+                    .SelectMany(x => x.Geometries)
+                    .ToArray();
 
                 var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                     inputGeometries,
