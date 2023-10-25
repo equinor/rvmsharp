@@ -45,8 +45,8 @@ public static class ConeTessellator
 
             var vNorm = Vector3.Normalize(v);
 
-            vertices.Add(centerA + vNorm * radiusA);
             vertices.Add(centerB + vNorm * radiusB);
+            vertices.Add(centerA + vNorm * radiusA);
         }
 
         // If the cone is not complete, the cone belongs to a rectangular torus
