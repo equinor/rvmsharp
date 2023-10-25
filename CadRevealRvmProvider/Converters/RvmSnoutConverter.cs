@@ -24,7 +24,7 @@ public static class RvmSnoutConverter
             Console.WriteLine(
                 $"Snout was removed due to invalid radii. RadiusTop: {rvmSnout.RadiusTop} RadiusBottom: {rvmSnout.RadiusBottom}"
             );
-            yield break;
+            return Array.Empty<APrimitive>();
         }
 
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
