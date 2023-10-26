@@ -55,21 +55,7 @@ public static class RvmRectangularTorusConverter
 
         var bbBox = rvmRectangularTorus.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
 
-        yield return new Cone(
-            0,
-            arcAngle,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radiusOuter,
-            radiusOuter,
-            treeIndex,
-            color,
-            bbBox
-        );
-
-        // If inner radius equals 0, then the geometry is basically a cylinder segment, and the inner cone is unnecessary
-        if (radiusInner > 0)
+        if (height != 0)
         {
             yield return new Cone(
                 0,
@@ -77,23 +63,35 @@ public static class RvmRectangularTorusConverter
                 centerA,
                 centerB,
                 localToWorldXAxis,
-                radiusInner,
-                radiusInner,
+                radiusOuter,
+                radiusOuter,
                 treeIndex,
                 color,
                 bbBox
             );
+
+            // If inner radius equals 0, then the geometry is basically a cylinder segment, and the inner cone is unnecessary
+            if (radiusInner > 0)
+            {
+                yield return new Cone(
+                    0,
+                    arcAngle,
+                    centerA,
+                    centerB,
+                    localToWorldXAxis,
+                    radiusInner,
+                    radiusInner,
+                    treeIndex,
+                    color,
+                    bbBox
+                );
+            }
         }
 
         var matrixRingA =
             Matrix4x4.CreateScale(outerDiameter)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(centerA);
-
-        var matrixRingB =
-            Matrix4x4.CreateScale(outerDiameter)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(centerB);
 
         if (matrixRingA.IsDecomposable())
         {
@@ -107,52 +105,60 @@ public static class RvmRectangularTorusConverter
             );
         }
 
-        if (matrixRingB.IsDecomposable())
+        if (height != 0)
         {
-            yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
-        }
-        else
-        {
-            // This should not happen, but happens in so few models as of now that we think we can ignore it.
-            Console.WriteLine(
-                $"Failed to decompose matrix for {nameof(matrixRingB)} of node {treeIndex} geometry: {rvmRectangularTorus}"
-            );
-        }
+            var matrixRingB =
+                Matrix4x4.CreateScale(outerDiameter)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(centerB);
 
-        // Add caps to the two ends of the torus, where the segment is "cut out"
-        // This is not needed if the torus goes all the way around
-        var isTorusSegment = !arcAngle.ApproximatelyEquals(2 * MathF.PI);
-        if (isTorusSegment)
-        {
-            var v1 = localToWorldXAxis;
+            if (matrixRingB.IsDecomposable())
+            {
+                yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
+            }
+            else
+            {
+                // This should not happen, but happens in so few models as of now that we think we can ignore it.
+                Console.WriteLine(
+                    $"Failed to decompose matrix for {nameof(matrixRingB)} of node {treeIndex} geometry: {rvmRectangularTorus}"
+                );
+            }
 
-            var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
-            var v2 = Vector3.Transform(v1, q2);
+            // Add caps to the two ends of the torus, where the segment is "cut out"
+            // This is not needed if the torus goes all the way around
+            var isTorusSegment = !arcAngle.ApproximatelyEquals(2 * MathF.PI);
+            if (isTorusSegment)
+            {
+                var v1 = localToWorldXAxis;
 
-            var centerQuadA = (centerA + centerB + v1 * (radiusInner + radiusOuter)) / 2.0f;
-            var centerQuadB = (centerA + centerB + v2 * (radiusInner + radiusOuter)) / 2.0f;
+                var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
+                var v2 = Vector3.Transform(v1, q2);
 
-            var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
-            var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
-            var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
-            var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
-            var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
+                var centerQuadA = (centerA + centerB + v1 * (radiusInner + radiusOuter)) / 2.0f;
+                var centerQuadB = (centerA + centerB + v2 * (radiusInner + radiusOuter)) / 2.0f;
 
-            var scaleQuad = new Vector3(height, radiusOuter - radiusInner, 0);
+                var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+                var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
+                var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
+                var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
+                var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
 
-            var quadMatrixA =
-                Matrix4x4.CreateScale(scaleQuad)
-                * Matrix4x4.CreateFromQuaternion(rotationQuadA)
-                * Matrix4x4.CreateTranslation(centerQuadA);
+                var scaleQuad = new Vector3(height, radiusOuter - radiusInner, 0);
 
-            var quadMatrixB =
-                Matrix4x4.CreateScale(scaleQuad)
-                * Matrix4x4.CreateFromQuaternion(rotationQuadB)
-                * Matrix4x4.CreateTranslation(centerQuadB);
+                var quadMatrixA =
+                    Matrix4x4.CreateScale(scaleQuad)
+                    * Matrix4x4.CreateFromQuaternion(rotationQuadA)
+                    * Matrix4x4.CreateTranslation(centerQuadA);
 
-            yield return new Quad(quadMatrixA, treeIndex, color, bbBox);
+                var quadMatrixB =
+                    Matrix4x4.CreateScale(scaleQuad)
+                    * Matrix4x4.CreateFromQuaternion(rotationQuadB)
+                    * Matrix4x4.CreateTranslation(centerQuadB);
 
-            yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
+                yield return new Quad(quadMatrixA, treeIndex, color, bbBox);
+
+                yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
+            }
         }
     }
 }
