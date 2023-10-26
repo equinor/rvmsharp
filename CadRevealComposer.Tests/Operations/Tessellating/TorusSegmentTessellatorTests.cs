@@ -10,7 +10,7 @@ using System.Numerics;
 public class TorusSegmentTessellatorTests
 {
     [Test]
-    public void TorusSegmentTessellatorTest()
+    public void TessellateTorusSegment_ReturnsCorrectNumberOfVerticesAndIndices()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
@@ -47,7 +47,7 @@ public class TorusSegmentTessellatorTests
     }
 
     [Test]
-    public void WindingOrderTest()
+    public void TessellateTorusSegment_ReturnsIndicesWithCorrectWindingOrder()
     {
         // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
 

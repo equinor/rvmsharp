@@ -28,7 +28,7 @@ public class TessellationUtilsTests
     }
 
     [Test]
-    public void CreateOrhtogonalVectorTest()
+    public void CreateOrthogonalVectorTest()
     {
         var unitX = Vector3.UnitX;
         var unitY = Vector3.UnitY;

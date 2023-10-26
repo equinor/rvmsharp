@@ -10,7 +10,7 @@ using System.Numerics;
 public class GeneralRingTessellatorTests
 {
     [Test]
-    public void GeneralRingTessellatorTest_WithFullThickness()
+    public void TessellateGeneralRing_WithFullThickness_ReturnsCorrectNumberOfVerticesAndIndices()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var ring = new GeneralRing(
@@ -32,7 +32,7 @@ public class GeneralRingTessellatorTests
     }
 
     [Test]
-    public void GeneralRingTessellatorTest_WithNotFullThicknes()
+    public void TessellateGeneralRing_WithoutFullThickness_ReturnsCorrectNumberOfVerticesAndIndices()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var ring = new GeneralRing(
@@ -54,7 +54,7 @@ public class GeneralRingTessellatorTests
     }
 
     [Test]
-    public void WindingOrderTest()
+    public void TessellateGeneralRing_WithFullThickness_ReturnsIndicesWithCorrectWindingOrder()
     {
         // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
 
@@ -108,7 +108,7 @@ public class GeneralRingTessellatorTests
     }
 
     [Test]
-    public void WindingOrderTest_WithThickness()
+    public void TessellateGeneralRing_WithoutFullThickness_ReturnsIndicesWithCorrectWindingOrder()
     {
         // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
 

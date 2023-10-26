@@ -10,7 +10,7 @@ using System.Numerics;
 public class ConeTessellatorTests
 {
     [Test]
-    public void ConeTessellatorTest()
+    public void TessellateCone_ReturnsCorrectNumberOfVerticesAndIndices()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var cone = new Cone(
@@ -35,7 +35,7 @@ public class ConeTessellatorTests
     }
 
     [Test]
-    public void ConeTessellatorTest_NotCompleteCone()
+    public void TessellateCircle_NotComplete_ReturnsCorrectNumberOfVerticesAndIndices()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var cone = new Cone(
@@ -90,7 +90,7 @@ public class ConeTessellatorTests
     }
 
     [Test]
-    public void WindingOrderTest()
+    public void TessellateCone_ReturnsIndicesWithCorrectWindingOrder()
     {
         // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
 
