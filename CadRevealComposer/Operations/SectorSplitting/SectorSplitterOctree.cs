@@ -18,6 +18,9 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
+    private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
+    private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
+
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
         var sectorIdGenerator = new SequentialIdGenerator();
@@ -75,6 +78,16 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield return sector;
             }
         }
+
+        Console.WriteLine(
+            $"Tried to convert {_tooFewPrimitivesHandler.TriedConvertedGroupsOfPrimitives} out of {_tooFewPrimitivesHandler.TotalGroupsOfPrimitive} total groups of primitives"
+        );
+        Console.WriteLine(
+            $"Successfully converted {_tooFewPrimitivesHandler.SuccessfullyConvertedGroupsOfPrimitives} groups of primitives"
+        );
+        Console.WriteLine(
+            $"This resulted in {_tooFewPrimitivesHandler.AdditionalNumberOfTriangles} additional triangles"
+        );
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
@@ -234,8 +247,25 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        var tooFewInstancesHandler = new TooFewInstancesHandler();
-        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        var geometriesCount = geometries.Length;
+
+        // NOTE: This increases triangle count
+        geometries = _tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewInstancesHandler from {geometriesCount} to {geometries}"
+            );
+        }
+
+        // NOTE: This increases triangle count
+        geometries = _tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewPrimitives from {geometriesCount} to {geometries.Length}"
+            );
+        }
 
         return new InternalSector(
             sectorId,

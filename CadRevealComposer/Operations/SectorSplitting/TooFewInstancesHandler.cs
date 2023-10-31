@@ -2,7 +2,6 @@ namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
 using System;
-using System.Diagnostics;
 using System.Linq;
 
 /// <summary>
