@@ -21,6 +21,10 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
+        var numberOfTriangles = allGeometries
+            .Where(g => g is TriangleMesh)
+            .Sum(x => ((TriangleMesh)x).Mesh.TriangleCount);
+
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();

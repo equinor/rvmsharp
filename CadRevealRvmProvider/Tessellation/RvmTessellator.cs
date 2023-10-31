@@ -4,10 +4,12 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using CadRevealComposer.Utils.MeshTools;
 using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System.Diagnostics;
+using System.Drawing;
 
 public class RvmTessellator
 {
@@ -28,8 +30,8 @@ public class RvmTessellator
         {
             var rvmMesh = Tessellate(p.RvmPrimitive);
             var mesh = ConvertRvmMesh(rvmMesh);
-            mesh = Simplify.SimplifyMeshLossy(mesh, 0.2f);
-            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
+            (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, 0.01f);
+            return new TriangleMesh(mesh, p.TreeIndex, Color.LightSkyBlue, p.AxisAlignedBoundingBox);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult

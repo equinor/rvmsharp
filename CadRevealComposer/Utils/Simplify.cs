@@ -43,12 +43,12 @@ public static class Simplify
     private static Mesh ConvertDMesh3ToMesh(DMesh3 dMesh3)
     {
         var verts = new Vector3[dMesh3.VertexCount];
-        var normals = new Vector3[dMesh3.VertexCount];
+        //var normals = new Vector3[dMesh3.VertexCount];
 
         for (int vertexIndex = 0; vertexIndex < dMesh3.VertexCount; vertexIndex++)
         {
             verts[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexf(vertexIndex));
-            normals[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexNormal(vertexIndex));
+            //normals[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexNormal(vertexIndex));
         }
 
         var mesh = new Mesh(verts, dMesh3.Triangles().SelectMany(x => x.array).Select(x => (uint)x).ToArray(), 0.0f);
@@ -107,7 +107,7 @@ public static class Simplify
     /// <param name="mesh"></param>
     /// <param name="thresholdInMeshUnits">Usually meters</param>
     /// <returns></returns>
-    public static Mesh SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
+    public static (Mesh mesh, bool success) SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
     {
         Interlocked.Add(ref SimplificationBefore, mesh.Vertices.Length);
         Interlocked.Add(ref SimplificationBeforeTriangleCount, mesh.TriangleCount);
@@ -133,6 +133,7 @@ public static class Simplify
         {
             reducer.ReduceToEdgeLength(thresholdInMeshUnits);
             // Remove optimized stuff from the mesh. This is important or the exporter will fail.
+
             if (!dMesh.IsCompact)
                 dMesh.CompactInPlace();
 
@@ -140,12 +141,13 @@ public static class Simplify
             var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
             Interlocked.Add(ref SimplificationAfter, lastPassMesh.Vertices.Length);
             Interlocked.Add(ref SimplificationAfterTriangleCount, lastPassMesh.TriangleCount);
-            return lastPassMesh;
+            return (lastPassMesh, true);
         }
         catch (Exception e)
         {
+            Console.WriteLine($"TEST: {dMesh.VertexEdges.MemoryUsage}");
             Console.WriteLine("Failed to optimize mesh: " + e);
-            return mesh;
+            return (mesh, false);
         }
     }
 }
