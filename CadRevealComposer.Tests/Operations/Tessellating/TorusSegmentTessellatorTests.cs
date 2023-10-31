@@ -59,16 +59,8 @@ public class TorusSegmentTessellatorTests
         var vertices = torusTessellate.Mesh.Vertices;
         var indices = torusTessellate.Mesh.Indices;
 
-        // Can calculate the determinant with this formula from:
-        // https://www.geeksforgeeks.org/determinant-of-a-matrix/
-        //   | a d g |
-        //   | b e h |
-        //   | c f i |
-        // determinant = a(ei - fh) - b(di - gf) + c(dh - eg)
-
-
         var poloidalSegments = indices[1]; // NOTE: This is dependent on tessellation order
-        var toroidalSegments = indices.Length / (3 * poloidalSegments * 2);
+        var toroidalSegments = indices.Length / (3 * poloidalSegments * 2); // Two triangles in each segment (two triangles in a square)
         var turnIncrement = 2 * MathF.PI / toroidalSegments;
 
         var vertex1 = vertices[indices[0]];
@@ -100,17 +92,7 @@ public class TorusSegmentTessellatorTests
                 Vector3 v2 = vertices[i2] - toroidalCenter;
                 Vector3 v3 = vertices[i3] - toroidalCenter;
 
-                float a = v1.X;
-                float b = v1.Y;
-                float c = v1.Z;
-                float d = v2.X;
-                float e = v2.Y;
-                float f = v2.Z;
-                float g = v3.X;
-                float h = v3.Y;
-                float i = v3.Z;
-
-                float determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
+                var determinant = TessellatorTestUtils.CalculateDeterminant(v1, v2, v3);
 
                 Assert.GreaterOrEqual(determinant, 0.0f);
             }
