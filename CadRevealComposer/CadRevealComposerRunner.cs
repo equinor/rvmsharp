@@ -82,6 +82,17 @@ public static class CadRevealComposerRunner
         });
 
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
+        int sum = geometriesToProcess
+            .Where(g => g is InstancedMesh)
+            .Sum(x => ((InstancedMesh)x).TemplateMesh.TriangleCount);
+        ;
+        Console.WriteLine($"HERREEEEE%&#&(%#(/ {sum}");
+        geometriesToProcess = SimplifyInstancedMesh(geometriesToProcess);
+        int sum2 = geometriesToProcess
+            .Where(g => g is InstancedMesh)
+            .Sum(x => ((InstancedMesh)x).TemplateMesh.TriangleCount);
+        ;
+        Console.WriteLine($"HERREEEEE {sum2}");
 
         ProcessPrimitives(
             geometriesToProcess.ToArray(),
@@ -97,6 +108,25 @@ public static class CadRevealComposerRunner
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
+    }
+
+    private static List<APrimitive> SimplifyInstancedMesh(List<APrimitive> geometriesToProcess)
+    {
+        var geometries = new List<APrimitive>();
+        var groups = geometriesToProcess.Where(g => g is InstancedMesh).GroupBy(x => ((InstancedMesh)x).InstanceId);
+        foreach (var group in groups)
+        {
+            var templatemesh = ((InstancedMesh)group.First()).TemplateMesh;
+            var mesh = Simplify.SimplifyMeshLossy(templatemesh, 0.005f).mesh;
+            foreach (InstancedMesh instance in group)
+            {
+                geometries.Add(instance with { TemplateMesh = mesh });
+            }
+        }
+        var groups2 = geometriesToProcess.Where(g => g is not InstancedMesh).ToArray();
+        geometries.AddRange(groups2);
+
+        return geometries;
     }
 
     public static void ProcessPrimitives(

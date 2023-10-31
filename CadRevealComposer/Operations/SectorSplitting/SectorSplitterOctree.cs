@@ -5,6 +5,7 @@ using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Drawing;
 using System.Linq;
 using Utils;
 
@@ -19,12 +20,23 @@ public class SectorSplitterOctree : ISectorSplitter
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
+        allGeometries = allGeometries
+            .Select(g =>
+            {
+                if (g is TriangleMesh triangleMesh)
+                    return g with { Color = Color.Gold };
+                else if (g is InstancedMesh instancedMesh)
+                    return g with { Color = Color.HotPink };
+                else
+                    return g;
+            })
+            .ToArray();
+
         var sectorIdGenerator = new SequentialIdGenerator();
 
         var numberOfTriangles = allGeometries
             .Where(g => g is TriangleMesh)
             .Sum(x => ((TriangleMesh)x).Mesh.TriangleCount);
-
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         var (regularNodes, outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(0.995f);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
