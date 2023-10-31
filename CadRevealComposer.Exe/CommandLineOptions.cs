@@ -104,6 +104,17 @@ public class CommandLineOptions
     ]
     public uint TemplateCountLimit { get; set; }
 
+    [
+        Option(
+            longName: "SimplifierThreshold",
+            Default = (float)0,
+            Required = false,
+            HelpText = "The threshold used in simplification."
+        ),
+        Range(0, float.MaxValue)
+    ]
+    public float SimplifierThreshold { get; set; }
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes

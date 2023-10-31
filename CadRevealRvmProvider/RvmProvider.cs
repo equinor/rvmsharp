@@ -138,7 +138,8 @@ public class RvmProvider : IModelFormatProvider
         var meshes = RvmTessellator.TessellateAndOutputInstanceMeshes(
             facetGroupInstancingResult,
             pyramidInstancingResult,
-            instanceIdGenerator
+            instanceIdGenerator,
+            composerParameters.SimplifierThreshold
         );
 
         var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh).Concat(meshes).ToArray();
