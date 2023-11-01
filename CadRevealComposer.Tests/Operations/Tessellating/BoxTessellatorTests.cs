@@ -15,7 +15,7 @@ public class BoxTessellatorTests
 
         var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedBox = BoxTessellator.Tessellate(box);
+        var tessellatedBox = (TriangleMesh)BoxTessellator.Tessellate(box);
 
         var vertices = tessellatedBox.Mesh.Vertices;
         var indices = tessellatedBox.Mesh.Indices;
@@ -33,7 +33,7 @@ public class BoxTessellatorTests
 
         var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedBox = BoxTessellator.Tessellate(box);
+        var tessellatedBox = (TriangleMesh)BoxTessellator.Tessellate(box);
 
         var vertices = tessellatedBox.Mesh.Vertices;
         var indices = tessellatedBox.Mesh.Indices;
