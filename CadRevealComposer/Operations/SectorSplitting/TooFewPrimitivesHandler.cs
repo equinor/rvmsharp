@@ -34,14 +34,15 @@ public class TooFewPrimitivesHandler
 
                 var convertedGeometries = group.SelectMany(APrimitiveTessellator.TryToTessellate).ToArray();
 
-                if (convertedGeometries.First() is TriangleMesh) // Can be false if primitives aren't handled, currently: EllipsoidSegment and GeneralCylinder
-                {
-                    SuccessfullyConvertedGroupsOfPrimitives++;
-                    foreach (var convertedGeometry in convertedGeometries)
-                    {
-                        AdditionalNumberOfTriangles += ((TriangleMesh)convertedGeometry).Mesh.TriangleCount;
-                    }
-                }
+                // TODO: Logs doesn't work after returning original primitive fallback
+                // if (convertedGeometries.First() is TriangleMesh) // Can be false if primitives aren't handled, currently: EllipsoidSegment and GeneralCylinder
+                // {
+                //     SuccessfullyConvertedGroupsOfPrimitives++;
+                //     foreach (var convertedGeometry in convertedGeometries)
+                //     {
+                //         AdditionalNumberOfTriangles += ((TriangleMesh)convertedGeometry).Mesh.TriangleCount;
+                //     }
+                // }
 
                 newGeometries.AddRange(convertedGeometries);
             }

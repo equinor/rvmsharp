@@ -1,13 +1,15 @@
 namespace CadRevealComposer.Operations.Tessellating;
 
 using Primitives;
+using System;
 using System.Linq;
 using System.Numerics;
 using Tessellation;
+using Utils;
 
 public static class BoxTessellator
 {
-    public static TriangleMesh Tessellate(Box box)
+    public static APrimitive Tessellate(Box box)
     {
         var vertices = new Vector3[]
         {
@@ -42,6 +44,13 @@ public static class BoxTessellator
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices, 0f);
+
+        if (mesh.Vertices.Any(v => !v.IsFinite()))
+        {
+            Console.WriteLine($"WARNING: Could not tessellate Box. Matrix: {box.InstanceMatrix.ToString()}");
+            return box;
+        }
+
         return new TriangleMesh(mesh, box.TreeIndex, box.Color, box.AxisAlignedBoundingBox);
     }
 }

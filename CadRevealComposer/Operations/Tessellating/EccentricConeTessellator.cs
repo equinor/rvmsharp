@@ -6,11 +6,13 @@ using Commons.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
+using Utils;
 
 public static class EccentricConeTessellator
 {
-    public static TriangleMesh Tessellate(EccentricCone cone)
+    public static APrimitive Tessellate(EccentricCone cone)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -61,6 +63,14 @@ public static class EccentricConeTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
+
+        if (mesh.Vertices.Any(v => !v.IsFinite()))
+        {
+            Console.WriteLine(
+                $"WARNING: Could not tessellate Cone. CenterA: {cone.CenterA} CenterB: {cone.CenterB} Normal: {cone.Normal} RadiusA: {cone.RadiusA} RadiusB: {cone.RadiusB}"
+            );
+            return cone;
+        }
         return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }
 }
