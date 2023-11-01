@@ -15,7 +15,7 @@ public class EccentricConeTessellatorTests
 
         var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedCone = EccentricConeTessellator.Tessellate(cone);
+        var tessellatedCone = EccentricConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;
@@ -40,7 +40,7 @@ public class EccentricConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
 
@@ -62,7 +62,7 @@ public class EccentricConeTessellatorTests
 
         var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedCone = EccentricConeTessellator.Tessellate(cone);
+        var tessellatedCone = EccentricConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;

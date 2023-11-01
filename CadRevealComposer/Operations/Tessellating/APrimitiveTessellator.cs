@@ -1,34 +1,25 @@
 namespace CadRevealComposer.Operations.Tessellating;
 
 using Primitives;
-using System.Collections.Generic;
 
 public static class APrimitiveTessellator
 {
-    public static IEnumerable<APrimitive> TryToTessellate(APrimitive primitive)
+    public static TriangleMesh? TryToTessellate(APrimitive primitive)
     {
-        var result = new List<APrimitive>();
-
         switch (primitive)
         {
             case Box box:
-                result.Add(BoxTessellator.Tessellate(box));
-                break;
+                return BoxTessellator.Tessellate(box);
             case EccentricCone cone:
-                result.Add(EccentricConeTessellator.Tessellate(cone));
-                break;
+                return EccentricConeTessellator.Tessellate(cone);
             case TorusSegment torus:
-                result.Add(TorusSegmentTessellator.Tessellate(torus));
-                break;
+                return TorusSegmentTessellator.Tessellate(torus);
             case Cone cone:
-                result.Add(ConeTessellator.Tessellate(cone));
-                break;
+                return ConeTessellator.Tessellate(cone);
             case Circle circle:
-                result.Add(CircleTessellator.Tessellate(circle));
-                break;
+                return CircleTessellator.Tessellate(circle);
             case GeneralRing generalRing:
-                result.Add(GeneralRingTessellator.Tessellate(generalRing));
-                break;
+                return GeneralRingTessellator.Tessellate(generalRing);
 
             // TODO Is complex and moved to own user story #131981
             //case EllipsoidSegment ellipsoidSegment:
@@ -40,10 +31,7 @@ public static class APrimitiveTessellator
             //     result.AddRange(GeneralCylinderTessellator.Tessellate(cylinder));
             //     break;
             default:
-                result.Add(primitive);
-                break;
+                return null;
         }
-
-        return result;
     }
 }

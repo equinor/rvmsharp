@@ -12,7 +12,7 @@ using System.Numerics;
 
 public static class GeneralRingTessellator
 {
-    public static TriangleMesh Tessellate(GeneralRing generalRing)
+    public static TriangleMesh? Tessellate(GeneralRing generalRing)
     {
         var matrix = generalRing.InstanceMatrix;
 
@@ -81,6 +81,14 @@ public static class GeneralRingTessellator
         var transformedVertices = vertices.Select(v => Vector3.Transform(v, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
+        if (mesh.Vertices.Any(v => !v.IsFinite()))
+        {
+            Console.WriteLine(
+                $"WARNING: Could not tessellate GeneralRing. ArcAnge: {generalRing.ArcAngle} Matrix: {generalRing.InstanceMatrix.ToString()} Normal: {generalRing.Normal} Thickness: {generalRing.Thickness}"
+            );
+
+            return null;
+        }
         return new TriangleMesh(mesh, generalRing.TreeIndex, generalRing.Color, generalRing.AxisAlignedBoundingBox);
     }
 }

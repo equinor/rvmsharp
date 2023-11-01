@@ -11,7 +11,7 @@ using Utils;
 
 public static class TorusSegmentTessellator
 {
-    public static TriangleMesh Tessellate(TorusSegment torus)
+    public static TriangleMesh? Tessellate(TorusSegment torus)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -133,6 +133,14 @@ public static class TorusSegmentTessellator
         var transformedVertices = vertices.Select(x => Vector3.Transform(x, matrix)).ToArray();
 
         var mesh = new Mesh(transformedVertices, indices.ToArray(), error);
+        if (mesh.Vertices.Any(v => !v.IsFinite()))
+        {
+            Console.WriteLine(
+                $"WARNING: Could not tessellate TorusSegment. ArcAngle: {torus.ArcAngle} Matrix: {torus.InstanceMatrix.ToString()} Radius: {torus.Radius} TubeRadius: {torus.TubeRadius}"
+            );
+
+            return null;
+        }
         return new TriangleMesh(mesh, torus.TreeIndex, torus.Color, torus.AxisAlignedBoundingBox);
     }
 }

@@ -14,7 +14,7 @@ public class CircleTessellatorTests
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var circle = new Circle(Matrix4x4.Identity, Vector3.UnitY, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedCircle = CircleTessellator.Tessellate(circle);
+        var tessellatedCircle = CircleTessellator.Tessellate(circle)!;
 
         var vertices = tessellatedCircle.Mesh.Vertices;
         var indices = tessellatedCircle.Mesh.Indices;
@@ -30,7 +30,7 @@ public class CircleTessellatorTests
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var circle = new Circle(Matrix4x4.Identity, Vector3.UnitY, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedCircle = CircleTessellator.Tessellate(circle);
+        var tessellatedCircle = CircleTessellator.Tessellate(circle)!;
 
         var vertices = tessellatedCircle.Mesh.Vertices;
         var indices = tessellatedCircle.Mesh.Indices;

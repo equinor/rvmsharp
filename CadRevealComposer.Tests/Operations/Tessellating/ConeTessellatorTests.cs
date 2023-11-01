@@ -26,7 +26,7 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;
@@ -51,7 +51,7 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;
@@ -76,7 +76,7 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
 
@@ -108,7 +108,7 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone)!;
 
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;

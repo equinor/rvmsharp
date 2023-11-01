@@ -6,11 +6,12 @@ using Utils;
 using Commons.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 public static class ConeTessellator
 {
-    public static TriangleMesh Tessellate(Cone cone)
+    public static TriangleMesh? Tessellate(Cone cone)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -76,6 +77,14 @@ public static class ConeTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
+
+        if (mesh.Vertices.Any(v => !v.IsFinite()))
+        {
+            Console.WriteLine(
+                $"WARNING: Could not tessellate Cone. ArcAngle: {cone.ArcAngle} CenterA: {cone.CenterA} CenterB: {cone.CenterB} LocalXAxis: {cone.LocalXAxis} RadiusA: {cone.RadiusA} RadiusB: {cone.RadiusB}"
+            );
+            return null;
+        }
         return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }
 }

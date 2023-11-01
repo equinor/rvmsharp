@@ -6,11 +6,12 @@ using CadRevealComposer.Utils;
 using Commons.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 public static class CircleTessellator
 {
-    public static TriangleMesh Tessellate(Circle circle)
+    public static TriangleMesh? Tessellate(Circle circle)
     {
         if (!circle.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out var position))
         {
@@ -57,6 +58,14 @@ public static class CircleTessellator
         }
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), error);
+
+        if (mesh.Vertices.Any(v => !v.IsFinite()))
+        {
+            Console.WriteLine(
+                $"WARNING: Could not tessellate Circle. Matrix: {circle.InstanceMatrix.ToString()} Normal: {circle.Normal}"
+            );
+            return null;
+        }
         return new TriangleMesh(mesh, circle.TreeIndex, circle.Color, circle.AxisAlignedBoundingBox);
     }
 }
