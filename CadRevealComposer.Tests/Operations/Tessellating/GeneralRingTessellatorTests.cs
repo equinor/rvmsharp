@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
-using CadRevealComposer.Primitives;
+using Primitives;
 using System;
 using System.Drawing;
 using System.Numerics;
@@ -24,9 +24,9 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
-        var indices = tessellatedGeneralRing!.Mesh.Indices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
+        var vertices = tessellatedGeneralRing.Mesh.Vertices;
+        var indices = tessellatedGeneralRing.Mesh.Indices;
 
         Assert.AreEqual(indices.Length, (vertices.Length - 2) * 3);
     }
@@ -46,9 +46,9 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
-        var indices = tessellatedGeneralRing!.Mesh.Indices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
+        var vertices = tessellatedGeneralRing.Mesh.Vertices;
+        var indices = tessellatedGeneralRing.Mesh.Indices;
 
         Assert.AreEqual(indices.Length, (vertices.Length - 2) * 3);
     }
@@ -70,8 +70,8 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
+        var vertices = tessellatedGeneralRing.Mesh.Vertices;
         var indices = tessellatedGeneralRing.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
@@ -107,9 +107,9 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
-        var indices = tessellatedGeneralRing!.Mesh.Indices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
+        var vertices = tessellatedGeneralRing.Mesh.Vertices;
+        var indices = tessellatedGeneralRing.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
         {
