@@ -107,7 +107,7 @@ public static class Simplify
     /// <param name="mesh"></param>
     /// <param name="thresholdInMeshUnits">Usually meters</param>
     /// <returns></returns>
-    public static (Mesh mesh, bool success) SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
+    public static Mesh SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
     {
         Interlocked.Add(ref SimplificationBefore, mesh.Vertices.Length);
         Interlocked.Add(ref SimplificationBeforeTriangleCount, mesh.TriangleCount);
@@ -141,13 +141,13 @@ public static class Simplify
             var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
             Interlocked.Add(ref SimplificationAfter, lastPassMesh.Vertices.Length);
             Interlocked.Add(ref SimplificationAfterTriangleCount, lastPassMesh.TriangleCount);
-            return (lastPassMesh, true);
+            return lastPassMesh;
         }
         catch (Exception e)
         {
             Console.WriteLine($"TEST: {dMesh.VertexEdges.MemoryUsage}");
             Console.WriteLine("Failed to optimize mesh: " + e);
-            return (mesh, false);
+            return mesh;
         }
     }
 }

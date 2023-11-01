@@ -20,16 +20,6 @@ public class SectorSplitterOctree : ISectorSplitter
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
-        allGeometries = allGeometries
-            .Select(g =>
-            {
-                if (g is TriangleMesh triangleMesh)
-                    return g with { Color = Color.Gold };
-                else
-                    return g;
-            })
-            .ToArray();
-
         var sectorIdGenerator = new SequentialIdGenerator();
 
         var numberOfTriangles = allGeometries

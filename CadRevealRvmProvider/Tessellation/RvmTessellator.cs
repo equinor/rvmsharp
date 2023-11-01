@@ -35,7 +35,7 @@ public class RvmTessellator
             var mesh = ConvertRvmMesh(rvmMesh);
 
             if (simplifierThreshold > 0.0f)
-                (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
 
             return new TriangleMesh(mesh, p.TreeIndex, Color.LightSkyBlue, p.AxisAlignedBoundingBox);
         }
