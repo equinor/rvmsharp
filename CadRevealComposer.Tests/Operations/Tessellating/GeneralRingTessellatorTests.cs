@@ -46,9 +46,9 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = (TriangleMesh)GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing.Mesh.Vertices;
-        var indices = tessellatedGeneralRing.Mesh.Indices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
+        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
+        var indices = tessellatedGeneralRing!.Mesh.Indices;
 
         Assert.AreEqual(indices.Length, (vertices.Length - 2) * 3);
     }
