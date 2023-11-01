@@ -29,6 +29,8 @@ public class RvmTessellator
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p, float simplifierThreshold)
         {
+            simplifierThreshold = 0.05f;
+
             var rvmMesh = Tessellate(p.RvmPrimitive);
             var mesh = ConvertRvmMesh(rvmMesh);
             (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
