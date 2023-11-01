@@ -29,11 +29,14 @@ public class RvmTessellator
     {
         static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p, float simplifierThreshold)
         {
-            simplifierThreshold = 0.05f;
+            simplifierThreshold = 0.01f; // Hardcoded for now, but is also a CLI option
 
             var rvmMesh = Tessellate(p.RvmPrimitive);
             var mesh = ConvertRvmMesh(rvmMesh);
-            (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+
+            if (simplifierThreshold > 0.0f)
+                (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+
             return new TriangleMesh(mesh, p.TreeIndex, Color.LightSkyBlue, p.AxisAlignedBoundingBox);
         }
 

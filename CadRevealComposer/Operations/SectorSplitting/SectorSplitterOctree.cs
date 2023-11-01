@@ -25,8 +25,6 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 if (g is TriangleMesh triangleMesh)
                     return g with { Color = Color.Gold };
-                else if (g is InstancedMesh instancedMesh)
-                    return g with { Color = Color.HotPink };
                 else
                     return g;
             })
