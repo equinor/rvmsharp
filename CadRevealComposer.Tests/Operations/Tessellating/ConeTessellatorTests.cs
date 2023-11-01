@@ -26,10 +26,10 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = (TriangleMesh)ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
-        var indices = tessellatedCone.Mesh.Indices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
+        var indices = tessellatedCone!.Mesh.Indices;
 
         Assert.AreEqual(vertices.Length * 3, indices.Length);
     }
