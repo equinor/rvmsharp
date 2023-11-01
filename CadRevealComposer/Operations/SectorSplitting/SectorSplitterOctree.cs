@@ -11,11 +11,15 @@ using Utils;
 public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
     private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
+
+    private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
+    private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -74,6 +78,16 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield return sector;
             }
         }
+
+        Console.WriteLine(
+            $"Tried to convert {_tooFewPrimitivesHandler.TriedConvertedGroupsOfPrimitives} out of {_tooFewPrimitivesHandler.TotalGroupsOfPrimitive} total groups of primitives"
+        );
+        Console.WriteLine(
+            $"Successfully converted {_tooFewPrimitivesHandler.SuccessfullyConvertedGroupsOfPrimitives} groups of primitives"
+        );
+        Console.WriteLine(
+            $"This resulted in {_tooFewPrimitivesHandler.AdditionalNumberOfTriangles} additional triangles"
+        );
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
@@ -122,20 +136,13 @@ public class SectorSplitterOctree : ISectorSplitter
         if (!subVoxelNodes.Any())
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
-            var path = $"{parentPath}/{sectorId}";
-            var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
-            var minDiagonal = nodes.Min(x => x.Diagonal);
-            var maxDiagonal = nodes.Max(x => x.Diagonal);
 
-            yield return new InternalSector(
+            yield return CreateSector(
+                mainVoxelNodes,
                 sectorId,
                 parentSectorId,
+                parentPath,
                 actualDepth,
-                path,
-                minDiagonal,
-                maxDiagonal,
-                geometries,
-                subtreeBoundingBox,
                 subtreeBoundingBox
             );
         }
@@ -151,20 +158,14 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
-                var geometryBb = geometries.CalculateBoundingBox();
 
-                var minDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Min(x => x.Diagonal) : 0;
-                var maxDiagonal = mainVoxelNodes.Any() ? mainVoxelNodes.Max(x => x.Diagonal) : 0;
-                yield return new InternalSector(
+                yield return CreateSector(
+                    mainVoxelNodes,
                     sectorId,
                     parentSectorId,
+                    parentPath,
                     actualDepth,
-                    path,
-                    minDiagonal,
-                    maxDiagonal,
-                    geometries,
-                    subtreeBoundingBox,
-                    geometryBb
+                    subtreeBoundingBox
                 );
 
                 parentPathForChildren = path;
@@ -225,9 +226,58 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
+    private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
         return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
+    }
+
+    private InternalSector CreateSector(
+        Node[] nodes,
+        uint sectorId,
+        uint? parentSectorId,
+        string parentPath,
+        int depth,
+        BoundingBox subtreeBoundingBox
+    )
+    {
+        var path = $"{parentPath}/{sectorId}";
+
+        var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
+        var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
+        var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+        var geometryBoundingBox = geometries.CalculateBoundingBox();
+
+        var geometriesCount = geometries.Length;
+
+        // NOTE: This increases triangle count
+        geometries = _tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewInstancesHandler from {geometriesCount} to {geometries}"
+            );
+        }
+
+        // NOTE: This increases triangle count
+        geometries = _tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewPrimitives from {geometriesCount} to {geometries.Length}"
+            );
+        }
+
+        return new InternalSector(
+            sectorId,
+            parentSectorId,
+            depth,
+            path,
+            minDiagonal,
+            maxDiagonal,
+            geometries,
+            subtreeBoundingBox,
+            geometryBoundingBox
+        );
     }
 
     private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
@@ -256,7 +306,7 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget, int actualDepth)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long byteSizeBudget, int actualDepth)
     {
         var selectedNodes = actualDepth switch
         {
@@ -268,19 +318,25 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
 
-        var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();
-        var primitiveBudget = SectorEstimatedPrimitiveBudget;
+        var byteSizeBudgetLeft = byteSizeBudget;
+        var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
+        var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            if (budgetLeft < 0 || primitiveBudget <= 0 && nodeArray.Length - i > 10)
+            if (
+                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
+                && nodeArray.Length - i > 10
+            )
             {
                 yield break;
             }
 
             var node = nodeArray[i];
-            budgetLeft -= node.EstimatedByteSize;
-            primitiveBudget -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            byteSizeBudgetLeft -= node.EstimatedByteSize;
+            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            trianglesBudgetLeft -= node.EstimatedTriangleCount;
+
             yield return node;
         }
     }

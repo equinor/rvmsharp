@@ -75,37 +75,4 @@ public static class TessellationHelpers
         vertices[l++] = pz;
         return l;
     }
-
-    /// <summary>
-    /// Calculates the "maximum deviation" in the mesh from the "ideal" primitive.
-    /// If we round a cylinder to N segment faces, this method gives us the distance from the extents of a the center
-    /// of a flat face to the extents of a perfect cylinder.
-    /// See: https://en.wikipedia.org/wiki/Sagitta_(geometry)
-    /// </summary>
-    public static float SagittaBasedError(double arc, float radius, float scale, int segments)
-    {
-        var lengthOfSagitta = scale * radius * (1.0f - Math.Cos(arc / segments)); // Length of sagitta
-        //assert(s <= tolerance);
-        return (float)lengthOfSagitta;
-    }
-
-    /// <summary>
-    /// Calculates the amount of segments we need to represent this primitive within a given tolerance.
-    /// </summary>
-    /// <example>
-    /// Example: A small cylinder with a tolerance of 0.1 might be represented with 8 sides, but a large cylinder might need 32
-    /// </example>
-    public static int SagittaBasedSegmentCount(double arc, float radius, float scale, float tolerance)
-    {
-        var maximumSagitta = tolerance;
-        var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - maximumSagitta / (scale * radius)));
-        if (double.IsNaN(samples))
-        {
-            throw new Exception(
-                $"Number of samples is calculated as NaN. Diagnostics: ({nameof(scale)}: {scale}, {nameof(arc)}: {arc}, {nameof(radius)}: {radius}, {nameof(tolerance)}: {tolerance} )"
-            );
-        }
-
-        return Math.Min(MaxSamples, (int)(Math.Max(MinSamples, Math.Ceiling(samples))));
-    }
 }
