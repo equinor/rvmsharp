@@ -12,7 +12,7 @@ using Utils;
 
 public static class EccentricConeTessellator
 {
-    public static APrimitive Tessellate(EccentricCone cone)
+    public static TriangleMesh? Tessellate(EccentricCone cone)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -69,7 +69,7 @@ public static class EccentricConeTessellator
             Console.WriteLine(
                 $"WARNING: Could not tessellate Cone. CenterA: {cone.CenterA} CenterB: {cone.CenterB} Normal: {cone.Normal} RadiusA: {cone.RadiusA} RadiusB: {cone.RadiusB}"
             );
-            return cone;
+            return null;
         }
         return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }

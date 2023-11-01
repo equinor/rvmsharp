@@ -15,10 +15,10 @@ public class EccentricConeTessellatorTests
 
         var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedCone = (TriangleMesh)EccentricConeTessellator.Tessellate(cone);
+        var tessellatedCone = EccentricConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
-        var indices = tessellatedCone.Mesh.Indices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
+        var indices = tessellatedCone!.Mesh.Indices;
 
         Assert.AreEqual(indices.Length, vertices.Length * 3);
     }
@@ -40,9 +40,9 @@ public class EccentricConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = (TriangleMesh)ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
 
         foreach (var vertex in vertices)
         {
@@ -62,10 +62,10 @@ public class EccentricConeTessellatorTests
 
         var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedCone = (TriangleMesh)EccentricConeTessellator.Tessellate(cone);
+        var tessellatedCone = EccentricConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
-        var indices = tessellatedCone.Mesh.Indices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
+        var indices = tessellatedCone!.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
         {

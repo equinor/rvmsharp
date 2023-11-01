@@ -70,8 +70,8 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = (TriangleMesh)GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing.Mesh.Vertices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
+        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
         var indices = tessellatedGeneralRing.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
@@ -107,9 +107,9 @@ public class GeneralRingTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedGeneralRing = (TriangleMesh)GeneralRingTessellator.Tessellate(ring);
-        var vertices = tessellatedGeneralRing.Mesh.Vertices;
-        var indices = tessellatedGeneralRing.Mesh.Indices;
+        var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring);
+        var vertices = tessellatedGeneralRing!.Mesh.Vertices;
+        var indices = tessellatedGeneralRing!.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
         {

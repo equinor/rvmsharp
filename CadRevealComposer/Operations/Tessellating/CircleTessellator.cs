@@ -11,7 +11,7 @@ using System.Numerics;
 
 public static class CircleTessellator
 {
-    public static APrimitive Tessellate(Circle circle)
+    public static TriangleMesh? Tessellate(Circle circle)
     {
         if (!circle.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out var position))
         {
@@ -64,7 +64,7 @@ public static class CircleTessellator
             Console.WriteLine(
                 $"WARNING: Could not tessellate Circle. Matrix: {circle.InstanceMatrix.ToString()} Normal: {circle.Normal}"
             );
-            return circle;
+            return null;
         }
         return new TriangleMesh(mesh, circle.TreeIndex, circle.Color, circle.AxisAlignedBoundingBox);
     }

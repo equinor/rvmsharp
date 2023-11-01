@@ -15,10 +15,10 @@ public class BoxTessellatorTests
 
         var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedBox = (TriangleMesh)BoxTessellator.Tessellate(box);
+        var tessellatedBox = BoxTessellator.Tessellate(box);
 
-        var vertices = tessellatedBox.Mesh.Vertices;
-        var indices = tessellatedBox.Mesh.Indices;
+        var vertices = tessellatedBox!.Mesh.Vertices;
+        var indices = tessellatedBox!.Mesh.Indices;
 
         Assert.AreEqual(vertices.Length, 8);
         Assert.AreEqual(indices.Length, 36);
@@ -33,10 +33,10 @@ public class BoxTessellatorTests
 
         var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
 
-        var tessellatedBox = (TriangleMesh)BoxTessellator.Tessellate(box);
+        var tessellatedBox = BoxTessellator.Tessellate(box);
 
-        var vertices = tessellatedBox.Mesh.Vertices;
-        var indices = tessellatedBox.Mesh.Indices;
+        var vertices = tessellatedBox!.Mesh.Vertices;
+        var indices = tessellatedBox!.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
         {

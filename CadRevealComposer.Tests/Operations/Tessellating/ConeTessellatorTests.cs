@@ -51,10 +51,10 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = (TriangleMesh)ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
-        var indices = tessellatedCone.Mesh.Indices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
+        var indices = tessellatedCone!.Mesh.Indices;
 
         Assert.AreEqual((vertices.Length - 2) * 3, indices.Length);
     }
@@ -76,9 +76,9 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = (TriangleMesh)ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
 
         foreach (var vertex in vertices)
         {
@@ -108,10 +108,10 @@ public class ConeTessellatorTests
             dummyBoundingBox
         );
 
-        var tessellatedCone = (TriangleMesh)ConeTessellator.Tessellate(cone);
+        var tessellatedCone = ConeTessellator.Tessellate(cone);
 
-        var vertices = tessellatedCone.Mesh.Vertices;
-        var indices = tessellatedCone.Mesh.Indices;
+        var vertices = tessellatedCone!.Mesh.Vertices;
+        var indices = tessellatedCone!.Mesh.Indices;
 
         for (uint index = 0; index < indices.Length; index += 3)
         {

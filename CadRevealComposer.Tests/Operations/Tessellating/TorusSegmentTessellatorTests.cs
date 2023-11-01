@@ -15,10 +15,10 @@ public class TorusSegmentTessellatorTests
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
         var torus = new TorusSegment(MathF.PI * 2, Matrix4x4.Identity, 1, 0.25f, 1, Color.Red, dummyBoundingBox);
-        var torusTessellate = (TriangleMesh)TorusSegmentTessellator.Tessellate(torus);
+        var torusTessellate = TorusSegmentTessellator.Tessellate(torus);
 
-        var vertices = torusTessellate.Mesh.Vertices;
-        var indices = torusTessellate.Mesh.Indices;
+        var vertices = torusTessellate!.Mesh.Vertices;
+        var indices = torusTessellate!.Mesh.Indices;
 
         Assert.Greater(vertices.Length, 0);
         Assert.Greater(indices.Length, 0);
@@ -29,9 +29,9 @@ public class TorusSegmentTessellatorTests
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
         var torus = new TorusSegment(MathF.PI * 2, Matrix4x4.Identity, 1, 0.25f, 1, Color.Red, dummyBoundingBox);
-        var tessellatedTorus = (TriangleMesh)TorusSegmentTessellator.Tessellate(torus);
+        var tessellatedTorus = TorusSegmentTessellator.Tessellate(torus);
 
-        var vertices = tessellatedTorus.Mesh.Vertices;
+        var vertices = tessellatedTorus!.Mesh.Vertices;
 
         var a = torus.TubeRadius;
         var c = torus.Radius;
@@ -54,10 +54,10 @@ public class TorusSegmentTessellatorTests
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
         var torus = new TorusSegment(MathF.PI * 2, Matrix4x4.Identity, 1, 0.25f, 1, Color.Red, dummyBoundingBox);
-        var torusTessellate = (TriangleMesh)TorusSegmentTessellator.Tessellate(torus);
+        var torusTessellate = TorusSegmentTessellator.Tessellate(torus);
 
-        var vertices = torusTessellate.Mesh.Vertices;
-        var indices = torusTessellate.Mesh.Indices;
+        var vertices = torusTessellate!.Mesh.Vertices;
+        var indices = torusTessellate!.Mesh.Indices;
 
         var poloidalSegments = indices[1]; // NOTE: This is dependent on tessellation order
         var toroidalSegments = indices.Length / (3 * poloidalSegments * 2); // Two triangles in each segment (two triangles in a square)

@@ -9,7 +9,7 @@ using Utils;
 
 public static class BoxTessellator
 {
-    public static APrimitive Tessellate(Box box)
+    public static TriangleMesh? Tessellate(Box box)
     {
         var vertices = new Vector3[]
         {
@@ -48,7 +48,7 @@ public static class BoxTessellator
         if (mesh.Vertices.Any(v => !v.IsFinite()))
         {
             Console.WriteLine($"WARNING: Could not tessellate Box. Matrix: {box.InstanceMatrix.ToString()}");
-            return box;
+            return null;
         }
 
         return new TriangleMesh(mesh, box.TreeIndex, box.Color, box.AxisAlignedBoundingBox);

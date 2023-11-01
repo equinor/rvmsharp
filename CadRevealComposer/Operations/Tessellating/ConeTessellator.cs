@@ -11,7 +11,7 @@ using System.Numerics;
 
 public static class ConeTessellator
 {
-    public static APrimitive Tessellate(Cone cone)
+    public static TriangleMesh? Tessellate(Cone cone)
     {
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
@@ -83,7 +83,7 @@ public static class ConeTessellator
             Console.WriteLine(
                 $"WARNING: Could not tessellate Cone. ArcAngle: {cone.ArcAngle} CenterA: {cone.CenterA} CenterB: {cone.CenterB} LocalXAxis: {cone.LocalXAxis} RadiusA: {cone.RadiusA} RadiusB: {cone.RadiusB}"
             );
-            return cone;
+            return null;
         }
         return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
     }
