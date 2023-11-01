@@ -32,7 +32,8 @@ public class FbxProviderTests
         false,
         true,
         false,
-        new NodeNameExcludeRegex(null)
+        new NodeNameExcludeRegex(null),
+        0.00f
     );
 
     private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
