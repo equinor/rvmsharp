@@ -46,7 +46,7 @@ public static class MeshTools
     /// Remove re-used vertices, and remap the Triangle indices to the new unique table.
     /// Saves memory but assumes the mesh ONLY has Position and Index data. Discards any normals!
     /// </summary>
-    public static void DeduplicateVerticesInPlace<T>(
+    private static void DeduplicateVerticesInPlace<T>(
         ref T[] vertices,
         ref uint[] indices,
         IEqualityComparer<T>? equalityComparer = null
@@ -90,25 +90,6 @@ public static class MeshTools
     }
 
     /// <summary>
-    /// Optimizes for best rendering performance without losing precision.
-    /// Removes duplicate vertices, reorders indices and vertices, and optimizes for GPU cache.
-    ///
-    /// Probably a minor improvement to rendering performance for most meshes, but usually really quick!
-    /// </summary>
-    public static void OptimizeInPlace<T>(
-        ref T[] vertices,
-        ref uint[] indices,
-        IEqualityComparer<T>? vertexComparer = null
-    )
-        where T : notnull
-    {
-        DeduplicateVerticesInPlace(ref vertices, ref indices, vertexComparer);
-        VertexCacheOptimizer.OptimizeVertexCache(indices, indices, (uint)vertices.Length);
-        VertexFetchOptimizer.OptimizeVertexFetch(vertices.AsSpan(), indices, vertices);
-    }
-
-    ///
-    /// <summary>
     /// <inheritdoc cref="OptimizeInPlace{T}" type="/summary"/>
     /// Returns a new mesh.
     /// </summary>
@@ -118,5 +99,23 @@ public static class MeshTools
         var verts = m.Vertices.ToArray();
         OptimizeInPlace(ref verts, ref indices);
         return new Mesh(verts, indices, m.Error);
+    }
+
+    /// <summary>
+    /// Optimizes for best rendering performance without losing precision.
+    /// Removes duplicate vertices, reorders indices and vertices, and optimizes for GPU cache.
+    ///
+    /// Probably a minor improvement to rendering performance for most meshes, but usually really quick!
+    /// </summary>
+    private static void OptimizeInPlace<T>(
+        ref T[] vertices,
+        ref uint[] indices,
+        IEqualityComparer<T>? vertexComparer = null
+    )
+        where T : notnull
+    {
+        DeduplicateVerticesInPlace(ref vertices, ref indices, vertexComparer);
+        VertexCacheOptimizer.OptimizeVertexCache(indices, indices, (uint)vertices.Length);
+        VertexFetchOptimizer.OptimizeVertexFetch(vertices.AsSpan(), indices, vertices);
     }
 }

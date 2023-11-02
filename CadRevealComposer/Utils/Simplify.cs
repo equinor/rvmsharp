@@ -17,17 +17,6 @@ public static class Simplify
             int,
             object /* Normals */
         >(mesh.Vertices.Select(Vec3ToVec3d), mesh.Indices.Select(x => (int)x));
-
-        // Alternative method?
-        // var dMesh = new DMesh3();
-        // dMesh.BeginUnsafeTrianglesInsert();
-        // dMesh.BeginUnsafeVerticesInsert();
-        // dMesh.TrianglesBuffer.Add(mesh.Triangles.Select(x => (int)x).ToArray());
-        // dMesh.VerticesBuffer.Add(mesh.Vertices.SelectMany(x => x.AsEnumerable()).Select(x => (double)x).ToArray());
-        // dMesh.NormalsBuffer.Add(mesh.Normals.SelectMany(x => x.AsEnumerable()).ToArray());
-        // dMesh.EndUnsafeTrianglesInsert();
-        // dMesh.EndUnsafeVerticesInsert();
-        // return dMesh;
     }
 
     static Vector3d Vec3ToVec3d(Vector3 vec3f)
@@ -43,56 +32,14 @@ public static class Simplify
     private static Mesh ConvertDMesh3ToMesh(DMesh3 dMesh3)
     {
         var verts = new Vector3[dMesh3.VertexCount];
-        //var normals = new Vector3[dMesh3.VertexCount];
 
         for (int vertexIndex = 0; vertexIndex < dMesh3.VertexCount; vertexIndex++)
         {
             verts[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexf(vertexIndex));
-            //normals[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexNormal(vertexIndex));
         }
 
         var mesh = new Mesh(verts, dMesh3.Triangles().SelectMany(x => x.array).Select(x => (uint)x).ToArray(), 0.0f);
         return mesh;
-    }
-
-    /// <summary>
-    /// Remove re-used vertices, and remap the Triangle indices to the new unique table.
-    /// Saves memory but assumes the mesh ONLY has Position and Index data and that you will not add normals later
-    /// </summary>
-    public static Mesh RemapDuplicatedVertices(Mesh input)
-    {
-        var alreadyFoundVertices = new Dictionary<Vector3, uint>();
-
-        var newVertices = new List<Vector3>();
-        var indicesCopy = input.Indices.ToArray();
-
-        // The index in the oldVertexIndexToNewIndexRemap array is the old index, and the value is the new index. (Think of it as a dict)
-        var oldVertexIndexToNewIndexRemap = new uint[input.Vertices.Length];
-
-        for (uint i = 0; i < input.Vertices.Length; i++)
-        {
-            var vertex = input.Vertices[i];
-            if (!alreadyFoundVertices.TryGetValue(vertex, out uint newIndex))
-            {
-                newIndex = (uint)newVertices.Count;
-                newVertices.Add(vertex);
-                alreadyFoundVertices.Add(vertex, newIndex);
-            }
-
-            oldVertexIndexToNewIndexRemap[i] = newIndex;
-        }
-
-        // Explicitly clear to unload memory as soon as possible.
-        alreadyFoundVertices.Clear();
-
-        for (int i = 0; i < indicesCopy.Length; i++)
-        {
-            var originalIndex = indicesCopy[i];
-            var vertexIndex = oldVertexIndexToNewIndexRemap[originalIndex];
-            indicesCopy[i] = vertexIndex;
-        }
-
-        return new Mesh(newVertices.ToArray(), indicesCopy, 0);
     }
 
     public static int SimplificationBefore = 0;
@@ -145,7 +92,6 @@ public static class Simplify
         }
         catch (Exception e)
         {
-            Console.WriteLine($"TEST: {dMesh.VertexEdges.MemoryUsage}");
             Console.WriteLine("Failed to optimize mesh: " + e);
             return mesh;
         }

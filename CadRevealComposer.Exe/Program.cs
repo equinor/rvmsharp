@@ -63,7 +63,7 @@ public static class Program
             options.SingleSector,
             options.SplitIntoZones,
             new NodeNameExcludeRegex(options.NodeNameExcludeRegex),
-            options.SimplifierThreshold
+            options.SimplificationThreshold
         );
 
         if (options.SplitIntoZones)

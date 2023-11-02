@@ -143,7 +143,7 @@ public class RvmProvider : IModelFormatProvider
             facetGroupInstancingResult,
             pyramidInstancingResult,
             instanceIdGenerator,
-            composerParameters.SimplifierThreshold
+            composerParameters.SimplificationThreshold
         );
 
         var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh).Concat(meshes).ToArray();

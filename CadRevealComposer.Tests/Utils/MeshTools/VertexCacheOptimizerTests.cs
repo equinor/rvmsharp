@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Tests;
+﻿namespace CadRevealComposer.Tests.Utils.MeshTools;
 
 using CadRevealComposer.Utils.MeshTools;
 

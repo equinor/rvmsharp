@@ -106,14 +106,14 @@ public class CommandLineOptions
 
     [
         Option(
-            longName: "SimplifierThreshold",
+            longName: "SimplificationThreshold",
             Default = (float)0,
             Required = false,
-            HelpText = "The threshold used in simplification."
+            HelpText = "The threshold used in simplification in meters."
         ),
         Range(0, float.MaxValue)
     ]
-    public float SimplifierThreshold { get; set; }
+    public float SimplificationThreshold { get; set; }
 
     public static void AssertValidOptions(CommandLineOptions options)
     {

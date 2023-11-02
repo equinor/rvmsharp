@@ -5,7 +5,7 @@ public record ComposerParameters(
     bool SingleSector,
     bool SplitIntoZones,
     NodeNameExcludeRegex NodeNameExcludeRegex,
-    float SimplifierThreshold
+    float SimplificationThreshold
 );
 
 public record NodeNameExcludeRegex(string? Value);
