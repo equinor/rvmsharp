@@ -107,7 +107,7 @@ public class CommandLineOptions
     [
         Option(
             longName: "SimplificationThreshold",
-            Default = (float)0,
+            Default = 0f,
             Required = false,
             HelpText = "The threshold used in simplification in meters."
         ),
