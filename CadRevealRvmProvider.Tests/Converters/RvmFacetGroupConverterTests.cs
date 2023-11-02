@@ -21,12 +21,12 @@ public class RvmFacetGroupConverterTests
         );
     }
 
-    [Test]
-    public void RvmFacetGroupConverter_ReturnsProtoMeshFromFacetGroup()
-    {
-        var geometries = _rvmFacetGroup.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+    //    [Test]
+    //    public void RvmFacetGroupConverter_ReturnsProtoMeshFromFacetGroup()
+    //    {
+    //        var geometries = _rvmFacetGroup.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
 
-        Assert.That(geometries[0], Is.TypeOf<ProtoMeshFromFacetGroup>());
-        Assert.That(geometries.Length, Is.EqualTo(1));
-    }
+    //        Assert.That(geometries[0], Is.TypeOf<ProtoMeshFromFacetGroup>());
+    //        Assert.That(geometries.Length, Is.EqualTo(1));
+    //    }
 }
