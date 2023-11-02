@@ -17,6 +17,10 @@ jobs:
       - name: Check formatting using csharpier
         run: |
           dotnet csharpier --check .
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "Tip: Install csharpier using ' dotnet tool restore ', and run it using ' dotnet csharpier . ' to autofix formatting."
+          }
 
   build:
     name: Build and test

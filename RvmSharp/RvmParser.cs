@@ -2,6 +2,7 @@
 
 using Containers;
 using Primitives;
+using RvmSharp.Operations;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -283,7 +284,18 @@ public static class RvmParser
                     group.AddChild(ReadCntb(stream));
                     break;
                 case "PRIM":
-                    group.AddChild(ReadPrimitive(stream));
+                    var primitive = ReadPrimitive(stream);
+                    if (Matrix4x4Helpers.MatrixContainsInfiniteValue(primitive.Matrix))
+                    {
+                        // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
+                        Console.WriteLine(
+                            "Invalid matrix found for primitive of " + name + ". " + " Discarding this primitive"
+                        );
+                    }
+                    else
+                    {
+                        group.AddChild(primitive);
+                    }
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {id}");
@@ -360,7 +372,6 @@ public static class RvmParser
 
             chunk = ReadChunkHeader(stream, out len, out dunno);
         }
-
         return new RvmFile(
             header,
             new RvmModel(

@@ -1,5 +1,6 @@
 namespace RvmSharp.Primitives;
 
+using System.Linq;
 using System.Numerics;
 
 public record RvmBoundingBox(Vector3 Min, Vector3 Max)
@@ -50,5 +51,22 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
     public RvmBoundingBox Encapsulate(RvmBoundingBox other)
     {
         return new RvmBoundingBox(Vector3.Min(Min, other.Min), Vector3.Max(Max, other.Max));
+    }
+
+    /// <summary>
+    /// Transforms a local axis aligned bounding box to a world space axis aligned bounding box
+    /// </summary>
+    /// <param name="localBoundingBox">An axis aligned bounding box in the primitive's local space</param>
+    /// <param name="matrix"></param>
+    /// <returns>An axis aligned bounding box in world space</returns>
+    public static RvmBoundingBox CalculateAxisAlignedBoundingBox(RvmBoundingBox localBoundingBox, Matrix4x4 matrix)
+    {
+        var box = localBoundingBox.GenerateBoxVertexes();
+
+        var rotatedBox = box.Select(vertex => Vector3.Transform(vertex, matrix)).ToArray();
+
+        var min = rotatedBox.Aggregate(Vector3.Min);
+        var max = rotatedBox.Aggregate(Vector3.Max);
+        return new RvmBoundingBox(Min: min, Max: max);
     }
 };

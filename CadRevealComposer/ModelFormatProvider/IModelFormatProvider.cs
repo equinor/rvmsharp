@@ -9,7 +9,7 @@ using System.IO;
 
 public interface IModelFormatProvider
 {
-    IReadOnlyList<CadRevealNode> ParseFiles(
+    (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,

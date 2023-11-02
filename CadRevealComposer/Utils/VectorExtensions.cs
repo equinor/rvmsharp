@@ -127,4 +127,10 @@ public static class VectorExtensions
                     : (divided.Z >= lowerTolerance && divided.Z <= upperTolerance)
             );
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFinite(this Vector3 vector)
+    {
+        return float.IsFinite(vector.X) && float.IsFinite(vector.Y) && float.IsFinite(vector.Z);
+    }
 }

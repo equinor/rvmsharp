@@ -101,6 +101,7 @@ end {
     $artifactGlobs = @(
         "scene.json"
         "initialCamera.json"
+        "modelMetadata.json"
         "*.db"
         "*.glb"
     )

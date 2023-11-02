@@ -11,14 +11,16 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
 using Converters;
+using Converters.CapVisibilityHelpers;
 using Operations;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using Tessellation;
 
 public class RvmProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -44,8 +46,10 @@ public class RvmProvider : IModelFormatProvider
         if (workload.Length == 0)
         {
             // returns empty list if there are no rvm files to process
-            return new List<CadRevealNode>();
+            return (new List<CadRevealNode>(), null);
         }
+
+        LogRvmPrimitives(rvmStore);
         Console.WriteLine(
             $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
         );
@@ -58,7 +62,7 @@ public class RvmProvider : IModelFormatProvider
         );
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
-        return nodes;
+        return (nodes, null);
     }
 
     public APrimitive[] ProcessGeometries(
@@ -146,11 +150,29 @@ public class RvmProvider : IModelFormatProvider
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
-        Console.WriteLine($"Show number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Shown}");
-        Console.WriteLine($"Hide number of snout caps: {PrimitiveCapHelper.GlobalCount_SnoutCaps_Hidden}");
+        Console.WriteLine($"Show number of caps: {CapVisibility.CapsShown}");
+        Console.WriteLine($"Hide number of caps: {CapVisibility.CapsHidden}");
+        Console.WriteLine($"Caps Without connection: {CapVisibility.CapsWithoutConnections}");
+        Console.WriteLine($"Total number of caps tested: {CapVisibility.TotalNumberOfCapsTested}");
 
         stopwatch.Restart();
 
         return geometriesIncludingMeshes;
+    }
+
+    private static void LogRvmPrimitives(RvmStore rvmStore)
+    {
+        var allRvmPrimitivesGroups = rvmStore.RvmFiles
+            .SelectMany(f => f.Model.Children)
+            .SelectMany(RvmNode.GetAllPrimitivesFlat)
+            .GroupBy(x => x.GetType());
+
+        using (new TeamCityLogBlock("RvmPrimitive Count"))
+        {
+            foreach (var group in allRvmPrimitivesGroups)
+            {
+                Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
+            }
+        }
     }
 }
