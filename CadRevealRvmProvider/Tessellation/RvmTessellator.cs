@@ -8,6 +8,7 @@ using CadRevealComposer.Utils.MeshTools;
 using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
 
@@ -19,6 +20,11 @@ public class RvmTessellator
         // Because it does not use normals, we can remove duplicate vertices optimizing it slightly
         return new Mesh(rvmMesh.Vertices, rvmMesh.Triangles, rvmMesh.Error);
     }
+
+    public static int NonSimplifiedMeshCostInitial = 0;
+    public static int NonSimplifiedMeshCostAfter = 0;
+    public static ConcurrentDictionary<string, int> DisciplineTriangleCostBeforeDict = new();
+    public static ConcurrentDictionary<string, int> DisciplineTriangleCostAfterDict = new();
 
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
@@ -33,9 +39,28 @@ public class RvmTessellator
 
             var rvmMesh = Tessellate(p.RvmPrimitive);
             var mesh = ConvertRvmMesh(rvmMesh);
+            if (p is ProtoMeshFromFacetGroup pfg)
+            {
+                // Setup dict on first mesh
+                if (!DisciplineTriangleCostAfterDict.ContainsKey(pfg.Discipline))
+                {
+                    DisciplineTriangleCostAfterDict[pfg.Discipline] = 0;
+                    DisciplineTriangleCostBeforeDict[pfg.Discipline] = 0;
+                }
 
-            if (simplifierThreshold > 0.0f)
-                (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                DisciplineTriangleCostBeforeDict[pfg.Discipline] = DisciplineTriangleCostBeforeDict[pfg.Discipline] + mesh.TriangleCount;
+                Interlocked.Add(ref NonSimplifiedMeshCostInitial, mesh.TriangleCount);
+                if (simplifierThreshold > 0.0f)
+                    (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                Interlocked.Add(ref NonSimplifiedMeshCostAfter, mesh.TriangleCount);
+                DisciplineTriangleCostAfterDict[pfg.Discipline] = DisciplineTriangleCostAfterDict[pfg.Discipline] + mesh.TriangleCount;
+            }
+            else
+            {
+                // Includes Pyramids
+                if (simplifierThreshold > 0.0f)
+                    (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+            }
 
             return new TriangleMesh(mesh, p.TreeIndex, Color.LightSkyBlue, p.AxisAlignedBoundingBox);
         }
@@ -130,6 +155,16 @@ public class RvmTessellator
                     Percent of Before Tris: {(Simplify.SimplificationAfterTriangleCount / (float)Simplify.SimplificationBeforeTriangleCount):P2}
                     """
             );
+
+            Console.WriteLine("NonSimplifiedMeshCost: " + NonSimplifiedMeshCostInitial);
+            Console.WriteLine("NonSimplifiedMeshCostAfter: " + NonSimplifiedMeshCostAfter);
+
+            foreach (var kvp in DisciplineTriangleCostAfterDict)
+            {
+                var after = kvp.Value;
+                var before = DisciplineTriangleCostBeforeDict[kvp.Key];
+                Console.WriteLine($"{kvp.Key, -8}. Before: {before, 20} After: {after, 20}");
+            }
         }
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();

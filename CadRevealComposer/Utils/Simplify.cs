@@ -147,6 +147,10 @@ public static class Simplify
         {
             Console.WriteLine($"TEST: {dMesh.VertexEdges.MemoryUsage}");
             Console.WriteLine("Failed to optimize mesh: " + e);
+            // TODO: Fix logging to always log the returned mesh
+            // Also log the cost of all non-optimized meshes maybe?
+            Interlocked.Add(ref SimplificationAfter, mesh.Vertices.Length);
+            Interlocked.Add(ref SimplificationAfterTriangleCount, mesh.TriangleCount);
             return (mesh, false);
         }
     }

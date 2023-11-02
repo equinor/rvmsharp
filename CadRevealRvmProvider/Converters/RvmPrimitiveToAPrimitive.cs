@@ -14,7 +14,6 @@ public class RvmPrimitiveToAPrimitive
             );
             return Array.Empty<APrimitive>();
         }
-
         switch (rvmPrimitive)
         {
             case RvmBox rvmBox:
@@ -24,7 +23,7 @@ public class RvmPrimitiveToAPrimitive
             case RvmEllipticalDish rvmEllipticalDish:
                 return rvmEllipticalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmFacetGroup rvmFacetGroup:
-                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
+                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), rvmNode);
             case RvmLine:
                 // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
                 return Array.Empty<APrimitive>();

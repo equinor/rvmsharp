@@ -18,7 +18,8 @@ public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
+    BoundingBox AxisAlignedBoundingBox,
+    string Discipline
 ) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record ProtoMeshFromRvmPyramid(
