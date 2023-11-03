@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer;
 
 using Configuration;
+using Devtools.Protobuf;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
@@ -20,6 +21,8 @@ using Utils.MeshTools;
 
 public static class CadRevealComposerRunner
 {
+    private const string CacheFilename = "todo2.revealcomposer";
+
     public static void Process(
         DirectoryInfo inputFolderPath,
         DirectoryInfo outputDirectory,
@@ -28,6 +31,15 @@ public static class CadRevealComposerRunner
         IReadOnlyList<IModelFormatProvider> modelFormatProviders
     )
     {
+        // TODO: Use input folder path for the cache name? Path.GetDirectoryName(inputFolderPath)?? Guessing folders are static enuff
+        var tempFile = new FileInfo(CacheFilename);
+        if (tempFile.Exists)
+        {
+            Console.WriteLine("We found a temp-state at " + CacheFilename + ". Restoring state and running split!");
+            ProcessPrimitives(null!, outputDirectory, modelParameters, composerParameters, new TreeIndexGenerator());
+            return;
+        }
+
         var totalTimeElapsed = Stopwatch.StartNew();
 
         var nodesToExport = new List<CadRevealNode>();
@@ -84,6 +96,7 @@ public static class CadRevealComposerRunner
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
+            return;
             // Exporting hierarchy on side thread to allow it to run in parallel
             var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
@@ -119,6 +132,18 @@ public static class CadRevealComposerRunner
         TreeIndexGenerator treeIndexGenerator
     )
     {
+        var tempFile = new FileInfo(CacheFilename);
+
+        if (!tempFile.Exists)
+        {
+            using var stream = tempFile.OpenWrite();
+            ProtobufStateSerializer.WriteAPrimitiveStateToStream(stream, allPrimitives);
+        }
+
+        using var readStream = tempFile.OpenRead();
+        var primitives = ProtobufStateSerializer.ReadAPrimitiveStateFromStream(readStream);
+        var maxTreeIndex = primitives.Max(x => x.TreeIndex);
+
         var stopwatch = Stopwatch.StartNew();
 
         ISectorSplitter splitter;
@@ -135,7 +160,7 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(primitives).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
         stopwatch.Restart();
@@ -149,12 +174,12 @@ public static class CadRevealComposerRunner
 
         PrintSectorStats(sectorsWithDownloadSize);
 
-        var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives);
+        var cameraPosition = CameraPositioning.CalculateInitialCamera(primitives);
         SceneCreator.WriteSceneFile(
             sectorsWithDownloadSize,
             modelParameters,
             outputDirectory,
-            treeIndexGenerator.CurrentMaxGeneratedIndex,
+            maxTreeIndex,
             cameraPosition
         );
 

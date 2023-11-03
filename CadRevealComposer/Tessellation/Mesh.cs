@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Tessellation;
 
+using ProtoBuf;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -7,8 +8,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 
+[ProtoContract(SkipConstructor = true)]
 public class Mesh : IEquatable<Mesh>
 {
+    /// <summary>
+    /// Represents the expected deviance from the
+    /// source data. Often Sagitta or Simplification. In meters.
+    /// </summary>
+    [ProtoMember(3)]
     public float Error { get; }
 
     /// <summary>
@@ -23,7 +30,10 @@ public class Mesh : IEquatable<Mesh>
     /// </summary>
     public int TriangleCount => _indices.Length / 3;
 
+    [ProtoMember(1)]
     private readonly Vector3[] _vertices;
+
+    [ProtoMember(2)]
     private readonly uint[] _indices;
 
     public Mesh(IReadOnlyList<float> vertexes, int[] indexes, float error)

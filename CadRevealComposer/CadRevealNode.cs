@@ -1,11 +1,13 @@
 namespace CadRevealComposer;
 
 using Primitives;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-public record BoundingBox(Vector3 Min, Vector3 Max)
+[ProtoContract(SkipConstructor = true)]
+public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: ProtoMember(2)] Vector3 Max)
 {
     /// <summary>
     /// Calculate the diagonal size (distance between "min" and "max")
