@@ -232,16 +232,17 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var distanceThreshold = 50f; // Arbitrary value
 
+        // Assume that origin is one of the corners, still wouldn't work if there are stuff in both "right" and "left" corer
         var sortingCenter = Vector3.Zero;
         var sortedNodes = nodes.OrderBy(n => Vector3.Distance(sortingCenter, n.BoundingBox.Center)).ToArray();
 
         var currentSectorNodeList = new List<Node>();
 
-        for (int i = 0; i < nodes.Length; i++)
+        for (int i = 0; i < sortedNodes.Length; i++)
         {
             if (i == 0)
             {
-                currentSectorNodeList.Add(nodes[i]);
+                currentSectorNodeList.Add(sortedNodes[i]);
                 continue;
             }
 
@@ -256,7 +257,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
                 currentSectorNodeList.Clear();
             }
-            currentSectorNodeList.Add(nodes[i]);
+            currentSectorNodeList.Add(sortedNodes[i]);
         }
 
         yield return CreateOutlierSector(currentSectorNodeList, sectorIdGenerator, parentSectorId, parentPath);
