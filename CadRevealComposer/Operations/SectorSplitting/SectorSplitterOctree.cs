@@ -230,7 +230,7 @@ public class SectorSplitterOctree : ISectorSplitter
         SequentialIdGenerator sectorIdGenerator
     )
     {
-        var distanceThreshold = 20f;
+        var distanceThreshold = 50f; // Arbitrary value
 
         var sortingCenter = Vector3.Zero;
         var sortedNodes = nodes.OrderBy(n => Vector3.Distance(sortingCenter, n.BoundingBox.Center)).ToArray();
@@ -263,7 +263,7 @@ public class SectorSplitterOctree : ISectorSplitter
     }
 
     private InternalSector CreateOutlierSector(
-        List<Node> currentSectorNodeList,
+        List<Node> nodList,
         SequentialIdGenerator sectorIdGenerator,
         uint? parentSectorId,
         string parentPath
@@ -271,10 +271,15 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var arbitraryOutlierDepth = 20;
 
-        var boundingbox = currentSectorNodeList.CalculateBoundingBox();
+        var boundingbox = nodList.CalculateBoundingBox();
+        boundingbox = boundingbox with
+        {
+            Min = boundingbox.Min - new Vector3(5f),
+            Max = boundingbox.Max + new Vector3(5f)
+        };
         var sectorId = (uint)sectorIdGenerator.GetNextId();
         return CreateSector(
-            currentSectorNodeList.ToArray(),
+            nodList.ToArray(),
             sectorId,
             parentSectorId,
             parentPath,
