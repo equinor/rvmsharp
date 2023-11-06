@@ -230,7 +230,6 @@ public class SectorSplitterOctree : ISectorSplitter
         SequentialIdGenerator sectorIdGenerator
     )
     {
-        var arbitraryOutlierDepth = 20;
         var distanceThreshold = 20f;
 
         var sortingCenter = Vector3.Zero;
@@ -240,31 +239,48 @@ public class SectorSplitterOctree : ISectorSplitter
 
         for (int i = 0; i < nodes.Length; i++)
         {
-            var distanceToNext = Vector3.Distance(
-                sortedNodes[i].BoundingBox.Center,
-                sortedNodes[i + 1].BoundingBox.Center
-            );
-
-            if (distanceToNext < distanceThreshold)
+            if (i == 0)
             {
                 currentSectorNodeList.Add(nodes[i]);
+                continue;
             }
-            else
+
+            var distanceToPrevious = Vector3.Distance(
+                sortedNodes[i - 1].BoundingBox.Center,
+                sortedNodes[i].BoundingBox.Center
+            );
+
+            if (distanceToPrevious > distanceThreshold)
             {
-                var boundingbox = currentSectorNodeList.CalculateBoundingBox();
-                var sectorId = (uint)sectorIdGenerator.GetNextId();
-                yield return CreateSector(
-                    currentSectorNodeList.ToArray(),
-                    sectorId,
-                    parentSectorId,
-                    parentPath,
-                    arbitraryOutlierDepth,
-                    boundingbox
-                );
+                yield return CreateOutlierSector(currentSectorNodeList, sectorIdGenerator, parentSectorId, parentPath);
 
                 currentSectorNodeList.Clear();
             }
+            currentSectorNodeList.Add(nodes[i]);
         }
+
+        yield return CreateOutlierSector(currentSectorNodeList, sectorIdGenerator, parentSectorId, parentPath);
+    }
+
+    private InternalSector CreateOutlierSector(
+        List<Node> currentSectorNodeList,
+        SequentialIdGenerator sectorIdGenerator,
+        uint? parentSectorId,
+        string parentPath
+    )
+    {
+        var arbitraryOutlierDepth = 20;
+
+        var boundingbox = currentSectorNodeList.CalculateBoundingBox();
+        var sectorId = (uint)sectorIdGenerator.GetNextId();
+        return CreateSector(
+            currentSectorNodeList.ToArray(),
+            sectorId,
+            parentSectorId,
+            parentPath,
+            arbitraryOutlierDepth,
+            boundingbox
+        );
     }
 
     private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
