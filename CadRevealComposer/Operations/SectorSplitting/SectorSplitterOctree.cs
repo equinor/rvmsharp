@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Numerics;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -57,16 +58,12 @@ public class SectorSplitterOctree : ISectorSplitter
         var excludedOutliersCount = outlierNodes.Length;
         if (excludedOutliersCount > 0)
         {
-            var boundingBoxEncapsulatingOutlierNodes = outlierNodes.CalculateBoundingBox();
-
-            Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
-            var outlierSectors = SplitIntoSectorsRecursive(
+            //Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
+            var outlierSectors = SplitOutlierNodesIntoSectors(
                     outlierNodes.ToArray(),
-                    20, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
                     rootPath,
                     rootSectorId,
-                    sectorIdGenerator,
-                    CalculateStartSplittingDepth(boundingBoxEncapsulatingOutlierNodes)
+                    sectorIdGenerator
                 )
                 .ToArray();
 
@@ -222,6 +219,50 @@ public class SectorSplitterOctree : ISectorSplitter
                 {
                     yield return sector;
                 }
+            }
+        }
+    }
+
+    private IEnumerable<InternalSector> SplitOutlierNodesIntoSectors(
+        Node[] nodes,
+        string parentPath,
+        uint? parentSectorId,
+        SequentialIdGenerator sectorIdGenerator
+    )
+    {
+        var arbitraryOutlierDepth = 20;
+        var distanceThreshold = 20f;
+
+        var sortingCenter = Vector3.Zero;
+        var sortedNodes = nodes.OrderBy(n => Vector3.Distance(sortingCenter, n.BoundingBox.Center)).ToArray();
+
+        var currentSectorNodeList = new List<Node>();
+
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            var distanceToNext = Vector3.Distance(
+                sortedNodes[i].BoundingBox.Center,
+                sortedNodes[i + 1].BoundingBox.Center
+            );
+
+            if (distanceToNext < distanceThreshold)
+            {
+                currentSectorNodeList.Add(nodes[i]);
+            }
+            else
+            {
+                var boundingbox = currentSectorNodeList.CalculateBoundingBox();
+                var sectorId = (uint)sectorIdGenerator.GetNextId();
+                yield return CreateSector(
+                    currentSectorNodeList.ToArray(),
+                    sectorId,
+                    parentSectorId,
+                    parentPath,
+                    arbitraryOutlierDepth,
+                    boundingbox
+                );
+
+                currentSectorNodeList.Clear();
             }
         }
     }
