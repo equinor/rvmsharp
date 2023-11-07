@@ -19,10 +19,10 @@ void manager_destroy(CFbxManager manager)
 std::string* get_fbxsdk_version()
 {
 #ifdef FBXSDK_VERSION
-    std::string* fbxVers = new std::string(FBXSDK_VERSION);
+    std::string* fbxVers = DBG_NEW std::string(FBXSDK_VERSION);
     return fbxVers;
 #else
-    std::string* fbxVers = new std::string("-1");
+    std::string* fbxVers = DBG_NEW std::string("-1");
 #endif
     return fbxVers;
 }

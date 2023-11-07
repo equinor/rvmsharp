@@ -19,7 +19,7 @@ unsigned int Factorial( unsigned int number ) {
 
 void iterate_children(FbxNode* parent, int ident = 0)
 {
-    char* name = new char[512];
+    char* name = DBG_NEW char[512];
     node_get_name(parent, name, 512);
     for (int i = 0; i < ident; i++) cout << "\t";
 
