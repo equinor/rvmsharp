@@ -18,6 +18,9 @@ public class Mesh : IEquatable<Mesh>
 
     public uint[] Indices => _indices;
 
+    /// <summary>
+    /// Triangle Count is (Mesh.Indices.Count / 3). As three indices make one triangle.
+    /// </summary>
     public int TriangleCount => _indices.Length / 3;
 
     private readonly Vector3[] _vertices;

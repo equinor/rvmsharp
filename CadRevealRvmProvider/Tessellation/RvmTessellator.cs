@@ -3,6 +3,7 @@
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
 using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
@@ -10,6 +11,14 @@ using System.Diagnostics;
 
 public class RvmTessellator
 {
+    private struct SimplificationLogObject
+    {
+        public int SimplificationBeforeVertexCount;
+        public int SimplificationAfterVertexCount;
+        public int SimplificationBeforeTriangleCount;
+        public int SimplificationAfterTriangleCount;
+    }
+
     public static Mesh ConvertRvmMesh(RvmMesh rvmMesh)
     {
         // Reveal does not use normals, so they are discarded here.
@@ -20,13 +29,29 @@ public class RvmTessellator
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
         RvmPyramidInstancer.Result[] pyramidInstancingResult,
-        InstanceIdGenerator instanceIdGenerator
+        InstanceIdGenerator instanceIdGenerator,
+        float simplifierThreshold
     )
     {
-        static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p)
+        static TriangleMesh TessellateAndCreateTriangleMesh(
+            ProtoMesh p,
+            float simplifierThreshold,
+            ref SimplificationLogObject logObject
+        )
         {
-            var mesh = Tessellate(p.RvmPrimitive);
-            return new TriangleMesh(ConvertRvmMesh(mesh), p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
+            var rvmMesh = Tessellate(p.RvmPrimitive);
+            var mesh = ConvertRvmMesh(rvmMesh);
+
+            if (simplifierThreshold > 0.0f)
+            {
+                Interlocked.Add(ref logObject.SimplificationBeforeVertexCount, mesh.Vertices.Length);
+                Interlocked.Add(ref logObject.SimplificationBeforeTriangleCount, mesh.TriangleCount);
+                mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                Interlocked.Add(ref logObject.SimplificationAfterVertexCount, mesh.Vertices.Length);
+                Interlocked.Add(ref logObject.SimplificationAfterTriangleCount, mesh.TriangleCount);
+            }
+
+            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
@@ -93,13 +118,34 @@ public class RvmTessellator
 
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
+        var logObject = new SimplificationLogObject();
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
             .AsParallel()
-            .Select(TessellateAndCreateTriangleMesh)
+            .Select(x => TessellateAndCreateTriangleMesh(x, simplifierThreshold, ref logObject))
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
-        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}");
+
+        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
+
+        using (new TeamCityLogBlock("Mesh Reduction Stats"))
+        {
+            Console.WriteLine(
+                $"""
+                    Before Total Vertices: {logObject.SimplificationBeforeVertexCount, 10}
+                    After total Vertices:  {logObject.SimplificationAfterVertexCount, 10}
+                    Percent of Before Verts: {(logObject.SimplificationAfterVertexCount / (float)logObject.SimplificationBeforeVertexCount):P2}
+                    """
+            );
+            Console.WriteLine("");
+            Console.WriteLine(
+                $"""
+                    Before Total Triangles: {logObject.SimplificationBeforeTriangleCount, 10}
+                    After total Triangles:  {logObject.SimplificationAfterTriangleCount, 10}
+                    Percent of Before Tris: {(logObject.SimplificationAfterTriangleCount / (float)logObject.SimplificationBeforeTriangleCount):P2}
+                    """
+            );
+        }
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }
