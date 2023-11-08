@@ -159,7 +159,6 @@ public static class RvmFacetGroupMatcher
     /// <param name="candidates"></param>
     /// <param name="maxNoTemplates"></param>
     /// <returns></returns>
-
     private static Result[] ReduceNumberOfTemplates(Result[] candidates, uint maxNoTemplates)
     {
         // groups that are not an instance of a template (regular groups) are copied over as is
@@ -281,8 +280,8 @@ public static class RvmFacetGroupMatcher
             var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
             var fraction = instancedCount / (float)facetGroups.Length;
             Console.WriteLine(
-                $"\tFound {instancedCount, 5:N0} instances in {facetGroups.Length, 6:N0} items ({fraction, 7:P1})."
-                    + $" TC: {templateCount, 4:N0}, VC: {vertexCount, 4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds, 6:N} s."
+                $"\tFound {instancedCount, 9:N0} instances in {facetGroups.Length, 7:N0} items ({fraction, 7:P1})."
+                    + $" TC: {templateCount, 5:N0}, VC: {vertexCount, 6:N0}, IC: {iterationCounter, 10:N0} in {timer.Elapsed.TotalSeconds, 6:N}s."
             );
 
             return (result, iterationCounter);
