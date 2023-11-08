@@ -7,6 +7,7 @@ param (
     [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
     [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Int32]] $InstancingThreshold = $null, # Optional. Must be > 0 if defined.
+    [Parameter(Mandatory = $false)][AllowNull()][Nullable[System.Single]] $SimplificationThreshold = $null, # Optional. Must be > 0 if defined.
     [Parameter(Mandatory = $false)][AllowNull()][string] $NodeNameExcludeRegex = $null, # Optional.
     [switch] $SplitIntoZones = $false, # Used for large in extents assets to have separate splitting roots.
     [Parameter(Mandatory = $true)][string] $ArtifactDirectory, #Example: "C:/artifacts/rvmsharp/hda",
@@ -70,11 +71,16 @@ end {
         $composerArgs += $InstancingThreshold
     }
 
+    if ($SimplificationThreshold) {
+        $composerArgs += "--SimplificationThreshold"
+        $composerArgs += $SimplificationThreshold
+    }
+
     if ($SplitIntoZones) {
         $composerArgs += "--SplitIntoZones"
         $composerArgs += $SplitIntoZones
     }
-    
+
     if ($NodeNameExcludeRegex) {
         $composerArgs += "--NodeNameExcludeRegex"
         $composerArgs += $NodeNameExcludeRegex
