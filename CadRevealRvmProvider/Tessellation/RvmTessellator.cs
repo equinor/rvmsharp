@@ -8,10 +8,17 @@ using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System.Diagnostics;
-using System.Drawing;
 
 public class RvmTessellator
 {
+    private struct SimplificationLogObject
+    {
+        public int SimplificationBeforeVertexCount;
+        public int SimplificationAfterVertexCount;
+        public int SimplificationBeforeTriangleCount;
+        public int SimplificationAfterTriangleCount;
+    }
+
     public static Mesh ConvertRvmMesh(RvmMesh rvmMesh)
     {
         // Reveal does not use normals, so they are discarded here.
@@ -26,13 +33,23 @@ public class RvmTessellator
         float simplifierThreshold
     )
     {
-        static TriangleMesh TessellateAndCreateTriangleMesh(ProtoMesh p, float simplifierThreshold)
+        static TriangleMesh TessellateAndCreateTriangleMesh(
+            ProtoMesh p,
+            float simplifierThreshold,
+            ref SimplificationLogObject logObject
+        )
         {
             var rvmMesh = Tessellate(p.RvmPrimitive);
             var mesh = ConvertRvmMesh(rvmMesh);
 
             if (simplifierThreshold > 0.0f)
+            {
+                Interlocked.Add(ref logObject.SimplificationBeforeVertexCount, mesh.Vertices.Length);
+                Interlocked.Add(ref logObject.SimplificationBeforeTriangleCount, mesh.TriangleCount);
                 mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                Interlocked.Add(ref logObject.SimplificationAfterVertexCount, mesh.Vertices.Length);
+                Interlocked.Add(ref logObject.SimplificationAfterTriangleCount, mesh.TriangleCount);
+            }
 
             return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
         }
@@ -101,10 +118,11 @@ public class RvmTessellator
 
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
+        var logObject = new SimplificationLogObject();
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
             .AsParallel()
-            .Select(x => TessellateAndCreateTriangleMesh(x, simplifierThreshold))
+            .Select(x => TessellateAndCreateTriangleMesh(x, simplifierThreshold, ref logObject))
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
 
@@ -114,17 +132,17 @@ public class RvmTessellator
         {
             Console.WriteLine(
                 $"""
-                    Before Total Vertices: {Simplify.SimplificationBefore, 10}
-                    After total Vertices:  {Simplify.SimplificationAfter, 10}
-                    Percent of Before Verts: {(Simplify.SimplificationAfter / (float)Simplify.SimplificationBefore):P2}
+                    Before Total Vertices: {logObject.SimplificationBeforeVertexCount, 10}
+                    After total Vertices:  {logObject.SimplificationAfterVertexCount, 10}
+                    Percent of Before Verts: {(logObject.SimplificationAfterVertexCount / (float)logObject.SimplificationBeforeVertexCount):P2}
                     """
             );
             Console.WriteLine("");
             Console.WriteLine(
                 $"""
-                    Before Total Triangles: {Simplify.SimplificationBeforeTriangleCount, 10}
-                    After total Triangles:  {Simplify.SimplificationAfterTriangleCount, 10}
-                    Percent of Before Tris: {(Simplify.SimplificationAfterTriangleCount / (float)Simplify.SimplificationBeforeTriangleCount):P2}
+                    Before Total Triangles: {logObject.SimplificationBeforeTriangleCount, 10}
+                    After total Triangles:  {logObject.SimplificationAfterTriangleCount, 10}
+                    Percent of Before Tris: {(logObject.SimplificationAfterTriangleCount / (float)logObject.SimplificationBeforeTriangleCount):P2}
                     """
             );
         }

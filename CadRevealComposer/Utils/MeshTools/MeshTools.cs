@@ -37,9 +37,9 @@ public static class MeshTools
     public static Mesh DeduplicateVertices(Mesh input)
     {
         var newVertices = input.Vertices.ToArray();
-        var indicesCopy = input.Indices.ToArray();
-        DeduplicateVerticesInPlace(ref newVertices, ref indicesCopy);
-        return new Mesh(newVertices, indicesCopy, 0);
+        var newIndices = input.Indices.ToArray();
+        DeduplicateVerticesInPlace(ref newVertices, ref newIndices);
+        return new Mesh(newVertices, newIndices, 0);
     }
 
     /// <summary>
@@ -57,7 +57,7 @@ public static class MeshTools
 
         var newVertices = new List<T>();
 
-        // The index in the oldVertexIndexToNewIndexRemap array is the old index, and the value is the new index. (Think of it as a dict)
+        // The index in the oldVertexIndexToNewIndexRemap array is the old index, and the value is the new index. (Think of it as a dict or a look-up table)
         var oldVertexIndexToNewIndexRemap = new uint[vertices.Length];
 
         for (uint i = 0; i < vertices.Length; i++)
@@ -93,6 +93,8 @@ public static class MeshTools
     /// <inheritdoc cref="OptimizeInPlace{T}" type="/summary"/>
     /// Returns a new mesh.
     /// </summary>
+
+    [Pure]
     public static Mesh OptimizeMesh(Mesh m)
     {
         var indices = m.Indices.ToArray();

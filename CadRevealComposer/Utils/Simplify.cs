@@ -2,10 +2,8 @@
 
 using g3;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Threading;
 using Tessellation;
 
 public static class Simplify
@@ -42,11 +40,6 @@ public static class Simplify
         return mesh;
     }
 
-    public static int SimplificationBefore = 0;
-    public static int SimplificationAfter = 0;
-    public static int SimplificationBeforeTriangleCount = 0;
-    public static int SimplificationAfterTriangleCount = 0;
-
     /// <summary>
     /// Lossy Simplification of the Mesh.
     /// This will reduce the quality of the mesh based on a threshold
@@ -56,9 +49,6 @@ public static class Simplify
     /// <returns></returns>
     public static Mesh SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
     {
-        Interlocked.Add(ref SimplificationBefore, mesh.Vertices.Length);
-        Interlocked.Add(ref SimplificationBeforeTriangleCount, mesh.TriangleCount);
-
         MeshTools.MeshTools.ReducePrecisionInPlace(mesh);
 
         var meshCopy = MeshTools.MeshTools.OptimizeMesh(mesh);
@@ -86,8 +76,6 @@ public static class Simplify
 
             var reducedMesh = ConvertDMesh3ToMesh(dMesh);
             var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
-            Interlocked.Add(ref SimplificationAfter, lastPassMesh.Vertices.Length);
-            Interlocked.Add(ref SimplificationAfterTriangleCount, lastPassMesh.TriangleCount);
             return lastPassMesh;
         }
         catch (Exception e)
