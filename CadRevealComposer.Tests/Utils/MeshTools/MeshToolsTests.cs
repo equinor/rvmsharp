@@ -1,6 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Utils.MeshTools;
 
-using CadRevealFbxProvider.BatchUtils;
+using CadRevealComposer.Utils.MeshTools;
 using System.Numerics;
 using Tessellation;
 

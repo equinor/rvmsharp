@@ -1,6 +1,5 @@
 ﻿namespace CadRevealComposer;
 
-using CadRevealFbxProvider.BatchUtils;
 using Configuration;
 using IdProviders;
 using ModelFormatProvider;
@@ -17,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
 using Utils;
+using Utils.MeshTools;
 
 public static class CadRevealComposerRunner
 {

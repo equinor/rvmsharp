@@ -104,6 +104,17 @@ public class CommandLineOptions
     ]
     public uint TemplateCountLimit { get; set; }
 
+    [
+        Option(
+            longName: "SimplificationThreshold",
+            Default = 0.0f,
+            Required = false,
+            HelpText = "The threshold used in simplification in meters. A reasonable value is 1 cm, i.e. 0.01."
+        ),
+        Range(0, float.MaxValue)
+    ]
+    public float SimplificationThreshold { get; set; }
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes
