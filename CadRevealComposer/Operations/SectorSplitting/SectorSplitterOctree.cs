@@ -106,11 +106,11 @@ public class SectorSplitterOctree : ISectorSplitter
         var currentGroup = new List<Node>();
         for (int i = 0; i < sortedOutlierNodes.Length; i++)
         {
-            var isLastIteration = i == sortedOutlierNodes.Length - 1;
             currentGroup.Add(sortedOutlierNodes[i]);
+
+            var isLastIteration = i == sortedOutlierNodes.Length - 1;
             if (isLastIteration || outlierDistances[i + 1] - outlierDistances[i] > OutlierGroupingDistance)
             {
-                var boundingBoxEncapsulatingOutlierNodes = currentGroup.CalculateBoundingBox();
                 var outlierSectors = SplitIntoSectorsRecursive(
                         currentGroup.ToArray(),
                         OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
