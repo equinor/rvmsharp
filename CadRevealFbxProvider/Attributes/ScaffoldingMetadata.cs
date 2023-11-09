@@ -7,18 +7,24 @@ public class ScaffoldingMetadata
     public string? WorkOrder { get; set; }
     public string? BuildOperationNumber { get; set; }
     public string? DismantleOperationNumber { get; set; }
+    public string? TotalWeight { get; set; }
+    public string? ScaffType { get; set; }
+    public string? ScaffTagNumber { get; set; }
 
     public const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
     public const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
     public const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
     public const string TotalWeightFieldName = "Scaffolding_TotalWeight";
-    public string? TotalWeight { get; set; }
+    public const string TagNumberFieldName = "Scaffolding_TagNumber";
+    public const string TypeFieldName = "Scaffolding_Type";
 
     public static readonly string[] ModelAttributesPerPart =
     {
         "Work order",
         "Scaff build Operation number",
-        "Dismantle Operation number"
+        "Dismantle Operation number",
+        "Scaff type",
+        "Scaff tag number"
     };
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
@@ -28,7 +34,9 @@ public class ScaffoldingMetadata
         WorkOrderId,
         BuildOperationId,
         DismantleOperationId,
-        TotalWeight
+        TotalWeight,
+        ScaffType,
+        ScaffTagNumber
     }
 
     public static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<
@@ -39,7 +47,9 @@ public class ScaffoldingMetadata
         { "Work order", AttributeEnum.WorkOrderId },
         { "Scaff build Operation number", AttributeEnum.BuildOperationId },
         { "Dismantle Operation number", AttributeEnum.DismantleOperationId },
-        { "Grand total", AttributeEnum.TotalWeight }
+        { "Grand total", AttributeEnum.TotalWeight },
+        { "Scaff type", AttributeEnum.ScaffType },
+        { "Scaff tag number", AttributeEnum.ScaffTagNumber }
     };
 
     public void GuardForInvalidValues(string newValue, string? existingValue)
@@ -82,6 +92,14 @@ public class ScaffoldingMetadata
                     GuardForInvalidValues(value, TotalWeight);
                     TotalWeight = value;
                     break;
+                case AttributeEnum.ScaffTagNumber:
+                    GuardForInvalidValues(value, ScaffTagNumber);
+                    ScaffTagNumber = value;
+                    break;
+                case AttributeEnum.ScaffType:
+                    GuardForInvalidValues(value, ScaffType);
+                    ScaffType = value;
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -99,6 +117,8 @@ public class ScaffoldingMetadata
             || string.IsNullOrEmpty(BuildOperationNumber)
             || string.IsNullOrEmpty(DismantleOperationNumber)
             || string.IsNullOrEmpty(TotalWeight)
+            || string.IsNullOrEmpty(ScaffTagNumber)
+            || string.IsNullOrEmpty(ScaffType)
         )
         {
             return false;
@@ -132,5 +152,7 @@ public class ScaffoldingMetadata
         targetDict.Add(BuildOpFieldName, BuildOperationNumber!);
         targetDict.Add(DismantleOpFieldName, DismantleOperationNumber!);
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
+        targetDict.Add(TagNumberFieldName, ScaffTagNumber!);
+        targetDict.Add(TypeFieldName, ScaffType!);
     }
 }
