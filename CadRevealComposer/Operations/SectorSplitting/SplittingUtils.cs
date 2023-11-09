@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
+using g3;
 using Primitives;
 using System;
 using System.Collections.Generic;
@@ -102,52 +103,88 @@ public static class SplittingUtils
             nodes.Average(x => x.BoundingBox.Center.Y),
             nodes.Average(x => x.BoundingBox.Center.Z)
         );
+        // Truncated average -> Discarding the first and last 5% of values to avoid trouble with outliers
+        var avgCenterX = nodes
+            .OrderBy(x => x.BoundingBox.Center.X)
+            .Skip((int)(nodes.Count*0.05))
+            .Take((int)(nodes.Count*0.95))
+            .Average(x => x.BoundingBox.Center.X);
 
-        var percentileNode = nodes
-            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-            .Skip((int)(nodes.Count * keepFactor))
-            .FirstOrDefault();
-        if (percentileNode == null)
-            return (nodes.ToArray(), Array.Empty<Node>());
+        var avgCenterY = nodes
+            .OrderBy(x => x.BoundingBox.Center.Y)
+            .Skip((int)(nodes.Count*0.05))
+            .Take((int)(nodes.Count*0.95))
+            .Average(x => x.BoundingBox.Center.Y);
 
-        var lastKeepCandidate = nodes
-            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-            .Take((int)(nodes.Count * keepFactor))
-            .LastOrDefault();
-        if (lastKeepCandidate == null)
-            return (nodes.ToArray(), Array.Empty<Node>());
-        var distanceLastKeepCandidate =
-            Vector3.Distance(lastKeepCandidate.BoundingBox.Center, avgCenter)
-            * paddingFactor /* Slight Padding */
-        ;
+        var avgCenterZ = nodes
+            .OrderBy(x => x.BoundingBox.Center.Z)
+            .Skip((int)(nodes.Count*0.05))
+            .Take((int)(nodes.Count*0.95))
+            .Average(x => x.BoundingBox.Center.Z);
 
-        float distanceToPercentileNode =
-            Vector3.Distance(percentileNode.BoundingBox.Center, avgCenter)
-            * paddingFactor /* Slight Padding */
-        ;
+        var truncatedAverage = new Vector3(avgCenterX,avgCenterY,avgCenterZ);
 
-        if (distanceToPercentileNode - distanceLastKeepCandidate < outlierDistance)
-        {
-            var outlierCandidates = nodes
-                .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-                .Skip((int)(nodes.Count * keepFactor))
-                .Select(x => new { Distance = Vector3.Distance(x.BoundingBox.Center, avgCenter) * paddingFactor })
-                .ToArray();
-            var newOutlierNode = outlierCandidates
-                .Where((x, i) => i > 0 && (x.Distance - outlierCandidates[i - 1].Distance > outlierDistance))
-                .FirstOrDefault();
-            if (newOutlierNode != null)
-            {
-                distanceToPercentileNode = newOutlierNode.Distance;
-            }
-        }
+        // var percentileNode = nodes
+        //     .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+        //     .Skip((int)(nodes.Count * keepFactor))
+        //     .FirstOrDefault();
+        // if (percentileNode == null)
+        //     return (nodes.ToArray(), Array.Empty<Node>());
+        //
+        // var lastKeepCandidate = nodes
+        //     .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+        //     .Take((int)(nodes.Count * keepFactor))
+        //     .LastOrDefault();
+        // if (lastKeepCandidate == null)
+        //     return (nodes.ToArray(), Array.Empty<Node>());
+
+        // TESTING HERE with truncated average
+        // var lastKeepCandidate = nodes
+        //     .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
+        //     .Select(x => new { Distance = Vector3.Distance(x.BoundingBox.Center, truncatedAverage) })
+        //     .ToArray();
+        // var lastKeepCandidate2 = lastKeepCandidate
+        //     .Where((x, i) => i > 0 && (x.Distance - lastKeepCandidate[i - 1].Distance > outlierDistance));
 
         var regularNodes = nodes
-            .Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) < distanceToPercentileNode)
+            .Where(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage) < outlierDistance)
             .ToArray();
         var outlierNodes = nodes
-            .Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) >= distanceToPercentileNode)
+            .Where(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage) >= outlierDistance)
             .ToArray();
+        Console.WriteLine(outlierNodes);
+        // var distanceLastKeepCandidate =
+        //     Vector3.Distance(lastKeepCandidate.BoundingBox.Center, avgCenter)
+        //     * paddingFactor /* Slight Padding */
+        // ;
+        //
+        // float distanceToPercentileNode =
+        //     Vector3.Distance(percentileNode.BoundingBox.Center, avgCenter)
+        //     * paddingFactor /* Slight Padding */
+        // ;
+        //
+        // if (distanceToPercentileNode - distanceLastKeepCandidate < outlierDistance)
+        // {
+        //     var outlierCandidates = nodes
+        //         .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
+        //         .Skip((int)(nodes.Count * keepFactor))
+        //         .Select(x => new { Distance = Vector3.Distance(x.BoundingBox.Center, avgCenter) * paddingFactor })
+        //         .ToArray();
+        //     var newOutlierNode = outlierCandidates
+        //         .Where((x, i) => i > 0 && (x.Distance - outlierCandidates[i - 1].Distance > outlierDistance))
+        //         .FirstOrDefault();
+        //     if (newOutlierNode != null)
+        //     {
+        //         distanceToPercentileNode = newOutlierNode.Distance;
+        //     }
+        // }
+        //
+        // var regularNodes = nodes
+        //     .Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) < distanceToPercentileNode)
+        //     .ToArray();
+        // var outlierNodes = nodes
+        //     .Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) >= distanceToPercentileNode)
+        //     .ToArray();
         return (regularNodes, outlierNodes);
     }
 
