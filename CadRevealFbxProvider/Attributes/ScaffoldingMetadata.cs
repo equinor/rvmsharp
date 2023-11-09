@@ -153,7 +153,7 @@ public class ScaffoldingMetadata
         targetDict.Add(BuildOpFieldName, BuildOperationNumber!);
         targetDict.Add(DismantleOpFieldName, DismantleOperationNumber!);
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
-        targetDict.Add(TagNumberFieldName, TagNumberFieldName!);
-        targetDict.Add(TypeFieldName, TypeFieldName!);
+        targetDict.Add(TagNumberFieldName, ScaffTagNumber!);
+        targetDict.Add(TypeFieldName, ScaffType!);
     }
 }
