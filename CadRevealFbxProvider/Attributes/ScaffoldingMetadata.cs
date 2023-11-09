@@ -18,7 +18,6 @@ public class ScaffoldingMetadata
     public const string TagNumberFieldName = "Scaffolding_TagNumber";
     public const string TypeFieldName = "Scaffolding_Type";
 
-
     public static readonly string[] ModelAttributesPerPart =
     {
         "Work order",
