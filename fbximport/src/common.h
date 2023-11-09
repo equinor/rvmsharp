@@ -1,14 +1,6 @@
 #ifndef __CFBX_COMMON_H__
 #define __CFBX_COMMON_H__
 
-#ifdef _DEBUG
-#define DBG_NEW new ( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-// Replace _NORMAL_BLOCK with _CLIENT_BLOCK if you want the
-// allocations to be of _CLIENT_BLOCK type
-#else
-#define DBG_NEW new
-#endif
-
 #if _WIN32
     #ifdef CFBX_BUILD_AS_DLL
     #define CFBX_API __declspec(dllexport)

@@ -14,7 +14,7 @@ typedef std::tuple<float, float, float, float, float, float> vertex_tuple;
 // it should never return nullptr, if the mesh is invalid for some reason, set the valid field to false
 ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
 {
-    ExportableMesh* mesh_out_tmp = DBG_NEW ExportableMesh();
+    ExportableMesh* mesh_out_tmp = new ExportableMesh();
     mesh_out_tmp->vertex_count = 0;
     mesh_out_tmp->vertex_position_data = nullptr;
     mesh_out_tmp->vertex_normal_data = nullptr;
@@ -82,9 +82,9 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
     mesh_out_tmp->index_count = lMeshOutVertexIndices.size();
     mesh_out_tmp->vertex_count = lMeshOutVertexPositions.size() / 3;
 
-    mesh_out_tmp->index_data = DBG_NEW int[mesh_out_tmp->index_count];
-    mesh_out_tmp->vertex_position_data = DBG_NEW float[lMeshOutVertexPositions.size()];
-    mesh_out_tmp->vertex_normal_data = DBG_NEW float[lMeshOutVertexPositions.size()];
+    mesh_out_tmp->index_data = new int[mesh_out_tmp->index_count];
+    mesh_out_tmp->vertex_position_data = new float[lMeshOutVertexPositions.size()];
+    mesh_out_tmp->vertex_normal_data = new float[lMeshOutVertexPositions.size()];
 
     std::copy(lMeshOutVertexIndices.begin(), lMeshOutVertexIndices.end(), mesh_out_tmp->index_data);
     std::copy(lMeshOutVertexPositions.begin(), lMeshOutVertexPositions.end(), mesh_out_tmp->vertex_position_data);
