@@ -7,19 +7,19 @@ using System.IO;
 using System.Linq;
 using Utils;
 
-public class DevCacheFolder
+public class DevPrimitiveCacheFolder
 {
-    private const string DevcacheExtension = ".devcache";
+    private const string PrimitiveCacheExtension = ".primitivecache";
     private readonly DirectoryInfo _cacheFolder;
 
-    public DevCacheFolder(DirectoryInfo cacheFolder)
+    public DevPrimitiveCacheFolder(DirectoryInfo cacheFolder)
     {
         _cacheFolder = cacheFolder;
     }
 
     public void PrintStatsToConsole()
     {
-        var cache = _cacheFolder.EnumerateFiles("*" + DevcacheExtension).ToArray();
+        var cache = _cacheFolder.EnumerateFiles("*" + PrimitiveCacheExtension).ToArray();
 
         var totalSizeBytes = cache.Sum(x => x.Length);
         var numCacheFiles = cache.Length;
@@ -36,12 +36,17 @@ public class DevCacheFolder
     public FileInfo GetCacheFileForInputDirectory(DirectoryInfo inputDirectory)
     {
         var name = inputDirectory.Name;
-        var expectedFilename = name + DevcacheExtension;
+        var expectedFilename = name + PrimitiveCacheExtension;
         var file = new FileInfo(Path.Combine(_cacheFolder.FullName, expectedFilename));
         return file;
     }
 
-    public APrimitive[]? ReadDevCacheIfExists(DirectoryInfo inputDirectory)
+    /// <summary>
+    /// Reads the best primitive-cache match.
+    ///
+    /// If there is none this will return null.
+    /// </summary>
+    public APrimitive[]? ReadPrimitiveCache(DirectoryInfo inputDirectory)
     {
         var file = GetCacheFileForInputDirectory(inputDirectory);
         if (!file.Exists)
@@ -50,7 +55,6 @@ public class DevCacheFolder
         try
         {
             using var readStream = file.OpenRead();
-
             return ProtobufStateSerializer.ReadAPrimitiveStateFromStream(readStream);
         }
         catch
@@ -62,10 +66,13 @@ public class DevCacheFolder
         }
     }
 
-    public void WriteToDevCacheIfExists(APrimitive[] geometriesToProcessArray, DirectoryInfo inputDirectory)
+    /// <summary>
+    /// Writes a new cache
+    /// </summary>
+    public void WriteToPrimitiveCache(APrimitive[] geometriesToProcessArray, DirectoryInfo inputDirectory)
     {
         var file = GetCacheFileForInputDirectory(inputDirectory);
-        using var writeStream = file.OpenWrite();
-        ProtobufStateSerializer.WriteAPrimitiveStateToStream(writeStream, geometriesToProcessArray);
+        using var fileStream = file.Create(); // Create a new file -- replacing existing file if any
+        ProtobufStateSerializer.WriteAPrimitiveStateToStream(fileStream, geometriesToProcessArray);
     }
 }

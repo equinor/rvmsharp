@@ -31,12 +31,12 @@ public static class CadRevealComposerRunner
     )
     {
         var totalTimeElapsed = Stopwatch.StartNew();
-        if (composerParameters.DevCacheFolder != null)
+        if (composerParameters.DevPrimitiveCacheFolder != null)
         {
-            var devCache = new DevCacheFolder(composerParameters.DevCacheFolder);
-            devCache.PrintStatsToConsole();
-            var cacheFile = devCache.GetCacheFileForInputDirectory(inputFolderPath);
-            var cachedAPrimitives = devCache.ReadDevCacheIfExists(inputFolderPath);
+            var primitiveCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
+            primitiveCache.PrintStatsToConsole();
+            var cacheFile = primitiveCache.GetCacheFileForInputDirectory(inputFolderPath);
+            var cachedAPrimitives = primitiveCache.ReadPrimitiveCache(inputFolderPath);
             if (cachedAPrimitives != null)
             {
                 Console.WriteLine("Using developer cache file: " + cacheFile);
@@ -46,6 +46,9 @@ public static class CadRevealComposerRunner
                 );
                 return;
             }
+            Console.WriteLine(
+                "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
+            );
         }
 
         var nodesToExport = new List<CadRevealNode>();
@@ -114,11 +117,11 @@ public static class CadRevealComposerRunner
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
         var geometriesToProcessArray = geometriesToProcess.ToArray();
-        if (composerParameters.DevCacheFolder != null)
+        if (composerParameters.DevPrimitiveCacheFolder != null)
         {
             Console.WriteLine("Writing to DevCache!");
-            var devCache = new DevCacheFolder(composerParameters.DevCacheFolder);
-            devCache.WriteToDevCacheIfExists(geometriesToProcessArray, inputFolderPath);
+            var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
+            devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
         ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
 

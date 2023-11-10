@@ -64,7 +64,7 @@ public static class Program
             options.SplitIntoZones,
             new NodeNameExcludeRegex(options.NodeNameExcludeRegex),
             options.SimplificationThreshold,
-            options.DevCacheFolder
+            options.DevPrimitiveCacheFolder
         );
 
         if (options.SplitIntoZones)
