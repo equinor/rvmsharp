@@ -48,19 +48,35 @@ public class DevPrimitiveCacheFolder
     /// </summary>
     public APrimitive[]? ReadPrimitiveCache(DirectoryInfo inputDirectory)
     {
-        var file = GetCacheFileForInputDirectory(inputDirectory);
-        if (!file.Exists)
+        var cacheFile = GetCacheFileForInputDirectory(inputDirectory);
+        if (!cacheFile.Exists)
             return null;
 
         try
         {
-            using var readStream = file.OpenRead();
+            Console.WriteLine(
+                $"Reading cache for file: {cacheFile.FullName}. The cache file was created at \"{cacheFile.CreationTime}\""
+            );
+
+            var inputFolderLastWriteTime = inputDirectory.EnumerateFiles().Max(x => x.LastWriteTime);
+
+            if (inputFolderLastWriteTime > cacheFile.LastWriteTime)
+            {
+                // Note: This is not exactly a reliable warning.
+                // It does not catch files copied out from and into the folder, as this will not affect write times...
+                // But its maybe better than nothing?
+                Console.WriteLine(
+                    "Warning: Cache file may be outdated compared to contents in " + _cacheFolder.FullName + " ."
+                );
+            }
+
+            using var readStream = cacheFile.OpenRead();
             return ProtobufStateSerializer.ReadAPrimitiveStateFromStream(readStream);
         }
         catch
         {
             Console.Error.WriteLine(
-                $"Failed to deserialize the cache file at: \"{file.FullName}\" . The file is probably outdated. Delete the file manually to create a new one on next run."
+                $"Failed to deserialize the cache file at: \"{cacheFile.FullName}\" . The file is probably outdated. Delete the file manually to create a new one on next run."
             );
             throw; // Rethrows the caught exception
         }
