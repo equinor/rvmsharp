@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer;
 
 using Configuration;
+using Devtools;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
@@ -12,6 +13,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Tessellation;
@@ -29,6 +31,25 @@ public static class CadRevealComposerRunner
     )
     {
         var totalTimeElapsed = Stopwatch.StartNew();
+        if (composerParameters.DevPrimitiveCacheFolder != null)
+        {
+            var primitiveCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
+            primitiveCache.PrintStatsToConsole();
+            var cacheFile = primitiveCache.GetCacheFileForInputDirectory(inputFolderPath);
+            var cachedAPrimitives = primitiveCache.ReadPrimitiveCache(inputFolderPath);
+            if (cachedAPrimitives != null)
+            {
+                Console.WriteLine("Using developer cache file: " + cacheFile);
+                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
+                Console.WriteLine(
+                    $"Ran {nameof(ProcessPrimitives)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
+                );
+                return;
+            }
+            Console.WriteLine(
+                "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
+            );
+        }
 
         var nodesToExport = new List<CadRevealNode>();
         var geometriesToProcess = new List<APrimitive>();
@@ -95,17 +116,20 @@ public static class CadRevealComposerRunner
 
         geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        ProcessPrimitives(
-            geometriesToProcess.ToArray(),
-            outputDirectory,
-            modelParameters,
-            composerParameters,
-            treeIndexGenerator
-        );
+        var geometriesToProcessArray = geometriesToProcess.ToArray();
+        if (composerParameters.DevPrimitiveCacheFolder != null)
+        {
+            Console.WriteLine("Writing to DevCache!");
+            var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
+            devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
+        }
+        ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
+
+        WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
@@ -115,10 +139,11 @@ public static class CadRevealComposerRunner
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
-        ComposerParameters composerParameters,
-        TreeIndexGenerator treeIndexGenerator
+        ComposerParameters composerParameters
     )
     {
+        var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
+
         var stopwatch = Stopwatch.StartNew();
 
         ISectorSplitter splitter;
@@ -154,7 +179,7 @@ public static class CadRevealComposerRunner
             sectorsWithDownloadSize,
             modelParameters,
             outputDirectory,
-            treeIndexGenerator.CurrentMaxGeneratedIndex,
+            maxTreeIndex,
             cameraPosition
         );
 
@@ -310,5 +335,28 @@ public static class CadRevealComposerRunner
         }
 
         return processedGeometries;
+    }
+
+    /// <summary>
+    /// Writes the input parameters to a file to easier replicate a run.
+    /// </summary>
+    private static void WriteParametersToParamsFile(
+        ModelParameters modelParameters,
+        ComposerParameters composerParameters,
+        DirectoryInfo outputDirectory
+    )
+    {
+        var json = new
+        {
+            note = "This file is not considered stable api. It is meant for humans to read, not computers. See 'scene.json' for a more stable file.",
+            modelParameters,
+            composerParameters,
+            timestampUtc = DateTimeOffset.UtcNow
+        };
+
+        File.WriteAllText(
+            Path.Join(outputDirectory.FullName, "params.json"),
+            JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true })
+        );
     }
 }

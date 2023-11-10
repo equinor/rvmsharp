@@ -38,7 +38,8 @@ public class FbxProviderTests
         true,
         false,
         new NodeNameExcludeRegex(null),
-        0f
+        0f,
+        null
     );
 
     private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
@@ -193,8 +194,7 @@ public class FbxProviderTests
             geometriesToProcess.ToArray(),
             outputDirectoryCorrect,
             modelParameters,
-            composerParameters,
-            treeIndexGenerator
+            composerParameters
         );
 
         Console.WriteLine(
