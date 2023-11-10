@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
+using System.Text.RegularExpressions;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -95,6 +96,68 @@ public class SectorSplitterOctree : ISectorSplitter
         SequentialIdGenerator sectorIdGenerator
     )
     {
+        var outlierGroups = GroupOutliersRecursive(outlierNodes);
+
+        foreach (var outlierGroup in outlierGroups)
+        {
+            var outlierSectors = SplitIntoSectorsRecursive(
+                    outlierGroup,
+                    OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                    rootPath,
+                    rootSectorId,
+                    sectorIdGenerator,
+                    0 // Hackish: This is set to a lot lower than OutlierStartDepth to skip size checking in budget
+                )
+                .ToArray();
+
+            foreach (var sector in outlierSectors)
+            {
+                Console.WriteLine(
+                    $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
+                );
+                yield return sector;
+            }
+        }
+    }
+
+    private IEnumerable<Node[]> GroupOutliersRecursive(Node[] outlierNodes)
+    {
+        var groups = GroupOutliers(outlierNodes, outlierNodes[0].BoundingBox.Center);
+        foreach (var group in groups)
+        {
+            if (nodesHasDistanceJump(group, OutlierGroupingDistance))
+            {
+                var splitGroups = GroupOutliersRecursive(group);
+                foreach (var splitGroup in splitGroups)
+                {
+                    yield return splitGroup;
+                }
+            }
+            else
+            {
+                yield return group;
+            }
+        }
+    }
+
+    private bool nodesHasDistanceJump(Node[] nodes, float distanceThreshold)
+    {
+        var distances = nodes
+            .Select(node => Vector3.Distance(node.BoundingBox.Center, nodes[0].BoundingBox.Center))
+            .OrderBy(x => x)
+            .ToArray();
+
+        for (int i = 0; i < distances.Length - 1; i++)
+        {
+            if (distances[i + 1] - distances[i] > distanceThreshold)
+                return true;
+        }
+
+        return false;
+    }
+
+    private List<Node[]> GroupOutliers(Node[] outlierNodes, Vector3 distanceMeasurementPoint)
+    {
         var sortedOutlierNodes = outlierNodes
             .OrderBy(x => Vector3.Distance(Vector3.One, x.BoundingBox.Center))
             .ToArray();
@@ -102,7 +165,7 @@ public class SectorSplitterOctree : ISectorSplitter
         var outlierDistances = sortedOutlierNodes
             .Select(x => Vector3.Distance(Vector3.Zero, x.BoundingBox.Center))
             .ToArray();
-
+        var listOfGroups = new List<Node[]>();
         var currentGroup = new List<Node>();
         for (int i = 0; i < sortedOutlierNodes.Length; i++)
         {
@@ -111,26 +174,12 @@ public class SectorSplitterOctree : ISectorSplitter
             var isLastIteration = i == sortedOutlierNodes.Length - 1;
             if (isLastIteration || outlierDistances[i + 1] - outlierDistances[i] > OutlierGroupingDistance)
             {
-                var outlierSectors = SplitIntoSectorsRecursive(
-                        currentGroup.ToArray(),
-                        OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
-                        rootPath,
-                        rootSectorId,
-                        sectorIdGenerator,
-                        0 // Hackish: This is set to a lot lower than OutlierStartDepth to skip size checking in budget
-                    )
-                    .ToArray();
-
-                foreach (var sector in outlierSectors)
-                {
-                    Console.WriteLine(
-                        $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
-                    );
-                    yield return sector;
-                }
+                listOfGroups.Add(currentGroup.ToArray());
                 currentGroup.Clear();
             }
         }
+
+        return listOfGroups;
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
