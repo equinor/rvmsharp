@@ -75,22 +75,22 @@ public static class ProtobufStateSerializer
         {
             return new Matrix4x4()
             {
-                M11 = c.Matrix[0],
-                M12 = c.Matrix[1],
-                M13 = c.Matrix[2],
-                M14 = c.Matrix[3],
-                M21 = c.Matrix[4],
-                M22 = c.Matrix[5],
-                M23 = c.Matrix[6],
-                M24 = c.Matrix[7],
-                M31 = c.Matrix[8],
-                M32 = c.Matrix[9],
-                M33 = c.Matrix[10],
-                M34 = c.Matrix[11],
-                M41 = c.Matrix[12],
-                M42 = c.Matrix[13],
-                M43 = c.Matrix[14],
-                M44 = c.Matrix[15],
+                M11 = c.M[0],
+                M12 = c.M[1],
+                M13 = c.M[2],
+                M14 = c.M[3],
+                M21 = c.M[4],
+                M22 = c.M[5],
+                M23 = c.M[6],
+                M24 = c.M[7],
+                M31 = c.M[8],
+                M32 = c.M[9],
+                M33 = c.M[10],
+                M34 = c.M[11],
+                M41 = c.M[12],
+                M42 = c.M[13],
+                M43 = c.M[14],
+                M44 = c.M[15],
             };
         }
 
@@ -98,7 +98,7 @@ public static class ProtobufStateSerializer
         {
             return new ProtoMatrix4x4()
             {
-                Matrix = new[]
+                M = new[]
                 {
                     c.M11,
                     c.M12,
