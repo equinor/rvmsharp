@@ -4,6 +4,7 @@ using CadRevealComposer.Devtools.Protobuf;
 using Primitives;
 using System.Drawing;
 using System.Numerics;
+using Tessellation;
 
 public class ProtobufStateSerializerTests
 {
@@ -41,6 +42,26 @@ public class ProtobufStateSerializerTests
         var box = new Box(Matrix4x4.Identity, 1337, Color.FromArgb(255, 255, 0, 255), SampleAxisAlignedBoundingBox);
 
         APrimitive[] inputArray = { box };
+        APrimitive[] outputArray = RoundtripSerializeDeserialize(inputArray);
+
+        Assert.That(outputArray, Is.EqualTo(inputArray));
+    }
+
+    [Test]
+    public void TestProtobufRoundtrip_Mesh()
+    {
+        var mesh = new TriangleMesh(
+            new Mesh(
+                new Vector3[] { new Vector3(1, 2, 3), new Vector3(4, 5, 6), new Vector3(7, 8, 9) },
+                new uint[] { 0, 1, 2 },
+                0.0f
+            ),
+            1337,
+            SampleColor,
+            SampleAxisAlignedBoundingBox
+        );
+
+        APrimitive[] inputArray = { mesh };
         APrimitive[] outputArray = RoundtripSerializeDeserialize(inputArray);
 
         Assert.That(outputArray, Is.EqualTo(inputArray));
