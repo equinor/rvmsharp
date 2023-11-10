@@ -115,6 +115,13 @@ public class CommandLineOptions
     ]
     public float SimplificationThreshold { get; set; }
 
+    [Option(
+        longName: "DevPrimitiveCacheFolder",
+        Required = false,
+        HelpText = "DevTool: The path to the primitive cache folder. If not set the primitive-cache will be disabled. By default the DevCache will use the input folders name to determine the cache file."
+    )]
+    public DirectoryInfo? DevPrimitiveCacheFolder { get; init; } = null;
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes
@@ -131,6 +138,15 @@ public class CommandLineOptions
         {
             // Creates the whole path
             Directory.CreateDirectory(options.OutputDirectory.FullName);
+        }
+
+        if (options.DevPrimitiveCacheFolder != null && !options.DevPrimitiveCacheFolder.Exists)
+        {
+            Directory.CreateDirectory(options.DevPrimitiveCacheFolder.FullName);
+            Console.WriteLine(
+                $"Created {nameof(options.DevPrimitiveCacheFolder)} at path: "
+                    + options.DevPrimitiveCacheFolder.FullName
+            );
         }
     }
 }
