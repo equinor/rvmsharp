@@ -123,6 +123,13 @@ public class SectorSplitterOctree : ISectorSplitter
     private IEnumerable<Node[]> GroupOutliersRecursive(Node[] outlierNodes)
     {
         var groups = GroupOutliers(outlierNodes, outlierNodes[0].BoundingBox.Center);
+
+        if (groups.Count == 1)
+        {
+            yield return groups[0];
+            yield break;
+        }
+
         foreach (var group in groups)
         {
             if (nodesHasDistanceJump(group, OutlierGroupingDistance))
