@@ -26,9 +26,9 @@ public class DevPrimitiveCacheFolder
 
         using (new TeamCityLogBlock("DevCache Stats"))
         {
-            Console.WriteLine("Stats for DevDache folder at " + _cacheFolder.FullName);
+            Console.WriteLine($"Stats for PrimitiveCache folder at \"{_cacheFolder.FullName}\"");
             Console.WriteLine(
-                $"Total Size of .devcache files: {totalSizeBytes / 1024 / 1024}MB. NumCacheFiles: {numCacheFiles}"
+                $"Total Size of {nameof(PrimitiveCacheExtension)} files: {totalSizeBytes / 1024 / 1024}MB. NumCacheFiles: {numCacheFiles}"
             );
         }
     }
@@ -55,7 +55,7 @@ public class DevPrimitiveCacheFolder
         try
         {
             Console.WriteLine(
-                $"Reading cache for file: {cacheFile.FullName}. The cache file was created at \"{cacheFile.CreationTime}\""
+                $"Reading cache for file: \"{cacheFile.FullName}\". The cache file was created at \"{cacheFile.CreationTime}\" ({(DateTime.Now - cacheFile.CreationTimeUtc).TotalDays:F2} days ago.)"
             );
 
             var inputFolderLastWriteTime = inputDirectory.EnumerateFiles().Max(x => x.LastWriteTime);
@@ -66,7 +66,7 @@ public class DevPrimitiveCacheFolder
                 // It does not catch files copied out from and into the folder, as this will not affect write times...
                 // But its maybe better than nothing?
                 Console.WriteLine(
-                    "Warning: Cache file may be outdated compared to contents in " + _cacheFolder.FullName + " ."
+                    $"Warning: Cache file may be outdated compared to contents in \"{_cacheFolder.FullName}\" ."
                 );
             }
 
