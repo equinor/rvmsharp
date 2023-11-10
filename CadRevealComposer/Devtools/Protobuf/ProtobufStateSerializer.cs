@@ -65,12 +65,11 @@ public static class ProtobufStateSerializer
         }
     }
 
-    [Serializable]
     [ProtoContract]
-    private class ProtoMatrix4x4
+    public struct ProtoMatrix4x4
     {
-        [ProtoMember(1)]
-        public required float[] Matrix; // Using an array for better binary packing
+        [ProtoMember(1, OverwriteList = true)]
+        public float[] M { get; set; } // Using an array for better binary packing
 
         public static implicit operator Matrix4x4(ProtoMatrix4x4 c)
         {

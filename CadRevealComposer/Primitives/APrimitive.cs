@@ -6,13 +6,9 @@ using System.Numerics;
 using Tessellation;
 
 // Reveal GLTF model
-[ProtoContract(SkipConstructor = true)]
-public sealed record Box(
-    [property: ProtoMember(1)] Matrix4x4 InstanceMatrix,
-    ulong TreeIndex,
-    Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
+public sealed record Box(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
+    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Circle(
@@ -143,7 +139,7 @@ public sealed record InstancedMesh(
 public sealed record TriangleMesh(Mesh Mesh, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
     : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
-[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true, IgnoreUnknownSubTypes = false)]
+[ProtoContract(SkipConstructor = true, IgnoreUnknownSubTypes = false)]
 [ProtoInclude(500, typeof(TriangleMesh))]
 [ProtoInclude(501, typeof(InstancedMesh))]
 [ProtoInclude(502, typeof(Trapezium))]
@@ -157,4 +153,8 @@ public sealed record TriangleMesh(Mesh Mesh, ulong TreeIndex, Color Color, Bound
 [ProtoInclude(510, typeof(Circle))]
 [ProtoInclude(511, typeof(Box))]
 [ProtoInclude(512, typeof(EccentricCone))]
-public abstract record APrimitive(ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox);
+public abstract record APrimitive(
+    [property: ProtoMember(1)] ulong TreeIndex,
+    [property: ProtoMember(2)] Color Color,
+    [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox
+);
