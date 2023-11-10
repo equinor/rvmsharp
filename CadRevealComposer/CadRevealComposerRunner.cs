@@ -2,7 +2,6 @@
 
 using Configuration;
 using Devtools;
-using Devtools.Protobuf;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
