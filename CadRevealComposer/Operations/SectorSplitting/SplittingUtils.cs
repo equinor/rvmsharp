@@ -139,20 +139,38 @@ public static class SplittingUtils
         //     return (nodes.ToArray(), Array.Empty<Node>());
 
         // TESTING HERE with truncated average
-        // var lastKeepCandidate = nodes
-        //     .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
-        //     .Select(x => new { Distance = Vector3.Distance(x.BoundingBox.Center, truncatedAverage) })
-        //     .ToArray();
-        // var lastKeepCandidate2 = lastKeepCandidate
-        //     .Where((x, i) => i > 0 && (x.Distance - lastKeepCandidate[i - 1].Distance > outlierDistance));
+
+        var lastKeepCandidate = nodes
+            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
+            .ToArray();
+
+        bool areOutliers = false;
+        int outlierStartIndex = 0;
+        for (int i = 1; i < lastKeepCandidate.Length; i++)
+        {
+            var firstDistance = Vector3.Distance(lastKeepCandidate[i-1].BoundingBox.Center, truncatedAverage);
+            var secondDistance = Vector3.Distance(lastKeepCandidate[i].BoundingBox.Center, truncatedAverage);
+            if(secondDistance - firstDistance >= outlierDistance){
+                areOutliers = true;
+                outlierStartIndex = i;
+                break;
+            }
+        }
+
+        if (!areOutliers)
+        {
+            return (nodes.ToArray(), Array.Empty<Node>());
+        }
 
         var regularNodes = nodes
-            .Where(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage) < outlierDistance)
+            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
+            .Take(outlierStartIndex)
             .ToArray();
         var outlierNodes = nodes
-            .Where(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage) >= outlierDistance)
+            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
+            .Skip(outlierStartIndex)
             .ToArray();
-        Console.WriteLine(outlierNodes);
+        Console.WriteLine("h");
         // var distanceLastKeepCandidate =
         //     Vector3.Distance(lastKeepCandidate.BoundingBox.Center, avgCenter)
         //     * paddingFactor /* Slight Padding */
