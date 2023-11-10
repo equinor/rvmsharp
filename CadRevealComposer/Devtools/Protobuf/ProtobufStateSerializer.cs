@@ -27,6 +27,7 @@ public static class ProtobufStateSerializer
     {
         var timer = Stopwatch.StartNew();
         EnsureSurrogatesRegistered();
+
         var primitives = Serializer.Deserialize<APrimitive[]>(targetStream);
         Console.WriteLine(
             $"Deserialized {primitives.Length, 8} primitives from {targetStream.Length / 1024 / 1024, 5}MB in {timer.Elapsed}"

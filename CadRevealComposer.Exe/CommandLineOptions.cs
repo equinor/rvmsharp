@@ -115,6 +115,13 @@ public class CommandLineOptions
     ]
     public float SimplificationThreshold { get; set; }
 
+    [Option(
+        longName: "DevCacheFolder",
+        Required = false,
+        HelpText = "The path to the developer cache folder. If not set the dev-cache will be disabled. By default the DevCache will use the input folders name to determine the cache file."
+    )]
+    public DirectoryInfo? DevCacheFolder { get; init; } = null;
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes
@@ -131,6 +138,12 @@ public class CommandLineOptions
         {
             // Creates the whole path
             Directory.CreateDirectory(options.OutputDirectory.FullName);
+        }
+
+        if (options.DevCacheFolder != null && !options.DevCacheFolder.Exists)
+        {
+            Directory.CreateDirectory(options.DevCacheFolder.FullName);
+            Console.WriteLine($"Created {nameof(options.DevCacheFolder)} at path: " + options.DevCacheFolder.FullName);
         }
     }
 }

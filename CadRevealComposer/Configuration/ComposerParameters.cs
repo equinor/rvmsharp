@@ -1,11 +1,11 @@
 namespace CadRevealComposer.Configuration;
 
-public record ComposerParameters(
-    bool NoInstancing,
+using System.IO;
+
+public record ComposerParameters(bool NoInstancing,
     bool SingleSector,
     bool SplitIntoZones,
     NodeNameExcludeRegex NodeNameExcludeRegex,
-    float SimplificationThreshold
-);
+    float SimplificationThreshold, DirectoryInfo? DevCacheFolder);
 
 public record NodeNameExcludeRegex(string? Value);
