@@ -28,7 +28,7 @@ public class DevPrimitiveCacheFolder
         {
             Console.WriteLine($"Stats for PrimitiveCache folder at \"{_cacheFolder.FullName}\"");
             Console.WriteLine(
-                $"Total Size of {nameof(PrimitiveCacheExtension)} files: {totalSizeBytes / 1024 / 1024}MB. NumCacheFiles: {numCacheFiles}"
+                $"Total Size of {PrimitiveCacheExtension} files: {totalSizeBytes / 1024 / 1024}MB. NumCacheFiles: {numCacheFiles}"
             );
         }
     }
