@@ -88,17 +88,16 @@ public static class SplittingUtils
     {
         var truncatedAverage = TruncatedAverageCenter(nodes);
 
-        var orderedNodes = nodes
-            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
-            .ToArray();
+        var orderedNodes = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage)).ToArray();
 
         bool areOutliers = false;
         int outlierStartIndex = 0;
         for (int i = 1; i < orderedNodes.Length; i++)
         {
-            var firstDistance = Vector3.Distance(orderedNodes[i-1].BoundingBox.Center, truncatedAverage);
+            var firstDistance = Vector3.Distance(orderedNodes[i - 1].BoundingBox.Center, truncatedAverage);
             var secondDistance = Vector3.Distance(orderedNodes[i].BoundingBox.Center, truncatedAverage);
-            if(secondDistance - firstDistance >= outlierDistance){
+            if (secondDistance - firstDistance >= outlierDistance)
+            {
                 areOutliers = true;
                 outlierStartIndex = i;
                 break;
@@ -110,15 +109,12 @@ public static class SplittingUtils
             return (nodes.ToArray(), Array.Empty<Node>());
         }
 
-        var regularNodes = orderedNodes
-            .Take(outlierStartIndex)
-            .ToArray();
-        var outlierNodes = orderedNodes
-            .Skip(outlierStartIndex)
-            .ToArray();
+        var regularNodes = orderedNodes.Take(outlierStartIndex).ToArray();
+        var outlierNodes = orderedNodes.Skip(outlierStartIndex).ToArray();
 
         return (regularNodes, outlierNodes);
     }
+
     /// <summary>
     /// Calculates the truncated average center for a collection of nodes.
     /// Discards the first and last 5% of values in an ascending ordered collection of the nodes
@@ -128,23 +124,23 @@ public static class SplittingUtils
     {
         var avgCenterX = nodes
             .OrderBy(x => x.BoundingBox.Center.X)
-            .Skip((int)(nodes.Count*0.05))
-            .Take((int)(nodes.Count*0.95))
+            .Skip((int)(nodes.Count * 0.05))
+            .Take((int)(nodes.Count * 0.95))
             .Average(x => x.BoundingBox.Center.X);
 
         var avgCenterY = nodes
             .OrderBy(x => x.BoundingBox.Center.Y)
-            .Skip((int)(nodes.Count*0.05))
-            .Take((int)(nodes.Count*0.95))
+            .Skip((int)(nodes.Count * 0.05))
+            .Take((int)(nodes.Count * 0.95))
             .Average(x => x.BoundingBox.Center.Y);
 
         var avgCenterZ = nodes
             .OrderBy(x => x.BoundingBox.Center.Z)
-            .Skip((int)(nodes.Count*0.05))
-            .Take((int)(nodes.Count*0.95))
+            .Skip((int)(nodes.Count * 0.05))
+            .Take((int)(nodes.Count * 0.95))
             .Average(x => x.BoundingBox.Center.Z);
 
-        return new Vector3(avgCenterX,avgCenterY,avgCenterZ);
+        return new Vector3(avgCenterX, avgCenterY, avgCenterZ);
     }
 
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
