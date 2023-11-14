@@ -156,7 +156,7 @@ public static class SplittingUtils
                 var boundingBox = geometries.CalculateBoundingBox();
                 if (boundingBox == null)
                 {
-                    throw new Exception("Unexpected error, the boundingbox should not have been null.");
+                    throw new Exception("Unexpected error, the bounding box should not have been null.");
                 }
                 return new Node(
                     g.TreeIndex,
