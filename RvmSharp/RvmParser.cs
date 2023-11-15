@@ -304,9 +304,11 @@ public static class RvmParser
                     break;
                 case "OBST":
                     ReadPrimitive(stream, true);
+                    Console.WriteLine("Encountered OBST chunk, skipping.");
                     break;
                 case "INSU":
                     ReadPrimitive(stream, true);
+                    Console.WriteLine("Encountered INSU chunk, skipping.");
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {id}");
