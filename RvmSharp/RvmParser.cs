@@ -92,10 +92,14 @@ public static class RvmParser
         var version = ReadUint(stream);
         var kind = (RvmPrimitiveKind)ReadUint(stream);
 
+        // some chunk types as obstruction or insulation have transparency
+        // we need to treat them in order to process the rest of the stream,
+        // but the opacity itself is not used in any way right now
         if (hasOpacity)
         {
             var opacity = ReadUint(stream);
         }
+
         // csharpier-ignore -- Keep matrix formatting
         var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
