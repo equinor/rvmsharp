@@ -87,10 +87,15 @@ public static class RvmParser
         return (version, project, name);
     }
 
-    private static RvmPrimitive ReadPrimitive(Stream stream)
+    private static RvmPrimitive ReadPrimitive(Stream stream, bool hasOpacity = false)
     {
         var version = ReadUint(stream);
         var kind = (RvmPrimitiveKind)ReadUint(stream);
+
+        if (hasOpacity)
+        {
+            var opacity = ReadUint(stream);
+        }
         // csharpier-ignore -- Keep matrix formatting
         var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
@@ -296,6 +301,12 @@ public static class RvmParser
                     {
                         group.AddChild(primitive);
                     }
+                    break;
+                case "OBST":
+                    ReadPrimitive(stream, true);
+                    break;
+                case "INSU":
+                    ReadPrimitive(stream, true);
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {id}");
