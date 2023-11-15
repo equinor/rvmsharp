@@ -99,7 +99,6 @@ public static class RvmParser
         {
             var opacity = ReadUint(stream);
         }
-
         // csharpier-ignore -- Keep matrix formatting
         var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
