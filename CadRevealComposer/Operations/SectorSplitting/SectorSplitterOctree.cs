@@ -129,48 +129,27 @@ public class SectorSplitterOctree : ISectorSplitter
             yield break;
         }
 
+        // Try to handle nodes in a group that were symmetrical about the distance measure point
         foreach (var group in groups)
         {
-            if (NodesHasDistanceJump(group, OutlierGroupingDistance))
+            var splitGroups = GroupOutliersRecursive(group);
+            foreach (var splitGroup in splitGroups)
             {
-                var splitGroups = GroupOutliersRecursive(group);
-                foreach (var splitGroup in splitGroups)
-                {
-                    yield return splitGroup;
-                }
-            }
-            else
-            {
-                yield return group;
+                yield return splitGroup;
             }
         }
-    }
-
-    private bool NodesHasDistanceJump(Node[] nodes, float distanceThreshold)
-    {
-        var distances = nodes
-            .Select(node => Vector3.Distance(node.BoundingBox.Center, nodes[0].BoundingBox.Center))
-            .OrderBy(x => x)
-            .ToArray();
-
-        for (int i = 0; i < distances.Length - 1; i++)
-        {
-            if (distances[i + 1] - distances[i] > distanceThreshold)
-                return true;
-        }
-
-        return false;
     }
 
     private List<Node[]> GroupOutliers(Node[] outlierNodes, Vector3 distanceMeasurementPoint)
     {
         var sortedOutlierNodes = outlierNodes
-            .OrderBy(x => Vector3.Distance(Vector3.One, x.BoundingBox.Center))
+            .OrderBy(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
             .ToArray();
 
         var outlierDistances = sortedOutlierNodes
-            .Select(x => Vector3.Distance(Vector3.Zero, x.BoundingBox.Center))
+            .Select(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
             .ToArray();
+
         var listOfGroups = new List<Node[]>();
         var currentGroup = new List<Node>();
         for (int i = 0; i < sortedOutlierNodes.Length; i++)
