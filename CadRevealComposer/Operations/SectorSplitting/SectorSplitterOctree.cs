@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
-using System.Text.RegularExpressions;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -132,7 +131,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         foreach (var group in groups)
         {
-            if (nodesHasDistanceJump(group, OutlierGroupingDistance))
+            if (NodesHasDistanceJump(group, OutlierGroupingDistance))
             {
                 var splitGroups = GroupOutliersRecursive(group);
                 foreach (var splitGroup in splitGroups)
@@ -147,7 +146,7 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private bool nodesHasDistanceJump(Node[] nodes, float distanceThreshold)
+    private bool NodesHasDistanceJump(Node[] nodes, float distanceThreshold)
     {
         var distances = nodes
             .Select(node => Vector3.Distance(node.BoundingBox.Center, nodes[0].BoundingBox.Center))
