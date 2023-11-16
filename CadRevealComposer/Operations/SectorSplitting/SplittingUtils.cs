@@ -164,4 +164,56 @@ public static class SplittingUtils
             })
             .ToArray();
     }
+
+    public static IEnumerable<Node[]> GroupOutliersRecursive(Node[] outlierNodes, float outlierGroupingDistance)
+    {
+        var groups = GroupOutliers(outlierNodes, outlierNodes[0].BoundingBox.Center, outlierGroupingDistance);
+
+        if (groups.Count == 1)
+        {
+            yield return groups[0];
+            yield break;
+        }
+
+        // Try to handle nodes in a group that were symmetrical about the distance measure point
+        foreach (var group in groups)
+        {
+            var subGroups = GroupOutliersRecursive(group, outlierGroupingDistance);
+            foreach (var subGroup in subGroups)
+            {
+                yield return subGroup;
+            }
+        }
+    }
+
+    private static List<Node[]> GroupOutliers(
+        Node[] outlierNodes,
+        Vector3 distanceMeasurementPoint,
+        float outlierGroupingDistance
+    )
+    {
+        var sortedOutlierNodes = outlierNodes
+            .OrderBy(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
+            .ToArray();
+
+        var outlierDistances = sortedOutlierNodes
+            .Select(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
+            .ToArray();
+
+        var listOfGroups = new List<Node[]>();
+        var currentGroup = new List<Node>();
+        for (int i = 0; i < sortedOutlierNodes.Length; i++)
+        {
+            currentGroup.Add(sortedOutlierNodes[i]);
+
+            var isLastIteration = i == sortedOutlierNodes.Length - 1;
+            if (isLastIteration || outlierDistances[i + 1] - outlierDistances[i] > outlierGroupingDistance)
+            {
+                listOfGroups.Add(currentGroup.ToArray());
+                currentGroup.Clear();
+            }
+        }
+
+        return listOfGroups;
+    }
 }

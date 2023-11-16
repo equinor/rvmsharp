@@ -95,7 +95,7 @@ public class SectorSplitterOctree : ISectorSplitter
         SequentialIdGenerator sectorIdGenerator
     )
     {
-        var outlierGroups = GroupOutliersRecursive(outlierNodes);
+        var outlierGroups = SplittingUtils.GroupOutliersRecursive(outlierNodes, OutlierGroupingDistance);
 
         foreach (var outlierGroup in outlierGroups)
         {
@@ -117,54 +117,6 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield return sector;
             }
         }
-    }
-
-    private IEnumerable<Node[]> GroupOutliersRecursive(Node[] outlierNodes)
-    {
-        var groups = GroupOutliers(outlierNodes, outlierNodes[0].BoundingBox.Center);
-
-        if (groups.Count == 1)
-        {
-            yield return groups[0];
-            yield break;
-        }
-
-        // Try to handle nodes in a group that were symmetrical about the distance measure point
-        foreach (var group in groups)
-        {
-            var subGroups = GroupOutliersRecursive(group);
-            foreach (var subGroup in subGroups)
-            {
-                yield return subGroup;
-            }
-        }
-    }
-
-    private List<Node[]> GroupOutliers(Node[] outlierNodes, Vector3 distanceMeasurementPoint)
-    {
-        var sortedOutlierNodes = outlierNodes
-            .OrderBy(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
-            .ToArray();
-
-        var outlierDistances = sortedOutlierNodes
-            .Select(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
-            .ToArray();
-
-        var listOfGroups = new List<Node[]>();
-        var currentGroup = new List<Node>();
-        for (int i = 0; i < sortedOutlierNodes.Length; i++)
-        {
-            currentGroup.Add(sortedOutlierNodes[i]);
-
-            var isLastIteration = i == sortedOutlierNodes.Length - 1;
-            if (isLastIteration || outlierDistances[i + 1] - outlierDistances[i] > OutlierGroupingDistance)
-            {
-                listOfGroups.Add(currentGroup.ToArray());
-                currentGroup.Clear();
-            }
-        }
-
-        return listOfGroups;
     }
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
