@@ -305,12 +305,12 @@ public static class RvmParser
                         group.AddChild(primitive);
                     }
                     break;
-                // types OBST (obstacle) and INSU (insulation) chunks were previously throwing an exception
-                // causing the building process to terminate
+                // types OBST (obstacle) and INSU (insulation) chunks were previously also throwing
+                // a NotImplementedException causing the building process to terminate
                 // now the corresponding stream is consumed, but they are skipped (not added to the scene)
                 //
-                // in order to add them to the scene, the primitive type needs to be extended as follows
-                // -- add a field for storing its type (primitive, obstacle, insulation)
+                // in order to add them to the scene, the primitive type needs to be extended as follows:
+                // -- add a field for storing the type of the chunk (primitive, obstacle, insulation)
                 // -- add a field for storing opacity if this should be supported by rendering
                 case "OBST":
                     ReadPrimitive(stream, true);
