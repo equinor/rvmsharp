@@ -90,7 +90,7 @@ public static class SplittingUtils
 
         var orderedNodes = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage)).ToArray();
 
-        bool areOutliers = false;
+        bool outliersExist = false;
         int outlierStartIndex = 0;
         for (int i = 1; i < orderedNodes.Length; i++)
         {
@@ -98,13 +98,13 @@ public static class SplittingUtils
             var secondDistance = Vector3.Distance(orderedNodes[i].BoundingBox.Center, truncatedAverage);
             if (secondDistance - firstDistance >= outlierDistance)
             {
-                areOutliers = true;
+                outliersExist = true;
                 outlierStartIndex = i;
                 break;
             }
         }
 
-        if (!areOutliers)
+        if (!outliersExist)
         {
             return (nodes.ToArray(), Array.Empty<Node>());
         }

@@ -19,8 +19,8 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
-    private const float OutlierGroupingDistance = 20f; // Distance between nodes before we group them
-    private const int OutlierStartDepth = 20; // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+    private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
+    private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
 
     private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
     private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
@@ -81,7 +81,7 @@ public class SectorSplitterOctree : ISectorSplitter
     }
 
     /// <summary>
-    /// Group outliers by distance, and run splitting on each seperate group
+    /// Group outliers by distance, and run splitting on each separate group
     /// </summary>
     /// <param name="outlierNodes"></param>
     /// <param name="rootPath"></param>
@@ -105,7 +105,7 @@ public class SectorSplitterOctree : ISectorSplitter
                     rootPath,
                     rootSectorId,
                     sectorIdGenerator,
-                    0 // Hackish: This is set to a lot lower than OutlierStartDepth to skip size checking in budget
+                    0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
                 )
                 .ToArray();
 
@@ -132,10 +132,10 @@ public class SectorSplitterOctree : ISectorSplitter
         // Try to handle nodes in a group that were symmetrical about the distance measure point
         foreach (var group in groups)
         {
-            var splitGroups = GroupOutliersRecursive(group);
-            foreach (var splitGroup in splitGroups)
+            var subGroups = GroupOutliersRecursive(group);
+            foreach (var subGroup in subGroups)
             {
-                yield return splitGroup;
+                yield return subGroup;
             }
         }
     }
