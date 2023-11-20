@@ -10,7 +10,7 @@ using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {
-    private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 500_000; // bytes, Arbitrary value
     private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
     private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
