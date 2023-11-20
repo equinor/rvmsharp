@@ -165,6 +165,11 @@ public static class SplittingUtils
             .ToArray();
     }
 
+    /// <summary>
+    /// Group outliers based on outlierGroupingDistance.
+    /// This is done recursively to avoid the problem where nodes are at equal distance to the measuring point,
+    /// but not actually close to each other.
+    /// </summary>
     public static IEnumerable<Node[]> GroupOutliersRecursive(Node[] outlierNodes, float outlierGroupingDistance)
     {
         var groups = GroupOutliers(outlierNodes, outlierNodes[0].BoundingBox.Center, outlierGroupingDistance);

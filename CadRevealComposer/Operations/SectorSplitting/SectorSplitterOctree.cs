@@ -83,11 +83,6 @@ public class SectorSplitterOctree : ISectorSplitter
     /// <summary>
     /// Group outliers by distance, and run splitting on each separate group
     /// </summary>
-    /// <param name="outlierNodes"></param>
-    /// <param name="rootPath"></param>
-    /// <param name="rootSectorId"></param>
-    /// <param name="sectorIdGenerator"></param>
-    /// <returns></returns>
     private IEnumerable<InternalSector> HandleOutlierSplitting(
         Node[] outlierNodes,
         string rootPath,
