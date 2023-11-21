@@ -23,7 +23,8 @@ public class ConeTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedCone = ConeTessellator.Tessellate(cone)!;
@@ -48,7 +49,8 @@ public class ConeTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedCone = ConeTessellator.Tessellate(cone)!;
@@ -73,7 +75,8 @@ public class ConeTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedCone = ConeTessellator.Tessellate(cone)!;
@@ -105,7 +108,8 @@ public class ConeTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedCone = ConeTessellator.Tessellate(cone)!;

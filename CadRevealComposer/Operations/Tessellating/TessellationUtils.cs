@@ -153,7 +153,7 @@ public static class TessellationUtils
         var boundingBox = new BoundingBox(baseCenterB - Vector3.One, baseCenterB + Vector3.One);
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
-        return new TriangleMesh(mesh, 0, color, boundingBox);
+        return new TriangleMesh(mesh, 0, color, boundingBox, null!);
     }
 
     /// <summary>
@@ -183,6 +183,6 @@ public static class TessellationUtils
         var boundingBox = new BoundingBox(startPoint - Vector3.One, startPoint + Vector3.One);
 
         var mesh = new Mesh(vertices.ToArray(), indices.ToArray(), 0);
-        return new TriangleMesh(mesh, 0, Color.Aquamarine, boundingBox);
+        return new TriangleMesh(mesh, 0, Color.Aquamarine, boundingBox, null!);
     }
 }

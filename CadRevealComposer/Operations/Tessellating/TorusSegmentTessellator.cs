@@ -141,6 +141,6 @@ public static class TorusSegmentTessellator
 
             return null;
         }
-        return new TriangleMesh(mesh, torus.TreeIndex, torus.Color, torus.AxisAlignedBoundingBox);
+        return new TriangleMesh(mesh, torus.TreeIndex, torus.Color, torus.AxisAlignedBoundingBox, torus.Area);
     }
 }

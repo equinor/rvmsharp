@@ -13,7 +13,7 @@ public class BoxTessellatorTests
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
-        var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
+        var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox,"HA-ARCH");
 
         var tessellatedBox = BoxTessellator.Tessellate(box)!;
 
@@ -31,7 +31,7 @@ public class BoxTessellatorTests
 
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
-        var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox);
+        var box = new Box(Matrix4x4.Identity, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
 
         var tessellatedBox = BoxTessellator.Tessellate(box)!;
 

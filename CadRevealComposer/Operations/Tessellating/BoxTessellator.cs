@@ -51,6 +51,6 @@ public static class BoxTessellator
             return null;
         }
 
-        return new TriangleMesh(mesh, box.TreeIndex, box.Color, box.AxisAlignedBoundingBox);
+        return new TriangleMesh(mesh, box.TreeIndex, box.Color, box.AxisAlignedBoundingBox, box.Area);
     }
 }

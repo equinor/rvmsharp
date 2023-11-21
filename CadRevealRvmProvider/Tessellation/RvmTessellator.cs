@@ -1,10 +1,12 @@
 ﻿namespace CadRevealRvmProvider.Tessellation;
 
 using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using Operations;
+using RvmSharp.Containers;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System.Diagnostics;

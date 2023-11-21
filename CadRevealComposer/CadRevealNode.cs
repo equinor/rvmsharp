@@ -65,6 +65,8 @@ public class CadRevealNode
     /// </summary>
     public string? OptionalDiagnosticInfo;
 
+    public string? Area;
+
     public static IEnumerable<CadRevealNode> GetAllNodesFlat(CadRevealNode root)
     {
         yield return root;

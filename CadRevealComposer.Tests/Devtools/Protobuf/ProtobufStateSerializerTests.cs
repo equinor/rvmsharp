@@ -27,7 +27,8 @@ public class ProtobufStateSerializerTests
             0.2f,
             1337,
             SampleColor,
-            SampleAxisAlignedBoundingBox
+            SampleAxisAlignedBoundingBox,
+            "HA"
         );
 
         APrimitive[] inputArray = { box };
@@ -39,7 +40,7 @@ public class ProtobufStateSerializerTests
     [Test]
     public void TestProtobufRoundtrip_Box()
     {
-        var box = new Box(Matrix4x4.Identity, 1337, Color.FromArgb(255, 255, 0, 255), SampleAxisAlignedBoundingBox);
+        var box = new Box(Matrix4x4.Identity, 1337, Color.FromArgb(255, 255, 0, 255), SampleAxisAlignedBoundingBox, "HA");
 
         APrimitive[] inputArray = { box };
         APrimitive[] outputArray = RoundtripSerializeDeserialize(inputArray);
@@ -58,7 +59,8 @@ public class ProtobufStateSerializerTests
             ),
             1337,
             SampleColor,
-            SampleAxisAlignedBoundingBox
+            SampleAxisAlignedBoundingBox,
+            "HA"
         );
 
         APrimitive[] inputArray = { mesh };

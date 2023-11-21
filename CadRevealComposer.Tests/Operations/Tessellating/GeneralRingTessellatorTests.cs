@@ -21,7 +21,8 @@ public class GeneralRingTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
@@ -43,7 +44,8 @@ public class GeneralRingTessellatorTests
             0.5f,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
@@ -67,7 +69,8 @@ public class GeneralRingTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;
@@ -104,7 +107,8 @@ public class GeneralRingTessellatorTests
             0.5f,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedGeneralRing = GeneralRingTessellator.Tessellate(ring)!;

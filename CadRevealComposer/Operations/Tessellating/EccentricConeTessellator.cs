@@ -71,6 +71,6 @@ public static class EccentricConeTessellator
             );
             return null;
         }
-        return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox);
+        return new TriangleMesh(mesh, cone.TreeIndex, cone.Color, cone.AxisAlignedBoundingBox, cone.Area);
     }
 }

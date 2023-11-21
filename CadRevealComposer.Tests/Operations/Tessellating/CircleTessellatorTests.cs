@@ -12,7 +12,7 @@ public class CircleTessellatorTests
     public void TessellateCircle_ReturnsCorrectNumberOfVerticesAndIndices()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
-        var circle = new Circle(Matrix4x4.Identity, Vector3.UnitY, 1, Color.Red, dummyBoundingBox);
+        var circle = new Circle(Matrix4x4.Identity, Vector3.UnitY, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
 
         var tessellatedCircle = CircleTessellator.Tessellate(circle)!;
 
@@ -28,7 +28,7 @@ public class CircleTessellatorTests
         // This test is based on https://math.stackexchange.com/questions/932800/what-formula-will-tell-if-three-vertices-in-3d-space-are-ordered-clockwise-or-co
 
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
-        var circle = new Circle(Matrix4x4.Identity, Vector3.UnitY, 1, Color.Red, dummyBoundingBox);
+        var circle = new Circle(Matrix4x4.Identity, Vector3.UnitY, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
 
         var tessellatedCircle = CircleTessellator.Tessellate(circle)!;
 

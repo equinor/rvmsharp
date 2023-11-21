@@ -30,7 +30,8 @@ public class ExteriorSplitterTests
             Matrix4x4.Identity,
             treeIndex,
             Color.Red,
-            new BoundingBox(new Vector3(-boxSize / 2f), new Vector3(boxSize / 2f))
+            new BoundingBox(new Vector3(-boxSize / 2f), new Vector3(boxSize / 2f)),
+            "HA"
         );
     }
 }

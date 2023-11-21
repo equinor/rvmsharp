@@ -13,7 +13,7 @@ public class EccentricConeTessellatorTests
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
-        var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox);
+        var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
 
         var tessellatedCone = EccentricConeTessellator.Tessellate(cone)!;
 
@@ -37,7 +37,8 @@ public class EccentricConeTessellatorTests
             1,
             1,
             Color.Red,
-            dummyBoundingBox
+            dummyBoundingBox,
+            "HA-ARCH"
         );
 
         var tessellatedCone = ConeTessellator.Tessellate(cone)!;
@@ -60,7 +61,7 @@ public class EccentricConeTessellatorTests
 
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
-        var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox);
+        var cone = new EccentricCone(Vector3.Zero, Vector3.UnitY, Vector3.UnitY, 1, 1, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
 
         var tessellatedCone = EccentricConeTessellator.Tessellate(cone)!;
 

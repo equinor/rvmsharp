@@ -13,9 +13,9 @@ public class DrawCallEstimatorTests
     {
         var geometry = new APrimitive[]
         {
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One)),
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One)),
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One))
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One),"HA"),
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One),"HA"),
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One),"HA")
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
         Assert.AreEqual(1, estimatedDrawCalls);
@@ -37,7 +37,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                "HA"
             ),
             new GeneralCylinder(
                 0f,
@@ -50,7 +51,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                "HA"
             )
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
@@ -73,7 +75,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                "HA"
             ),
             new TorusSegment(
                 0f,
@@ -82,7 +85,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                "HA"
             ),
             new GeneralCylinder(
                 0f,
@@ -95,7 +99,8 @@ public class DrawCallEstimatorTests
                 0f,
                 int.MaxValue,
                 Color.Red,
-                new BoundingBox(-Vector3.One, Vector3.One)
+                new BoundingBox(-Vector3.One, Vector3.One),
+                "HA"
             )
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
