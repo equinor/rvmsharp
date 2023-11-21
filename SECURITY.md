@@ -1,8 +1,6 @@
 ## Security Policy
 If you discover a security vulnerability in this project, please follow the steps below to report it.
 
-If you discover a security vulnerability in this project, please follow the steps below to report it.
-
 ### For "non-critical" issues
 
 - **Alternative A:**
