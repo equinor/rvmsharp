@@ -31,7 +31,7 @@ internal class RvmRectangularTorusConverterTests
     {
         var torus = _rvmRectangularTorus with { Angle = 2 * MathF.PI };
 
-        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Cone>());
@@ -45,7 +45,7 @@ internal class RvmRectangularTorusConverterTests
     {
         var torus = _rvmRectangularTorus with { Angle = 2 * MathF.PI, RadiusInner = 0 };
 
-        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<GeneralRing>());
@@ -56,7 +56,7 @@ internal class RvmRectangularTorusConverterTests
     [Test]
     public void RvmRectangularTorusConverter_WhenAngleIsLessThan2Pi_ReturnsTorusWithCaps()
     {
-        var geometries = _rvmRectangularTorus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = _rvmRectangularTorus.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Cone>());
@@ -72,7 +72,7 @@ internal class RvmRectangularTorusConverterTests
     {
         var torus = _rvmRectangularTorus with { RadiusOuter = 0 };
 
-        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries, Is.Empty);
     }
@@ -88,7 +88,7 @@ internal class RvmRectangularTorusConverterTests
             RadiusInner = 1.0f
         };
 
-        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         var quad1 = (Quad)geometries[4];
         var quad2 = (Quad)geometries[5];

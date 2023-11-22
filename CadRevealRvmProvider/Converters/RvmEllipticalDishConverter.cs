@@ -13,7 +13,7 @@ public static class RvmEllipticalDishConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmEllipticalDish rvmEllipticalDish,
         ulong treeIndex,
-        Color color
+        Color color, string area
     )
     {
         if (!rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -43,14 +43,14 @@ public static class RvmEllipticalDishConverter
             normal,
             treeIndex,
             color,
-            bbBox
+            bbBox, area
         );
 
         var showCap = CapVisibility.IsCapVisible(rvmEllipticalDish, position);
 
         if (showCap)
         {
-            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color, area);
         }
     }
 }

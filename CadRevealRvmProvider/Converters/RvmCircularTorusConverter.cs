@@ -9,11 +9,9 @@ using System.Numerics;
 
 public static class RvmCircularTorusConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmCircularTorus rvmCircularTorus,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color
-    )
+        Color color, string area)
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -41,7 +39,7 @@ public static class RvmCircularTorusConverter
             TubeRadius: rvmCircularTorus.Radius,
             treeIndex,
             color,
-            bbox
+            bbox, area
         );
 
         if (isTorusSegment)
@@ -71,7 +69,7 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapA);
 
-                yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalCapA, treeIndex, color);
+                yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalCapA, treeIndex, color, area);
             }
 
             if (showCapB)
@@ -83,7 +81,7 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapB);
 
-                yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color);
+                yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color, area);
             }
         }
     }

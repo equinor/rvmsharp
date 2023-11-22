@@ -9,7 +9,7 @@ using System.Linq;
 using System.Numerics;
 using Utils;
 
-public class SectorSplitterOctree : ISectorSplitter
+internal class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
     private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
@@ -42,20 +42,35 @@ public class SectorSplitterOctree : ISectorSplitter
         //Order nodes by diagonal size
         var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
 
-        var sectors = SplitIntoSectorsRecursive(
-                sortedNodes,
-                1,
-                rootPath,
-                rootSectorId,
-                sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
-            )
-            .ToArray();
+        var areaNodes = sortedNodes.GroupBy(x => x.Geometries.First().Area);
 
-        foreach (var sector in sectors)
+        foreach (var group in areaNodes)
         {
-            yield return sector;
+            var sectors = SplitIntoSectorsRecursive(
+                    group.ToArray(),
+                    1,
+                    rootPath,
+                    rootSectorId,
+                    sectorIdGenerator,
+                    CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                )
+                .ToArray();
+            foreach (var sector in sectors)
+            {
+                yield return sector;
+            }
         }
+
+        // var sectors = SplitIntoSectorsRecursive(
+        //         sortedNodes,
+        //         1,
+        //         rootPath,
+        //         rootSectorId,
+        //         sectorIdGenerator,
+        //         CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+        //     )
+        //     .ToArray();
+
 
         // Add outliers to special outliers sector
         var excludedOutliersCount = outlierNodes.Length;

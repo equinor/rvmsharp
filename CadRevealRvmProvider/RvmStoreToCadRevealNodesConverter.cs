@@ -97,8 +97,15 @@ internal static class RvmStoreToCadRevealNodesConverter
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
         }
 
+        // Hacky way to get the area
+        var r = newNode;
+        while (r.Parent is not null)
+        {
+            r = r.Parent;
+        }
+
         newNode.Geometries = rvmGeometries
-            .SelectMany(primitive => RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root))
+            .SelectMany(primitive => RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root, r.Name.Split("-").First()))
             .ToArray();
 
         newNode.Children = childrenCadNodes;

@@ -53,7 +53,7 @@ public class RvmTessellator
                 Interlocked.Add(ref logObject.SimplificationAfterTriangleCount, mesh.TriangleCount);
             }
 
-            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
+            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox, p.Area);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
@@ -112,7 +112,8 @@ public class RvmTessellator
                                 item.Transform,
                                 item.ProtoMesh.TreeIndex,
                                 item.ProtoMesh.Color,
-                                item.ProtoMesh.AxisAlignedBoundingBox
+                                item.ProtoMesh.AxisAlignedBoundingBox,
+                                item.ProtoMesh.Area
                             )
                     )
             )

@@ -146,7 +146,7 @@ public static class FbxNodeToCadRevealNodeConverter
                 transform,
                 treeIndex,
                 Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform)
+                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform), "HA" // TODO: fix me
             );
             return instancedMeshCopy;
         }
@@ -171,7 +171,7 @@ public static class FbxNodeToCadRevealNodeConverter
                 transform,
                 treeIndex,
                 Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                bb
+                bb, "HA" // TODO: fix me
             );
             return instancedMesh;
         }
@@ -180,7 +180,7 @@ public static class FbxNodeToCadRevealNodeConverter
             mesh,
             treeIndex,
             Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-            bb
+            bb,"HA" // TODO: fix me
         );
 
         return triangleMesh;

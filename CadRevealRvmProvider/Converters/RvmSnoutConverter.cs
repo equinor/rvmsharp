@@ -12,7 +12,8 @@ using System.Numerics;
 
 public static class RvmSnoutConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color,
+        string area)
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -74,7 +75,8 @@ public static class RvmSnoutConverter
                     scale,
                     treeIndex,
                     color,
-                    bbox
+                    bbox,
+                    area
                 );
             }
 
@@ -94,11 +96,13 @@ public static class RvmSnoutConverter
                 length,
                 treeIndex,
                 color,
-                bbox
+                bbox,
+                area
             );
         }
 
-        return CreateCone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox);
+        return CreateCone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox,
+            area);
     }
 
     private static IEnumerable<APrimitive> CreateCone(
@@ -111,7 +115,8 @@ public static class RvmSnoutConverter
         float radiusB,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        string area
     )
     {
         var diameterA = 2f * radiusA;
@@ -131,7 +136,7 @@ public static class RvmSnoutConverter
                 radiusB,
                 treeIndex,
                 color,
-                bbox
+                bbox, area
             );
         }
 
@@ -144,7 +149,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color, area);
         }
 
         if (showCapB && radiusB > 0 && hasHeight)
@@ -154,7 +159,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            yield return CircleConverterHelper.ConvertCircle(matrixCapB, -normal, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapB, -normal, treeIndex, color, area);
         }
     }
 
@@ -169,7 +174,8 @@ public static class RvmSnoutConverter
         float length,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        string area
     )
     {
         var halfLength = length / 2f;
@@ -192,7 +198,7 @@ public static class RvmSnoutConverter
             radiusB,
             treeIndex,
             color,
-            bbox
+            bbox, area
         );
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
@@ -204,7 +210,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(eccentricCenterA);
 
-            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color, area);
         }
 
         if (showCapB && radiusB > 0)
@@ -214,7 +220,7 @@ public static class RvmSnoutConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(eccentricCenterB);
 
-            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapB, -normal, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapB, -normal, treeIndex, color, area);
         }
     }
 
@@ -228,7 +234,8 @@ public static class RvmSnoutConverter
         Vector3 scale,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        string area
     )
     {
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
@@ -265,7 +272,7 @@ public static class RvmSnoutConverter
             (float)semiMinorAxisA,
             treeIndex,
             color,
-            bbox
+            bbox, area
         );
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
@@ -287,7 +294,8 @@ public static class RvmSnoutConverter
                     Thickness: 1f,
                     treeIndex,
                     color,
-                    bbox // Why we use the same bbox as RVM source
+                    bbox, // Why we use the same bbox as RVM source
+                    area
                 );
             }
             else
@@ -316,7 +324,8 @@ public static class RvmSnoutConverter
                     Thickness: 1f,
                     treeIndex,
                     color,
-                    bbox // Why we use the same bbox as RVM source
+                    bbox, // Why we use the same bbox as RVM sources
+                    area
                 );
             }
             else

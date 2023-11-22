@@ -27,7 +27,7 @@ public class RvmCylinderConverterTests
     [Test]
     public void RvmCylinderConverter_ReturnsConeWithCaps()
     {
-        var geometries = _rvmCylinder.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = _rvmCylinder.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());

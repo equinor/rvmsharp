@@ -12,7 +12,8 @@ public static class RvmCylinderConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCylinder rvmCylinder,
         ulong treeIndex,
-        Color color
+        Color color,
+        string area
     )
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -93,7 +94,7 @@ public static class RvmCylinderConverter
                 radius,
                 treeIndex,
                 color,
-                bbox
+                bbox, area
             );
         }
 
@@ -107,7 +108,7 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalA, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalA, treeIndex, color, area);
         }
 
         if (showCapB && height != 0) // If height is zero, return a Circle only
@@ -117,7 +118,7 @@ public static class RvmCylinderConverter
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerB);
 
-            yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalB, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalB, treeIndex, color, area);
         }
     }
 }

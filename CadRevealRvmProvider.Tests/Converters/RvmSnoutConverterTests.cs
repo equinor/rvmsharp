@@ -34,7 +34,7 @@ public class RvmSnoutConverterTests
     [Test]
     public void RvmSnoutConverter_ReturnsConeWithCaps()
     {
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());
@@ -50,7 +50,7 @@ public class RvmSnoutConverterTests
         Assert.Throws<NotImplementedException>(
             delegate
             {
-                snout.ConvertToRevealPrimitive(_treeIndex, Color.Red);
+                snout.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA");
             }
         );
     }
@@ -60,7 +60,7 @@ public class RvmSnoutConverterTests
     {
         _rvmSnout = _rvmSnout with { RadiusBottom = 1, RadiusTop = 1, BottomShearX = 0.5f };
 
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<GeneralCylinder>());
         Assert.That(geometries[1], Is.TypeOf<GeneralRing>());
@@ -73,7 +73,7 @@ public class RvmSnoutConverterTests
     {
         var snout = _rvmSnout with { OffsetX = 0.5f };
 
-        var geometries = snout.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = snout.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<EccentricCone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());
@@ -84,7 +84,7 @@ public class RvmSnoutConverterTests
     [Test]
     public void RvmSnoutConverter_WhenNoShearAndNotEccentric_ReturnsConeWithCaps()
     {
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red, "HA").ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());

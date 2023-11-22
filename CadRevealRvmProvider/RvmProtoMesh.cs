@@ -11,22 +11,25 @@ public abstract record ProtoMesh(
     RvmPrimitive RvmPrimitive,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    string Area
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, Area);
 
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    String Area
+) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox, Area);
 
 public sealed record ProtoMeshFromRvmPyramid(
     RvmPyramid Pyramid,
     ulong TreeIndex,
     Color Color,
-    BoundingBox AxisAlignedBoundingBox
-) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);
+    BoundingBox AxisAlignedBoundingBox,
+    String Area
+) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox, Area);
 
 /// <summary>
 /// Sole purpose is to keep the <see cref="ProtoMeshFromFacetGroup"/> through processing of facet group instancing.

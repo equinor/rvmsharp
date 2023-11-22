@@ -10,11 +10,9 @@ using System.Numerics;
 
 public static class RvmSphericalDishConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmSphericalDish rvmSphericalDish,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSphericalDish rvmSphericalDish,
         ulong treeIndex,
-        Color color
-    )
+        Color color, string area)
     {
         if (!rvmSphericalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -39,13 +37,15 @@ public static class RvmSphericalDishConverter
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(position);
 
-        yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox);
+        yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox,
+            area);
 
         var showCap = CapVisibility.IsCapVisible(rvmSphericalDish, position);
 
         if (showCap)
         {
-            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
+            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color,
+                area);
         }
     }
 }

@@ -9,14 +9,15 @@ public static class RvmFacetGroupConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmFacetGroup rvmFacetGroup,
         ulong treeIndex,
-        Color color
+        Color color,
+        string Area
     )
     {
         yield return new ProtoMeshFromFacetGroup(
             rvmFacetGroup,
             treeIndex,
             color,
-            rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+            rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(), Area
         );
     }
 }

@@ -9,11 +9,9 @@ using System.Numerics;
 
 public static class RvmPyramidConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmPyramid rvmPyramid,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmPyramid rvmPyramid,
         ulong treeIndex,
-        Color color
-    )
+        Color color, string area)
     {
         if (IsBoxShaped(rvmPyramid))
         {
@@ -33,7 +31,7 @@ public static class RvmPyramidConverter
                 matrix,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(), area
             );
         }
         else
@@ -42,7 +40,7 @@ public static class RvmPyramidConverter
                 rvmPyramid,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(), area
             );
         }
     }
