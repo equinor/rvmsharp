@@ -50,7 +50,7 @@ public class RvmTessellator
 
                 DisciplineTriangleCostBeforeDict[pfg.Discipline] = DisciplineTriangleCostBeforeDict[pfg.Discipline] + mesh.TriangleCount;
                 Interlocked.Add(ref NonSimplifiedMeshCostInitial, mesh.TriangleCount);
-                if (simplifierThreshold > 0.0f)
+                if (simplifierThreshold > 0.0f && pfg.Discipline != "STRU")
                     (mesh, bool success) = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
                 Interlocked.Add(ref NonSimplifiedMeshCostAfter, mesh.TriangleCount);
                 DisciplineTriangleCostAfterDict[pfg.Discipline] = DisciplineTriangleCostAfterDict[pfg.Discipline] + mesh.TriangleCount;
@@ -158,13 +158,16 @@ public class RvmTessellator
 
             Console.WriteLine("NonSimplifiedMeshCost: " + NonSimplifiedMeshCostInitial);
             Console.WriteLine("NonSimplifiedMeshCostAfter: " + NonSimplifiedMeshCostAfter);
-
+            var sumBefore = 0;
             foreach (var kvp in DisciplineTriangleCostAfterDict)
             {
                 var after = kvp.Value;
                 var before = DisciplineTriangleCostBeforeDict[kvp.Key];
+                sumBefore = sumBefore + before;
                 Console.WriteLine($"{kvp.Key, -8}. Before: {before, 20} After: {after, 20}");
             }
+            Console.WriteLine("Sum of triangles for all disciplines before: " + sumBefore);
+
         }
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();

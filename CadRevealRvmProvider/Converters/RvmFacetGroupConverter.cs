@@ -13,12 +13,7 @@ public static class RvmFacetGroupConverter
         RvmNode rvmNode
     )
     {
-        var shouldNotSimplify = false;
-
         if (rvmNode.Attributes.TryGetValue("Discipline", out var val2))
-        {
-            shouldNotSimplify = val2 == "STRU";
-        }
 
         yield return new ProtoMeshFromFacetGroup(
             rvmFacetGroup,
