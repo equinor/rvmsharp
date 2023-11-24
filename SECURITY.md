@@ -7,7 +7,7 @@ If you discover a security vulnerability in this project, please follow the step
   Create a GitHub issue for the vulnerability. Avoid putting sensitive information in the issue.
 
 - **Alternative B:**
-  Send an email to the projects maintainer at [security@example.com](mailto:security@example.com) describing the issue.
+  Contact at least two of the project's maintainers through internal Equinor slack or email, and describe the issue.
 
 ### For "critical" and time sensitive issues
 
