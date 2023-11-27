@@ -42,13 +42,16 @@ public class SectorSplitterOctree : ISectorSplitter
         //Order nodes by diagonal size
         var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
 
+        var cubicBoundingBoxEncapsulatingMostNodes = SplittingUtils.CubifyBB(boundingBoxEncapsulatingMostNodes);
+
         var sectors = SplitIntoSectorsRecursive(
                 sortedNodes,
                 1,
                 rootPath,
                 rootSectorId,
                 sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                CalculateStartSplittingDepth(cubicBoundingBoxEncapsulatingMostNodes),
+                cubicBoundingBoxEncapsulatingMostNodes
             )
             .ToArray();
 
@@ -94,13 +97,17 @@ public class SectorSplitterOctree : ISectorSplitter
 
         foreach (var outlierGroup in outlierGroups)
         {
+            var bb = outlierGroup.CalculateBoundingBox();
+            var cubicBB = SplittingUtils.CubifyBB(bb);
+
             var outlierSectors = SplitIntoSectorsRecursive(
                     outlierGroup,
                     OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
                     rootPath,
                     rootSectorId,
                     sectorIdGenerator,
-                    0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    0, // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    cubicBB
                 )
                 .ToArray();
 
@@ -120,7 +127,8 @@ public class SectorSplitterOctree : ISectorSplitter
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        int depthToStartSplittingGeometry
+        int depthToStartSplittingGeometry,
+        BoundingBox octant
     )
     {
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
@@ -135,7 +143,8 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var actualDepth = Math.Max(1, recursiveDepth - depthToStartSplittingGeometry + 1);
 
-        var subtreeBoundingBox = nodes.CalculateBoundingBox();
+        //var subtreeBoundingBox = nodes.CalculateBoundingBox();
+        var subtreeBoundingBox = octant;
 
         var mainVoxelNodes = Array.Empty<Node>();
         Node[] subVoxelNodes;
@@ -210,7 +219,8 @@ public class SectorSplitterOctree : ISectorSplitter
                     parentPathForChildren,
                     parentSectorIdForChildren,
                     sectorIdGenerator,
-                    depthToStartSplittingGeometry
+                    depthToStartSplittingGeometry,
+                    octant
                 );
                 foreach (var sector in sectors)
                 {
@@ -234,13 +244,16 @@ public class SectorSplitterOctree : ISectorSplitter
                     );
                 }
 
+                var newOctant = SplittingUtils.CalculateVoxelBounds(octant, voxelGroup.Key);
+
                 var sectors = SplitIntoSectorsRecursive(
                     voxelGroup.ToArray(),
                     recursiveDepth + 1,
                     parentPathForChildren,
                     parentSectorIdForChildren,
                     sectorIdGenerator,
-                    depthToStartSplittingGeometry
+                    depthToStartSplittingGeometry,
+                    newOctant
                 );
                 foreach (var sector in sectors)
                 {

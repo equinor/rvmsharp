@@ -221,4 +221,96 @@ public static class SplittingUtils
 
         return listOfGroups;
     }
+
+    public static BoundingBox CubifyBB(BoundingBox boundingBox)
+    {
+        var xMin = boundingBox.Min.X;
+        var yMin = boundingBox.Min.Y;
+        var zMin = boundingBox.Min.Z;
+        var center = boundingBox.Center;
+
+        var xMax = boundingBox.Max.X;
+        var yMax = boundingBox.Max.Y;
+        var zMax = boundingBox.Max.Z;
+
+        var xLength = xMax - xMin;
+        var yLength = yMax - yMin;
+        var zLength = zMax - zMin;
+
+        if (xLength >= yLength && xLength >= zLength)
+        {
+            var newMin = new Vector3(xMin, center.Y - xLength / 2f, center.Z - xLength / 2f);
+            var newMax = new Vector3(xMax, center.Y + xLength / 2f, center.Z + xLength / 2f);
+
+            return new BoundingBox(newMin, newMax);
+        }
+        if (yLength >= xLength && yLength >= zLength)
+        {
+            var newMin = new Vector3(center.X - yLength / 2f, yMin, center.Z - yLength / 2f);
+            var newMax = new Vector3(center.X + yLength / 2f, yMax, center.Z + yLength / 2f);
+
+            return new BoundingBox(newMin, newMax);
+        }
+        if (zLength >= xLength && zLength >= yLength)
+        {
+            var newMin = new Vector3(center.X - zLength / 2f, center.Y - zLength / 2f, zMin);
+            var newMax = new Vector3(center.X + zLength / 2f, center.Y + zLength / 2f, zMax);
+
+            return new BoundingBox(newMin, newMax);
+        }
+
+        return boundingBox;
+    }
+
+    public static BoundingBox CalculateVoxelBounds(BoundingBox parentVoxel, int voxelKey)
+    {
+        var center = parentVoxel.Center;
+        var maxCenterDiff = parentVoxel.Max - center;
+
+        var xExtent = maxCenterDiff.X;
+        var yExtent = maxCenterDiff.Y;
+        var zExtent = maxCenterDiff.Z;
+
+        float minX;
+        float minY;
+        float minZ;
+        float maxX;
+        float maxY;
+        float maxZ;
+
+        if (voxelKey is 1 or 2 or 3 or 4)
+        {
+            minX = center.X;
+            maxX = center.X + xExtent;
+        }
+        else
+        {
+            minX = center.X - xExtent;
+            maxX = center.X;
+        }
+
+        if (voxelKey is 1 or 2 or 5 or 6)
+        {
+            minY = center.Y;
+            maxY = center.Y + yExtent;
+        }
+        else
+        {
+            minY = center.Y - yExtent;
+            maxY = center.Y;
+        }
+
+        if (voxelKey is 1 or 3 or 5 or 7)
+        {
+            minZ = center.Z;
+            maxZ = center.Z + zExtent;
+        }
+        else
+        {
+            minZ = center.Z - zExtent;
+            maxZ = center.Z;
+        }
+
+        return new BoundingBox(new Vector3(minX, minY, minZ), new Vector3(maxX, maxY, maxZ));
+    }
 }
