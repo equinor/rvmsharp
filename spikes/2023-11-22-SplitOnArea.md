@@ -4,11 +4,11 @@
 
 ## Goal
 
-Try to split sectors on the area code to improve user experience. The user experience can be improved by prioritizing the drawing of geometries.
+Split sectors on the area code to enhance user experience by presenting more relevant parts at any given time. As a bonus we might achieve more floor aligned sectors, which also might enhance user experience. Splitting on area has been implemented before, but we have no data on why it was decided not to be merged.
 
 ## Method
 
-Start by grouping the nodes on the area of the first geometry for each node. Then loop over each group and split the sectors recursively. Make a build on Huldra and document the findings.
+Start by grouping the nodes on the area of the first geometry for each node. Then loop over each group and split the sectors recursively. Make a build on Huldra and document the findings. This is a naive split for each area as if it was a root sector (depth = 1). There might be possible better methods, which are not investigated in this spike.
 
 ## Results
 #### Table of sector counts on Huldra
@@ -39,4 +39,6 @@ This improvements in user experience is negative or best case not satisfactory, 
 
 ## Next steps
 
-- Find a solution to manage the outliers in the areas to reduce the size of the bounding boxes
+- Find a solution to manage the outliers in the areas to reduce the size of the bounding boxes.
+- Test if there are benefits in making the area root sector (depth = 1) cubed
+
