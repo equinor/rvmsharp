@@ -291,6 +291,8 @@ public class SectorSplitterOctree : ISectorSplitter
             );
         }
 
+        var newSubtreeBoundingBox = CubifyBB(subtreeBoundingBox);
+
         return new InternalSector(
             sectorId,
             parentSectorId,
@@ -299,9 +301,49 @@ public class SectorSplitterOctree : ISectorSplitter
             minDiagonal,
             maxDiagonal,
             geometries,
-            subtreeBoundingBox,
+            newSubtreeBoundingBox,
             geometryBoundingBox
         );
+    }
+
+    private BoundingBox CubifyBB(BoundingBox boundingBox)
+    {
+        var xMin = boundingBox.Min.X;
+        var yMin = boundingBox.Min.Y;
+        var zMin = boundingBox.Min.Z;
+        var center = boundingBox.Center;
+
+        var xMax = boundingBox.Max.X;
+        var yMax = boundingBox.Max.Y;
+        var zMax = boundingBox.Max.Z;
+
+        var xLength = xMax - xMin;
+        var yLength = yMax - yMin;
+        var zLength = zMax - zMin;
+
+        if (xLength >= yLength && xLength >= zLength)
+        {
+            var newMin = new Vector3(xMin, center.Y - xLength / 2f, center.Z - xLength / 2f);
+            var newMax = new Vector3(xMax, center.Y + xLength / 2f, center.Z + xLength / 2f);
+
+            return new BoundingBox(newMin, newMax);
+        }
+        if (yLength >= xLength && yLength >= zLength)
+        {
+            var newMin = new Vector3(center.X - yLength / 2f, yMin, center.Z - yLength / 2f);
+            var newMax = new Vector3(center.X + yLength / 2f, yMax, center.Z + yLength / 2f);
+
+            return new BoundingBox(newMin, newMax);
+        }
+        if (zLength >= xLength && zLength >= yLength)
+        {
+            var newMin = new Vector3(center.X - zLength / 2f, center.Y - zLength / 2f, zMin);
+            var newMax = new Vector3(center.X + zLength / 2f, center.Y + zLength / 2f, zMax);
+
+            return new BoundingBox(newMin, newMax);
+        }
+
+        return boundingBox;
     }
 
     private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
