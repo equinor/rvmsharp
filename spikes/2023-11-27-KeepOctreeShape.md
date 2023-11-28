@@ -31,10 +31,11 @@ The following images show the difference between main (tight bounding boxes) and
 
 #### Aasta Hansteen
 Main:
-![main_AHA](https://github.com/equinor/rvmsharp/assets/141636529/eb9c8fb1-b3cd-4c63-87f3-72d4bc43e92e)
+![main_AHA](https://github.com/equinor/rvmsharp/assets/141636529/829a618d-d181-4c5f-a76a-f67f7f516393)
 
 Keep Octree Shape branch:
-![spike_AHA](https://github.com/equinor/rvmsharp/assets/141636529/53884267-5ae2-40c2-a9ad-8f056281e1e1)
+![spike_AHA](https://github.com/equinor/rvmsharp/assets/141636529/9fdd2ee9-3d02-4640-9ce1-c8cf3af81a42)
+
 
 #### Kårstø
 Main:
