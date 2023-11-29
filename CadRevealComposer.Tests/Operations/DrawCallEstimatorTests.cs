@@ -13,9 +13,9 @@ public class DrawCallEstimatorTests
     {
         var geometry = new APrimitive[]
         {
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One),"HA"),
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One),"HA"),
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One),"HA")
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One), "HA"),
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One), "HA"),
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One), "HA")
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
         Assert.AreEqual(1, estimatedDrawCalls);

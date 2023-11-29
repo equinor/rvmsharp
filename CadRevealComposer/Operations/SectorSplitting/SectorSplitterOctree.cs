@@ -1,5 +1,6 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
+using g3;
 using IdProviders;
 using Primitives;
 using System;
@@ -44,7 +45,60 @@ internal class SectorSplitterOctree : ISectorSplitter
 
         var areaNodes = sortedNodes.GroupBy(x => x.Geometries.First().Area);
 
+        var boundingBoxesAreaNodesWithoutOutliers = new List<BoundingBox>();
+
         foreach (var group in areaNodes)
+        {
+            var nodes = group.ToArray();
+            var averageCenter = SplittingUtils.TruncatedAverageCenter(nodes);
+            var sortedAreaNodes = nodes
+                .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, averageCenter))
+                .Take((int)(nodes.Length * 0.70))
+                .ToArray();
+
+            boundingBoxesAreaNodesWithoutOutliers.Add(sortedAreaNodes.CalculateBoundingBox());
+        }
+
+        var nodesDict = new Dictionary<int, List<Node>>();
+        for (int i = 0; i < boundingBoxesAreaNodesWithoutOutliers.Count; i++)
+        {
+            nodesDict[i] = new List<Node>();
+        }
+
+        foreach (var n in regularNodes)
+        {
+            bool hasBeenPlaced = false;
+            for (int i = 0; i < boundingBoxesAreaNodesWithoutOutliers.Count; i++)
+            {
+                if (IsInsideBoundingBox(n.BoundingBox.Center, boundingBoxesAreaNodesWithoutOutliers[i]))
+                {
+                    nodesDict[i].Add(n);
+                    hasBeenPlaced = true;
+                    break;
+                }
+            }
+
+            if (!hasBeenPlaced)
+            {
+                int smallestDistanceIndex = 0;
+                float currentSmallestDistance = float.MaxValue;
+
+                for (int y = 0; y < boundingBoxesAreaNodesWithoutOutliers.Count; y++)
+                {
+                    var tempDistance =
+                        DistanceFromPointToAABB(n.BoundingBox.Center, boundingBoxesAreaNodesWithoutOutliers[y]);
+                    if(tempDistance<currentSmallestDistance)
+                    {
+                        currentSmallestDistance = tempDistance;
+                        smallestDistanceIndex = y;
+                    }
+                }
+                nodesDict[smallestDistanceIndex].Add(n);
+            }
+
+        }
+
+        foreach (var group in nodesDict.Values)
         {
             var sectors = SplitIntoSectorsRecursive(
                     group.ToArray(),
@@ -93,6 +147,25 @@ internal class SectorSplitterOctree : ISectorSplitter
         Console.WriteLine(
             $"This resulted in {_tooFewPrimitivesHandler.AdditionalNumberOfTriangles} additional triangles"
         );
+    }
+
+    private bool IsInsideBoundingBox(Vector3 point, BoundingBox boundingBox)
+    {
+        return point.X >= boundingBox.Min.X
+            && point.X <= boundingBox.Max.X
+            && point.Y >= boundingBox.Min.Y
+            && point.Y <= boundingBox.Max.Y
+            && point.Z >= boundingBox.Min.Z
+            && point.Z <= boundingBox.Max.Z;
+    }
+
+    private float DistanceFromPointToAABB(Vector3 point, BoundingBox boundingBox)
+    {
+        var dx = MathF.Max(0,MathF.Max(boundingBox.Min.X - point.X, point.X - boundingBox.Max.X));
+        var dy = MathF.Max(0,MathF.Max(boundingBox.Min.Y - point.Y, point.Y - boundingBox.Max.Y));
+        var dz = MathF.Max(0,MathF.Max(boundingBox.Min.Z - point.Z, point.Z - boundingBox.Max.Z));
+
+        return MathF.Sqrt(dx*dx + dy*dy + dz*dz);
     }
 
     /// <summary>

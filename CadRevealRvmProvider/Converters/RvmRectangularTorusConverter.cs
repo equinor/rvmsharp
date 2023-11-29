@@ -10,9 +10,12 @@ using System.Numerics;
 
 public static class RvmRectangularTorusConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmRectangularTorus rvmRectangularTorus,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
-        Color color, string area)
+        Color color,
+        string area
+    )
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -65,7 +68,8 @@ public static class RvmRectangularTorusConverter
                 radiusOuter,
                 treeIndex,
                 color,
-                bbBox, area
+                bbBox,
+                area
             );
 
             // If inner radius equals 0, then the geometry is basically a cylinder segment, and the inner cone is unnecessary
@@ -81,7 +85,8 @@ public static class RvmRectangularTorusConverter
                     radiusInner,
                     treeIndex,
                     color,
-                    bbBox, area
+                    bbBox,
+                    area
                 );
             }
         }
@@ -112,7 +117,17 @@ public static class RvmRectangularTorusConverter
 
             if (matrixRingB.IsDecomposable())
             {
-                yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox, area);
+                yield return new GeneralRing(
+                    0f,
+                    arcAngle,
+                    matrixRingB,
+                    -normal,
+                    thickness,
+                    treeIndex,
+                    color,
+                    bbBox,
+                    area
+                );
             }
             else
             {

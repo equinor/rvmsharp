@@ -25,7 +25,13 @@ public class RvmPyramidInstancerTests
         {
             new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One), "HA"),
             new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One), "HA"),
-            new ProtoMeshFromRvmPyramid(rvmPyramidNotMatching, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One), "HA")
+            new ProtoMeshFromRvmPyramid(
+                rvmPyramidNotMatching,
+                0,
+                Color.Red,
+                new BoundingBox(Vector3.One, Vector3.One),
+                "HA"
+            )
         };
 
         var res = RvmPyramidInstancer.Process(protoPyramids, _ => true);
@@ -67,7 +73,13 @@ public class RvmPyramidInstancerTests
         var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }
             .Select(
                 rvmPyramid =>
-                    new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One), "HA")
+                    new ProtoMeshFromRvmPyramid(
+                        rvmPyramid,
+                        0,
+                        Color.Red,
+                        new BoundingBox(Vector3.One, Vector3.One),
+                        "HA"
+                    )
             )
             .ToArray();
 

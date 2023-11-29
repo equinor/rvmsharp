@@ -9,9 +9,12 @@ using System.Numerics;
 
 public static class RvmCircularTorusConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmCircularTorus rvmCircularTorus,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color, string area)
+        Color color,
+        string area
+    )
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -39,7 +42,8 @@ public static class RvmCircularTorusConverter
             TubeRadius: rvmCircularTorus.Radius,
             treeIndex,
             color,
-            bbox, area
+            bbox,
+            area
         );
 
         if (isTorusSegment)

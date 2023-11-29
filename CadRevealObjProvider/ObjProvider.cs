@@ -72,7 +72,8 @@ public class ObjProvider : IModelFormatProvider
                 treeIndex,
                 Color.Magenta /* TODO: Add color support */
                 ,
-                mesh.CalculateBoundingBox(), "HA" // TODO: fix me
+                mesh.CalculateBoundingBox(),
+                "HA" // TODO: fix me
             )
         };
     }

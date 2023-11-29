@@ -5,7 +5,12 @@ using RvmSharp.Primitives;
 
 public class RvmPrimitiveToAPrimitive
 {
-    public static IEnumerable<APrimitive> FromRvmPrimitive(ulong treeIndex, RvmPrimitive rvmPrimitive, RvmNode rvmNode, string area)
+    public static IEnumerable<APrimitive> FromRvmPrimitive(
+        ulong treeIndex,
+        RvmPrimitive rvmPrimitive,
+        RvmNode rvmNode,
+        string area
+    )
     {
         if (rvmNode == null)
         {

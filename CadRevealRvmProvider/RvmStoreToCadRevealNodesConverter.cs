@@ -105,7 +105,15 @@ internal static class RvmStoreToCadRevealNodesConverter
         }
 
         newNode.Geometries = rvmGeometries
-            .SelectMany(primitive => RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root, r.Name.Split("-").First()))
+            .SelectMany(
+                primitive =>
+                    RvmPrimitiveToAPrimitive.FromRvmPrimitive(
+                        newNode.TreeIndex,
+                        primitive,
+                        root,
+                        r.Name.Split("-").First()
+                    )
+            )
             .ToArray();
 
         newNode.Children = childrenCadNodes;

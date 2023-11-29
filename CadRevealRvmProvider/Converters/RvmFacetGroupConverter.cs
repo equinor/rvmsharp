@@ -17,7 +17,8 @@ public static class RvmFacetGroupConverter
             rvmFacetGroup,
             treeIndex,
             color,
-            rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(), Area
+            rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(),
+            Area
         );
     }
 }

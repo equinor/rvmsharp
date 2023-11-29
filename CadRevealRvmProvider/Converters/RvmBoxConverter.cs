@@ -8,7 +8,12 @@ using System.Numerics;
 
 public static class RvmBoxConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmBox rvmBox, ulong treeIndex, Color color, string Area)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmBox rvmBox,
+        ulong treeIndex,
+        Color color,
+        string Area
+    )
     {
         if (!rvmBox.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -26,7 +31,8 @@ public static class RvmBoxConverter
             matrix,
             treeIndex,
             color,
-            rvmBox.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(), Area
+            rvmBox.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(),
+            Area
         );
     }
 }

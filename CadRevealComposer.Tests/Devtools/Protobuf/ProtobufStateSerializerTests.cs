@@ -40,7 +40,13 @@ public class ProtobufStateSerializerTests
     [Test]
     public void TestProtobufRoundtrip_Box()
     {
-        var box = new Box(Matrix4x4.Identity, 1337, Color.FromArgb(255, 255, 0, 255), SampleAxisAlignedBoundingBox, "HA");
+        var box = new Box(
+            Matrix4x4.Identity,
+            1337,
+            Color.FromArgb(255, 255, 0, 255),
+            SampleAxisAlignedBoundingBox,
+            "HA"
+        );
 
         APrimitive[] inputArray = { box };
         APrimitive[] outputArray = RoundtripSerializeDeserialize(inputArray);

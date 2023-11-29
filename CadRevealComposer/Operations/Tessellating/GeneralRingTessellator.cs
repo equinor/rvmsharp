@@ -89,6 +89,12 @@ public static class GeneralRingTessellator
 
             return null;
         }
-        return new TriangleMesh(mesh, generalRing.TreeIndex, generalRing.Color, generalRing.AxisAlignedBoundingBox, generalRing.Area);
+        return new TriangleMesh(
+            mesh,
+            generalRing.TreeIndex,
+            generalRing.Color,
+            generalRing.AxisAlignedBoundingBox,
+            generalRing.Area
+        );
     }
 }

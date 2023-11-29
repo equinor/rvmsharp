@@ -25,7 +25,9 @@ public class RvmSphericalDishConverterTests
     [Test]
     public void RvmSphericalDishConverter_ReturnsEllipsoidSegmentWithCap()
     {
-        var geometries = _rvmSphericalDish.ConvertToRevealPrimitive(_treeIndex, System.Drawing.Color.Red, "HA").ToArray();
+        var geometries = _rvmSphericalDish
+            .ConvertToRevealPrimitive(_treeIndex, System.Drawing.Color.Red, "HA")
+            .ToArray();
 
         Assert.That(geometries.Length, Is.EqualTo(2));
         Assert.That(geometries[0], Is.TypeOf<EllipsoidSegment>());

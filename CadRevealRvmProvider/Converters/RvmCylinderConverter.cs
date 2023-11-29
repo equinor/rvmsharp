@@ -94,7 +94,8 @@ public static class RvmCylinderConverter
                 radius,
                 treeIndex,
                 color,
-                bbox, area
+                bbox,
+                area
             );
         }
 

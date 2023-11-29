@@ -12,8 +12,12 @@ using System.Numerics;
 
 public static class RvmSnoutConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color,
-        string area)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmSnout rvmSnout,
+        ulong treeIndex,
+        Color color,
+        string area
+    )
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -101,8 +105,7 @@ public static class RvmSnoutConverter
             );
         }
 
-        return CreateCone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox,
-            area);
+        return CreateCone(rvmSnout, rotation, centerA, centerB, normal, radiusA, radiusB, treeIndex, color, bbox, area);
     }
 
     private static IEnumerable<APrimitive> CreateCone(
@@ -136,7 +139,8 @@ public static class RvmSnoutConverter
                 radiusB,
                 treeIndex,
                 color,
-                bbox, area
+                bbox,
+                area
             );
         }
 
@@ -198,7 +202,8 @@ public static class RvmSnoutConverter
             radiusB,
             treeIndex,
             color,
-            bbox, area
+            bbox,
+            area
         );
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
@@ -272,7 +277,8 @@ public static class RvmSnoutConverter
             (float)semiMinorAxisA,
             treeIndex,
             color,
-            bbox, area
+            bbox,
+            area
         );
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);

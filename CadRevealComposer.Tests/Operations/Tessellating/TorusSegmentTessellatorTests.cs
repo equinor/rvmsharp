@@ -14,7 +14,16 @@ public class TorusSegmentTessellatorTests
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
-        var torus = new TorusSegment(MathF.PI * 2, Matrix4x4.Identity, 1, 0.25f, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
+        var torus = new TorusSegment(
+            MathF.PI * 2,
+            Matrix4x4.Identity,
+            1,
+            0.25f,
+            1,
+            Color.Red,
+            dummyBoundingBox,
+            "HA-ARCH"
+        );
         var torusTessellate = TorusSegmentTessellator.Tessellate(torus)!;
 
         var vertices = torusTessellate.Mesh.Vertices;
@@ -28,8 +37,16 @@ public class TorusSegmentTessellatorTests
     public void VerticesConformToTorusEquation()
     {
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
-        var torus = new TorusSegment(MathF.PI * 2, Matrix4x4.Identity, 1, 0.25f, 1, Color.Red, dummyBoundingBox,
-            "HA-ARCH");
+        var torus = new TorusSegment(
+            MathF.PI * 2,
+            Matrix4x4.Identity,
+            1,
+            0.25f,
+            1,
+            Color.Red,
+            dummyBoundingBox,
+            "HA-ARCH"
+        );
         var tessellatedTorus = TorusSegmentTessellator.Tessellate(torus)!;
 
         var vertices = tessellatedTorus.Mesh.Vertices;
@@ -54,7 +71,16 @@ public class TorusSegmentTessellatorTests
 
         var dummyBoundingBox = new BoundingBox(Vector3.Zero, Vector3.Zero);
 
-        var torus = new TorusSegment(MathF.PI * 2, Matrix4x4.Identity, 1, 0.25f, 1, Color.Red, dummyBoundingBox, "HA-ARCH");
+        var torus = new TorusSegment(
+            MathF.PI * 2,
+            Matrix4x4.Identity,
+            1,
+            0.25f,
+            1,
+            Color.Red,
+            dummyBoundingBox,
+            "HA-ARCH"
+        );
         var torusTessellate = TorusSegmentTessellator.Tessellate(torus)!;
 
         var vertices = torusTessellate.Mesh.Vertices;

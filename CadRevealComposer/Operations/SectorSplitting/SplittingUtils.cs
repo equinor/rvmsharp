@@ -120,7 +120,7 @@ public static class SplittingUtils
     /// Discards the first and last 5% of values in an ascending ordered collection of the nodes
     /// to avoid trouble with outliers.
     /// </summary>
-    private static Vector3 TruncatedAverageCenter(this IReadOnlyCollection<Node> nodes)
+    public static Vector3 TruncatedAverageCenter(this IReadOnlyCollection<Node> nodes)
     {
         var avgCenterX = nodes
             .OrderBy(x => x.BoundingBox.Center.X)
