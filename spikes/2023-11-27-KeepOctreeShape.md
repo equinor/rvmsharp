@@ -9,8 +9,8 @@ This is done to avoid making unfavorable sector shapes such as oblong sectors.
 We believe this will enhance user experience.
 
 ## Method
-Calculate the bounding box encapsulating all nodes as usual. Make this bounding box cubed (which we call cubify) by increasing/decreasing the x, y, and z values based on the
-largest value. This implies that the size of the cubed bounding box is always greater than or equal the size of the original bounding box.
+Calculate the bounding box encapsulating all nodes as usual for depth 1. Make this bounding box cubed (which we call cubify) by increasing/decreasing the x, y, and z values based on the
+largest value.
 
 For instance:
 
@@ -25,6 +25,8 @@ Implies cubed bounding box data:
 - $X_{min}$ = -1, &emsp; $X_{max}$ = 5
 - $Y_{min}$ = 2,  &emsp; $Y_{max}$ = 6
 - $Z_{min}$ = 0,  &emsp; $Z_{max}$ = 6
+
+We now split this quadratic box into same size octants to keep the octree shape.
 
 ## Results
 The following images show the difference between main (tight bounding boxes) and the KeepOctreeShape branch.
