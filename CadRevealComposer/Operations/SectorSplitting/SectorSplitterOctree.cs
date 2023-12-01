@@ -343,7 +343,7 @@ public class SectorSplitterOctree : ISectorSplitter
             _ => nodes.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => CalculateSurfaceArea(x.Geometries.First()));
 
         var nodeArray = nodesInPrioritizedOrder.ToArray();
         var byteSizeBudgetLeft = byteSizeBudget;
@@ -368,7 +368,36 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private float CalculateSurfaceArea(Mesh mesh)
+    private static float CalculateSurfaceArea(APrimitive primitive)
+    {
+        switch (primitive)
+        {
+            case TriangleMesh triangleMesh:
+                return SurfaceArea(triangleMesh.Mesh);
+            case InstancedMesh instancedMesh:
+                return SurfaceArea(instancedMesh.TemplateMesh);
+            case Box box:
+                return SurfaceArea(box);
+            case EccentricCone eccentricCone:
+                return SurfaceArea(eccentricCone);
+            case TorusSegment torus:
+                return SurfaceArea(torus);
+            case Cone cone:
+                return SurfaceArea(cone);
+            case Circle circle:
+                return SurfaceArea(circle);
+            case GeneralRing generalRing:
+                return SurfaceArea(generalRing);
+            case EllipsoidSegment ellipsoidSegment:
+                return SurfaceArea(ellipsoidSegment);
+            case GeneralCylinder cylinder:
+                return SurfaceArea(cylinder);
+            default:
+                return 0f;
+        }
+    }
+
+    private static float SurfaceArea(Mesh mesh)
     {
         var indices = mesh.Indices;
         var vertices = mesh.Vertices;
@@ -387,56 +416,58 @@ public class SectorSplitterOctree : ISectorSplitter
         return (float)(sum / 2.0);
     }
 
-    private float CalculateSurfaceArea(APrimitive primitive)
+    private static float SurfaceArea(GeneralCylinder generalCylinder)
     {
-        switch (primitive)
-        {
-            case TriangleMesh triangleMesh:
-                return CalculateSurfaceArea(triangleMesh.Mesh);
-            case InstancedMesh instancedMesh:
-                return CalculateSurfaceArea(instancedMesh.TemplateMesh);
-            case Box box:
-                return CalculateSurfaceArea(box);
-            case EccentricCone eccentricCone:
-                return CalculateSurfaceArea(eccentricCone);
-            case TorusSegment torus:
-
-            case Cone cone:
-                return CalculateSurfaceArea(cone);
-            case Circle circle:
-            case GeneralRing generalRing:
-            case EllipsoidSegment ellipsoidSegment:
-            case GeneralCylinder cylinder:
-            default:
-                return 0f;
-        }
+        return SurfaceAreaCylinder(
+            generalCylinder.Radius,
+            (generalCylinder.CenterA - generalCylinder.CenterB).Length()
+        );
     }
 
-    private float CalculateSurfaceArea(Box box)
+    private static float SurfaceArea(EllipsoidSegment ellipsoidSegment)
+    {
+        return ellipsoidSegment.VerticalRadius * ellipsoidSegment.HorizontalRadius * 12; // Kind of a box that approximates surface area?
+    }
+
+    private static float SurfaceArea(GeneralRing generalRing)
+    {
+        generalRing.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out _);
+
+        return (MathF.PI * scale.X * scale.X) * (generalRing.ArcAngle / (MathF.PI * 2)) * generalRing.Thickness;
+    }
+
+    private static float SurfaceArea(Circle circle)
+    {
+        circle.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out _);
+
+        return MathF.PI * scale.X * scale.X;
+    }
+
+    private static float SurfaceArea(Box box)
     {
         box.InstanceMatrix.DecomposeAndNormalize(out var scale, out _, out _);
         return scale.X * scale.Y * 2f + scale.X * scale.Z * 2f + scale.Y * scale.Z * 2f;
     }
 
-    private float CalculateSurfaceArea(EccentricCone cone)
+    private static float SurfaceArea(EccentricCone cone)
     {
         var approx = SurfaceAreaCylinder((cone.RadiusA + cone.RadiusB) / 2.0f, (cone.CenterB - cone.CenterA).Length());
         return approx;
     }
 
-    private float CalculateSurfaceArea(Cone cone)
+    private static float SurfaceArea(Cone cone)
     {
         var approx = SurfaceAreaCylinder((cone.RadiusA + cone.RadiusB) / 2.0f, (cone.CenterB - cone.CenterA).Length());
         return approx;
     }
 
-    private float CalculateSurfaceArea(TorusSegment torusSegment)
+    private static float SurfaceArea(TorusSegment torusSegment)
     {
         var completeTorus = 4 * MathF.PI * MathF.PI * torusSegment.TubeRadius * torusSegment.Radius;
         return completeTorus * (torusSegment.ArcAngle / (2 * MathF.PI));
     }
 
-    private float SurfaceAreaCylinder(float radius, float height)
+    private static float SurfaceAreaCylinder(float radius, float height)
     {
         return 2 * MathF.PI * radius * height + 2 * MathF.PI * radius * radius;
     }
