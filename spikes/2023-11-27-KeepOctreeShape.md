@@ -4,13 +4,14 @@
 
 ## Goal
 
-Try to keep the octree shape when sector splitting instead of making tighter bounding sectors. 
+Try to keep the octree shape when sector splitting instead of making tighter bounding sectors.
 This is done to avoid making unfavorable sector shapes such as oblong sectors.
-We believe this will enhance user experience.
+
+Oblong sectors are a problem if a user stands at the edge of sector and is looking away from the centre, because a lot of parts behind her would still be rendered.
 
 ## Method
-Calculate the bounding box encapsulating all nodes as usual for depth 1. Make this bounding box cubed (which we call cubify) by increasing/decreasing the x, y, and z values based on the
-largest value.
+
+Calculate the bounding box encapsulating all nodes as usual for depth 1. Make this bounding box cubed (which we call cubify) by increasing/decreasing the x, y, and z values based on the largest value.
 
 For instance:
 
@@ -26,42 +27,52 @@ Implies cubed bounding box data:
 - $Y_{min}$ = 2,  &emsp; $Y_{max}$ = 6
 - $Z_{min}$ = 0,  &emsp; $Z_{max}$ = 6
 
-We now split this quadratic box into same size octants to keep the octree shape.
+This cubic box is then split into same size octants to keep the octree shape.
 
 ## Results
+
 The following images show the difference between main (tight bounding boxes) and the KeepOctreeShape branch.
 
-#### Aasta Hansteen
+### Aasta Hansteen
+
 Main:
-![main_AHA](https://github.com/equinor/rvmsharp/assets/141636529/829a618d-d181-4c5f-a76a-f67f7f516393)
+![main_AHA](./images/KeepOctreeShape/AHA_Main.png)
 
 Keep Octree Shape branch:
-![spike_AHA](https://github.com/equinor/rvmsharp/assets/141636529/9fdd2ee9-3d02-4640-9ce1-c8cf3af81a42)
+![spike_AHA](./images/KeepOctreeShape/AHA_Octree.png)
 
+### Kårstø
 
-#### Kårstø
 Main:
-![main_KAA](https://github.com/equinor/rvmsharp/assets/141636529/79e3b73e-bb71-4d1e-99fb-d36544508be9)
+![main_KAA](./images/KeepOctreeShape/Karsta_Main.png)
 
 Keep Octree Shape branch:
-![spike_KAA](https://github.com/equinor/rvmsharp/assets/141636529/3262ef52-c3f0-4c70-b0ba-f67069cf9ee6)
+![spike_KAA](./images/KeepOctreeShape/Karsta_Octree.png)
 
-As evident from the figures, many sectors have increased significantly in size.
-However, the user experience of moving around in these two models remain unchanged after testing on a local development computer.
-A possible implimentation of a smarter algorithm can be investigated.
+### Observations
 
-Examples to a smart cubification algorithm:
-- Smart cubification of oblong sectors
-  - If the original sector has lengths in any directions that are substantially longer than the others, do not cubify,
-  - Or implement a partial cubification of those sectors
-- Only cubify if the percentage volume increase between the original and cubified sectors are below a certain threshold
-- Not cubifying at higher depths
+As evident from the figures, many sectors have increased significantly in size. It is especially evident that the sectors grow a lot in height on Kårstø.
+
+| Octree | Prod |
+| ------ | ----- |
+![view_1_octree](./images/KeepOctreeShape/viewDirection_1_octree.png) | ![view_1_prod](./images/KeepOctreeShape/viewDirection_1_prod.png)
+![view_2_octree](./images/KeepOctreeShape/viewDirection_2_octree.png) | ![view_2_prod](./images/KeepOctreeShape/viewDirection_2_prod.png)
+![view_3_octree](./images/KeepOctreeShape/viewDirection_3_octree.png) | ![view_3_prod](./images/KeepOctreeShape/viewDirection_3_prod.png)
+
+The loading of sectors works as expected. In two directions more parts are shown, probably because less parts are rendered behind you. In the third case more parts are shown in front of the user in the prod version, because she is standing in a oblong sector that stretches forward.
 
 ## Conclusion
-The gain is currently unknown, however there were no apparent downsides when testing the model on a local development computer.
-Since there are currently no apparent upside nor downside we recommend to not merge this change.
+
+More cubic sectors will render less parts behind the user, but might render more parts above and below. The images shown in the result might not present this very well, since they are taken from the top of a platform.
+
+Some sectors are also prone to having a small amount of parts, in addition to being large in size.
+
+There is no strictly positive result that suggest that this is the solution to choose.
 
 ## Next steps
-- Implement a smart cubification algorithm
 
-
+- Half the sector heights
+- Overlap the sectors
+  - Expand the sectors to contain all the geometry, but still keep the octree shape when chopping up to sub sectors
+- Make a smart cubify algorith
+  
