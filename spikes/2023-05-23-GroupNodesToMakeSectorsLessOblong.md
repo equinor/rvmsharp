@@ -25,16 +25,16 @@ Will give six cubes 1 x 2 x 3. The nodes will then be placed based on center of 
 The following screenshots are made at different depths, but at a point where the sectors are approximately equal in size. The difference in depths is just a result of the splitting being done differently.
 
 Screenshot of TrollA before grouping:
-![Troll A before grouping](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/GroupNodesToMakeSectorsLessOblong/trolla.png?csf=1&web=1&e=nmki3q)
+![Troll A before grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EVgAFnDKfQVAm27u672i2xcBiUN1w-vMZ7yiW9KFTq1JzQ?e=ZQTMoC)
 
 Screenshot of TrollA after grouping:
-![Troll A after grouping](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/GroupNodesToMakeSectorsLessOblong/trolla_group.png?csf=1&web=1&e=Y3bL4m)
+![Troll A after grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EasvAv3e7P9Kvegmbm9W8pEBpqlZahUghaX4fxUXhIcN2Q?e=rergwd)
 
 Screenshot of Melkøya before grouping:
-![Melkøya before grouping](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/GroupNodesToMakeSectorsLessOblong/melkoya.png?csf=1&web=1&e=pcx8jP)
+![Melkøya before grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EcULflbCp15Oh1tp6hN73xcB2RHDtmOY2gi8-3hyBymj8Q?e=haq8l6)
 
 Screenshot of Melkøya after grouping:
-![Melkøya after grouping](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/GroupNodesToMakeSectorsLessOblong/melkoya_group.png?csf=1&web=1&e=WnTHoE)
+![Melkøya after grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EU8PWa4q80hFtEqRYZaQQ70BEF8L6DjvtwvJLwx_lIxVbg?e=Lt6zFy)
 
 ## Conclusion
 
