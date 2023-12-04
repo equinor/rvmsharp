@@ -31,7 +31,7 @@ Screenshot of TrollA after grouping:
 ![Troll A after grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EasvAv3e7P9Kvegmbm9W8pEBpqlZahUghaX4fxUXhIcN2Q?e=rergwd)
 
 Screenshot of Melkøya before grouping:
-![Melkøya before grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EcULflbCp15Oh1tp6hN73xcB2RHDtmOY2gi8-3hyBymj8Q?e=haq8l6)
+![Melkøya before grouping](https://simple.wikipedia.org/wiki/Link#/media/File:Chain_link_icon.png)
 
 Screenshot of Melkøya after grouping:
 ![Melkøya after grouping](https://statoilsrm.sharepoint.com/:i:/s/Echo3DWeb/EU8PWa4q80hFtEqRYZaQQ70BEF8L6DjvtwvJLwx_lIxVbg?e=Lt6zFy)
