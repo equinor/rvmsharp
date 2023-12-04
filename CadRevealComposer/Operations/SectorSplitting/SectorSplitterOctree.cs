@@ -3,6 +3,7 @@ namespace CadRevealComposer.Operations.SectorSplitting;
 using IdProviders;
 using Primitives;
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -48,7 +49,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 rootPath,
                 rootSectorId,
                 sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes),
+                4
             )
             .ToArray();
 
@@ -100,7 +102,8 @@ public class SectorSplitterOctree : ISectorSplitter
                     rootPath,
                     rootSectorId,
                     sectorIdGenerator,
-                    0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    0, // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    100 // Arbitrary value, currently avoiding flatsplitting
                 )
                 .ToArray();
 
@@ -120,7 +123,8 @@ public class SectorSplitterOctree : ISectorSplitter
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        int depthToStartSplittingGeometry
+        int depthToStartSplittingGeometry,
+        int depthToStartFlatSplitting
     )
     {
         /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
@@ -134,6 +138,21 @@ public class SectorSplitterOctree : ISectorSplitter
         }
 
         var actualDepth = Math.Max(1, recursiveDepth - depthToStartSplittingGeometry + 1);
+        if (actualDepth == depthToStartFlatSplitting)
+        {
+            var detailedSectors = SplitIntoSectorsFlat(
+                nodes,
+                parentPath,
+                parentSectorId,
+                sectorIdGenerator,
+                actualDepth
+            );
+            foreach (var detailedSector in detailedSectors)
+            {
+                yield return detailedSector;
+            }
+            yield break;
+        }
 
         var subtreeBoundingBox = nodes.CalculateBoundingBox();
 
@@ -210,7 +229,8 @@ public class SectorSplitterOctree : ISectorSplitter
                     parentPathForChildren,
                     parentSectorIdForChildren,
                     sectorIdGenerator,
-                    depthToStartSplittingGeometry
+                    depthToStartSplittingGeometry,
+                    depthToStartFlatSplitting
                 );
                 foreach (var sector in sectors)
                 {
@@ -240,11 +260,127 @@ public class SectorSplitterOctree : ISectorSplitter
                     parentPathForChildren,
                     parentSectorIdForChildren,
                     sectorIdGenerator,
-                    depthToStartSplittingGeometry
+                    depthToStartSplittingGeometry,
+                    depthToStartFlatSplitting
                 );
                 foreach (var sector in sectors)
                 {
                     yield return sector;
+                }
+            }
+        }
+    }
+
+    private IEnumerable<InternalSector> SplitIntoSectorsFlat(
+        Node[] nodes,
+        string parentPath,
+        uint? parentSectorId,
+        SequentialIdGenerator sectorIdGenerator,
+        int depth
+    )
+    {
+        float sectorSize = 17.4f;
+
+        var boundingBox = nodes.CalculateBoundingBox();
+        var boundingBoxSizes = boundingBox.Max - boundingBox.Min;
+
+        var xMin = boundingBox.Min.X;
+        var yMin = boundingBox.Min.Y;
+        var zMin = boundingBox.Min.Z;
+
+        var xSize = boundingBoxSizes.X;
+        var ySize = boundingBoxSizes.Y;
+        var zSize = boundingBoxSizes.Z;
+
+        var numberOfBoxesOnX = (int)(xSize / sectorSize) + 1;
+        var numberOfBoxesOnY = (int)(ySize / sectorSize) + 1;
+        var numberOfBoxesOnZ = (int)(zSize / sectorSize) + 1;
+
+        var xDict = new Dictionary<int, Dictionary<int, Dictionary<int, List<Node>>>>();
+
+        for (int x = 0; x < numberOfBoxesOnX; x++)
+        {
+            xDict.Add(x, new Dictionary<int, Dictionary<int, List<Node>>>());
+
+            for (int y = 0; y < numberOfBoxesOnY; y++)
+            {
+                var yDict = xDict[x];
+                yDict.Add(y, new Dictionary<int, List<Node>>());
+
+                for (int z = 0; z < numberOfBoxesOnZ; z++)
+                {
+                    var zDict = yDict[y];
+                    zDict.Add(z, new List<Node>());
+                }
+            }
+        }
+
+        foreach (var node in nodes)
+        {
+            var center = node.BoundingBox.Center;
+
+            var xMapped = (int)((center.X - xMin) / sectorSize);
+            var yMapped = (int)((center.Y - yMin) / sectorSize);
+            var zMapped = (int)((center.Z - zMin) / sectorSize);
+
+            xDict[xMapped][yMapped][zMapped].Add(node);
+        }
+
+        for (int x = 0; x < numberOfBoxesOnX; x++)
+        {
+            for (int y = 0; y < numberOfBoxesOnY; y++)
+            {
+                for (int z = 0; z < numberOfBoxesOnZ; z++)
+                {
+                    var flatSectorNodes = xDict[x][y][z].ToArray();
+
+                    if (flatSectorNodes.Length == 0)
+                        continue;
+
+                    var smallSizeThreshold = 1.0f;
+
+                    var smallNodeList = new List<Node>();
+                    var largeNodeList = new List<Node>();
+
+                    foreach (var flatNode in flatSectorNodes)
+                    {
+                        if (flatNode.Diagonal < smallSizeThreshold)
+                        {
+                            smallNodeList.Add(flatNode);
+                        }
+                        else
+                        {
+                            largeNodeList.Add(flatNode);
+                        }
+                    }
+
+                    var largeSectorId = (uint)sectorIdGenerator.GetNextId();
+                    var largeSectorPath = $"{parentPath}/{largeSectorId}";
+                    var subtreeBoundingBox = flatSectorNodes.CalculateBoundingBox();
+
+                    yield return CreateSector(
+                        largeNodeList.ToArray(),
+                        largeSectorId,
+                        parentSectorId,
+                        parentPath,
+                        depth,
+                        subtreeBoundingBox
+                    );
+
+                    if (smallNodeList.Count > 0)
+                    {
+                        var smallSectorId = (uint)sectorIdGenerator.GetNextId();
+                        var smallSubtreeBoundingBox = smallNodeList.CalculateBoundingBox();
+
+                        yield return CreateSector(
+                            smallNodeList.ToArray(),
+                            smallSectorId,
+                            largeSectorId,
+                            largeSectorPath,
+                            depth + 1,
+                            smallSubtreeBoundingBox
+                        );
+                    }
                 }
             }
         }
