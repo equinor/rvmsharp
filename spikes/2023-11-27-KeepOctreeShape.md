@@ -24,8 +24,8 @@ Bounding box data:
 Implies cubed bounding box data:
 
 - $X_{min}$ = -1, &emsp; $X_{max}$ = 5
-- $Y_{min}$ = 2,  &emsp; $Y_{max}$ = 6
-- $Z_{min}$ = 0,  &emsp; $Z_{max}$ = 6
+- $Y_{min}$ = 2, &emsp; $Y_{max}$ = 6
+- $Z_{min}$ = 0, &emsp; $Z_{max}$ = 6
 
 This cubic box is then split into same size octants to keep the octree shape.
 
@@ -36,28 +36,30 @@ The following images show the difference between main (tight bounding boxes) and
 ### Aasta Hansteen
 
 Main:
-![main_AHA](./images/KeepOctreeShape/AHA_Main.png)
+[AHA Main](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/AHA_Main.png?csf=1&web=1&e=t33moH)
 
 Keep Octree Shape branch:
-![spike_AHA](./images/KeepOctreeShape/AHA_Octree.png)
+[AHA Spike](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/AHA_Octree.png?csf=1&web=1&e=7pfCmS)
 
 ### Kårstø
 
 Main:
-![main_KAA](./images/KeepOctreeShape/Karsta_Main.png)
+[KAA Main](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/Karsta_Main.png?csf=1&web=1&e=Wb7LxZ)
 
 Keep Octree Shape branch:
-![spike_KAA](./images/KeepOctreeShape/Karsta_Octree.png)
+[KAA Spike](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/Karsta_Octree.png?csf=1&web=1&e=2Nb83M)
 
 ### Observations
 
 As evident from the figures, many sectors have increased significantly in size. It is especially evident that the sectors grow a lot in height on Kårstø.
 
+<!-- prettier-ignore-start -->
 | Octree | Prod |
-| ------ | ----- |
-![view_1_octree](./images/KeepOctreeShape/viewDirection_1_octree.png) | ![view_1_prod](./images/KeepOctreeShape/viewDirection_1_prod.png)
-![view_2_octree](./images/KeepOctreeShape/viewDirection_2_octree.png) | ![view_2_prod](./images/KeepOctreeShape/viewDirection_2_prod.png)
-![view_3_octree](./images/KeepOctreeShape/viewDirection_3_octree.png) | ![view_3_prod](./images/KeepOctreeShape/viewDirection_3_prod.png)
+| - |- |
+| [view_1_octree](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/viewDirection_1_octree.png?csf=1&web=1&e=nmPNtt) | [view_1_prod](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/viewDirection_1_prod.png?csf=1&web=1&e=TLptoA) |
+| [view_2_octree](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/viewDirection_2_octree.png?csf=1&web=1&e=KA7QYv) | [view_2_prod](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/viewDirection_2_prod.png?csf=1&web=1&e=QOaXBF) |
+| [view_3_octree](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/viewDirection_3_octree.png?csf=1&web=1&e=8UCD3y) | [view_3_prod](https://statoilsrm.sharepoint.com/:i:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Resources/KeepOctreeShape/viewDirection_3_prod.png?csf=1&web=1&e=tl8VfH) |
+<!-- prettier-ignore-end -->
 
 The loading of sectors works as expected. In two directions more parts are shown, probably because less parts are rendered behind you. In the third case more parts are shown in front of the user in the prod version, because she is standing in a oblong sector that stretches forward.
 
@@ -75,4 +77,3 @@ There is no strictly positive result that suggest that this is the solution to c
 - Overlap the sectors
   - Expand the sectors to contain all the geometry, but still keep the octree shape when chopping up to sub sectors
 - Make a smart cubify algorith
-  
