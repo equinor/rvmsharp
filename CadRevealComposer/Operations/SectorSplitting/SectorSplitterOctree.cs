@@ -279,7 +279,7 @@ public class SectorSplitterOctree : ISectorSplitter
         int depth
     )
     {
-        float sectorSize = 17.4f;
+        float sectorSize = 20f;
 
         var boundingBox = nodes.CalculateBoundingBox();
         var boundingBoxSizes = boundingBox.Max - boundingBox.Min;
@@ -354,18 +354,60 @@ public class SectorSplitterOctree : ISectorSplitter
                         }
                     }
 
-                    var largeSectorId = (uint)sectorIdGenerator.GetNextId();
-                    var largeSectorPath = $"{parentPath}/{largeSectorId}";
+                    uint largeSectorId;
+                    string largeSectorPath;
                     var subtreeBoundingBox = flatSectorNodes.CalculateBoundingBox();
 
-                    yield return CreateSector(
-                        largeNodeList.ToArray(),
-                        largeSectorId,
-                        parentSectorId,
-                        parentPath,
-                        depth,
-                        subtreeBoundingBox
-                    );
+                    var sortedLargeNodes = largeNodeList.OrderByDescending(n => n.Diagonal);
+                    var largeNodeSplit = new List<Node>();
+                    float budgetUsed = 0f;
+                    foreach (var largeNode in sortedLargeNodes)
+                    {
+                        budgetUsed += largeNode.EstimatedByteSize;
+                        largeNodeSplit.Add(largeNode);
+
+                        if (budgetUsed > SectorEstimatedPrimitiveBudget * 2f)
+                        {
+                            largeSectorId = (uint)sectorIdGenerator.GetNextId();
+                            largeSectorPath = $"{parentPath}/{largeSectorId}";
+
+                            yield return CreateSector(
+                                largeNodeSplit.ToArray(),
+                                largeSectorId,
+                                parentSectorId,
+                                parentPath,
+                                depth,
+                                subtreeBoundingBox
+                            );
+
+                            parentSectorId = largeSectorId;
+                            parentPath = largeSectorPath;
+
+                            largeNodeSplit.Clear();
+                            budgetUsed = 0f;
+                            depth++;
+                        }
+                    }
+
+                    if (largeNodeSplit.Any())
+                    {
+                        largeSectorId = (uint)sectorIdGenerator.GetNextId();
+                        largeSectorPath = $"{parentPath}/{largeSectorId}";
+
+                        yield return CreateSector(
+                            largeNodeSplit.ToArray(),
+                            largeSectorId,
+                            parentSectorId,
+                            parentPath,
+                            depth,
+                            subtreeBoundingBox
+                        );
+
+                        parentSectorId = largeSectorId;
+                        parentPath = largeSectorPath;
+
+                        largeNodeSplit.Clear();
+                    }
 
                     if (smallNodeList.Count > 0)
                     {
@@ -375,8 +417,8 @@ public class SectorSplitterOctree : ISectorSplitter
                         yield return CreateSector(
                             smallNodeList.ToArray(),
                             smallSectorId,
-                            largeSectorId,
-                            largeSectorPath,
+                            parentSectorId,
+                            parentPath,
                             depth + 1,
                             smallSubtreeBoundingBox
                         );
