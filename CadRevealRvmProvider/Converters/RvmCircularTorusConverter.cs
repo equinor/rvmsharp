@@ -71,7 +71,8 @@ public static class RvmCircularTorusConverter
                     )
                     * Matrix4x4.CreateTranslation(positionCapA);
 
-                yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalCapA, treeIndex, color);
+                if (diameter > 0)
+                    yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalCapA, treeIndex, color);
             }
 
             if (showCapB)
@@ -82,8 +83,8 @@ public static class RvmCircularTorusConverter
                         arcRotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
                     )
                     * Matrix4x4.CreateTranslation(positionCapB);
-
-                yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color);
+                if (diameter > 0)
+                    yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color);
             }
         }
     }

@@ -50,7 +50,8 @@ public static class RvmEllipticalDishConverter
 
         if (showCap)
         {
-            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
+            if (horizontalRadius <= 0f)
+                yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
         }
     }
 }
