@@ -465,7 +465,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private static float SurfaceArea(TorusSegment torusSegment)
     {
-        var completeTorus = 4 * MathF.PI * MathF.PI * torusSegment.TubeRadius * torusSegment.Radius;
+        var completeTorus = 4 * MathF.PI * MathF.PI * torusSegment.TubeRadius * torusSegment.Radius * 0.001f * 0.001f;
         return completeTorus * (torusSegment.ArcAngle / (2 * MathF.PI));
     }
 
