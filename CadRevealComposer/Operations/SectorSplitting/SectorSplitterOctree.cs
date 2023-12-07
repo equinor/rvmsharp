@@ -150,12 +150,7 @@ public class SectorSplitterOctree : ISectorSplitter
         else
         {
             // fill main voxel according to budget
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(
-                    nodes.ToArray(),
-                    SectorEstimatedByteSizeBudget,
-                    actualDepth
-                )
-                .ToList();
+            var additionalMainVoxelNodesByBudget = GetNodesByBudget(nodes.ToArray(), actualDepth).ToList();
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
         }
@@ -333,7 +328,7 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long byteSizeBudget, int actualDepth)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, int actualDepth)
     {
         var selectedNodes = actualDepth switch
         {
@@ -348,9 +343,16 @@ public class SectorSplitterOctree : ISectorSplitter
         );
 
         var nodeArray = nodesInPrioritizedOrder.ToArray();
-        var byteSizeBudgetLeft = byteSizeBudget;
+        var byteSizeBudgetLeft = SectorEstimatedByteSizeBudget;
         var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
         var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
+
+        if (actualDepth == 1 || actualDepth == 2 || actualDepth == 3)
+        {
+            byteSizeBudgetLeft /= 2;
+            trianglesBudgetLeft /= 2;
+        }
+
         for (int i = 0; i < nodeArray.Length; i++)
         {
             if (
