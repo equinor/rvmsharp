@@ -8,6 +8,7 @@ using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
 using System.Diagnostics;
+using System.Numerics;
 
 public class RvmTessellator
 {
@@ -84,15 +85,31 @@ public class RvmTessellator
         var meshes = facetGroupInstanced
             .Concat(pyramidsInstanced)
             .AsParallel()
-            .Select(
-                g =>
-                    (
-                        InstanceGroup: g,
-                        Mesh: Tessellate(g.Key),
-                        InstanceId: instanceIdGenerator.GetNextId() /* Must be identical for all instances of this mesh */
-                    )
-            )
-            .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
+            .Select(g =>
+            {
+                var allScales = g.Select(x =>
+                {
+                    Matrix4x4.Decompose(x.Transform, out var scale, out _, out _);
+                    return scale;
+                });
+
+                Matrix4x4.Decompose(g.Key.Matrix, out var originalScale, out _, out _);
+                var maxScale = allScales.Aggregate(Vector3.Max);
+                var primitiveToTessellate = g.Key with { Matrix = g.Key.Matrix * Matrix4x4.CreateScale(maxScale) };
+                var tessellated = Tessellate(primitiveToTessellate);
+                var mesh = ConvertRvmMesh(tessellated);
+                if (simplifierThreshold > 0.0f)
+                {
+                    mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                }
+                mesh.Apply(Matrix4x4.CreateScale(originalScale / maxScale));
+                return (
+                    InstanceGroup: g,
+                    Mesh: mesh,
+                    InstanceId: instanceIdGenerator.GetNextId() /* Must be identical for all instances of this mesh */
+                );
+            })
+            .Where(g => g.Mesh.TriangleCount > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
         Console.WriteLine(
@@ -106,7 +123,7 @@ public class RvmTessellator
                         item =>
                             new InstancedMesh(
                                 InstanceId: group.InstanceId,
-                                ConvertRvmMesh(group.Mesh),
+                                group.Mesh,
                                 item.Transform,
                                 item.ProtoMesh.TreeIndex,
                                 item.ProtoMesh.Color,
