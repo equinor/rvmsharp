@@ -1,0 +1,29 @@
+# Sector split on area
+
+## [Reference branch](https://github.com/equinor/rvmsharp/tree/Spike/OctreeWithFlatFinish)
+
+## Goal
+
+The current coarse model, being the three first level in the octree, is giving us a satisfactory result. The theory is that it is possible to improve the detailed sectors, while still keeping the current coarse model solution.
+
+One possible way to this is to start flat splitting after the first three levels. Flat splitting means in general to split into uniform sectors, and then maybe create new overlapping sectors from these without choping into smaller sectors.
+
+## Method
+
+Normal octree splitting is done for the first three levels. Each 3rd level sector is then split into uniform sectors of a size of 10 - 20 meters. This is to done to ensure a logical parent/children pattern.
+
+The resulting uniform sectors were first split into a sector with large parts and a sector with small parts. This was later changed, since some sectors would get a huge amount of data in them. The large sectors would then rater be split into more overlapping sectors based on node size.
+
+![Octree with flat finish splitting](./images/OctreeSplitWithFlatFinish/OctreeWithFlatFinish.png)
+
+## Results
+
+The results were disappointingly bad. The amount of sectors increased dramatically. The amount of sectors on JCA increased from about 3000 to about 44000 sectors. This amount of sectors affects download times and makes everything lagg.
+
+## Conclusion
+
+The current solution did not work, because it created way too many sectors. This alone made it hard to test if the general user experience with a flat finish was decent. If this should be viable, the amount of sectors needs to be reduced significantly.
+
+## Next steps
+
+- Find a way to reduce the number of sectors while stilling having a flat finish.
