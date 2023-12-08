@@ -17,6 +17,18 @@ public static class RvmBoxConverter
 
         var unitBoxScale = Vector3.Multiply(scale, new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));
 
+        if (!unitBoxScale.IsFinite())
+        {
+            Console.WriteLine($"Removing box because scale was invalid: {unitBoxScale}");
+            yield break;
+        }
+
+        if (unitBoxScale.X < 0 || unitBoxScale.Y < 0 || unitBoxScale.Z < 0)
+        {
+            Console.WriteLine($"Removing box because scale was less than zero: {unitBoxScale}");
+            yield break;
+        }
+
         var matrix =
             Matrix4x4.CreateScale(unitBoxScale)
             * Matrix4x4.CreateFromQuaternion(rotation)
