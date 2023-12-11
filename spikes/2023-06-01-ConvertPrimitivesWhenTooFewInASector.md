@@ -14,17 +14,17 @@ During splitting the number of each type of primitive is counted and compared wi
 
 ## Evidence
 
-|Threshold|Batches|
-|---------|-------|
-|0|434|
-|1|404|
-|3|361|
-|5|336|
-|10|303|
-|15|275|
-|25|236|
-|50|188|
-|100|149|
+| Threshold | Batches |
+| --------- | ------- |
+| 0         | 434     |
+| 1         | 404     |
+| 3         | 361     |
+| 5         | 336     |
+| 10        | 303     |
+| 15        | 275     |
+| 25        | 236     |
+| 50        | 188     |
+| 100       | 149     |
 
 ![Batches after primtive thresholding](images/ConvertPrimitivesWhenTooFewInASector/HULDRA_primitiveBatches.png)
 
@@ -34,7 +34,7 @@ During splitting the number of each type of primitive is counted and compared wi
 
 ## Conclusion
 
-The graph produced indicates that we can save some batches, even by setting the threshold reasonably low. Maybe a threshold of about 20 would be reasonable. 
+The graph produced indicates that we can save some batches, even by setting the threshold reasonably low. Maybe a threshold of about 20 would be reasonable.
 
 ## Next steps
 
