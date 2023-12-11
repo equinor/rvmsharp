@@ -76,4 +76,4 @@ There is no strictly positive result that suggest that this is the solution to c
 - Half the sector heights
 - Overlap the sectors
   - Expand the sectors to contain all the geometry, but still keep the octree shape when chopping up to sub sectors
-- Make a smart cubify algorith
+- Make a smart cubify algorithm
