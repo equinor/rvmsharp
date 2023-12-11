@@ -39,10 +39,6 @@ This improvements in user experience is negative or best case not satisfactory, 
 
 ## Next steps
 
-<<<<<<< HEAD
-- Find a solution to manage the outliers in the areas to reduce the size of the bounding boxes
-=======
 - Find a solution to manage the outliers in the areas to reduce the size of the bounding boxes.
 - Test if there are benefits in making the area root sector (depth = 1) cubed
 
->>>>>>> 377cd64fb5c0544cd6e922d832ce69f9fde82839

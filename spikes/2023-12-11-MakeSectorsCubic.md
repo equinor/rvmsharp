@@ -14,20 +14,12 @@ The cubification is made by increasing the length of the axis to be equal the le
 
 ## Results
 
-<<<<<<< HEAD
 ### Huldra on master
 
 ![Huldra master](https://github.com/equinor/rvmsharp/assets/141636529/1926d8c0-a2b0-4172-8fdc-5b6c4b84d040)
 
 ### Huldra on Spike/MakeEverySectorCubic
 
-=======
-#### Huldra on master:
-![Huldra master](https://github.com/equinor/rvmsharp/assets/141636529/1926d8c0-a2b0-4172-8fdc-5b6c4b84d040)
-
-
-#### Huldra on Spike/MakeEverySectorCubic:
->>>>>>> 377cd64fb5c0544cd6e922d832ce69f9fde82839
 ![Branch](https://github.com/equinor/rvmsharp/assets/141636529/74d508e5-743e-4aa9-bd17-212fe3805c70)
 
 The percieved performance was neither worse nor better.
@@ -38,9 +30,6 @@ All bounding boxes are equally large or larger than the original bounding box, w
 The improvements in user experience is negative or at best not satisfactory, and should not be included.
 
 ## Next steps
-<<<<<<< HEAD
 
-=======
->>>>>>> 377cd64fb5c0544cd6e922d832ce69f9fde82839
 - Investigate if the cubification can be implemented on some bounding boxes instead of all.
 Example: If the length increase in any axis is less than a fixed parameter, then cubify the bounding box.
