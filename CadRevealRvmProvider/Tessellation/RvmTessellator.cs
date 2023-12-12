@@ -79,17 +79,8 @@ public class RvmTessellator
             .AsParallel()
             .Select(g =>
             {
-                var allScales = g.Select(x =>
-                {
-                    Matrix4x4.Decompose(x.Transform, out var scale, out _, out _);
-                    return scale;
-                });
-
-                Matrix4x4.Decompose(g.Key.Matrix, out var originalScale, out _, out _);
-                var maxScale = allScales.Aggregate(Vector3.Max);
-                var primitiveToTessellate = g.Key with { Matrix = g.Key.Matrix * Matrix4x4.CreateScale(maxScale) };
-                Mesh mesh = TessellateAndSimplifyMesh(simplifierThreshold, primitiveToTessellate, instancedLogObject, g.Count());
-                mesh.Apply(Matrix4x4.CreateScale(originalScale / maxScale));
+                var allTransforms = g.Select(x => x.Transform).ToArray();
+                Mesh mesh = SimplifyInstancedGroup(simplifierThreshold, g.Key, allTransforms, instancedLogObject);
                 return (
                     InstanceGroup: g,
                     Mesh: mesh,
@@ -132,23 +123,32 @@ public class RvmTessellator
 
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
 
+        LogSimplifications(triangleMeshLogObject, instancedLogObject);
 
+        return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
+    }
+
+    private static void LogSimplifications(
+        SimplificationLogObject triangleMeshLogObject,
+        SimplificationLogObject instancedLogObject
+    )
+    {
         using (new TeamCityLogBlock("Mesh Reduction Stats"))
         {
             Console.WriteLine(
                 $"""
-                    Before Total Vertices of Triangle Meshes: {triangleMeshLogObject.SimplificationBeforeVertexCount, 10}
-                    After total Vertices of Triangle Meshes:  {triangleMeshLogObject.SimplificationAfterVertexCount, 10}
-                    Percent of Before Vertices of Triangle Meshes: {(triangleMeshLogObject.SimplificationAfterVertexCount / (float)triangleMeshLogObject.SimplificationBeforeVertexCount):P2}
-                    """
+                 Before Total Vertices of Triangle Meshes: {triangleMeshLogObject.SimplificationBeforeVertexCount, 10}
+                 After total Vertices of Triangle Meshes:  {triangleMeshLogObject.SimplificationAfterVertexCount, 10}
+                 Percent of Before Vertices of Triangle Meshes: {(triangleMeshLogObject.SimplificationAfterVertexCount / (float)triangleMeshLogObject.SimplificationBeforeVertexCount):P2}
+                 """
             );
             Console.WriteLine("");
             Console.WriteLine(
                 $"""
-                    Before Total Triangles of Triangle Meshes: {triangleMeshLogObject.SimplificationBeforeTriangleCount, 10}
-                    After total Triangles of Triangle Meshes:  {triangleMeshLogObject.SimplificationAfterTriangleCount, 10}
-                    Percent of Before Triangles of Triangle Meshes: {(triangleMeshLogObject.SimplificationAfterTriangleCount / (float)triangleMeshLogObject.SimplificationBeforeTriangleCount):P2}
-                    """
+                 Before Total Triangles of Triangle Meshes: {triangleMeshLogObject.SimplificationBeforeTriangleCount, 10}
+                 After total Triangles of Triangle Meshes:  {triangleMeshLogObject.SimplificationAfterTriangleCount, 10}
+                 Percent of Before Triangles of Triangle Meshes: {(triangleMeshLogObject.SimplificationAfterTriangleCount / (float)triangleMeshLogObject.SimplificationBeforeTriangleCount):P2}
+                 """
             );
             Console.WriteLine("");
             Console.WriteLine(
@@ -167,22 +167,51 @@ public class RvmTessellator
                  """
             );
         }
-
-        return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }
 
-    private static Mesh TessellateAndSimplifyMesh(float simplifierThreshold, RvmPrimitive primitiveToTessellate,
-        SimplificationLogObject logObject, int numberOfInstances = 1 )
+    private static Mesh SimplifyInstancedGroup(
+        float simplifierThreshold,
+        RvmPrimitive primitive,
+        Matrix4x4[] transforms,
+        SimplificationLogObject instancedLogObject
+    )
+    {
+        var allScales = transforms.Select(transform =>
+        {
+            Matrix4x4.Decompose(transform, out var scale, out _, out _);
+            return scale;
+        });
+
+        Matrix4x4.Decompose(primitive.Matrix, out var originalScale, out _, out _);
+        var maxScale = allScales.Aggregate(Vector3.Max);
+        var primitiveToTessellate = primitive with { Matrix = primitive.Matrix * Matrix4x4.CreateScale(maxScale) };
+        Mesh mesh = TessellateAndSimplifyMesh(
+            simplifierThreshold,
+            primitiveToTessellate,
+            instancedLogObject,
+            transforms.Count()
+        );
+        mesh.Apply(Matrix4x4.CreateScale(originalScale / maxScale));
+
+        return mesh;
+    }
+
+    private static Mesh TessellateAndSimplifyMesh(
+        float simplifierThreshold,
+        RvmPrimitive primitiveToTessellate,
+        SimplificationLogObject logObject,
+        int numberOfInstances = 1
+    )
     {
         var tessellated = Tessellate(primitiveToTessellate);
         var mesh = ConvertRvmMesh(tessellated);
         if (simplifierThreshold > 0.0f)
         {
-            Interlocked.Add(ref logObject.SimplificationBeforeVertexCount, mesh.Vertices.Length*numberOfInstances);
-            Interlocked.Add(ref logObject.SimplificationBeforeTriangleCount, mesh.TriangleCount*numberOfInstances);
+            Interlocked.Add(ref logObject.SimplificationBeforeVertexCount, mesh.Vertices.Length * numberOfInstances);
+            Interlocked.Add(ref logObject.SimplificationBeforeTriangleCount, mesh.TriangleCount * numberOfInstances);
             mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
-            Interlocked.Add(ref logObject.SimplificationAfterVertexCount, mesh.Vertices.Length*numberOfInstances);
-            Interlocked.Add(ref logObject.SimplificationAfterTriangleCount, mesh.TriangleCount*numberOfInstances);
+            Interlocked.Add(ref logObject.SimplificationAfterVertexCount, mesh.Vertices.Length * numberOfInstances);
+            Interlocked.Add(ref logObject.SimplificationAfterTriangleCount, mesh.TriangleCount * numberOfInstances);
         }
 
         return mesh;
