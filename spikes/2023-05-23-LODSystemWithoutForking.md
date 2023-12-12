@@ -14,22 +14,23 @@ This can be achieved in frontend by just doing:
 
 ```js
 if (zone === CutoffZone.Near) {
-        if (sector.sectorFileName?.includes("shadow")){
-            return 0;
-        }
-        return SectorZonePriority.zonePriorityTop + percentOfScreenFilledByLargestNode;
-    }
+  if (sector.sectorFileName?.includes('shadow')) {
+    return 0;
+  }
+  return (
+    SectorZonePriority.zonePriorityTop + percentOfScreenFilledByLargestNode
+  );
+}
 
-
-    if (!sector.sectorFileName?.includes("shadow")){        
-        return 0;
-    }
-    return SectorZonePriority.zonePriorityLow + percentOfScreenFilledByLargestNode;
+if (!sector.sectorFileName?.includes('shadow')) {
+  return 0;
+}
+return SectorZonePriority.zonePriorityLow + percentOfScreenFilledByLargestNode;
 ```
 
 ## Evidence
 
-![LOD System](images/LODSystemWithoutForking/LOD.gif)
+![LOD System GIF](./images/LODSystemWithoutForking/LOD.gif)
 
 The magenta sectors are hacked in and are just colored duplicates of the detailed sectors. The level of detail of the duplicates, is the same as for the original sectors. This is done just to illustrate the loading and unloading of sectors based on the weighting of the sectors.
 
@@ -48,4 +49,3 @@ Sometimes there is a frame between unloading a detailed/shadow sector and loadin
 
 - Optimize the weighting for user experience
   - This is most likely only possible when we have an actual course model available.
-  
