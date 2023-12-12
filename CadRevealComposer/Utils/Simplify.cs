@@ -80,7 +80,8 @@ public static class Simplify
         }
         catch (Exception e)
         {
-            Console.WriteLine("Failed to optimize mesh: " + e);
+            Console.WriteLine("Failed to optimize mesh: " + e.Message.Split(": ")[1]
+            );
             return mesh;
         }
     }
