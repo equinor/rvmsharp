@@ -9,9 +9,11 @@ using System.Numerics;
 
 public static class RvmPyramidConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmPyramid rvmPyramid,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmPyramid rvmPyramid,
         ulong treeIndex,
-        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
+        Color color
+    )
     {
         if (IsBoxShaped(rvmPyramid))
         {

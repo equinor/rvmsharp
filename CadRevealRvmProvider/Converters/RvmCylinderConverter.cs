@@ -9,9 +9,12 @@ using System.Numerics;
 
 public static class RvmCylinderConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmCylinder rvmCylinder,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmCylinder rvmCylinder,
         ulong treeIndex,
-        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitives = null
+    )
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -27,15 +30,9 @@ public static class RvmCylinderConverter
             )
         )
         {
-            try
-            {
-                failedPrimitives[rvmCylinder.GetType()][RvmPrimitiveToAPrimitive.FailReason.Rotation] += 1;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
+            if (failedPrimitives != null)
+                failedPrimitives.FailedCylinders.RotationCounter++;
+
             yield break;
         }
 
@@ -46,7 +43,9 @@ public static class RvmCylinderConverter
 
         if (rvmCylinder.Radius < 0)
         {
-            Console.WriteLine($"Cylinder was removed due to invalid radius. Radius: {rvmCylinder.Radius}");
+            if (failedPrimitives != null)
+                failedPrimitives.FailedCylinders.RadiusCounter++;
+
             yield break;
         }
 

@@ -10,9 +10,11 @@ using System.Numerics;
 
 public static class RvmSphericalDishConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSphericalDish rvmSphericalDish,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmSphericalDish rvmSphericalDish,
         ulong treeIndex,
-        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
+        Color color
+    )
     {
         if (!rvmSphericalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {

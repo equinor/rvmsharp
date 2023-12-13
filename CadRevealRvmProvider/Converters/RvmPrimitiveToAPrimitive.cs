@@ -1,58 +1,51 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 
 public static class RvmPrimitiveToAPrimitive
 {
-    private class FailedPrimitives
+    public static IEnumerable<APrimitive> FromRvmPrimitive(
+        ulong treeIndex,
+        RvmPrimitive rvmPrimitive,
+        RvmNode rvmNode,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
+    )
     {
-        private static Dictionary<FailReason, uint> FailedBoxes = new();
-        private static Dictionary<FailReason, uint> FailedCylinders = new();
-        private static Dictionary<FailReason, uint> FailedEllipticalDishes = new();
-        private static Dictionary<FailReason, uint> FailedCircularToruses = new();
-        private static Dictionary<FailReason, uint> FailedSpheres = new();
-        private static Dictionary<FailReason, uint> FailedSphericalDish = new();
-        private static Dictionary<FailReason, uint> FailedSnout = new();
-        private static Dictionary<FailReason, uint> FailedRectangularTorus= new();
-    }
-
-
-    public enum FailReason
-    {
-        Radius,
-        Scale,
-        Rotation
-    }
-
-    public static IEnumerable<APrimitive> FromRvmPrimitive(ulong treeIndex, RvmPrimitive rvmPrimitive, RvmNode rvmNode)
-    {
-        FailedPrimitives failedPrimitiveDicts = new FailedPrimitives();
         switch (rvmPrimitive)
         {
             case RvmBox rvmBox:
-                return rvmBox.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmBox.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmCylinder rvmCylinder:
-                return rvmCylinder.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmCylinder.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitivesLogObject);
             case RvmEllipticalDish rvmEllipticalDish:
-                return rvmEllipticalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmEllipticalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmFacetGroup rvmFacetGroup:
-                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts); // Assuming FailedPrimitives is a placeholder for a correct dictionary
+                return rvmFacetGroup.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmLine:
                 // Intentionally ignored. Can't draw a 2D line in Cognite Reveal.
                 return Array.Empty<APrimitive>();
             case RvmPyramid rvmPyramid:
-                return rvmPyramid.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts); // Assuming FailedPrimitives is a placeholder for a correct dictionary
+                return rvmPyramid.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmCircularTorus rvmCircularTorus:
-                return rvmCircularTorus.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmCircularTorus.ConvertToRevealPrimitive(
+                    treeIndex,
+                    rvmNode.GetColor(),
+                    failedPrimitivesLogObject
+                );
             case RvmSphere rvmSphere:
-                return rvmSphere.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmSphere.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmSphericalDish rvmSphericalDish:
-                return rvmSphericalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmSphericalDish.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor());
             case RvmSnout rvmSnout:
-                return rvmSnout.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmSnout.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitivesLogObject);
             case RvmRectangularTorus rvmRectangularTorus:
-                return rvmRectangularTorus.ConvertToRevealPrimitive(treeIndex, rvmNode.GetColor(), failedPrimitiveDicts);
+                return rvmRectangularTorus.ConvertToRevealPrimitive(
+                    treeIndex,
+                    rvmNode.GetColor(),
+                    failedPrimitivesLogObject
+                );
             default:
                 throw new ArgumentOutOfRangeException(nameof(rvmPrimitive), rvmPrimitive, nameof(rvmPrimitive));
         }

@@ -8,8 +8,7 @@ using System.Numerics;
 
 public static class RvmBoxConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmBox rvmBox, ulong treeIndex, Color color,
-        Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmBox rvmBox, ulong treeIndex, Color color)
     {
         if (!rvmBox.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {

@@ -10,9 +10,11 @@ using System.Numerics;
 
 public static class RvmEllipticalDishConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmEllipticalDish rvmEllipticalDish,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmEllipticalDish rvmEllipticalDish,
         ulong treeIndex,
-        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
+        Color color
+    )
     {
         if (!rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {

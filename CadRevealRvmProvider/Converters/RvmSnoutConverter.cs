@@ -12,8 +12,12 @@ using System.Numerics;
 
 public static class RvmSnoutConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color,
-        Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmSnout rvmSnout,
+        ulong treeIndex,
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitives = null
+    )
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -22,9 +26,9 @@ public static class RvmSnoutConverter
 
         if (rvmSnout.RadiusBottom < 0 || rvmSnout.RadiusTop < 0)
         {
-            Console.WriteLine(
-                $"Snout was removed due to invalid radii. RadiusTop: {rvmSnout.RadiusTop} RadiusBottom: {rvmSnout.RadiusBottom}"
-            );
+            if (failedPrimitives != null)
+                failedPrimitives.FailedSnouts.RadiusCounter++;
+
             return Array.Empty<APrimitive>();
         }
 
@@ -48,7 +52,9 @@ public static class RvmSnoutConverter
 
         if (scale.X < 0)
         {
-            Console.WriteLine($"Snout was removed, because the radii were: {radiusA} and {radiusB}");
+            if (failedPrimitives != null)
+                failedPrimitives.FailedSnouts.ScaleCounter++;
+
             return Array.Empty<APrimitive>();
         }
 
