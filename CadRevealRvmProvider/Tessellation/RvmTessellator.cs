@@ -176,6 +176,8 @@ public class RvmTessellator
         SimplificationLogObject instancedLogObject
     )
     {
+        // Scale the mesh up to the largest use in each dimension, and simplify based on that size.
+        // This should make the simplification loss as small as possible and avoids simplifying a small template which is scaled up in its instances (magnifying the error).
         var allScales = transforms.Select(transform =>
         {
             Matrix4x4.Decompose(transform, out var scale, out _, out _);
