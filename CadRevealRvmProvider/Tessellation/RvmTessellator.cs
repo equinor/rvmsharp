@@ -11,14 +11,6 @@ using System.Diagnostics;
 
 public class RvmTessellator
 {
-    private struct SimplificationLogObject
-    {
-        public int SimplificationBeforeVertexCount;
-        public int SimplificationAfterVertexCount;
-        public int SimplificationBeforeTriangleCount;
-        public int SimplificationAfterTriangleCount;
-    }
-
     public static Mesh ConvertRvmMesh(RvmMesh rvmMesh)
     {
         // Reveal does not use normals, so they are discarded here.
@@ -36,7 +28,7 @@ public class RvmTessellator
         static TriangleMesh TessellateAndCreateTriangleMesh(
             ProtoMesh p,
             float simplifierThreshold,
-            ref SimplificationLogObject simplificationLogObject,
+            SimplificationLogObject simplificationLogObject,
             RvmTessellatorLogObject tessellationLogObject
         )
         {
@@ -47,7 +39,7 @@ public class RvmTessellator
             {
                 Interlocked.Add(ref simplificationLogObject.SimplificationBeforeVertexCount, mesh.Vertices.Length);
                 Interlocked.Add(ref simplificationLogObject.SimplificationBeforeTriangleCount, mesh.TriangleCount);
-                mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
+                mesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, simplifierThreshold);
                 Interlocked.Add(ref simplificationLogObject.SimplificationAfterVertexCount, mesh.Vertices.Length);
                 Interlocked.Add(ref simplificationLogObject.SimplificationAfterTriangleCount, mesh.TriangleCount);
             }
@@ -127,9 +119,7 @@ public class RvmTessellator
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
             .AsParallel()
-            .Select(
-                x => TessellateAndCreateTriangleMesh(x, simplifierThreshold, ref logObject, meshTessellationLogObject)
-            )
+            .Select(x => TessellateAndCreateTriangleMesh(x, simplifierThreshold, logObject, meshTessellationLogObject))
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
 
@@ -153,6 +143,8 @@ public class RvmTessellator
                     Percent of Before Tris: {(logObject.SimplificationAfterTriangleCount / (float)logObject.SimplificationBeforeTriangleCount):P2}
                     """
             );
+            Console.WriteLine("");
+            Console.WriteLine($"Number of failed simplifications of mesh: {logObject.FailedOptimizations}");
         }
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
