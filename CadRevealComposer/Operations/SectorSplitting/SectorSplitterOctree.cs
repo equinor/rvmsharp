@@ -173,7 +173,7 @@ public class SectorSplitterOctree : ISectorSplitter
             string parentPathForChildren = parentPath;
             uint? parentSectorIdForChildren = parentSectorId;
 
-            var geometries = mainVoxelNodes.SelectMany(n => n.Geometries).ToArray();
+            var geometries = mainVoxelNodes.Select(n => n.Geometry).ToArray();
 
             // Should we keep empty sectors???? yes no?
             if (geometries.Any() || subVoxelNodes.Any())
@@ -266,7 +266,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
         var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
-        var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
+        var geometries = nodes.Select(n => n.Geometry).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
         var geometriesCount = geometries.Length;
@@ -338,9 +338,11 @@ public class SectorSplitterOctree : ISectorSplitter
             _ => nodes.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(
-            x => CalculateSurfaceArea(x.Geometries.First()) / x.EstimatedTriangleCount
-        );
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x =>
+        {
+            var test = CalculateSurfaceArea(x.Geometry) / x.EstimatedTriangleCount;
+            return test;
+        });
 
         var nodeArray = nodesInPrioritizedOrder.ToArray();
         var byteSizeBudgetLeft = SectorEstimatedByteSizeBudget;
@@ -365,7 +367,8 @@ public class SectorSplitterOctree : ISectorSplitter
 
             var node = nodeArray[i];
             byteSizeBudgetLeft -= node.EstimatedByteSize;
-            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            if (node.Geometry is not TriangleMesh or InstancedMesh)
+                primitiveBudgetLeft -= 1;
             trianglesBudgetLeft -= node.EstimatedTriangleCount;
 
             yield return node;

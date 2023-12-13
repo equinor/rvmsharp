@@ -20,19 +20,9 @@ public static class SplittingUtils
         SubVoxelG = 7,
         SubVoxelH = 8;
 
-    public static int CalculateVoxelKeyForNode(Node nodeGroupGeometries, BoundingBox boundingBox)
+    public static int CalculateVoxelKeyForNode(Node node, BoundingBox boundingBox)
     {
-        var voxelKeyAndUsageCount = new Dictionary<int, int>();
-
-        foreach (var geometry in nodeGroupGeometries.Geometries)
-        {
-            var voxelKey = CalculateVoxelKeyForGeometry(geometry.AxisAlignedBoundingBox, boundingBox);
-            var count = voxelKeyAndUsageCount.TryGetValue(voxelKey, out int existingCount) ? existingCount : 0;
-            voxelKeyAndUsageCount[voxelKey] = count + 1;
-        }
-
-        // Return the voxel key where most of the node's geometries lie
-        return voxelKeyAndUsageCount.Aggregate((l, r) => l.Value > r.Value ? l : r).Key;
+        return CalculateVoxelKeyForGeometry(node.Geometry.AxisAlignedBoundingBox, boundingBox);
     }
 
     private static int CalculateVoxelKeyForGeometry(BoundingBox geometryBoundingBox, BoundingBox boundingBox)
@@ -148,17 +138,17 @@ public static class SplittingUtils
         return primitives
             .Select(g =>
             {
-                var geometries = new[] { g };
-                var boundingBox = geometries.CalculateBoundingBox();
+                var geometry = g;
+                var boundingBox = g.AxisAlignedBoundingBox;
                 if (boundingBox == null)
                 {
                     throw new Exception("Unexpected error, the bounding box should not have been null.");
                 }
                 return new Node(
                     g.TreeIndex,
-                    geometries,
-                    geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                    EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,
+                    geometry,
+                    DrawCallEstimator.EstimateByteSize(geometry),
+                    DrawCallEstimator.Estimate(new[] { geometry }).EstimatedTriangleCount,
                     boundingBox
                 );
             })
