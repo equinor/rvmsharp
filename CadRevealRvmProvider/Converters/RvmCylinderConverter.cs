@@ -9,11 +9,9 @@ using System.Numerics;
 
 public static class RvmCylinderConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmCylinder rvmCylinder,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmCylinder rvmCylinder,
         ulong treeIndex,
-        Color color
-    )
+        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -29,7 +27,15 @@ public static class RvmCylinderConverter
             )
         )
         {
-            Console.WriteLine($"Cylinder was removed due to invalid rotation values: {rotation}");
+            try
+            {
+                failedPrimitives[rvmCylinder.GetType()][RvmPrimitiveToAPrimitive.FailReason.Rotation] += 1;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
             yield break;
         }
 

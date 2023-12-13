@@ -10,11 +10,9 @@ using System.Numerics;
 
 public static class RvmRectangularTorusConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmRectangularTorus rvmRectangularTorus,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
-        Color color
-    )
+        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {

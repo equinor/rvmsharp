@@ -6,14 +6,13 @@ using CapVisibilityHelpers;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
+using System.Security.Cryptography;
 
 public static class RvmCircularTorusConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmCircularTorus rvmCircularTorus,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color
-    )
+        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
@@ -22,7 +21,16 @@ public static class RvmCircularTorusConverter
 
         if (rvmCircularTorus.Radius <= 0)
         {
-            Console.WriteLine($"Removing CircularTorus because radius was: {rvmCircularTorus.Radius}");
+            try
+            {
+                failedPrimitives[rvmCircularTorus.GetType()][RvmPrimitiveToAPrimitive.FailReason.Rotation] += 1;
+                Console.WriteLine("Hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
             yield break;
         }
 

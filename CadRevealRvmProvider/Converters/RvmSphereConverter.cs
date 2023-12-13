@@ -8,11 +8,9 @@ using System.Drawing;
 
 public static class RvmSphereConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
-        this RvmSphere rvmSphere,
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSphere rvmSphere,
         ulong treeIndex,
-        Color color
-    )
+        Color color, Dictionary<Type, Dictionary<RvmPrimitiveToAPrimitive.FailReason, uint>> failedPrimitives)
     {
         if (!rvmSphere.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
