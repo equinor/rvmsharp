@@ -36,19 +36,20 @@ public class RvmTessellator
         static TriangleMesh TessellateAndCreateTriangleMesh(
             ProtoMesh p,
             float simplifierThreshold,
-            ref SimplificationLogObject logObject
+            ref SimplificationLogObject simplificationLogObject,
+            RvmTessellatorLogObject tessellationLogObject
         )
         {
-            var rvmMesh = Tessellate(p.RvmPrimitive);
+            var rvmMesh = Tessellate(p.RvmPrimitive, tessellationLogObject);
             var mesh = ConvertRvmMesh(rvmMesh);
 
             if (simplifierThreshold > 0.0f)
             {
-                Interlocked.Add(ref logObject.SimplificationBeforeVertexCount, mesh.Vertices.Length);
-                Interlocked.Add(ref logObject.SimplificationBeforeTriangleCount, mesh.TriangleCount);
+                Interlocked.Add(ref simplificationLogObject.SimplificationBeforeVertexCount, mesh.Vertices.Length);
+                Interlocked.Add(ref simplificationLogObject.SimplificationBeforeTriangleCount, mesh.TriangleCount);
                 mesh = Simplify.SimplifyMeshLossy(mesh, simplifierThreshold);
-                Interlocked.Add(ref logObject.SimplificationAfterVertexCount, mesh.Vertices.Length);
-                Interlocked.Add(ref logObject.SimplificationAfterTriangleCount, mesh.TriangleCount);
+                Interlocked.Add(ref simplificationLogObject.SimplificationAfterVertexCount, mesh.Vertices.Length);
+                Interlocked.Add(ref simplificationLogObject.SimplificationAfterTriangleCount, mesh.TriangleCount);
             }
 
             return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
@@ -81,6 +82,7 @@ public class RvmTessellator
 
         // tessellate instanced geometries
         var stopwatch = Stopwatch.StartNew();
+        var instanceTessellationLogObject = new RvmTessellatorLogObject("Failed instance tessellations");
         var meshes = facetGroupInstanced
             .Concat(pyramidsInstanced)
             .AsParallel()
@@ -88,13 +90,15 @@ public class RvmTessellator
                 g =>
                     (
                         InstanceGroup: g,
-                        Mesh: Tessellate(g.Key),
+                        Mesh: Tessellate(g.Key, instanceTessellationLogObject),
                         InstanceId: instanceIdGenerator.GetNextId() /* Must be identical for all instances of this mesh */
                     )
             )
             .Where(g => g.Mesh.Triangles.Length > 0) // ignore empty meshes
             .ToArray();
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
+        instanceTessellationLogObject.LogFailedTessellations();
+
         Console.WriteLine(
             $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}"
         );
@@ -119,13 +123,17 @@ public class RvmTessellator
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
         var logObject = new SimplificationLogObject();
+        var meshTessellationLogObject = new RvmTessellatorLogObject("Failed mesh tessellations");
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
             .AsParallel()
-            .Select(x => TessellateAndCreateTriangleMesh(x, simplifierThreshold, ref logObject))
+            .Select(
+                x => TessellateAndCreateTriangleMesh(x, simplifierThreshold, ref logObject, meshTessellationLogObject)
+            )
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();
 
+        meshTessellationLogObject.LogFailedTessellations();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
 
         using (new TeamCityLogBlock("Mesh Reduction Stats"))
@@ -150,7 +158,7 @@ public class RvmTessellator
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }
 
-    public static RvmMesh Tessellate(RvmPrimitive primitive)
+    public static RvmMesh Tessellate(RvmPrimitive primitive, RvmTessellatorLogObject logObject)
     {
         RvmMesh mesh;
         try
@@ -166,11 +174,11 @@ public class RvmTessellator
         {
             if (primitive is RvmFacetGroup f)
             {
-                Console.WriteLine($"WARNING: Could not tessellate facet group! Polygon count: {f.Polygons.Length}");
+                logObject.AddFailedFacetGroup(f.Polygons.Length);
             }
             else if (primitive is RvmPyramid)
             {
-                Console.WriteLine("WARNING: Could not tessellate pyramid!: " + primitive);
+                logObject.AddFailedPyramid();
             }
             else
             {
