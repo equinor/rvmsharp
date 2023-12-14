@@ -83,7 +83,7 @@ public static class Simplify
             var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
             return lastPassMesh;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             simplificationLogObject.FailedOptimizations++;
             return mesh;
