@@ -92,20 +92,20 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var outlierGroups = SplittingUtils.GroupOutliersRecursive(outlierNodes, OutlierGroupingDistance);
 
-        foreach (var outlierGroup in outlierGroups)
+        using (new TeamCityLogBlock("Outlier Sectors"))
         {
-            var outlierSectors = SplitIntoSectorsRecursive(
-                    outlierGroup,
-                    OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
-                    rootPath,
-                    rootSectorId,
-                    sectorIdGenerator,
-                    0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
-                )
-                .ToArray();
-
-            using (new TeamCityLogBlock("Outlier Sectors"))
+            foreach (var outlierGroup in outlierGroups)
             {
+                var outlierSectors = SplitIntoSectorsRecursive(
+                        outlierGroup,
+                        OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                        rootPath,
+                        rootSectorId,
+                        sectorIdGenerator,
+                        0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    )
+                    .ToArray();
+
                 foreach (var sector in outlierSectors)
                 {
                     Console.WriteLine(
