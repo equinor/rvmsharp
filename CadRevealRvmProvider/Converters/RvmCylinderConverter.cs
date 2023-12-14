@@ -13,7 +13,7 @@ public static class RvmCylinderConverter
         this RvmCylinder rvmCylinder,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitives = null
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -30,8 +30,8 @@ public static class RvmCylinderConverter
             )
         )
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedCylinders.RotationCounter++;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
 
             yield break;
         }
@@ -43,8 +43,8 @@ public static class RvmCylinderConverter
 
         if (rvmCylinder.Radius < 0)
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedCylinders.RadiusCounter++;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedCylinders.RadiusCounter++;
 
             yield break;
         }

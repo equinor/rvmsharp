@@ -4,12 +4,12 @@ using CadRevealComposer.Utils;
 
 public class FailedPrimitivesLogObject
 {
-    public FailedConversionReasons FailedCylinders = new("cylinders");
-    public FailedConversionReasons FailedCircularToruses = new("circular toruses");
-    public FailedConversionReasons FailedSnouts = new("snouts");
-    public FailedConversionReasons FailedRectangularTorus = new("rectangular toruses");
+    public FailedConversionCases FailedCylinders = new("cylinders");
+    public FailedConversionCases FailedCircularToruses = new("circular toruses");
+    public FailedConversionCases FailedSnouts = new("snouts");
+    public FailedConversionCases FailedRectangularTorus = new("rectangular toruses");
 
-    public struct FailedConversionReasons
+    public struct FailedConversionCases
     {
         public readonly string PrimitiveType;
 
@@ -17,7 +17,7 @@ public class FailedPrimitivesLogObject
         public uint RotationCounter = 0;
         public uint ScaleCounter = 0;
 
-        public FailedConversionReasons(string primitiveType)
+        public FailedConversionCases(string primitiveType)
         {
             PrimitiveType = primitiveType;
         }
@@ -34,7 +34,7 @@ public class FailedPrimitivesLogObject
         }
     }
 
-    private void LogFailedPrimitive(FailedConversionReasons failedConversionReasons)
+    private void LogFailedPrimitive(FailedConversionCases failedConversionReasons)
     {
         if (failedConversionReasons.RadiusCounter > 0)
             Console.WriteLine(

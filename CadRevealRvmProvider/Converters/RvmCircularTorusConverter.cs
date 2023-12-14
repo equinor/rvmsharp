@@ -13,7 +13,7 @@ public static class RvmCircularTorusConverter
         this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitives = null
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -23,8 +23,8 @@ public static class RvmCircularTorusConverter
 
         if (rvmCircularTorus.Radius <= 0)
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedCircularToruses.RadiusCounter += 1;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedCircularToruses.RadiusCounter += 1;
 
             yield break;
         }

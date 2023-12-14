@@ -16,7 +16,7 @@ public static class RvmSnoutConverter
         this RvmSnout rvmSnout,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitives = null
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -26,8 +26,8 @@ public static class RvmSnoutConverter
 
         if (rvmSnout.RadiusBottom < 0 || rvmSnout.RadiusTop < 0)
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedSnouts.RadiusCounter++;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
 
             return Array.Empty<APrimitive>();
         }
@@ -52,8 +52,8 @@ public static class RvmSnoutConverter
 
         if (scale.X < 0)
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedSnouts.ScaleCounter++;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
 
             return Array.Empty<APrimitive>();
         }

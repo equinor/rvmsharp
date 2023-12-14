@@ -14,7 +14,7 @@ public static class RvmRectangularTorusConverter
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitives = null
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -25,16 +25,16 @@ public static class RvmRectangularTorusConverter
 
         if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner < 0)
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedRectangularTorus.RadiusCounter++;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedRectangularTorus.RadiusCounter++;
 
             yield break;
         }
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitives != null)
-                failedPrimitives.FailedRectangularTorus.ScaleCounter++;
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
 
             yield break;
         }
