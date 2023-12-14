@@ -104,12 +104,15 @@ public class SectorSplitterOctree : ISectorSplitter
                 )
                 .ToArray();
 
-            foreach (var sector in outlierSectors)
+            using (new TeamCityLogBlock("Outlier Sectors"))
             {
-                Console.WriteLine(
-                    $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
-                );
-                yield return sector;
+                foreach (var sector in outlierSectors)
+                {
+                    Console.WriteLine(
+                        $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
+                    );
+                    yield return sector;
+                }
             }
         }
     }
