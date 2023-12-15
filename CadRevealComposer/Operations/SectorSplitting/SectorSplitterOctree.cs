@@ -134,46 +134,34 @@ public class SectorSplitterOctree : ISectorSplitter
         var subBoxes = SplitBoxIntoSubBoxes(startBox, depth, depth, depth); // TODO find length, width, height
 
         var placedNodes = new List<Node>();
-        var sectors = new List<InternalSector>();
 
         foreach (var subBox in subBoxes)
         {
-            int tempBudget = 10000;
-            var sectorNodes = new List<Node>();
+            var nodesByBudget = GetNodesByBudget(nodes, subBox, depth);
 
-            for (int i = 0; i < nodes.Length; i++)
+            if (nodesByBudget.Any())
             {
-                var node = nodes[i];
-                if (subBox.IsInside(node.BoundingBox.Center))
-                {
-                    sectorNodes.Add(node);
-                    tempBudget--;
-                }
-
-                if (tempBudget <= 0)
-                    break;
-            }
-
-            if (sectorNodes.Any())
-            {
-                sectors.Add(
-                    CreateSector(
-                        sectorNodes.ToArray(),
-                        (uint)sectorIdGenerator.GetNextId(),
-                        parentSectorId,
-                        parentPath,
-                        depth,
-                        sectorNodes.CalculateBoundingBox()
-                    )
+                yield return CreateSector(
+                    nodesByBudget.ToArray(),
+                    (uint)sectorIdGenerator.GetNextId(),
+                    parentSectorId,
+                    parentPath,
+                    depth,
+                    nodesByBudget.CalculateBoundingBox()
                 );
-                placedNodes.AddRange(sectorNodes);
+                placedNodes.AddRange(nodesByBudget);
             }
         }
 
         var restNodes = nodes.Except(placedNodes).ToArray();
 
-        sectors.AddRange(
-            SplitIntoSectorsRecursive(restNodes, depth + 1, parentPath, parentSectorId, sectorIdGenerator, startBox)
+        var sectors = SplitIntoSectorsRecursive(
+            restNodes,
+            depth + 1,
+            parentPath,
+            parentSectorId,
+            sectorIdGenerator,
+            startBox
         );
 
         foreach (var sector in sectors)
@@ -266,48 +254,27 @@ public class SectorSplitterOctree : ISectorSplitter
         );
     }
 
-    private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
+    private static Node[] GetNodesByBudget(Node[] nodes, BoundingBox subBox, int depth)
     {
-        // If we start splitting too low in the octree, we might end up with way too many sectors
-        // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
+        var nodesInside = nodes.Where(x => subBox.IsInside(x.BoundingBox.Center)); // TODO: Is it neccessary to go through all nodes, since a subset will be chosen in the end (and they are prioritized)?
 
-        var diagonalAtDepth = boundingBox.Diagonal;
-        int depth = 1;
-        // Todo: Arbitrary numbers in this method based on gut feeling.
-        // Assumes 3 levels of "LOD Splitting":
-        // 300x300 for Very large parts
-        // 150x150 for large parts
-        // 75x75 for > 1 meter parts
-        // 37,5 etc by budget
-        const float level1SectorsMaxDiagonal = 500;
-        while (diagonalAtDepth > level1SectorsMaxDiagonal)
+        var selectedNodes = depth switch
         {
-            diagonalAtDepth /= 2;
-            depth++;
-        }
-
-        Console.WriteLine(
-            $"Diagonal was: {boundingBox.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m"
-        );
-        return depth;
-    }
-
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long byteSizeBudget, int actualDepth)
-    {
-        var selectedNodes = actualDepth switch
-        {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
-            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
-            _ => nodes.ToArray(),
+            1 => nodesInside.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
+            2 => nodesInside.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
+            3 => nodesInside.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            _ => nodesInside.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal); // TODO: Already sorted?
 
         var nodeArray = nodesInPrioritizedOrder.ToArray();
-        var byteSizeBudgetLeft = byteSizeBudget;
+
+        var byteSizeBudgetLeft = SectorEstimatedByteSizeBudget;
         var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
         var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
+
+        var chosenNodes = new List<Node>();
         for (int i = 0; i < nodeArray.Length; i++)
         {
             if (
@@ -315,7 +282,7 @@ public class SectorSplitterOctree : ISectorSplitter
                 && nodeArray.Length - i > 10
             )
             {
-                yield break;
+                break;
             }
 
             var node = nodeArray[i];
@@ -323,7 +290,9 @@ public class SectorSplitterOctree : ISectorSplitter
             primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
             trianglesBudgetLeft -= node.EstimatedTriangleCount;
 
-            yield return node;
+            chosenNodes.Add(node);
         }
+
+        return chosenNodes.ToArray();
     }
 }
