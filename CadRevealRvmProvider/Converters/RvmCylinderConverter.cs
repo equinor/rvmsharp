@@ -12,7 +12,8 @@ public static class RvmCylinderConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCylinder rvmCylinder,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -29,7 +30,9 @@ public static class RvmCylinderConverter
             )
         )
         {
-            Console.WriteLine($"Cylinder was removed due to invalid rotation values: {rotation}");
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
+
             yield break;
         }
 
@@ -40,7 +43,9 @@ public static class RvmCylinderConverter
 
         if (rvmCylinder.Radius < 0)
         {
-            Console.WriteLine($"Cylinder was removed due to invalid radius. Radius: {rvmCylinder.Radius}");
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedCylinders.RadiusCounter++;
+
             yield break;
         }
 

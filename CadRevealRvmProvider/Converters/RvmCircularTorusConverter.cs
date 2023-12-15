@@ -12,7 +12,8 @@ public static class RvmCircularTorusConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -22,7 +23,9 @@ public static class RvmCircularTorusConverter
 
         if (rvmCircularTorus.Radius <= 0)
         {
-            Console.WriteLine($"Removing CircularTorus because radius was: {rvmCircularTorus.Radius}");
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedCircularToruses.RadiusCounter += 1;
+
             yield break;
         }
 
