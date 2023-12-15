@@ -36,6 +36,18 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     {
         return new BoundingBox(Vector3.Min(Min, other.Min), Vector3.Max(Max, other.Max));
     }
+
+    public bool IsInside(Vector3 point)
+    {
+        return (
+            point.X >= Min.X
+            && point.X < Max.X
+            && point.Y >= Min.Y
+            && point.Y < Max.Y
+            && point.Z >= Min.Z
+            && point.Z < Max.Z
+        );
+    }
 };
 
 public class CadRevealNode

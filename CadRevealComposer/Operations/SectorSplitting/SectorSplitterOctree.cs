@@ -48,7 +48,7 @@ public class SectorSplitterOctree : ISectorSplitter
                 rootPath,
                 rootSectorId,
                 sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                sortedNodes.CalculateBoundingBox()
             )
             .ToArray();
 
@@ -98,11 +98,11 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 var outlierSectors = SplitIntoSectorsRecursive(
                         outlierGroup,
-                        OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                        1, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
                         rootPath,
                         rootSectorId,
                         sectorIdGenerator,
-                        0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                        outlierGroup.CalculateBoundingBox()
                     )
                     .ToArray();
 
@@ -119,138 +119,97 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private IEnumerable<InternalSector> SplitIntoSectorsRecursive(
         Node[] nodes,
-        int recursiveDepth,
+        int depth,
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        int depthToStartSplittingGeometry
+        BoundingBox startBox
     )
     {
-        /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
-         * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
-         * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
-         */
-
-        if (nodes.Length == 0)
+        if (nodes.Length <= 0)
         {
             yield break;
         }
 
-        var actualDepth = Math.Max(1, recursiveDepth - depthToStartSplittingGeometry + 1);
+        var subBoxes = SplitBoxIntoSubBoxes(startBox, depth, depth, depth); // TODO find length, width, height
 
-        var subtreeBoundingBox = nodes.CalculateBoundingBox();
+        var placedNodes = new List<Node>();
+        var sectors = new List<InternalSector>();
 
-        var mainVoxelNodes = Array.Empty<Node>();
-        Node[] subVoxelNodes;
-
-        if (recursiveDepth < depthToStartSplittingGeometry)
+        foreach (var subBox in subBoxes)
         {
-            subVoxelNodes = nodes;
-        }
-        else
-        {
-            // fill main voxel according to budget
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(
-                    nodes.ToArray(),
-                    SectorEstimatedByteSizeBudget,
-                    actualDepth
-                )
-                .ToList();
-            mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
-            subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
-        }
+            int tempBudget = 10000;
+            var sectorNodes = new List<Node>();
 
-        if (!subVoxelNodes.Any())
-        {
-            var sectorId = (uint)sectorIdGenerator.GetNextId();
-
-            yield return CreateSector(
-                mainVoxelNodes,
-                sectorId,
-                parentSectorId,
-                parentPath,
-                actualDepth,
-                subtreeBoundingBox
-            );
-        }
-        else
-        {
-            string parentPathForChildren = parentPath;
-            uint? parentSectorIdForChildren = parentSectorId;
-
-            var geometries = mainVoxelNodes.SelectMany(n => n.Geometries).ToArray();
-
-            // Should we keep empty sectors???? yes no?
-            if (geometries.Any() || subVoxelNodes.Any())
+            for (int i = 0; i < nodes.Length; i++)
             {
-                var sectorId = (uint)sectorIdGenerator.GetNextId();
-                var path = $"{parentPath}/{sectorId}";
-
-                yield return CreateSector(
-                    mainVoxelNodes,
-                    sectorId,
-                    parentSectorId,
-                    parentPath,
-                    actualDepth,
-                    subtreeBoundingBox
-                );
-
-                parentPathForChildren = path;
-                parentSectorIdForChildren = sectorId;
-            }
-
-            var sizeOfSubVoxelNodes = subVoxelNodes.Sum(x => x.EstimatedByteSize);
-            var subVoxelDiagonal = subVoxelNodes.CalculateBoundingBox().Diagonal;
-
-            if (
-                subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter
-                || sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget
-            )
-            {
-                var sectors = SplitIntoSectorsRecursive(
-                    subVoxelNodes,
-                    recursiveDepth + 1,
-                    parentPathForChildren,
-                    parentSectorIdForChildren,
-                    sectorIdGenerator,
-                    depthToStartSplittingGeometry
-                );
-                foreach (var sector in sectors)
+                var node = nodes[i];
+                if (subBox.IsInside(node.BoundingBox.Center))
                 {
-                    yield return sector;
+                    sectorNodes.Add(node);
+                    tempBudget--;
                 }
 
-                yield break;
+                if (tempBudget <= 0)
+                    break;
             }
 
-            var voxels = subVoxelNodes
-                .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, subtreeBoundingBox))
-                .OrderBy(x => x.Key)
-                .ToImmutableList();
-
-            foreach (var voxelGroup in voxels)
+            if (sectorNodes.Any())
             {
-                if (voxelGroup.Key == SplittingUtils.MainVoxel)
-                {
-                    throw new Exception(
-                        "Main voxel should not appear here. Main voxel should be processed separately."
-                    );
-                }
-
-                var sectors = SplitIntoSectorsRecursive(
-                    voxelGroup.ToArray(),
-                    recursiveDepth + 1,
-                    parentPathForChildren,
-                    parentSectorIdForChildren,
-                    sectorIdGenerator,
-                    depthToStartSplittingGeometry
+                sectors.Add(
+                    CreateSector(
+                        sectorNodes.ToArray(),
+                        (uint)sectorIdGenerator.GetNextId(),
+                        parentSectorId,
+                        parentPath,
+                        depth,
+                        sectorNodes.CalculateBoundingBox()
+                    )
                 );
-                foreach (var sector in sectors)
+                placedNodes.AddRange(sectorNodes);
+            }
+        }
+
+        var restNodes = nodes.Except(placedNodes).ToArray();
+
+        sectors.AddRange(
+            SplitIntoSectorsRecursive(restNodes, depth + 1, parentPath, parentSectorId, sectorIdGenerator, startBox)
+        );
+
+        foreach (var sector in sectors)
+        {
+            yield return sector;
+        }
+    }
+
+    private BoundingBox[] SplitBoxIntoSubBoxes(BoundingBox startBox, int xBoxes, int yBoxes, int zBoxes)
+    {
+        float xStartMin = startBox.Min.X;
+        float yStartMin = startBox.Min.Y;
+        float zStartMin = startBox.Min.Z;
+
+        var startBoxLengths = startBox.Max - startBox.Min;
+        var xLength = startBoxLengths.X;
+        var yLength = startBoxLengths.Y;
+        var zLength = startBoxLengths.Z;
+
+        var splitBoxes = new List<BoundingBox>();
+
+        for (int i = 0; i < xBoxes; i++)
+        {
+            for (int j = 0; j < yBoxes; j++)
+            {
+                for (int k = 0; k < zBoxes; k++)
                 {
-                    yield return sector;
+                    var newMin = new Vector3(xStartMin + xLength * i, yStartMin + yLength * j, zStartMin + zLength * k);
+                    var newMax = new Vector3(newMin.X + xLength, newMin.Y + yLength, newMin.Z + zLength);
+
+                    splitBoxes.Add(new BoundingBox(newMin, newMax));
                 }
             }
         }
+
+        return splitBoxes.ToArray();
     }
 
     private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
