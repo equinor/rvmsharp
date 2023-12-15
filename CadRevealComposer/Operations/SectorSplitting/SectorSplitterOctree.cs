@@ -92,24 +92,27 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var outlierGroups = SplittingUtils.GroupOutliersRecursive(outlierNodes, OutlierGroupingDistance);
 
-        foreach (var outlierGroup in outlierGroups)
+        using (new TeamCityLogBlock("Outlier Sectors"))
         {
-            var outlierSectors = SplitIntoSectorsRecursive(
-                    outlierGroup,
-                    OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
-                    rootPath,
-                    rootSectorId,
-                    sectorIdGenerator,
-                    0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
-                )
-                .ToArray();
-
-            foreach (var sector in outlierSectors)
+            foreach (var outlierGroup in outlierGroups)
             {
-                Console.WriteLine(
-                    $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
-                );
-                yield return sector;
+                var outlierSectors = SplitIntoSectorsRecursive(
+                        outlierGroup,
+                        OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                        rootPath,
+                        rootSectorId,
+                        sectorIdGenerator,
+                        0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    )
+                    .ToArray();
+
+                foreach (var sector in outlierSectors)
+                {
+                    Console.WriteLine(
+                        $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
+                    );
+                    yield return sector;
+                }
             }
         }
     }
