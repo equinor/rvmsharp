@@ -189,9 +189,9 @@ public class SectorSplitterOctree : ISectorSplitter
         float zStartMin = startBox.Min.Z;
 
         var startBoxLengths = startBox.Max - startBox.Min;
-        var xLength = startBoxLengths.X;
-        var yLength = startBoxLengths.Y;
-        var zLength = startBoxLengths.Z;
+        var xLength = startBoxLengths.X / xBoxes;
+        var yLength = startBoxLengths.Y / yBoxes;
+        var zLength = startBoxLengths.Z / zBoxes;
 
         var splitBoxes = new List<BoundingBox>();
 
