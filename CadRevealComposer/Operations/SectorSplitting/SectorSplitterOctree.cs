@@ -131,7 +131,9 @@ public class SectorSplitterOctree : ISectorSplitter
             yield break;
         }
 
-        var subBoxes = SplitBoxIntoSubBoxes(startBox, depth, depth, depth); // TODO find length, width, height
+        var dimensions = FindDimensions(startBox, depth);
+
+        var subBoxes = SplitBoxIntoSubBoxes(startBox, dimensions); // TODO find length, width, height
 
         var placedNodes = new List<Node>();
 
@@ -170,24 +172,29 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private BoundingBox[] SplitBoxIntoSubBoxes(BoundingBox startBox, int xBoxes, int yBoxes, int zBoxes)
+    private Vector3 FindDimensions(BoundingBox startBox, int depth)
+    {
+        return new Vector3(depth); // TODO: Do something smart here. Using primes or something? Try to avoid aligning sector edges
+    }
+
+    private BoundingBox[] SplitBoxIntoSubBoxes(BoundingBox startBox, Vector3 dimensions)
     {
         float xStartMin = startBox.Min.X;
         float yStartMin = startBox.Min.Y;
         float zStartMin = startBox.Min.Z;
 
         var startBoxLengths = startBox.Max - startBox.Min;
-        var xLength = startBoxLengths.X / xBoxes;
-        var yLength = startBoxLengths.Y / yBoxes;
-        var zLength = startBoxLengths.Z / zBoxes;
+        var xLength = startBoxLengths.X / dimensions.X;
+        var yLength = startBoxLengths.Y / dimensions.Y;
+        var zLength = startBoxLengths.Z / dimensions.Z;
 
         var splitBoxes = new List<BoundingBox>();
 
-        for (int i = 0; i < xBoxes; i++)
+        for (int i = 0; i < dimensions.X; i++)
         {
-            for (int j = 0; j < yBoxes; j++)
+            for (int j = 0; j < dimensions.Y; j++)
             {
-                for (int k = 0; k < zBoxes; k++)
+                for (int k = 0; k < dimensions.Z; k++)
                 {
                     var newMin = new Vector3(xStartMin + xLength * i, yStartMin + yLength * j, zStartMin + zLength * k);
                     var newMax = new Vector3(newMin.X + xLength, newMin.Y + yLength, newMin.Z + zLength);
