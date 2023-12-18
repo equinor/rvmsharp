@@ -6,15 +6,16 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibTessDotNet" Version="1.1.15" />
+    <PackageReference Include="LibTessDotNet" Version="1.1.15"/>
     <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ben.StringIntern" Version="0.1.8" />
+    <PackageReference Include="Ben.StringIntern" Version="0.1.8"/>
   </ItemGroup>
 
 </Project>

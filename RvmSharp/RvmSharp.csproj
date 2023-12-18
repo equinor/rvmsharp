@@ -1,20 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Library</OutputType>
-        <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>nullable;</WarningsAsErrors>
-		<LangVersion>latest</LangVersion>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable;</WarningsAsErrors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <PackageReference Include="LibTessDotNet" Version="1.1.15" />
-      <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="LibTessDotNet" Version="1.1.15"/>
+    <PackageReference Include="MathNet.Numerics" Version="5.0.0"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Commons\Commons.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Commons\Commons.csproj"/>
+  </ItemGroup>
 
 </Project>
