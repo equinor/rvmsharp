@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net7.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibTessDotNet" Version="1.1.15"/>
-    <PackageReference Include="System.Text.Encodings.Web" Version="7.0.0"/>
+    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>

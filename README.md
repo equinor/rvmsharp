@@ -2,7 +2,7 @@
 
 A library and utility for reading and converting RVM files.
 
-Library supports .NET 7.0+ and .NET Standard 2.1
+Library supports .NET 8.0+ and .NET Standard 2.1
 
 This repo also contains a pipeline for converting from Rvm to the Reveal file format. See [CadRevealComposer](#cad-reveal-composer)
 
