@@ -174,7 +174,9 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private Vector3 FindDimensions(BoundingBox startBox, int depth)
     {
-        return new Vector3(depth); // TODO: Do something smart here. Using primes or something? Try to avoid aligning sector edges
+        int[] primes = { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+
+        return new Vector3(primes[depth]); // TODO: Do something smart here. Using primes or something? Try to avoid aligning sector edges
     }
 
     private BoundingBox[] SplitBoxIntoSubBoxes(BoundingBox startBox, Vector3 dimensions)
