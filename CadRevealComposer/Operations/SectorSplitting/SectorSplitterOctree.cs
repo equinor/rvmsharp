@@ -3,10 +3,13 @@ namespace CadRevealComposer.Operations.SectorSplitting;
 using IdProviders;
 using Primitives;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -135,23 +138,39 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var subBoxes = SplitBoxIntoSubBoxes(startBox, dimensions); // TODO find length, width, height
 
-        var placedNodes = new List<Node>();
+        var placedNodes = new ConcurrentBag<Node>();
 
-        foreach (var subBox in subBoxes)
-        {
-            var nodesByBudget = GetNodesByBudget(nodes, subBox, depth);
-
-            if (nodesByBudget.Any())
+        var sectorTests = subBoxes
+            .AsParallel()
+            .Select(subBox =>
             {
-                yield return CreateSector(
-                    nodesByBudget.ToArray(),
-                    (uint)sectorIdGenerator.GetNextId(),
-                    parentSectorId,
-                    parentPath,
-                    depth,
-                    nodesByBudget.CalculateBoundingBox()
-                );
-                placedNodes.AddRange(nodesByBudget);
+                var nodesByBudget = GetNodesByBudget(nodes, subBox, depth);
+
+                if (nodesByBudget.Any())
+                {
+                    foreach (var node in nodesByBudget)
+                    {
+                        placedNodes.Add(node);
+                    }
+
+                    return CreateSector(
+                        nodesByBudget.ToArray(),
+                        (uint)sectorIdGenerator.GetNextId(),
+                        parentSectorId,
+                        parentPath,
+                        depth,
+                        nodesByBudget.CalculateBoundingBox()
+                    );
+                }
+
+                return null;
+            });
+
+        foreach (var sector in sectorTests)
+        {
+            if (sector != null)
+            {
+                yield return sector;
             }
         }
 
@@ -175,8 +194,18 @@ public class SectorSplitterOctree : ISectorSplitter
     private Vector3 FindDimensions(BoundingBox startBox, int depth)
     {
         int[] primes = { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+        Vector3 dimensions;
 
-        return new Vector3(primes[depth]); // TODO: Do something smart here. Using primes or something? Try to avoid aligning sector edges
+        if (depth >= primes.Length)
+        {
+            dimensions = new Vector3(primes[primes.Length - 1]);
+        }
+        else
+        {
+            dimensions = new Vector3(primes[depth]);
+        }
+
+        return dimensions; // TODO: Do something smart here. Using primes or something? Try to avoid aligning sector edges
     }
 
     private BoundingBox[] SplitBoxIntoSubBoxes(BoundingBox startBox, Vector3 dimensions)
