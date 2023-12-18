@@ -33,7 +33,7 @@ public static class EccentricConeTessellator
 
         for (uint i = 0; i < segments; i++)
         {
-            var q = Quaternion.CreateFromAxisAngle(normal, angleIncrement * i);
+            var q = Quaternion.CreateFromAxisAngle(-normal, angleIncrement * i);
 
             var v = Vector3.Normalize(Vector3.Transform(startVector, q));
 

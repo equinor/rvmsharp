@@ -16,11 +16,22 @@ internal static class RvmStoreToCadRevealNodesConverter
         NodeNameFiltering nodeNameFiltering
     )
     {
+        var failedPrimitiveConversionsLogObject = new FailedPrimitivesLogObject();
         var cadRevealRootNodes = rvmStore.RvmFiles
             .SelectMany(f => f.Model.Children)
-            .Select(root => CollectGeometryNodesRecursive(root, parent: null, treeIndexGenerator, nodeNameFiltering))
+            .Select(
+                root =>
+                    CollectGeometryNodesRecursive(
+                        root,
+                        parent: null,
+                        treeIndexGenerator,
+                        nodeNameFiltering,
+                        failedPrimitiveConversionsLogObject
+                    )
+            )
             .WhereNotNull()
             .ToArray();
+        failedPrimitiveConversionsLogObject.LogFailedPrimitives();
 
         var subBoundingBox = cadRevealRootNodes
             .Select(x => x.BoundingBoxAxisAligned)
@@ -38,7 +49,8 @@ internal static class RvmStoreToCadRevealNodesConverter
         RvmNode root,
         CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        FailedPrimitivesLogObject failedPrimitivesConversionLogObject
     )
     {
         if (nodeNameFiltering.ShouldExcludeNode(root.Name))
@@ -71,14 +83,16 @@ internal static class RvmStoreToCadRevealNodesConverter
                                 },
                                 newNode,
                                 treeIndexGenerator,
-                                nodeNameFiltering
+                                nodeNameFiltering,
+                                failedPrimitivesConversionLogObject
                             );
                         case RvmNode rvmNode:
                             return CollectGeometryNodesRecursive(
                                 rvmNode,
                                 newNode,
                                 treeIndexGenerator,
-                                nodeNameFiltering
+                                nodeNameFiltering,
+                                failedPrimitivesConversionLogObject
                             );
                         default:
                             throw new Exception();
@@ -91,14 +105,31 @@ internal static class RvmStoreToCadRevealNodesConverter
         {
             childrenCadNodes = root.Children
                 .OfType<RvmNode>()
-                .Select(n => CollectGeometryNodesRecursive(n, newNode, treeIndexGenerator, nodeNameFiltering))
+                .Select(
+                    n =>
+                        CollectGeometryNodesRecursive(
+                            n,
+                            newNode,
+                            treeIndexGenerator,
+                            nodeNameFiltering,
+                            failedPrimitivesConversionLogObject
+                        )
+                )
                 .WhereNotNull()
                 .ToArray();
             rvmGeometries = root.Children.OfType<RvmPrimitive>().ToArray();
         }
 
         newNode.Geometries = rvmGeometries
-            .SelectMany(primitive => RvmPrimitiveToAPrimitive.FromRvmPrimitive(newNode.TreeIndex, primitive, root))
+            .SelectMany(
+                primitive =>
+                    RvmPrimitiveToAPrimitive.FromRvmPrimitive(
+                        newNode.TreeIndex,
+                        primitive,
+                        root,
+                        failedPrimitivesConversionLogObject
+                    )
+            )
             .ToArray();
 
         newNode.Children = childrenCadNodes;

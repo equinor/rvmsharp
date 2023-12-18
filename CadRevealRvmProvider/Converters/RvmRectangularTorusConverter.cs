@@ -13,7 +13,8 @@ public static class RvmRectangularTorusConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -24,9 +25,17 @@ public static class RvmRectangularTorusConverter
 
         if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner < 0)
         {
-            Console.WriteLine(
-                $"Removing RectangularTorus because radius was invalid. Outer radius: {rvmRectangularTorus.RadiusOuter} Inner radius: {rvmRectangularTorus.RadiusInner}"
-            );
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedRectangularTorus.RadiusCounter++;
+
+            yield break;
+        }
+
+        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        {
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
+
             yield break;
         }
 
@@ -34,12 +43,6 @@ public static class RvmRectangularTorusConverter
 
         var radiusInner = rvmRectangularTorus.RadiusInner * scale.X;
         var radiusOuter = rvmRectangularTorus.RadiusOuter * scale.X;
-
-        if (radiusOuter <= 0)
-        {
-            Console.WriteLine($"Rectangular Torus was removed, because outer radius was: {radiusOuter}");
-            yield break;
-        }
 
         var thickness = (radiusOuter - radiusInner) / radiusOuter;
 

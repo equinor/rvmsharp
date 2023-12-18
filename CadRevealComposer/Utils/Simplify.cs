@@ -45,9 +45,14 @@ public static class Simplify
     /// This will reduce the quality of the mesh based on a threshold
     /// </summary>
     /// <param name="mesh"></param>
+    /// <param name="simplificationLogObject"></param>
     /// <param name="thresholdInMeshUnits">Usually meters</param>
     /// <returns></returns>
-    public static Mesh SimplifyMeshLossy(Mesh mesh, float thresholdInMeshUnits = 0.01f)
+    public static Mesh SimplifyMeshLossy(
+        Mesh mesh,
+        SimplificationLogObject simplificationLogObject,
+        float thresholdInMeshUnits = 0.01f
+    )
     {
         MeshTools.MeshTools.ReducePrecisionInPlace(mesh);
 
@@ -78,9 +83,9 @@ public static class Simplify
             var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
             return lastPassMesh;
         }
-        catch (Exception e)
+        catch (Exception)
         {
-            Console.WriteLine("Failed to optimize mesh: " + e);
+            simplificationLogObject.FailedOptimizations++;
             return mesh;
         }
     }
