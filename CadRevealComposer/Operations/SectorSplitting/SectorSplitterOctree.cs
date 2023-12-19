@@ -5,11 +5,8 @@ using Primitives;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
-using System.Threading.Tasks;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
@@ -105,7 +102,8 @@ public class SectorSplitterOctree : ISectorSplitter
                         rootPath,
                         rootSectorId,
                         sectorIdGenerator,
-                        outlierGroup.CalculateBoundingBox()
+                        outlierGroup.CalculateBoundingBox(),
+                        false
                     )
                     .ToArray();
 
@@ -126,7 +124,8 @@ public class SectorSplitterOctree : ISectorSplitter
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        BoundingBox startBox
+        BoundingBox startBox,
+        bool avoidSmallerPartsInFirstDepths = true
     )
     {
         if (nodes.Length <= 0)
@@ -138,13 +137,18 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var subBoxes = SplitBoxIntoSubBoxes(startBox, dimensions); // TODO find length, width, height
 
+        var nodeInBoundingBoxDictionary = PlaceNodesInBoundingBoxes(subBoxes, nodes);
+
         var placedNodes = new ConcurrentBag<Node>();
 
         var sectorTests = subBoxes
+            .Where(subBox => nodeInBoundingBoxDictionary.ContainsKey(subBox))
             .AsParallel()
             .Select(subBox =>
             {
-                var nodesByBudget = GetNodesByBudget(nodes, subBox, depth);
+                var nodesInBox = nodeInBoundingBoxDictionary[subBox];
+
+                var nodesByBudget = GetNodesByBudget(nodesInBox.ToArray(), depth, avoidSmallerPartsInFirstDepths);
 
                 if (nodesByBudget.Any())
                 {
@@ -182,13 +186,39 @@ public class SectorSplitterOctree : ISectorSplitter
             parentPath,
             parentSectorId,
             sectorIdGenerator,
-            startBox
+            startBox,
+            avoidSmallerPartsInFirstDepths
         );
 
         foreach (var sector in sectors)
         {
             yield return sector;
         }
+    }
+
+    private Dictionary<BoundingBox, List<Node>> PlaceNodesInBoundingBoxes(BoundingBox[] subBoxes, Node[] nodes)
+    {
+        var dict = new Dictionary<BoundingBox, List<Node>>();
+        foreach (var node in nodes)
+        {
+            foreach (var subBox in subBoxes)
+            {
+                if (subBox.IsInside(node.BoundingBox.Center))
+                {
+                    if (dict.TryGetValue(subBox, out var existingValue))
+                    {
+                        existingValue.Add(node);
+                    }
+                    else
+                    {
+                        dict[subBox] = new List<Node> { node };
+                    }
+                    break;
+                }
+            }
+        }
+
+        return dict;
     }
 
     private Vector3 FindDimensions(BoundingBox startBox, int depth)
@@ -292,17 +322,24 @@ public class SectorSplitterOctree : ISectorSplitter
         );
     }
 
-    private static Node[] GetNodesByBudget(Node[] nodes, BoundingBox subBox, int depth)
+    private static Node[] GetNodesByBudget(Node[] nodes, int depth, bool avoidSmallerPartsInFirstDepths)
     {
-        var nodesInside = nodes.Where(x => subBox.IsInside(x.BoundingBox.Center)); // TODO: Is it neccessary to go through all nodes, since a subset will be chosen in the end (and they are prioritized)?
+        IEnumerable<Node> selectedNodes;
 
-        var selectedNodes = depth switch
+        if (avoidSmallerPartsInFirstDepths)
         {
-            1 => nodesInside.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
-            2 => nodesInside.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
-            3 => nodesInside.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
-            _ => nodesInside.ToArray(),
-        };
+            selectedNodes = depth switch
+            {
+                1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
+                2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
+                3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+                _ => nodes.ToArray(),
+            };
+        }
+        else
+        {
+            selectedNodes = nodes;
+        }
 
         var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal); // TODO: Already sorted?
 

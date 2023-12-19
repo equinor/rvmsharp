@@ -145,6 +145,7 @@ public static class CadRevealComposerRunner
         var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
 
         var stopwatch = Stopwatch.StartNew();
+        Console.WriteLine($"Starting splitting");
 
         ISectorSplitter splitter;
         if (composerParameters.SingleSector)
