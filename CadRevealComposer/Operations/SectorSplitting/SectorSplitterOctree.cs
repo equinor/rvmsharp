@@ -143,7 +143,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var sectorTests = subBoxes
             .Where(subBox => nodeInBoundingBoxDictionary.ContainsKey(subBox))
-            .AsParallel()
+            // .AsParallel()
             .Select(subBox =>
             {
                 var nodesInBox = nodeInBoundingBoxDictionary[subBox];
@@ -198,27 +198,42 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private Dictionary<BoundingBox, List<Node>> PlaceNodesInBoundingBoxes(BoundingBox[] subBoxes, Node[] nodes)
     {
+        var min = subBoxes[0].Min;
+        var firstMax = subBoxes[0].Max;
+        var sideLengths = firstMax - min;
+
         var dict = new Dictionary<BoundingBox, List<Node>>();
         foreach (var node in nodes)
         {
-            foreach (var subBox in subBoxes)
+            var index = CalculateIndex(node, min, sideLengths, subBoxes.Length);
+            var subBox = subBoxes[index];
+
+            if (subBox.IsInside(node.BoundingBox.Center))
             {
-                if (subBox.IsInside(node.BoundingBox.Center))
+                if (dict.TryGetValue(subBox, out var existingValue))
                 {
-                    if (dict.TryGetValue(subBox, out var existingValue))
-                    {
-                        existingValue.Add(node);
-                    }
-                    else
-                    {
-                        dict[subBox] = new List<Node> { node };
-                    }
-                    break;
+                    existingValue.Add(node);
+                }
+                else
+                {
+                    dict[subBox] = new List<Node> { node };
                 }
             }
         }
 
         return dict;
+    }
+
+    private int CalculateIndex(Node node, Vector3 min, Vector3 sideLengths, int subBoxesLength)
+    {
+        var boxesOnSide = (int)(MathF.Pow(subBoxesLength, 1.0f / 3));
+        var pos = node.BoundingBox.Center;
+
+        int x = (int)((pos.X - min.X) / sideLengths.X);
+        int y = (int)((pos.Y - min.Y) / sideLengths.Y);
+        int z = (int)((pos.Z - min.Z) / sideLengths.Z);
+
+        return boxesOnSide * boxesOnSide * z + boxesOnSide * y + x;
     }
 
     private Vector3 FindDimensions(BoundingBox startBox, int depth)
@@ -251,11 +266,11 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var splitBoxes = new List<BoundingBox>();
 
-        for (int i = 0; i < dimensions.X; i++)
+        for (int k = 0; k < dimensions.Z; k++)
         {
             for (int j = 0; j < dimensions.Y; j++)
             {
-                for (int k = 0; k < dimensions.Z; k++)
+                for (int i = 0; i < dimensions.X; i++)
                 {
                     var newMin = new Vector3(xStartMin + xLength * i, yStartMin + yLength * j, zStartMin + zLength * k);
                     var newMax = new Vector3(newMin.X + xLength, newMin.Y + yLength, newMin.Z + zLength);
