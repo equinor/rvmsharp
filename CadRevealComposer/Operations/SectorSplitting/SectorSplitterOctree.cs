@@ -208,16 +208,13 @@ public class SectorSplitterOctree : ISectorSplitter
             var index = CalculateIndex(node, min, sideLengths, subBoxes.Length);
             var subBox = subBoxes[index];
 
-            if (subBox.IsInside(node.BoundingBox.Center))
+            if (dict.TryGetValue(subBox, out var existingValue))
             {
-                if (dict.TryGetValue(subBox, out var existingValue))
-                {
-                    existingValue.Add(node);
-                }
-                else
-                {
-                    dict[subBox] = new List<Node> { node };
-                }
+                existingValue.Add(node);
+            }
+            else
+            {
+                dict[subBox] = new List<Node> { node };
             }
         }
 
