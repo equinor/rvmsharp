@@ -235,7 +235,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private Vector3 FindDimensions(BoundingBox startBox, int depth)
     {
-        int[] primes = { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23 };
+        int[] primes = { 1, 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71 };
         Vector3 dimensions;
 
         if (depth >= primes.Length)
