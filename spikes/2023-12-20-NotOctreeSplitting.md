@@ -4,11 +4,11 @@
 
 ## Goal
 
-By octree splitting one consequence is that at the center of the octree, for instance, there can be lot of sectors with aligned edges. This means that if the user is moving, he would suddenly move from one set of sectors into a whole new set of sectors. By not splitting in an octree fashion, but rather make depths of not aligned sectors, the aligment problem could be avoided. The positives about oct tree splitting would hopefully not be lost.
+By octree splitting one consequence is that at the center of the octree, for instance, there can be lot of sectors with aligned edges/faces. This means that if a user has rapid transitions between sectors with aligned edges/faces, a large set of sectors will load for each transition. This could decrease user experience due to slow loading of geometry and lag. By not splitting in an octree fashion, but rather make depths of not aligned sectors, the aligment problem could be avoided. The positives about octree splitting would hopefully not be lost.
 
 In the image below the octree splitting is represented as a binary tree, which is similar in functionality. The red lines represents some of the large edge aligning lines that will occur. In the not-octree splitting to the right there would be no red lines.
 
-The drawback with this method is that we lose the parent/child tree structure. Every Sector would now be a child of root.
+The drawback with this method is that we lose the parent/child tree structure. Every sector would now be a child of root.
 
 ![Not octree splitting](./images/NotOctreeSplitting/not_octree.png)
 
@@ -41,9 +41,9 @@ Visually it looks like there are less edges aligning.
 
 ## Conclusion
 
-The results are promising. It feels basically the same as the normal octree splitting. There are some theoretical advantages:
+The results are promising. It feels the same as the normal octree splitting. There are some theoretical advantages:
 
-- If the user is moving she would get one sector at the time that needed to load, while in normal octree she would experience batches of sectors that needed loading
+- As the users navigates in the model, individual sectors loads sequentially, in contrast to the typical octree approach where groups of sectors would load simultaneously.
 - The code is less complex
 - Maybe it is easier to make the sectors less oblong, since the bounding boxes is created beforehand and are independent on the level above(?)
 
