@@ -263,7 +263,7 @@ public static class RvmSnoutConverter
         var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W (last value in the Vector4) isn't used by Reveal
         var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W (last value in the Vector4) isn't used by Reveal
 
-        if (!double.IsFinite(semiMajorAxisA) || semiMinorAxisA < 0)
+        if (!double.IsFinite(semiMinorAxisA) || semiMinorAxisA <= 0)
         {
             if (failedPrimitivesLogObject != null)
                 failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
