@@ -1,11 +1,12 @@
 namespace CadRevealRvmProvider.Tessellation;
 
 using CadRevealComposer.Utils;
+using System.Collections.Concurrent;
 
 public class TessellationLogObject
 {
     private readonly string _description;
-    private readonly Dictionary<int, int> _tessellateFacetGroupFails = new();
+    private readonly ConcurrentDictionary<int, int> _tessellateFacetGroupFails = new();
     private int _pyramidCounter;
 
     public TessellationLogObject(string description)
