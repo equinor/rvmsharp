@@ -21,33 +21,9 @@ public static class RvmCylinderConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
-
+        if (!rvmCylinder.CanBeConverted(scale,
+                rotation, failedPrimitivesLogObject))
             yield break;
-        }
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
-        }
-
-        if (rvmCylinder.Radius < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCylinders.RadiusCounter++;
-
-            yield break;
-        }
 
         var (normal, _) = rotation.DecomposeQuaternion();
 

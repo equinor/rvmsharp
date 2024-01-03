@@ -20,7 +20,9 @@ public static class RvmSphericalDishConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphericalDish.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+        if (!rvmSphericalDish.CanBeConverted(scale,
+                rotation))
+            yield break;
 
         (Vector3 normal, _) = rotation.DecomposeQuaternion();
 

@@ -21,23 +21,10 @@ public static class RvmRectangularTorusConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
-        if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedRectangularTorus.RadiusCounter++;
-
+        if (!rvmRectangularTorus.CanBeConverted(scale,
+                rotation))
             yield break;
-        }
-
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
-
-            yield break;
-        }
 
         (Vector3 normal, float _) = rotation.DecomposeQuaternion();
 

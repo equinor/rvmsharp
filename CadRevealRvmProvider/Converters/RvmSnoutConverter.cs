@@ -24,15 +24,9 @@ public static class RvmSnoutConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
 
-        if (rvmSnout.RadiusBottom < 0 || rvmSnout.RadiusTop < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
-
+        if (!rvmSnout.CanBeConverted(scale,
+                rotation))
             return Array.Empty<APrimitive>();
-        }
-
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
         var (normal, _) = rotation.DecomposeQuaternion();
 

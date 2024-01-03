@@ -18,7 +18,10 @@ public static class RvmSphereConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphere.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (!rvmSphere.CanBeConverted(scale,
+                rotation))
+            yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
