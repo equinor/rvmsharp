@@ -21,8 +21,7 @@ public static class RvmCylinderConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        if (!rvmCylinder.CanBeConverted(scale,
-                rotation, failedPrimitivesLogObject))
+        if (!rvmCylinder.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();

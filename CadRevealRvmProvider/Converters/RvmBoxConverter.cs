@@ -15,8 +15,7 @@ public static class RvmBoxConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmBox.Matrix);
         }
 
-        if (!rvmBox.CanBeConverted(scale,
-                rotation))
+        if (!rvmBox.CanBeConverted(scale, rotation))
             yield break;
 
         var unitBoxScale = Vector3.Multiply(scale, new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));

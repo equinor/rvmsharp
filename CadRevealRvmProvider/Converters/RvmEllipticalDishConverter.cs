@@ -21,8 +21,7 @@ public static class RvmEllipticalDishConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmEllipticalDish.Matrix);
         }
 
-        if (!rvmEllipticalDish.CanBeConverted(scale,
-                rotation))
+        if (!rvmEllipticalDish.CanBeConverted(scale, rotation))
             yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();

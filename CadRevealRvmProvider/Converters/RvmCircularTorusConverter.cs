@@ -21,8 +21,7 @@ public static class RvmCircularTorusConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCircularTorus.Matrix);
         }
 
-        if (!rvmCircularTorus.CanBeConverted(scale,
-                rotation, failedPrimitivesLogObject))
+        if (!rvmCircularTorus.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();

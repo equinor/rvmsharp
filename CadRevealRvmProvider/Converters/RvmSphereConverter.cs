@@ -19,8 +19,7 @@ public static class RvmSphereConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphere.Matrix);
         }
 
-        if (!rvmSphere.CanBeConverted(scale,
-                rotation))
+        if (!rvmSphere.CanBeConverted(scale, rotation))
             yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();
