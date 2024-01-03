@@ -4,6 +4,7 @@ using g3;
 using System;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using Tessellation;
 
 public static class Simplify
@@ -85,7 +86,7 @@ public static class Simplify
         }
         catch (Exception)
         {
-            simplificationLogObject.FailedOptimizations++;
+            Interlocked.Add(ref simplificationLogObject.FailedOptimizations, 1);
             return mesh;
         }
     }
