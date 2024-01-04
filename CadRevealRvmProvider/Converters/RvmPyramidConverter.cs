@@ -12,7 +12,8 @@ public static class RvmPyramidConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmPyramid rvmPyramid,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (IsBoxShaped(rvmPyramid))

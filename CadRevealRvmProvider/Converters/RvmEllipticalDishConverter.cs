@@ -13,7 +13,8 @@ public static class RvmEllipticalDishConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmEllipticalDish rvmEllipticalDish,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))

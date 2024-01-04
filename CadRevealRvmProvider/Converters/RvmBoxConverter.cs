@@ -8,14 +8,19 @@ using System.Numerics;
 
 public static class RvmBoxConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmBox rvmBox, ulong treeIndex, Color color)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmBox rvmBox,
+        ulong treeIndex,
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+    )
     {
         if (!rvmBox.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmBox.Matrix);
         }
 
-        if (!rvmBox.CanBeConverted(scale, rotation))
+        if (!rvmBox.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
 
         var unitBoxScale = Vector3.Multiply(scale, new Vector3(rvmBox.LengthX, rvmBox.LengthY, rvmBox.LengthZ));

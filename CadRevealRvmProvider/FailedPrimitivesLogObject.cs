@@ -4,6 +4,11 @@ using CadRevealComposer.Utils;
 
 public class FailedPrimitivesLogObject
 {
+    public FailedConversionCases FailedBoxes = new("boxes");
+    public FailedConversionCases FailedEllipticalDishes = new("elliptical disches");
+    public FailedConversionCases FailedPyramids = new("pyramids");
+    public FailedConversionCases FailedSpheres = new("spheres");
+    public FailedConversionCases FailedSphericalDishes = new("spherical dishes");
     public FailedConversionCases FailedCylinders = new("cylinders");
     public FailedConversionCases FailedCircularToruses = new("circular toruses");
     public FailedConversionCases FailedSnouts = new("snouts");
@@ -13,9 +18,9 @@ public class FailedPrimitivesLogObject
     {
         public readonly string PrimitiveType;
 
-        public uint RadiusCounter = 0;
         public uint RotationCounter = 0;
         public uint ScaleCounter = 0;
+        public uint SizeCounter = 0;
 
         public FailedConversionCases(string primitiveType)
         {
@@ -27,6 +32,11 @@ public class FailedPrimitivesLogObject
     {
         using (new TeamCityLogBlock("Failed Primitives"))
         {
+            LogFailedPrimitive(FailedBoxes);
+            LogFailedPrimitive(FailedEllipticalDishes);
+            LogFailedPrimitive(FailedPyramids);
+            LogFailedPrimitive(FailedSpheres);
+            LogFailedPrimitive(FailedSphericalDishes);
             LogFailedPrimitive(FailedCylinders);
             LogFailedPrimitive(FailedSnouts);
             LogFailedPrimitive(FailedCircularToruses);
@@ -36,10 +46,6 @@ public class FailedPrimitivesLogObject
 
     private void LogFailedPrimitive(FailedConversionCases failedConversionReasons)
     {
-        if (failedConversionReasons.RadiusCounter > 0)
-            Console.WriteLine(
-                $"Removed {failedConversionReasons.RadiusCounter} {failedConversionReasons.PrimitiveType} because of invalid radius"
-            );
         if (failedConversionReasons.RotationCounter > 0)
             Console.WriteLine(
                 $"Removed {failedConversionReasons.RotationCounter} {failedConversionReasons.PrimitiveType} because of invalid rotation"
@@ -48,11 +54,15 @@ public class FailedPrimitivesLogObject
             Console.WriteLine(
                 $"Removed {failedConversionReasons.ScaleCounter} {failedConversionReasons.PrimitiveType} because of invalid scale"
             );
+        if (failedConversionReasons.SizeCounter > 0)
+            Console.WriteLine(
+                $"Removed {failedConversionReasons.SizeCounter} {failedConversionReasons.PrimitiveType} because of invalid size (height, length)"
+            );
 
         var totalFails =
-            failedConversionReasons.RadiusCounter
-            + failedConversionReasons.RotationCounter
-            + failedConversionReasons.ScaleCounter;
+            failedConversionReasons.RotationCounter
+            + failedConversionReasons.ScaleCounter
+            + failedConversionReasons.SizeCounter;
         if (totalFails > 0)
         {
             Console.WriteLine($"Removed {totalFails} {failedConversionReasons.PrimitiveType} in total");

@@ -11,7 +11,8 @@ public static class RvmSphereConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphere rvmSphere,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmSphere.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))

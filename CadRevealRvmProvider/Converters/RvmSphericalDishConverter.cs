@@ -13,7 +13,8 @@ public static class RvmSphericalDishConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphericalDish rvmSphericalDish,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         if (!rvmSphericalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
