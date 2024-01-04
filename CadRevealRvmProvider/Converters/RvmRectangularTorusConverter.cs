@@ -4,7 +4,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 
@@ -14,7 +13,7 @@ public static class RvmRectangularTorusConverter
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))

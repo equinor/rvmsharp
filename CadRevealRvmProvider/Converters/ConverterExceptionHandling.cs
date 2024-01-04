@@ -1,11 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
-using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Numerics;
-using System.Drawing;
 
 public static class ConverterExceptionHandling
 {
@@ -13,7 +11,7 @@ public static class ConverterExceptionHandling
         this RvmBox rvmBox,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (
@@ -61,7 +59,7 @@ public static class ConverterExceptionHandling
         this RvmCircularTorus rvmCircularTorus,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (
@@ -124,7 +122,7 @@ public static class ConverterExceptionHandling
         this RvmCylinder rvmCylinder,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (
@@ -184,7 +182,7 @@ public static class ConverterExceptionHandling
         this RvmEllipticalDish rvmEllipticalDish,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (
@@ -235,7 +233,7 @@ public static class ConverterExceptionHandling
         this RvmSnout rvmSnout,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (rvmSnout.RadiusBottom <= 0 || rvmSnout.RadiusTop <= 0)
@@ -309,7 +307,7 @@ public static class ConverterExceptionHandling
         this RvmRectangularTorus rvmRectangularTorus,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (
@@ -369,7 +367,7 @@ public static class ConverterExceptionHandling
         this RvmPyramid rvmPyramid,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
@@ -434,7 +432,7 @@ public static class ConverterExceptionHandling
         this RvmSphere rvmSphere,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
@@ -482,7 +480,7 @@ public static class ConverterExceptionHandling
         this RvmSphericalDish rvmSphericalDish,
         Vector3 scale,
         Quaternion rotation,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)

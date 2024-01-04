@@ -6,7 +6,6 @@ using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using Commons.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 
@@ -16,7 +15,7 @@ public static class RvmSnoutConverter
         this RvmSnout rvmSnout,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))

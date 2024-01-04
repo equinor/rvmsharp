@@ -12,7 +12,7 @@ public static class RvmBoxConverter
         this RvmBox rvmBox,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmBox.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))

@@ -3,7 +3,6 @@
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 
 public static class RvmSphereConverter
@@ -12,7 +11,7 @@ public static class RvmSphereConverter
         this RvmSphere rvmSphere,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmSphere.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))

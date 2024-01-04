@@ -13,7 +13,7 @@ public static class RvmPyramidConverter
         this RvmPyramid rvmPyramid,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (IsBoxShaped(rvmPyramid))

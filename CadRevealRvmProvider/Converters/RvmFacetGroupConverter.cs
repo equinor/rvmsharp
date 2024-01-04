@@ -10,7 +10,7 @@ public static class RvmFacetGroupConverter
         this RvmFacetGroup rvmFacetGroup,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         yield return new ProtoMeshFromFacetGroup(
