@@ -23,7 +23,6 @@ public static class RvmSnoutConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
-        // Test
         if (!rvmSnout.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             return Array.Empty<APrimitive>();
 

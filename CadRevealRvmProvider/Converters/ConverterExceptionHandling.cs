@@ -1,10 +1,8 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
-using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
-using System.Drawing;
 using System.Numerics;
 
 public static class ConverterExceptionHandling
@@ -273,11 +271,11 @@ public static class ConverterExceptionHandling
         if (
             !(
                 float.IsFinite(rvmSnout.OffsetX)
-                || float.IsFinite(rvmSnout.OffsetY)
-                || float.IsFinite(rvmSnout.BottomShearX)
-                || float.IsFinite(rvmSnout.BottomShearY)
-                || float.IsFinite(rvmSnout.TopShearX)
-                || float.IsFinite(rvmSnout.TopShearY)
+                && float.IsFinite(rvmSnout.OffsetY)
+                && float.IsFinite(rvmSnout.BottomShearX)
+                && float.IsFinite(rvmSnout.BottomShearY)
+                && float.IsFinite(rvmSnout.TopShearX)
+                && float.IsFinite(rvmSnout.TopShearY)
             )
         )
         {
