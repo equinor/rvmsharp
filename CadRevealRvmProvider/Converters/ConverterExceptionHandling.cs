@@ -23,11 +23,8 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedBoxes.RotationCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedBoxes.RotationCounter++;
+            return false;
         }
 
         if ((rvmBox.LengthX <= 0 || rvmBox.LengthY <= 0 || rvmBox.LengthZ <= 0))
@@ -40,9 +37,7 @@ public static class ConverterExceptionHandling
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedBoxes.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedBoxes.ScaleCounter++;
             return false;
         }
 
@@ -71,42 +66,34 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedCircularToruses.RotationCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedCircularToruses.RotationCounter++;
+            return false;
         }
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCircularToruses.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedCircularToruses.ScaleCounter++;
             return false;
         }
 
         if (rvmCircularTorus.Radius <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCircularToruses.SizeCounter++;
+            failedPrimitivesLogObject.FailedCircularToruses.SizeCounter++;
             return false;
         }
 
         if (!float.IsFinite(rvmCircularTorus.Offset))
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCircularToruses.SizeCounter++;
+            failedPrimitivesLogObject.FailedCircularToruses.SizeCounter++;
 
             return false;
         }
 
         if (!float.IsFinite(rvmCircularTorus.Angle))
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedCircularToruses.RotationCounter++;
-                return false;
-            }
+        {
+            failedPrimitivesLogObject.FailedCircularToruses.RotationCounter++;
+            return false;
+        }
 
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Circular Torus. Was: {scale}");
 
@@ -134,35 +121,24 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
+            return false;
         }
 
         if (rvmCylinder.Radius <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
+            return false;
         }
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCylinders.ScaleCounter++;
-
-            return false;
+            failedPrimitivesLogObject.FailedCylinders.ScaleCounter++;
         }
 
         if (rvmCylinder.Height <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
             return false;
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Cylinder. Was: {scale}");
@@ -199,26 +175,17 @@ public static class ConverterExceptionHandling
 
         if (rvmEllipticalDish.BaseRadius <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedEllipticalDishes.SizeCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedEllipticalDishes.SizeCounter++;
+            return false;
         }
 
         if (rvmEllipticalDish.Height <= 0)
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedEllipticalDishes.SizeCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedEllipticalDishes.SizeCounter++;
+        return false;
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedEllipticalDishes.ScaleCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedEllipticalDishes.ScaleCounter++;
+        return false;
 
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Elliptical Dish. Was: {scale}");
 
@@ -238,17 +205,13 @@ public static class ConverterExceptionHandling
     {
         if (rvmSnout.RadiusBottom <= 0 || rvmSnout.RadiusTop <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
             return false;
         }
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
             return false;
         }
 
@@ -261,11 +224,8 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedSnouts.RotationCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedSnouts.RotationCounter++;
+            return false;
         }
 
         if (
@@ -279,16 +239,13 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
             return false;
         }
 
         if (rvmSnout.Height <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
+            failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
 
             return false;
         }
@@ -316,26 +273,19 @@ public static class ConverterExceptionHandling
             || rvmRectangularTorus.Height <= 0
         )
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedRectangularTorus.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedRectangularTorus.SizeCounter++;
             return false;
         }
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
             return false;
         }
 
         if (!float.IsFinite(rvmRectangularTorus.Angle))
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
+        return false;
 
         if (
             !(
@@ -346,11 +296,8 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-            {
-                failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
-                return false;
-            }
+            failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
+            return false;
         }
 
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
@@ -372,9 +319,7 @@ public static class ConverterExceptionHandling
     {
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedPyramids.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedPyramids.ScaleCounter++;
             return false;
         }
 
@@ -387,9 +332,7 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedPyramids.RotationCounter++;
-
+            failedPrimitivesLogObject.FailedPyramids.RotationCounter++;
             return false;
         }
 
@@ -404,17 +347,13 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedPyramids.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedPyramids.SizeCounter++;
             return false;
         }
 
         if (rvmPyramid.Height <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedPyramids.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedPyramids.SizeCounter++;
             return false;
         }
 
@@ -437,9 +376,7 @@ public static class ConverterExceptionHandling
     {
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSpheres.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedSpheres.ScaleCounter++;
             return false;
         }
 
@@ -452,17 +389,13 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSpheres.RotationCounter++;
-
+            failedPrimitivesLogObject.FailedSpheres.RotationCounter++;
             return false;
         }
 
         if (rvmSphere.Radius <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSpheres.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedSpheres.SizeCounter++;
             return false;
         }
 
@@ -485,9 +418,7 @@ public static class ConverterExceptionHandling
     {
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSphericalDishes.ScaleCounter++;
-
+            failedPrimitivesLogObject.FailedSphericalDishes.ScaleCounter++;
             return false;
         }
 
@@ -500,25 +431,19 @@ public static class ConverterExceptionHandling
             )
         )
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSphericalDishes.RotationCounter++;
-
+            failedPrimitivesLogObject.FailedSphericalDishes.RotationCounter++;
             return false;
         }
 
         if (rvmSphericalDish.BaseRadius <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
             return false;
         }
 
         if (rvmSphericalDish.Height <= 0)
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
             return false;
         }
 
