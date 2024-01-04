@@ -264,7 +264,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
-        if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner <= 0)
+        if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner < 0)
         {
             if (failedPrimitivesLogObject != null)
                 failedPrimitivesLogObject.FailedRectangularTorus.RadiusCounter++;
