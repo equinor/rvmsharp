@@ -9,7 +9,6 @@ using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
 
-// Test
 public static class RvmSnoutConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
@@ -249,13 +248,6 @@ public static class RvmSnoutConverter
 
         var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W (last value in the Vector4) isn't used by Reveal
         var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W (last value in the Vector4) isn't used by Reveal
-
-        if (!double.IsFinite(semiMinorAxisA) || semiMinorAxisA <= 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
-            yield break;
-        }
 
         yield return new GeneralCylinder(
             Angle: 0f,
