@@ -180,12 +180,16 @@ public static class ConverterExceptionHandling
         }
 
         if (rvmEllipticalDish.Height <= 0)
+        {
             failedPrimitivesLogObject.FailedEllipticalDishes.SizeCounter++;
-        return false;
+            return false;
+        }
 
         if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        {
             failedPrimitivesLogObject.FailedEllipticalDishes.ScaleCounter++;
-        return false;
+            return false;
+        }
 
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Elliptical Dish. Was: {scale}");
 
