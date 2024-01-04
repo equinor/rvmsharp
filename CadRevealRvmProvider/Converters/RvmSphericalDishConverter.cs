@@ -21,7 +21,7 @@ public static class RvmSphericalDishConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphericalDish.Matrix);
         }
-        if (!rvmSphericalDish.CanBeConverted(scale, rotation))
+        if (!rvmSphericalDish.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
 
         (Vector3 normal, _) = rotation.DecomposeQuaternion();

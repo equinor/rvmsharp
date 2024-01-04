@@ -22,7 +22,7 @@ public static class RvmRectangularTorusConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
         }
 
-        if (!rvmRectangularTorus.CanBeConverted(scale, rotation))
+        if (!rvmRectangularTorus.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
 
         (Vector3 normal, float _) = rotation.DecomposeQuaternion();

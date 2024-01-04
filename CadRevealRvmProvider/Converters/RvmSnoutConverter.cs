@@ -24,7 +24,7 @@ public static class RvmSnoutConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
 
-        if (!rvmSnout.CanBeConverted(scale, rotation))
+        if (!rvmSnout.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             return Array.Empty<APrimitive>();
 
         var (normal, _) = rotation.DecomposeQuaternion();

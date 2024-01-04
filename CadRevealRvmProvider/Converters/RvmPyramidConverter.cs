@@ -23,7 +23,7 @@ public static class RvmPyramidConverter
                 throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPyramid.Matrix);
             }
 
-            if (!rvmPyramid.CanBeConverted(scale, rotation))
+            if (!rvmPyramid.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
                 yield break;
 
             var unitBoxScale = Vector3.Multiply(

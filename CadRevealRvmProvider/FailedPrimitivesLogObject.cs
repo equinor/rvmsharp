@@ -56,7 +56,7 @@ public class FailedPrimitivesLogObject
             );
         if (failedConversionReasons.SizeCounter > 0)
             Console.WriteLine(
-                $"Removed {failedConversionReasons.SizeCounter} {failedConversionReasons.PrimitiveType} because of invalid size (height, length)"
+                $"Removed {failedConversionReasons.SizeCounter} {failedConversionReasons.PrimitiveType} because of invalid size (height, length, or radius)"
             );
 
         var totalFails =
