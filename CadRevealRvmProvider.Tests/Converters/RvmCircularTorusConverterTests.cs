@@ -38,8 +38,9 @@ public class RvmCircularTorusConverterTests
     [Test]
     public void RvmCircularConverter_WhenAngleIsLessThan2Pi_ReturnsTorusWithCaps()
     {
+        var logObject = new FailedPrimitivesLogObject();
         var torus = _rvmCircularTorus with { Angle = MathF.PI };
-        var geometries = torus.ConvertToRevealPrimitive(1337, Color.Red, null).ToArray();
+        var geometries = torus.ConvertToRevealPrimitive(1337, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<TorusSegment>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());
