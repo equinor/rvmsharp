@@ -169,9 +169,13 @@ public static class ConverterExceptionHandling
         }
         Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Cylinder. Was: {scale}");
 
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
+        if (scale.X != 0 && scale.Y == 0)
         {
-            Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
+            Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
+        }
+        else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
+        {
+            throw new Exception("Cylinders with non-uniform scale is not implemented!");
         }
         return true;
     }

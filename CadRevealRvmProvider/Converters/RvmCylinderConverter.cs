@@ -38,15 +38,6 @@ public static class RvmCylinderConverter
         */
         var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y);
 
-        if (scale.X != 0 && scale.Y == 0)
-        {
-            Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
-        }
-        else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            throw new Exception("Cylinders with non-uniform scale is not implemented!");
-        }
-
         var diameter = 2f * radius;
         var height = rvmCylinder.Height * scale.Z;
         var halfHeight = height / 2f;

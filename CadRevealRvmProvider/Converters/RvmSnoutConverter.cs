@@ -43,14 +43,6 @@ public static class RvmSnoutConverter
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
 
-        if (scale.X < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
-
-            return Array.Empty<APrimitive>();
-        }
-
         var centerA = position + normal * halfLength;
         var centerB = position - normal * halfLength;
 
