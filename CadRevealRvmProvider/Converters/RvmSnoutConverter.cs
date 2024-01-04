@@ -68,7 +68,8 @@ public static class RvmSnoutConverter
                     scale,
                     treeIndex,
                     color,
-                    bbox
+                    bbox,
+                    failedPrimitivesLogObject
                 );
             }
 
@@ -222,7 +223,8 @@ public static class RvmSnoutConverter
         Vector3 scale,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
@@ -247,6 +249,13 @@ public static class RvmSnoutConverter
 
         var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W (last value in the Vector4) isn't used by Reveal
         var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W (last value in the Vector4) isn't used by Reveal
+
+        if (!double.IsFinite(semiMinorAxisA) || semiMinorAxisA <= 0)
+        {
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
+            yield break;
+        }
 
         yield return new GeneralCylinder(
             Angle: 0f,
