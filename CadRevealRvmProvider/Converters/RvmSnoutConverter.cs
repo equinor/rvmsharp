@@ -23,8 +23,11 @@ public static class RvmSnoutConverter
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
+
         if (!rvmSnout.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+        {
             return Array.Empty<APrimitive>();
+        }
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -41,6 +44,14 @@ public static class RvmSnoutConverter
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
+
+        if (scale.X < 0)
+        {
+            if (failedPrimitivesLogObject != null)
+                failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
+
+            return Array.Empty<APrimitive>();
+        }
 
         var centerA = position + normal * halfLength;
         var centerB = position - normal * halfLength;

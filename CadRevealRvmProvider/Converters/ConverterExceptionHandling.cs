@@ -1,9 +1,11 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Numerics;
+using System.Drawing;
 
 public static class ConverterExceptionHandling
 {
