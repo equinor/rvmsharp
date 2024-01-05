@@ -89,7 +89,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmCylinder.Radius <= 0)
+        if (rvmCylinder.Radius <= 0) //Don't add caps if radius is zero
         {
             failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
             return false;
@@ -127,7 +127,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmEllipticalDish.Height < 0)
+        if (rvmEllipticalDish.Height <= 0)
         {
             failedPrimitivesLogObject.FailedEllipticalDishes.SizeCounter++;
             return false;
@@ -182,7 +182,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmSnout.Height < 0)
+        if (rvmSnout.Height <= 0)
         {
             failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
 
@@ -292,7 +292,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmSphere.Radius < 0)
+        if (rvmSphere.Radius <= 0)
         {
             failedPrimitivesLogObject.FailedSpheres.SizeCounter++;
             return false;
@@ -320,7 +320,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmSphericalDish.BaseRadius <= 0 || rvmSphericalDish.Height < 0)
+        if (rvmSphericalDish.BaseRadius <= 0 || rvmSphericalDish.Height <= 0)
         {
             failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
             return false;

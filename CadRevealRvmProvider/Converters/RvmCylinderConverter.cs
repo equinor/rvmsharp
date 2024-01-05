@@ -68,9 +68,6 @@ public static class RvmCylinderConverter
             );
         }
 
-        if (radius == 0) //Don't add caps if radius is zero
-            yield break;
-
         if (showCapA)
         {
             var matrixCapA =
