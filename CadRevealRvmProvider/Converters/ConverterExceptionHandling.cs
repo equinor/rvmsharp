@@ -14,14 +14,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedBoxes.RotationCounter++;
             return false;
@@ -29,24 +22,16 @@ public static class ConverterExceptionHandling
 
         if ((rvmBox.LengthX <= 0 || rvmBox.LengthY <= 0 || rvmBox.LengthZ <= 0))
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedBoxes.SizeCounter++;
-
+            failedPrimitivesLogObject.FailedBoxes.SizeCounter++;
             return false;
         }
 
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedBoxes.ScaleCounter++;
             return false;
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Box. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found box with non-uniform X and Y scale");
-        }
         return true;
     }
 
@@ -57,20 +42,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedCircularToruses.RotationCounter++;
             return false;
         }
 
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedCircularToruses.ScaleCounter++;
             return false;
@@ -95,13 +73,6 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Circular Torus. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found circular torus with non-uniform X and Y scale");
-        }
-
         return true;
     }
 
@@ -112,14 +83,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
             return false;
@@ -131,7 +95,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedCylinders.ScaleCounter++;
         }
@@ -141,16 +105,7 @@ public static class ConverterExceptionHandling
             failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
             return false;
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Cylinder. Was: {scale}");
 
-        if (scale.X != 0 && scale.Y == 0)
-        {
-            Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
-        }
-        else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            throw new Exception("Cylinders with non-uniform scale is not implemented!");
-        }
         return true;
     }
 
@@ -161,14 +116,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             return false;
         }
@@ -185,18 +133,12 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedEllipticalDishes.ScaleCounter++;
             return false;
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Elliptical Dish. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found elliptical dish with non-uniform X and Y scale");
-        }
         return true;
     }
 
@@ -213,20 +155,13 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
             return false;
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedSnouts.RotationCounter++;
             return false;
@@ -254,13 +189,6 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Snout. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found snout with non-uniform X and Y scale");
-        }
-
         return true;
     }
 
@@ -281,34 +209,22 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
             return false;
         }
 
         if (!float.IsFinite(rvmRectangularTorus.Angle))
-            failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
-        return false;
-
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
         {
             failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
             return false;
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
+        if (IsRotationValid(rotation))
         {
-            Console.WriteLine("Warning: Found snout with non-uniform X and Y scale");
+            failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
+            return false;
         }
 
         return true;
@@ -321,20 +237,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedPyramids.ScaleCounter++;
             return false;
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedPyramids.RotationCounter++;
             return false;
@@ -361,13 +270,6 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Pyramid. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found Pyramid with non-uniform X and Y scale");
-        }
-
         return true;
     }
 
@@ -378,20 +280,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedSpheres.ScaleCounter++;
             return false;
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedSpheres.RotationCounter++;
             return false;
@@ -401,13 +296,6 @@ public static class ConverterExceptionHandling
         {
             failedPrimitivesLogObject.FailedSpheres.SizeCounter++;
             return false;
-        }
-
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Sphere. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found Sphere with non-uniform X and Y scale");
         }
 
         return true;
@@ -420,44 +308,39 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
+        if (IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedSphericalDishes.ScaleCounter++;
             return false;
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
+        if (IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedSphericalDishes.RotationCounter++;
             return false;
         }
 
-        if (rvmSphericalDish.BaseRadius <= 0)
+        if (rvmSphericalDish.BaseRadius <= 0 || rvmSphericalDish.Height <= 0)
         {
             failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
             return false;
-        }
-
-        if (rvmSphericalDish.Height <= 0)
-        {
-            failedPrimitivesLogObject.FailedSphericalDishes.SizeCounter++;
-            return false;
-        }
-
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale For Spherical Dish. Was: {scale}");
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found Spherical Dish with non-uniform X and Y scale");
         }
 
         return true;
+    }
+
+    private static bool IsScaleValid(Vector3 scale)
+    {
+        return scale.X < 0 || scale.Y < 0 || scale.Z < 0 || !scale.IsUniform();
+    }
+
+    private static bool IsRotationValid(Quaternion rotation)
+    {
+        return !(
+            float.IsFinite(rotation.X)
+            && float.IsFinite(rotation.Y)
+            && float.IsFinite(rotation.Z)
+            && float.IsFinite(rotation.W)
+        );
     }
 }
