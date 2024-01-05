@@ -14,7 +14,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedBoxes.RotationCounter++;
             return false;
@@ -26,7 +26,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedBoxes.ScaleCounter++;
             return false;
@@ -42,13 +42,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedCircularToruses.RotationCounter++;
             return false;
         }
 
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedCircularToruses.ScaleCounter++;
             return false;
@@ -83,7 +83,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
             return false;
@@ -95,7 +95,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedCylinders.ScaleCounter++;
         }
@@ -116,7 +116,7 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             return false;
         }
@@ -133,7 +133,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedEllipticalDishes.ScaleCounter++;
             return false;
@@ -155,13 +155,13 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
             return false;
         }
 
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedSnouts.RotationCounter++;
             return false;
@@ -209,7 +209,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
             return false;
@@ -221,7 +221,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedRectangularTorus.RotationCounter++;
             return false;
@@ -237,13 +237,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedPyramids.ScaleCounter++;
             return false;
         }
 
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedPyramids.RotationCounter++;
             return false;
@@ -280,13 +280,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedSpheres.ScaleCounter++;
             return false;
         }
 
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedSpheres.RotationCounter++;
             return false;
@@ -308,13 +308,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (IsScaleValid(scale))
+        if (!IsScaleValid(scale))
         {
             failedPrimitivesLogObject.FailedSphericalDishes.ScaleCounter++;
             return false;
         }
 
-        if (IsRotationValid(rotation))
+        if (!IsRotationValid(rotation))
         {
             failedPrimitivesLogObject.FailedSphericalDishes.RotationCounter++;
             return false;
@@ -329,14 +329,14 @@ public static class ConverterExceptionHandling
         return true;
     }
 
-    private static bool IsScaleValid(Vector3 scale)
+    public static bool IsScaleValid(Vector3 scale)
     {
-        return scale.X < 0 || scale.Y < 0 || scale.Z < 0 || !scale.IsUniform();
+        return (scale is { X: >= 0, Y: >= 0, Z: >= 0 } && scale.IsUniform());
     }
 
-    private static bool IsRotationValid(Quaternion rotation)
+    public static bool IsRotationValid(Quaternion rotation)
     {
-        return !(
+        return (
             float.IsFinite(rotation.X)
             && float.IsFinite(rotation.Y)
             && float.IsFinite(rotation.Z)
