@@ -13,6 +13,11 @@ public class ExceptionHandlerConverterTests
     private RvmCircularTorus _rvmCircularTorus = null!;
     private RvmCylinder _rvmCylinder = null!;
     private RvmSnout _rvmSnout = null!;
+    private RvmEllipticalDish _rvmEllipticalDish = null!;
+    private RvmPyramid _rvmPyramid = null!;
+    private RvmRectangularTorus _rvmRectangularTorus = null!;
+    private RvmSphere _rvmSphere = null!;
+    private RvmSphericalDish _rvmSphericalDish = null!;
 
     private readonly FailedPrimitivesLogObject logObject = new FailedPrimitivesLogObject();
     private Vector3 _scale = new Vector3(1, 1, 1);
@@ -44,6 +49,38 @@ public class ExceptionHandlerConverterTests
             Radius: 1,
             Height: 0f
         );
+
+        _rvmEllipticalDish = new RvmEllipticalDish(
+            Version: 2,
+            Matrix: Matrix4x4.Identity,
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+            BaseRadius: 0f,
+            Height: 1
+        );
+
+        _rvmPyramid = new RvmPyramid(
+            Version: 2,
+            Matrix: Matrix4x4.Identity,
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+            BottomX: 1,
+            BottomY: 2,
+            TopX: 3,
+            TopY: 4,
+            OffsetX: 5,
+            OffsetY: 6,
+            Height: 0f
+        );
+
+        _rvmRectangularTorus = new RvmRectangularTorus(
+            Version: 2,
+            Matrix: Matrix4x4.Identity,
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+            RadiusInner: 1,
+            RadiusOuter: 2,
+            Height: 1,
+            Angle: float.PositiveInfinity
+        );
+
         _rvmSnout = new RvmSnout(
             Version: 2,
             Matrix: Matrix4x4.Identity,
@@ -58,38 +95,88 @@ public class ExceptionHandlerConverterTests
             TopShearX: 0,
             TopShearY: 0
         );
+
+        _rvmSphere = new RvmSphere(
+            Version: 2,
+            Matrix: Matrix4x4.Identity,
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+            Radius: -1
+        );
+
+        _rvmSphericalDish = new RvmSphericalDish(
+            Version: 2,
+            Matrix: Matrix4x4.Identity,
+            BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
+            BaseRadius: 0f,
+            Height: 1
+        );
     }
 
     [Test]
-    public void CanBeConvertedRvmBoxNegativeLength_Bool()
+    public void InvalidRvmBox()
     {
         bool result = _rvmBox.CanBeConverted(_scale, _rotation, logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
-    public void CanBeConvertedRvmCircularTorusNegativeRadius_Bool()
+    public void InvalidRvmCircularTorus()
     {
         bool result = _rvmCircularTorus.CanBeConverted(_scale, _rotation, logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
-    public void CanBeConvertedRvmCylinderZeroHeight_Bool()
+    public void InvalidRvmCylinder()
     {
         bool result = _rvmCylinder.CanBeConverted(_scale, _rotation, logObject);
         Assert.IsTrue(result); // Returns a cap (a circle), so this must be allowed
     }
 
     [Test]
-    public void CanBeConvertedRvmSnoutInfiniteShear_Bool()
+    public void InvalidRvmEllipticalDish()
+    {
+        bool result = _rvmEllipticalDish.CanBeConverted(_scale, _rotation, logObject);
+        Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void InvalidRvmPyramid()
+    {
+        bool result = _rvmPyramid.CanBeConverted(_scale, _rotation, logObject);
+        Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void InvalidRvmRectangularTorus()
+    {
+        bool result = _rvmRectangularTorus.CanBeConverted(_scale, _rotation, logObject);
+        Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void InvalidRvmSnout()
     {
         bool result = _rvmSnout.CanBeConverted(_scale, _rotation, logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
-    public void IsScaleValid_Bool()
+    public void InvalidRvmSphere()
+    {
+        bool result = _rvmSphere.CanBeConverted(_scale, _rotation, logObject);
+        Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void InvalidRvmSphericalDish()
+    {
+        bool result = _rvmSphericalDish.CanBeConverted(_scale, _rotation, logObject);
+        Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void InvalidIsScaleValid()
     {
         Vector3 notValidScale = new Vector3(1, -1, 1);
         bool result = ConverterExceptionHandling.IsScaleValid(notValidScale);
@@ -97,10 +184,24 @@ public class ExceptionHandlerConverterTests
     }
 
     [Test]
-    public void IsRotationValid_Bool()
+    public void ValidIsScaleValid()
+    {
+        bool result = ConverterExceptionHandling.IsScaleValid(_scale);
+        Assert.IsTrue(result);
+    }
+
+    [Test]
+    public void InvalidIsRotationValid()
     {
         Quaternion notValidRotation = new Quaternion(0.5f, 0.5f, float.PositiveInfinity, 0.5f);
         bool result = ConverterExceptionHandling.IsRotationValid(notValidRotation);
         Assert.IsFalse(result);
+    }
+
+    [Test]
+    public void ValidIsRotationValid()
+    {
+        bool result = ConverterExceptionHandling.IsRotationValid(_rotation);
+        Assert.IsTrue(result);
     }
 }
