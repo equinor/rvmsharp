@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Utils.MeshTools;
+﻿namespace CadRevealComposer.Utils.MeshOptimization;
 
 using System;
 using System.Collections.Generic;
