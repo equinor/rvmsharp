@@ -4,7 +4,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 
@@ -14,30 +13,16 @@ public static class RvmRectangularTorusConverter
         this RvmRectangularTorus rvmRectangularTorus,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmRectangularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmRectangularTorus.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
-        if (rvmRectangularTorus.RadiusOuter <= 0 || rvmRectangularTorus.RadiusInner < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedRectangularTorus.RadiusCounter++;
-
+        if (!rvmRectangularTorus.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
-        }
-
-        if (scale.X < 0 || scale.Y < 0 || scale.Z < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedRectangularTorus.ScaleCounter++;
-
-            yield break;
-        }
 
         (Vector3 normal, float _) = rotation.DecomposeQuaternion();
 

@@ -24,7 +24,8 @@ public class RvmFacetGroupConverterTests
     [Test]
     public void RvmFacetGroupConverter_ReturnsProtoMeshFromFacetGroup()
     {
-        var geometries = _rvmFacetGroup.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmFacetGroup.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<ProtoMeshFromFacetGroup>());
         Assert.That(geometries.Length, Is.EqualTo(1));

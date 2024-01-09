@@ -13,7 +13,7 @@ public static class RvmCylinderConverter
         this RvmCylinder rvmCylinder,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -21,33 +21,8 @@ public static class RvmCylinderConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
         }
 
-        if (
-            !(
-                float.IsFinite(rotation.X)
-                && float.IsFinite(rotation.Y)
-                && float.IsFinite(rotation.Z)
-                && float.IsFinite(rotation.W)
-            )
-        )
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCylinders.RotationCounter++;
-
+        if (!rvmCylinder.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
             yield break;
-        }
-
-        if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            Console.WriteLine("Warning: Found cylinder with non-uniform X and Y scale");
-        }
-
-        if (rvmCylinder.Radius < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedCylinders.RadiusCounter++;
-
-            yield break;
-        }
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -62,15 +37,6 @@ public static class RvmCylinderConverter
         * https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_workitems/edit/72816/
         */
         var radius = rvmCylinder.Radius * MathF.Max(scale.X, scale.Y);
-
-        if (scale.X != 0 && scale.Y == 0)
-        {
-            Console.WriteLine("Warning: Found cylinder where X scale was non-zero and Y scale was zero");
-        }
-        else if (!scale.X.ApproximatelyEquals(scale.Y, 0.0001))
-        {
-            throw new Exception("Cylinders with non-uniform scale is not implemented!");
-        }
 
         var diameter = 2f * radius;
         var height = rvmCylinder.Height * scale.Z;
@@ -101,9 +67,6 @@ public static class RvmCylinderConverter
                 bbox
             );
         }
-
-        if (radius == 0) //Don't add caps if radius is zero
-            yield break;
 
         if (showCapA)
         {

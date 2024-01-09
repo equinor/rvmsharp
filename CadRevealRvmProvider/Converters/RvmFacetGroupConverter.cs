@@ -9,7 +9,8 @@ public static class RvmFacetGroupConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmFacetGroup rvmFacetGroup,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         yield return new ProtoMeshFromFacetGroup(

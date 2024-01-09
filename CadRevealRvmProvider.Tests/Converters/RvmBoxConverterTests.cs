@@ -28,7 +28,8 @@ public class RvmBoxConverterTests
     [Test]
     public void RvmBoxConverter_ReturnsBox()
     {
-        var geometries = _rvmBox.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmBox.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Box>());
         Assert.That(geometries.Length, Is.EqualTo(1));

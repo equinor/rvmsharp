@@ -6,7 +6,6 @@ using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using Commons.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 
@@ -16,7 +15,7 @@ public static class RvmSnoutConverter
         this RvmSnout rvmSnout,
         ulong treeIndex,
         Color color,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -24,15 +23,10 @@ public static class RvmSnoutConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
 
-        if (rvmSnout.RadiusBottom < 0 || rvmSnout.RadiusTop < 0)
+        if (!rvmSnout.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
         {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
-
             return Array.Empty<APrimitive>();
         }
-
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -49,14 +43,6 @@ public static class RvmSnoutConverter
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
-
-        if (scale.X < 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.ScaleCounter++;
-
-            return Array.Empty<APrimitive>();
-        }
 
         var centerA = position + normal * halfLength;
         var centerB = position - normal * halfLength;
@@ -262,13 +248,6 @@ public static class RvmSnoutConverter
 
         var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W (last value in the Vector4) isn't used by Reveal
         var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W (last value in the Vector4) isn't used by Reveal
-
-        if (!double.IsFinite(semiMinorAxisA) || semiMinorAxisA <= 0)
-        {
-            if (failedPrimitivesLogObject != null)
-                failedPrimitivesLogObject.FailedSnouts.RadiusCounter++;
-            yield break;
-        }
 
         yield return new GeneralCylinder(
             Angle: 0f,

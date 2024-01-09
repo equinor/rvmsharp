@@ -34,7 +34,8 @@ public class RvmPyramidConverterTests
     {
         var pyramid = _rvmPyramid with { BottomX = 1, BottomY = 2, TopX = 1, TopY = 2, OffsetX = 0, OffsetY = 0, };
 
-        var geometries = pyramid.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = pyramid.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Box>());
         Assert.That(geometries.Length, Is.EqualTo(1));
@@ -43,7 +44,8 @@ public class RvmPyramidConverterTests
     [Test]
     public void RvmPyramidConverter_WhenNotBoxShaped_ReturnsProtoMeshFromPyramid()
     {
-        var geometries = _rvmPyramid.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmPyramid.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<ProtoMeshFromRvmPyramid>());
         Assert.That(geometries.Length, Is.EqualTo(1));

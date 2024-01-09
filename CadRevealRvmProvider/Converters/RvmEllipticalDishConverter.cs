@@ -4,7 +4,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
 
@@ -13,7 +12,8 @@ public static class RvmEllipticalDishConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmEllipticalDish rvmEllipticalDish,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmEllipticalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
@@ -21,7 +21,8 @@ public static class RvmEllipticalDishConverter
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmEllipticalDish.Matrix);
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+        if (!rvmEllipticalDish.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+            yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
