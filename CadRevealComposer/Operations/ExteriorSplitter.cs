@@ -14,8 +14,8 @@ using Utils;
 /// Split geometries into exterior and interior. The main use is too aid sector splitting, prioritizing the exterior higher up in the sector tree.
 /// - Primitives are grouped by node ID, and whole nodes are split into exterior and interior.
 /// - Ray casting is used to measure distance from outside vantage points to the nodes. The closest nodes are kept as exterior.
-/// - TriangleMesh and InstanceMesh are tessellated to triangles and raycasted.
-/// - Other primitives are raycasted using their bounding box. The justification is that primitives have a tight bounding box.
+/// - TriangleMesh and InstanceMesh are tessellated to triangles and ray-casted.
+/// - Other primitives are ray-casted using their bounding box. The justification is that primitives have a tight bounding box.
 /// </summary>
 public static class ExteriorSplitter
 {
@@ -192,38 +192,38 @@ public static class ExteriorSplitter
     {
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
-        var isHit = diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
-        if (isHit)
+        var isHit = diff is { X: > 0f, Y: > 0f, Z: > 0f };
+        if (!isHit)
         {
-            float distance;
-            if (ray.Direction.X < 0f)
-            {
-                distance = boundingBox.Min.X - ray.Origin.X;
-            }
-            else if (ray.Direction.Y < 0f)
-            {
-                distance = boundingBox.Min.Y - ray.Origin.Y;
-            }
-            else if (ray.Direction.Z < 0f)
-            {
-                distance = boundingBox.Min.Z - ray.Origin.Z;
-            }
-            else if (ray.Direction.X > 0f)
-            {
-                distance = ray.Origin.X - boundingBox.Max.X;
-            }
-            else if (ray.Direction.Y > 0f)
-            {
-                distance = ray.Origin.Y - boundingBox.Max.Y;
-            }
-            else
-            {
-                distance = ray.Origin.Z - boundingBox.Max.Z;
-            }
-            return (true, distance);
+            return (false, float.NaN);
         }
 
-        return (false, float.NaN);
+        float distance;
+        if (ray.Direction.X < 0f)
+        {
+            distance = boundingBox.Min.X - ray.Origin.X;
+        }
+        else if (ray.Direction.Y < 0f)
+        {
+            distance = boundingBox.Min.Y - ray.Origin.Y;
+        }
+        else if (ray.Direction.Z < 0f)
+        {
+            distance = boundingBox.Min.Z - ray.Origin.Z;
+        }
+        else if (ray.Direction.X > 0f)
+        {
+            distance = ray.Origin.X - boundingBox.Max.X;
+        }
+        else if (ray.Direction.Y > 0f)
+        {
+            distance = ray.Origin.Y - boundingBox.Max.Y;
+        }
+        else
+        {
+            distance = ray.Origin.Z - boundingBox.Max.Z;
+        }
+        return (true, distance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -240,7 +240,7 @@ public static class ExteriorSplitter
         }
     }
 
-    private static Node[] CreateNodes(APrimitive[] primitives)
+    private static IEnumerable<Node> CreateNodes(IEnumerable<APrimitive> primitives)
     {
         static TessellatedPrimitive? TessellateInstancedMesh(InstancedMesh primitive)
         {

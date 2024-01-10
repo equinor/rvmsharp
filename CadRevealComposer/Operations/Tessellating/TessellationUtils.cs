@@ -1,13 +1,13 @@
 ﻿namespace CadRevealComposer.Operations.Tessellating;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Tessellation;
-using CadRevealComposer.Utils;
+using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using Tessellation;
+using Utils;
 
 public static class TessellationUtils
 {
@@ -67,12 +67,12 @@ public static class TessellationUtils
         var arrowCenterA = baseCenterB;
         var arrowCenterB = arrowCenterA + unitDirection * arrowLength;
 
-        uint segments = 6;
+        const uint segments = 6;
 
         var vertices = new List<Vector3>();
         var indices = new List<uint>();
 
-        var angleIncrement = (2 * MathF.PI) / segments;
+        const float angleIncrement = (2 * MathF.PI) / segments;
 
         var startVector = CreateOrthogonalUnitVector(unitDirection);
 

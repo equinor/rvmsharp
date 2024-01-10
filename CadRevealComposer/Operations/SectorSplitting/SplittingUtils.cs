@@ -181,18 +181,18 @@ public static class SplittingUtils
         }
 
         // Try to handle nodes in a group that were symmetrical about the distance measure point
-        foreach (var group in groups)
+        foreach (
+            var subGroup in groups
+                .Select(group => GroupOutliersRecursive(group, outlierGroupingDistance))
+                .SelectMany(subGroups => subGroups)
+        )
         {
-            var subGroups = GroupOutliersRecursive(group, outlierGroupingDistance);
-            foreach (var subGroup in subGroups)
-            {
-                yield return subGroup;
-            }
+            yield return subGroup;
         }
     }
 
     private static List<Node[]> GroupOutliers(
-        Node[] outlierNodes,
+        IEnumerable<Node> outlierNodes,
         Vector3 distanceMeasurementPoint,
         float outlierGroupingDistance
     )

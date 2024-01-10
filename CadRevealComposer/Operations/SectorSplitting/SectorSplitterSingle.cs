@@ -13,7 +13,7 @@ public class SectorSplitterSingle : ISectorSplitter
         yield return CreateRootSector(0, allGeometries);
     }
 
-    private InternalSector CreateRootSector(uint sectorId, APrimitive[] geometries)
+    private static InternalSector CreateRootSector(uint sectorId, APrimitive[] geometries)
     {
         var bb = geometries.CalculateBoundingBox();
         if (bb == null)

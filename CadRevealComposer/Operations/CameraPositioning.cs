@@ -2,6 +2,7 @@ namespace CadRevealComposer.Operations;
 
 using Primitives;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
@@ -83,11 +84,11 @@ public static class CameraPositioning
     }
 
     private static (Vector3 PlatformBoundingBoxMin, Vector3 PlatformBoundingBoxMax) GetPlatformBoundingBox(
-        APrimitive[] geometries
+        IReadOnlyCollection<APrimitive> geometries
     )
     {
         // TODO: does not handle empty geometries correctly
-        if (geometries.Length == 0)
+        if (geometries.Count == 0)
         {
             throw new Exception(
                 "The input data had 0 elements, we cannot position the camera. Does the 3D scene have any valid meshes?"
@@ -99,32 +100,32 @@ public static class CameraPositioning
         var platformMinX = geometries
             .Select(node => node.AxisAlignedBoundingBox.Min.X)
             .OrderBy(x => x)
-            .Skip((int)(percentile * geometries.Length))
+            .Skip((int)(percentile * geometries.Count))
             .First();
         var platformMinY = geometries
             .Select(node => node.AxisAlignedBoundingBox.Min.Y)
             .OrderBy(x => x)
-            .Skip((int)(percentile * geometries.Length))
+            .Skip((int)(percentile * geometries.Count))
             .First();
         var platformMinZ = geometries
             .Select(node => node.AxisAlignedBoundingBox.Min.Z)
             .OrderBy(x => x)
-            .Skip((int)(percentile * geometries.Length))
+            .Skip((int)(percentile * geometries.Count))
             .First();
         var platformMaxX = geometries
             .Select(node => node.AxisAlignedBoundingBox.Max.X)
             .OrderByDescending(x => x)
-            .Skip((int)(percentile * geometries.Length))
+            .Skip((int)(percentile * geometries.Count))
             .First();
         var platformMaxY = geometries
             .Select(node => node.AxisAlignedBoundingBox.Max.Y)
             .OrderByDescending(x => x)
-            .Skip((int)(percentile * geometries.Length))
+            .Skip((int)(percentile * geometries.Count))
             .First();
         var platformMaxZ = geometries
             .Select(node => node.AxisAlignedBoundingBox.Max.Z)
             .OrderByDescending(x => x)
-            .Skip((int)(percentile * geometries.Length))
+            .Skip((int)(percentile * geometries.Count))
             .First();
 
         var bbMin = new Vector3(platformMinX, platformMinY, platformMinZ);

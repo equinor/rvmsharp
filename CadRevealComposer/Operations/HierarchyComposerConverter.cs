@@ -31,7 +31,7 @@ public static class HierarchyComposerConverter
     /// </summary>
     /// <param name="revealNode"></param>
     /// <returns></returns>
-    private static HierarchyNode? ConvertRevealNodeToHierarchyNode(CadRevealNode revealNode)
+    private static HierarchyNode ConvertRevealNodeToHierarchyNode(CadRevealNode revealNode)
     {
         var maybeRefNoString = revealNode.Attributes.GetValueOrNull("RefNo");
 

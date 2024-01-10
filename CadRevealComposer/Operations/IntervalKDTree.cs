@@ -3,6 +3,7 @@ namespace CadRevealComposer.Operations;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Numerics;
 
 internal class IntervalKdTree<T>
@@ -79,40 +80,39 @@ internal class IntervalKdTree<T>
 
         public IEnumerable<T> GetValues(Cube cube)
         {
-            foreach (var box in _boxes)
+            foreach (var box in _boxes.Where(cube.Intersects))
             {
-                if (cube.Intersects(box))
-                {
-                    yield return box.Value;
-                }
+                yield return box.Value;
             }
 
-            if (HasChildren())
+            if (!HasChildren())
             {
-                if (cube.IsBelow(_depth, _divisionBoundary))
+                yield break;
+            }
+
+            if (cube.IsBelow(_depth, _divisionBoundary))
+            {
+                foreach (var value in _lowChild.GetValues(cube))
                 {
-                    foreach (var value in _lowChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
+                    yield return value;
                 }
-                else if (cube.IsAbove(_depth, _divisionBoundary))
+            }
+            else if (cube.IsAbove(_depth, _divisionBoundary))
+            {
+                foreach (var value in _highChild.GetValues(cube))
                 {
-                    foreach (var value in _highChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
+                    yield return value;
                 }
-                else
+            }
+            else
+            {
+                foreach (var value in _lowChild.GetValues(cube))
                 {
-                    foreach (var value in _lowChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
-                    foreach (var value in _highChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
+                    yield return value;
+                }
+                foreach (var value in _highChild.GetValues(cube))
+                {
+                    yield return value;
                 }
             }
         }
@@ -193,7 +193,7 @@ internal class IntervalKdTree<T>
             // positive if overlaps
             var diff = Vector3.Min(Max, cube.Max) - Vector3.Max(Min, cube.Min);
 
-            return diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
+            return diff is { X: > 0f, Y: > 0f, Z: > 0f };
         }
     }
 }

@@ -9,8 +9,8 @@ public class NodeNameFiltering
 {
     private readonly Regex? _nodeNameExcludeGlobs;
 
-    private long _checkedNodes = 0;
-    private long _excludedNodes = 0;
+    private long _checkedNodes;
+    private long _excludedNodes;
 
     public NodeNameFiltering(NodeNameExcludeRegex modelParametersNodeNameExcludeGlobs)
     {

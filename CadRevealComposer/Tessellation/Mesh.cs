@@ -52,7 +52,7 @@ public class Mesh : IEquatable<Mesh>
 
     /// <summary>
     /// Create a mesh using vertices, indices and error
-    /// Note: Verticies and indices are referenced and not copied
+    /// Note: Vertices and indices are referenced and not copied
     /// </summary>
     /// <param name="vertices"></param>
     /// <param name="indices"></param>
@@ -94,9 +94,9 @@ public class Mesh : IEquatable<Mesh>
         {
             for (int i = 1; i < vertices.Length; i++)
             {
-                var transformedVertice = Vector3.Transform(vertices[i], transform.Value);
-                min = Vector3.Min(min, transformedVertice);
-                max = Vector3.Max(max, transformedVertice);
+                var transformedVertices = Vector3.Transform(vertices[i], transform.Value);
+                min = Vector3.Min(min, transformedVertices);
+                max = Vector3.Max(max, transformedVertices);
             }
         }
         else

@@ -1,7 +1,6 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
 using Primitives;
-using System;
 using System.Linq;
 
 /// <summary>
@@ -29,7 +28,7 @@ public class TooFewInstancesHandler
             .ToArray();
     }
 
-    private TriangleMesh ConvertInstanceToMesh(InstancedMesh instanceMesh)
+    private static TriangleMesh ConvertInstanceToMesh(InstancedMesh instanceMesh)
     {
         var templateMesh = instanceMesh.TemplateMesh;
 
@@ -58,15 +57,12 @@ public class TooFewInstancesHandler
     /// </summary>
     /// <param name="instanceGroup"></param>
     /// <returns></returns>
-    private bool ShouldConvert(IGrouping<ulong, APrimitive> instanceGroup)
+    private static bool ShouldConvert(IGrouping<ulong, APrimitive> instanceGroup)
     {
-        int numberOfInstancesThreshold = 100; // Always keep when the number of instances is exceeding the threshold
-        int numberOfTrianglesThreshold = 10000; // Alwyas keep when the number of triangles is exceeding the threshold
+        const int numberOfInstancesThreshold = 100; // Always keep when the number of instances is exceeding the threshold
+        const int numberOfTrianglesThreshold = 10000; // Always keep when the number of triangles is exceeding the threshold
 
-        float a = 100; // Steepness
-
-        if (a < 0)
-            throw new ArgumentException($"The value of A needs to be larger than zero. It was: {a}");
+        const float a = 100; // Steepness
 
         int numberOfInstances = instanceGroup.Count();
         int numberOfTriangles = ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * numberOfInstances;

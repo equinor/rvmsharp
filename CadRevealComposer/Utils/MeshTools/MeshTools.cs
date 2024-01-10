@@ -98,9 +98,9 @@ public static class MeshTools
     public static Mesh OptimizeMesh(Mesh m)
     {
         var indices = m.Indices.ToArray();
-        var verts = m.Vertices.ToArray();
-        OptimizeInPlace(ref verts, ref indices);
-        return new Mesh(verts, indices, m.Error);
+        var vertices = m.Vertices.ToArray();
+        OptimizeInPlace(ref vertices, ref indices);
+        return new Mesh(vertices, indices, m.Error);
     }
 
     /// <summary>

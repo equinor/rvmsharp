@@ -2,6 +2,7 @@ namespace CadRevealComposer.Operations;
 
 using Primitives;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public static class DrawCallEstimator
@@ -46,7 +47,7 @@ public static class DrawCallEstimator
         }
     }
 
-    private static RenderPrimitive[] GetRenderPrimitives(this APrimitive primitive)
+    private static IEnumerable<RenderPrimitive> GetRenderPrimitives(this APrimitive primitive)
     {
         return primitive switch
         {

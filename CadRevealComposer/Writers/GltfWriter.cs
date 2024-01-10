@@ -24,8 +24,8 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class GltfWriter
 {
-    public static int WritePrimitives<T>(
-        IReadOnlyList<APrimitive> primitives,
+    private static int WritePrimitives<T>(
+        IEnumerable<APrimitive> primitives,
         Action<T[], ModelRoot, Scene> writeFunction,
         ModelRoot model,
         Scene scene

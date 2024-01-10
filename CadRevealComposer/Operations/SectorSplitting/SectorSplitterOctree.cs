@@ -15,9 +15,9 @@ public class SectorSplitterOctree : ISectorSplitter
     private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
     private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
-    private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
-    private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
-    private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
+    private const float MinDiagonalSizeAtDepth1 = 7; // arbitrary value for min size at depth 1
+    private const float MinDiagonalSizeAtDepth2 = 4; // arbitrary value for min size at depth 2
+    private const float MinDiagonalSizeAtDepth3 = 1.5f; // arbitrary value for min size at depth 3
 
     private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
     private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
@@ -35,7 +35,7 @@ public class SectorSplitterOctree : ISectorSplitter
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-        var rootPath = "/0";
+        const string rootPath = "/0";
 
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
@@ -131,7 +131,7 @@ public class SectorSplitterOctree : ISectorSplitter
          * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
          */
 
-        if (nodes.Length == 0)
+        if (!nodes.Any())
         {
             yield break;
         }
@@ -253,7 +253,7 @@ public class SectorSplitterOctree : ISectorSplitter
         }
     }
 
-    private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
+    private static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
         return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
     }
@@ -337,9 +337,9 @@ public class SectorSplitterOctree : ISectorSplitter
     {
         var selectedNodes = actualDepth switch
         {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
-            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
+            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth1).ToArray(),
+            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth2).ToArray(),
+            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth3).ToArray(),
             _ => nodes.ToArray(),
         };
 

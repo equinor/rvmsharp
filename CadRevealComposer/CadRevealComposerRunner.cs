@@ -27,7 +27,7 @@ public static class CadRevealComposerRunner
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
-        IReadOnlyList<IModelFormatProvider> modelFormatProviders
+        IEnumerable<IModelFormatProvider> modelFormatProviders
     )
     {
         var totalTimeElapsed = Stopwatch.StartNew();
@@ -80,21 +80,23 @@ public static class CadRevealComposerRunner
                 $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
             );
 
-            if (cadRevealNodes.Count > 0)
+            if (cadRevealNodes.Count <= 0)
             {
-                // collect all nodes for later sector division of the entire scene
-                nodesToExport.AddRange(cadRevealNodes);
-
-                var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
-
-                var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
-                    inputGeometries,
-                    composerParameters,
-                    modelParameters,
-                    instanceIdGenerator
-                );
-                geometriesToProcess.AddRange(geometriesIncludingMeshes);
+                continue;
             }
+
+            // collect all nodes for later sector division of the entire scene
+            nodesToExport.AddRange(cadRevealNodes);
+
+            var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+
+            var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                inputGeometries,
+                composerParameters,
+                modelParameters,
+                instanceIdGenerator
+            );
+            geometriesToProcess.AddRange(geometriesIncludingMeshes);
         }
 
         // If there is no metadata for this model, the json will be empty
@@ -282,7 +284,7 @@ public static class CadRevealComposerRunner
 
     private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
         IEnumerable<SceneCreator.SectorInfo> sectors,
-        DirectoryInfo outputDirectory
+        FileSystemInfo outputDirectory
     )
     {
         foreach (var sector in sectors)

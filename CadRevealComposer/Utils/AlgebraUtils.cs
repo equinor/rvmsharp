@@ -128,10 +128,7 @@ public static class AlgebraUtils
         {
             return ((float)Math.Atan2(r12, r13), MathF.PI / 2, 0);
         }
-        else
-        {
-            return ((float)Math.Atan2(-r12, -r13), -MathF.PI / 2, 0);
-        }
+        return ((float)Math.Atan2(-r12, -r13), -MathF.PI / 2, 0);
     }
 
     public static void AssertEulerAnglesCorrect(
@@ -223,23 +220,23 @@ public static class AlgebraUtils
         out Vector3 translation
     )
     {
-        if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
+        if (!Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
         {
-            rotation = Quaternion.Normalize(rotation);
-            if (
-                rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold)
-                && rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold)
-                && rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold)
-                && rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold)
-            )
-            {
-                rotation = Quaternion.Identity;
-            }
-
-            return true;
+            return false;
         }
 
-        return false;
+        rotation = Quaternion.Normalize(rotation);
+        if (
+            rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold)
+            && rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold)
+            && rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold)
+            && rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold)
+        )
+        {
+            rotation = Quaternion.Identity;
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -327,10 +324,10 @@ public static class AlgebraUtils
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(translation);
 
-        const float OneMillimeter = 0.001f; // assumption: the data is in meters
-        return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), OneMillimeter)
-            && pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), OneMillimeter)
-            && pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), OneMillimeter)
-            && pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), OneMillimeter);
+        const float oneMillimeter = 0.001f; // assumption: the data is in meters
+        return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), oneMillimeter)
+            && pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), oneMillimeter)
+            && pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), oneMillimeter)
+            && pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), oneMillimeter);
     }
 }

@@ -14,7 +14,7 @@ public class TooFewPrimitivesHandler
     public int SuccessfullyConvertedGroupsOfPrimitives { get; private set; }
     public int AdditionalNumberOfTriangles { get; private set; }
 
-    public APrimitive[] ConvertPrimitivesWhenTooFew(APrimitive[] geometries)
+    public APrimitive[] ConvertPrimitivesWhenTooFew(IEnumerable<APrimitive> geometries)
     {
         var newGeometries = new List<APrimitive>();
         var primitiveGroups = geometries.GroupBy(x => x.GetType());

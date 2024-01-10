@@ -13,7 +13,6 @@ using System.IO;
 using System.Linq;
 using Utils;
 using Writers;
-using static CadRevealComposer.Operations.CameraPositioning;
 
 public static class SceneCreator
 {
