@@ -1,12 +1,5 @@
 ﻿namespace CadRevealComposer;
 
-using Configuration;
-using Devtools;
-using IdProviders;
-using ModelFormatProvider;
-using Operations;
-using Operations.SectorSplitting;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -16,6 +9,13 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Configuration;
+using Devtools;
+using IdProviders;
+using ModelFormatProvider;
+using Operations;
+using Operations.SectorSplitting;
+using Primitives;
 using Tessellation;
 using Utils;
 using Utils.MeshTools;

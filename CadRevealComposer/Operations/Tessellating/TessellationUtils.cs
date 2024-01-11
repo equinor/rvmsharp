@@ -1,12 +1,12 @@
 ﻿namespace CadRevealComposer.Operations.Tessellating;
 
-using Primitives;
+using System.Numerics;
+using Tessellation;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Numerics;
-using Tessellation;
+using Primitives;
 using Utils;
 
 public static class TessellationUtils
