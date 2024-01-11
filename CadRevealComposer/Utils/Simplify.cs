@@ -1,7 +1,11 @@
 ﻿namespace CadRevealComposer.Utils;
 
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils.MeshOptimization;
 using g3;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
@@ -55,9 +59,9 @@ public static class Simplify
         float thresholdInMeshUnits = 0.01f
     )
     {
-        MeshTools.MeshTools.ReducePrecisionInPlace(mesh);
+        MeshTools.ReducePrecisionInPlace(mesh);
 
-        var meshCopy = MeshTools.MeshTools.OptimizeMesh(mesh);
+        var meshCopy = MeshTools.OptimizeMesh(mesh);
 
         var dMesh = ConvertMeshToDMesh3(meshCopy);
 
@@ -81,7 +85,7 @@ public static class Simplify
                 dMesh.CompactInPlace();
 
             var reducedMesh = ConvertDMesh3ToMesh(dMesh);
-            var lastPassMesh = MeshTools.MeshTools.OptimizeMesh(reducedMesh);
+            var lastPassMesh = MeshTools.OptimizeMesh(reducedMesh);
             return lastPassMesh;
         }
         catch (Exception)
@@ -89,5 +93,40 @@ public static class Simplify
             Interlocked.Add(ref simplificationLogObject.FailedOptimizations, 1);
             return mesh;
         }
+    }
+
+    public static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
+    {
+        var meshCount = 0;
+        var beforeOptimizationTotalVertices = 0;
+        var afterOptimizationTotalVertices = 0;
+        var timer = Stopwatch.StartNew();
+        // Optimize TriangleMesh meshes for least memory use
+        var processedGeometries = geometriesToProcess
+            .AsParallel()
+            .AsOrdered()
+            .Select(primitive =>
+            {
+                if (primitive is not TriangleMesh triangleMesh)
+                {
+                    return primitive;
+                }
+
+                Mesh newMesh = MeshTools.DeduplicateVertices(triangleMesh.Mesh);
+                Interlocked.Increment(ref meshCount);
+                Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
+                Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
+                return triangleMesh with { Mesh = newMesh };
+            })
+            .ToList();
+
+        using (new TeamCityLogBlock("Vertex Dedupe Stats"))
+        {
+            Console.WriteLine(
+                $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices, 11}\nAfter:  {afterOptimizationTotalVertices, 11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices, 11:P2}\nTime: {timer.Elapsed}"
+            );
+        }
+
+        return processedGeometries;
     }
 }
