@@ -60,7 +60,7 @@ As of now Cad Reveal Composer recursively splits space into eight subvoxels usin
 
 #### Geometry: tesselation
 
-`RvmPyramid` and `RvmFacetGroup` are tesselated into meshes.
+`RvmPyramid` and `RvmFacetGroup` are tessellated into meshes.
 
 #### Geometry: instance matching
 

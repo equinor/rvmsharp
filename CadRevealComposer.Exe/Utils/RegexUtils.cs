@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Exe;
+﻿namespace CadRevealComposer.Exe.Utils;
 
 using System;
 using System.Text.RegularExpressions;
