@@ -62,7 +62,7 @@ public class TooFewInstancesHandler
         const int numberOfInstancesThreshold = 100; // Always keep when the number of instances is exceeding the threshold
         const int numberOfTrianglesThreshold = 10000; // Always keep when the number of triangles is exceeding the threshold
 
-        const float a = 100; // Steepness
+        const float a = 100; // This is steepness. The value of the steepness needs to be larger than zero."
 
         int numberOfInstances = instanceGroup.Count();
         int numberOfTriangles = ((InstancedMesh)instanceGroup.First()).TemplateMesh.TriangleCount * numberOfInstances;
