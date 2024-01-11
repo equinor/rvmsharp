@@ -21,6 +21,9 @@ public static class CircleTessellator
         var normal = circle.Normal;
         var radius = scale.X / 2f;
 
+        if (radius < 0)
+            return null;
+
         float tolerance = SagittaUtils.CalculateSagittaTolerance(radius);
         var segments = SagittaUtils.SagittaBasedSegmentCount(2 * MathF.PI, radius, 1, tolerance);
         var error = SagittaUtils.SagittaBasedError(2 * MathF.PI, radius, 1, segments);

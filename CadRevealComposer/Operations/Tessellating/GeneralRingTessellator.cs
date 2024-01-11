@@ -22,6 +22,10 @@ public static class GeneralRingTessellator
         }
 
         var transformedRadius = scale.X / 2f;
+
+        if (transformedRadius < 0)
+            return null;
+
         var arcAngle = generalRing.ArcAngle;
 
         float tolerance = SagittaUtils.CalculateSagittaTolerance(transformedRadius);
