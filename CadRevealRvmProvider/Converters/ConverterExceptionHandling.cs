@@ -89,7 +89,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmCylinder.Radius <= 0) //Don't add caps if radius is zero
+        if (rvmCylinder.Radius <= 0)
         {
             failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
             return false;
@@ -100,7 +100,7 @@ public static class ConverterExceptionHandling
             failedPrimitivesLogObject.FailedCylinders.ScaleCounter++;
         }
 
-        if (rvmCylinder.Height < 0)
+        if (rvmCylinder.Height < 0) //Just add a cap if height is zero
         {
             failedPrimitivesLogObject.FailedCylinders.SizeCounter++;
             return false;
@@ -149,7 +149,13 @@ public static class ConverterExceptionHandling
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
-        if (rvmSnout.RadiusBottom <= 0 || rvmSnout.RadiusTop <= 0)
+        if (rvmSnout.RadiusBottom < 0 || rvmSnout.RadiusTop < 0)
+        {
+            failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
+            return false;
+        }
+
+        if (rvmSnout.RadiusBottom == 0 && rvmSnout.RadiusTop == 0)
         {
             failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
             return false;
@@ -182,7 +188,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmSnout.Height <= 0)
+        if (rvmSnout.Height < 0)
         {
             failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
 
@@ -202,7 +208,7 @@ public static class ConverterExceptionHandling
         if (
             rvmRectangularTorus.RadiusOuter <= 0
             || rvmRectangularTorus.RadiusInner < 0
-            || rvmRectangularTorus.Height <= 0
+            || rvmRectangularTorus.Height < 0
         )
         {
             failedPrimitivesLogObject.FailedRectangularTorus.SizeCounter++;
