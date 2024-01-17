@@ -1,6 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Utils.MeshTools;
 
-using CadRevealComposer.Utils.MeshTools;
+using CadRevealComposer.Utils.MeshOptimization;
 using System.Numerics;
 using Tessellation;
 

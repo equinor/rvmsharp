@@ -1,6 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Utils.MeshTools;
 
-using CadRevealComposer.Utils.MeshTools;
+using CadRevealComposer.Utils.MeshOptimization;
 
 [TestFixture]
 public class VertexCacheOptimizerTests
