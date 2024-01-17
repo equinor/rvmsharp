@@ -4,7 +4,7 @@ using System.Text.Json;
 
 public static class TestSampleLoader
 {
-    public static readonly string TestSamplesDirectory = Path.GetFullPath(
+    private static readonly string TestSamplesDirectory = Path.GetFullPath(
         Path.Join(TestContext.CurrentContext.TestDirectory, "TestSamples")
     );
     public static readonly string GlobalTestSamplesDirectory = Path.GetFullPath(

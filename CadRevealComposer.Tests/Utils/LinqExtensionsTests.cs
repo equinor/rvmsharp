@@ -6,12 +6,12 @@ using System.Collections.Immutable;
 [TestFixture]
 public class LinqExtensionsTests
 {
-    private class TestDataClass { }
+    private class TestDataClass;
 
     [Test]
     public void WhereNotNull_WithClass_FiltersNullValues()
     {
-        var sampleList = new List<TestDataClass> { new TestDataClass(), null, new TestDataClass(), null };
+        var sampleList = new List<TestDataClass> { new(), null, new(), null };
         var result = sampleList.WhereNotNull().ToImmutableArray();
         Assert.That(result, Has.None.Null);
         Assert.That(result, Has.Exactly(2).Items);
@@ -20,7 +20,7 @@ public class LinqExtensionsTests
     [Test]
     public void WhereNotNull_WithParallelClass_FiltersNullValues()
     {
-        var sampleList = new List<TestDataClass> { new TestDataClass(), null, new TestDataClass(), null };
+        var sampleList = new List<TestDataClass> { new(), null, new(), null };
         var result = sampleList
             .AsParallel()
             .WithExecutionMode(ParallelExecutionMode.ForceParallelism)

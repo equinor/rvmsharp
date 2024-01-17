@@ -13,7 +13,7 @@ public class ExteriorSplitterTests
     {
         var exterior = CreateBoxCenteredInOrigin(1, 10);
         var interior = CreateBoxCenteredInOrigin(2, 5);
-        var (exteriorList, interiorList) = ExteriorSplitter.Split(new APrimitive[] { interior, exterior });
+        var (exteriorList, interiorList) = ExteriorSplitter.Split([interior, exterior]);
 
         Assert.AreEqual(1, exteriorList.Length);
         Assert.AreEqual(1, interiorList.Length);
