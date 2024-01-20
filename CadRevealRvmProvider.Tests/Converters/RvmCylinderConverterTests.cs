@@ -9,7 +9,7 @@ using System.Numerics;
 [TestFixture]
 public class RvmCylinderConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmCylinder _rvmCylinder = null!;
 
     [SetUp]
@@ -28,7 +28,7 @@ public class RvmCylinderConverterTests
     public void RvmCylinderConverter_ReturnsConeWithCaps()
     {
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmCylinder.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmCylinder.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());

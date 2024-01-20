@@ -17,7 +17,7 @@ public class FacetGroupHelpers
     private const string ExportPath = "D:\\tmp";
     private const string ExplicitReason = "Development helpers, not real tests.";
 
-    private static readonly string[] FacetGroupJsons = new[] { "m1.json", "m2.json", "5.json", "6.json" };
+    private static readonly string[] FacetGroupJsons = ["m1.json", "m2.json", "5.json", "6.json"];
 
     [Explicit(ExplicitReason)]
     [Test]
@@ -49,7 +49,7 @@ public class FacetGroupHelpers
             for (var i = 0; i < facetGroup.Polygons.Length; i++)
             {
                 var p = facetGroup.Polygons[i];
-                var m1 = facetGroup with { Polygons = new[] { p } };
+                var m1 = facetGroup with { Polygons = [p] };
                 objExporter.StartGroup($"{name}_p{i}");
                 objExporter.WriteMesh(TessellatorBridge.Tessellate(m1, UnusedTolerance)!);
             }

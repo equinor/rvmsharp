@@ -9,16 +9,16 @@ using System.Numerics;
 [TestFixture]
 public class RvmPyramidInstancerTests
 {
-    private RvmBoundingBox _throwawayBoundingBox => new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
+    private static RvmBoundingBox ThrowawayBoundingBox => new(Vector3.Zero, Vector3.Zero);
 
     [Test]
     public void Process_WhenTwoIdenticalMeshes_IgnoresOneOfThem()
     {
         // Arbitrary arguments.
-        var rvmPyramid = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, 1, 1, 1, 1, 1, 1, 1);
+        var rvmPyramid = new RvmPyramid(2, Matrix4x4.Identity, ThrowawayBoundingBox, 1, 1, 1, 1, 1, 1, 1);
 
         // Arbitrary arguments.
-        var rvmPyramidNotMatching = new RvmPyramid(2, Matrix4x4.Identity, _throwawayBoundingBox, 1, 1, 1, 1, 2, 2, 1);
+        var rvmPyramidNotMatching = new RvmPyramid(2, Matrix4x4.Identity, ThrowawayBoundingBox, 1, 1, 1, 1, 2, 2, 1);
 
         // Mark: These two input pyramids will be identical as they are Records with identical values.
         ProtoMeshFromRvmPyramid[] protoPyramids = new[]
@@ -39,7 +39,7 @@ public class RvmPyramidInstancerTests
         var rvmPyramidA = new RvmPyramid(
             Version: 2,
             Matrix: Matrix4x4.Identity,
-            BoundingBoxLocal: _throwawayBoundingBox,
+            BoundingBoxLocal: ThrowawayBoundingBox,
             BottomX: 2,
             BottomY: 4,
             TopX: 6,
@@ -52,7 +52,7 @@ public class RvmPyramidInstancerTests
         var rvmPyramidAHalfScaled = new RvmPyramid(
             Version: 2,
             Matrix: Matrix4x4.Identity,
-            BoundingBoxLocal: _throwawayBoundingBox,
+            BoundingBoxLocal: ThrowawayBoundingBox,
             BottomX: 1,
             2,
             3,
