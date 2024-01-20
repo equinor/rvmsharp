@@ -77,7 +77,7 @@ public static class RvmWorkload
             var rvmFile = RvmParser.ReadRvm(stream);
             if (!string.IsNullOrEmpty(txtFilename))
             {
-                rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
+                rvmFile.AttachAttributes(txtFilename, redundantPdmsAttributesToExclude, stringInternPool);
             }
 
             progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
@@ -89,7 +89,7 @@ public static class RvmWorkload
         if (stringInternPool != null)
         {
             Console.WriteLine(
-                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
+                $"{stringInternPool.Considered:N0} PDMS strings were deduced into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
             );
         }
 
