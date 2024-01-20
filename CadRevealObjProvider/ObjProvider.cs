@@ -64,8 +64,8 @@ public class ObjProvider : IModelFormatProvider
 
     private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
     {
-        return new APrimitive[]
-        {
+        return
+        [
             // Reveal does not use normals, so we discard them here.
             new TriangleMesh(
                 new Mesh(mesh.Vertices, mesh.Triangles, 0),
@@ -74,7 +74,7 @@ public class ObjProvider : IModelFormatProvider
                 ,
                 mesh.CalculateBoundingBox()
             )
-        };
+        ];
     }
 
     public APrimitive[] ProcessGeometries(
@@ -87,7 +87,7 @@ public class ObjProvider : IModelFormatProvider
         return geometries;
     }
 
-    public record ObjMesh
+    private record ObjMesh
     {
         public string Name { get; init; } = "";
         public uint[] Triangles { get; init; } = Array.Empty<uint>();
@@ -165,10 +165,7 @@ public class ObjProvider : IModelFormatProvider
             Triangles = triangles.ToArray()
         };
 
-        if (mesh.Vertices.Length == 0)
-            return null;
-
-        return mesh;
+        return mesh.Vertices.Length == 0 ? null : mesh;
     }
 
     private static Vector3 ToVector3(Vertex x)
