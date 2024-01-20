@@ -2,8 +2,13 @@
 
 public static class ComparerHelper
 {
-    public static bool CheckOverlap(bool isCurrentPrimitive,
-        float radius1, float radius2, float radius3, float tolerance)
+    public static bool CheckOverlap(
+        bool isCurrentPrimitive,
+        float radius1,
+        float radius2,
+        float radius3,
+        float tolerance
+    )
     {
         if (isCurrentPrimitive)
         {
