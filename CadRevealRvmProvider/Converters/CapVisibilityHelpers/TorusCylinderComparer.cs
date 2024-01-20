@@ -16,21 +16,12 @@ public static class TorusCylinderComparer
         var circularTorusRadius = rvmCircularTorus.Radius * circularTorusScale.X;
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
-        if (torusCapData.IsCurrentPrimitive)
-        {
-            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= circularTorusRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (circularTorusRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.CheckOverlap(
+            torusCapData.IsCurrentPrimitive,
+            circularTorusRadius,
+            cylinderRadius,
+            cylinderRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }

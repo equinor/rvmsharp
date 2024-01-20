@@ -26,21 +26,12 @@ public static class CylinderSnoutComparer
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
-        if (cylinderCapData.IsCurrentPrimitive)
-        {
-            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.CheckOverlap(
+            cylinderCapData.IsCurrentPrimitive,
+            cylinderRadius,
+            (float)semiMinorRadius,
+            (float)semiMajorRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }

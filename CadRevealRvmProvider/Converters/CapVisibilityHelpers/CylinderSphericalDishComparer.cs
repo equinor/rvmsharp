@@ -16,21 +16,12 @@ public static class CylinderSphericalDishComparer
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
         var rvmSphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 
-        if (cylinderCapData.IsCurrentPrimitive)
-        {
-            if (rvmSphericalDishRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= rvmSphericalDishRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.CheckOverlap(
+            cylinderCapData.IsCurrentPrimitive,
+            cylinderRadius,
+            rvmSphericalDishRadius,
+            rvmSphericalDishRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }

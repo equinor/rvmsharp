@@ -16,21 +16,12 @@ public static class TorusTorusComparer
         var torusRadius1 = rvmCircularTorus1.Radius * torusScale1.X;
         var torusRadius2 = rvmCircularTorus2.Radius * torusScale2.X;
 
-        if (torusCapData1.IsCurrentPrimitive)
-        {
-            if (torusRadius2 + CapVisibility.CapOverlapTolerance >= torusRadius1)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (torusRadius1 + CapVisibility.CapOverlapTolerance >= torusRadius2)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.CheckOverlap(
+            torusCapData1.IsCurrentPrimitive,
+            torusRadius1,
+            torusRadius2,
+            torusRadius2,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }

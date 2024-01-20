@@ -16,21 +16,12 @@ public static class CylinderEllipticalDishComparer
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
         var ellipticalDishRadius = rvmEllipticalDish.BaseRadius * ellipticalDishScale.X;
 
-        if (cylinderCapData.IsCurrentPrimitive)
-        {
-            if (ellipticalDishRadius + CapVisibility.CapOverlapTolerance >= cylinderRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (cylinderRadius + CapVisibility.CapOverlapTolerance >= ellipticalDishRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.CheckOverlap(
+            cylinderCapData.IsCurrentPrimitive,
+            cylinderRadius,
+            ellipticalDishRadius,
+            ellipticalDishRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }
