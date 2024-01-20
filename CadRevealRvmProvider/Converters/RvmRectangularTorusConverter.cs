@@ -93,60 +93,64 @@ public static class RvmRectangularTorusConverter
             );
         }
 
-        if (height != 0)
+        if (height == 0)
         {
-            var matrixRingB =
-                Matrix4x4.CreateScale(outerDiameter)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerB);
-
-            if (matrixRingB.IsDecomposable())
-            {
-                yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
-            }
-            else
-            {
-                // This should not happen, but happens in so few models as of now that we think we can ignore it.
-                Console.WriteLine(
-                    $"Failed to decompose matrix for {nameof(matrixRingB)} of node {treeIndex} geometry: {rvmRectangularTorus}"
-                );
-            }
-
-            // Add caps to the two ends of the torus, where the segment is "cut out"
-            // This is not needed if the torus goes all the way around
-            var isTorusSegment = !arcAngle.ApproximatelyEquals(2 * MathF.PI);
-            if (isTorusSegment)
-            {
-                var v1 = localToWorldXAxis;
-
-                var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
-                var v2 = Vector3.Transform(v1, q2);
-
-                var centerQuadA = (centerA + centerB + v1 * (radiusInner + radiusOuter)) / 2.0f;
-                var centerQuadB = (centerA + centerB + v2 * (radiusInner + radiusOuter)) / 2.0f;
-
-                var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
-                var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
-                var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
-                var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
-                var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
-
-                var scaleQuad = new Vector3(height, radiusOuter - radiusInner, 0);
-
-                var quadMatrixA =
-                    Matrix4x4.CreateScale(scaleQuad)
-                    * Matrix4x4.CreateFromQuaternion(rotationQuadA)
-                    * Matrix4x4.CreateTranslation(centerQuadA);
-
-                var quadMatrixB =
-                    Matrix4x4.CreateScale(scaleQuad)
-                    * Matrix4x4.CreateFromQuaternion(rotationQuadB)
-                    * Matrix4x4.CreateTranslation(centerQuadB);
-
-                yield return new Quad(quadMatrixA, treeIndex, color, bbBox);
-
-                yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
-            }
+            yield break;
         }
+
+        var matrixRingB =
+            Matrix4x4.CreateScale(outerDiameter)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        if (matrixRingB.IsDecomposable())
+        {
+            yield return new GeneralRing(0f, arcAngle, matrixRingB, -normal, thickness, treeIndex, color, bbBox);
+        }
+        else
+        {
+            // This should not happen, but happens in so few models as of now that we think we can ignore it.
+            Console.WriteLine(
+                $"Failed to decompose matrix for {nameof(matrixRingB)} of node {treeIndex} geometry: {rvmRectangularTorus}"
+            );
+        }
+
+        // Add caps to the two ends of the torus, where the segment is "cut out"
+        // This is not needed if the torus goes all the way around
+        var isTorusSegment = !arcAngle.ApproximatelyEquals(2 * MathF.PI);
+        if (!isTorusSegment)
+        {
+            yield break;
+        }
+
+        var v1 = localToWorldXAxis;
+
+        var q2 = Quaternion.CreateFromAxisAngle(normal, arcAngle);
+        var v2 = Vector3.Transform(v1, q2);
+
+        var centerQuadA = (centerA + centerB + v1 * (radiusInner + radiusOuter)) / 2.0f;
+        var centerQuadB = (centerA + centerB + v2 * (radiusInner + radiusOuter)) / 2.0f;
+
+        var halfPiAroundX = Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f);
+        var halfPiAroundZ = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI / 2f);
+        var arcRotationCompensation = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
+        var rotationQuadA = rotation * halfPiAroundX * halfPiAroundZ;
+        var rotationQuadB = rotation * arcRotationCompensation * halfPiAroundX * halfPiAroundZ;
+
+        var scaleQuad = new Vector3(height, radiusOuter - radiusInner, 0);
+
+        var quadMatrixA =
+            Matrix4x4.CreateScale(scaleQuad)
+            * Matrix4x4.CreateFromQuaternion(rotationQuadA)
+            * Matrix4x4.CreateTranslation(centerQuadA);
+
+        var quadMatrixB =
+            Matrix4x4.CreateScale(scaleQuad)
+            * Matrix4x4.CreateFromQuaternion(rotationQuadB)
+            * Matrix4x4.CreateTranslation(centerQuadB);
+
+        yield return new Quad(quadMatrixA, treeIndex, color, bbBox);
+
+        yield return new Quad(quadMatrixB, treeIndex, color, bbBox);
     }
 }

@@ -78,14 +78,16 @@ public static class RvmCylinderConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalA, treeIndex, color);
         }
 
-        if (showCapB && height != 0) // If height is zero, return a Circle only
+        if (!showCapB || height == 0) // If height is zero, return a Circle only
         {
-            var matrixCapB =
-                Matrix4x4.CreateScale(diameter, diameter, 1f)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerB);
-
-            yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalB, treeIndex, color);
+            yield break;
         }
+
+        var matrixCapB =
+            Matrix4x4.CreateScale(diameter, diameter, 1f)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalB, treeIndex, color);
     }
 }

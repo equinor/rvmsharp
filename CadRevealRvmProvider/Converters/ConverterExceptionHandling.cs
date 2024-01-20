@@ -2,7 +2,6 @@
 
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Numerics;
 
 public static class ConverterExceptionHandling
@@ -155,7 +154,7 @@ public static class ConverterExceptionHandling
             return false;
         }
 
-        if (rvmSnout.RadiusBottom == 0 && rvmSnout.RadiusTop == 0)
+        if (rvmSnout is { RadiusBottom: 0, RadiusTop: 0 })
         {
             failedPrimitivesLogObject.FailedSnouts.SizeCounter++;
             return false;

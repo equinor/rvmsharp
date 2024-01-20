@@ -123,8 +123,8 @@ public static class RvmFacetGroupMatcher
                 (
                     templateIndex++,
                     t.Count(),
-                    t.First().FacetGroup.Polygons.Count(),
-                    t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))
+                    t.First().FacetGroup.Polygons.Length,
+                    t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Length))
                 )
         );
 
@@ -330,7 +330,10 @@ public static class RvmFacetGroupMatcher
         return finalResult;
     }
 
-    private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
+    private static List<Result> MatchFacetGroups(
+        IReadOnlyCollection<RvmFacetGroup> facetGroups,
+        out long iterationCounter
+    )
     {
         static void SwapItemData(TemplateItem a, TemplateItem b)
         {
@@ -419,7 +422,7 @@ public static class RvmFacetGroupMatcher
             const int templateCleanupInterval = 500; // Arbitrarily chosen number
             if (cleanupIntervalCounter > templateCleanupInterval)
             {
-                CleanupTemplateCandidates(ref templateCandidates, ref result, facetGroups.Length);
+                CleanupTemplateCandidates(ref templateCandidates, ref result, facetGroups.Count);
                 cleanupIntervalCounter = 0;
             }
 

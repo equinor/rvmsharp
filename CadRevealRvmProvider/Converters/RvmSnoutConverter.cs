@@ -141,15 +141,17 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (showCapB && radiusB > 0 && hasHeight)
+        if (!showCapB || !(radiusB > 0) || !hasHeight)
         {
-            var matrixCapB =
-                Matrix4x4.CreateScale(diameterB)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerB);
-
-            yield return CircleConverterHelper.ConvertCircle(matrixCapB, -normal, treeIndex, color);
+            yield break;
         }
+
+        var matrixCapB =
+            Matrix4x4.CreateScale(diameterB)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        yield return CircleConverterHelper.ConvertCircle(matrixCapB, -normal, treeIndex, color);
     }
 
     private static IEnumerable<APrimitive> CreateEccentricCone(
@@ -201,15 +203,17 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
-        if (showCapB && radiusB > 0)
+        if (!showCapB || !(radiusB > 0))
         {
-            var matrixEccentricCapB =
-                Matrix4x4.CreateScale(diameterB)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(eccentricCenterB);
-
-            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapB, -normal, treeIndex, color);
+            yield break;
         }
+
+        var matrixEccentricCapB =
+            Matrix4x4.CreateScale(diameterB)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(eccentricCenterB);
+
+        yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapB, -normal, treeIndex, color);
     }
 
     private static IEnumerable<APrimitive> CreateCylinderWithShear(
@@ -223,7 +227,7 @@ public static class RvmSnoutConverter
         ulong treeIndex,
         Color color,
         BoundingBox bbox,
-        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null //TODO: Log object not used
     )
     {
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
@@ -294,33 +298,35 @@ public static class RvmSnoutConverter
             }
         }
 
-        if (showCapB && semiMajorAxisB > 0)
+        if (!showCapB || !(semiMajorAxisB > 0))
         {
-            var matrixCapB =
-                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
-                * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
-                * Matrix4x4.CreateTranslation(centerB);
+            yield break;
+        }
 
-            if (matrixCapB.IsDecomposable())
-            {
-                yield return new GeneralRing(
-                    Angle: 0f,
-                    ArcAngle: 2f * MathF.PI,
-                    matrixCapB,
-                    -normal,
-                    Thickness: 1f,
-                    treeIndex,
-                    color,
-                    bbox // Why we use the same bbox as RVM source
-                );
-            }
-            else
-            {
-                // This should not happen, but happens in so few models as of now that we think we can ignore it.
-                Console.WriteLine(
-                    $"Failed to decompose matrix for {nameof(matrixCapB)} of node {treeIndex} geometry: {rvmSnout}"
-                );
-            }
+        var matrixCapB =
+            Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
+            * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        if (matrixCapB.IsDecomposable())
+        {
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                matrixCapB,
+                -normal,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
+        else
+        {
+            // This should not happen, but happens in so few models as of now that we think we can ignore it.
+            Console.WriteLine(
+                $"Failed to decompose matrix for {nameof(matrixCapB)} of node {treeIndex} geometry: {rvmSnout}"
+            );
         }
     }
 }
