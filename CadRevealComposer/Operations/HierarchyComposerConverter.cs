@@ -47,8 +47,8 @@ public static class HierarchyComposerConverter
         {
             aabb = new AABB
             {
-                min = new Vector3EfSerializable(boundingBox.Min),
-                max = new Vector3EfSerializable(boundingBox.Max)
+                Min = new Vector3EfSerializable(boundingBox.Min),
+                Max = new Vector3EfSerializable(boundingBox.Max)
             };
         }
 

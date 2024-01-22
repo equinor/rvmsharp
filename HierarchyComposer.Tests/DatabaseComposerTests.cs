@@ -51,8 +51,8 @@ public class DatabaseComposerTests
                 PDMSData = new Dictionary<string, string>() { { "Tag", "23L0001" } },
                 AABB = new AABB
                 {
-                    min = new Vector3EfSerializable(-Vector3.One),
-                    max = new Vector3EfSerializable(Vector3.One)
+                    Min = new Vector3EfSerializable(-Vector3.One),
+                    Max = new Vector3EfSerializable(Vector3.One)
                 }
             }
         };

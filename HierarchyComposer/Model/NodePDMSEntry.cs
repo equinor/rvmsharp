@@ -5,11 +5,11 @@ using System.Data.SQLite;
 
 public class NodePDMSEntry
 {
-    public uint NodeId { get; set; }
-    public Node Node { get; set; } = null!;
+    public uint NodeId { get; init; }
+    public Node Node { get; init; } = null!;
 
-    public long PDMSEntryId { get; set; }
-    public PDMSEntry PDMSEntry { get; set; } = null!;
+    public long PDMSEntryId { get; init; }
+    public PDMSEntry PDMSEntry { get; init; } = null!;
 
     public void RawInsert(SQLiteCommand command)
     {

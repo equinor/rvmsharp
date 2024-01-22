@@ -7,17 +7,17 @@ using System.Numerics;
 
 public class AABB : IEquatable<AABB>
 {
-    public int Id { get; init; }
-    public Vector3EfSerializable min { get; init; } = new Vector3EfSerializable(Vector3.Zero);
-    public Vector3EfSerializable max { get; init; } = new Vector3EfSerializable(Vector3.Zero);
+    public int Id { get; private init; }
+    public Vector3EfSerializable Min { get; init; } = new(Vector3.Zero);
+    public Vector3EfSerializable Max { get; init; } = new(Vector3.Zero);
 
     public AABB CopyWithNewId(int id)
     {
         return new AABB()
         {
             Id = id,
-            min = this.min,
-            max = this.max
+            Min = this.Min,
+            Max = this.Max
         };
     }
 
@@ -57,12 +57,12 @@ public class AABB : IEquatable<AABB>
         foreach (var aabb in aabbs)
         {
             aabbIdParameter.Value = aabb.Id;
-            minXParameter.Value = aabb.min.x;
-            minYParameter.Value = aabb.min.y;
-            minZParameter.Value = aabb.min.z;
-            maxXParameter.Value = aabb.max.x;
-            maxYParameter.Value = aabb.max.y;
-            maxZParameter.Value = aabb.max.z;
+            minXParameter.Value = aabb.Min.X;
+            minYParameter.Value = aabb.Min.Y;
+            minZParameter.Value = aabb.Min.Z;
+            maxXParameter.Value = aabb.Max.X;
+            maxYParameter.Value = aabb.Max.Y;
+            maxZParameter.Value = aabb.Max.Z;
             command.ExecuteNonQuery();
         }
     }
@@ -79,7 +79,7 @@ public class AABB : IEquatable<AABB>
             return true;
         }
 
-        return Equals(min, other.min) && Equals(max, other.max);
+        return Equals(Min, other.Min) && Equals(Max, other.Max);
     }
 
     public override bool Equals(object? obj)
@@ -104,6 +104,6 @@ public class AABB : IEquatable<AABB>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(min, max);
+        return HashCode.Combine(Min, Max);
     }
 }
