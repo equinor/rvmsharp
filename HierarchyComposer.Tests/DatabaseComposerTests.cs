@@ -38,7 +38,7 @@ public class DatabaseComposerTests
 
         var nodes = new List<HierarchyNode>()
         {
-            new HierarchyNode()
+            new()
             {
                 NodeId = 1,
                 Name = "23L0001",
