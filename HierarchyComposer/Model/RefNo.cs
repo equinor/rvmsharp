@@ -28,7 +28,7 @@ public partial class RefNo
     /// <remarks>
     /// This should never be null as it would make DB queries a lot more complicated ((NULL = NULL) is UNKNOWN in SQL)
     /// </remarks>
-    public string Prefix { get; init; }
+    public string Prefix { get; set; }
     public int DbNo { get; }
     public int SequenceNo { get; }
 
@@ -66,7 +66,8 @@ public partial class RefNo
     [Pure]
     public static RefNo Parse(string refNo)
     {
-        ArgumentNullException.ThrowIfNull(refNo);
+        if (refNo == null)
+            throw new ArgumentNullException(nameof(refNo));
 
         var match = RefNoRegex.Match(refNo.Trim());
 

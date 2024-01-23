@@ -9,9 +9,8 @@ public class PDMSEntry : IEquatable<PDMSEntry>
     public long Id { get; init; } = -1;
     public string? Key { get; init; }
     public string? Value { get; init; }
-    public virtual ICollection<NodePDMSEntry> NodePDMSEntry { get; init; } = null!; // Navigation property
+    public virtual ICollection<NodePDMSEntry> NodePDMSEntry { get; set; } = null!; // Navigation property
 
-    // TODO: Not used. Why?
     public void RawInsert(SQLiteCommand command)
     {
         command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES (@Id, @Key, @Value);";
@@ -37,7 +36,7 @@ public class PDMSEntry : IEquatable<PDMSEntry>
         var valueParameter = command.CreateParameter();
         valueParameter.ParameterName = "$Value";
 
-        command.Parameters.AddRange([idParameter, keyParameter, valueParameter]);
+        command.Parameters.AddRange(new[] { idParameter, keyParameter, valueParameter });
 
         foreach (PDMSEntry pdmsEntry in pdmsEntries)
         {

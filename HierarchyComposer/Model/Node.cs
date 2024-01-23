@@ -22,7 +22,7 @@ public class Node
     [ForeignKey("TopNodeId")]
     public virtual Node? TopNode { get; set; }
 
-    public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; }
+    public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
 
     public AABB? AABB { get; init; }
 

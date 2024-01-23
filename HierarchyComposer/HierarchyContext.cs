@@ -5,6 +5,11 @@ using Model;
 
 public class HierarchyContext : DbContext
 {
+    public DbSet<Node> Nodes => Set<Node>();
+    public DbSet<PDMSEntry> PdmsEntries => Set<PDMSEntry>();
+    public DbSet<AABB> Aabbs => Set<AABB>();
+    public DbSet<NodePDMSEntry> NodeToPDMSEntry => Set<NodePDMSEntry>();
+
     // This connection string is only used during manual migration from command line, use HierarchyContext(DbContextOptions)
     // constructor runtime.
     private const string DefaultMigrationConnectionString = @"Data Source = D:\tmp\Hierarchy.db;";
