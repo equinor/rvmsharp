@@ -20,10 +20,10 @@ public static class BoxSnoutComparer
         var isSnoutCapTop = snoutCapData.CapIndex == 1;
 
         var snoutEllipse = isSnoutCapTop
-            ? rvmSnout.GetTopCapEllipse().ellipse2DPolar
-            : rvmSnout.GetBottomCapEllipse().ellipse2DPolar;
+            ? rvmSnout.GetTopCapEllipse().Ellipse2DPolar
+            : rvmSnout.GetBottomCapEllipse().Ellipse2DPolar;
 
-        var snoutMajorAxis = snoutEllipse.semiMajorAxis * snoutScale.X;
+        var snoutMajorAxis = snoutEllipse.SemiMajorAxis * snoutScale.X;
 
         // Only check for the snout, because a box does not have any caps
         if (!snoutCapData.IsCurrentPrimitive)

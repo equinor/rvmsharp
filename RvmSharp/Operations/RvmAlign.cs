@@ -14,7 +14,7 @@ public static class RvmAlign
 
     private class Context
     {
-        public List<QueueItem> Queue = new();
+        public List<QueueItem> Queue = [];
         public int Front;
         public int Back;
         public int ConnectedComponents;
@@ -35,16 +35,16 @@ public static class RvmAlign
 
     private static void HandleCircularTorus(Context context, RvmCircularTorus ct, uint offset, Vector3 upWorld)
     {
-        var M = ct.Matrix;
+        var m = ct.Matrix;
         //var  N = Mat3f(M.data);
         //var  N_inv = inverse(N);
-        if (!Matrix4x4.Invert(M, out var N_inv))
+        if (!Matrix4x4.Invert(m, out var nInv))
             throw new Exception("Inversion failed");
 
         var c = (float)Math.Cos(ct.Angle);
         var s = (float)Math.Sin(ct.Angle);
 
-        var upLocal = Vector3.Normalize(Vector3.TransformNormal(upWorld, N_inv));
+        var upLocal = Vector3.Normalize(Vector3.TransformNormal(upWorld, nInv));
 
         if (offset == 1)
         {
@@ -53,43 +53,44 @@ public static class RvmAlign
         }
 
         ct.SampleStartAngle = (float)Math.Atan2(upLocal.Z, upLocal.X);
-        if (!FloatExtensions.IsFinite(ct.SampleStartAngle))
+        if (!ct.SampleStartAngle.IsFinite())
         {
             ct.SampleStartAngle = 0.0f;
         }
 
         var ci = (float)Math.Cos(ct.SampleStartAngle);
         var si = (float)Math.Sin(ct.SampleStartAngle);
-        var co = (float)Math.Cos(ct.Angle);
-        var so = (float)Math.Sin(ct.Angle);
+        // var co = (float)Math.Cos(ct.Angle);
+        // var so = (float)Math.Sin(ct.Angle);
 
         Vector3 upNew = new Vector3(ci, 0.0f, si);
 
         Vector3[] upNewWorld = new Vector3[2];
-        upNewWorld[0] = Vector3.TransformNormal(upNew, M);
+        upNewWorld[0] = Vector3.TransformNormal(upNew, m);
         upNewWorld[1] = Vector3.TransformNormal(
             new Vector3(c * upNew.X - s * upNew.Y, s * upNew.X + c * upNew.Y, upNew.Z),
-            M
+            m
         );
 
-        if (true)
-        {
-            Vector3 p0 = new Vector3(ct.Radius * ci + ct.Offset, 0.0f, ct.Radius * si);
-
-            Vector3 p1 = new Vector3(
-                (ct.Radius * ci + ct.Offset) * co,
-                (ct.Radius * ci + ct.Offset) * so,
-                ct.Radius * si
-            );
-
-            var a0 = Vector3.Transform(p0, ct.Matrix);
-
-            var b0 = a0 + 1.5f * ct.Radius * upNewWorld[0];
-
-            var a1 = Vector3.Transform(p1, ct.Matrix);
-
-            var b1 = a1 + 1.5f * ct.Radius * upNewWorld[1];
-        }
+        // TODO: Redundant. Why?
+        // if (true)
+        // {
+        //     Vector3 p0 = new Vector3(ct.Radius * ci + ct.Offset, 0.0f, ct.Radius * si);
+        //
+        //     Vector3 p1 = new Vector3(
+        //         (ct.Radius * ci + ct.Offset) * co,
+        //         (ct.Radius * ci + ct.Offset) * so,
+        //         ct.Radius * si
+        //     );
+        //
+        //     var a0 = Vector3.Transform(p0, ct.Matrix);
+        //
+        //     var b0 = a0 + 1.5f * ct.Radius * upNewWorld[0];
+        //
+        //     var a1 = Vector3.Transform(p1, ct.Matrix);
+        //
+        //     var b1 = a1 + 1.5f * ct.Radius * upNewWorld[1];
+        // }
 
         for (uint k = 0; k < 2; k++)
         {
@@ -108,17 +109,17 @@ public static class RvmAlign
 
     private static void HandleCylinderSnoutAndDish(Context context, RvmPrimitive geo, uint offset, Vector3 upWorld)
     {
-        if (!Matrix4x4.Invert(geo.Matrix, out var M_inv))
+        if (!Matrix4x4.Invert(geo.Matrix, out var mInv))
             throw new Exception();
         //var  M_inv = inverse(Mat3f(geo.M_3x4.data));
 
         var upn = Vector3.Normalize(upWorld);
 
-        var upLocal = Vector3.TransformNormal(upn, M_inv);
+        var upLocal = Vector3.TransformNormal(upn, mInv);
         upLocal.Z = 0.0f; // project to xy-plane
 
         geo.SampleStartAngle = (float)Math.Atan2(upLocal.Y, upLocal.X);
-        if (!FloatExtensions.IsFinite(geo.SampleStartAngle))
+        if (!geo.SampleStartAngle.IsFinite())
         {
             geo.SampleStartAngle = 0.0f;
         }
@@ -219,7 +220,7 @@ public static class RvmAlign
             }
 
             var upWorld = Vector3.Normalize(Vector3.Cross(d, b));
-            if (!FloatExtensions.IsFinite(upWorld.LengthSquared()))
+            if (!upWorld.LengthSquared().IsFinite())
                 throw new Exception("Invalid world");
 
             context.Front = 0;

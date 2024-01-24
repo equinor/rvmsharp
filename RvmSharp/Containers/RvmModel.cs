@@ -11,9 +11,9 @@ public record RvmModel
 
     public IReadOnlyList<RvmNode> Children => _children;
 
-    private readonly List<RvmNode> _children = new List<RvmNode>();
-    private readonly List<RvmPrimitive> _primitives = new List<RvmPrimitive>();
-    private readonly List<RvmColor> _colors = new List<RvmColor>();
+    private readonly List<RvmNode> _children = [];
+    private readonly List<RvmPrimitive> _primitives = [];
+    private readonly List<RvmColor> _colors = [];
 
     public RvmModel(
         uint version,
@@ -32,6 +32,7 @@ public record RvmModel
         _colors.AddRange(colors);
     }
 
+    // TODO: AddChild, AddPrimitive, and AddColor is not used. Why?
     internal void AddChild(RvmNode rvmNode)
     {
         _children.Add(rvmNode);

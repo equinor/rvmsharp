@@ -19,12 +19,12 @@ public static class CylinderSnoutComparer
         var isSnoutCapTop = snoutCapData.CapIndex == 1;
 
         var snoutEllipse = isSnoutCapTop
-            ? rvmSnout.GetTopCapEllipse().ellipse2DPolar
-            : rvmSnout.GetBottomCapEllipse().ellipse2DPolar;
+            ? rvmSnout.GetTopCapEllipse().Ellipse2DPolar
+            : rvmSnout.GetBottomCapEllipse().Ellipse2DPolar;
 
         Trace.Assert(MathF.Abs(snoutScale.X / snoutScale.Y - 1.0f) < 0.00001f);
-        var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
-        var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
+        var semiMinorRadius = snoutEllipse.SemiMinorAxis * snoutScale.X;
+        var semiMajorRadius = snoutEllipse.SemiMajorAxis * snoutScale.X;
 
         if (cylinderCapData.IsCurrentPrimitive)
         {

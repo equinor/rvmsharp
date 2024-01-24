@@ -5,6 +5,7 @@ using Model;
 
 public class HierarchyContext : DbContext
 {
+    // Do not remove the fields
     public DbSet<Node> Nodes => Set<Node>();
     public DbSet<PDMSEntry> PdmsEntries => Set<PDMSEntry>();
     public DbSet<AABB> Aabbs => Set<AABB>();
