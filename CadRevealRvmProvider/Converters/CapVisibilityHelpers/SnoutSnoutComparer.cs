@@ -61,16 +61,16 @@ public static class SnoutSnoutComparer
         double y0E1 = ellipseCurrent.Ellipse2DPolar.Y0;
         double theta = ellipseCurrent.Ellipse2DPolar.Theta;
 
-        var ptE1_xplaneCoord = new VectorD[4];
-        ptE1_xplaneCoord[0] = VectorD.Build.Dense(new double[] { aE1 - x0E1, -y0E1, 0.0f, 1.0 });
-        ptE1_xplaneCoord[1] = VectorD.Build.Dense(new double[] { -x0E1, bE1 - y0E1, 0.0f, 1.0 });
-        ptE1_xplaneCoord[2] = VectorD.Build.Dense(new double[] { -aE1 - x0E1, -y0E1, 0.0f, 1.0 });
-        ptE1_xplaneCoord[3] = VectorD.Build.Dense(new double[] { -x0E1, -bE1 - y0E1, 0.0f, 1.0 });
+        var ptE1XplaneCoord = new VectorD[4];
+        ptE1XplaneCoord[0] = VectorD.Build.Dense(new double[] { aE1 - x0E1, -y0E1, 0.0f, 1.0 });
+        ptE1XplaneCoord[1] = VectorD.Build.Dense(new double[] { -x0E1, bE1 - y0E1, 0.0f, 1.0 });
+        ptE1XplaneCoord[2] = VectorD.Build.Dense(new double[] { -aE1 - x0E1, -y0E1, 0.0f, 1.0 });
+        ptE1XplaneCoord[3] = VectorD.Build.Dense(new double[] { -x0E1, -bE1 - y0E1, 0.0f, 1.0 });
 
         var cosTheta = Math.Cos(theta);
         var sinTheta = Math.Sin(theta);
         var matRotationEl1 = DenseMatrix.OfArray(
-            new double[,]
+            new[,]
             {
                 { cosTheta, sinTheta, 0.0, 0.0 },
                 { sinTheta, cosTheta, 0.0, 0.0 },
@@ -79,17 +79,17 @@ public static class SnoutSnoutComparer
             }
         );
 
-        var mat_stack =
+        var matStack =
             ellipseOther.ModelToPlaneCoord
             * worldToSnout2
             * snout1ToWorld
             * ellipseCurrent.PlaneToModelCoord
             * matRotationEl1;
 
-        var ptE1_transformedTo_xplaneCoordOfE2 = new VectorD[4];
+        var ptE1TransformedToXplaneCoordOfE2 = new VectorD[4];
         for (int i = 0; i < 4; i++)
         {
-            ptE1_transformedTo_xplaneCoordOfE2[i] = mat_stack.Multiply(ptE1_xplaneCoord[i]);
+            ptE1TransformedToXplaneCoordOfE2[i] = matStack.Multiply(ptE1XplaneCoord[i]);
         }
 
         // hide cap if all four points (extremities) of the ellipse (cap) are inside the other cap
@@ -99,8 +99,8 @@ public static class SnoutSnoutComparer
         const int y = 1;
         for (int i = 0; i < 4; i++)
         {
-            var px = ptE1_transformedTo_xplaneCoordOfE2[i][x];
-            var py = ptE1_transformedTo_xplaneCoordOfE2[i][y];
+            var px = ptE1TransformedToXplaneCoordOfE2[i][x];
+            var py = ptE1TransformedToXplaneCoordOfE2[i][y];
 
             var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.Ellipse2DPolar, px, py);
             if (d > 0.1) // 0.1mm

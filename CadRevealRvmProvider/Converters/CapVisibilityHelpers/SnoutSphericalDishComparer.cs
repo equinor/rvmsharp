@@ -26,21 +26,12 @@ public static class SnoutSphericalDishComparer
 
         var sphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 
-        if (snoutCapData.IsCurrentPrimitive)
-        {
-            if (sphericalDishRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= sphericalDishRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.IsVisible(
+            sphericalDishCapData.IsCurrentPrimitive,
+            sphericalDishRadius,
+            (float)semiMinorRadius,
+            (float)semiMajorRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }
