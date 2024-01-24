@@ -26,21 +26,12 @@ public static class TorusSnoutComparer
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
-        if (torusCapData.IsCurrentPrimitive)
-        {
-            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= torusRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (torusRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.IsVisible(
+            torusCapData.IsCurrentPrimitive,
+            torusRadius,
+            (float)semiMinorRadius,
+            (float)semiMajorRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }

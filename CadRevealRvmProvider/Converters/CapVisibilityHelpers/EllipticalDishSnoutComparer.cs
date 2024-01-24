@@ -26,21 +26,12 @@ public static class EllipticalDishSnoutComparer
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
-        if (ellipticalDishCapData.IsCurrentPrimitive)
-        {
-            if (semiMinorRadius + CapVisibility.CapOverlapTolerance >= ellipticalDishRadius)
-            {
-                return false;
-            }
-        }
-        else
-        {
-            if (ellipticalDishRadius + CapVisibility.CapOverlapTolerance >= semiMajorRadius)
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return ComparerHelper.IsVisible(
+            ellipticalDishCapData.IsCurrentPrimitive,
+            ellipticalDishRadius,
+            (float)semiMinorRadius,
+            (float)semiMajorRadius,
+            CapVisibility.CapOverlapTolerance
+        );
     }
 }
