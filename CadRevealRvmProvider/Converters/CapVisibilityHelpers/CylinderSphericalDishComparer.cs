@@ -16,10 +16,9 @@ public static class CylinderSphericalDishComparer
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
         var rvmSphericalDishRadius = rvmSphericalDish.BaseRadius * sphericalDishScale.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             cylinderCapData.IsCurrentPrimitive,
             cylinderRadius,
-            rvmSphericalDishRadius,
             rvmSphericalDishRadius,
             CapVisibility.CapOverlapTolerance
         );

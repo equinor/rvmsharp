@@ -26,7 +26,7 @@ public static class TorusSnoutComparer
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             torusCapData.IsCurrentPrimitive,
             torusRadius,
             (float)semiMinorRadius,

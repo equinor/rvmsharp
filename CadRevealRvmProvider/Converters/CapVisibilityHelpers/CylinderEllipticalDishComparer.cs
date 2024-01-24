@@ -16,10 +16,9 @@ public static class CylinderEllipticalDishComparer
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
         var ellipticalDishRadius = rvmEllipticalDish.BaseRadius * ellipticalDishScale.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             cylinderCapData.IsCurrentPrimitive,
             cylinderRadius,
-            ellipticalDishRadius,
             ellipticalDishRadius,
             CapVisibility.CapOverlapTolerance
         );

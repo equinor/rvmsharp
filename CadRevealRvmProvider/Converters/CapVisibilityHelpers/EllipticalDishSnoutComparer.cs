@@ -26,7 +26,7 @@ public static class EllipticalDishSnoutComparer
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             ellipticalDishCapData.IsCurrentPrimitive,
             ellipticalDishRadius,
             (float)semiMinorRadius,

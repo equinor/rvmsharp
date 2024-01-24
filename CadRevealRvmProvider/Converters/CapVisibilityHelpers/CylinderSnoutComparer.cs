@@ -26,7 +26,7 @@ public static class CylinderSnoutComparer
         var semiMinorRadius = snoutEllipse.semiMinorAxis * snoutScale.X;
         var semiMajorRadius = snoutEllipse.semiMajorAxis * snoutScale.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             cylinderCapData.IsCurrentPrimitive,
             cylinderRadius,
             (float)semiMinorRadius,

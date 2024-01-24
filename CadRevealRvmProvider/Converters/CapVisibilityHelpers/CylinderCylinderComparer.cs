@@ -16,10 +16,9 @@ public static class CylinderCylinderComparer
         var cylinderRadius1 = rvmCylinder1.Radius * cylinderScale1.X;
         var cylinderRadius2 = rvmCylinder2.Radius * cylinderScale2.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             cylinderData1.IsCurrentPrimitive,
             cylinderRadius1,
-            cylinderRadius2,
             cylinderRadius2,
             CapVisibility.CapOverlapTolerance
         );

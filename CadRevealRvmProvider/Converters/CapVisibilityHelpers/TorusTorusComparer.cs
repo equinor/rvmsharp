@@ -16,10 +16,9 @@ public static class TorusTorusComparer
         var torusRadius1 = rvmCircularTorus1.Radius * torusScale1.X;
         var torusRadius2 = rvmCircularTorus2.Radius * torusScale2.X;
 
-        return ComparerHelper.CheckOverlap(
+        return ComparerHelper.IsVisible(
             torusCapData1.IsCurrentPrimitive,
             torusRadius1,
-            torusRadius2,
             torusRadius2,
             CapVisibility.CapOverlapTolerance
         );
