@@ -74,7 +74,7 @@ public static class PdmsTextParser
                         Name: trimmedLine[newItemSeparatorLength..].Trim().ToString(),
                         MetadataDict: new Dictionary<string, string>(),
                         Parent: currentPdmsNode,
-                        Children: new List<PdmsNode>()
+                        Children: []
                     );
 
                     indentationStack.Push(lineSpan[..lineSpan.IndexOf(newItemSeparator[0])].Length);
@@ -109,19 +109,21 @@ public static class PdmsTextParser
                         );
                         var key = GetKey(trimmedLine, nameSeparatorIndex);
 
-                        if (!IsExcludedAttribute(key, attributesToExclude))
+                        if (IsExcludedAttribute(key, attributesToExclude))
                         {
-                            var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
-                            if (stringInternPool != null)
-                            {
-                                var keyInterned = stringInternPool.Intern(key);
-                                var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
-                            }
-                            else
-                            {
-                                currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
-                            }
+                            continue;
+                        }
+
+                        var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
+                        if (stringInternPool != null)
+                        {
+                            var keyInterned = stringInternPool.Intern(key);
+                            var valueInterned = stringInternPool.Intern(StripQuotes(value));
+                            currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+                        }
+                        else
+                        {
+                            currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
                         }
                     }
                 }
@@ -132,11 +134,11 @@ public static class PdmsTextParser
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsExcludedAttribute(ReadOnlySpan<char> attributeName, IReadOnlyList<string> attributesToExclude)
+    private static bool IsExcludedAttribute(ReadOnlySpan<char> attributeName, IEnumerable<string> attributesToExclude)
     {
-        for (var i = 0; i < attributesToExclude.Count; i++)
+        foreach (var t in attributesToExclude)
         {
-            if (attributeName.SequenceEqual(attributesToExclude[i]))
+            if (attributeName.SequenceEqual(t))
             {
                 return true;
             }
@@ -161,7 +163,7 @@ public static class PdmsTextParser
     {
         var header = new PdmsFileHeader();
 
-        string[] cadcAttributesFilesSupported = { "CADC_Attributes_File v1.0" };
+        string[] cadcAttributesFilesSupported = ["CADC_Attributes_File v1.0"];
 
         // Parse the first line:
         string? firstLine = reader.ReadLine();
@@ -185,29 +187,31 @@ public static class PdmsTextParser
 
         // Read Header Information:
         var firstLineHeaderInformation = reader.ReadLine()!;
-        if (firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
+        if (!firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
         {
-            bool headerEnded = false;
-            while (!headerEnded)
+            return header;
+        }
+
+        bool headerEnded = false;
+        while (!headerEnded)
+        {
+            string currentLine = reader.ReadLine()!;
+            if (currentLine.EndsWith(header.EndSeparator))
             {
-                string currentLine = reader.ReadLine()!;
-                if (currentLine.EndsWith(header.EndSeparator))
+                headerEnded = true;
+            }
+            else
+            {
+                var lineSegments = currentLine.Split(new[] { header.Sep }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string keyValueSegment in lineSegments)
                 {
-                    headerEnded = true;
-                }
-                else
-                {
-                    var lineSegments = currentLine.Split(new[] { header.Sep }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string keyValueSegment in lineSegments)
-                    {
-                        var nameSeparatorIndex = keyValueSegment.IndexOf(
-                            header.NameEnd,
-                            StringComparison.InvariantCulture
-                        );
-                        var key = GetKey(keyValueSegment, nameSeparatorIndex).ToString();
-                        var value = GetValue(keyValueSegment, nameSeparatorIndex + header.NameEnd.Length).ToString();
-                        header.HeaderMetadata[key] = value;
-                    }
+                    var nameSeparatorIndex = keyValueSegment.IndexOf(
+                        header.NameEnd,
+                        StringComparison.InvariantCulture
+                    );
+                    var key = GetKey(keyValueSegment, nameSeparatorIndex).ToString();
+                    var value = GetValue(keyValueSegment, nameSeparatorIndex + header.NameEnd.Length).ToString();
+                    header.HeaderMetadata[key] = value;
                 }
             }
         }

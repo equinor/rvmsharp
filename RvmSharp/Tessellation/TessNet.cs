@@ -13,10 +13,10 @@ public static class TessNet
     {
         public Vector3[] VertexData = Array.Empty<Vector3>();
         public Vector3[] NormalData = Array.Empty<Vector3>();
-        public readonly List<int> Indices = new List<int>();
+        public readonly List<int> Indices = [];
     }
 
-    public static TessellateResult Tessellate(RvmContour[] contours)
+    public static TessellateResult Tessellate(IEnumerable<RvmContour> contours)
     {
         var tess = new Tess();
         Vec3 normal = default;

@@ -87,7 +87,7 @@ internal class ConnectionInterface
                 var ym = -yp;
                 var zp = 0.5f * box.LengthZ;
                 var zm = -zp;
-                Vector3[,] V =
+                Vector3[,] v =
                 {
                     {
                         new Vector3(xm, ym, zp),
@@ -129,7 +129,7 @@ internal class ConnectionInterface
 
                 for (var k = 0; k < 4; k++)
                 {
-                    connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(V[o, k], geo.Matrix);
+                    connectionInterface.SquareConnectionPoints[k] = Vector3.Transform(v[o, k], geo.Matrix);
                 }
 
                 break;

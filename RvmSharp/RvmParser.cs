@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp;
 
 using Containers;
+using Operations;
 using Primitives;
-using RvmSharp.Operations;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -280,10 +280,7 @@ public static class RvmParser
 
         var group = new RvmNode(version, name, translation, materialId);
 
-        uint unusedNextHeaderOffset;
-        uint dontKnowWhatThisValueDoes;
-
-        var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+        var id = ReadChunkHeader(stream, out uint _, out uint _);
         while (id != "CNTE")
         {
             switch (id)
@@ -324,7 +321,7 @@ public static class RvmParser
                     throw new NotImplementedException($"Unknown chunk: {id}");
             }
 
-            id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+            id = ReadChunkHeader(stream, out uint _, out uint _);
         }
 
         if (id == "CNTE")
@@ -360,14 +357,11 @@ public static class RvmParser
 
     public static RvmFile ReadRvm(Stream stream)
     {
-        uint len,
-            dunno;
-
-        var head = ReadChunkHeader(stream, out len, out dunno);
+        var head = ReadChunkHeader(stream, out uint _, out uint _);
         if (head != "HEAD")
             throw new IOException($"Expected HEAD, found {head}");
         var header = ReadHead(stream);
-        var modl = ReadChunkHeader(stream, out len, out dunno);
+        var modl = ReadChunkHeader(stream, out uint _, out uint _);
         if (modl != "MODL")
             throw new IOException($"Expected MODL, found {modl}");
         var modelParameters = ReadModelParameters(stream);
@@ -375,7 +369,7 @@ public static class RvmParser
         var modelPrimitives = new List<RvmPrimitive>();
         var modelColors = new List<RvmColor>();
 
-        var chunk = ReadChunkHeader(stream, out len, out dunno);
+        var chunk = ReadChunkHeader(stream, out uint _, out uint _);
         while (chunk != "END:")
         {
             switch (chunk)
@@ -393,7 +387,7 @@ public static class RvmParser
                     throw new NotImplementedException($"Unknown chunk: {chunk}");
             }
 
-            chunk = ReadChunkHeader(stream, out len, out dunno);
+            chunk = ReadChunkHeader(stream, out uint _, out uint _);
         }
         return new RvmFile(
             header,

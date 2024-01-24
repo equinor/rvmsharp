@@ -16,17 +16,11 @@ public class RvmMesh : IEquatable<RvmMesh>
 
     public float Error { get; }
 
-    public Vector3[] Vertices => _vertices;
+    public Vector3[] Vertices { get; }
 
-    public Vector3[] Normals => _normals;
+    public Vector3[] Normals { get; }
 
-    public uint[] Triangles => _triangles;
-
-    public int TriangleCount => _triangles.Length / 3;
-
-    private readonly Vector3[] _vertices;
-    private readonly Vector3[] _normals;
-    private readonly uint[] _triangles;
+    public uint[] Triangles { get; }
 
     public RvmMesh(IReadOnlyList<float> vertexData, IReadOnlyList<float> normalData, int[] triangleData, float error)
     {
@@ -34,16 +28,16 @@ public class RvmMesh : IEquatable<RvmMesh>
         if (vertexData.Count != normalData.Count)
             throw new ArgumentException("Vertex and normal arrays must have equal length");
 
-        _vertices = new Vector3[vertexData.Count / 3];
-        _normals = new Vector3[normalData.Count / 3];
+        Vertices = new Vector3[vertexData.Count / 3];
+        Normals = new Vector3[normalData.Count / 3];
         for (var i = 0; i < vertexData.Count / 3; i++)
         {
-            _vertices[i] = new Vector3(vertexData[i * 3], vertexData[i * 3 + 1], vertexData[i * 3 + 2]);
-            _normals[i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
+            Vertices[i] = new Vector3(vertexData[i * 3], vertexData[i * 3 + 1], vertexData[i * 3 + 2]);
+            Normals[i] = new Vector3(normalData[i * 3], normalData[i * 3 + 1], normalData[i * 3 + 2]);
         }
 
-        _triangles = new uint[triangleData.Length];
-        Array.Copy(triangleData, _triangles, triangleData.Length);
+        Triangles = new uint[triangleData.Length];
+        Array.Copy(triangleData, Triangles, triangleData.Length);
     }
 
     public RvmMesh(Vector3[] vertices, Vector3[] normals, uint[] triangles, float error)
@@ -52,9 +46,9 @@ public class RvmMesh : IEquatable<RvmMesh>
             throw new ArgumentException("Vertex and normal arrays must have equal length");
 
         Error = error;
-        _vertices = vertices;
-        _normals = normals;
-        _triangles = triangles;
+        Vertices = vertices;
+        Normals = normals;
+        Triangles = triangles;
     }
 
     public void Apply(Matrix4x4 matrix)
@@ -65,10 +59,10 @@ public class RvmMesh : IEquatable<RvmMesh>
             throw new ArgumentException($"Could not invert matrix {matrix}");
         var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
 
-        for (var i = 0; i < _vertices.Length; i++)
+        for (var i = 0; i < Vertices.Length; i++)
         {
-            _vertices[i] = Vector3.Transform(_vertices[i], matrix);
-            _normals[i] = Vector3.Normalize(Vector3.TransformNormal(_normals[i], matrixInvertedTransposed));
+            Vertices[i] = Vector3.Transform(Vertices[i], matrix);
+            Normals[i] = Vector3.Normalize(Vector3.TransformNormal(Normals[i], matrixInvertedTransposed));
         }
     }
 
@@ -118,9 +112,9 @@ public class RvmMesh : IEquatable<RvmMesh>
     public override int GetHashCode()
     {
         var errorHashCode = Error.GetHashCode();
-        var verticesHashCode = GetStructuralHashCode(_vertices);
-        var normalsHashCode = GetStructuralHashCode(_normals);
-        var trianglesHashCode = GetStructuralHashCode(_triangles);
+        var verticesHashCode = GetStructuralHashCode(Vertices);
+        var normalsHashCode = GetStructuralHashCode(Normals);
+        var trianglesHashCode = GetStructuralHashCode(Triangles);
         unchecked
         {
             // https://stackoverflow.com/a/1646913 (Replacement for HashCode.Combine since its not available on dotnet standard 2.0)

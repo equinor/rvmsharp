@@ -11,7 +11,7 @@ public abstract record RvmPrimitive(
     RvmBoundingBox BoundingBoxLocal
 ) : RvmGroup(Version)
 {
-    public RvmConnection?[] Connections { get; } = { null, null, null, null, null, null }; // Up to six connections. Connections depend on primitive type.
+    public RvmConnection?[] Connections { get; } = [null, null, null, null, null, null]; // Up to six connections. Connections depend on primitive type.
 
     public virtual bool Equals(RvmPrimitive? other)
     {

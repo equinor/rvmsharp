@@ -1,5 +1,6 @@
 namespace RvmSharp.Primitives;
 
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -9,7 +10,7 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
     /// Generate all 8 corners of the bounding box.
     /// Remark: This can be "Flat" (Zero width) in one or more dimensions.
     /// </summary>
-    public Vector3[] GenerateBoxVertexes()
+    public IEnumerable<Vector3> GenerateBoxVertexes()
     {
         var cube = new[]
         {

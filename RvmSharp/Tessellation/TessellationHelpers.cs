@@ -1,13 +1,9 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using System;
 using System.Numerics;
 
 public static class TessellationHelpers
 {
-    private const int MinSamples = 3;
-    private const int MaxSamples = 100;
-
     public static int QuadIndices(int[] indices, int l, int o, int v0, int v1, int v2, int v3)
     {
         indices[l++] = o + v0;

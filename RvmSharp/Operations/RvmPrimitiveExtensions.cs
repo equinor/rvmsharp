@@ -17,15 +17,9 @@ public static class RvmPrimitiveExtensions
         // csharpier-ignore -- <- Causes massive whitespace
         return group with
         {
-            Polygons = group.Polygons.Select(a => a with
-                {
-                    Contours = a.Contours.Select(c => c with
-                    {
-                        Vertices = c.Vertices.Select(v => (
-                            Vector3.Transform(v.Vertex, matrix),
-                            Vector3.Normalize(Vector3.TransformNormal(v.Normal, matrixInvertedTransposed)))).ToArray()
-                    }).ToArray()
-                }
+            Polygons = group.Polygons.Select(a => new RvmFacetGroup.RvmPolygon(Contours: a.Contours.Select(c => new RvmFacetGroup.RvmContour(Vertices: c.Vertices.Select(v => (
+                    Vector3.Transform(v.Vertex, matrix),
+                    Vector3.Normalize(Vector3.TransformNormal(v.Normal, matrixInvertedTransposed)))).ToArray())).ToArray())
             ).ToArray()
         };
     }

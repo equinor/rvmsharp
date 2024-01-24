@@ -8,7 +8,6 @@ public class RvmConnection
     [Flags]
     public enum ConnectionType
     {
-        None = 0,
         HasCircularSide = 1,
         HasRectangularSide = 2
         // NextFlag = 4

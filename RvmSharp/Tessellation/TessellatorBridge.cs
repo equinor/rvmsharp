@@ -185,7 +185,7 @@ public static class TessellatorBridge
 
         var capCount = cap.Count(c => c);
 
-        var error = 0.0f;
+        const float error = 0.0f;
 
         var vertices = new float[3 * 4 * capCount];
         var normals = new float[3 * 4 * capCount];
@@ -279,17 +279,19 @@ public static class TessellatorBridge
         Debug.Assert(error <= tolerance);
 
         bool shell = true;
-        bool[] cap = { true, true };
+        bool[] cap = [true, true];
 
         for (var i = 0; i < 2; i++)
         {
             var con = rectangularTorus.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasRectangularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
-                {
-                    cap[i] = false;
-                }
+                continue;
+            }
+
+            if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
+            {
+                cap[i] = false;
             }
         }
 
@@ -312,10 +314,10 @@ public static class TessellatorBridge
 
         var l = 0;
 
-        var vertices_n = (shell ? 4 * 2 * samples : 0) + (cap[0] ? 4 : 0) + (cap[1] ? 4 : 0);
+        var verticesN = (4 * 2 * samples) + (cap[0] ? 4 : 0) + (cap[1] ? 4 : 0);
 
-        var vertices = new float[3 * vertices_n];
-        var normals = new float[3 * vertices_n];
+        var vertices = new float[3 * verticesN];
+        var normals = new float[3 * verticesN];
 
         if (shell)
         {
@@ -376,14 +378,14 @@ public static class TessellatorBridge
             }
         }
 
-        if (l != 3 * vertices_n)
+        if (l != 3 * verticesN)
             throw new Exception();
 
         l = 0;
         var o = 0;
 
-        var triangles_n = (shell ? 4 * 2 * (samples - 1) : 0) + (cap[0] ? 2 : 0) + (cap[1] ? 2 : 0);
-        var indices = new int[3 * triangles_n];
+        var trianglesN = (4 * 2 * (samples - 1)) + (cap[0] ? 2 : 0) + (cap[1] ? 2 : 0);
+        var indices = new int[3 * trianglesN];
 
         if (shell)
         {
@@ -426,7 +428,7 @@ public static class TessellatorBridge
             o += 4;
         }
 
-        if (o != vertices_n || l != 3 * triangles_n)
+        if (o != verticesN || l != 3 * trianglesN)
             throw new Exception();
 
         return new RvmMesh(vertices, normals, indices, error);
@@ -434,14 +436,14 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
     {
-        var segments_l = SagittaUtils.SagittaBasedSegmentCount(
+        var segmentsL = SagittaUtils.SagittaBasedSegmentCount(
             circularTorus.Angle,
             circularTorus.Offset + circularTorus.Radius,
             scale,
             tolerance
         ); // large radius, toroidal direction
         // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
-        var segments_s = SagittaUtils.SagittaBasedSegmentCount(
+        var segmentsS = SagittaUtils.SagittaBasedSegmentCount(
             Math.PI * 2,
             Math.Abs(circularTorus.Radius),
             scale,
@@ -453,54 +455,56 @@ public static class TessellatorBridge
                 circularTorus.Angle,
                 circularTorus.Offset + circularTorus.Radius,
                 scale,
-                segments_l
+                segmentsL
             ),
-            SagittaUtils.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s)
+            SagittaUtils.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segmentsS)
         );
         Debug.Assert(error <= tolerance);
 
-        var samples_l = segments_l + 1; // Assumed to be open, add extra sample
-        var samples_s = segments_s; // Assumed to be closed
+        var samplesL = segmentsL + 1; // Assumed to be open, add extra sample
+        var samplesS = segmentsS; // Assumed to be closed
 
-        bool shell = true;
+        const bool shell = true;
         bool[] cap = { true, true };
         for (var i = 0; i < 2; i++)
         {
             var con = circularTorus.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
-                {
-                    cap[i] = false;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
             }
+
+            if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
+            {
+                cap[i] = false;
+            }
+            // else
+            // {
+            //     store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
+            // }
         }
 
-        var t0 = new float[2 * samples_l];
-        for (var i = 0; i < samples_l; i++)
+        var t0 = new float[2 * samplesL];
+        for (var i = 0; i < samplesL; i++)
         {
-            t0[2 * i + 0] = (float)Math.Cos((circularTorus.Angle / (samples_l - 1.0f)) * i);
-            t0[2 * i + 1] = (float)Math.Sin((circularTorus.Angle / (samples_l - 1.0f)) * i);
+            t0[2 * i + 0] = (float)Math.Cos((circularTorus.Angle / (samplesL - 1.0f)) * i);
+            t0[2 * i + 1] = (float)Math.Sin((circularTorus.Angle / (samplesL - 1.0f)) * i);
         }
 
-        var t1 = new float[2 * samples_s];
-        for (var i = 0; i < samples_s; i++)
+        var t1 = new float[2 * samplesS];
+        for (var i = 0; i < samplesS; i++)
         {
-            t1[2 * i + 0] = (float)Math.Cos((Math.PI * 2 / samples_s) * i + circularTorus.SampleStartAngle);
-            t1[2 * i + 1] = (float)Math.Sin((Math.PI * 2 / samples_s) * i + circularTorus.SampleStartAngle);
+            t1[2 * i + 0] = (float)Math.Cos((Math.PI * 2 / samplesS) * i + circularTorus.SampleStartAngle);
+            t1[2 * i + 1] = (float)Math.Sin((Math.PI * 2 / samplesS) * i + circularTorus.SampleStartAngle);
         }
 
-        var vertices_n = ((shell ? samples_l : 0) + (cap[0] ? 1 : 0) + (cap[1] ? 1 : 0)) * samples_s;
-        var vertices = new float[3 * vertices_n];
-        var normals = new float[3 * vertices_n];
+        var verticesN = ((samplesL) + (cap[0] ? 1 : 0) + (cap[1] ? 1 : 0)) * samplesS;
+        var vertices = new float[3 * verticesN];
+        var normals = new float[3 * verticesN];
 
-        var triangles_n =
-            (shell ? 2 * (samples_l - 1) * samples_s : 0) + (samples_s - 2) * ((cap[0] ? 1 : 0) + (cap[1] ? 1 : 0));
-        var indices = new int[3 * triangles_n];
+        var trianglesN =
+            (2 * (samplesL - 1) * samplesS) + (samplesS - 2) * ((cap[0] ? 1 : 0) + (cap[1] ? 1 : 0));
+        var indices = new int[3 * trianglesN];
 
         // generate vertices
         var l = 0;
@@ -513,9 +517,9 @@ public static class TessellatorBridge
             //Vec3f p((circularTorus.Radius * cos(Math.PI * 2 *v) + circularTorus.Offset) * cos(circularTorus.Angle * u),
             //        (circularTorus.Radius * cos(Math.PI * 2 *v) + circularTorus.Offset) * sin(circularTorus.Angle * u),
             //        circularTorus.Radius * sin(Math.PI * 2 *v));
-            for (var u = 0; u < samples_l; u++)
+            for (var u = 0; u < samplesL; u++)
             {
-                for (var v = 0; v < samples_s; v++)
+                for (var v = 0; v < samplesS; v++)
                 {
                     normals[l] = t1[2 * v + 0] * t0[2 * u + 0];
                     vertices[l++] = ((circularTorus.Radius * t1[2 * v + 0] + circularTorus.Offset) * t0[2 * u + 0]);
@@ -529,7 +533,7 @@ public static class TessellatorBridge
 
         if (cap[0])
         {
-            for (var v = 0; v < samples_s; v++)
+            for (var v = 0; v < samplesS; v++)
             {
                 normals[l] = 0.0f;
                 vertices[l++] = ((circularTorus.Radius * t1[2 * v + 0] + circularTorus.Offset) * t0[0]);
@@ -542,8 +546,8 @@ public static class TessellatorBridge
 
         if (cap[1])
         {
-            var m = 2 * (samples_l - 1);
-            for (var v = 0; v < samples_s; v++)
+            var m = 2 * (samplesL - 1);
+            for (var v = 0; v < samplesS; v++)
             {
                 normals[l] = -t0[m + 1];
                 vertices[l++] = ((circularTorus.Radius * t1[2 * v + 0] + circularTorus.Offset) * t0[m + 0]);
@@ -554,63 +558,63 @@ public static class TessellatorBridge
             }
         }
 
-        Debug.Assert(l == 3 * vertices_n, "l == 3*vertices_n");
+        Debug.Assert(l == 3 * verticesN, "l == 3*vertices_n");
 
         // generate indices
         l = 0;
         var o = 0;
         if (shell)
         {
-            for (var u = 0; u + 1 < samples_l; u++)
+            for (var u = 0; u + 1 < samplesL; u++)
             {
-                for (var v = 0; v + 1 < samples_s; v++)
+                for (var v = 0; v + 1 < samplesS; v++)
                 {
-                    indices[l++] = samples_s * (u + 0) + (v + 0);
-                    indices[l++] = samples_s * (u + 1) + (v + 0);
-                    indices[l++] = samples_s * (u + 1) + (v + 1);
+                    indices[l++] = samplesS * (u + 0) + (v + 0);
+                    indices[l++] = samplesS * (u + 1) + (v + 0);
+                    indices[l++] = samplesS * (u + 1) + (v + 1);
 
-                    indices[l++] = samples_s * (u + 1) + (v + 1);
-                    indices[l++] = samples_s * (u + 0) + (v + 1);
-                    indices[l++] = samples_s * (u + 0) + (v + 0);
+                    indices[l++] = samplesS * (u + 1) + (v + 1);
+                    indices[l++] = samplesS * (u + 0) + (v + 1);
+                    indices[l++] = samplesS * (u + 0) + (v + 0);
                 }
 
-                indices[l++] = samples_s * (u + 0) + (samples_s - 1);
-                indices[l++] = samples_s * (u + 1) + (samples_s - 1);
-                indices[l++] = samples_s * (u + 1) + 0;
-                indices[l++] = samples_s * (u + 1) + 0;
-                indices[l++] = samples_s * (u + 0) + 0;
-                indices[l++] = samples_s * (u + 0) + (samples_s - 1);
+                indices[l++] = samplesS * (u + 0) + (samplesS - 1);
+                indices[l++] = samplesS * (u + 1) + (samplesS - 1);
+                indices[l++] = samplesS * (u + 1) + 0;
+                indices[l++] = samplesS * (u + 1) + 0;
+                indices[l++] = samplesS * (u + 0) + 0;
+                indices[l++] = samplesS * (u + 0) + (samplesS - 1);
             }
 
-            o += samples_l * samples_s;
+            o += samplesL * samplesS;
         }
 
-        var u1 = new int[samples_s];
-        var u2 = new int[samples_s];
+        var u1 = new int[samplesS];
+        var u2 = new int[samplesS];
         if (cap[0])
         {
-            for (var i = 0; i < samples_s; i++)
+            for (var i = 0; i < samplesS; i++)
             {
                 u1[i] = o + i;
             }
 
-            l = TessellateCircle(indices, l, u2, u1, samples_s);
-            o += samples_s;
+            l = TessellateCircle(indices, l, u2, u1, samplesS);
+            o += samplesS;
         }
 
         if (cap[1])
         {
-            for (var i = 0; i < samples_s; i++)
+            for (var i = 0; i < samplesS; i++)
             {
-                u1[i] = o + (samples_s - 1) - i;
+                u1[i] = o + (samplesS - 1) - i;
             }
 
-            l = TessellateCircle(indices, l, u2, u1, samples_s);
-            o += samples_s;
+            l = TessellateCircle(indices, l, u2, u1, samplesS);
+            o += samplesS;
         }
 
-        Debug.Assert(l == 3 * triangles_n);
-        Debug.Assert(o == vertices_n);
+        Debug.Assert(l == 3 * trianglesN);
+        Debug.Assert(o == verticesN);
 
         return new RvmMesh(vertices, normals, indices, error);
     }
@@ -671,25 +675,29 @@ public static class TessellatorBridge
             }
         }
 
-        var faces_n = 0;
+        var facesN = 0;
         for (var i = 0; i < 6; i++)
         {
             if (faces[i])
-                faces_n++;
+                facesN++;
         }
 
-        if (faces_n > 0)
+        if (facesN <= 0)
         {
-            var vertices_n = 4 * faces_n;
-            var vertices = new float[3 * vertices_n];
-            var normals = new float[3 * vertices_n];
+            return new RvmMesh(Array.Empty<float>(), Array.Empty<float>(), Array.Empty<int>(), 0);
+        }
 
-            var triangles_n = 2 * faces_n;
-            var indices = new int[3 * triangles_n];
+        {
+            var verticesN = 4 * facesN;
+            var vertices = new float[3 * verticesN];
+            var normals = new float[3 * verticesN];
+
+            var trianglesN = 2 * facesN;
+            var indices = new int[3 * trianglesN];
 
             var o = 0;
-            var i_v = 0;
-            var i_p = 0;
+            var iV = 0;
+            var iP = 0;
             for (var f = 0; f < 6; f++)
             {
                 if (!faces[f])
@@ -697,17 +705,17 @@ public static class TessellatorBridge
 
                 for (var i = 0; i < 4; i++)
                 {
-                    i_v = TessellationHelpers.Vertex(normals, vertices, i_v, n[f], v[f, i]);
+                    iV = TessellationHelpers.Vertex(normals, vertices, iV, n[f], v[f, i]);
                 }
 
-                i_p = TessellationHelpers.QuadIndices(indices, i_p, o, 0, 1, 2, 3);
+                iP = TessellationHelpers.QuadIndices(indices, iP, o, 0, 1, 2, 3);
 
                 o += 4;
             }
 
             var tri = new RvmMesh(vertices, normals, indices, 0.0f);
 
-            if (!(i_v == 3 * vertices_n) || !(i_p == 3 * triangles_n) || !(o == vertices_n))
+            if (iV != 3 * verticesN || iP != 3 * trianglesN || o != verticesN)
             {
                 throw new Exception();
             }
@@ -715,7 +723,6 @@ public static class TessellatorBridge
             return tri;
         }
 
-        return new RvmMesh(new float[0], new float[0], new int[0], 0);
     }
 
     private static RvmMesh Tessellate(RvmFacetGroup facetGroup)
@@ -724,10 +731,8 @@ public static class TessellatorBridge
         var normals = new List<Vector3>();
         var indices = new List<int>();
 
-        for (var p = 0; p < facetGroup.Polygons.Length; p++)
+        foreach (var poly in facetGroup.Polygons)
         {
-            var poly = facetGroup.Polygons[p];
-
             var (bMin, bMax) = (new Vector3(float.MaxValue), new Vector3(float.MinValue));
             foreach (var cont in poly.Contours)
             {
@@ -779,33 +784,35 @@ public static class TessellatorBridge
 
         var error = SagittaUtils.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
 
-        bool shell = true;
+        const bool shell = true;
         bool[] shouldCap = { true, true };
 
         for (int i = 0; i < 2; i++)
         {
             var con = cylinder.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
-                {
-                    shouldCap[i] = false;
-                    //discardedCaps++;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
+            }
+
+            if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
+            {
+                shouldCap[i] = false;
+                //discardedCaps++;
+            }
+            else
+            {
+                //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
             }
         }
 
-        int vertCount = (shell ? 2 * samples : 0) + (shouldCap[0] ? samples : 0) + (shouldCap[1] ? samples : 0);
+        int vertCount = (2 * samples) + (shouldCap[0] ? samples : 0) + (shouldCap[1] ? samples : 0);
         var vertices = new Vector3[vertCount];
         var normals = new Vector3[vertCount];
 
-        int triangles_n =
-            (shell ? 2 * samples : 0) + (shouldCap[0] ? samples - 2 : 0) + (shouldCap[1] ? samples - 2 : 0);
-        var indices = new int[triangles_n * 3];
+        int trianglesN =
+            (2 * samples) + (shouldCap[0] ? samples - 2 : 0) + (shouldCap[1] ? samples - 2 : 0);
+        var indices = new int[trianglesN * 3];
 
         float[] t0 = new float[2 * samples];
         for (int i = 0; i < samples; i++)
@@ -919,7 +926,7 @@ public static class TessellatorBridge
             o += samples;
         }
 
-        Debug.Assert(l == triangles_n * 3);
+        Debug.Assert(l == trianglesN * 3);
         Debug.Assert(o == vertCount);
 
         return new RvmMesh(vertices, normals, indices.Select(x => (uint)x).ToArray(), error);
@@ -927,28 +934,30 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmSnout snout, float scale, float tolerance)
     {
-        var radius_max = Math.Max(snout.RadiusBottom, snout.RadiusTop);
-        var segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
+        var radiusMax = Math.Max(snout.RadiusBottom, snout.RadiusTop);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, radiusMax, scale, tolerance);
         var samples = segments; // assumed to be closed
 
-        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radiusMax, scale, segments);
 
-        bool shell = true;
+        const bool shell = true;
         bool[] cap = { true, true };
         for (var i = 0; i < 2; i++)
         {
             var con = snout.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(snout, con))
-                {
-                    cap[i] = false;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
             }
+
+            if (ConnectionInterface.DoInterfacesMatch(snout, con))
+            {
+                cap[i] = false;
+            }
+            // else
+            // {
+            //     store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
+            // }
         }
 
         var t0 = new float[2 * samples];
@@ -977,12 +986,12 @@ public static class TessellatorBridge
         float[] mb = { (float)Math.Tan(snout.BottomShearX), (float)Math.Tan(snout.BottomShearY) };
         float[] mt = { (float)Math.Tan(snout.TopShearX), (float)Math.Tan(snout.TopShearY) };
 
-        var vertices_n = (shell ? 2 * samples : 0) + (cap[0] ? samples : 0) + (cap[1] ? samples : 0);
-        var vertices = new float[3 * vertices_n];
-        var normals = new float[3 * vertices_n];
+        var verticesN = (2 * samples) + (cap[0] ? samples : 0) + (cap[1] ? samples : 0);
+        var vertices = new float[3 * verticesN];
+        var normals = new float[3 * verticesN];
 
-        var triangles_n = (shell ? 2 * samples : 0) + (cap[0] ? samples - 2 : 0) + (cap[1] ? samples - 2 : 0);
-        var indices = new int[3 * triangles_n];
+        var trianglesN = (2 * samples) + (cap[0] ? samples - 2 : 0) + (cap[1] ? samples - 2 : 0);
+        var indices = new int[3 * trianglesN];
 
         if (shell)
         {
@@ -1049,7 +1058,7 @@ public static class TessellatorBridge
             }
         }
 
-        Debug.Assert(l == vertices_n * 3);
+        Debug.Assert(l == verticesN * 3);
 
         l = 0;
         var o = 0;
@@ -1088,8 +1097,8 @@ public static class TessellatorBridge
             o += samples;
         }
 
-        Debug.Assert(l == triangles_n * 3);
-        Debug.Assert(o == vertices_n);
+        Debug.Assert(l == trianglesN * 3);
+        Debug.Assert(o == verticesN);
 
         return new RvmMesh(vertices, normals, indices, error);
     }
@@ -1098,8 +1107,8 @@ public static class TessellatorBridge
         RvmPrimitive sphereBasedPrimitive,
         float radius,
         float arc,
-        float shift_z,
-        float scale_z,
+        float shiftZ,
+        float scaleZ,
         float scale,
         float tolerance
     )
@@ -1109,29 +1118,29 @@ public static class TessellatorBridge
 
         var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius, scale, samples);
 
-        bool is_sphere = false;
+        bool isSphere = false;
         if (Math.PI - 1e-3 <= arc)
         {
             arc = (float)Math.PI;
-            is_sphere = true;
+            isSphere = true;
         }
 
-        var min_rings = 3; // arc <= half_pi ? 2 : 3;
-        var rings = (int)(Math.Max(min_rings, scale_z * samples * arc * (1.0f / Math.PI * 2)));
+        const int minRings = 3; // arc <= half_pi ? 2 : 3;
+        var rings = (int)(Math.Max(minRings, scaleZ * samples * arc * (1.0f / Math.PI * 2)));
 
         var u0 = new int[rings];
         var t0 = new float[2 * rings];
-        var theta_scale = arc / (rings - 1);
+        var thetaScale = arc / (rings - 1);
         for (var r = 0; r < rings; r++)
         {
-            float theta = theta_scale * r;
+            float theta = thetaScale * r;
             t0[2 * r + 0] = (float)Math.Cos(theta);
             t0[2 * r + 1] = (float)Math.Sin(theta);
             u0[r] = (int)(Math.Max(3.0f, t0[2 * r + 1] * samples)); // samples in this ring
         }
 
         u0[0] = 1;
-        if (is_sphere)
+        if (isSphere)
         {
             u0[rings - 1] = 1;
         }
@@ -1142,104 +1151,104 @@ public static class TessellatorBridge
             s += u0[r];
         }
 
-        var vertices_n = s;
-        var vertices = new float[3 * vertices_n];
-        var normals = new float[3 * vertices_n];
+        var verticesN = s;
+        var vertices = new float[3 * verticesN];
+        var normals = new float[3 * verticesN];
 
         var l = 0;
         for (var r = 0; r < rings; r++)
         {
             var nz = t0[2 * r + 0];
-            var z = radius * scale_z * nz + shift_z;
+            var z = radius * scaleZ * nz + shiftZ;
             var w = t0[2 * r + 1];
             var n = u0[r];
 
-            var phi_scale = Math.PI * 2 / n;
+            var phiScale = Math.PI * 2 / n;
             for (var i = 0; i < n; i++)
             {
-                var phi = (float)(phi_scale * i + sphereBasedPrimitive.SampleStartAngle);
+                var phi = (float)(phiScale * i + sphereBasedPrimitive.SampleStartAngle);
                 var nx = (float)(w * Math.Cos(phi));
                 var ny = (float)(w * Math.Sin(phi));
-                l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scale_z, radius * nx, radius * ny, z);
+                l = TessellationHelpers.Vertex(normals, vertices, l, nx, ny, nz / scaleZ, radius * nx, radius * ny, z);
             }
         }
 
-        Debug.Assert(l == vertices_n * 3);
+        Debug.Assert(l == verticesN * 3);
 
-        var o_c = 0;
+        var oC = 0;
         var indices = new List<int>();
         for (var r = 0; r + 1 < rings; r++)
         {
-            var n_c = u0[r];
-            var n_n = u0[r + 1];
-            var o_n = o_c + n_c;
+            var nC = u0[r];
+            var nN = u0[r + 1];
+            var oN = oC + nC;
 
-            if (n_c < n_n)
+            if (nC < nN)
             {
-                for (var i_n = 0; i_n < n_n; i_n++)
+                for (var iN = 0; iN < nN; iN++)
                 {
-                    var ii_n = (i_n + 1);
-                    var i_c = (n_c * (i_n + 1)) / n_n;
-                    var ii_c = (n_c * (ii_n + 1)) / n_n;
+                    var iiN = (iN + 1);
+                    var iC = (nC * (iN + 1)) / nN;
+                    var iiC = (nC * (iiN + 1)) / nN;
 
-                    i_c %= n_c;
-                    ii_c %= n_c;
-                    ii_n %= n_n;
+                    iC %= nC;
+                    iiC %= nC;
+                    iiN %= nN;
 
-                    if (i_c != ii_c)
+                    if (iC != iiC)
                     {
-                        indices.Add(o_c + i_c);
-                        indices.Add(o_n + ii_n);
-                        indices.Add(o_c + ii_c);
+                        indices.Add(oC + iC);
+                        indices.Add(oN + iiN);
+                        indices.Add(oC + iiC);
                     }
 
-                    Debug.Assert(i_n != ii_n, $"{nameof(i_n)} should not equal {nameof(ii_n)}");
+                    Debug.Assert(iN != iiN, $"{nameof(iN)} should not equal {nameof(iiN)}");
 
-                    indices.Add(o_c + i_c);
-                    indices.Add(o_n + i_n);
-                    indices.Add(o_n + ii_n);
+                    indices.Add(oC + iC);
+                    indices.Add(oN + iN);
+                    indices.Add(oN + iiN);
                 }
             }
             else
             {
-                for (var i_c = 0; i_c < n_c; i_c++)
+                for (var iC = 0; iC < nC; iC++)
                 {
-                    var ii_c = (i_c + 1);
-                    var i_n = (n_n * (i_c + 0)) / n_c;
-                    var ii_n = (n_n * (ii_c + 0)) / n_c;
+                    var iiC = (iC + 1);
+                    var iN = (nN * (iC + 0)) / nC;
+                    var iiN = (nN * (iiC + 0)) / nC;
 
-                    i_n %= n_n;
-                    ii_n %= n_n;
-                    ii_c %= n_c;
+                    iN %= nN;
+                    iiN %= nN;
+                    iiC %= nC;
 
-                    Debug.Assert(i_c != ii_c, $"{nameof(i_c)} should not equal {nameof(ii_c)}");
+                    Debug.Assert(iC != iiC, $"{nameof(iC)} should not equal {nameof(iiC)}");
 
-                    indices.Add(o_c + i_c);
-                    indices.Add(o_n + ii_n);
-                    indices.Add(o_c + ii_c);
+                    indices.Add(oC + iC);
+                    indices.Add(oN + iiN);
+                    indices.Add(oC + iiC);
 
-                    if (i_n != ii_n)
+                    if (iN != iiN)
                     {
-                        indices.Add(o_c + i_c);
-                        indices.Add(o_n + i_n);
-                        indices.Add(o_n + ii_n);
+                        indices.Add(oC + iC);
+                        indices.Add(oN + iN);
+                        indices.Add(oN + iiN);
                     }
                 }
             }
 
-            o_c = o_n;
+            oC = oN;
         }
 
         return new RvmMesh(vertices, normals, indices.ToArray(), error);
     }
 
-    private static int TessellateCircle(int[] indices, int l, int[] t, int[] src, int N)
+    private static int TessellateCircle(IList<int> indices, int l, int[] t, int[] src, int n)
     {
-        while (3 <= N)
+        while (3 <= n)
         {
             int m = 0;
             int i;
-            for (i = 0; i + 2 < N; i += 2)
+            for (i = 0; i + 2 < n; i += 2)
             {
                 indices[l++] = src[i];
                 indices[l++] = src[i + 1];
@@ -1247,12 +1256,12 @@ public static class TessellatorBridge
                 t[m++] = src[i];
             }
 
-            for (; i < N; i++)
+            for (; i < n; i++)
             {
                 t[m++] = src[i];
             }
 
-            N = m;
+            n = m;
 
             // TODO: What does the swap do here.
             // Was: std::swap(t, src);

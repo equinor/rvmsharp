@@ -39,7 +39,7 @@ public record RvmSnout(
         return TranslateShearToSlope(BottomShearX, BottomShearY);
     }
 
-    public bool IsCappedCylinder()
+    private bool IsCappedCylinder()
     {
         return Math.Abs(RadiusBottom - RadiusTop) < 0.01;
     }
@@ -50,7 +50,7 @@ public record RvmSnout(
         var topCapCenter = 0.5f * new Vector3(OffsetX, OffsetY, Height);
         var xPlane = GeometryHelper.GetPlaneFromShearAndPoint(TopShearX, TopShearY, topCapCenter);
 
-        return getCapEllipse(xPlane, topCapCenter, RadiusTop);
+        return GetCapEllipse(xPlane, topCapCenter, RadiusTop);
     }
 
     public Ellipse3D GetBottomCapEllipse()
@@ -59,10 +59,10 @@ public record RvmSnout(
         var bottomCapCenter = -0.5f * new Vector3(OffsetX, OffsetY, Height);
         var xPlane = GeometryHelper.GetPlaneFromShearAndPoint(BottomShearX, BottomShearY, bottomCapCenter);
 
-        return getCapEllipse(xPlane, bottomCapCenter, RadiusBottom);
+        return GetCapEllipse(xPlane, bottomCapCenter, RadiusBottom);
     }
 
-    private Ellipse3D getCapEllipse(PlaneImplicitForm xPlane, Vector3 capCenter, float capRadius)
+    private Ellipse3D GetCapEllipse(PlaneImplicitForm xPlane, Vector3 capCenter, float capRadius)
     {
         // cones
         if (!IsCappedCylinder())
@@ -70,27 +70,18 @@ public record RvmSnout(
             var offset = new Vector3(OffsetX, OffsetY, Height);
             var cone = ConicSectionsHelper.CreateConeFromSnout(RadiusBottom, RadiusTop, offset);
 
-            if (Math.Abs(capRadius) < 0.01)
-            {
-                return ConicSectionsHelper.CreateDegenerateEllipse(xPlane, cone);
-            }
-            return ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
+            return Math.Abs(capRadius) < 0.01
+                ? ConicSectionsHelper.CreateDegenerateEllipse(xPlane, cone)
+                : ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
         }
-        //cylinders
-        else
-        {
-            var cosineSlope = Vector3.Dot(xPlane.Normal, new Vector3(0.0f, 0.0f, 1.0f));
 
-            // the most trivial case, cylinder with zero slope
-            if (cosineSlope == 1)
-            {
-                return ConicSectionsHelper.CalcEllipseIntersectionForCylinderWithZeroCapSlope(RadiusBottom, capCenter);
-            }
-            else
-            {
-                return ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
-            }
-        }
+        //cylinders
+        var cosineSlope = Vector3.Dot(xPlane.Normal, new Vector3(0.0f, 0.0f, 1.0f));
+
+        // the most trivial case, cylinder with zero slope
+        return Math.Abs(cosineSlope - 1) < 0.0001
+            ? ConicSectionsHelper.CalcEllipseIntersectionForCylinderWithZeroCapSlope(RadiusBottom, capCenter)
+            : ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
     }
 
     private (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)
