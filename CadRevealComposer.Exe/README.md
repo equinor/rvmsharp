@@ -58,9 +58,9 @@ can be loaded and unloaded as Cognite Reveal sees fit.
 
 As of now Cad Reveal Composer recursively splits space into eight subvoxels using X/Y/Z midpoint.
 
-#### Geometry: tesselation
+#### Geometry: tessellation
 
-`RvmPyramid` and `RvmFacetGroup` are tesselated into meshes.
+`RvmPyramid` and `RvmFacetGroup` are tessellated into meshes.
 
 #### Geometry: instance matching
 
