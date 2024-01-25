@@ -1,8 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
-using CadRevealComposer.Primitives;
-using System;
+using Primitives;
 using System.Drawing;
 using System.Numerics;
 
