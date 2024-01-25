@@ -240,7 +240,6 @@ public static class AlgebraUtils
         }
 
         return true;
-
     }
 
     /// <summary>
