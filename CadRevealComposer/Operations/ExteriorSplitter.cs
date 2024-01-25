@@ -14,8 +14,8 @@ using Utils;
 /// Split geometries into exterior and interior. The main use is too aid sector splitting, prioritizing the exterior higher up in the sector tree.
 /// - Primitives are grouped by node ID, and whole nodes are split into exterior and interior.
 /// - Ray casting is used to measure distance from outside vantage points to the nodes. The closest nodes are kept as exterior.
-/// - TriangleMesh and InstanceMesh are tessellated to triangles and raycasted.
-/// - Other primitives are raycasted using their bounding box. The justification is that primitives have a tight bounding box.
+/// - TriangleMesh and InstanceMesh are tessellated to triangles and ray casted.
+/// - Other primitives are ray casted using their bounding box. The justification is that primitives have a tight bounding box.
 /// </summary>
 public static class ExteriorSplitter
 {

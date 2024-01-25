@@ -33,10 +33,10 @@ public static class SnoutSnoutComparer
             // is ellipse1 totally inside ellipse2 ?
             ellipseCurrent = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
             ellipseOther = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
-            snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(rvmSnout1.Matrix).Transpose();
+            snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4X4ToMatrixDouble(rvmSnout1.Matrix).Transpose();
             // these matrices are stored as trans ^^ vv
             worldToSnout2 = VectorAlgebraHelper
-                .ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix))
+                .ConvertMatrix4X4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout2.Matrix))
                 .Inverse();
         }
         else
@@ -49,17 +49,17 @@ public static class SnoutSnoutComparer
 
             ellipseCurrent = isSnoutCapTop2 ? rvmSnout2.GetTopCapEllipse() : rvmSnout2.GetBottomCapEllipse();
             ellipseOther = isSnoutCapTop1 ? rvmSnout1.GetTopCapEllipse() : rvmSnout1.GetBottomCapEllipse();
-            snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4x4ToMatrixDouble(rvmSnout2.Matrix).Transpose();
+            snout1ToWorld = VectorAlgebraHelper.ConvertMatrix4X4ToMatrixDouble(rvmSnout2.Matrix).Transpose();
             worldToSnout2 = VectorAlgebraHelper
-                .ConvertMatrix4x4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix))
+                .ConvertMatrix4X4ToMatrixDouble(Matrix4x4.Transpose(rvmSnout1.Matrix))
                 .Inverse();
         }
 
-        double aE1 = ellipseCurrent.ellipse2DPolar.semiMajorAxis;
-        double bE1 = ellipseCurrent.ellipse2DPolar.semiMinorAxis;
-        double x0E1 = ellipseCurrent.ellipse2DPolar.x0;
-        double y0E1 = ellipseCurrent.ellipse2DPolar.y0;
-        double theta = ellipseCurrent.ellipse2DPolar.theta;
+        double aE1 = ellipseCurrent.Ellipse2DPolar.SemiMajorAxis;
+        double bE1 = ellipseCurrent.Ellipse2DPolar.SemiMinorAxis;
+        double x0E1 = ellipseCurrent.Ellipse2DPolar.X0;
+        double y0E1 = ellipseCurrent.Ellipse2DPolar.Y0;
+        double theta = ellipseCurrent.Ellipse2DPolar.Theta;
 
         var ptE1XplaneCoord = new VectorD[4];
         ptE1XplaneCoord[0] = VectorD.Build.Dense(new double[] { aE1 - x0E1, -y0E1, 0.0f, 1.0 });
@@ -80,10 +80,10 @@ public static class SnoutSnoutComparer
         );
 
         var matStack =
-            ellipseOther.modelToPlaneCoord
+            ellipseOther.ModelToPlaneCoord
             * worldToSnout2
             * snout1ToWorld
-            * ellipseCurrent.planeToModelCoord
+            * ellipseCurrent.PlaneToModelCoord
             * matRotationEl1;
 
         var ptE1TransformedToXplaneCoordOfE2 = new VectorD[4];
@@ -102,7 +102,7 @@ public static class SnoutSnoutComparer
             var px = ptE1TransformedToXplaneCoordOfE2[i][x];
             var py = ptE1TransformedToXplaneCoordOfE2[i][y];
 
-            var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.ellipse2DPolar, px, py);
+            var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.Ellipse2DPolar, px, py);
             if (d > 0.1) // 0.1mm
             {
                 return true;

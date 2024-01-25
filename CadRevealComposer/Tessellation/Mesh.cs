@@ -52,7 +52,7 @@ public class Mesh : IEquatable<Mesh>
 
     /// <summary>
     /// Create a mesh using vertices, indices and error
-    /// Note: Verticies and indices are referenced and not copied
+    /// Note: Vertices and indices are referenced and not copied
     /// </summary>
     /// <param name="vertices"></param>
     /// <param name="indices"></param>

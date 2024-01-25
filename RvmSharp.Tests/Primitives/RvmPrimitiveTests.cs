@@ -165,8 +165,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(1.857449777519938f));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(1.857449777519938f));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(1.3031138776160802));
     }
 
     [Test]
@@ -188,8 +188,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(0.0f));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(0.0f));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(0.0f));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(0.0f));
     }
 
     [Test]
@@ -211,8 +211,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(155.5));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(155.5));
     }
 
     [Test]
@@ -234,8 +234,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(16.5));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(16.5));
     }
 
     [Test]
@@ -257,8 +257,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout.TopShearY)));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout.TopShearY)));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0));
     }
 
     [Test]
@@ -280,8 +280,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.x0, Is.EqualTo(0.0));
-        Assert.That(topEllipse.ellipse2DPolar.y0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.Ellipse2DPolar.X0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.Ellipse2DPolar.Y0, Is.EqualTo(0.0));
     }
 
     //0.1 millimeters precision
@@ -356,8 +356,8 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetTopCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
 
         // snout1 -> BOTTOM!!
         var snout1CapCenter = -0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -488,8 +488,8 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetBottomCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
 
         // snout1 -> top
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -601,8 +601,8 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetBottomCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
 
         // snout1 -> top
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));

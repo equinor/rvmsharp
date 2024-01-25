@@ -79,7 +79,7 @@ public record RvmSnout(
         //cylinders
         else
         {
-            var cosineSlope = Vector3.Dot(xPlane.normal, new Vector3(0.0f, 0.0f, 1.0f));
+            var cosineSlope = Vector3.Dot(xPlane.Normal, new Vector3(0.0f, 0.0f, 1.0f));
 
             // the most trivial case, cylinder with zero slope
             if (cosineSlope == 1)
