@@ -35,7 +35,7 @@ public class SectorSplitterOctree : ISectorSplitter
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-        var rootPath = "/0";
+        const string rootPath = "/0";
 
         yield return CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 

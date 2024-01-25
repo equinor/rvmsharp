@@ -39,7 +39,7 @@ public record RvmSnout(
         return TranslateShearToSlope(BottomShearX, BottomShearY);
     }
 
-    public bool IsCappedCylinder()
+    private bool IsCappedCylinder()
     {
         return Math.Abs(RadiusBottom - RadiusTop) < 0.01;
     }

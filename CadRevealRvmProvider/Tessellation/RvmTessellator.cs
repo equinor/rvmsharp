@@ -12,7 +12,7 @@ using System.Numerics;
 
 public class RvmTessellator
 {
-    public static Mesh ConvertRvmMesh(RvmMesh rvmMesh)
+    private static Mesh ConvertRvmMesh(RvmMesh rvmMesh)
     {
         // Reveal does not use normals, so they are discarded here.
         // Because it does not use normals, we can remove duplicate vertices optimizing it slightly
@@ -211,7 +211,7 @@ public class RvmTessellator
         return mesh;
     }
 
-    public static RvmMesh Tessellate(RvmPrimitive primitive, TessellationLogObject logObject)
+    private static RvmMesh Tessellate(RvmPrimitive primitive, TessellationLogObject logObject)
     {
         RvmMesh mesh;
         try

@@ -176,7 +176,7 @@ public static class ConicSectionsHelper
     // calculate coefficients A,B,C,D,E,F from the set of 6 transformed points
     // OBS: in theory only 5 points are be necessary, but we use 6 points to make the algorithm less complicated
 
-    public static Ellipse2DImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius)
+    private static Ellipse2DImplicitForm CalcEllipseImplicitForm(MatrixD matPV, double basisRadius)
     {
         // for convenience of adressing homogeneous coordinates in an array
         const int x = 0;
@@ -278,7 +278,7 @@ public static class ConicSectionsHelper
     // used conversion formulas: https://en.wikipedia.org/wiki/Ellipse#General_ellipse
     // have been verified by @vero-so
 
-    public static Ellipse2DPolarForm ConvertEllipseImplicitToPolarForm(Ellipse2DImplicitForm el)
+    private static Ellipse2DPolarForm ConvertEllipseImplicitToPolarForm(Ellipse2DImplicitForm el)
     {
         double A = el.A;
         double B = el.B;
