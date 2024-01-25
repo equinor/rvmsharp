@@ -24,8 +24,7 @@ public static class Matrix4x4Helpers
     /// </summary>
     public static bool MatrixContainsInfiniteValue(Matrix4x4 matrix)
     {
-        if (
-            !float.IsFinite(matrix.M11)
+        return !float.IsFinite(matrix.M11)
             || !float.IsFinite(matrix.M12)
             || !float.IsFinite(matrix.M13)
             || !float.IsFinite(matrix.M14)
@@ -40,11 +39,6 @@ public static class Matrix4x4Helpers
             || !float.IsFinite(matrix.M41)
             || !float.IsFinite(matrix.M42)
             || !float.IsFinite(matrix.M43)
-            || !float.IsFinite(matrix.M44)
-        )
-        {
-            return true;
-        }
-        return false;
+            || !float.IsFinite(matrix.M44);
     }
 }
