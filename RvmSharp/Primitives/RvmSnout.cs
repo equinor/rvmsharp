@@ -70,27 +70,18 @@ public record RvmSnout(
             var offset = new Vector3(OffsetX, OffsetY, Height);
             var cone = ConicSectionsHelper.CreateConeFromSnout(RadiusBottom, RadiusTop, offset);
 
-            if (Math.Abs(capRadius) < 0.01)
-            {
-                return ConicSectionsHelper.CreateDegenerateEllipse(xPlane, cone);
-            }
-            return ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
+            return Math.Abs(capRadius) < 0.01
+                ? ConicSectionsHelper.CreateDegenerateEllipse(xPlane, cone)
+                : ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
         }
         //cylinders
-        else
-        {
-            var cosineSlope = Vector3.Dot(xPlane.normal, new Vector3(0.0f, 0.0f, 1.0f));
 
-            // the most trivial case, cylinder with zero slope
-            if (cosineSlope == 1)
-            {
-                return ConicSectionsHelper.CalcEllipseIntersectionForCylinderWithZeroCapSlope(RadiusBottom, capCenter);
-            }
-            else
-            {
-                return ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
-            }
-        }
+        var cosineSlope = Vector3.Dot(xPlane.normal, new Vector3(0.0f, 0.0f, 1.0f));
+
+        // the most trivial case, cylinder with zero slope
+        return Math.Abs(cosineSlope - 1) < 0.0001
+            ? ConicSectionsHelper.CalcEllipseIntersectionForCylinderWithZeroCapSlope(RadiusBottom, capCenter)
+            : ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
     }
 
     private (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)

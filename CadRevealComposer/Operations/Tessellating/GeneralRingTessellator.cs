@@ -39,7 +39,9 @@ public static class GeneralRingTessellator
         var center = Vector3.Zero;
         var thickness = generalRing.Thickness;
 
-        if (thickness == 1) // Thickness is a value between 0 - 1, 1 means full cake slice
+        const double epsilon = 1e-6; // Epsilon - a small value to account for floating-point precision
+
+        if (Math.Abs(thickness - 1) < epsilon) // Thickness is a value between 0 - 1, 1 means full cake slice
         {
             vertices.Add(center);
             for (uint i = 0; i < segments + 1; i++)

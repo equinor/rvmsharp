@@ -87,32 +87,34 @@ internal class IntervalKdTree<T>
                 }
             }
 
-            if (HasChildren())
+            if (!HasChildren())
             {
-                if (cube.IsBelow(_depth, _divisionBoundary))
+                yield break;
+            }
+
+            if (cube.IsBelow(_depth, _divisionBoundary))
+            {
+                foreach (var value in _lowChild.GetValues(cube))
                 {
-                    foreach (var value in _lowChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
+                    yield return value;
                 }
-                else if (cube.IsAbove(_depth, _divisionBoundary))
+            }
+            else if (cube.IsAbove(_depth, _divisionBoundary))
+            {
+                foreach (var value in _highChild.GetValues(cube))
                 {
-                    foreach (var value in _highChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
+                    yield return value;
                 }
-                else
+            }
+            else
+            {
+                foreach (var value in _lowChild.GetValues(cube))
                 {
-                    foreach (var value in _lowChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
-                    foreach (var value in _highChild.GetValues(cube))
-                    {
-                        yield return value;
-                    }
+                    yield return value;
+                }
+                foreach (var value in _highChild.GetValues(cube))
+                {
+                    yield return value;
                 }
             }
         }

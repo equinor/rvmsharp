@@ -86,31 +86,33 @@ public static class RvmConnect
                 const float alignedThreshold = -0.995f; // 0.995 => About 5.7 degrees // This number was 0.98 => 12 degrees in cdyk/rvmparser
                 bool aligned = Vector3.Dot(anchors[j].Direction, anchors[i].Direction) < alignedThreshold;
 
-                if (canMatch && close && aligned)
+                if (!canMatch || !close || !aligned)
                 {
-                    RvmConnection connection = new RvmConnection(
-                        primitive1: anchors[j].Geo,
-                        primitive2: anchors[i].Geo,
-                        connectionIndex1: anchors[j].ConnectionIndex,
-                        connectionIndex2: anchors[i].ConnectionIndex,
-                        position: anchors[j].Position,
-                        direction: anchors[j].Direction,
-                        connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
-                    );
-
-                    context.store.Connections.Add(connection);
-
-                    anchors[j].Geo.Connections[anchors[j].ConnectionIndex] = connection;
-                    anchors[i].Geo.Connections[anchors[i].ConnectionIndex] = connection;
-
-                    anchors[j].Matched = true;
-                    anchors[i].Matched = true;
-                    context.AnchorsMatched += 2;
-
-                    //context->store->addDebugLine((a[j].p + 0.03f*a[j].d).data,
-                    //                             (a[i].p + 0.03f*a[i].d).data,
-                    //                             0x0000ff);
+                    continue;
                 }
+
+                RvmConnection connection = new RvmConnection(
+                    primitive1: anchors[j].Geo,
+                    primitive2: anchors[i].Geo,
+                    connectionIndex1: anchors[j].ConnectionIndex,
+                    connectionIndex2: anchors[i].ConnectionIndex,
+                    position: anchors[j].Position,
+                    direction: anchors[j].Direction,
+                    connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
+                );
+
+                context.store.Connections.Add(connection);
+
+                anchors[j].Geo.Connections[anchors[j].ConnectionIndex] = connection;
+                anchors[i].Geo.Connections[anchors[i].ConnectionIndex] = connection;
+
+                anchors[j].Matched = true;
+                anchors[i].Matched = true;
+                context.AnchorsMatched += 2;
+
+                //context->store->addDebugLine((a[j].p + 0.03f*a[j].d).data,
+                //                             (a[i].p + 0.03f*a[i].d).data,
+                //                             0x0000ff);
             }
         }
 

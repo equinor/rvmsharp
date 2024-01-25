@@ -118,7 +118,7 @@ public static class RvmAlign
         upLocal.Z = 0.0f; // project to xy-plane
 
         geo.SampleStartAngle = (float)Math.Atan2(upLocal.Y, upLocal.X);
-        if (!FloatExtensions.IsFinite(geo.SampleStartAngle))
+        if (!geo.SampleStartAngle.IsFinite())
         {
             geo.SampleStartAngle = 0.0f;
         }
@@ -219,7 +219,7 @@ public static class RvmAlign
             }
 
             var upWorld = Vector3.Normalize(Vector3.Cross(d, b));
-            if (!FloatExtensions.IsFinite(upWorld.LengthSquared()))
+            if (!upWorld.LengthSquared().IsFinite())
                 throw new Exception("Invalid world");
 
             context.Front = 0;

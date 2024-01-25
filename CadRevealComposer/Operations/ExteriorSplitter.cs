@@ -193,37 +193,37 @@ public static class ExteriorSplitter
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
         var isHit = diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
-        if (isHit)
+        if (!isHit)
         {
-            float distance;
-            if (ray.Direction.X < 0f)
-            {
-                distance = boundingBox.Min.X - ray.Origin.X;
-            }
-            else if (ray.Direction.Y < 0f)
-            {
-                distance = boundingBox.Min.Y - ray.Origin.Y;
-            }
-            else if (ray.Direction.Z < 0f)
-            {
-                distance = boundingBox.Min.Z - ray.Origin.Z;
-            }
-            else if (ray.Direction.X > 0f)
-            {
-                distance = ray.Origin.X - boundingBox.Max.X;
-            }
-            else if (ray.Direction.Y > 0f)
-            {
-                distance = ray.Origin.Y - boundingBox.Max.Y;
-            }
-            else
-            {
-                distance = ray.Origin.Z - boundingBox.Max.Z;
-            }
-            return (true, distance);
+            return (false, float.NaN);
         }
 
-        return (false, float.NaN);
+        float distance;
+        if (ray.Direction.X < 0f)
+        {
+            distance = boundingBox.Min.X - ray.Origin.X;
+        }
+        else if (ray.Direction.Y < 0f)
+        {
+            distance = boundingBox.Min.Y - ray.Origin.Y;
+        }
+        else if (ray.Direction.Z < 0f)
+        {
+            distance = boundingBox.Min.Z - ray.Origin.Z;
+        }
+        else if (ray.Direction.X > 0f)
+        {
+            distance = ray.Origin.X - boundingBox.Max.X;
+        }
+        else if (ray.Direction.Y > 0f)
+        {
+            distance = ray.Origin.Y - boundingBox.Max.Y;
+        }
+        else
+        {
+            distance = ray.Origin.Z - boundingBox.Max.Z;
+        }
+        return (true, distance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

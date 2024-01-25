@@ -187,26 +187,28 @@ public class RvmTessellator
     {
         var tessellated = Tessellate(primitiveToTessellate, tessellationLogObject);
         var mesh = ConvertRvmMesh(tessellated);
-        if (simplifierThreshold > 0.0f)
+        if (!(simplifierThreshold > 0.0f))
         {
-            Interlocked.Add(
-                ref simplificationLogObject.SimplificationBeforeVertexCount,
-                mesh.Vertices.Length * numberOfInstances
-            );
-            Interlocked.Add(
-                ref simplificationLogObject.SimplificationBeforeTriangleCount,
-                mesh.TriangleCount * numberOfInstances
-            );
-            mesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, simplifierThreshold);
-            Interlocked.Add(
-                ref simplificationLogObject.SimplificationAfterVertexCount,
-                mesh.Vertices.Length * numberOfInstances
-            );
-            Interlocked.Add(
-                ref simplificationLogObject.SimplificationAfterTriangleCount,
-                mesh.TriangleCount * numberOfInstances
-            );
+            return mesh;
         }
+
+        Interlocked.Add(
+            ref simplificationLogObject.SimplificationBeforeVertexCount,
+            mesh.Vertices.Length * numberOfInstances
+        );
+        Interlocked.Add(
+            ref simplificationLogObject.SimplificationBeforeTriangleCount,
+            mesh.TriangleCount * numberOfInstances
+        );
+        mesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, simplifierThreshold);
+        Interlocked.Add(
+            ref simplificationLogObject.SimplificationAfterVertexCount,
+            mesh.Vertices.Length * numberOfInstances
+        );
+        Interlocked.Add(
+            ref simplificationLogObject.SimplificationAfterTriangleCount,
+            mesh.TriangleCount * numberOfInstances
+        );
 
         return mesh;
     }
@@ -223,22 +225,23 @@ public class RvmTessellator
             mesh = RvmMesh.Empty;
         }
 
-        if (mesh.Vertices.Length == 0)
+        if (mesh.Vertices.Length != 0)
         {
-            if (primitive is RvmFacetGroup f)
-            {
+            return mesh;
+        }
+
+        switch (primitive)
+        {
+            case RvmFacetGroup f:
                 logObject.AddFailedFacetGroup(f.Polygons.Length);
-            }
-            else if (primitive is RvmPyramid)
-            {
+                break;
+            case RvmPyramid:
                 logObject.AddFailedPyramid();
-            }
-            else
-            {
+                break;
+            default:
                 throw new NotImplementedException(
                     $"Could not tessellate primitive of type {primitive.GetType()}. \n{primitive}. This is unexpected. If this needs to be handled add a case for it"
                 );
-            }
         }
 
         return mesh;
