@@ -5,8 +5,15 @@
     <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <LangVersion>latest</LangVersion>
+
+    <!-- Package metadata -->
+    <Copyright>Equinor ASA</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Company>Equinor ASA</Company>
+    <PackageDescription>Rvmsharp is an Aveva .RVM file format reader</PackageDescription>
+    <RepositoryUrl>https://github.com/equinor/rvmsharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
