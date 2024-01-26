@@ -264,7 +264,7 @@ public static class ConicSectionsHelper
             );
         }
         // the matrix does not have a null space, so the only solution is a null vector
-        return ConicSectionsHelper.ZeroEllipseImplicit;
+        return ZeroEllipseImplicit;
     }
 
     // converts general ellipse in implicit form to polar form

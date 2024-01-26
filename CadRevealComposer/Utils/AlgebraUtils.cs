@@ -3,6 +3,7 @@
 
 namespace CadRevealComposer.Utils;
 
+using Commons.Utils;
 using System;
 using System.Diagnostics;
 using System.Numerics;

@@ -3,6 +3,7 @@ namespace CadRevealRvmProvider.Converters;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
