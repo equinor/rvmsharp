@@ -76,13 +76,12 @@ public record RvmSnout(
                 : ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
         }
         //cylinders
-        var cosineSlope = Vector3.Dot(xPlane.normal, new Vector3(0.0f, 0.0f, 1.0f));
+        var cosineSlope = Vector3.Dot(xPlane.Normal, new Vector3(0.0f, 0.0f, 1.0f));
 
         // the most trivial case, cylinder with zero slope
         return cosineSlope.ApproximatelyEquals(1)
             ? ConicSectionsHelper.CalcEllipseIntersectionForCylinderWithZeroCapSlope(RadiusBottom, capCenter)
             : ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
-
     }
 
     private (Quaternion rotation, Vector3 normal, float slope) TranslateShearToSlope(float shearX, float shearY)

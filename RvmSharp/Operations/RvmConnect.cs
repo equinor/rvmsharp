@@ -101,7 +101,7 @@ public static class RvmConnect
                     connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
                 );
 
-                context.store.Connections.Add(connection);
+                context.Store.Connections.Add(connection);
 
                 anchors[j].Geo.Connections[anchors[j].ConnectionIndex] = connection;
                 anchors[i].Geo.Connections[anchors[i].ConnectionIndex] = connection;
