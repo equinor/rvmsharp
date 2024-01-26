@@ -1,6 +1,7 @@
-﻿namespace CadRevealComposer.Utils;
+﻿namespace Commons.Utils;
 
 using System;
+using System.Runtime.CompilerServices;
 
 public static class FloatExtensions
 {
@@ -40,5 +41,12 @@ public static class FloatExtensions
     {
         // ReSharper disable once CompareOfFloatsByEqualityOperator -- Equality comparing after rounding should be safe
         return MathF.Round(self, decimals) == MathF.Round(other, decimals);
+    }
+
+    /// <summary>Determines whether the specified value is finite (Not NaN && Not Infinity).</summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFinite(this float f)
+    {
+        return !float.IsNaN(f) && !float.IsInfinity(f);
     }
 }

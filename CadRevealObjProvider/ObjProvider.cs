@@ -165,10 +165,7 @@ public class ObjProvider : IModelFormatProvider
             Triangles = triangles.ToArray()
         };
 
-        if (mesh.Vertices.Length == 0)
-            return null;
-
-        return mesh;
+        return mesh.Vertices.Length == 0 ? null : mesh;
     }
 
     private static Vector3 ToVector3(Vertex x)

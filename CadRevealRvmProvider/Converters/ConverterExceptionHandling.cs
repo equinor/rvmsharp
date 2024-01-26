@@ -2,7 +2,6 @@
 
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Numerics;
 
 public static class ConverterExceptionHandling

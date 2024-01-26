@@ -1,14 +1,13 @@
 ﻿namespace CadRevealComposer.Operations.Tessellating;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Tessellation;
-using CadRevealComposer.Utils;
 using Commons.Utils;
+using Primitives;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using Tessellation;
+using Utils;
 
 public static class GeneralRingTessellator
 {
@@ -39,7 +38,7 @@ public static class GeneralRingTessellator
         var center = Vector3.Zero;
         var thickness = generalRing.Thickness;
 
-        if (thickness == 1) // Thickness is a value between 0 - 1, 1 means full cake slice
+        if (thickness.ApproximatelyEquals(1)) // Thickness is a value between 0 - 1, 1 means full cake slice
         {
             vertices.Add(center);
             for (uint i = 0; i < segments + 1; i++)

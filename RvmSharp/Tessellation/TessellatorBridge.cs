@@ -284,12 +284,14 @@ public static class TessellatorBridge
         for (var i = 0; i < 2; i++)
         {
             var con = rectangularTorus.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasRectangularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
-                {
-                    cap[i] = false;
-                }
+                continue;
+            }
+
+            if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
+            {
+                cap[i] = false;
             }
         }
 
@@ -467,16 +469,18 @@ public static class TessellatorBridge
         for (var i = 0; i < 2; i++)
         {
             var con = circularTorus.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
-                {
-                    cap[i] = false;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
+            }
+
+            if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
+            {
+                cap[i] = false;
+            }
+            else
+            {
+                //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
             }
         }
 
@@ -678,7 +682,11 @@ public static class TessellatorBridge
                 faces_n++;
         }
 
-        if (faces_n > 0)
+        if (faces_n <= 0)
+        {
+            return new RvmMesh(new float[0], new float[0], new int[0], 0);
+        }
+
         {
             var vertices_n = 4 * faces_n;
             var vertices = new float[3 * vertices_n];
@@ -707,15 +715,13 @@ public static class TessellatorBridge
 
             var tri = new RvmMesh(vertices, normals, indices, 0.0f);
 
-            if (!(i_v == 3 * vertices_n) || !(i_p == 3 * triangles_n) || !(o == vertices_n))
+            if (i_v != 3 * vertices_n || i_p != 3 * triangles_n || o != vertices_n)
             {
                 throw new Exception();
             }
 
             return tri;
         }
-
-        return new RvmMesh(new float[0], new float[0], new int[0], 0);
     }
 
     private static RvmMesh Tessellate(RvmFacetGroup facetGroup)
@@ -785,18 +791,17 @@ public static class TessellatorBridge
         for (int i = 0; i < 2; i++)
         {
             var con = cylinder.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
-                {
-                    shouldCap[i] = false;
-                    //discardedCaps++;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
             }
+
+            if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
+            {
+                shouldCap[i] = false;
+                //discardedCaps++;
+            }
+            //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
         }
 
         int vertCount = (shell ? 2 * samples : 0) + (shouldCap[0] ? samples : 0) + (shouldCap[1] ? samples : 0);
@@ -938,17 +943,16 @@ public static class TessellatorBridge
         for (var i = 0; i < 2; i++)
         {
             var con = snout.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(snout, con))
-                {
-                    cap[i] = false;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
             }
+
+            if (ConnectionInterface.DoInterfacesMatch(snout, con))
+            {
+                cap[i] = false;
+            }
+            //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
         }
 
         var t0 = new float[2 * samples];
@@ -1218,12 +1222,14 @@ public static class TessellatorBridge
                     indices.Add(o_n + ii_n);
                     indices.Add(o_c + ii_c);
 
-                    if (i_n != ii_n)
+                    if (i_n == ii_n)
                     {
-                        indices.Add(o_c + i_c);
-                        indices.Add(o_n + i_n);
-                        indices.Add(o_n + ii_n);
+                        continue;
                     }
+
+                    indices.Add(o_c + i_c);
+                    indices.Add(o_n + i_n);
+                    indices.Add(o_n + ii_n);
                 }
             }
 
