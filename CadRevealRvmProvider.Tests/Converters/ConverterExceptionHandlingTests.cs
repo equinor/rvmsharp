@@ -20,8 +20,8 @@ public class ExceptionHandlerConverterTests
     private RvmSphericalDish _rvmSphericalDish = null!;
 
     private readonly FailedPrimitivesLogObject _logObject = new FailedPrimitivesLogObject();
-    private Vector3 _scale = new Vector3(1, 1, 1);
-    private Quaternion _rotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
+    private readonly Vector3 _scale = new Vector3(1, 1, 1);
+    private readonly Quaternion _rotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
 
     [SetUp]
     public void Setup()

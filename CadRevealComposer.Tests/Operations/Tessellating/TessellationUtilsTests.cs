@@ -1,7 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
-using System;
 using System.Numerics;
 
 [TestFixture]

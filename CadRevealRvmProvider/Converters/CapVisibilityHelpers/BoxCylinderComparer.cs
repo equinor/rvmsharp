@@ -20,13 +20,15 @@ public static class BoxCylinderComparer
         var cylinderRadius = rvmCylinder.Radius * cylinderScale.X;
 
         // Only check for the cylinder, because a box does not have any caps
-        if (cylinderCapData.IsCurrentPrimitive)
+        if (!cylinderCapData.IsCurrentPrimitive)
         {
-            // TODO: Is it possible to find out which sides to compare with?
-            if (cylinderRadius < halfLengthX && cylinderRadius < halfLengthY && cylinderRadius < halfLengthZ)
-            {
-                return false;
-            }
+            return true;
+        }
+
+        // TODO: Is it possible to find out which sides to compare with?
+        if (cylinderRadius < halfLengthX && cylinderRadius < halfLengthY && cylinderRadius < halfLengthZ)
+        {
+            return false;
         }
 
         return true;

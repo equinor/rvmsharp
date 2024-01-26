@@ -1,6 +1,5 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using System;
 using System.Numerics;
 
 public static class TessellationHelpers

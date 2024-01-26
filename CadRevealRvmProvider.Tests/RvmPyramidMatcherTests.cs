@@ -56,20 +56,22 @@ public class RvmPyramidMatcherTests
         );
 
         var result = RvmPyramidMatcher.Match(pyramidA, pyramidB, out var transform);
-        if (result)
+        if (!result)
         {
-            if (transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
-            {
-                (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
-                Console.WriteLine("Transform:");
-                Console.WriteLine("scale: " + scale.ToString("0.00"));
-                Console.WriteLine($"rotation: (x: {rollX:##.00} y: {pitchY:##.00} z: {yawZ:##.00})");
-                Console.WriteLine("translation: " + translation.ToString("0.00"));
-            }
-            else
-            {
-                Console.WriteLine("Failed to decompose matrix!");
-            }
+            return result;
+        }
+
+        if (transform.DecomposeAndNormalize(out var scale, out var rotation, out var translation))
+        {
+            (float rollX, float pitchY, float yawZ) = rotation.ToEulerAngles();
+            Console.WriteLine("Transform:");
+            Console.WriteLine("scale: " + scale.ToString("0.00"));
+            Console.WriteLine($"rotation: (x: {rollX:##.00} y: {pitchY:##.00} z: {yawZ:##.00})");
+            Console.WriteLine("translation: " + translation.ToString("0.00"));
+        }
+        else
+        {
+            Console.WriteLine("Failed to decompose matrix!");
         }
 
         return result;
