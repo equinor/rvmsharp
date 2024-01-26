@@ -1,13 +1,13 @@
 ﻿namespace CadRevealComposer.Operations.Tessellating;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Tessellation;
-using CadRevealComposer.Utils;
 using Commons.Utils;
+using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Tessellation;
+using Utils;
 
 public static class CircleTessellator
 {

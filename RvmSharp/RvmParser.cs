@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp;
 
 using Containers;
+using Operations;
 using Primitives;
-using RvmSharp.Operations;
 using System;
 using System.Collections.Generic;
 using System.IO;
