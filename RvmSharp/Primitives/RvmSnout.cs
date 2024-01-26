@@ -1,5 +1,6 @@
 namespace RvmSharp.Primitives;
 
+using Commons.Utils;
 using Operations;
 using System;
 using System.Numerics;
@@ -79,7 +80,7 @@ public record RvmSnout(
         var cosineSlope = Vector3.Dot(xPlane.normal, new Vector3(0.0f, 0.0f, 1.0f));
 
         // the most trivial case, cylinder with zero slope
-        return Math.Abs(cosineSlope - 1) < 0.0001
+        return cosineSlope.ApproximatelyEquals(1)
             ? ConicSectionsHelper.CalcEllipseIntersectionForCylinderWithZeroCapSlope(RadiusBottom, capCenter)
             : ConicSectionsHelper.CalcEllipseIntersectionForCylinder(xPlane, RadiusBottom, capCenter);
     }
