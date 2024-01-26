@@ -1,5 +1,6 @@
 namespace CadRevealComposer.AlgebraExtensions;
 
+using Commons.Utils;
 using System;
 using System.Numerics;
 using Utils;

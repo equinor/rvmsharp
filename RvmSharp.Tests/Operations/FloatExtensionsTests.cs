@@ -1,7 +1,7 @@
 ﻿namespace RvmSharp.Tests.Operations;
 
+using Commons.Utils;
 using NUnit.Framework;
-using RvmSharp.Operations;
 
 [TestFixture]
 public class FloatExtensionsTests

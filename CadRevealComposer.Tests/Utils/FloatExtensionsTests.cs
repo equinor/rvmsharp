@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Utils;
+using Commons.Utils;
 
 [TestFixture]
 public class FloatExtensionsTests

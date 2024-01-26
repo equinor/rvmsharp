@@ -26,13 +26,15 @@ public static class BoxSnoutComparer
         var snoutMajorAxis = snoutEllipse.semiMajorAxis * snoutScale.X;
 
         // Only check for the snout, because a box does not have any caps
-        if (snoutCapData.IsCurrentPrimitive)
+        if (!snoutCapData.IsCurrentPrimitive)
         {
-            // TODO: Is it possible to find out which sides to compare with?
-            if (snoutMajorAxis < halfLengthX && snoutMajorAxis < halfLengthY && snoutMajorAxis < halfLengthZ)
-            {
-                return false;
-            }
+            return true;
+        }
+
+        // TODO: Is it possible to find out which sides to compare with?
+        if (snoutMajorAxis < halfLengthX && snoutMajorAxis < halfLengthY && snoutMajorAxis < halfLengthZ)
+        {
+            return false;
         }
 
         return true;
