@@ -368,8 +368,7 @@ public class RvmPrimitiveTests
         );
         var snout1N4D = new Vector4(snout1N.X, snout1N.Y, snout1N.Z, 0.0f);
 
-        var distance1 =
-            snout1N.X * ptOrigEll1[0] + snout1N.Y * ptOrigEll1[1] + snout1N.Z * ptOrigEll1[2] + snout1Dc;
+        var distance1 = snout1N.X * ptOrigEll1[0] + snout1N.Y * ptOrigEll1[1] + snout1N.Z * ptOrigEll1[2] + snout1Dc;
 
         // snout2 -> bottom TOP!!
         var snout2CapCenter = 0.5f * (new Vector3(snout2.OffsetX, snout2.OffsetY, snout2.Height));
@@ -380,8 +379,7 @@ public class RvmPrimitiveTests
         );
         var snout2N4D = new Vector4(snout2N.X, snout2N.Y, snout2N.Z, 0.0f);
 
-        var distance2 =
-            snout2N.X * ptOrigEll2[0] + snout2N.Y * ptOrigEll2[1] + snout2N.Z * ptOrigEll2[2] + snout2Dc;
+        var distance2 = snout2N.X * ptOrigEll2[0] + snout2N.Y * ptOrigEll2[1] + snout2N.Z * ptOrigEll2[2] + snout2Dc;
 
         var v4TransfNormal1 = Vector4.Transform(snout1N4D, snout1.Matrix);
         var v4TransfNormal2 = Vector4.Transform(snout2N4D, snout2.Matrix);
@@ -500,8 +498,7 @@ public class RvmPrimitiveTests
         );
         var snout1N4D = new Vector4(snout1N.X, snout1N.Y, snout1N.Z, 0.0f);
 
-        var distance1 =
-            snout1N.X * ptOrigEll1[0] + snout1N.Y * ptOrigEll1[1] + snout1N.Z * ptOrigEll1[2] + snout1Dc;
+        var distance1 = snout1N.X * ptOrigEll1[0] + snout1N.Y * ptOrigEll1[1] + snout1N.Z * ptOrigEll1[2] + snout1Dc;
 
         // snout2 -> bottom
         var snout2CapCenter = -0.5f * (new Vector3(snout2.OffsetX, snout2.OffsetY, snout2.Height));
@@ -512,8 +509,7 @@ public class RvmPrimitiveTests
         );
         var snout2N4D = new Vector4(snout2N.X, snout2N.Y, snout2N.Z, 0.0f);
 
-        var distance2 =
-            snout2N.X * ptOrigEll2[0] + snout2N.Y * ptOrigEll2[1] + snout2N.Z * ptOrigEll2[2] + snout2Dc;
+        var distance2 = snout2N.X * ptOrigEll2[0] + snout2N.Y * ptOrigEll2[1] + snout2N.Z * ptOrigEll2[2] + snout2Dc;
 
         var v4TransfNormal1 = Vector4.Transform(snout1N4D, snout1.Matrix);
         var v4TransfNormal2 = Vector4.Transform(snout2N4D, snout2.Matrix);
@@ -613,8 +609,7 @@ public class RvmPrimitiveTests
         );
         var snout1N4D = new Vector4(snout1N.X, snout1N.Y, snout1N.Z, 0.0f);
 
-        var distance1 =
-            snout1N.X * ptOrigEll1[0] + snout1N.Y * ptOrigEll1[1] + snout1N.Z * ptOrigEll1[2] + snout1Dc;
+        var distance1 = snout1N.X * ptOrigEll1[0] + snout1N.Y * ptOrigEll1[1] + snout1N.Z * ptOrigEll1[2] + snout1Dc;
 
         // snout2 -> bottom
         var snout2CapCenter = -0.5f * (new Vector3(snout2.OffsetX, snout2.OffsetY, snout2.Height));
@@ -625,8 +620,7 @@ public class RvmPrimitiveTests
         );
         var snout2N4D = new Vector4(snout2N.X, snout2N.Y, snout2N.Z, 0.0f);
 
-        var distance2 =
-            snout2N.X * ptOrigEll2[0] + snout2N.Y * ptOrigEll2[1] + snout2N.Z * ptOrigEll2[2] + snout2Dc;
+        var distance2 = snout2N.X * ptOrigEll2[0] + snout2N.Y * ptOrigEll2[1] + snout2N.Z * ptOrigEll2[2] + snout2Dc;
 
         var v4TransfNormal1 = Vector4.Transform(snout1N4D, snout1.Matrix);
         var v4TransfNormal2 = Vector4.Transform(snout2N4D, snout2.Matrix);
