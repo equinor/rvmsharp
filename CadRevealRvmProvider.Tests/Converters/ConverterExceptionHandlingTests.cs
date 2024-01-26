@@ -19,7 +19,7 @@ public class ExceptionHandlerConverterTests
     private RvmSphere _rvmSphere = null!;
     private RvmSphericalDish _rvmSphericalDish = null!;
 
-    private readonly FailedPrimitivesLogObject logObject = new FailedPrimitivesLogObject();
+    private readonly FailedPrimitivesLogObject _logObject = new FailedPrimitivesLogObject();
     private Vector3 _scale = new Vector3(1, 1, 1);
     private Quaternion _rotation = new Quaternion(0.5f, 0.5f, 0.5f, 0.5f);
 
@@ -115,63 +115,63 @@ public class ExceptionHandlerConverterTests
     [Test]
     public void InvalidRvmBox()
     {
-        bool result = _rvmBox.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmBox.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmCircularTorus()
     {
-        bool result = _rvmCircularTorus.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmCircularTorus.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmCylinder()
     {
-        bool result = _rvmCylinder.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmCylinder.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsTrue(result); // Returns a cap (a circle), so this must be allowed
     }
 
     [Test]
     public void InvalidRvmEllipticalDish()
     {
-        bool result = _rvmEllipticalDish.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmEllipticalDish.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmPyramid()
     {
-        bool result = _rvmPyramid.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmPyramid.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmRectangularTorus()
     {
-        bool result = _rvmRectangularTorus.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmRectangularTorus.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmSnout()
     {
-        bool result = _rvmSnout.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmSnout.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmSphere()
     {
-        bool result = _rvmSphere.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmSphere.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 
     [Test]
     public void InvalidRvmSphericalDish()
     {
-        bool result = _rvmSphericalDish.CanBeConverted(_scale, _rotation, logObject);
+        bool result = _rvmSphericalDish.CanBeConverted(_scale, _rotation, _logObject);
         Assert.IsFalse(result);
     }
 

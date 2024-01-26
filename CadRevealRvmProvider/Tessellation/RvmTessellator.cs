@@ -121,7 +121,7 @@ public class RvmTessellator
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
 
-        var meshSimplificiationLogObject = new SimplificationLogObject();
+        var meshSimplificationLogObject = new SimplificationLogObject();
         var meshTessellationLogObject = new TessellationLogObject("Failed mesh tessellations");
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
@@ -131,7 +131,7 @@ public class RvmTessellator
                     TessellateAndCreateTriangleMesh(
                         x,
                         simplifierThreshold,
-                        meshSimplificiationLogObject,
+                        meshSimplificationLogObject,
                         meshTessellationLogObject
                     )
             )
@@ -141,7 +141,7 @@ public class RvmTessellator
         meshTessellationLogObject.LogFailedTessellations();
         Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
 
-        SimplificationLogObject.LogSimplifications(meshSimplificiationLogObject, instanceSimplificationLogObject);
+        SimplificationLogObject.LogSimplifications(meshSimplificationLogObject, instanceSimplificationLogObject);
 
         return instancedMeshes.Cast<APrimitive>().Concat(triangleMeshes).ToArray();
     }

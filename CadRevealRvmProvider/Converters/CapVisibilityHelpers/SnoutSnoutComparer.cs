@@ -102,7 +102,7 @@ public static class SnoutSnoutComparer
             var px = ptE1TransformedToXplaneCoordOfE2[i][x];
             var py = ptE1TransformedToXplaneCoordOfE2[i][y];
 
-            var d = ConicSectionsHelper.CalcDistancePointEllise(ellipseOther.Ellipse2DPolar, px, py);
+            var d = ConicSectionsHelper.CalcDistancePointEllipse(ellipseOther.Ellipse2DPolar, px, py);
             if (d > 0.1) // 0.1mm
             {
                 return true;
