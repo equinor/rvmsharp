@@ -87,47 +87,40 @@ public static class CadRevealComposerRunner
             // collect all nodes for later sector division of the entire scene
             nodesToExport.AddRange(cadRevealNodes);
             // Adding Surface Unit Volume Attributes for Sleipner T
-                var regex = new Regex(@"^\/\d+[A-Z]\d+$");
-                foreach (CadRevealNode cadRevealNode in cadRevealNodes)
+            var regex = new Regex(@"^\/\d+[A-Z]\d+$");
+            foreach (CadRevealNode cadRevealNode in cadRevealNodes)
+            {
+                if (cadRevealNode.Parent?.Name.Contains("/A00-AREA") == true)
                 {
-                    if (cadRevealNode.Parent?.Name.Contains("/A00-AREA") == true)
+                    if (regex.IsMatch(cadRevealNode.Name))
                     {
-                        if (regex.IsMatch(cadRevealNode.Name))
-                        {
-                            cadRevealNode.Attributes.Add("SurfaceUnitVolume", "true");
-                            cadRevealNode.Attributes.Add(cadRevealNode.Name.TrimStart('/'), "true");
-                        }
+                        cadRevealNode.Attributes.Add("SurfaceUnitVolume", "true");
+                        cadRevealNode.Attributes.Add(cadRevealNode.Name.TrimStart('/'), "true");
                     }
                 }
+            }
 
-                // Add Surface Unit Metadata
-                List<string> fileNames = new() { "SLT_surface_units.csv" };
+            // Add Surface Unit Metadata
+            List<string> fileNames = new() { "SLT_surface_units.csv" };
 
-                fileNames.ForEach(fileName =>
+            fileNames.ForEach(fileName =>
+            {
+                var filePath = Path.Combine(inputFolderPath.FullName, fileName);
+                if (File.Exists(filePath))
                 {
-                    var filePath = Path.Combine(inputFolderPath.FullName, fileName);
-                    if (File.Exists(filePath))
-                    {
-                        SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, filePath);
-                    }
-                });
+                    SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, filePath);
+                }
+            });
 
-                // collect all nodes for later sector division of the entire scene
-                nodesToExport.AddRange(cadRevealNodes);
+            var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
-                var inputGeometries = cadRevealNodes
-                    .AsParallel()
-                    .AsOrdered()
-                    .SelectMany(x => x.Geometries)
-                    .ToArray();
-
-                var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
-                    inputGeometries,
-                    composerParameters,
-                    modelParameters,
-                    instanceIdGenerator
-                );
-                geometriesToProcess.AddRange(geometriesIncludingMeshes);
+            var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                inputGeometries,
+                composerParameters,
+                modelParameters,
+                instanceIdGenerator
+            );
+            geometriesToProcess.AddRange(geometriesIncludingMeshes);
         }
 
         // If there is no metadata for this model, the json will be empty
