@@ -9,7 +9,7 @@ using System.Numerics;
 [TestFixture]
 public class RvmPyramidInstancerTests
 {
-    private static RvmBoundingBox ThrowawayBoundingBox => new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
+    private RvmBoundingBox ThrowawayBoundingBox => new RvmBoundingBox(Vector3.Zero, Vector3.Zero);
 
     [Test]
     public void Process_WhenTwoIdenticalMeshes_IgnoresOneOfThem()
