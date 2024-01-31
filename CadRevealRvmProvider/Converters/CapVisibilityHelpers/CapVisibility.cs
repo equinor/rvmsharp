@@ -15,7 +15,7 @@ public static class CapVisibility
     /// Allows caps to be hidden even if it is a bit larger than the connected cap.
     /// This value should be so low that it doesn't impact user experience by hiding caps that are clearly visible
     /// </summary>
-    public static readonly float CapOverlapTolerance = 0.01f; // 0.01 is 1 cm
+    public const float CapOverlapTolerance = 0.01f; // 0.01 is 1 cm
 
     /// <summary>
     /// Checks cap visibility on RvmPrimitives with one cap
