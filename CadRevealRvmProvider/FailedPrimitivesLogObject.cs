@@ -44,7 +44,7 @@ public class FailedPrimitivesLogObject
         }
     }
 
-    private void LogFailedPrimitive(FailedConversionCases failedConversionReasons)
+    private static void LogFailedPrimitive(FailedConversionCases failedConversionReasons)
     {
         if (failedConversionReasons.RotationCounter > 0)
             Console.WriteLine(
