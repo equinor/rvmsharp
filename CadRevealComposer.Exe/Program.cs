@@ -9,7 +9,6 @@ using ModelFormatProvider;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 
 public static class Program
@@ -48,24 +47,29 @@ public static class Program
             new InstancingThreshold(options.InstancingThreshold),
             new TemplateCountLimit(options.TemplateCountLimit)
         );
-        var programPath = Path.GetDirectoryName(typeof(Program).Assembly.Location);
-        var toolsPath = Path.Combine(programPath!, "tools");
+
+        if (options.NodeNameExcludeRegex != null)
+        {
+            // Ensure regex is valid.
+            if (!RegexUtils.IsValidRegex(options.NodeNameExcludeRegex))
+                throw new ArgumentException(
+                    $"The {nameof(options.NodeNameExcludeRegex)} is not a valid regex. Check its syntax. "
+                        + $"The input was: {options.NodeNameExcludeRegex}"
+                );
+        }
+
         var toolsParameters = new ComposerParameters(
-            Path.Combine(toolsPath, OperatingSystem.IsMacOS() ? "mesh2ctm.osx" : "mesh2ctm.exe"),
             options.NoInstancing,
             options.SingleSector,
-            options.SplitIntoZones
+            options.SplitIntoZones,
+            new NodeNameExcludeRegex(options.NodeNameExcludeRegex),
+            options.SimplificationThreshold,
+            options.DevPrimitiveCacheFolder
         );
 
         if (options.SplitIntoZones)
         {
             throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
-        }
-
-        if (!File.Exists(toolsParameters.Mesh2CtmToolPath))
-        {
-            Console.WriteLine($"Not found: {toolsParameters.Mesh2CtmToolPath}");
-            return 1;
         }
 
         var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider(), new FbxProvider() };

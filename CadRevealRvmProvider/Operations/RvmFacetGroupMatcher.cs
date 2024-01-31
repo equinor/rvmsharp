@@ -1,6 +1,7 @@
 namespace CadRevealRvmProvider.Operations;
 
 using CadRevealComposer.Utils;
+using Commons.Utils;
 using RvmSharp.Primitives;
 using System.Diagnostics;
 using System.Numerics;
@@ -159,7 +160,6 @@ public static class RvmFacetGroupMatcher
     /// <param name="candidates"></param>
     /// <param name="maxNoTemplates"></param>
     /// <returns></returns>
-
     private static Result[] ReduceNumberOfTemplates(Result[] candidates, uint maxNoTemplates)
     {
         // groups that are not an instance of a template (regular groups) are copied over as is
@@ -222,7 +222,10 @@ public static class RvmFacetGroupMatcher
         Console.WriteLine("Algorithm is O(n^2) of group size (worst case).");
         Console.WriteLine("Explanations. IC: iteration count, TC: template count, VC: vertex count");
 
-        (IReadOnlyList<Result> Result, long IterationCounter) MatchGroup(RvmFacetGroup[] facetGroups)
+        (IReadOnlyList<Result> Result, long IterationCounter) MatchGroup(
+            RvmFacetGroup[] facetGroups,
+            FacetGroupMatcherLogObject logObject
+        )
         {
             var result = new List<Result>();
 
@@ -279,10 +282,14 @@ public static class RvmFacetGroupMatcher
             }
 
             var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
-            var fraction = instancedCount / (float)facetGroups.Length;
-            Console.WriteLine(
-                $"\tFound {instancedCount, 5:N0} instances in {facetGroups.Length, 6:N0} items ({fraction, 7:P1})."
-                    + $" TC: {templateCount, 4:N0}, VC: {vertexCount, 4:N0}, IC: {iterationCounter:N0} in {timer.Elapsed.TotalSeconds, 6:N} s."
+
+            logObject.AddFacetGroupMatchingResult(
+                instancedCount,
+                facetGroups.Length,
+                templateCount,
+                vertexCount,
+                iterationCounter,
+                timer.Elapsed.TotalSeconds
             );
 
             return (result, iterationCounter);
@@ -290,16 +297,18 @@ public static class RvmFacetGroupMatcher
 
         long iterationCounter = 0;
 
+        var instancingLogObject = new FacetGroupMatcherLogObject();
         var matchingResult = groupedFacetGroups
             .OrderByDescending(facetGroups => facetGroups.Length)
             .AsParallel()
             .SelectMany(x =>
             {
-                var result = MatchGroup(x);
+                var result = MatchGroup(x, instancingLogObject);
                 Interlocked.Add(ref iterationCounter, result.IterationCounter);
                 return result.Result;
             })
             .ToArray();
+        instancingLogObject.LogFacetGroupMatchingResults();
 
         var finalResult = ReduceNumberOfTemplates(matchingResult, maxNoTemplates);
 

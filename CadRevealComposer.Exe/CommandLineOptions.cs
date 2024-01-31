@@ -71,6 +71,13 @@ public class CommandLineOptions
     [Option(longName: "SingleSector", shortName: 's', Required = false, HelpText = "Create a single sector.")]
     public bool SingleSector { get; init; }
 
+    [Option(
+        longName: "NodeNameExcludeRegex",
+        Required = false,
+        HelpText = "A regex matching node names to _exclude_ from export. Not case sensitive."
+    )]
+    public string? NodeNameExcludeRegex { get; init; } = null;
+
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
 
@@ -97,6 +104,24 @@ public class CommandLineOptions
     ]
     public uint TemplateCountLimit { get; set; }
 
+    [
+        Option(
+            longName: "SimplificationThreshold",
+            Default = 0.0f,
+            Required = false,
+            HelpText = "The threshold used in simplification in meters. A reasonable value is 1 cm, i.e. 0.01."
+        ),
+        Range(0, float.MaxValue)
+    ]
+    public float SimplificationThreshold { get; set; }
+
+    [Option(
+        longName: "DevPrimitiveCacheFolder",
+        Required = false,
+        HelpText = "DevTool: The path to the primitive cache folder. If not set the primitive-cache will be disabled. By default the DevCache will use the input folders name to determine the cache file."
+    )]
+    public DirectoryInfo? DevPrimitiveCacheFolder { get; init; } = null;
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes
@@ -113,6 +138,15 @@ public class CommandLineOptions
         {
             // Creates the whole path
             Directory.CreateDirectory(options.OutputDirectory.FullName);
+        }
+
+        if (options.DevPrimitiveCacheFolder != null && !options.DevPrimitiveCacheFolder.Exists)
+        {
+            Directory.CreateDirectory(options.DevPrimitiveCacheFolder.FullName);
+            Console.WriteLine(
+                $"Created {nameof(options.DevPrimitiveCacheFolder)} at path: "
+                    + options.DevPrimitiveCacheFolder.FullName
+            );
         }
     }
 }

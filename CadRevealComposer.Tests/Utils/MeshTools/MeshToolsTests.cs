@@ -1,6 +1,6 @@
 ﻿namespace CadRevealComposer.Tests.Utils.MeshTools;
 
-using CadRevealFbxProvider.BatchUtils;
+using CadRevealComposer.Utils.MeshOptimization;
 using System.Numerics;
 using Tessellation;
 
@@ -16,7 +16,7 @@ public class MeshToolsTests
         Assert.That(newMesh.Vertices, Is.EquivalentTo(new[] { Vector3.One, Vector3.Zero }));
 
         // Expect Vertex 0 and 2 to be equal, and that indices have been changed to only be 0
-        Assert.That(newMesh.Triangles, Is.EquivalentTo(new[] { 0, 1, 0, 1, 0, 0 }));
+        Assert.That(newMesh.Indices, Is.EquivalentTo(new[] { 0, 1, 0, 1, 0, 0 }));
     }
 
     [Test]

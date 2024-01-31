@@ -61,7 +61,7 @@ public static class RvmWorkload
         return result.ToArray();
     }
 
-    public static RvmStore ReadRvmData(
+    public static RvmStore ReadRvmFiles(
         IReadOnlyCollection<(string rvmFilename, string? txtFilename)> workload,
         IProgress<(string fileName, int progress, int total)>? progressReport = null,
         IStringInternPool? stringInternPool = null

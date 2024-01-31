@@ -25,7 +25,8 @@ public class RvmSphereConverterTests
     [Test]
     public void RvmSphereConverter_ReturnsEllipsoidSegment()
     {
-        var geometries = _rvmSphere.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmSphere.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<EllipsoidSegment>());
         Assert.That(geometries.Length, Is.EqualTo(1));

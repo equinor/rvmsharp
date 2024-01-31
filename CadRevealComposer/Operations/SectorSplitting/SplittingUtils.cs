@@ -74,81 +74,73 @@ public static class SplittingUtils
     }
 
     /// <summary>
-    /// Split Nodes into groups of "regular nodes" and outlier nodes. Outliers are based on distance from the average center.
+    /// Split Nodes into groups of "regular nodes" and outlier nodes. Outliers are based on distance from the average truncated center.
     /// </summary>
     /// <param name="nodes">Nodes</param>
-    /// <param name="keepFactor">Value between 0 and 1 for how many percent of nodes to keep based on distance from center. 1 is 100% and keeps everything.</param>
-    /// <param name="paddingFactor">Padding factor to add some padding for distance calculation</param>
     /// <param name="outlierDistance">The minimum distance between most distant "regular" node and first outlier node.  Default 20.0 </param>
     /// <returns>
     /// (Node[] regularNodes, Node[] outlierNodes)
     /// </returns>
-    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public static (Node[] regularNodes, Node[] outlierNodes) SplitNodesIntoRegularAndOutlierNodes(
         this IReadOnlyCollection<Node> nodes,
-        float keepFactor,
-        float paddingFactor = 1.1f,
         float outlierDistance = 20.0f
     )
     {
-        if (keepFactor is <= 0 or > 1)
+        var truncatedAverage = TruncatedAverageCenter(nodes);
+
+        var orderedNodes = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage)).ToArray();
+
+        bool outliersExist = false;
+        int outlierStartIndex = 0;
+        for (int i = 1; i < orderedNodes.Length; i++)
         {
-            throw new ArgumentOutOfRangeException(nameof(keepFactor), keepFactor, "Must be > 0 and <= 1");
-        }
-
-        // TODO Optimize me
-        var avgCenter = new Vector3(
-            nodes.Average(x => x.BoundingBox.Center.X),
-            nodes.Average(x => x.BoundingBox.Center.Y),
-            nodes.Average(x => x.BoundingBox.Center.Z)
-        );
-
-        var percentileNode = nodes
-            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-            .Skip((int)(nodes.Count * keepFactor))
-            .FirstOrDefault();
-        if (percentileNode == null)
-            return (nodes.ToArray(), Array.Empty<Node>());
-
-        var lastKeepCandidate = nodes
-            .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-            .Take((int)(nodes.Count * keepFactor))
-            .LastOrDefault();
-        if (lastKeepCandidate == null)
-            return (nodes.ToArray(), Array.Empty<Node>());
-        var distanceLastKeepCandidate =
-            Vector3.Distance(lastKeepCandidate.BoundingBox.Center, avgCenter)
-            * paddingFactor /* Slight Padding */
-        ;
-
-        float distanceToPercentileNode =
-            Vector3.Distance(percentileNode.BoundingBox.Center, avgCenter)
-            * paddingFactor /* Slight Padding */
-        ;
-
-        if (distanceToPercentileNode - distanceLastKeepCandidate < outlierDistance)
-        {
-            var outlierCandidates = nodes
-                .OrderBy(x => Vector3.Distance(x.BoundingBox.Center, avgCenter))
-                .Skip((int)(nodes.Count * keepFactor))
-                .Select(x => new { Distance = Vector3.Distance(x.BoundingBox.Center, avgCenter) * paddingFactor })
-                .ToArray();
-            var newOutlierNode = outlierCandidates
-                .Where((x, i) => i > 0 && (x.Distance - outlierCandidates[i - 1].Distance > outlierDistance))
-                .FirstOrDefault();
-            if (newOutlierNode != null)
+            var firstDistance = Vector3.Distance(orderedNodes[i - 1].BoundingBox.Center, truncatedAverage);
+            var secondDistance = Vector3.Distance(orderedNodes[i].BoundingBox.Center, truncatedAverage);
+            if (secondDistance - firstDistance >= outlierDistance)
             {
-                distanceToPercentileNode = newOutlierNode.Distance;
+                outliersExist = true;
+                outlierStartIndex = i;
+                break;
             }
         }
 
-        var regularNodes = nodes
-            .Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) < distanceToPercentileNode)
-            .ToArray();
-        var outlierNodes = nodes
-            .Where(x => Vector3.Distance(x.BoundingBox.Center, avgCenter) >= distanceToPercentileNode)
-            .ToArray();
+        if (!outliersExist)
+        {
+            return (nodes.ToArray(), Array.Empty<Node>());
+        }
+
+        var regularNodes = orderedNodes.Take(outlierStartIndex).ToArray();
+        var outlierNodes = orderedNodes.Skip(outlierStartIndex).ToArray();
+
         return (regularNodes, outlierNodes);
+    }
+
+    /// <summary>
+    /// Calculates the truncated average center for a collection of nodes.
+    /// Discards the first and last 5% of values in an ascending ordered collection of the nodes
+    /// to avoid trouble with outliers.
+    /// </summary>
+    private static Vector3 TruncatedAverageCenter(this IReadOnlyCollection<Node> nodes)
+    {
+        var avgCenterX = nodes
+            .OrderBy(x => x.BoundingBox.Center.X)
+            .Skip((int)(nodes.Count * 0.05))
+            .Take((int)(nodes.Count * 0.95))
+            .Average(x => x.BoundingBox.Center.X);
+
+        var avgCenterY = nodes
+            .OrderBy(x => x.BoundingBox.Center.Y)
+            .Skip((int)(nodes.Count * 0.05))
+            .Take((int)(nodes.Count * 0.95))
+            .Average(x => x.BoundingBox.Center.Y);
+
+        var avgCenterZ = nodes
+            .OrderBy(x => x.BoundingBox.Center.Z)
+            .Skip((int)(nodes.Count * 0.05))
+            .Take((int)(nodes.Count * 0.95))
+            .Average(x => x.BoundingBox.Center.Z);
+
+        return new Vector3(avgCenterX, avgCenterY, avgCenterZ);
     }
 
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
@@ -160,7 +152,7 @@ public static class SplittingUtils
                 var boundingBox = geometries.CalculateBoundingBox();
                 if (boundingBox == null)
                 {
-                    throw new Exception("Unexpected error, the boundingbox should not have been null.");
+                    throw new Exception("Unexpected error, the bounding box should not have been null.");
                 }
                 return new Node(
                     g.TreeIndex,
@@ -171,5 +163,62 @@ public static class SplittingUtils
                 );
             })
             .ToArray();
+    }
+
+    /// <summary>
+    /// Group outliers based on outlierGroupingDistance.
+    /// This is done recursively to avoid the problem where nodes are at equal distance to the measuring point,
+    /// but not actually close to each other.
+    /// </summary>
+    public static IEnumerable<Node[]> GroupOutliersRecursive(Node[] outlierNodes, float outlierGroupingDistance)
+    {
+        var groups = GroupOutliers(outlierNodes, outlierNodes[0].BoundingBox.Center, outlierGroupingDistance);
+
+        if (groups.Count == 1)
+        {
+            yield return groups[0];
+            yield break;
+        }
+
+        // Try to handle nodes in a group that were symmetrical about the distance measure point
+        foreach (var group in groups)
+        {
+            var subGroups = GroupOutliersRecursive(group, outlierGroupingDistance);
+            foreach (var subGroup in subGroups)
+            {
+                yield return subGroup;
+            }
+        }
+    }
+
+    private static List<Node[]> GroupOutliers(
+        Node[] outlierNodes,
+        Vector3 distanceMeasurementPoint,
+        float outlierGroupingDistance
+    )
+    {
+        var sortedOutlierNodes = outlierNodes
+            .OrderBy(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
+            .ToArray();
+
+        var outlierDistances = sortedOutlierNodes
+            .Select(x => Vector3.Distance(distanceMeasurementPoint, x.BoundingBox.Center))
+            .ToArray();
+
+        var listOfGroups = new List<Node[]>();
+        var currentGroup = new List<Node>();
+        for (int i = 0; i < sortedOutlierNodes.Length; i++)
+        {
+            currentGroup.Add(sortedOutlierNodes[i]);
+
+            var isLastIteration = i == sortedOutlierNodes.Length - 1;
+            if (isLastIteration || outlierDistances[i + 1] - outlierDistances[i] > outlierGroupingDistance)
+            {
+                listOfGroups.Add(currentGroup.ToArray());
+                currentGroup.Clear();
+            }
+        }
+
+        return listOfGroups;
     }
 }

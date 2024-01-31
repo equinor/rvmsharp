@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Writers;
 
+using Commons.Utils;
 using Primitives;
 using SharpGLTF.IO;
 using SharpGLTF.Schema2;
@@ -89,7 +90,7 @@ public static class GltfWriter
             var sourceMesh = instanceMeshGroup.First().TemplateMesh;
 
             // create GLTF byte buffer
-            var indexCount = sourceMesh.Triangles.Length;
+            var indexCount = sourceMesh.Indices.Length;
             var vertexCount = sourceMesh.Vertices.Length;
             var indicesBufferSize = indexCount * sizeof(uint);
             var vertexBufferSize = vertexCount * 3 * sizeof(float);
@@ -121,7 +122,7 @@ public static class GltfWriter
 
             // write indices
             var indexBufferInt = MemoryMarshal.Cast<byte, uint>(indexBuffer.Content.AsSpan());
-            sourceMesh.Triangles.CopyTo(indexBufferInt);
+            sourceMesh.Indices.CopyTo(indexBufferInt);
 
             // write vertices
             var vertexBufferVector = MemoryMarshal.Cast<byte, Vector3>(vertexBuffer.Content.AsSpan());
@@ -192,7 +193,7 @@ public static class GltfWriter
 
     private static void WriteTriangleMeshes(TriangleMesh[] triangleMeshes, ModelRoot model, Scene scene)
     {
-        var indexCount = triangleMeshes.Sum(m => m.Mesh.Triangles.Length);
+        var indexCount = triangleMeshes.Sum(m => m.Mesh.Indices.Length);
         var vertexCount = triangleMeshes.Sum(m => m.Mesh.Vertices.Length);
         var indexBufferSize = indexCount * sizeof(uint);
         var vertexBufferByteStride = (1 + 1 + 3) * sizeof(float);
@@ -224,7 +225,7 @@ public static class GltfWriter
             var sourceMesh = triangleMesh.Mesh;
 
             // write indices
-            var indices = sourceMesh.Triangles;
+            var indices = sourceMesh.Indices;
             var indexBufferSpan = MemoryMarshal
                 .Cast<byte, uint>(indexBuffer.Content.AsSpan())
                 .Slice(indexOffset, indices.Length);
@@ -248,7 +249,7 @@ public static class GltfWriter
                 vertexBufferSpan.Write(vertex, ref bufferPos);
             }
 
-            indexOffset += sourceMesh.Triangles.Length;
+            indexOffset += sourceMesh.Indices.Length;
             vertexOffset += sourceMesh.Vertices.Length;
         }
 
@@ -817,6 +818,10 @@ public static class GltfWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static void Write(this Span<byte> buffer, Matrix4x4 matrix, ref int bufferPos)
     {
+        foreach (float f in matrix.AsEnumerableRowMajor())
+        {
+            ThrowIfValueIsNotFinite(f);
+        }
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Matrix4x4.cs
         // writes Matrix4x4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref matrix, 1));

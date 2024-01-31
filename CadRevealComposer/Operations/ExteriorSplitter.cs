@@ -193,49 +193,49 @@ public static class ExteriorSplitter
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
         var isHit = diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
-        if (isHit)
+        if (!isHit)
         {
-            float distance;
-            if (ray.Direction.X < 0f)
-            {
-                distance = boundingBox.Min.X - ray.Origin.X;
-            }
-            else if (ray.Direction.Y < 0f)
-            {
-                distance = boundingBox.Min.Y - ray.Origin.Y;
-            }
-            else if (ray.Direction.Z < 0f)
-            {
-                distance = boundingBox.Min.Z - ray.Origin.Z;
-            }
-            else if (ray.Direction.X > 0f)
-            {
-                distance = ray.Origin.X - boundingBox.Max.X;
-            }
-            else if (ray.Direction.Y > 0f)
-            {
-                distance = ray.Origin.Y - boundingBox.Max.Y;
-            }
-            else
-            {
-                distance = ray.Origin.Z - boundingBox.Max.Z;
-            }
-            return (true, distance);
+            return (false, float.NaN);
         }
 
-        return (false, float.NaN);
+        float distance;
+        if (ray.Direction.X < 0f)
+        {
+            distance = boundingBox.Min.X - ray.Origin.X;
+        }
+        else if (ray.Direction.Y < 0f)
+        {
+            distance = boundingBox.Min.Y - ray.Origin.Y;
+        }
+        else if (ray.Direction.Z < 0f)
+        {
+            distance = boundingBox.Min.Z - ray.Origin.Z;
+        }
+        else if (ray.Direction.X > 0f)
+        {
+            distance = ray.Origin.X - boundingBox.Max.X;
+        }
+        else if (ray.Direction.Y > 0f)
+        {
+            distance = ray.Origin.Y - boundingBox.Max.Y;
+        }
+        else
+        {
+            distance = ray.Origin.Z - boundingBox.Max.Z;
+        }
+        return (true, distance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static IEnumerable<Triangle> CollectTrianglesForMesh(Mesh mesh)
     {
-        var triangleCount = mesh.Triangles.Length / 3;
+        var triangleCount = mesh.Indices.Length / 3;
         var vertices = mesh.Vertices;
         for (var i = 0; i < triangleCount; i++)
         {
-            var v1 = vertices[mesh.Triangles[i * 3]];
-            var v2 = vertices[mesh.Triangles[i * 3 + 1]];
-            var v3 = vertices[mesh.Triangles[i * 3 + 2]];
+            var v1 = vertices[mesh.Indices[i * 3]];
+            var v2 = vertices[mesh.Indices[i * 3 + 1]];
+            var v3 = vertices[mesh.Indices[i * 3 + 2]];
             yield return new Triangle(v1, v2, v3);
         }
     }

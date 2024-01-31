@@ -23,7 +23,7 @@ public static class PdmsTextParser
         public StatefulReader(string filename)
             : base(filename) { }
 
-        override public string? ReadLine()
+        public override string? ReadLine()
         {
             var line = base.ReadLine();
             LineNumber++;
@@ -109,19 +109,21 @@ public static class PdmsTextParser
                         );
                         var key = GetKey(trimmedLine, nameSeparatorIndex);
 
-                        if (!IsExcludedAttribute(key, attributesToExclude))
+                        if (IsExcludedAttribute(key, attributesToExclude))
                         {
-                            var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
-                            if (stringInternPool != null)
-                            {
-                                var keyInterned = stringInternPool.Intern(key);
-                                var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                                currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
-                            }
-                            else
-                            {
-                                currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
-                            }
+                            continue;
+                        }
+
+                        var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
+                        if (stringInternPool != null)
+                        {
+                            var keyInterned = stringInternPool.Intern(key);
+                            var valueInterned = stringInternPool.Intern(StripQuotes(value));
+                            currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+                        }
+                        else
+                        {
+                            currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
                         }
                     }
                 }
@@ -185,29 +187,28 @@ public static class PdmsTextParser
 
         // Read Header Information:
         var firstLineHeaderInformation = reader.ReadLine()!;
-        if (firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
+        if (!firstLineHeaderInformation.StartsWith($"{header.StartSeparator} Header Information"))
         {
-            bool headerEnded = false;
-            while (!headerEnded)
+            return header;
+        }
+
+        bool headerEnded = false;
+        while (!headerEnded)
+        {
+            string currentLine = reader.ReadLine()!;
+            if (currentLine.EndsWith(header.EndSeparator))
             {
-                string currentLine = reader.ReadLine()!;
-                if (currentLine.EndsWith(header.EndSeparator))
+                headerEnded = true;
+            }
+            else
+            {
+                var lineSegments = currentLine.Split(new[] { header.Sep }, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string keyValueSegment in lineSegments)
                 {
-                    headerEnded = true;
-                }
-                else
-                {
-                    var lineSegments = currentLine.Split(new[] { header.Sep }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string keyValueSegment in lineSegments)
-                    {
-                        var nameSeparatorIndex = keyValueSegment.IndexOf(
-                            header.NameEnd,
-                            StringComparison.InvariantCulture
-                        );
-                        var key = GetKey(keyValueSegment, nameSeparatorIndex).ToString();
-                        var value = GetValue(keyValueSegment, nameSeparatorIndex + header.NameEnd.Length).ToString();
-                        header.HeaderMetadata[key] = value;
-                    }
+                    var nameSeparatorIndex = keyValueSegment.IndexOf(header.NameEnd, StringComparison.InvariantCulture);
+                    var key = GetKey(keyValueSegment, nameSeparatorIndex).ToString();
+                    var value = GetValue(keyValueSegment, nameSeparatorIndex + header.NameEnd.Length).ToString();
+                    header.HeaderMetadata[key] = value;
                 }
             }
         }

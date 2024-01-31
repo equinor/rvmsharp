@@ -1,11 +1,13 @@
 namespace CadRevealComposer;
 
 using Primitives;
+using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-public record BoundingBox(Vector3 Min, Vector3 Max)
+[ProtoContract(SkipConstructor = true)]
+public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: ProtoMember(2)] Vector3 Max)
 {
     /// <summary>
     /// Calculate the diagonal size (distance between "min" and "max")
@@ -38,13 +40,13 @@ public record BoundingBox(Vector3 Min, Vector3 Max)
 
 public class CadRevealNode
 {
-    public ulong TreeIndex;
-    public string Name { get; init; } = ""; // TODO: Required field
+    public required ulong TreeIndex { get; init; }
+    public required string Name { get; init; }
 
     // TODO support Store, Model, File and maybe not RVM
     // public RvmGroup? Group; // PDMS inside, children inside
     public Dictionary<string, string> Attributes = new Dictionary<string, string>();
-    public CadRevealNode? Parent;
+    public required CadRevealNode? Parent;
     public CadRevealNode[]? Children;
 
     public APrimitive[] Geometries = Array.Empty<APrimitive>();

@@ -1,24 +1,21 @@
 ﻿namespace CadRevealComposer;
 
-using CadRevealFbxProvider.BatchUtils;
 using Configuration;
+using Devtools;
 using IdProviders;
 using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
-using RvmSharp.Primitives;
 using SurfaceUnits;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
-using Tessellation;
 using Utils;
 
 public static class CadRevealComposerRunner
@@ -33,97 +30,139 @@ public static class CadRevealComposerRunner
     {
         var totalTimeElapsed = Stopwatch.StartNew();
 
-        var nodesToProcess = new List<CadRevealNode>();
+        if (composerParameters.DevPrimitiveCacheFolder != null)
+        {
+            var primitiveCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
+            primitiveCache.PrintStatsToConsole();
+            var cacheFile = primitiveCache.GetCacheFileForInputDirectory(inputFolderPath);
+            var cachedAPrimitives = primitiveCache.ReadPrimitiveCache(inputFolderPath);
+            if (cachedAPrimitives != null)
+            {
+                Console.WriteLine("Using developer cache file: " + cacheFile);
+                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
+                Console.WriteLine(
+                    $"Ran {nameof(ProcessPrimitives)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
+                );
+                return;
+            }
+            Console.WriteLine(
+                "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
+            );
+        }
+
+        var nodesToExport = new List<CadRevealNode>();
         var geometriesToProcess = new List<APrimitive>();
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIdGenerator = new InstanceIdGenerator();
 
+        var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
+
+        ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
-            IReadOnlyList<CadRevealNode> cadRevealNodes = modelFormatProvider.ParseFiles(
+            (IReadOnlyList<CadRevealNode> cadRevealNodes, var generalMetadata) = modelFormatProvider.ParseFiles(
                 inputFolderPath.EnumerateFiles(),
                 treeIndexGenerator,
-                instanceIdGenerator
+                instanceIdGenerator,
+                filtering
             );
-            if (cadRevealNodes != null)
-            {
-                Console.WriteLine(
-                    $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
-                );
 
-                if (cadRevealNodes.Count > 0)
+            if (generalMetadata != null)
+            {
+                // Log that we added some metadata
+                Console.WriteLine("Adding an entry to model metadata");
+                metadataFromAllFiles.Add(generalMetadata);
+            }
+
+            Console.WriteLine(
+                $"Imported all files for {modelFormatProvider.GetType().Name} in {timer.Elapsed}. Got {cadRevealNodes.Count} nodes."
+            );
+
+            if (cadRevealNodes.Count <= 0)
+            {
+                continue;
+            }
+
+            // collect all nodes for later sector division of the entire scene
+            nodesToExport.AddRange(cadRevealNodes);
+            // Adding Surface Unit Volume Attributes for Sleipner T
+                var regex = new Regex(@"^\/\d+[A-Z]\d+$");
+                foreach (CadRevealNode cadRevealNode in cadRevealNodes)
                 {
-                    // Adding Surface Unit Volume Attributes for Sleipner T
-                    var regex = new Regex(@"^\/\d+[A-Z]\d+$");
-                    foreach (CadRevealNode cadRevealNode in cadRevealNodes)
+                    if (cadRevealNode.Parent?.Name.Contains("/A00-AREA") == true)
                     {
-                        if (cadRevealNode.Parent?.Name.Contains("/A00-AREA") == true)
+                        if (regex.IsMatch(cadRevealNode.Name))
                         {
-                            if (regex.IsMatch(cadRevealNode.Name))
-                            {
-                                cadRevealNode.Attributes.Add("SurfaceUnitVolume", "true");
-                                cadRevealNode.Attributes.Add(cadRevealNode.Name.TrimStart('/'), "true");
-                            }
+                            cadRevealNode.Attributes.Add("SurfaceUnitVolume", "true");
+                            cadRevealNode.Attributes.Add(cadRevealNode.Name.TrimStart('/'), "true");
                         }
                     }
-
-                    // Add Surface Unit Metadata
-                    List<string> fileNames = new() { "SLT_surface_units.csv" };
-
-                    fileNames.ForEach(fileName =>
-                    {
-                        var filePath = Path.Combine(inputFolderPath.FullName, fileName);
-                        if (File.Exists(filePath))
-                        {
-                            SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, filePath);
-                        }
-                    });
-
-                    // collect all nodes for later sector division of the entire scene
-                    nodesToProcess.AddRange(cadRevealNodes);
-
-                    var inputGeometries = cadRevealNodes
-                        .AsParallel()
-                        .AsOrdered()
-                        .SelectMany(x => x.Geometries)
-                        .ToArray();
-
-                    var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
-                        inputGeometries,
-                        composerParameters,
-                        modelParameters,
-                        instanceIdGenerator
-                    );
-                    geometriesToProcess.AddRange(geometriesIncludingMeshes);
                 }
-            }
+
+                // Add Surface Unit Metadata
+                List<string> fileNames = new() { "SLT_surface_units.csv" };
+
+                fileNames.ForEach(fileName =>
+                {
+                    var filePath = Path.Combine(inputFolderPath.FullName, fileName);
+                    if (File.Exists(filePath))
+                    {
+                        SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, filePath);
+                    }
+                });
+
+                // collect all nodes for later sector division of the entire scene
+                nodesToExport.AddRange(cadRevealNodes);
+
+                var inputGeometries = cadRevealNodes
+                    .AsParallel()
+                    .AsOrdered()
+                    .SelectMany(x => x.Geometries)
+                    .ToArray();
+
+                var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
+                    inputGeometries,
+                    composerParameters,
+                    modelParameters,
+                    instanceIdGenerator
+                );
+                geometriesToProcess.AddRange(geometriesIncludingMeshes);
         }
+
+        // If there is no metadata for this model, the json will be empty
+        Console.WriteLine("Exporting model metadata");
+        SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
+
+        filtering.PrintFilteringStatsToConsole();
 
         var exportHierarchyDatabaseTask = Task.Run(() =>
         {
             // Exporting hierarchy on side thread to allow it to run in parallel
             var hierarchyExportTimer = Stopwatch.StartNew();
             var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToProcess);
+            SceneCreator.ExportHierarchyDatabase(databasePath, nodesToExport);
             Console.WriteLine(
                 $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
             );
         });
 
-        geometriesToProcess = OptimizeVertexCountInMeshes(geometriesToProcess);
+        geometriesToProcess = Simplify.OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        ProcessPrimitives(
-            geometriesToProcess.ToArray(),
-            outputDirectory,
-            modelParameters,
-            composerParameters,
-            treeIndexGenerator
-        );
+        var geometriesToProcessArray = geometriesToProcess.ToArray();
+        if (composerParameters.DevPrimitiveCacheFolder != null)
+        {
+            Console.WriteLine("Writing to DevCache!");
+            var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
+            devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
+        }
+        ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
+
+        WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
@@ -133,10 +172,11 @@ public static class CadRevealComposerRunner
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
-        ComposerParameters composerParameters,
-        TreeIndexGenerator treeIndexGenerator
+        ComposerParameters composerParameters
     )
     {
+        var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
+
         var stopwatch = Stopwatch.StartNew();
 
         ISectorSplitter splitter;
@@ -156,177 +196,33 @@ public static class CadRevealComposerRunner
         var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+
         stopwatch.Restart();
-
-        var sectorInfos = sectors.Select(s => SerializeSector(s, outputDirectory.FullName)).ToArray();
-
-        Console.WriteLine($"Serialized {sectors.Length} sectors in {stopwatch.Elapsed}");
-        stopwatch.Restart();
-
-        var sectorsWithDownloadSize = CalculateDownloadSizes(sectorInfos, outputDirectory).ToImmutableArray();
-
-        PrintSectorStats(sectorsWithDownloadSize);
-
-        var cameraPosition = CameraPositioning.CalculateInitialCamera(allPrimitives);
-        SceneCreator.WriteSceneFile(
-            sectorsWithDownloadSize,
-            modelParameters,
-            outputDirectory,
-            treeIndexGenerator.CurrentMaxGeneratedIndex,
-            cameraPosition
-        );
-
+        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
     }
 
-    private static void PrintSectorStats(ImmutableArray<SceneCreator.SectorInfo> sectorsWithDownloadSize)
-    {
-        // Helpers
-        static float BytesToMegabytes(long bytes) => bytes / 1024f / 1024f;
-
-        (string, string, string, string, string, string, string, string, string, string) headers = (
-            "Depth",
-            "Sectors",
-            "μ drawCalls",
-            "μ Triangles",
-            "μ sectDiam",
-            "^ sectDiam",
-            "v sectDiam",
-            "μ s/l part",
-            "μ DLsize",
-            "v DLsize"
-        );
-        // Add stuff you would like for a quick overview here:
-        using (new TeamCityLogBlock("Sector Stats"))
-        {
-            Console.WriteLine($"Sector Count: {sectorsWithDownloadSize.Length}");
-            Console.WriteLine(
-                $"Sum all sectors .glb size megabytes: {BytesToMegabytes(sectorsWithDownloadSize.Sum(x => x.DownloadSize)):F2}MB"
-            );
-            Console.WriteLine(
-                $"Total Estimated Triangle Count: {sectorsWithDownloadSize.Sum(x => x.EstimatedTriangleCount)}"
-            );
-            Console.WriteLine($"Depth Stats:");
-            Console.WriteLine(
-                $"|{headers.Item1, 5}|{headers.Item2, 7}|{headers.Item3, 10}|{headers.Item4, 11}|{headers.Item5, 10}|{headers.Item6, 10}|{headers.Item7, 10}|{headers.Item8, 17}|{headers.Item9, 10}|{headers.Item10, 8}|"
-            );
-            Console.WriteLine(new String('-', 110));
-            foreach (
-                IGrouping<long, SceneCreator.SectorInfo> g in sectorsWithDownloadSize
-                    .GroupBy(x => x.Depth)
-                    .OrderBy(x => x.Key)
-            )
-            {
-                var anyHasGeometry = g.Any(x => x.Geometries.Any());
-                var sizeMinAvgExceptEmpty = anyHasGeometry
-                    ? g.Where(x => x.Geometries.Any()).Average(x => x.MinNodeDiagonal)
-                    : 0;
-                var sizeMaxAvgExceptEmpty = anyHasGeometry
-                    ? g.Where(x => x.Geometries.Any()).Average(x => x.MaxNodeDiagonal)
-                    : 0;
-                var maxSize = "N/A";
-                if (g.Count() > 1)
-                {
-                    maxSize = $"{BytesToMegabytes(g.Max(x => x.DownloadSize)):F2}";
-                }
-
-                var formatted = $@"|
-{g.Key, 5}|
-{g.Count(), 7}|
-{g.Average(x => x.EstimatedDrawCalls), 11:F2}|
-{g.Average(x => x.EstimatedTriangleCount), 11:F0}|
-{g.Average(x => x.SubtreeBoundingBox.Diagonal), 9:F2}m|
-{g.Min(x => x.SubtreeBoundingBox.Diagonal), 9:F2}m|
-{g.Max(x => x.SubtreeBoundingBox.Diagonal), 9:F2}m|
-{sizeMinAvgExceptEmpty, 7:F2}m/{sizeMaxAvgExceptEmpty, 7:F2}m|
-{g.Average(x => x.DownloadSize / 1024f / 1024f), 8:F}MB|
-{maxSize, 8}|
-".Replace(Environment.NewLine, "");
-                Console.WriteLine(formatted);
-            }
-        }
-    }
-
-    private static SceneCreator.SectorInfo SerializeSector(InternalSector p, string outputDirectory)
-    {
-        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
-
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
-        var sectorInfo = new SceneCreator.SectorInfo(
-            SectorId: p.SectorId,
-            ParentSectorId: p.ParentSectorId,
-            Depth: p.Depth,
-            Path: p.Path,
-            Filename: sectorFilename,
-            EstimatedTriangleCount: estimatedTriangleCount,
-            EstimatedDrawCalls: estimatedDrawCalls,
-            MinNodeDiagonal: p.MinNodeDiagonal,
-            MaxNodeDiagonal: p.MaxNodeDiagonal,
-            Geometries: p.Geometries,
-            SubtreeBoundingBox: p.SubtreeBoundingBox,
-            GeometryBoundingBox: p.GeometryBoundingBox
-        );
-
-        if (sectorFilename != null)
-            SceneCreator.ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
-        return sectorInfo;
-    }
-
-    private static IEnumerable<SceneCreator.SectorInfo> CalculateDownloadSizes(
-        IEnumerable<SceneCreator.SectorInfo> sectors,
+    /// <summary>
+    /// Writes the input parameters to a file to easier replicate a run.
+    /// </summary>
+    private static void WriteParametersToParamsFile(
+        ModelParameters modelParameters,
+        ComposerParameters composerParameters,
         DirectoryInfo outputDirectory
     )
     {
-        foreach (var sector in sectors)
+        var json = new
         {
-            if (string.IsNullOrEmpty(sector.Filename))
-            {
-                yield return sector;
-            }
-            else
-            {
-                var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
-                yield return sector with
-                {
-                    DownloadSize = new FileInfo(filepath).Length
-                };
-            }
-        }
-    }
+            note = "This file is not considered stable api. It is meant for humans to read, not computers. See 'scene.json' for a more stable file.",
+            modelParameters,
+            composerParameters,
+            timestampUtc = DateTimeOffset.UtcNow
+        };
 
-    private static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
-    {
-        var meshCount = 0;
-        var beforeOptimizationTotalVertices = 0;
-        var afterOptimizationTotalVertices = 0;
-        var timer = Stopwatch.StartNew();
-        // Optimize TriangleMesh meshes for least memory use
-        var processedGeometries = geometriesToProcess
-            .AsParallel()
-            .AsOrdered()
-            .Select(primitive =>
-            {
-                if (primitive is not TriangleMesh triangleMesh)
-                {
-                    return primitive;
-                }
-
-                Mesh newMesh = MeshTools.DeduplicateVertices(triangleMesh.Mesh);
-                Interlocked.Increment(ref meshCount);
-                Interlocked.Add(ref beforeOptimizationTotalVertices, triangleMesh.Mesh.Vertices.Length);
-                Interlocked.Add(ref afterOptimizationTotalVertices, newMesh.Vertices.Length);
-                return triangleMesh with { Mesh = newMesh };
-            })
-            .ToList();
-
-        using (new TeamCityLogBlock("Vertex Dedupe Stats"))
-        {
-            Console.WriteLine(
-                $"Vertice Dedupe Stats (Vertex Count) for {meshCount} meshes:\nBefore: {beforeOptimizationTotalVertices, 11}\nAfter:  {afterOptimizationTotalVertices, 11}\nPercent: {(float)afterOptimizationTotalVertices / beforeOptimizationTotalVertices, 11:P2}\nTime: {timer.Elapsed}"
-            );
-        }
-
-        return processedGeometries;
+        File.WriteAllText(
+            Path.Join(outputDirectory.FullName, "params.json"),
+            JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true })
+        );
     }
 }

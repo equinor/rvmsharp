@@ -2,6 +2,7 @@
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using Commons.Utils;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System.Drawing;
@@ -12,7 +13,8 @@ public static class RvmPyramidConverter
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmPyramid rvmPyramid,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (IsBoxShaped(rvmPyramid))
@@ -21,6 +23,9 @@ public static class RvmPyramidConverter
             {
                 throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmPyramid.Matrix);
             }
+
+            if (!rvmPyramid.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+                yield break;
 
             var unitBoxScale = Vector3.Multiply(
                 scale,
