@@ -46,6 +46,11 @@ public static class SceneCreator
 
     public static void ExportHierarchyDatabase(string databasePath, IReadOnlyList<CadRevealNode> allNodes)
     {
+        var tagDataFromSTid = StidTagMapper.ParseFromJson(
+            @"C:\Users\nhals\GitRepos\rvmsharp\TestData\ASG_Tags\response.json"
+        );
+        StidTagMapper.MapToStidTags(allNodes, tagDataFromSTid);
+
         var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 
         ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;

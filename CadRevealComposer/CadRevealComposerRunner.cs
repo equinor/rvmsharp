@@ -111,6 +111,9 @@ public static class CadRevealComposerRunner
                 $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
             );
         });
+        exportHierarchyDatabaseTask.Wait();
+        Console.WriteLine("Finished with hierarchy export only! Pling!\a");
+        return;
 
         geometriesToProcess = Simplify.OptimizeVertexCountInMeshes(geometriesToProcess);
 
