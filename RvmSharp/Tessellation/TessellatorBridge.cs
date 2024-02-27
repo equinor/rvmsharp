@@ -185,7 +185,7 @@ public static class TessellatorBridge
 
         var capCount = cap.Count(c => c);
 
-        var error = 0.0f;
+        const float error = 0.0f;
 
         var vertices = new float[3 * 4 * capCount];
         var normals = new float[3 * 4 * capCount];
@@ -464,7 +464,7 @@ public static class TessellatorBridge
         var samples_l = segments_l + 1; // Assumed to be open, add extra sample
         var samples_s = segments_s; // Assumed to be closed
 
-        bool shell = true;
+        const bool shell = true;
         bool[] cap = { true, true };
         for (var i = 0; i < 2; i++)
         {
@@ -785,7 +785,7 @@ public static class TessellatorBridge
 
         var error = SagittaUtils.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
 
-        bool shell = true;
+        const bool shell = true;
         bool[] shouldCap = { true, true };
 
         for (int i = 0; i < 2; i++)
@@ -938,7 +938,7 @@ public static class TessellatorBridge
 
         var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
 
-        bool shell = true;
+        const bool shell = true;
         bool[] cap = { true, true };
         for (var i = 0; i < 2; i++)
         {
@@ -1120,7 +1120,7 @@ public static class TessellatorBridge
             is_sphere = true;
         }
 
-        var min_rings = 3; // arc <= half_pi ? 2 : 3;
+        const int min_rings = 3; // arc <= half_pi ? 2 : 3;
         var rings = (int)(Math.Max(min_rings, scale_z * samples * arc * (1.0f / Math.PI * 2)));
 
         var u0 = new int[rings];
