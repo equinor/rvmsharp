@@ -64,7 +64,7 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
 
         if (!result.second)
         {
-            // insertion did not take place, since the key (position, normal) already exists
+            // Insertion did not take place, since the key (position, normal) already exists
             // result.first is thus the iterator pointing to the element that prevented the insertion
             auto vertex = (*(result.first));
             auto outIndex = vertex.second;
