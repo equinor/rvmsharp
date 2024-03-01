@@ -12,7 +12,7 @@ typedef std::tuple<float, float, float, float, float, float> vertex_tuple;
 // this function allocates memory
 // there should be a corresponding mesh_clean call for each call of this function
 // it should never return nullptr, if the mesh is invalid for some reason, set the valid field to false
-ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
+ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry, bool ignore_normals)
 {
     ExportableMesh* mesh_out_tmp = new ExportableMesh();
     mesh_out_tmp->vertex_count = 0;
@@ -53,7 +53,7 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
     {
         const auto fbxVertexPositionIndex = fbxVertexPositionIndexArray[i];
         auto lVertex = lFbxPositions[fbxVertexPositionIndex];
-        auto lNormal = lFbxNormals[i];
+        auto lNormal = ignore_normals ? FbxVector4(0.0, 0.0, 0.0, 0.0) : lFbxNormals[i];
 
         float vx = (float)lVertex[0]; float vy = (float)lVertex[1]; float vz = (float)lVertex[2];
         float nx = (float)lNormal[0]; float ny = (float)lNormal[1]; float nz = (float)lNormal[2];
@@ -64,7 +64,7 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry)
 
         if (!result.second)
         {
-            // Insertion did not take place, since the key (position, normal) already exists
+            // insertion did not take place, since the key (position, normal) already exists
             // result.first is thus the iterator pointing to the element that prevented the insertion
             auto vertex = (*(result.first));
             auto outIndex = vertex.second;
