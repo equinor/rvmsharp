@@ -20,8 +20,10 @@ public:
     FbxInfo(const std::string& fileName, const bool& ignore_normals);
 
 public:
-    void print_info() const;
-    static void print_comparison(const FbxInfo& a, const FbxInfo& b);
+    size_t get_node_count() const;
+    const FbxInfo::InfoItem& get_node(const size_t& index) const;
+    std::string print_info() const;
+    static std::string print_comparison(const FbxInfo& a, const FbxInfo& b);
 
 private:
     void iterate(FbxNode* parent, const bool& ignore_normals, int ident = 0);

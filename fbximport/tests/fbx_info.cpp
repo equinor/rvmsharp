@@ -22,59 +22,80 @@ FbxInfo::FbxInfo(const std::string& fileName, const bool& ignore_normals)
     load(fileName, ignore_normals);
 }
 
-void FbxInfo::print_info() const
+size_t FbxInfo::get_node_count() const
 {
-    cout << string("FBX info. Surface normals are ") << string(ignore_normals_ ? "ignored." : "used.") << endl;
-    cout << "-----------------------------------------------------";
+    return node_info_.size();
+}
+
+const FbxInfo::InfoItem& FbxInfo::get_node(const size_t& index) const
+{
+    return node_info_[index];
+}
+
+std::string FbxInfo::print_info() const
+{
+    std::string output;
+
+    output+= string("FBX info. Surface normals are ") + string(ignore_normals_ ? "ignored." : "used.") + "\r\n";
+    output+= string("-----------------------------------------------------") + "\r\n";
 
     for (const InfoItem& item : node_info_)
     {
         if (item.vertex_count_ == 0)
         {
-            cerr << "Could not retrieve geometry" << endl;
+            output+= string("Could not retrieve geometry") + "\r\n";
         }
         else
         {
-            cout << "Vertex count: " << item.vertex_count_ << endl;
-            cout << "Triangle count: " << item.triangle_count_ << endl;
+            output+= string("Vertex count: ") + to_string(item.vertex_count_) + "\r\n";
+            output+= string("Triangle count: ") + to_string(item.triangle_count_) + "\r\n";
         }
     }
 
-    cout << endl;
+    output+= "\r\n";
+
+    return output;
 }
 
-void FbxInfo::print_comparison(const FbxInfo& a, const FbxInfo& b)
+std::string FbxInfo::print_comparison(const FbxInfo& a, const FbxInfo& b)
 {
-    cout << string("Comparison:") << endl;
-    cout << string("-----------------------------------------------------") << endl;
-    cout << string("tri.cnt1; tri.cnt2; vert.cnt1; vert.cnt2") << endl;
-    const size_t count = (a.node_info_.size() < b.node_info_.size()) ? a.node_info_.size() : b.node_info_.size();
+    string output;
+
+    output+= string("Comparison:") + "\r\n";
+    output+= string("-----------------------------------------------------") + "\r\n";
+    output+= string("tri.cnt1; tri.cnt2; vert.cnt1; vert.cnt2") + "\r\n";
+    const size_t count = (a.get_node_count() < b.get_node_count()) ? a.get_node_count() : b.get_node_count();
 
     std::pair<double, double> sum_triangle_count = { 0.0, 0.0 };
     std::pair<double, double> sum_vertex_count = { 0.0, 0.0 };
     for (size_t i=0; i<count; i++)
     {
-        sum_triangle_count.first+= a.node_info_[i].triangle_count_;
-        sum_triangle_count.second+= b.node_info_[i].triangle_count_;
-        sum_vertex_count.first+= a.node_info_[i].vertex_count_;
-        sum_vertex_count.second+= b.node_info_[i].vertex_count_;
+        const InfoItem& fbxInfoA = a.get_node(i);
+        const InfoItem& fbxInfoB = b.get_node(i);
 
-        cout << to_string(a.node_info_[i].triangle_count_) << "; ";
-        cout << to_string(b.node_info_[i].triangle_count_) << "; ";
-        cout << to_string(a.node_info_[i].vertex_count_) << "; ";
-        cout << to_string(b.node_info_[i].vertex_count_) << endl;
+        sum_triangle_count.first+= fbxInfoA.triangle_count_;
+        sum_triangle_count.second+= fbxInfoB.triangle_count_;
+        sum_vertex_count.first+= fbxInfoA.vertex_count_;
+        sum_vertex_count.second+= fbxInfoB.vertex_count_;
+
+        output+= to_string(fbxInfoA.triangle_count_) + "; ";
+        output+= to_string(fbxInfoB.triangle_count_) + "; ";
+        output+= to_string(fbxInfoA.vertex_count_) + "; ";
+        output+= to_string(fbxInfoB.vertex_count_) + "\r\n";
     }
-    cout << endl << endl;
+    output+= "\r\n\r\n";
 
-    cout << string("Total triangle count 1: ") << to_string(sum_triangle_count.first) << endl;
-    cout << string("Total triangle count 2: ") << to_string(sum_triangle_count.second) << endl;
-    cout << string("Total vertex count 1: ") << to_string(sum_vertex_count.first) << endl;
-    cout << string("Total vertex count 2: ") << to_string(sum_vertex_count.second) << endl;
+    output+= string("Total triangle count 1: ") + to_string(sum_triangle_count.first) + "\r\n";
+    output+= string("Total triangle count 2: ") + to_string(sum_triangle_count.second) + "\r\n";
+    output+= string("Total vertex count 1: ") + to_string(sum_vertex_count.first) + "\r\n";
+    output+= string("Total vertex count 2: ") + to_string(sum_vertex_count.second) + "\r\n";
 
-    cout << endl;
+    output+= "\r\n";
 
-    cout << string("Reduction in triangle count: ") << to_string((sum_triangle_count.first - sum_triangle_count.second) * 100.0 / sum_triangle_count.first) << string("%") << endl;
-    cout << string("Reduction in vertex count: ") << to_string((sum_vertex_count.first - sum_vertex_count.second) * 100.0 / sum_vertex_count.first) << string("%") << endl;
+    output+= string("Reduction in triangle count: ") + to_string((sum_triangle_count.first - sum_triangle_count.second) * 100.0 / sum_triangle_count.first) + string("%") + "\r\n";
+    output+= string("Reduction in vertex count: ") + to_string((sum_vertex_count.first - sum_vertex_count.second) * 100.0 / sum_vertex_count.first) + string("%") + "\r\n";
+
+    return output;
 }
 
 void FbxInfo::iterate(FbxNode* parent, const bool& ignore_normals, int ident)
