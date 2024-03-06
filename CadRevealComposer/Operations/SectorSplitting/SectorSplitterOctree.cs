@@ -342,7 +342,7 @@ public class SectorSplitterOctree : ISectorSplitter
             _ => nodes.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.EstimatedTriangleCount);
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal / x.EstimatedTriangleCount);
 
         var nodeArray = nodesInPrioritizedOrder.ToArray();
         var byteSizeBudgetLeft = byteSizeBudget;
