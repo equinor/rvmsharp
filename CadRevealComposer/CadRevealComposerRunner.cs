@@ -101,7 +101,7 @@ public static class CadRevealComposerRunner
             }
 
             // Add Surface Unit Metadata
-            List<string> fileNames = new() { "SLT_surface_units.csv" };
+            List<string> fileNames = new() { "surface_units.csv" };
 
             fileNames.ForEach(fileName =>
             {
