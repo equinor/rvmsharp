@@ -51,6 +51,12 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry, bool ignore_normals)
     
     for (auto i = 0; i < fbxVertexPositionsCount; i++)
     {
+        // Retrieve vertex index, position, and surface normal. If we have choosen to ignore the vertex surface normal,
+        // then we set it to (0, 0, 0). Subsequently, the position and normal are assembled into a tuple. Hence,
+        // even if two equally positioned vertices have different surface normals, the normals will become zero, making
+        // those two tuples equal during the process of removing duplicate tuples. The result is a possible reduction
+        // in vertices that reduce the amount of vertices stored by Reveal, which do not need the surface normals. This 
+        // has the potential of speeding up the performance in Reveal. 
         const auto fbxVertexPositionIndex = fbxVertexPositionIndexArray[i];
         auto lVertex = lFbxPositions[fbxVertexPositionIndex];
         auto lNormal = ignore_normals ? FbxVector4(0.0, 0.0, 0.0, 0.0) : lFbxNormals[i];
