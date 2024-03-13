@@ -15,7 +15,7 @@ int invoke_catch2_tests(int argc, char* argv[])
     using namespace Catch::Clara;
     auto cli = session.cli()                // Get Catch2's command line parser
     | Opt(filePath, "modelfile")            // bind variable to a new option, with a hint string
-        ["-f"]["--modelfile"]               // the option names it will respond to
+        ["-m"]["--modelfile"]               // the option names it will respond to
         ("Model file path (fbx-file)");     // description string for the help output
 
     // Now pass the new composite back to Catch2 so it uses that
