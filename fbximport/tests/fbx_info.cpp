@@ -24,31 +24,31 @@ FbxInfo::FbxInfo(const std::string& fileName, const bool& ignore_normals)
 
 size_t FbxInfo::get_node_count() const
 {
-    return node_info_.size();
+    return m_node_info.size();
 }
 
 const FbxInfo::InfoItem& FbxInfo::get_node(const size_t& index) const
 {
-    return node_info_[index];
+    return m_node_info[index];
 }
 
 std::string FbxInfo::print_info() const
 {
     std::string output;
 
-    output+= string("FBX info. Surface normals are ") + string(ignore_normals_ ? "ignored." : "used.") + "\r\n";
+    output+= string("FBX info. Surface normals are ") + string(m_ignore_normals ? "ignored." : "used.") + "\r\n";
     output+= string("-----------------------------------------------------") + "\r\n";
 
-    for (const InfoItem& item : node_info_)
+    for (const InfoItem& item : m_node_info)
     {
-        if (item.vertex_count_ == 0)
+        if (item.m_vertex_count == 0)
         {
             output+= string("Could not retrieve geometry") + "\r\n";
         }
         else
         {
-            output+= string("Vertex count: ") + to_string(item.vertex_count_) + "\r\n";
-            output+= string("Triangle count: ") + to_string(item.triangle_count_) + "\r\n";
+            output+= string("Vertex count: ") + to_string(item.m_vertex_count) + "\r\n";
+            output+= string("Triangle count: ") + to_string(item.m_triangle_count) + "\r\n";
         }
     }
 
@@ -73,15 +73,15 @@ std::string FbxInfo::print_comparison(const FbxInfo& a, const FbxInfo& b)
         const InfoItem& fbxInfoA = a.get_node(i);
         const InfoItem& fbxInfoB = b.get_node(i);
 
-        sum_triangle_count.first+= fbxInfoA.triangle_count_;
-        sum_triangle_count.second+= fbxInfoB.triangle_count_;
-        sum_vertex_count.first+= fbxInfoA.vertex_count_;
-        sum_vertex_count.second+= fbxInfoB.vertex_count_;
+        sum_triangle_count.first+= fbxInfoA.m_triangle_count;
+        sum_triangle_count.second+= fbxInfoB.m_triangle_count;
+        sum_vertex_count.first+= fbxInfoA.m_vertex_count;
+        sum_vertex_count.second+= fbxInfoB.m_vertex_count;
 
-        output+= to_string(fbxInfoA.triangle_count_) + "; ";
-        output+= to_string(fbxInfoB.triangle_count_) + "; ";
-        output+= to_string(fbxInfoA.vertex_count_) + "; ";
-        output+= to_string(fbxInfoB.vertex_count_) + "\r\n";
+        output+= to_string(fbxInfoA.m_triangle_count) + "; ";
+        output+= to_string(fbxInfoB.m_triangle_count) + "; ";
+        output+= to_string(fbxInfoA.m_vertex_count) + "; ";
+        output+= to_string(fbxInfoB.m_vertex_count) + "\r\n";
     }
     output+= "\r\n\r\n";
 
@@ -115,7 +115,7 @@ void FbxInfo::iterate(FbxNode* parent, const bool& ignore_normals, int ident)
     if (geometry != nullptr)
     {
         auto data = mesh_get_geometry_data(geometry, ignore_normals);
-        node_info_.emplace_back(InfoItem(data->vertex_count, data->index_count));
+        m_node_info.emplace_back(InfoItem(data->vertex_count, data->index_count));
 
         delete data;
     }
@@ -123,7 +123,7 @@ void FbxInfo::iterate(FbxNode* parent, const bool& ignore_normals, int ident)
 
 void FbxInfo::load(const std::string& fileName, const bool& ignore_normals)
 {
-    ignore_normals_ = ignore_normals;
+    m_ignore_normals = ignore_normals;
 
     auto sdk = manager_create();
     auto root = (FbxNode*)load_file(fileName.c_str(), sdk);

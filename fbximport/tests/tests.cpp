@@ -71,8 +71,8 @@ TEST_CASE("Check ignore normals", "[FBX sdk]")
         const FbxInfo::InfoItem& item1 = fbx_info1.get_node(i);
         const FbxInfo::InfoItem& item2 = fbx_info2.get_node(i);
 
-        REQUIRE(item1.vertex_count_ >= item2.vertex_count_);
-        REQUIRE(item1.triangle_count_ == item2.triangle_count_);
+        REQUIRE(item1.m_vertex_count >= item2.m_vertex_count);
+        REQUIRE(item1.m_triangle_count == item2.m_triangle_count);
     }
 
     std::string output = FbxInfo::print_comparison(fbx_info1, fbx_info2);

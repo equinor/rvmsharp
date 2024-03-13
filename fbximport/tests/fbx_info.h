@@ -9,11 +9,11 @@ public:
     class InfoItem
     {
     public:
-        InfoItem(const int& vertex_count, const int& triangle_count) { vertex_count_ = vertex_count; triangle_count_ = triangle_count; }
+        InfoItem(const int& vertex_count, const int& triangle_count) { m_vertex_count = vertex_count; m_triangle_count = triangle_count; }
 
     public:
-        int vertex_count_ = 0;
-        int triangle_count_ = 0;
+        int m_vertex_count = 0;
+        int m_triangle_count = 0;
     };
 
 public:
@@ -30,6 +30,6 @@ private:
     void load(const std::string& fileName, const bool& ignore_normals);
 
 private:
-    std::vector<InfoItem> node_info_;
-    bool ignore_normals_ = false;
+    std::vector<InfoItem> m_node_info;
+    bool m_ignore_normals = false;
 };
