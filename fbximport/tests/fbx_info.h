@@ -21,7 +21,7 @@ public:
 
 public:
     size_t get_node_count() const;
-    const FbxInfo::InfoItem& get_node(const size_t& index) const;
+    const FbxInfo::InfoItem& get_node_info(const size_t& index) const;
     std::string print_info() const;
     static std::string print_comparison(const FbxInfo& a, const FbxInfo& b);
 

@@ -27,7 +27,7 @@ size_t FbxInfo::get_node_count() const
     return m_node_info.size();
 }
 
-const FbxInfo::InfoItem& FbxInfo::get_node(const size_t& index) const
+const FbxInfo::InfoItem& FbxInfo::get_node_info(const size_t& index) const
 {
     return m_node_info[index];
 }
@@ -70,8 +70,8 @@ std::string FbxInfo::print_comparison(const FbxInfo& a, const FbxInfo& b)
     std::pair<double, double> sum_vertex_count = { 0.0, 0.0 };
     for (size_t i=0; i<count; i++)
     {
-        const InfoItem& fbxInfoA = a.get_node(i);
-        const InfoItem& fbxInfoB = b.get_node(i);
+        const InfoItem& fbxInfoA = a.get_node_info(i);
+        const InfoItem& fbxInfoB = b.get_node_info(i);
 
         sum_triangle_count.first+= fbxInfoA.m_triangle_count;
         sum_triangle_count.second+= fbxInfoB.m_triangle_count;
