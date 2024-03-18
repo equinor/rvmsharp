@@ -32,14 +32,14 @@ public static class FbxMeshWrapper
 
     // the underlying umanaged code allocates memory, you must call mesh_clean_memory to free it later
     [DllImport(FbxLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
-    private static extern IntPtr mesh_get_geometry_data(IntPtr mesh); //IntPtr out is FbxMesh*
+    private static extern IntPtr mesh_get_geometry_data(IntPtr mesh, bool ignore_normals); // IntPtr out is FbxMesh*
 
     public static (Mesh Mesh, IntPtr MeshPtr)? GetGeometricData(FbxNode node)
     {
         var meshPtr = node_get_mesh(node.NodeAddress);
         if (meshPtr != IntPtr.Zero)
         {
-            var geomPtr = mesh_get_geometry_data(meshPtr);
+            var geomPtr = mesh_get_geometry_data(meshPtr, true); // Reveal does not use surface normals, hence we ignore them and treat vertices with different normals, but same location, as equivalent.
             var geom = Marshal.PtrToStructure<FbxMesh>(geomPtr);
 
             // geoemtry can be invalid if, e.g., the extraction of normal vectors failed

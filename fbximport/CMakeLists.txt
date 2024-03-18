@@ -52,7 +52,6 @@ set(TARGET_SOURCES
     src/common.h
     src/node.h
     src/node.cpp
-    src/main.cpp
     src/mesh.h
     src/mesh.cpp
     src/manager.h
@@ -61,7 +60,11 @@ set(TARGET_SOURCES
     src/importer.cpp
 )
 set(TEST_SOURCES
+    tests/main.cpp
+    tests/tests.h
     tests/tests.cpp
+    tests/fbx_info.h
+    tests/fbx_info.cpp
 )
 
 add_compile_definitions(FBXSDK_VERSION=\"${FBXSDK_VERSION}\")

@@ -8,6 +8,7 @@
 # Build files
 **/bin/**
 **/obj/**
+/build/
 
 # Launch Settings
 /CadRevealComposer.Exe/Properties/launchSettings.json
