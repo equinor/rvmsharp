@@ -4,21 +4,16 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-  branches:
-    include:
-      - master
-  paths:
-    include:
-      - kag/trufflehog-ci # TODO: Used for testing
-      
+  - master
+
 jobs:
-- job: Secrets Scanning
+- job: secrets_scanning
   pool:
     vmImage: 'ubuntu-latest'
   steps:
     - template: secrets-scanning.yaml
 
-- job: Build, test and install
+- job: build_test_install
   pool:
     vmImage: "windows-latest"
   
