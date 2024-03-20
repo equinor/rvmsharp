@@ -8,7 +8,7 @@ using System.Numerics;
 
 public class RvmSphereConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmSphere _rvmSphere = null!;
 
     [SetUp]
@@ -26,7 +26,7 @@ public class RvmSphereConverterTests
     public void RvmSphereConverter_ReturnsEllipsoidSegment()
     {
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmSphere.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmSphere.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<EllipsoidSegment>());
         Assert.That(geometries.Length, Is.EqualTo(1));
