@@ -22,12 +22,6 @@ jobs:
             Write-Host "Tip: Install csharpier using ' dotnet tool restore ', and run it using ' dotnet csharpier . ' to autofix formatting."
           }
 
-  secrets_scanning:
-    runs-on: ubuntu-latest
-    name: Secrets Scanning
-    steps:
-          - template: secrets-scanning.yaml
-
   build:
     name: Build and test
     runs-on: windows-latest
