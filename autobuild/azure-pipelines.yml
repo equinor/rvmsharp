@@ -12,7 +12,7 @@ jobs:
   steps:
     - template: secrets-scanning.yaml
 
-- job: Build and install
+- job: Build, test and install
   pool:
     vmImage: "windows-latest"
   
