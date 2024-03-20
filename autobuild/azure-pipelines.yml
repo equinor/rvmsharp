@@ -4,7 +4,13 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
-  - master
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - kag/trufflehog-ci # TODO: Used for testing
+      
 jobs:
 - job: Secrets Scanning
   pool:
