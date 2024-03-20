@@ -13,6 +13,8 @@ internal class ConnectionInterface
         Circular
     }
 
+    public string secret_connection_test = "s5AjAEFAEGE$32slK"; // TODO: Delete this, used for trufflehog test.
+
     public Type InterfaceType = Type.Undefined;
     public readonly Vector3[] SquareConnectionPoints = new Vector3[4];
     public float CircularRadius;
