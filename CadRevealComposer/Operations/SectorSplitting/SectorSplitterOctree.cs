@@ -14,7 +14,7 @@ public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
     private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
-    private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
+    private const long SectorEstimatedPrimitiveBudget = 5_000_000; // count, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
