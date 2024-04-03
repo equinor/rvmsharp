@@ -15,9 +15,11 @@ Tested alternatives:
 
 ## Results
 
-**NOTE:** TriangleCount and SurfaceArea was disgarded early in testing, because they looked horrible
+**NOTE:** TriangleCount and SurfaceArea was disgarded early in testing, because they looked horrible.
 
 Test images with different weightings can be found [here](https://statoilsrm.sharepoint.com/:f:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/Weighting?csf=1&web=1&e=pacWUI).
+
+See the [README in the EMHI project](https://github.com/equinor/Echo3DWebDevTools/tree/Feature/emhi-lowercase/EMHI) (TODO: Link should be updated after EMHI is merged) for tips on how to compare screenshots.
 
 ## Conclusion
 
