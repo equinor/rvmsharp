@@ -7,7 +7,6 @@ public class HierarchyContext : DbContext
 {
     public DbSet<Node> Nodes => Set<Node>();
     public DbSet<PDMSEntry> PdmsEntries => Set<PDMSEntry>();
-    public DbSet<AABB> Aabbs => Set<AABB>();
     public DbSet<NodePDMSEntry> NodeToPDMSEntry => Set<NodePDMSEntry>();
 
     // This connection string is only used during manual migration from command line, use HierarchyContext(DbContextOptions)
@@ -31,7 +30,6 @@ public class HierarchyContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PDMSEntry>().ToTable("PDMSEntries");
-        modelBuilder.Entity<AABB>().ToTable("AABBs");
         modelBuilder.Entity<NodePDMSEntry>().HasKey(e => new { e.NodeId, e.PDMSEntryId });
         modelBuilder
             .Entity<NodePDMSEntry>()

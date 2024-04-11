@@ -154,6 +154,11 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
                 using var cmd = new SQLiteCommand(connection);
+
+                cmd.CommandText =
+                    "CREATE VIRTUAL TABLE AABBs USING rtree(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
+                cmd.ExecuteNonQuery();
+
                 AABB.RawInsertBatch(cmd, aabbs.Values);
 
                 transaction.Commit();
