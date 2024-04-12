@@ -8,7 +8,7 @@ using System.Numerics;
 
 public class RvmEllipticalDishConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmEllipticalDish _rvmEllipticalDish = null!;
 
     [SetUp]
@@ -27,7 +27,7 @@ public class RvmEllipticalDishConverterTests
     public void RvmEllipticalDishConverter_ReturnsEllipsoidSegmentWithCap()
     {
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmEllipticalDish.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmEllipticalDish.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<EllipsoidSegment>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());

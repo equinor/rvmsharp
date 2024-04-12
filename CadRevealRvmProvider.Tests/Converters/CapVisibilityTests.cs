@@ -741,11 +741,11 @@ public class CapVisibilityTests
         );
         var bottomCap = snout1.GetBottomCapEllipse();
 
-        Assert.That(topCap.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0f / MathF.Cos(snout1.TopShearY)));
-        Assert.That(topCap.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0f));
+        Assert.That(topCap.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0f / MathF.Cos(snout1.TopShearY)));
+        Assert.That(topCap.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0f));
 
-        Assert.That(bottomCap.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout1.TopShearY)));
-        Assert.That(bottomCap.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(bottomCap.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout1.TopShearY)));
+        Assert.That(bottomCap.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0));
 
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
         var snout1CapCenterB = -0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -809,11 +809,11 @@ public class CapVisibilityTests
         );
         var bottomCap = snout2.GetBottomCapEllipse();
 
-        Assert.That(topCap.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0f / MathF.Cos(snout1.TopShearY)));
-        Assert.That(topCap.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0f));
+        Assert.That(topCap.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0f / MathF.Cos(snout1.TopShearY)));
+        Assert.That(topCap.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0f));
 
-        Assert.That(bottomCap.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout2.BottomShearY)));
-        Assert.That(bottomCap.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(bottomCap.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout2.BottomShearY)));
+        Assert.That(bottomCap.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0));
 
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
         var snout1CapCenterB = -0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -909,17 +909,17 @@ public class CapVisibilityTests
         var ellipse2 = snout2.GetTopCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var p1_el1 = VectorD.Build.Dense(new double[] { ellipse1.ellipse2DPolar.semiMajorAxis, 0.0, 0.0, 1.0 });
-        var p2_el1 = VectorD.Build.Dense(new double[] { 0.0, ellipse1.ellipse2DPolar.semiMinorAxis, 0.0, 1.0 });
-        var p1_el2 = VectorD.Build.Dense(new double[] { ellipse2.ellipse2DPolar.semiMajorAxis, 0.0, 0.0, 1.0 });
-        var p2_el2 = VectorD.Build.Dense(new double[] { 0.0, ellipse2.ellipse2DPolar.semiMinorAxis, 0.0, 1.0 });
+        var p1_el1 = VectorD.Build.Dense(new double[] { ellipse1.Ellipse2DPolar.SemiMajorAxis, 0.0, 0.0, 1.0 });
+        var p2_el1 = VectorD.Build.Dense(new double[] { 0.0, ellipse1.Ellipse2DPolar.SemiMinorAxis, 0.0, 1.0 });
+        var p1_el2 = VectorD.Build.Dense(new double[] { ellipse2.Ellipse2DPolar.SemiMajorAxis, 0.0, 0.0, 1.0 });
+        var p2_el2 = VectorD.Build.Dense(new double[] { 0.0, ellipse2.Ellipse2DPolar.SemiMinorAxis, 0.0, 1.0 });
 
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
-        var pt_pt1_ell1 = ellipse1.planeToModelCoord * p1_el1;
-        var pt_pt2_ell1 = ellipse1.planeToModelCoord * p2_el1;
-        var pt_pt1_ell2 = ellipse2.planeToModelCoord * p1_el2;
-        var pt_pt2_ell2 = ellipse2.planeToModelCoord * p2_el2;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
+        var pt_pt1_ell1 = ellipse1.PlaneToModelCoord * p1_el1;
+        var pt_pt2_ell1 = ellipse1.PlaneToModelCoord * p2_el1;
+        var pt_pt1_ell2 = ellipse2.PlaneToModelCoord * p1_el2;
+        var pt_pt2_ell2 = ellipse2.PlaneToModelCoord * p2_el2;
 
         // snout1 -> bottom,
         var snout1CapCenter = -0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -1049,24 +1049,24 @@ public class CapVisibilityTests
         );
         var snout2bottomCap = snout2.GetBottomCapEllipse();
 
-        Assert.That(snout1TopCap.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0f));
-        Assert.That(snout1TopCap.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0f));
+        Assert.That(snout1TopCap.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0f));
+        Assert.That(snout1TopCap.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0f));
 
-        Assert.That(snout2bottomCap.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout2.BottomShearX)));
-        Assert.That(snout2bottomCap.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(snout2bottomCap.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout2.BottomShearX)));
+        Assert.That(snout2bottomCap.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0));
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var p1_el1 = VectorD.Build.Dense(new double[] { snout1TopCap.ellipse2DPolar.semiMajorAxis, 0.0, 0.0, 1.0 });
-        var p2_el1 = VectorD.Build.Dense(new double[] { 0.0, snout1TopCap.ellipse2DPolar.semiMinorAxis, 0.0, 1.0 });
-        var p1_el2 = VectorD.Build.Dense(new double[] { snout2bottomCap.ellipse2DPolar.semiMajorAxis, 0.0, 0.0, 1.0 });
-        var p2_el2 = VectorD.Build.Dense(new double[] { 0.0, snout2bottomCap.ellipse2DPolar.semiMinorAxis, 0.0, 1.0 });
+        var p1_el1 = VectorD.Build.Dense(new double[] { snout1TopCap.Ellipse2DPolar.SemiMajorAxis, 0.0, 0.0, 1.0 });
+        var p2_el1 = VectorD.Build.Dense(new double[] { 0.0, snout1TopCap.Ellipse2DPolar.SemiMinorAxis, 0.0, 1.0 });
+        var p1_el2 = VectorD.Build.Dense(new double[] { snout2bottomCap.Ellipse2DPolar.SemiMajorAxis, 0.0, 0.0, 1.0 });
+        var p2_el2 = VectorD.Build.Dense(new double[] { 0.0, snout2bottomCap.Ellipse2DPolar.SemiMinorAxis, 0.0, 1.0 });
 
-        var pt_orig_ell1 = snout1TopCap.planeToModelCoord * origin;
-        var pt_orig_ell2 = snout2bottomCap.planeToModelCoord * origin;
-        var pt_pt1_ell1 = snout1TopCap.planeToModelCoord * p1_el1;
-        var pt_pt2_ell1 = snout1TopCap.planeToModelCoord * p2_el1;
-        var pt_pt1_ell2 = snout2bottomCap.planeToModelCoord * p1_el2;
-        var pt_pt2_ell2 = snout2bottomCap.planeToModelCoord * p2_el2;
+        var pt_orig_ell1 = snout1TopCap.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = snout2bottomCap.PlaneToModelCoord * origin;
+        var pt_pt1_ell1 = snout1TopCap.PlaneToModelCoord * p1_el1;
+        var pt_pt2_ell1 = snout1TopCap.PlaneToModelCoord * p2_el1;
+        var pt_pt1_ell2 = snout2bottomCap.PlaneToModelCoord * p1_el2;
+        var pt_pt2_ell2 = snout2bottomCap.PlaneToModelCoord * p2_el2;
 
         // snout1 -> top
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));

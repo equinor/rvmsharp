@@ -9,7 +9,7 @@ using System.Numerics;
 [TestFixture]
 public class RvmSnoutConverterTests
 {
-    private const int _treeIndex = 1337;
+    private const int TreeIndex = 1337;
     private static RvmSnout _rvmSnout = null!;
 
     [SetUp]
@@ -35,7 +35,7 @@ public class RvmSnoutConverterTests
     public void RvmSnoutConverter_ReturnsConeWithCaps()
     {
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmSnout.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());
@@ -52,7 +52,7 @@ public class RvmSnoutConverterTests
             delegate
             {
                 var logObject = new FailedPrimitivesLogObject();
-                snout.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject);
+                snout.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject);
             }
         );
     }
@@ -63,7 +63,7 @@ public class RvmSnoutConverterTests
         _rvmSnout = _rvmSnout with { RadiusBottom = 1, RadiusTop = 1, BottomShearX = 0.5f };
 
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmSnout.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<GeneralCylinder>());
         Assert.That(geometries[1], Is.TypeOf<GeneralRing>());
@@ -77,7 +77,7 @@ public class RvmSnoutConverterTests
         var snout = _rvmSnout with { OffsetX = 0.5f };
 
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = snout.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = snout.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<EccentricCone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());
@@ -89,7 +89,7 @@ public class RvmSnoutConverterTests
     public void RvmSnoutConverter_WhenNoShearAndNotEccentric_ReturnsConeWithCaps()
     {
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmSnout.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmSnout.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Cone>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());

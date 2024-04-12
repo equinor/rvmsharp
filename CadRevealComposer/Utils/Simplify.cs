@@ -34,14 +34,14 @@ public static class Simplify
 
     private static Mesh ConvertDMesh3ToMesh(DMesh3 dMesh3)
     {
-        var verts = new Vector3[dMesh3.VertexCount];
+        var vertices = new Vector3[dMesh3.VertexCount];
 
         for (int vertexIndex = 0; vertexIndex < dMesh3.VertexCount; vertexIndex++)
         {
-            verts[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexf(vertexIndex));
+            vertices[vertexIndex] = Vec3fToVec3(dMesh3.GetVertexf(vertexIndex));
         }
 
-        var mesh = new Mesh(verts, dMesh3.Triangles().SelectMany(x => x.array).Select(x => (uint)x).ToArray(), 0.0f);
+        var mesh = new Mesh(vertices, dMesh3.Triangles().SelectMany(x => x.array).Select(x => (uint)x).ToArray(), 0.0f);
         return mesh;
     }
 

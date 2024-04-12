@@ -52,7 +52,7 @@ public class CadRevealNode
     public APrimitive[] Geometries = Array.Empty<APrimitive>();
 
     /// <summary>
-    /// This is a bounding box encapsulating all childrens bounding boxes.
+    /// This is a bounding box encapsulating all children bounding boxes.
     /// Some nodes are "Notes", and can validly not have any Bounds
     /// </summary>
     public BoundingBox? BoundingBoxAxisAligned;

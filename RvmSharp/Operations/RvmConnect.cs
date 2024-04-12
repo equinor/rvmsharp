@@ -44,13 +44,13 @@ public static class RvmConnect
 
     class Context
     {
-        public RvmStore store;
+        public readonly RvmStore Store;
         public readonly List<Anchor> Anchors = new List<Anchor>();
-        public const float epsilon = 0.001f;
+        public const float Epsilon = 0.001f;
 
         public Context(RvmStore store)
         {
-            this.store = store;
+            this.Store = store;
         }
 
         public int AnchorsCount => Anchors.Count;
@@ -61,7 +61,7 @@ public static class RvmConnect
     {
         var anchorsCount = context.AnchorsCount;
 
-        const float epsilon = Context.epsilon;
+        const float epsilon = Context.Epsilon;
         const float epsilonSquared = epsilon * epsilon;
 
         if (offset > anchorsCount)
@@ -101,7 +101,7 @@ public static class RvmConnect
                     connectionTypeFlags: anchors[i].ConnectionTypeFlags | anchors[j].ConnectionTypeFlags
                 );
 
-                context.store.Connections.Add(connection);
+                context.Store.Connections.Add(connection);
 
                 anchors[j].Geo.Connections[anchors[j].ConnectionIndex] = connection;
                 anchors[i].Geo.Connections[anchors[i].ConnectionIndex] = connection;

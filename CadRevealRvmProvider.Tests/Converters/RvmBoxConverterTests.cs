@@ -9,7 +9,7 @@ using System.Numerics;
 [TestFixture]
 public class RvmBoxConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmBox _rvmBox = null!;
 
     [SetUp]
@@ -29,7 +29,7 @@ public class RvmBoxConverterTests
     public void RvmBoxConverter_ReturnsBox()
     {
         var logObject = new FailedPrimitivesLogObject();
-        var geometries = _rvmBox.ConvertToRevealPrimitive(_treeIndex, Color.Red, logObject).ToArray();
+        var geometries = _rvmBox.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Box>());
         Assert.That(geometries.Length, Is.EqualTo(1));
