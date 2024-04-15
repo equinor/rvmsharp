@@ -9,6 +9,8 @@ public class HierarchyContext : DbContext
     public DbSet<PDMSEntry> PdmsEntries => Set<PDMSEntry>();
     public DbSet<NodePDMSEntry> NodeToPDMSEntry => Set<NodePDMSEntry>();
 
+    // NOTE: The AABB table is created in DatabaseComposer, because R-Tree isn't supported in the Enitity Framework
+
     // This connection string is only used during manual migration from command line, use HierarchyContext(DbContextOptions)
     // constructor runtime.
     private const string DefaultMigrationConnectionString = @"Data Source = D:\tmp\Hierarchy.db;";
