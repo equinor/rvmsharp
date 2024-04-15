@@ -7,8 +7,9 @@ public class HierarchyContext : DbContext
 {
     public DbSet<Node> Nodes => Set<Node>();
     public DbSet<PDMSEntry> PdmsEntries => Set<PDMSEntry>();
-    public DbSet<AABB> Aabbs => Set<AABB>();
     public DbSet<NodePDMSEntry> NodeToPDMSEntry => Set<NodePDMSEntry>();
+
+    // NOTE: The AABB table is created in DatabaseComposer, because R-Tree isn't supported in the Enitity Framework
 
     // This connection string is only used during manual migration from command line, use HierarchyContext(DbContextOptions)
     // constructor runtime.
@@ -31,7 +32,6 @@ public class HierarchyContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<PDMSEntry>().ToTable("PDMSEntries");
-        modelBuilder.Entity<AABB>().ToTable("AABBs");
         modelBuilder.Entity<NodePDMSEntry>().HasKey(e => new { e.NodeId, e.PDMSEntryId });
         modelBuilder
             .Entity<NodePDMSEntry>()
