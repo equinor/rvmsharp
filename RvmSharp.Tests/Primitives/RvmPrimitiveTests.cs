@@ -99,7 +99,7 @@ public class RvmPrimitiveTests
     {
         var primitive = CreateUnitBoxWithMatrix(testCaseDescription.Transform);
         RvmBoundingBox bb = primitive.CalculateAxisAlignedBoundingBox();
-        var diagonal = bb.Diagonal;
+        var diagonal = bb!.Diagonal;
 
         Assert.That(bb.Min, Is.EqualTo(testCaseDescription.ExpectedMin));
         Assert.That(bb.Max, Is.EqualTo(testCaseDescription.ExpectedMax));
@@ -390,7 +390,7 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
         // are the planes going through the same pt?
         // they are not for this snout!!
@@ -409,11 +409,11 @@ public class RvmPrimitiveTests
         var p2 = Vector4.Transform(Vector4.Transform(snout2CapCenter, s2Mat), sn1MatInv);
         var d_c2_pl1 = Vector3.Dot(snout1_n, new Vector3(p2.X, p2.Y, p2.Z)) + snout1_dc;
 
-        Assert.AreEqual(0.0, d_c1_pl2);
-        Assert.AreEqual(0.0, d_c2_pl1);
+        Assert.That(0.0, Is.EqualTo(d_c1_pl2));
+        Assert.That(0.0, Is.EqualTo(d_c2_pl1));
 
-        Assert.AreEqual(0.0, distance1 * 1000.0);
-        Assert.AreEqual(0.0, distance2 * 1000.0);
+        Assert.That(0.0, Is.EqualTo(distance1 * 1000.0));
+        Assert.That(0.0, Is.EqualTo(distance2 * 1000.0));
     }
 
     [Test]
@@ -522,10 +522,10 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
-        Assert.AreEqual(0.0, distance1 * 1000.0);
-        Assert.AreEqual(0.0, distance2 * 1000.0);
+        Assert.That(distance1 * 1000.0, Is.EqualTo(0));
+        Assert.That(distance2 * 1000.0, Is.EqualTo(0));
     }
 
     [Test]
@@ -635,9 +635,9 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
-        Assert.AreEqual(0.0, distance1 * 1000.0);
-        Assert.AreEqual(0.0, distance2 * 1000.0);
+        Assert.That(distance1 * 1000.0, Is.Zero);
+        Assert.That(distance2 * 1000.0, Is.Zero);
     }
 }
