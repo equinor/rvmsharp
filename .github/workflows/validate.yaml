@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
     name: Check Formatting
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install tools
         run: |
           dotnet tool restore
@@ -30,7 +30,7 @@ jobs:
         dotnet-version: [ '8.0.x' ]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup .NET SDK ${{ matrix.dotnet-version }}
         uses: actions/setup-dotnet@v3
         with:
