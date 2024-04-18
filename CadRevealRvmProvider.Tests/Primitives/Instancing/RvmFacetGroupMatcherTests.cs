@@ -25,8 +25,8 @@ public class RvmFacetGroupMatcherTests
             out var transform
         );
 
-        Assert.IsTrue(isMatch, "Could not match.");
-        Assert.AreEqual(Matrix4x4.Identity, transform);
+        Assert.That(isMatch, Is.True, "Could not match.");
+        Assert.That(Matrix4x4.Identity, Is.EqualTo(transform));
     }
 
     [Test]
@@ -49,7 +49,7 @@ public class RvmFacetGroupMatcherTests
             var meshB = meshA.TransformVertexData(ma);
 
             var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
-            Assert.IsTrue(isMatch, "Could not match.");
+            Assert.That(isMatch, Is.True, "Could not match.");
         }
     }
 
@@ -73,7 +73,7 @@ public class RvmFacetGroupMatcherTests
         var meshB = meshA.TransformVertexData(ma);
 
         var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
-        Assert.IsTrue(isMatch, "Could not match.");
+        Assert.That(isMatch, Is.True, "Could not match.");
     }
 
     private static Vector3 RandomVector(Random r, float minComponentValue, float maxComponentValue)
