@@ -3,6 +3,7 @@
 using Configuration;
 using Devtools;
 using IdProviders;
+using Microsoft.Data.Sqlite;
 using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
@@ -121,11 +122,47 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
-        ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
+        var treeIndexWithSector = ProcessPrimitives(
+            geometriesToProcessArray,
+            outputDirectory,
+            modelParameters,
+            composerParameters
+        );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
+
+
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
+        {
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText =
+                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL); ";
+            createTableCommand.ExecuteNonQuery();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT INTO sectors (treeindex, sectorId) VALUES ($TreeIndex, $SectorId)";
+            var treeIndexParameter = command.CreateParameter();
+            treeIndexParameter.ParameterName = "$TreeIndex";
+            var sectorIdParameter = command.CreateParameter();
+            sectorIdParameter.ParameterName = "$SectorId";
+
+            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter]);
+
+            var transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+            foreach (var pair in treeIndexWithSector)
+            {
+                treeIndexParameter.Value = pair.treeIndex;
+                sectorIdParameter.Value = pair.sectorId;
+                command.ExecuteNonQuery();
+            }
+            transaction.Commit();
+        }
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
@@ -133,7 +170,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(
+    public static (ulong treeIndex, uint sectorId)[] ProcessPrimitives(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -166,6 +203,18 @@ public static class CadRevealComposerRunner
         SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
+
+        var treeIndexSectorIdList = new List<(ulong, uint)>();
+        foreach (var sector in sectors)
+        {
+            var sectorId = sector.SectorId;
+            foreach (var node in sector.Geometries)
+            {
+                treeIndexSectorIdList.Add((node.TreeIndex, sectorId));
+            }
+        }
+
+        return treeIndexSectorIdList.ToArray();
     }
 
     /// <summary>
