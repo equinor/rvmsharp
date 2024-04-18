@@ -1,6 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Tests.Utils;
 
 using BatchUtils;
+using NUnit.Framework.Legacy;
 using Operations;
 using RvmSharp.Exporters;
 using RvmSharp.Primitives;
@@ -111,7 +112,7 @@ public class FacetGroupHelpers
             totalCount += totalMatches;
         }
 
-        Assert.AreEqual(groupToTemplateWithTransform.Length, totalCount);
+        Assert.That(totalCount, Is.EqualTo(groupToTemplateWithTransform.Length));
     }
 
     private static IEnumerable<RvmFacetGroup> GetAllFacetGroups(RvmNode root)

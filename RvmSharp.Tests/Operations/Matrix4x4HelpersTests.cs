@@ -57,7 +57,7 @@ public class Matrix4x4HelpersTests
         bool result = Matrix4x4Helpers.MatrixContainsInfiniteValue(matrix);
 
         //Assert
-        Assert.IsFalse(result);
+        Assert.That(result, Is.False);
     }
 
     [Test]
@@ -86,6 +86,6 @@ public class Matrix4x4HelpersTests
         bool result = Matrix4x4Helpers.MatrixContainsInfiniteValue(matrix);
 
         //Assert
-        Assert.IsTrue(result);
+        Assert.That(result, Is.True);
     }
 }
