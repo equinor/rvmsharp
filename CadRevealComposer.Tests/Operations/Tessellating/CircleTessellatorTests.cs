@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
+using NUnit.Framework.Legacy;
 using Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -19,7 +20,7 @@ public class CircleTessellatorTests
         var vertices = tessellatedCircle.Mesh.Vertices;
         var indices = tessellatedCircle.Mesh.Indices;
 
-        Assert.AreEqual(indices.Length, (vertices.Length - 1) * 3);
+        Assert.That((vertices.Length - 1) * 3, Is.EqualTo(indices.Length));
     }
 
     [Test]
@@ -47,7 +48,7 @@ public class CircleTessellatorTests
 
             var determinant = TessellatorTestUtils.CalculateDeterminant(v1, v2, v3);
 
-            Assert.GreaterOrEqual(determinant, 0.0f);
+            Assert.That(determinant, Is.GreaterThanOrEqualTo(0.0f));
         }
     }
 }

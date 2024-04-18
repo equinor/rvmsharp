@@ -2,6 +2,7 @@
 
 using CadRevealRvmProvider.Converters;
 using CadRevealRvmProvider.Converters.CapVisibilityHelpers;
+using NUnit.Framework.Legacy;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
 using System.Numerics;
@@ -48,8 +49,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, 0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -69,8 +70,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, 0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -90,8 +91,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -111,8 +112,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -132,8 +133,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -153,8 +154,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -174,8 +175,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -195,8 +196,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -216,8 +217,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -237,8 +238,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -258,8 +259,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -279,8 +280,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -300,8 +301,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -321,8 +322,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -342,8 +343,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -363,8 +364,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, new Vector3(0, -1, -0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -384,8 +385,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, new Vector3(0, -1, -0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -405,8 +406,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_cylinder, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     /////// SNOUT ///////
@@ -427,8 +428,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -448,8 +449,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -469,8 +470,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -490,8 +491,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -511,8 +512,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -532,8 +533,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -553,8 +554,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -574,8 +575,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -595,8 +596,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -616,8 +617,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -637,8 +638,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -658,8 +659,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -679,8 +680,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, new Vector3(0, -1, 0));
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -700,8 +701,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, new Vector3(0, -1, 0), Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -962,7 +963,7 @@ public class CapVisibilityTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
         // are the planes going through the same pt?
         // they are not for this snout!!
@@ -981,15 +982,15 @@ public class CapVisibilityTests
         var p2 = Vector4.Transform(Vector4.Transform(snout2CapCenter, s2Mat), sn1MatInv);
         var d_c2_pl1 = Vector3.Dot(snout1_n, new Vector3(p2.X, p2.Y, p2.Z)) + snout1_dc;
 
-        Assert.AreEqual(0.0, d_c1_pl2);
-        Assert.AreEqual(0.0, d_c2_pl1);
+        Assert.That(d_c1_pl2, Is.EqualTo(0.0));
+        Assert.That(d_c2_pl1, Is.EqualTo(0.0));
 
-        Assert.AreEqual(0.0, distance1_0 * 1000.0);
-        Assert.AreEqual(0.0, distance1_1 * 1000.0);
-        Assert.AreEqual(0.0, distance1_2 * 1000.0);
-        Assert.AreEqual(0.0, distance2_0 * 1000.0);
-        Assert.AreEqual(0.0, distance2_1 * 1000.0);
-        Assert.AreEqual(0.0, distance2_2 * 1000.0);
+        Assert.That(distance1_0 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance1_1 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance1_2 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2_0 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2_1 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2_2 * 1000.0, Is.EqualTo(0.0));
 
         snout2.Connections[0] = new RvmConnection(
             snout2,
@@ -1108,9 +1109,9 @@ public class CapVisibilityTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual((double)transfNormal1.X, (double)transfNormal2.X, 0.00001);
-        Assert.AreEqual((double)transfNormal1.Y, (double)transfNormal2.Y, 0.00001);
-        Assert.AreEqual((double)transfNormal1.Z, (double)transfNormal2.Z, 0.00001);
+        Assert.That((double)transfNormal2.X, Is.EqualTo((double)transfNormal1.X).Within(0.00001));
+        Assert.That((double)transfNormal2.Y, Is.EqualTo((double)transfNormal1.Y).Within(0.00001));
+        Assert.That((double)transfNormal2.Z, Is.EqualTo((double)transfNormal1.Z).Within(0.00001));
 
         // are the planes going through the same pt?
 
@@ -1128,15 +1129,15 @@ public class CapVisibilityTests
         var p2 = Vector4.Transform(Vector4.Transform(snout2CapCenter, s2Mat), sn1MatInv);
         var d_c2_pl1 = Vector3.Dot(snout1_n, new Vector3(p2.X, p2.Y, p2.Z)) + snout1_dc;
 
-        Assert.AreEqual(0.0, d_c1_pl2);
-        Assert.AreEqual(0.0, d_c2_pl1);
+        Assert.That(d_c1_pl2, Is.EqualTo(0.0));
+        Assert.That(d_c2_pl1, Is.EqualTo(0.0));
 
-        Assert.AreEqual(0.0, distance1_0 * 1000.0);
-        Assert.AreEqual(0.0, distance1_1 * 1000.0);
-        Assert.AreEqual(0.0, distance1_2 * 1000.0);
-        Assert.AreEqual(0.0, distance2_0 * 1000.0);
-        Assert.AreEqual(0.0, distance2_1 * 1000.0);
-        Assert.AreEqual(0.0, distance2_2 * 1000.0);
+        Assert.That(distance1_0 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance1_1 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance1_2 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2_0 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2_1 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2_2 * 1000.0, Is.EqualTo(0.0));
 
         snout1.Connections[0] = new RvmConnection(
             snout1,
@@ -1393,8 +1394,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_snout, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     /////// CIRCULAR TORUS ///////
@@ -1419,8 +1420,8 @@ public class CapVisibilityTests
             new Vector3(0, -1, -0)
         );
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -1444,8 +1445,8 @@ public class CapVisibilityTests
             Vector3.Zero
         );
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -1465,8 +1466,8 @@ public class CapVisibilityTests
 
         (bool showCapA, bool showCapB) = CapVisibility.IsCapsVisible(_circularTorus, Vector3.Zero, Vector3.Zero);
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -1490,8 +1491,8 @@ public class CapVisibilityTests
             new Vector3(0, -1, -0)
         );
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -1515,8 +1516,8 @@ public class CapVisibilityTests
             Vector3.Zero
         );
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -1540,8 +1541,8 @@ public class CapVisibilityTests
             new Vector3(0, -1, -0)
         );
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -1565,8 +1566,8 @@ public class CapVisibilityTests
             new Vector3(0, -1, -0)
         );
 
-        Assert.IsFalse(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.False);
+        Assert.That(showCapB, Is.True);
     }
 
     [Test]
@@ -1590,8 +1591,8 @@ public class CapVisibilityTests
             Vector3.Zero
         );
 
-        Assert.IsTrue(showCapA);
-        Assert.IsFalse(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.False);
     }
 
     [Test]
@@ -1615,8 +1616,8 @@ public class CapVisibilityTests
             new Vector3(0, -1, -0)
         );
 
-        Assert.IsTrue(showCapA);
-        Assert.IsTrue(showCapB);
+        Assert.That(showCapA, Is.True);
+        Assert.That(showCapB, Is.True);
     }
 
     /////// SPHERICAL DISH ///////
@@ -1637,7 +1638,7 @@ public class CapVisibilityTests
 
         bool showCap = CapVisibility.IsCapVisible(_sphericalDish, Vector3.Zero);
 
-        Assert.IsFalse(showCap);
+        Assert.That(showCap, Is.False);
     }
 
     [Test]
@@ -1657,7 +1658,7 @@ public class CapVisibilityTests
 
         bool showCap = CapVisibility.IsCapVisible(_sphericalDish, Vector3.Zero);
 
-        Assert.IsTrue(showCap);
+        Assert.That(showCap, Is.True);
     }
 
     /////// ELLIPTICAL DISH ///////
@@ -1678,7 +1679,7 @@ public class CapVisibilityTests
 
         bool showCap = CapVisibility.IsCapVisible(_ellipticalDish, Vector3.Zero);
 
-        Assert.IsFalse(showCap);
+        Assert.That(showCap, Is.False);
     }
 
     [Test]
@@ -1698,6 +1699,6 @@ public class CapVisibilityTests
 
         bool showCap = CapVisibility.IsCapVisible(_ellipticalDish, Vector3.Zero);
 
-        Assert.IsTrue(showCap);
+        Assert.That(showCap, Is.True);
     }
 }

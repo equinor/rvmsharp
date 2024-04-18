@@ -44,8 +44,8 @@ class VectorExtensionsTests
     [Test]
     public void EqualsWithinTolerance()
     {
-        Assert.IsTrue(Vector3.One.EqualsWithinTolerance(Vector3.One, 0.000_001f));
-        Assert.IsFalse(Vector3.One.EqualsWithinTolerance(Vector3.Zero, 0.000_001f));
+        Assert.That(Vector3.One.EqualsWithinTolerance(Vector3.One, 0.000_001f));
+        Assert.That(Vector3.One.EqualsWithinTolerance(Vector3.Zero, 0.000_001f), Is.False);
     }
 
     [Test]
@@ -71,12 +71,12 @@ class VectorExtensionsTests
     [Test]
     public void EqualsWithinFactor()
     {
-        Assert.IsTrue(Vector3.One.EqualsWithinFactor(Vector3.One, 0f));
-        Assert.IsFalse(Vector3.One.EqualsWithinFactor(Vector3.Zero, 0f));
+        Assert.That(Vector3.One.EqualsWithinFactor(Vector3.One, 0f));
+        Assert.That(Vector3.One.EqualsWithinFactor(Vector3.Zero, 0f), Is.False);
 
         // dividing zero with zero leads to NaN which is a special case
         var almostZero = new Vector3(1E-20f, 1E-20f, 1E-20f);
-        Assert.IsTrue(Vector3.Zero.EqualsWithinFactor(Vector3.Zero, 0f));
-        Assert.IsTrue(almostZero.EqualsWithinFactor(Vector3.Zero, 0f));
+        Assert.That(Vector3.Zero.EqualsWithinFactor(Vector3.Zero, 0f));
+        Assert.That(almostZero.EqualsWithinFactor(Vector3.Zero, 0f));
     }
 }

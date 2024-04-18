@@ -13,17 +13,17 @@ public class TessellationUtilsTests
         var unitY = Vector3.UnitY;
         var unitZ = Vector3.UnitZ;
 
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitX, unitY), MathF.PI / 2, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitY, unitZ), MathF.PI / 2, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitX, unitZ), MathF.PI / 2, 0.001f);
+        Assert.That(TessellationUtils.AngleBetween(unitX, unitY), Is.EqualTo(MathF.PI / 2).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(unitY, unitZ), Is.EqualTo(MathF.PI / 2).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(unitX, unitZ), Is.EqualTo(MathF.PI / 2).Within(0.001f));
 
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitX, -unitX), Math.PI, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitX, unitX), 0, 0.001f);
+        Assert.That(TessellationUtils.AngleBetween(unitX, -unitX), Is.EqualTo(Math.PI).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(unitX, unitX), Is.EqualTo(0).Within(0.001f));
 
         var rotation = Quaternion.CreateFromAxisAngle(unitZ, 0.3f);
         var rotatedVector = Vector3.Transform(unitX, rotation);
 
-        Assert.AreEqual(TessellationUtils.AngleBetween(rotatedVector, unitX), 0.3f, 0.001);
+        Assert.That(TessellationUtils.AngleBetween(rotatedVector, unitX), Is.EqualTo(0.3f).Within(0.001f));
     }
 
     [Test]
@@ -37,9 +37,9 @@ public class TessellationUtilsTests
         var ortoY = TessellationUtils.CreateOrthogonalUnitVector(unitY);
         var ortoZ = TessellationUtils.CreateOrthogonalUnitVector(unitZ);
 
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitX, ortoX), MathF.PI / 2, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitY, ortoY), MathF.PI / 2, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(unitZ, ortoZ), MathF.PI / 2, 0.001f);
+        Assert.That(TessellationUtils.AngleBetween(unitX, ortoX), Is.EqualTo(MathF.PI / 2).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(unitY, ortoY), Is.EqualTo(MathF.PI / 2).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(unitZ, ortoZ), Is.EqualTo(MathF.PI / 2).Within(0.001f));
 
         var v1 = new Vector3(1, 1, 1);
         var v2 = new Vector3(2, -2, 5);
@@ -49,15 +49,15 @@ public class TessellationUtilsTests
         var ortoV2 = TessellationUtils.CreateOrthogonalUnitVector(v2);
         var ortoV3 = TessellationUtils.CreateOrthogonalUnitVector(v3);
 
-        Assert.AreEqual(TessellationUtils.AngleBetween(v1, ortoV1), MathF.PI / 2, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(v2, ortoV2), MathF.PI / 2, 0.001f);
-        Assert.AreEqual(TessellationUtils.AngleBetween(v3, ortoV3), MathF.PI / 2, 0.001f);
+        Assert.That(TessellationUtils.AngleBetween(v1, ortoV1), Is.EqualTo(MathF.PI / 2).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(v2, ortoV2), Is.EqualTo(MathF.PI / 2).Within(0.001f));
+        Assert.That(TessellationUtils.AngleBetween(v3, ortoV3), Is.EqualTo(MathF.PI / 2).Within(0.001f));
 
-        Assert.AreEqual(ortoV1.Length(), Vector3.Normalize(ortoV1).Length(), 0.001f);
-        Assert.AreEqual(ortoV2.Length(), Vector3.Normalize(ortoV2).Length(), 0.001f);
-        Assert.AreEqual(ortoV3.Length(), Vector3.Normalize(ortoV3).Length(), 0.001f);
-        Assert.AreEqual(ortoX.Length(), Vector3.Normalize(ortoX).Length(), 0.001f);
-        Assert.AreEqual(ortoY.Length(), Vector3.Normalize(ortoY).Length(), 0.001f);
-        Assert.AreEqual(ortoZ.Length(), Vector3.Normalize(ortoZ).Length(), 0.001f);
+        Assert.That(ortoV1.Length(), Is.EqualTo(Vector3.Normalize(ortoV1).Length()).Within(0.001f));
+        Assert.That(ortoV2.Length(), Is.EqualTo(Vector3.Normalize(ortoV2).Length()).Within(0.001f));
+        Assert.That(ortoV3.Length(), Is.EqualTo(Vector3.Normalize(ortoV3).Length()).Within(0.001f));
+        Assert.That(ortoX.Length(), Is.EqualTo(Vector3.Normalize(ortoX).Length()).Within(0.001f));
+        Assert.That(ortoY.Length(), Is.EqualTo(Vector3.Normalize(ortoY).Length()).Within(0.001f));
+        Assert.That(ortoZ.Length(), Is.EqualTo(Vector3.Normalize(ortoZ).Length()).Within(0.001f));
     }
 }

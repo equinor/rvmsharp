@@ -409,11 +409,11 @@ public class RvmPrimitiveTests
         var p2 = Vector4.Transform(Vector4.Transform(snout2CapCenter, s2Mat), sn1MatInv);
         var d_c2_pl1 = Vector3.Dot(snout1_n, new Vector3(p2.X, p2.Y, p2.Z)) + snout1_dc;
 
-        Assert.That(0.0, Is.EqualTo(d_c1_pl2));
-        Assert.That(0.0, Is.EqualTo(d_c2_pl1));
+        Assert.That(d_c1_pl2, Is.EqualTo(0.0));
+        Assert.That(d_c2_pl1, Is.EqualTo(0.0));
 
-        Assert.That(0.0, Is.EqualTo(distance1 * 1000.0));
-        Assert.That(0.0, Is.EqualTo(distance2 * 1000.0));
+        Assert.That(distance1 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2 * 1000.0, Is.EqualTo(0.0));
     }
 
     [Test]

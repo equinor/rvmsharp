@@ -18,9 +18,9 @@ public class RayTests
         var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
         LogResult(hitResult, intersectionPoint, isFrontFace);
 
-        Assert.True(intersectionPoint.EqualsWithinTolerance(new Vector3(0, 0, 2), 0.00001f));
+        Assert.That(intersectionPoint.EqualsWithinTolerance(new Vector3(0, 0, 2), 0.00001f));
         Assert.That(hitResult);
-        Assert.True(!isFrontFace);
+        Assert.That(isFrontFace, Is.False);
     }
 
     [Test]
@@ -34,9 +34,9 @@ public class RayTests
         var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
         LogResult(hitResult, intersectionPoint, isFrontFace);
 
-        Assert.True(intersectionPoint.EqualsWithinTolerance(new Vector3(0, 0, 2), 0.00001f));
+        Assert.That(intersectionPoint.EqualsWithinTolerance(new Vector3(0, 0, 2), 0.00001f));
         Assert.That(hitResult);
-        Assert.True(isFrontFace);
+        Assert.That(isFrontFace);
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class RayTests
         var hitResult = ray.Trace(triangle, out var intersectionPoint, out var isFrontFace);
         LogResult(hitResult, intersectionPoint, isFrontFace);
 
-        Assert.True(intersectionPoint.EqualsWithinTolerance(new Vector3(0, 0, 0), 0.00001f));
+        Assert.That(intersectionPoint.EqualsWithinTolerance(new Vector3(0, 0, 0), 0.00001f));
         Assert.That(hitResult);
         Assert.That(isFrontFace);
     }

@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
+using NUnit.Framework.Legacy;
 using Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -27,7 +28,7 @@ public class GeneralRingTessellatorTests
         var vertices = tessellatedGeneralRing.Mesh.Vertices;
         var indices = tessellatedGeneralRing.Mesh.Indices;
 
-        Assert.AreEqual(indices.Length, (vertices.Length - 2) * 3);
+        Assert.That((vertices.Length - 2) * 3, Is.EqualTo(indices.Length));
     }
 
     [Test]
@@ -49,7 +50,7 @@ public class GeneralRingTessellatorTests
         var vertices = tessellatedGeneralRing.Mesh.Vertices;
         var indices = tessellatedGeneralRing.Mesh.Indices;
 
-        Assert.AreEqual(indices.Length, (vertices.Length - 2) * 3);
+        Assert.That((vertices.Length - 2) * 3, Is.EqualTo(indices.Length));
     }
 
     [Test]
@@ -85,7 +86,7 @@ public class GeneralRingTessellatorTests
 
             var determinant = TessellatorTestUtils.CalculateDeterminant(v1, v2, v3);
 
-            Assert.GreaterOrEqual(determinant, 0.0f);
+            Assert.That(determinant, Is.GreaterThanOrEqualTo(0.0f));
         }
     }
 
@@ -132,7 +133,7 @@ public class GeneralRingTessellatorTests
 
             float determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g);
 
-            Assert.GreaterOrEqual(determinant, 0.0f);
+            Assert.That(determinant, Is.GreaterThanOrEqualTo(0.0f));
         }
     }
 }
