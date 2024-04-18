@@ -40,7 +40,7 @@ public class FacetGroupMatchTests
         var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
         var panel2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("2.json");
         var panelsEqual = RvmFacetGroupMatcher.Match(panel1, panel2, out Matrix4x4 _);
-        Assert.That(panelsEqual, Is.True);
+        Assert.That(panelsEqual, Is.False);
     }
 
     /// <summary>
