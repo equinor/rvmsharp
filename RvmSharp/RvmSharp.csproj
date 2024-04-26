@@ -12,6 +12,7 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <!-- Package metadata -->
+    <Version>1.0.1</Version> <!-- Nuget Package Version. Try to keep somwehat SemVer updated -->
     <Copyright>Equinor ASA</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>Equinor ASA</Company>
