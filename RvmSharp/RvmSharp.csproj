@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
+    
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
     <!-- Package metadata -->
     <Copyright>Equinor ASA</Copyright>
@@ -14,7 +18,17 @@
     <PackageDescription>Rvmsharp is an Aveva .RVM file format reader</PackageDescription>
     <RepositoryUrl>https://github.com/equinor/rvmsharp</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageId>Equinor.RvmSharp</PackageId>
+    <Authors>Equinor ASA</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <DebugSymbols>true</DebugSymbols>
+    <Description>RvmSharp is a fast AVEVA Rvm parser and converter, it can read .RVM files and attribute files and convert these files to meshes.</Description>
   </PropertyGroup>
+  
+  <ItemGroup>
+    <!-- Include readme in nuget package -->
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="LibTessDotNet" Version="1.1.15"/>
