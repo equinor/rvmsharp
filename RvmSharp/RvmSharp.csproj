@@ -36,7 +36,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Commons\Commons.csproj"/>
+    <!-- PrivateAssets="all" means that this will be referenced as an internal package in nuget -->
+    <ProjectReference Include="..\Commons\Commons.csproj" PrivateAssets="all"/>
   </ItemGroup>
 
 </Project>
