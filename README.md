@@ -104,6 +104,10 @@ Install the addon for your IDE, and enable formatting when saving files to avoid
 > Remark:<br>
 > You need to run `dotnet tool restore` to install and update csharpier for the IDE addons to work as expected.
 
+## Releasing NuGet
+
+To update the RvmSharp package on nuget check the internal docs: <https://github.com/equinor/Echo/tree/master/docs/rvmsharp-sop-nuget.md>
+
 ## Credits
 
 This project is based on [rvmparser](https://github.com/cdyk/rvmparser) by @cdyk
