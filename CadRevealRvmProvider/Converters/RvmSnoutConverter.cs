@@ -131,7 +131,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA && radiusA > 0)
+        if (showCapA && radiusA > 0.0001f)
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -141,7 +141,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (!showCapB || !(radiusB > 0) || !hasHeight)
+        if (!showCapB || !(radiusB > 0.0001f) || !hasHeight)
         {
             yield break;
         }
@@ -193,7 +193,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
-        if (showCapA && radiusA > 0)
+        if (showCapA && radiusA > 0.0001f)
         {
             var matrixEccentricCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -203,7 +203,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
-        if (!showCapB || !(radiusB > 0))
+        if (!showCapB || !(radiusB > 0.0001f))
         {
             yield break;
         }
