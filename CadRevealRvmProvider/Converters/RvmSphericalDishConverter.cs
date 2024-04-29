@@ -42,6 +42,10 @@ public static class RvmSphericalDishConverter
 
         yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox);
 
+        // TODO: Test
+        if (baseDiameter <= 0)
+            yield break;
+
         var showCap = CapVisibility.IsCapVisible(rvmSphericalDish, position);
 
         if (showCap)
