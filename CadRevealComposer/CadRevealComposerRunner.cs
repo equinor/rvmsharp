@@ -133,7 +133,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
 
-
+        // Sector in metadata hack //////////////////
         var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
         using (var connection = new SqliteConnection($"Data Source={databasePath}"))
         {
@@ -141,11 +141,11 @@ public static class CadRevealComposerRunner
 
             var createTableCommand = connection.CreateCommand();
             createTableCommand.CommandText =
-                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL); ";
+                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, sectorId)) WITHOUT ROWID; ";
             createTableCommand.ExecuteNonQuery();
 
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT INTO sectors (treeindex, sectorId) VALUES ($TreeIndex, $SectorId)";
+            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId) VALUES ($TreeIndex, $SectorId)";
             var treeIndexParameter = command.CreateParameter();
             treeIndexParameter.ParameterName = "$TreeIndex";
             var sectorIdParameter = command.CreateParameter();
@@ -163,7 +163,7 @@ public static class CadRevealComposerRunner
             }
             transaction.Commit();
         }
-
+        //////////////////////////////////////////////
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
