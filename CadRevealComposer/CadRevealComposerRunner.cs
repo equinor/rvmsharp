@@ -133,37 +133,7 @@ public static class CadRevealComposerRunner
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
 
-        // Sector in metadata hack //////////////////
-        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
-        {
-            connection.Open();
 
-            var createTableCommand = connection.CreateCommand();
-            createTableCommand.CommandText =
-                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, sectorId)) WITHOUT ROWID; ";
-            createTableCommand.ExecuteNonQuery();
-
-            var command = connection.CreateCommand();
-            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId) VALUES ($TreeIndex, $SectorId)";
-            var treeIndexParameter = command.CreateParameter();
-            treeIndexParameter.ParameterName = "$TreeIndex";
-            var sectorIdParameter = command.CreateParameter();
-            sectorIdParameter.ParameterName = "$SectorId";
-
-            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter]);
-
-            var transaction = connection.BeginTransaction();
-            command.Transaction = transaction;
-            foreach (var pair in treeIndexWithSector)
-            {
-                treeIndexParameter.Value = pair.treeIndex;
-                sectorIdParameter.Value = pair.sectorId;
-                command.ExecuteNonQuery();
-            }
-            transaction.Commit();
-        }
-        //////////////////////////////////////////////
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
@@ -197,14 +167,8 @@ public static class CadRevealComposerRunner
 
         var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
 
-        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 
-        stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
-        Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
-        stopwatch.Restart();
-
-        var treeIndexSectorIdList = new List<(ulong, uint)>();
+        var treeIndexSectorIdList = new List<(ulong treeIndex, uint sectorId)>();
         foreach (var sector in sectors)
         {
             var sectorId = sector.SectorId;
@@ -213,6 +177,48 @@ public static class CadRevealComposerRunner
                 treeIndexSectorIdList.Add((node.TreeIndex, sectorId));
             }
         }
+
+        // Sector in metadata hack //////////////////
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
+        {
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText =
+                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, sectorId)) WITHOUT ROWID; ";
+            createTableCommand.ExecuteNonQuery();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId) VALUES ($TreeIndex, $SectorId)";
+            var treeIndexParameter = command.CreateParameter();
+            treeIndexParameter.ParameterName = "$TreeIndex";
+            var sectorIdParameter = command.CreateParameter();
+            sectorIdParameter.ParameterName = "$SectorId";
+
+            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter]);
+
+            var transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+            foreach (var pair in treeIndexSectorIdList.ToArray())
+            {
+                treeIndexParameter.Value = pair.treeIndex;
+                sectorIdParameter.Value = pair.sectorId;
+                command.ExecuteNonQuery();
+            }
+            transaction.Commit();
+        }
+        //////////////////////////////////////////////
+
+
+        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+
+        stopwatch.Restart();
+        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+        Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
+        stopwatch.Restart();
+
+
 
         return treeIndexSectorIdList.ToArray();
     }
