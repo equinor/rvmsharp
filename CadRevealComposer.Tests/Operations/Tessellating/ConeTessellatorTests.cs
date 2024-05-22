@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
+using NUnit.Framework.Legacy;
 using Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -30,7 +31,7 @@ public class ConeTessellatorTests
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;
 
-        Assert.AreEqual(vertices.Length * 3, indices.Length);
+        Assert.That(indices, Has.Length.EqualTo(vertices.Length * 3));
     }
 
     [Test]
@@ -55,7 +56,7 @@ public class ConeTessellatorTests
         var vertices = tessellatedCone.Mesh.Vertices;
         var indices = tessellatedCone.Mesh.Indices;
 
-        Assert.AreEqual((vertices.Length - 2) * 3, indices.Length);
+        Assert.That(indices.Length, Is.EqualTo((vertices.Length - 2) * 3));
     }
 
     [Test]
@@ -124,7 +125,7 @@ public class ConeTessellatorTests
 
             var determinant = TessellatorTestUtils.CalculateDeterminant(v1, v2, v3);
 
-            Assert.GreaterOrEqual(determinant, 0.0f);
+            Assert.That(determinant, Is.GreaterThanOrEqualTo(0.0f));
         }
     }
 }

@@ -51,7 +51,7 @@ public record RvmSnout(
         var topCapCenter = 0.5f * new Vector3(OffsetX, OffsetY, Height);
         var xPlane = GeometryHelper.GetPlaneFromShearAndPoint(TopShearX, TopShearY, topCapCenter);
 
-        return getCapEllipse(xPlane, topCapCenter, RadiusTop);
+        return GetCapEllipse(xPlane, topCapCenter, RadiusTop);
     }
 
     public Ellipse3D GetBottomCapEllipse()
@@ -60,10 +60,10 @@ public record RvmSnout(
         var bottomCapCenter = -0.5f * new Vector3(OffsetX, OffsetY, Height);
         var xPlane = GeometryHelper.GetPlaneFromShearAndPoint(BottomShearX, BottomShearY, bottomCapCenter);
 
-        return getCapEllipse(xPlane, bottomCapCenter, RadiusBottom);
+        return GetCapEllipse(xPlane, bottomCapCenter, RadiusBottom);
     }
 
-    private Ellipse3D getCapEllipse(PlaneImplicitForm xPlane, Vector3 capCenter, float capRadius)
+    private Ellipse3D GetCapEllipse(PlaneImplicitForm xPlane, Vector3 capCenter, float capRadius)
     {
         // cones
         if (!IsCappedCylinder())
@@ -76,8 +76,7 @@ public record RvmSnout(
                 : ConicSectionsHelper.CalcEllipseIntersectionForCone(xPlane, cone);
         }
         //cylinders
-
-        var cosineSlope = Vector3.Dot(xPlane.normal, new Vector3(0.0f, 0.0f, 1.0f));
+        var cosineSlope = Vector3.Dot(xPlane.Normal, new Vector3(0.0f, 0.0f, 1.0f));
 
         // the most trivial case, cylinder with zero slope
         return cosineSlope.ApproximatelyEquals(1)

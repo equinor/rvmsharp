@@ -25,8 +25,8 @@ public class RvmFacetGroupMatcherTests
             out var transform
         );
 
-        Assert.IsTrue(isMatch, "Could not match.");
-        Assert.AreEqual(Matrix4x4.Identity, transform);
+        Assert.That(isMatch, Is.True, "Could not match.");
+        Assert.That(Matrix4x4.Identity, Is.EqualTo(transform));
     }
 
     [Test]
@@ -41,15 +41,15 @@ public class RvmFacetGroupMatcherTests
             var scale = RandomVector(r, 0.1f, 5.1f);
             var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
 
-            var Mr = Matrix4x4.CreateFromQuaternion(q);
-            var Ms = Matrix4x4.CreateScale(scale);
-            var Mt = Matrix4x4.CreateTranslation(Vector3.Zero);
-            var Ma = Ms * Mr * Mt;
+            var mr = Matrix4x4.CreateFromQuaternion(q);
+            var ms = Matrix4x4.CreateScale(scale);
+            var mt = Matrix4x4.CreateTranslation(Vector3.Zero);
+            var ma = ms * mr * mt;
 
-            var meshB = meshA.TransformVertexData(Ma);
+            var meshB = meshA.TransformVertexData(ma);
 
             var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
-            Assert.IsTrue(isMatch, "Could not match.");
+            Assert.That(isMatch, Is.True, "Could not match.");
         }
     }
 
@@ -65,15 +65,15 @@ public class RvmFacetGroupMatcherTests
         var position = new Vector3(0, 0, 0);
         var q = Quaternion.CreateFromYawPitchRoll(eulers.X, eulers.Y, eulers.Z);
 
-        var Mr = Matrix4x4.CreateFromQuaternion(q);
-        var Ms = Matrix4x4.CreateScale(scale);
-        var Mt = Matrix4x4.CreateTranslation(position);
-        var Ma = Ms * Mr * Mt;
+        var mr = Matrix4x4.CreateFromQuaternion(q);
+        var ms = Matrix4x4.CreateScale(scale);
+        var mt = Matrix4x4.CreateTranslation(position);
+        var ma = ms * mr * mt;
 
-        var meshB = meshA.TransformVertexData(Ma);
+        var meshB = meshA.TransformVertexData(ma);
 
         var isMatch = RvmFacetGroupMatcher.Match(meshA, meshB, out Matrix4x4 _);
-        Assert.IsTrue(isMatch, "Could not match.");
+        Assert.That(isMatch, Is.True, "Could not match.");
     }
 
     private static Vector3 RandomVector(Random r, float minComponentValue, float maxComponentValue)

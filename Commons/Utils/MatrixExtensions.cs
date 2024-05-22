@@ -7,7 +7,7 @@ using System.Numerics;
 public static class MatrixExtensions
 {
     /// <summary>
-    /// Check if the matrix is decomposable. Used to validate matrixes for use in 3D. Ensures all data is finite and that its decomposable.
+    /// Check if the matrix is decomposable. Used to validate matrices for use in 3D. Ensures all data is finite and that its decomposable.
     ///
     /// This uses Matrix4x4.Decompose but discards the element output. Use <see cref="Matrix4x4.Decompose" /> if you need the output
     /// </summary>

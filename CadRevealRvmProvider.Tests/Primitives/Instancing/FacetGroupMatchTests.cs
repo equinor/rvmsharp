@@ -31,7 +31,7 @@ public class FacetGroupMatchTests
         var hinges1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m1.json");
         var hinges2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("m2.json");
         var hingesEqual = RvmFacetGroupMatcher.Match(hinges1, hinges2, out Matrix4x4 _);
-        Assert.IsFalse(hingesEqual);
+        Assert.That(hingesEqual, Is.False);
     }
 
     [Test]
@@ -40,7 +40,7 @@ public class FacetGroupMatchTests
         var panel1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("0.json");
         var panel2 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("2.json");
         var panelsEqual = RvmFacetGroupMatcher.Match(panel1, panel2, out Matrix4x4 _);
-        Assert.IsFalse(panelsEqual);
+        Assert.That(panelsEqual, Is.False);
     }
 
     /// <summary>
@@ -105,9 +105,9 @@ public class FacetGroupMatchTests
             .Select(r => r.FacetGroup)
             .ToArray();
 
-        Assert.AreEqual(1, templates.Length);
-        Assert.AreEqual(10, instanced.Length);
-        Assert.AreEqual(5, notInstanced.Length);
+        Assert.That(templates, Has.Exactly(1).Items);
+        Assert.That(instanced, Has.Exactly(10).Items);
+        Assert.That(notInstanced, Has.Exactly(5).Items);
     }
 
     [Test]

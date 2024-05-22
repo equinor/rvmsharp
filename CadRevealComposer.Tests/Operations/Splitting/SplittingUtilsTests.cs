@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Splitting;
 
 using CadRevealComposer.Operations.SectorSplitting;
+using NUnit.Framework.Legacy;
 using System.Numerics;
 
 [TestFixture]
@@ -20,8 +21,8 @@ public class SplittingUtilsTests
         (Node[] regularNodes, Node[] outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes();
 
         // Assert
-        Assert.AreEqual(3, regularNodes.Length);
-        Assert.AreEqual(1, outlierNodes.Length);
+        Assert.That(regularNodes.Length, Is.EqualTo(3));
+        Assert.That(outlierNodes.Length, Is.EqualTo(1));
     }
 
     [Test]
@@ -36,7 +37,7 @@ public class SplittingUtilsTests
 
         var groups = SplittingUtils.GroupOutliersRecursive(nodes, 10f);
 
-        Assert.AreEqual(2, groups.Count());
+        Assert.That(groups.Count(), Is.EqualTo(2));
     }
 
     [Test]
@@ -51,6 +52,6 @@ public class SplittingUtilsTests
 
         var groups = SplittingUtils.GroupOutliersRecursive(nodes, 10f);
 
-        Assert.AreEqual(3, groups.Count());
+        Assert.That(groups.Count(), Is.EqualTo(3));
     }
 }

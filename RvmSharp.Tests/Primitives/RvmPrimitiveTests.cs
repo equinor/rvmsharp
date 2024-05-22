@@ -99,7 +99,7 @@ public class RvmPrimitiveTests
     {
         var primitive = CreateUnitBoxWithMatrix(testCaseDescription.Transform);
         RvmBoundingBox bb = primitive.CalculateAxisAlignedBoundingBox();
-        var diagonal = bb.Diagonal;
+        var diagonal = bb!.Diagonal;
 
         Assert.That(bb.Min, Is.EqualTo(testCaseDescription.ExpectedMin));
         Assert.That(bb.Max, Is.EqualTo(testCaseDescription.ExpectedMax));
@@ -165,8 +165,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(1.857449777519938f));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(1.3031138776160802));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(1.857449777519938f));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(1.3031138776160802));
     }
 
     [Test]
@@ -188,8 +188,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(0.0f));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(0.0f));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(0.0f));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(0.0f));
     }
 
     [Test]
@@ -211,8 +211,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(155.5));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(155.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(155.5));
     }
 
     [Test]
@@ -234,8 +234,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(16.5));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(16.5));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(16.5));
     }
 
     [Test]
@@ -257,8 +257,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.semiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout.TopShearY)));
-        Assert.That(topEllipse.ellipse2DPolar.semiMinorAxis, Is.EqualTo(2.0));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMajorAxis, Is.EqualTo(2.0 / MathF.Cos(snout.TopShearY)));
+        Assert.That(topEllipse.Ellipse2DPolar.SemiMinorAxis, Is.EqualTo(2.0));
     }
 
     [Test]
@@ -280,8 +280,8 @@ public class RvmPrimitiveTests
         );
         var topEllipse = snout.GetTopCapEllipse();
 
-        Assert.That(topEllipse.ellipse2DPolar.x0, Is.EqualTo(0.0));
-        Assert.That(topEllipse.ellipse2DPolar.y0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.Ellipse2DPolar.X0, Is.EqualTo(0.0));
+        Assert.That(topEllipse.Ellipse2DPolar.Y0, Is.EqualTo(0.0));
     }
 
     //0.1 millimeters precision
@@ -356,8 +356,8 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetTopCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
 
         // snout1 -> BOTTOM!!
         var snout1CapCenter = -0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -390,7 +390,7 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
         // are the planes going through the same pt?
         // they are not for this snout!!
@@ -409,11 +409,11 @@ public class RvmPrimitiveTests
         var p2 = Vector4.Transform(Vector4.Transform(snout2CapCenter, s2Mat), sn1MatInv);
         var d_c2_pl1 = Vector3.Dot(snout1_n, new Vector3(p2.X, p2.Y, p2.Z)) + snout1_dc;
 
-        Assert.AreEqual(0.0, d_c1_pl2);
-        Assert.AreEqual(0.0, d_c2_pl1);
+        Assert.That(d_c1_pl2, Is.EqualTo(0.0));
+        Assert.That(d_c2_pl1, Is.EqualTo(0.0));
 
-        Assert.AreEqual(0.0, distance1 * 1000.0);
-        Assert.AreEqual(0.0, distance2 * 1000.0);
+        Assert.That(distance1 * 1000.0, Is.EqualTo(0.0));
+        Assert.That(distance2 * 1000.0, Is.EqualTo(0.0));
     }
 
     [Test]
@@ -488,8 +488,8 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetBottomCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
 
         // snout1 -> top
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -522,10 +522,10 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
-        Assert.AreEqual(0.0, distance1 * 1000.0);
-        Assert.AreEqual(0.0, distance2 * 1000.0);
+        Assert.That(distance1 * 1000.0, Is.EqualTo(0));
+        Assert.That(distance2 * 1000.0, Is.EqualTo(0));
     }
 
     [Test]
@@ -601,8 +601,8 @@ public class RvmPrimitiveTests
         var ellipse2 = snout2.GetBottomCapEllipse();
 
         var origin = VectorD.Build.Dense(new double[] { 0.0, 0.0, 0.0, 1.0 });
-        var pt_orig_ell1 = ellipse1.planeToModelCoord * origin;
-        var pt_orig_ell2 = ellipse2.planeToModelCoord * origin;
+        var pt_orig_ell1 = ellipse1.PlaneToModelCoord * origin;
+        var pt_orig_ell2 = ellipse2.PlaneToModelCoord * origin;
 
         // snout1 -> top
         var snout1CapCenter = 0.5f * (new Vector3(snout1.OffsetX, snout1.OffsetY, snout1.Height));
@@ -635,9 +635,9 @@ public class RvmPrimitiveTests
         transfNormal1 = Vector3.Normalize(transfNormal1);
         transfNormal2 = Vector3.Normalize(transfNormal2);
 
-        Assert.AreEqual(Vector3.Dot(transfNormal1, transfNormal2), 1.0f, 0.001);
+        Assert.That(Vector3.Dot(transfNormal1, transfNormal2), Is.EqualTo(1.0f).Within(0.001));
 
-        Assert.AreEqual(0.0, distance1 * 1000.0);
-        Assert.AreEqual(0.0, distance2 * 1000.0);
+        Assert.That(distance1 * 1000.0, Is.Zero);
+        Assert.That(distance2 * 1000.0, Is.Zero);
     }
 }

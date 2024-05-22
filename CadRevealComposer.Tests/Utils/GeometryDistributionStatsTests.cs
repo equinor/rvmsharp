@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
 using CadRevealComposer.Utils;
+using NUnit.Framework.Legacy;
 using Primitives;
 
 public class GeometryDistributionStatsTests
@@ -48,18 +49,18 @@ public class GeometryDistributionStatsTests
         var distribution = new GeometryDistributionStats(primitives);
 
         // Assert
-        Assert.AreEqual(1, distribution.Boxes);
-        Assert.AreEqual(1, distribution.Circles);
-        Assert.AreEqual(2, distribution.Cones);
-        Assert.AreEqual(1, distribution.EccentricCones);
-        Assert.AreEqual(2, distribution.EllipsoidSegments);
-        Assert.AreEqual(1, distribution.GeneralCylinders);
-        Assert.AreEqual(1, distribution.GeneralRings);
-        Assert.AreEqual(2, distribution.InstancedMeshes);
-        Assert.AreEqual(1, distribution.Nuts);
-        Assert.AreEqual(1, distribution.Quads);
-        Assert.AreEqual(1, distribution.TorusSegments);
-        Assert.AreEqual(2, distribution.Trapeziums);
-        Assert.AreEqual(1, distribution.TriangleMeshes);
+        Assert.That(distribution.Boxes, Is.EqualTo(1));
+        Assert.That(distribution.Circles, Is.EqualTo(1));
+        Assert.That(distribution.Cones, Is.EqualTo(2));
+        Assert.That(distribution.EccentricCones, Is.EqualTo(1));
+        Assert.That(distribution.EllipsoidSegments, Is.EqualTo(2));
+        Assert.That(distribution.GeneralCylinders, Is.EqualTo(1));
+        Assert.That(distribution.GeneralRings, Is.EqualTo(1));
+        Assert.That(distribution.InstancedMeshes, Is.EqualTo(2));
+        Assert.That(distribution.Nuts, Is.EqualTo(1));
+        Assert.That(distribution.Quads, Is.EqualTo(1));
+        Assert.That(distribution.TorusSegments, Is.EqualTo(1));
+        Assert.That(distribution.Trapeziums, Is.EqualTo(2));
+        Assert.That(distribution.TriangleMeshes, Is.EqualTo(1));
     }
 }

@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
 using CadRevealComposer.Operations.Tessellating;
+using NUnit.Framework.Legacy;
 using Primitives;
 using System.Drawing;
 using System.Numerics;
@@ -19,8 +20,11 @@ public class TorusSegmentTessellatorTests
         var vertices = torusTessellate.Mesh.Vertices;
         var indices = torusTessellate.Mesh.Indices;
 
-        Assert.Greater(vertices.Length, 0);
-        Assert.Greater(indices.Length, 0);
+        Assert.Multiple(() =>
+        {
+            Assert.That(vertices, Is.Not.Empty);
+            Assert.That(indices, Is.Not.Empty);
+        });
     }
 
     [Test]
@@ -93,7 +97,7 @@ public class TorusSegmentTessellatorTests
 
                 var determinant = TessellatorTestUtils.CalculateDeterminant(v1, v2, v3);
 
-                Assert.GreaterOrEqual(determinant, 0.0f);
+                Assert.That(determinant, Is.GreaterThanOrEqualTo(0.0f));
             }
         }
     }

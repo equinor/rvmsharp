@@ -7,7 +7,7 @@ using System.Numerics;
 
 public class RvmSphericalDishConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmSphericalDish _rvmSphericalDish = null!;
 
     [SetUp]
@@ -27,7 +27,7 @@ public class RvmSphericalDishConverterTests
     {
         var logObject = new FailedPrimitivesLogObject();
         var geometries = _rvmSphericalDish
-            .ConvertToRevealPrimitive(_treeIndex, System.Drawing.Color.Red, logObject)
+            .ConvertToRevealPrimitive(TreeIndex, System.Drawing.Color.Red, logObject)
             .ToArray();
 
         Assert.That(geometries.Length, Is.EqualTo(2));
