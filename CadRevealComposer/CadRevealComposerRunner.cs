@@ -7,12 +7,14 @@ using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
+using SurfaceUnits;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Utils;
 
@@ -27,6 +29,7 @@ public static class CadRevealComposerRunner
     )
     {
         var totalTimeElapsed = Stopwatch.StartNew();
+
         if (composerParameters.DevPrimitiveCacheFolder != null)
         {
             var primitiveCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
@@ -42,6 +45,7 @@ public static class CadRevealComposerRunner
                 );
                 return;
             }
+
             Console.WriteLine(
                 "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
             );
@@ -83,6 +87,34 @@ public static class CadRevealComposerRunner
 
             // collect all nodes for later sector division of the entire scene
             nodesToExport.AddRange(cadRevealNodes);
+            // Adding Surface Unit Volume Attributes for Sleipner T
+            var regex = new Regex(@"^\/\d+[A-Z]\d+$");
+            foreach (CadRevealNode cadRevealNode in cadRevealNodes)
+            {
+                if (cadRevealNode.Parent?.Name.Contains("/A00-AREA") == true)
+                {
+                    if (regex.IsMatch(cadRevealNode.Name))
+                    {
+                        cadRevealNode.Attributes.Add("SurfaceUnitVolume", "true");
+                        cadRevealNode.Attributes.Add(cadRevealNode.Name.TrimStart('/'), "true");
+                    }
+                }
+            }
+
+            // Add Surface Unit Metadata
+            var files = Directory
+                .GetFiles(inputFolderPath.FullName, "surface_units*.csv", SearchOption.TopDirectoryOnly)
+                .ToList();
+            if (files.Count > 0)
+            {
+                using (new TeamCityLogBlock("Surface Unit Metadata"))
+                {
+                    foreach (var file in files)
+                    {
+                        SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, file);
+                    }
+                }
+            }
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
@@ -121,6 +153,7 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
+
         ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
