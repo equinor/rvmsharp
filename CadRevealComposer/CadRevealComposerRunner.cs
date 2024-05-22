@@ -105,10 +105,16 @@ public static class CadRevealComposerRunner
             var files = Directory
                 .GetFiles(inputFolderPath.FullName, "surface_units*.csv", SearchOption.TopDirectoryOnly)
                 .ToList();
-            files.ForEach(file =>
+            if (files.Count > 0)
             {
-                SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, file);
-            });
+                using (new TeamCityLogBlock("Surface Unit Metadata"))
+                {
+                    foreach (var file in files)
+                    {
+                        SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, file);
+                    }
+                }
+            }
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
