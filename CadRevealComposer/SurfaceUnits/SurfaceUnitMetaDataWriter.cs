@@ -12,6 +12,7 @@ public static class SurfaceUnitMetaDataWriter
 {
     public static void AddMetaData(IEnumerable<CadRevealNode> allNodes, string filePath)
     {
+        Console.WriteLine("Adding Surface Unit Metadata to nodes from file " + filePath);
         var rvmNodes = allNodes
             .Where(n => n.Attributes.ContainsKey("RefNo"))
             .ToDictionary((k) => k.Attributes["RefNo"], (v) => v);
@@ -25,7 +26,6 @@ public static class SurfaceUnitMetaDataWriter
         Console.WriteLine("Found " + records.Count + " records in file.");
         int count = 0;
 
-        Console.WriteLine("Adding Surface Unit Metadata to nodes from file " + filePath);
         foreach (var record in records)
         {
             try

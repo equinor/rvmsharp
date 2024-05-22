@@ -45,6 +45,7 @@ public static class CadRevealComposerRunner
                 );
                 return;
             }
+
             Console.WriteLine(
                 "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
             );
@@ -101,15 +102,12 @@ public static class CadRevealComposerRunner
             }
 
             // Add Surface Unit Metadata
-            List<string> fileNames = new() { "surface_units.csv" };
-
-            fileNames.ForEach(fileName =>
+            var files = Directory
+                .GetFiles(inputFolderPath.FullName, "surface_units*.csv", SearchOption.TopDirectoryOnly)
+                .ToList();
+            files.ForEach(file =>
             {
-                var filePath = Path.Combine(inputFolderPath.FullName, fileName);
-                if (File.Exists(filePath))
-                {
-                    SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, filePath);
-                }
+                SurfaceUnitMetaDataWriter.AddMetaData(cadRevealNodes, file);
             });
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
@@ -149,6 +147,7 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
+
         ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
