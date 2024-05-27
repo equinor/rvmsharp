@@ -37,7 +37,7 @@ public static class CadRevealComposerRunner
             if (cachedAPrimitives != null)
             {
                 Console.WriteLine("Using developer cache file: " + cacheFile);
-                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
+                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters, null);
                 Console.WriteLine(
                     $"Ran {nameof(ProcessPrimitives)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
                 );
