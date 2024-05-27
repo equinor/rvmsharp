@@ -54,7 +54,7 @@ public static class CadRevealComposerRunner
         var instanceIdGenerator = new InstanceIdGenerator();
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
-
+        
         ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
@@ -96,6 +96,28 @@ public static class CadRevealComposerRunner
             geometriesToProcess.AddRange(geometriesIncludingMeshes);
         }
 
+
+        var tagTreeIndexLookup = new Dictionary<string, List<ulong>>();
+
+        foreach(var node in nodesToExport)
+        {
+            node.Attributes.TryGetValue("Tag", out string? tag);
+
+            if (tag != null)
+            {
+                if (tagTreeIndexLookup.ContainsKey(tag))
+                {
+                    tagTreeIndexLookup[tag].Add(node.TreeIndex);
+                }
+                else
+                {
+                    tagTreeIndexLookup[tag] = new List<ulong> { node.TreeIndex };
+                }
+            }
+        }
+
+        var multipleTreeIndexesInTagLookup = tagTreeIndexLookup.Where(x => x.Value.Count > 1).ToDictionary();
+
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
         SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
@@ -126,7 +148,8 @@ public static class CadRevealComposerRunner
             geometriesToProcessArray,
             outputDirectory,
             modelParameters,
-            composerParameters
+            composerParameters,
+            multipleTreeIndexesInTagLookup
         );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
@@ -174,7 +197,8 @@ public static class CadRevealComposerRunner
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
-        ComposerParameters composerParameters
+        ComposerParameters composerParameters,
+        Dictionary<string, List<ulong>> multipleTreeIndexesInTagLookup
     )
     {
         var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
@@ -195,7 +219,7 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(allPrimitives, multipleTreeIndexesInTagLookup).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 

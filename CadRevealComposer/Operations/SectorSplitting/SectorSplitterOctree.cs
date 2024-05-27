@@ -24,7 +24,10 @@ public class SectorSplitterOctree : ISectorSplitter
     private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
     private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        Dictionary<string, List<ulong>> multipleTreeIndexesInTagLookup
+    )
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 

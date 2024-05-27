@@ -5,5 +5,8 @@ using System.Collections.Generic;
 
 public interface ISectorSplitter
 {
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries);
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        Dictionary<string, List<ulong>> multipleTreeIndexesInTagLookup
+    );
 }
