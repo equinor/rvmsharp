@@ -143,9 +143,41 @@ public static class SplittingUtils
         return new Vector3(avgCenterX, avgCenterY, avgCenterZ);
     }
 
-    public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
+    public static Node[] ConvertPrimitivesToNodes(
+        APrimitive[] primitives,
+        Dictionary<string, List<ulong>> tagTreeIndexLookup
+    )
     {
-        var groups = primitives.GroupBy(x => x.TreeIndex);
+        var treeIndexGroups = primitives.GroupBy(x => x.TreeIndex).ToDictionary(t => t.Key, t => t.Select(x => x));
+        var groups = new List<APrimitive[]>();
+
+        foreach (var keyValuePair in tagTreeIndexLookup)
+        {
+            var primitiveGroup = new List<APrimitive>();
+            var treeIndexesFromLookup = keyValuePair.Value;
+
+            foreach (var treeIndexFromLookup in treeIndexesFromLookup)
+            {
+                if (!treeIndexGroups.ContainsKey(treeIndexFromLookup))
+                    continue;
+
+                var groupToAdd = treeIndexGroups[treeIndexFromLookup].ToArray();
+                primitiveGroup.AddRange(groupToAdd);
+            }
+
+            if (primitiveGroup.Count > 0)
+                groups.Add(primitiveGroup.ToArray());
+        }
+
+        var restOfTreeIndexes = treeIndexGroups.Keys.Except(groups.Select(x => x.First().TreeIndex));
+        foreach (var treeIndex in restOfTreeIndexes)
+        {
+            groups.Add(treeIndexGroups[treeIndex].ToArray());
+        }
+
+        Console.WriteLine("Start number of prims: " + primitives.Length);
+        Console.WriteLine("End number of prims: " + groups.Sum(x => x.Length));
+
         return groups
             .Select(g =>
             {
@@ -157,7 +189,7 @@ public static class SplittingUtils
                     throw new Exception("Unexpected error, the bounding box should not have been null.");
                 }
                 return new Node(
-                    g.Key,
+                    g.First().TreeIndex,
                     geometries,
                     geometries.Sum(DrawCallEstimator.EstimateByteSize),
                     EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,

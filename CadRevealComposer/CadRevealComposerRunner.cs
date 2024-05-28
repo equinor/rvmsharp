@@ -115,8 +115,7 @@ public static class CadRevealComposerRunner
                 }
             }
         }
-
-        var multipleTreeIndexesInTagLookup = tagTreeIndexLookup.Where(x => x.Value.Count > 1).ToDictionary();
+       
 
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
@@ -149,7 +148,7 @@ public static class CadRevealComposerRunner
             outputDirectory,
             modelParameters,
             composerParameters,
-            multipleTreeIndexesInTagLookup
+            tagTreeIndexLookup
         );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
