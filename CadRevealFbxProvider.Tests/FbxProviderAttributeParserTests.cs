@@ -8,10 +8,9 @@ public class FbxProviderAttributeParserTests
 {
     private DirectoryInfo attributeDirectory = new DirectoryInfo(@".\TestSamples\attributes");
 
-    [Test]
-    public void ParseCorrectAttributesTest()
+    private void ParseCorrectAttributesTest(string csvFileNmae)
     {
-        string infoTextFilename = attributeDirectory.FullName.ToString() + "\\fbx_test_model.csv";
+        string infoTextFilename = attributeDirectory.FullName.ToString() + csvFileNmae;
         var lines = File.ReadAllLines(infoTextFilename);
         (var attributes, var metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
 
@@ -35,6 +34,13 @@ public class FbxProviderAttributeParserTests
             ScaffoldingMetadata.ModelAttributesPerPart.Length + 1,
             Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes)
         );
+    }
+
+    [Test]
+    public void ParseCorrectAttributesTest()
+    {
+        ParseCorrectAttributesTest("\\fbx_test_model.csv");
+        ParseCorrectAttributesTest("\\fbx_test_model_with_header_on_row_two.csv");
     }
 
     [Test]

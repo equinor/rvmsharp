@@ -55,6 +55,9 @@
     <None Update="TestSamples\attributes\fbx_test_model.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestSamples\attributes\fbx_test_model_with_header_on_row_two.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="TestSamples\attributes\missing_key_attribute.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
