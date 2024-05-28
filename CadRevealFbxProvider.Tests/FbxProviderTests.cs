@@ -194,7 +194,8 @@ public class FbxProviderTests
             geometriesToProcess.ToArray(),
             outputDirectoryCorrect,
             modelParameters,
-            composerParameters
+            composerParameters,
+            null
         );
 
         Console.WriteLine(
