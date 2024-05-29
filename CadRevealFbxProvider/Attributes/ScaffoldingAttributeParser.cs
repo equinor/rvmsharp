@@ -17,7 +17,8 @@ public class ScaffoldingAttributeParser
         ScaffoldingMetadata scaffoldingMetadata
     ) ParseAttributes(string[] fileLines)
     {
-        if(fileLines.Length == 0) throw new ArgumentException(nameof(fileLines));
+        if (fileLines.Length == 0)
+            throw new ArgumentException(nameof(fileLines));
         Console.WriteLine("Reading attribute file.");
 
         // The below will remove the first row in the CSV file, if it is not the header. However,
