@@ -7,6 +7,6 @@ public interface ISectorSplitter
 {
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
-        Dictionary<string, List<ulong>> multipleTreeIndexesInTagLookup
+        Dictionary<string, HashSet<ulong>> multipleTreeIndexesInTagLookup
     );
 }

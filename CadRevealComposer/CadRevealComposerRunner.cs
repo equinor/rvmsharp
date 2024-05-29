@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.JavaScript;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Utils;
@@ -54,7 +55,7 @@ public static class CadRevealComposerRunner
         var instanceIdGenerator = new InstanceIdGenerator();
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
-        
+
         ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
@@ -97,25 +98,40 @@ public static class CadRevealComposerRunner
         }
 
 
-        var tagTreeIndexLookup = new Dictionary<string, List<ulong>>();
+        var tagTreeIndexLookup = new Dictionary<string, HashSet<ulong>>();
 
-        foreach(var node in nodesToExport)
+        var allNodesWithTag = new List<CadRevealNode>();
+        foreach (var node in nodesToExport)
         {
             node.Attributes.TryGetValue("Tag", out string? tag);
 
             if (tag != null)
             {
-                if (tagTreeIndexLookup.ContainsKey(tag))
-                {
-                    tagTreeIndexLookup[tag].Add(node.TreeIndex);
-                }
-                else
-                {
-                    tagTreeIndexLookup[tag] = new List<ulong> { node.TreeIndex };
-                }
+                allNodesWithTag.Add(node);
+                if (!tagTreeIndexLookup.ContainsKey(tag))
+                    tagTreeIndexLookup.Add(tag, new HashSet<ulong>());
             }
         }
-       
+
+        var allUsedNodes = new List<CadRevealNode>();
+        foreach (var node in allNodesWithTag)
+        {
+            var children = GetAllChildrenFlat(node);
+            node.Attributes.TryGetValue("Tag", out string? tag);
+            var treeIndexes = children.Select(x => x.TreeIndex).Distinct().ToArray();
+
+            foreach (var index in treeIndexes)
+            {
+                tagTreeIndexLookup[tag].Add(index);
+            }
+
+            allUsedNodes.AddRange(children);
+        }
+
+        allUsedNodes = allUsedNodes.Distinct().ToList();
+        var theRest = nodesToExport.Except(allUsedNodes);
+
+
 
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
@@ -192,12 +208,29 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
+    private static CadRevealNode[] GetAllChildrenFlat(CadRevealNode node)
+    {
+        var allChildren = new List<CadRevealNode>();
+
+        allChildren.Add(node);
+
+        if (node.Children is { Length: > 0 })
+        {
+            foreach (var child in node.Children)
+            {
+                allChildren.AddRange(GetAllChildrenFlat(child));
+            }
+        }
+
+        return allChildren.ToArray();
+    }
+
     public static (ulong treeIndex, uint sectorId)[] ProcessPrimitives(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
-        Dictionary<string, List<ulong>> multipleTreeIndexesInTagLookup
+        Dictionary<string, HashSet<ulong>> multipleTreeIndexesInTagLookup
     )
     {
         var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);

@@ -145,7 +145,7 @@ public static class SplittingUtils
 
     public static Node[] ConvertPrimitivesToNodes(
         APrimitive[] primitives,
-        Dictionary<string, List<ulong>> tagTreeIndexLookup
+        Dictionary<string, HashSet<ulong>> tagTreeIndexLookup
     )
     {
         var treeIndexGroups = primitives.GroupBy(x => x.TreeIndex).ToDictionary(t => t.Key, t => t.Select(x => x));

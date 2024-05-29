@@ -26,7 +26,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
-        Dictionary<string, List<ulong>> tagTreeIndexLookup
+        Dictionary<string, HashSet<ulong>> tagTreeIndexLookup
     )
     {
         var sectorIdGenerator = new SequentialIdGenerator();
