@@ -33,6 +33,7 @@ public class FbxProviderTests
         new InstancingThreshold(1),
         new TemplateCountLimit(100)
     );
+
     private static readonly ComposerParameters composerParameters = new ComposerParameters(
         false,
         true,
@@ -188,14 +189,15 @@ public class FbxProviderTests
         }
 
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
-        Assert.That(geometriesToProcess, Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
-        Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
+        Assert.That(geometriesToProcess,
+            Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
+        Assert.That(geometriesToProcess,
+            Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
             outputDirectoryCorrect,
             modelParameters,
-            composerParameters,
-            null
+            composerParameters
         );
 
         Console.WriteLine(
