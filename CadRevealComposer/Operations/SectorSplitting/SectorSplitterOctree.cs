@@ -26,12 +26,12 @@ public class SectorSplitterOctree : ISectorSplitter
 
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
-        Dictionary<string, HashSet<ulong>> tagTreeIndexLookup
+        HashSet<APrimitive[]> primitiveGroupsByTag
     )
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
-        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries, tagTreeIndexLookup);
+        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries, primitiveGroupsByTag);
         (Node[] regularNodes, Node[] outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes();
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();

@@ -10,7 +10,7 @@ public class SectorSplitterSingle : ISectorSplitter
 {
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
-        Dictionary<string, HashSet<ulong>> multipleTreeIndexesInTagLookup
+        HashSet<APrimitive[]> primitiveGroupsByTag
     )
     {
         yield return CreateRootSector(0, allGeometries);

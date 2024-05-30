@@ -98,7 +98,7 @@ public static class CadRevealComposerRunner
         }
 
 
-        var tagTreeIndexLookup = new Dictionary<string, HashSet<ulong>>();
+        var primitiveGroupsByTag = new HashSet<APrimitive[]>();
 
         var allNodesWithTag = new List<CadRevealNode>();
         foreach (var node in nodesToExport)
@@ -108,30 +108,34 @@ public static class CadRevealComposerRunner
             if (tag != null)
             {
                 allNodesWithTag.Add(node);
-                if (!tagTreeIndexLookup.ContainsKey(tag))
-                    tagTreeIndexLookup.Add(tag, new HashSet<ulong>());
             }
         }
+
+        var primitivesGroupedByTreeIndexLookup = geometriesToProcess.ToLookup(x => x.TreeIndex);
 
         var allUsedNodes = new List<CadRevealNode>();
         foreach (var node in allNodesWithTag)
         {
-            var children = GetAllChildrenFlat(node);
-            node.Attributes.TryGetValue("Tag", out string? tag);
-            var treeIndexes = children.Select(x => x.TreeIndex).Distinct().ToArray();
+            var nodeAndAllChildren = GetAllNodeAndChildrenFlat(node);
+            var treeIndexes = nodeAndAllChildren.Select(x => x.TreeIndex).Distinct().ToArray();
 
-            foreach (var index in treeIndexes)
+            var primitivesInGroup = new List<APrimitive>();
+            foreach (var treeIndex in treeIndexes)
             {
-                tagTreeIndexLookup[tag].Add(index);
+                primitivesInGroup.AddRange(primitivesGroupedByTreeIndexLookup[treeIndex]);
             }
 
-            allUsedNodes.AddRange(children);
+            primitiveGroupsByTag.Add(primitivesInGroup.ToArray());
+            allUsedNodes.AddRange(nodeAndAllChildren);
         }
 
         allUsedNodes = allUsedNodes.Distinct().ToList();
         var theRest = nodesToExport.Except(allUsedNodes);
 
-
+        foreach (var node in theRest)
+        {
+            primitiveGroupsByTag.Add(primitivesGroupedByTreeIndexLookup[node.TreeIndex].ToArray());
+        }
 
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
@@ -164,7 +168,7 @@ public static class CadRevealComposerRunner
             outputDirectory,
             modelParameters,
             composerParameters,
-            tagTreeIndexLookup
+            primitiveGroupsByTag
         );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
@@ -208,7 +212,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    private static CadRevealNode[] GetAllChildrenFlat(CadRevealNode node)
+    private static CadRevealNode[] GetAllNodeAndChildrenFlat(CadRevealNode node)
     {
         var allChildren = new List<CadRevealNode>();
 
@@ -218,7 +222,7 @@ public static class CadRevealComposerRunner
         {
             foreach (var child in node.Children)
             {
-                allChildren.AddRange(GetAllChildrenFlat(child));
+                allChildren.AddRange(GetAllNodeAndChildrenFlat(child));
             }
         }
 
@@ -230,7 +234,7 @@ public static class CadRevealComposerRunner
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
         ComposerParameters composerParameters,
-        Dictionary<string, HashSet<ulong>> multipleTreeIndexesInTagLookup
+        HashSet<APrimitive[]> primitiveGroupsByTag
     )
     {
         var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
@@ -251,7 +255,7 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives, multipleTreeIndexesInTagLookup).OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(allPrimitives, primitiveGroupsByTag).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 

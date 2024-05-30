@@ -145,40 +145,11 @@ public static class SplittingUtils
 
     public static Node[] ConvertPrimitivesToNodes(
         APrimitive[] primitives,
-        Dictionary<string, HashSet<ulong>> tagTreeIndexLookup
+        HashSet<APrimitive[]> primitiveGroupsByTag
     )
     {
-        var treeIndexGroups = primitives.GroupBy(x => x.TreeIndex).ToDictionary(t => t.Key, t => t.Select(x => x));
-        var groups = new List<APrimitive[]>();
-
-        foreach (var keyValuePair in tagTreeIndexLookup)
-        {
-            var primitiveGroup = new List<APrimitive>();
-            var treeIndexesFromLookup = keyValuePair.Value;
-
-            foreach (var treeIndexFromLookup in treeIndexesFromLookup)
-            {
-                if (!treeIndexGroups.ContainsKey(treeIndexFromLookup))
-                    continue;
-
-                var groupToAdd = treeIndexGroups[treeIndexFromLookup].ToArray();
-                primitiveGroup.AddRange(groupToAdd);
-            }
-
-            if (primitiveGroup.Count > 0)
-                groups.Add(primitiveGroup.ToArray());
-        }
-
-        var restOfTreeIndexes = treeIndexGroups.Keys.Except(groups.Select(x => x.First().TreeIndex));
-        foreach (var treeIndex in restOfTreeIndexes)
-        {
-            groups.Add(treeIndexGroups[treeIndex].ToArray());
-        }
-
-        Console.WriteLine("Start number of prims: " + primitives.Length);
-        Console.WriteLine("End number of prims: " + groups.Sum(x => x.Length));
-
-        return groups
+        return primitiveGroupsByTag
+            .Where(x => x.Length > 0)
             .Select(g =>
             {
                 var geometries = g.Select(x => x).ToArray();
