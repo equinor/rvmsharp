@@ -9,8 +9,7 @@ using Utils;
 public class SectorSplitterSingle : ISectorSplitter
 {
     public IEnumerable<InternalSector> SplitIntoSectors(
-        APrimitive[] allGeometries,
-        HashSet<APrimitive[]> primitiveGroupsByTag
+        APrimitive[] allGeometries
     )
     {
         yield return CreateRootSector(0, allGeometries);

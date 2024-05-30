@@ -38,7 +38,7 @@ public static class CadRevealComposerRunner
             if (cachedAPrimitives != null)
             {
                 Console.WriteLine("Using developer cache file: " + cacheFile);
-                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters, null);
+                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
                 Console.WriteLine(
                     $"Ran {nameof(ProcessPrimitives)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
                 );
@@ -98,44 +98,44 @@ public static class CadRevealComposerRunner
         }
 
 
-        var primitiveGroupsByTag = new HashSet<APrimitive[]>();
-
-        var allNodesWithTag = new List<CadRevealNode>();
-        foreach (var node in nodesToExport)
-        {
-            node.Attributes.TryGetValue("Tag", out string? tag);
-
-            if (tag != null)
-            {
-                allNodesWithTag.Add(node);
-            }
-        }
-
-        var primitivesGroupedByTreeIndexLookup = geometriesToProcess.ToLookup(x => x.TreeIndex);
-
-        var allUsedNodes = new List<CadRevealNode>();
-        foreach (var node in allNodesWithTag)
-        {
-            var nodeAndAllChildren = GetAllNodeAndChildrenFlat(node);
-            var treeIndexes = nodeAndAllChildren.Select(x => x.TreeIndex).Distinct().ToArray();
-
-            var primitivesInGroup = new List<APrimitive>();
-            foreach (var treeIndex in treeIndexes)
-            {
-                primitivesInGroup.AddRange(primitivesGroupedByTreeIndexLookup[treeIndex]);
-            }
-
-            primitiveGroupsByTag.Add(primitivesInGroup.ToArray());
-            allUsedNodes.AddRange(nodeAndAllChildren);
-        }
-
-        allUsedNodes = allUsedNodes.Distinct().ToList();
-        var theRest = nodesToExport.Except(allUsedNodes);
-
-        foreach (var node in theRest)
-        {
-            primitiveGroupsByTag.Add(primitivesGroupedByTreeIndexLookup[node.TreeIndex].ToArray());
-        }
+        // var primitiveGroupsByTag = new HashSet<APrimitive[]>();
+        //
+        // var allNodesWithTag = new List<CadRevealNode>();
+        // foreach (var node in nodesToExport)
+        // {
+        //     node.Attributes.TryGetValue("Tag", out string? tag);
+        //
+        //     if (tag != null)
+        //     {
+        //         allNodesWithTag.Add(node);
+        //     }
+        // }
+        //
+        // var primitivesGroupedByTreeIndexLookup = geometriesToProcess.ToLookup(x => x.TreeIndex);
+        //
+        // var allUsedNodes = new List<CadRevealNode>();
+        // foreach (var node in allNodesWithTag)
+        // {
+        //     var nodeAndAllChildren = GetAllNodeAndChildrenFlat(node);
+        //     var treeIndexes = nodeAndAllChildren.Select(x => x.TreeIndex).Distinct().ToArray();
+        //
+        //     var primitivesInGroup = new List<APrimitive>();
+        //     foreach (var treeIndex in treeIndexes)
+        //     {
+        //         primitivesInGroup.AddRange(primitivesGroupedByTreeIndexLookup[treeIndex]);
+        //     }
+        //
+        //     primitiveGroupsByTag.Add(primitivesInGroup.ToArray());
+        //     allUsedNodes.AddRange(nodeAndAllChildren);
+        // }
+        //
+        // allUsedNodes = allUsedNodes.Distinct().ToList();
+        // var theRest = nodesToExport.Except(allUsedNodes);
+        //
+        // foreach (var node in theRest)
+        // {
+        //     primitiveGroupsByTag.Add(primitivesGroupedByTreeIndexLookup[node.TreeIndex].ToArray());
+        // }
 
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
@@ -167,8 +167,7 @@ public static class CadRevealComposerRunner
             geometriesToProcessArray,
             outputDirectory,
             modelParameters,
-            composerParameters,
-            primitiveGroupsByTag
+            composerParameters
         );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
@@ -233,8 +232,7 @@ public static class CadRevealComposerRunner
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
-        ComposerParameters composerParameters,
-        HashSet<APrimitive[]> primitiveGroupsByTag
+        ComposerParameters composerParameters
     )
     {
         var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
@@ -255,7 +253,7 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives, primitiveGroupsByTag).OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 

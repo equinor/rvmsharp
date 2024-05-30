@@ -144,13 +144,12 @@ public static class SplittingUtils
     }
 
     public static Node[] ConvertPrimitivesToNodes(
-        APrimitive[] primitives,
-        HashSet<APrimitive[]> primitiveGroupsByTag
+        APrimitive[] primitives
     )
     {
-        return primitiveGroupsByTag
-            .Where(x => x.Length > 0)
-            .Select(g =>
+        var groupedByTreeIndex = primitives.GroupBy(x => x.TreeIndex);
+        return
+            groupedByTreeIndex.Select(g =>
             {
                 var geometries = g.Select(x => x).ToArray();
 

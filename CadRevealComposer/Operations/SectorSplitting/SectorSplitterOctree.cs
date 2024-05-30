@@ -25,13 +25,12 @@ public class SectorSplitterOctree : ISectorSplitter
     private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
 
     public IEnumerable<InternalSector> SplitIntoSectors(
-        APrimitive[] allGeometries,
-        HashSet<APrimitive[]> primitiveGroupsByTag
+        APrimitive[] allGeometries
     )
     {
         var sectorIdGenerator = new SequentialIdGenerator();
 
-        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries, primitiveGroupsByTag);
+        var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         (Node[] regularNodes, Node[] outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes();
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();

@@ -6,7 +6,6 @@ using System.Collections.Generic;
 public interface ISectorSplitter
 {
     public IEnumerable<InternalSector> SplitIntoSectors(
-        APrimitive[] allGeometries,
-        HashSet<APrimitive[]> primitiveGroupsByTag
+        APrimitive[] allGeometries
     );
 }
