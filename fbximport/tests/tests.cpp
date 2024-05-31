@@ -35,6 +35,7 @@ const std::string get_test_model_file_path()
     return test_model_file_path_.get() ? *test_model_file_path_ : "";
 }
 
+#ifdef _WIN32
 TEST_CASE("Load and iterate", "[FBX sdk]")
 {
     VS_MEM_CHECK
@@ -49,13 +50,16 @@ TEST_CASE("Load and iterate", "[FBX sdk]")
     _CrtMemDifference(&s3, &s1, &s2);
     _CrtMemDumpStatistics(&s3);
 }
+#endif
 
 TEST_CASE("Check ignore normals", "[FBX sdk]")
 {
-    std::cout << std::string("Using file path: ") << get_test_model_file_path() << std::endl;
+    auto testModelPath = get_test_model_file_path();
 
-    FbxInfo fbx_info1(get_test_model_file_path(), false);
-    FbxInfo fbx_info2(get_test_model_file_path(), true);
+    std::cout << std::string("Using file path: ") << testModelPath << std::endl;
+
+    FbxInfo fbx_info1(testModelPath, false);
+    FbxInfo fbx_info2(testModelPath, true);
 
     size_t node_count1 = fbx_info1.get_node_count();
     size_t node_count2 = fbx_info2.get_node_count();
