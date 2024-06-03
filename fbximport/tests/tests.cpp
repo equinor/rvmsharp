@@ -52,6 +52,12 @@ TEST_CASE("Load and iterate", "[FBX sdk]")
 }
 #endif
 
+TEST_CASE("Get sdk version", "[FBX sdk]")
+{
+    auto version = get_fbxsdk_version();
+    REQUIRE(version->compare("-1") != 0);
+}
+
 TEST_CASE("Check ignore normals", "[FBX sdk]")
 {
     auto testModelPath = get_test_model_file_path();

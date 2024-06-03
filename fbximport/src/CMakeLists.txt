@@ -23,4 +23,4 @@ add_library(cfbx SHARED ${TARGET_SOURCES})
 target_link_libraries(cfbx ${LIBRARY_DEPENDENCIES})
 set_property(TARGET cfbx PROPERTY CXX_STANDARD 20)
 
-target_compile_definitions(cfbx PUBLIC CFBX_BUILD_AS_DLL)
+target_compile_definitions(cfbx PUBLIC FBXSDK_VERSION="${FBXSDK_VERSION}" CFBX_BUILD_AS_DLL)
