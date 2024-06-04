@@ -146,7 +146,7 @@ public static class SceneCreator
     {
         var filePath = Path.Join(outputDirectory, sectorFilename);
         using var gltfSectorFile = File.Create(filePath);
-        GltfWriter.WriteSector(geometries, gltfSectorFile);
+        GltfWriter.WriteSector(geometries, gltfSectorFile, filePath);
         gltfSectorFile.Flush(true);
     }
 

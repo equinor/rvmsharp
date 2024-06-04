@@ -1,6 +1,7 @@
 ﻿namespace CadRevealComposer.Writers;
 
 using Commons.Utils;
+using Newtonsoft.Json;
 using Primitives;
 using SharpGLTF.IO;
 using SharpGLTF.Schema2;
@@ -14,6 +15,8 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+public record SectorBufferMetadata(ulong TreeIndex, int BufferStartPosition, int BufferLength);
+
 /// <summary>
 /// Cognite Reveal format:
 /// - Primitives are written with GLTF instancing extension. One GLTF node per type of primitive.
@@ -24,23 +27,24 @@ using System.Runtime.InteropServices;
 /// </summary>
 public static class GltfWriter
 {
-    public static int WritePrimitives<T>(
+    public static (int count, int bufferMovement) WritePrimitives<T>(
         IReadOnlyList<APrimitive> primitives,
-        Action<T[], ModelRoot, Scene> writeFunction,
+        Func<T[], ModelRoot, Scene, int> writeFunction,
         ModelRoot model,
         Scene scene
     )
     {
         var selectedPrimitives = primitives.OfType<T>().ToArray();
         var primitiveNumber = selectedPrimitives.Length;
+        int bufferMovement = 0;
         if (selectedPrimitives.Length > 0)
         {
-            writeFunction(selectedPrimitives, model, scene);
+            bufferMovement = writeFunction(selectedPrimitives, model, scene);
         }
-        return primitiveNumber;
+        return (primitiveNumber, bufferMovement);
     }
 
-    public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream outputStream)
+    public static void WriteSector(IReadOnlyList<APrimitive> primitives, Stream outputStream, string filePath)
     {
         if (!BitConverter.IsLittleEndian)
         {
@@ -53,20 +57,51 @@ public static class GltfWriter
         var scene = model.UseScene(null);
         model.DefaultScene = scene;
 
+        var primitiveGroups = primitives.GroupBy(x => x.TreeIndex);
+
         int counter = 0;
-        counter += WritePrimitives<InstancedMesh>(primitives, WriteInstancedMeshes, model, scene);
-        counter += WritePrimitives<TriangleMesh>(primitives, WriteTriangleMeshes, model, scene);
-        counter += WritePrimitives<Box>(primitives, WriteBoxes, model, scene);
-        counter += WritePrimitives<Circle>(primitives, WriteCircles, model, scene);
-        counter += WritePrimitives<Cone>(primitives, WriteCones, model, scene);
-        counter += WritePrimitives<EccentricCone>(primitives, WriteEccentricCones, model, scene);
-        counter += WritePrimitives<EllipsoidSegment>(primitives, WriteEllipsoidSegments, model, scene);
-        counter += WritePrimitives<GeneralCylinder>(primitives, WriteGeneralCylinders, model, scene);
-        counter += WritePrimitives<GeneralRing>(primitives, WriteGeneralRings, model, scene);
-        counter += WritePrimitives<Nut>(primitives, WriteNuts, model, scene);
-        counter += WritePrimitives<Quad>(primitives, WriteQuads, model, scene);
-        counter += WritePrimitives<TorusSegment>(primitives, WriteTorusSegments, model, scene);
-        counter += WritePrimitives<Trapezium>(primitives, WriteTrapeziums, model, scene);
+        int bufferPosition = 0;
+
+        var sectorBufferMetadata = new List<SectorBufferMetadata>();
+
+        foreach (var primitiveGroup in primitiveGroups)
+        {
+            var treeIndex = primitiveGroup.Key;
+            var group = primitiveGroup.ToList().AsReadOnly();
+
+            var bufferMovement = 0;
+            // csharpier-ignore-start
+            (int count, int bufferDiff) = WritePrimitives<InstancedMesh>(group, WriteInstancedMeshes, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<TriangleMesh>(group, WriteTriangleMeshes, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<Box>(group, WriteBoxes, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<Circle>(group, WriteCircles, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<Cone>(group, WriteCones, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<EccentricCone>(group, WriteEccentricCones, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<EllipsoidSegment>(group, WriteEllipsoidSegments, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<GeneralCylinder>(group, WriteGeneralCylinders, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<GeneralRing>(group, WriteGeneralRings, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<Nut>(group, WriteNuts, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<Quad>(group, WriteQuads, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<TorusSegment>(group, WriteTorusSegments, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            (count, bufferDiff) = WritePrimitives<Trapezium>(group, WriteTrapeziums, model, scene);
+            counter += count; bufferMovement += bufferDiff;
+            // csharpier-ignore-end
+
+            sectorBufferMetadata.Add(new SectorBufferMetadata(treeIndex, bufferPosition, bufferMovement));
+            bufferPosition += bufferMovement;
+        }
 
         Trace.Assert(counter == primitives.Count, "Not all primitives were processed in GltfWriter.");
 
@@ -74,15 +109,20 @@ public static class GltfWriter
         model.Asset.Generator = "rvmsharp";
 
         model.WriteGLB(outputStream);
+
+        var metadataFilePath = filePath.Replace(".glb", "_metadata.json");
+        string metadata = JsonConvert.SerializeObject(sectorBufferMetadata);
+        File.WriteAllText(metadataFilePath, metadata);
     }
 
-    private static void WriteInstancedMeshes(InstancedMesh[] meshes, ModelRoot model, Scene scene)
+    private static int WriteInstancedMeshes(InstancedMesh[] meshes, ModelRoot model, Scene scene)
     {
         // Remark: InstancedMesh.InstanceId is shared across Sectors, and that means that we can have InstancedMesh groups
         // with only one item in this sector, but it will use the shared instance from another sector if already loaded from that sector.
         // So small instance groups increases file size, but not memory use.
 
         var instanceMeshGroups = meshes.GroupBy(m => m.InstanceId);
+        int bufferMovement = 0;
 
         foreach (var instanceMeshGroup in instanceMeshGroups)
         {
@@ -99,6 +139,8 @@ public static class GltfWriter
             var instanceBufferSize = byteStride * instanceCount;
 
             var bufferSize = indicesBufferSize + vertexBufferSize + instanceBufferSize;
+            bufferMovement += bufferSize;
+
             var buffer = model.CreateBuffer(bufferSize);
 
             // create GLTF buffer views
@@ -189,9 +231,11 @@ public static class GltfWriter
             meshGpuInstancing.SetAccessor("_color", colorAccessor);
             meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
         }
+
+        return bufferMovement;
     }
 
-    private static void WriteTriangleMeshes(TriangleMesh[] triangleMeshes, ModelRoot model, Scene scene)
+    private static int WriteTriangleMeshes(TriangleMesh[] triangleMeshes, ModelRoot model, Scene scene)
     {
         var indexCount = triangleMeshes.Sum(m => m.Mesh.Indices.Length);
         var vertexCount = triangleMeshes.Sum(m => m.Mesh.Vertices.Length);
@@ -273,15 +317,18 @@ public static class GltfWriter
         meshPrimitive.SetVertexAccessor("COLOR_0", colorAccessor);
         meshPrimitive.SetVertexAccessor("POSITION", positionAccessor);
         node.Mesh = mesh;
+
+        return bufferSize;
     }
 
-    private static void WriteBoxes(Box[] boxes, ModelRoot model, Scene scene)
+    private static int WriteBoxes(Box[] boxes, ModelRoot model, Scene scene)
     {
         var boxCount = boxes.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * boxCount, byteStride);
+        var bufferSize = byteStride * boxCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var box in boxes)
@@ -307,15 +354,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
         meshGpuInstancing.SetAccessor("_color", colorAccessor);
         meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteCircles(Circle[] circles, ModelRoot model, Scene scene)
+    private static int WriteCircles(Circle[] circles, ModelRoot model, Scene scene)
     {
         var circleCount = circles.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 16 + 3) * sizeof(float); // id + color + matrix + normal
-        var bufferView = model.CreateBufferView(byteStride * circleCount, byteStride);
+        var bufferSize = byteStride * circleCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var circle in circles)
@@ -345,15 +395,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_color", colorAccessor);
         meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
         meshGpuInstancing.SetAccessor("_normal", normalAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteCones(Cone[] cones, ModelRoot model, Scene scene)
+    private static int WriteCones(Cone[] cones, ModelRoot model, Scene scene)
     {
         var coneCount = cones.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 3 + 3 + 3 + 1 + 1) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * coneCount, byteStride);
+        var bufferSize = byteStride * coneCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var cone in cones)
@@ -403,15 +456,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_localXAxis", localXAxisAccessor);
         meshGpuInstancing.SetAccessor("_radiusA", radiusAAccessor);
         meshGpuInstancing.SetAccessor("_radiusB", radiusBAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteEccentricCones(EccentricCone[] eccentricCones, ModelRoot model, Scene scene)
+    private static int WriteEccentricCones(EccentricCone[] eccentricCones, ModelRoot model, Scene scene)
     {
         var eccentricConeCount = eccentricCones.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 3 + 3 + 3 + 1 + 1) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * eccentricConeCount, byteStride);
+        var bufferSize = byteStride * eccentricConeCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var eccentricCone in eccentricCones)
@@ -453,15 +509,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_normal", normalAccessor);
         meshGpuInstancing.SetAccessor("_radiusA", radiusAAccessor);
         meshGpuInstancing.SetAccessor("_radiusB", radiusBAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteEllipsoidSegments(EllipsoidSegment[] ellipsoids, ModelRoot model, Scene scene)
+    private static int WriteEllipsoidSegments(EllipsoidSegment[] ellipsoids, ModelRoot model, Scene scene)
     {
         var ellipsoidCount = ellipsoids.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 1 + 3 + 3) * sizeof(float); // id + color + matrix
-        var bufferView = model.CreateBufferView(byteStride * ellipsoidCount, byteStride);
+        var bufferSize = byteStride * ellipsoidCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var ellipsoid in ellipsoids)
@@ -510,15 +569,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_height", heightAccessor);
         meshGpuInstancing.SetAccessor("_center", centerAccessor);
         meshGpuInstancing.SetAccessor("_normal", normalAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteGeneralCylinders(GeneralCylinder[] generalCylinders, ModelRoot model, Scene scene)
+    private static int WriteGeneralCylinders(GeneralCylinder[] generalCylinders, ModelRoot model, Scene scene)
     {
         var generalCylinderCount = generalCylinders.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 3 + 3 + 3 + 4 + 4 + 1) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * generalCylinderCount, byteStride);
+        var bufferSize = byteStride * generalCylinderCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var generalCylinder in generalCylinders)
@@ -579,15 +641,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_localXAxis", localXAxisAccessor);
         meshGpuInstancing.SetAccessor("_angle", angleAccessor);
         meshGpuInstancing.SetAccessor("_arcAngle", arcAngleAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteGeneralRings(GeneralRing[] generalRings, ModelRoot model, Scene scene)
+    private static int WriteGeneralRings(GeneralRing[] generalRings, ModelRoot model, Scene scene)
     {
         var generalRingCount = generalRings.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 1 + 16 + 3 + 1) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * generalRingCount, byteStride);
+        var bufferSize = byteStride * generalRingCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var generalRing in generalRings)
@@ -629,15 +694,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
         meshGpuInstancing.SetAccessor("_normal", normalAccessor);
         meshGpuInstancing.SetAccessor("_thickness", thicknessAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteNuts(Nut[] nuts, ModelRoot model, Scene scene)
+    private static int WriteNuts(Nut[] nuts, ModelRoot model, Scene scene)
     {
         var nutCount = nuts.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float); // id + color + matrix
-        var bufferView = model.CreateBufferView(byteStride * nutCount, byteStride);
+        var bufferSize = byteStride * nutCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var nut in nuts)
@@ -663,14 +731,17 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
         meshGpuInstancing.SetAccessor("_color", colorAccessor);
         meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteQuads(Quad[] quads, ModelRoot model, Scene scene)
+    private static int WriteQuads(Quad[] quads, ModelRoot model, Scene scene)
     {
         var quadCount = quads.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float); // id + color + matrix
+        var bufferSize = byteStride * quadCount;
         var bufferView = model.CreateBufferView(byteStride * quadCount, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
@@ -697,15 +768,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_treeIndex", treeIndexAccessor);
         meshGpuInstancing.SetAccessor("_color", colorAccessor);
         meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteTorusSegments(TorusSegment[] torus, ModelRoot model, Scene scene)
+    private static int WriteTorusSegments(TorusSegment[] torus, ModelRoot model, Scene scene)
     {
         var torusCount = torus.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 1 + 16 + 1 + 1) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * torusCount, byteStride);
+        var bufferSize = byteStride * torusCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var tor in torus)
@@ -743,15 +817,18 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_instanceMatrix", instanceMatrixAccessor);
         meshGpuInstancing.SetAccessor("_radius", radiusAccessor);
         meshGpuInstancing.SetAccessor("_tubeRadius", tubeRadiusAccessor);
+
+        return bufferSize;
     }
 
-    private static void WriteTrapeziums(Trapezium[] trapeziums, ModelRoot model, Scene scene)
+    private static int WriteTrapeziums(Trapezium[] trapeziums, ModelRoot model, Scene scene)
     {
         var trapeziumCount = trapeziums.Length;
 
         // create byte buffer
         const int byteStride = (1 + 1 + 3 + 3 + 3 + 3) * sizeof(float); // id + color + matrix
-        var bufferView = model.CreateBufferView(byteStride * trapeziumCount, byteStride);
+        var bufferSize = byteStride * trapeziumCount;
+        var bufferView = model.CreateBufferView(bufferSize, byteStride);
         var buffer = bufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var trapezium in trapeziums)
@@ -789,6 +866,8 @@ public static class GltfWriter
         meshGpuInstancing.SetAccessor("_vertex2", vertex2Accessor);
         meshGpuInstancing.SetAccessor("_vertex3", vertex3Accessor);
         meshGpuInstancing.SetAccessor("_vertex4", vertex4Accessor);
+
+        return bufferSize;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
