@@ -9,18 +9,16 @@
 #endif
 
 #include "tests.h"
-#include "common.h"
-#include "node.h"
-#include "mesh.h"
-#include "importer.h"
-#include "manager.h"
-
-#include <iostream>
-#include <fbxsdk.h>
 #include "fbx_info.h"
 
+#include <node.h>
+#include <mesh.h>
+#include <importer.h>
+#include <manager.h>
+
+#include <iostream>
+
 using namespace std;
-using namespace fbxsdk;
 
 std::shared_ptr<std::string> test_model_file_path_;
 

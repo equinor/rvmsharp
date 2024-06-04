@@ -53,6 +53,15 @@ CFbxMesh node_get_mesh(CFbxNode node)
     return nullptr;
 }
 
+void node_destroy(CFbxNode node)
+{
+    if (node == nullptr)
+        return;
+
+    auto fbxNode = static_cast<FbxNode*>(node);
+    fbxNode->Destroy();
+    fbxNode = nullptr;
+}
 
 Transform node_get_transform(CFbxNode node)
 {

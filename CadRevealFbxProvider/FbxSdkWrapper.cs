@@ -49,7 +49,7 @@ public class FbxSdkWrapper : IDisposable
             return false;
         }
 
-        var trimmedVersion = versionStr.TrimStart('\u0010');;
+        var trimmedVersion = versionStr.TrimStart('\u0010');
 
         var versionMinExpected = new Version("2020.3.2");
         var versionObj = new Version(trimmedVersion);

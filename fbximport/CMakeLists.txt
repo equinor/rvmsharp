@@ -29,10 +29,10 @@ if(NOT ${FBX_ROOT} MATCHES ${FBXSDK_VERSION})
 endif()
 
 include_directories(SYSTEM "${FBX_ROOT}/include")
-IF (NOT WIN32 AND NOT APPLE)
+if (NOT WIN32 AND NOT APPLE)
    # assume we are on Linux
    SET(FBX_SHARED 1)
-ENDIF()
+endif()
 include(fbx)
 
 # http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
@@ -49,5 +49,5 @@ endif()
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-add_subdirectory(tests)
 add_subdirectory(src)
+add_subdirectory(tests)

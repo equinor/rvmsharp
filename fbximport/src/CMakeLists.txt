@@ -20,7 +20,7 @@ else()
 endif()
 
 add_library(cfbx SHARED ${SOURCES})
-target_link_libraries(cfbx ${LIBRARY_DEPENDENCIES})
+target_link_libraries(cfbx PRIVATE ${LIBRARY_DEPENDENCIES} )
 set_property(TARGET cfbx PROPERTY CXX_STANDARD 20)
 
 target_compile_definitions(cfbx PUBLIC FBXSDK_VERSION="${FBXSDK_VERSION}" CFBX_BUILD_AS_DLL)
