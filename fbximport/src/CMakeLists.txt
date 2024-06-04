@@ -1,4 +1,4 @@
-set(TARGET_SOURCES
+set(SOURCES
     common.h
     node.h
     node.cpp
@@ -19,7 +19,7 @@ else()
     set(LIBRARY_DEPENDENCIES ${FBX_REQUIRED_LIBS_DEPENDENCY})
 endif()
 
-add_library(cfbx SHARED ${TARGET_SOURCES})
+add_library(cfbx SHARED ${SOURCES})
 target_link_libraries(cfbx ${LIBRARY_DEPENDENCIES})
 set_property(TARGET cfbx PROPERTY CXX_STANDARD 20)
 
