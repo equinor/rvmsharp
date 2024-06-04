@@ -21,9 +21,8 @@ public class ScaffoldingAttributeParser
             throw new ArgumentException(nameof(fileLines));
         Console.WriteLine("Reading attribute file.");
 
-        // The below will remove the first row in the CSV file, if it is not the header. However,
-        // this may be done directly from manipulation of the CsvOptions below, but since we have
-        // RowToSkip = 0, then SkipRow is never called.
+        // The below will remove the first row in the CSV file, if it is not the header.
+        // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
         if (!fileLines.First().Contains("Description"))
         {
             fileLines = fileLines.Skip(1).ToArray();
