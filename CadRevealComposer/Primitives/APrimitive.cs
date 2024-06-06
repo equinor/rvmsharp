@@ -157,4 +157,7 @@ public abstract record APrimitive(
     [property: ProtoMember(1)] ulong TreeIndex,
     [property: ProtoMember(2)] Color Color,
     [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox
-);
+)
+{
+    public int Priority { get; init; } = 0;
+}

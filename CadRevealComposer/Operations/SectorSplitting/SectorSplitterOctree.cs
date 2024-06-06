@@ -24,9 +24,9 @@ public class SectorSplitterOctree : ISectorSplitter
     private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
     private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong nextSectorId)
     {
-        var sectorIdGenerator = new SequentialIdGenerator();
+        var sectorIdGenerator = new SequentialIdGenerator(nextSectorId);
 
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         (Node[] regularNodes, Node[] outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes();

@@ -165,8 +165,10 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
-
+        var sectors = splitter.SplitIntoSectors(allPrimitives, 1).OrderBy(x => x.SectorId).ToArray();
+        var nextSectorId = sectors.Last().SectorId + 1;
+        var prioritized = allPrimitives.Where(x => x.Priority == 1).ToArray();
+        var highlightSectors = splitter.SplitIntoSectors(prioritized, nextSectorId).OrderBy(x => x.SectorId).ToArray();
 
         var treeIndexSectorIdList = new List<(ulong treeIndex, uint sectorId)>();
         foreach (var sector in sectors)
@@ -215,11 +217,17 @@ public static class CadRevealComposerRunner
 
         stopwatch.Restart();
         SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+
+
+        /// Write Sectors outside scene
+
+        foreach (var highlightSector in highlightSectors)
+        {
+            SceneCreator.SerializeSector(highlightSector, outputDirectory.FullName, "highlight_");
+        }
+        ///
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
-
-
-
         return treeIndexSectorIdList.ToArray();
     }
 

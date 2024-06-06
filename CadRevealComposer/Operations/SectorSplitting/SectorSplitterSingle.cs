@@ -8,7 +8,7 @@ using Utils;
 
 public class SectorSplitterSingle : ISectorSplitter
 {
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
+    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong sectorStartId = 0)
     {
         yield return CreateRootSector(0, allGeometries);
     }

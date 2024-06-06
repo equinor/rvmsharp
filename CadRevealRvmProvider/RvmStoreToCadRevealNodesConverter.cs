@@ -42,6 +42,19 @@ internal static class RvmStoreToCadRevealNodesConverter
         Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+        allNodes = allNodes.Select(node =>
+        {
+            var type = node.Attributes.GetValueOrNull("Type");
+
+            if (type is "VALV")
+            {
+                var geometries = node.Geometries;
+                node.Geometries = geometries.Select(g => g with { Priority = 1 }).ToArray();
+            }
+
+            return node;
+        }).ToArray();
+
         return allNodes;
     }
 

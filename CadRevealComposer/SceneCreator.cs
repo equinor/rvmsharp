@@ -138,7 +138,7 @@ public static class SceneCreator
         JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: EnvUtil.IsDebugBuild); // We don't want indentation in prod, it doubles the size. Format in an editor if needed.
     }
 
-    public static void ExportSectorGeometries(
+    private static void ExportSectorGeometries(
         IReadOnlyList<APrimitive> geometries,
         string sectorFilename,
         string? outputDirectory
@@ -150,11 +150,11 @@ public static class SceneCreator
         gltfSectorFile.Flush(true);
     }
 
-    private static SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    public static SectorInfo SerializeSector(InternalSector p, string outputDirectory, string sectorPrefix = "")
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+        var sectorFilename = p.Geometries.Any() ? $"{sectorPrefix}sector_{p.SectorId}.glb" : null;
         var sectorInfo = new SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,
