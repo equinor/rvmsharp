@@ -33,22 +33,26 @@ const std::string get_test_model_file_path()
     return test_model_file_path_.get() ? *test_model_file_path_ : "";
 }
 
-#ifdef _WIN32
 TEST_CASE("Load and iterate", "[FBX sdk]")
 {
     VS_MEM_CHECK
 
     std::cout << std::string("Using file path: ") << get_test_model_file_path() << std::endl;
 
+#ifdef _WIN32
     _CrtMemState s1, s2, s3;
     _CrtMemCheckpoint(&s1);
+#endif
+
     FbxInfo fbx_info(get_test_model_file_path(), false);
     std::cout << fbx_info.print_info();
+
+#ifdef _WIN32
     _CrtMemCheckpoint(&s2);
     _CrtMemDifference(&s3, &s1, &s2);
     _CrtMemDumpStatistics(&s3);
-}
 #endif
+}
 
 TEST_CASE("Get sdk version", "[FBX sdk]")
 {
