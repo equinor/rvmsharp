@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.13.4)
 
 project (cfbx LANGUAGES CXX VERSION 0.0.1)
 
-find_package(Catch2 3 REQUIRED)
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
 # FBX SDK section
 set(FBX_ROOT "$ENV{FBX_ROOT}")
@@ -28,12 +28,12 @@ if(NOT ${FBX_ROOT} MATCHES ${FBXSDK_VERSION})
     message(FATAL_ERROR "FBX SDK path does not contain the FBX version " ${FBXSDK_VERSION} )
 endif()
 
-include_directories("${FBX_ROOT}/include")
-IF (NOT WIN32 AND NOT APPLE)
+include_directories(SYSTEM "${FBX_ROOT}/include")
+if (NOT WIN32 AND NOT APPLE)
    # assume we are on Linux
    SET(FBX_SHARED 1)
-ENDIF()
-include("fbx.cmake")
+endif()
+include(fbx)
 
 # http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
 if(MSVC AND protobuf_MSVC_STATIC_RUNTIME)
@@ -46,38 +46,8 @@ if(MSVC AND protobuf_MSVC_STATIC_RUNTIME)
   endforeach()
 endif()
 
-set(CMAKE_INCLUDE_CURRENT_DIR TRUE)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
-set(TARGET_SOURCES
-    src/common.h
-    src/node.h
-    src/node.cpp
-    src/mesh.h
-    src/mesh.cpp
-    src/manager.h
-    src/manager.cpp
-    src/importer.h
-    src/importer.cpp
-)
-set(TEST_SOURCES
-    tests/main.cpp
-    tests/tests.h
-    tests/tests.cpp
-    tests/fbx_info.h
-    tests/fbx_info.cpp
-)
-
-add_compile_definitions(FBXSDK_VERSION=\"${FBXSDK_VERSION}\")
-
-include_directories(
-    ${cfbx_SOURCE_DIR}/src)
-
-add_executable(tests ${TEST_SOURCES} ${TARGET_SOURCES})
-target_link_libraries(tests PRIVATE Catch2::Catch2WithMain ${FBX_REQUIRED_LIBS_DEPENDENCY})
-set_property(TARGET tests PROPERTY CXX_STANDARD 20)
-
-add_library(cfbx SHARED ${TARGET_SOURCES})
-target_link_libraries(cfbx ${FBX_REQUIRED_LIBS_DEPENDENCY})
-set_property(TARGET cfbx PROPERTY CXX_STANDARD 20)
-
-target_compile_definitions(cfbx PUBLIC CFBX_BUILD_AS_DLL)
+add_subdirectory(src)
+add_subdirectory(tests)

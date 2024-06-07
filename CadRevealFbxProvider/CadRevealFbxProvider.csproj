@@ -16,6 +16,10 @@
       <Link>cfbx.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include=".\lib\libcfbx.dylib">
+      <Link>libcfbx.dylib</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>

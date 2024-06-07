@@ -1,4 +1,4 @@
-#include <node.h>
+#include "node.h"
 #include <fbxsdk.h>
 
 void node_get_name(CFbxNode node, char* output, int output_size)
@@ -8,7 +8,8 @@ void node_get_name(CFbxNode node, char* output, int output_size)
 
     const auto fbxNode = static_cast<FbxNode*>(node);
     auto name = fbxNode->GetName();
-    strcpy_s(output, output_size, name);
+    strncpy(output, name, output_size - 1);
+    output[output_size - 1] = '\0';
 }
 
 CFbxNode node_get_parent(CFbxNode node)
@@ -52,6 +53,15 @@ CFbxMesh node_get_mesh(CFbxNode node)
     return nullptr;
 }
 
+void node_destroy(CFbxNode node)
+{
+    if (node == nullptr)
+        return;
+
+    auto fbxNode = static_cast<FbxNode*>(node);
+    fbxNode->Destroy();
+    fbxNode = nullptr;
+}
 
 Transform node_get_transform(CFbxNode node)
 {
