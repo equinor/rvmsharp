@@ -5,20 +5,20 @@ using System.Runtime.InteropServices;
 public class FbxSdkWrapper : IDisposable
 {
     public const string FbxLibraryName = "cfbx";
-    private IntPtr sdk;
-    private IntPtr version;
+    private IntPtr _sdk;
+    private IntPtr _version;
 
-    private bool isValidSdk = false;
+    private readonly bool _isValidSdk;
 
     public FbxSdkWrapper()
     {
         CreateSdk();
-        isValidSdk = AssertFbxSdkVersion();
+        _isValidSdk = AssertFbxSdkVersion();
     }
 
     public bool IsValid()
     {
-        return isValidSdk;
+        return _isValidSdk;
     }
 
     public void Dispose()
@@ -38,8 +38,8 @@ public class FbxSdkWrapper : IDisposable
     /// </summary>
     public bool AssertFbxSdkVersion()
     {
-        version = get_fbxsdk_version();
-        var versionStr = Marshal.PtrToStringAnsi(version);
+        _version = get_fbxsdk_version();
+        var versionStr = Marshal.PtrToStringAnsi(_version);
 
         Console.WriteLine("Using FBX SDK version: " + versionStr);
 
@@ -49,15 +49,17 @@ public class FbxSdkWrapper : IDisposable
             return false;
         }
 
+        var trimmedVersion = versionStr.TrimStart('\u0010');
+
         var versionMinExpected = new Version("2020.3.2");
-        var versionObj = new Version(versionStr);
+        var versionObj = new Version(trimmedVersion);
         if (versionObj.CompareTo(versionMinExpected) < 0)
         {
             Console.WriteLine("FBX SDK version is too old. Cannot load this FBX file.");
             return false;
         }
 
-        delete_fbxsdk_version(version);
+        delete_fbxsdk_version(_version);
         return true;
     }
 
@@ -69,7 +71,7 @@ public class FbxSdkWrapper : IDisposable
     /// </summary>
     public void CreateSdk()
     {
-        sdk = manager_create();
+        _sdk = manager_create();
     }
 
     [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_destroy")]
@@ -77,7 +79,7 @@ public class FbxSdkWrapper : IDisposable
 
     public void DestroySdk()
     {
-        manager_destroy(sdk);
+        manager_destroy(_sdk);
 
         Console.WriteLine("Disposing FBX SDK");
     }
@@ -87,6 +89,6 @@ public class FbxSdkWrapper : IDisposable
 
     public FbxNode LoadFile(string filename)
     {
-        return new FbxNode(load_file(filename, sdk));
+        return new FbxNode(load_file(filename, _sdk));
     }
 }
