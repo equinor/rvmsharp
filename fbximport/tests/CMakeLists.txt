@@ -1,5 +1,3 @@
-find_package(Catch2 3 REQUIRED)
-
 set(SOURCES
     main.cpp
     tests.h
@@ -8,6 +6,7 @@ set(SOURCES
     fbx_info.cpp
 )
 
+include(catch2)
 include_directories(${cfbx_SOURCE_DIR}/src)
 
 add_executable(tests ${SOURCES})

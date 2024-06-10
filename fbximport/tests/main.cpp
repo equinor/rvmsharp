@@ -9,7 +9,7 @@ int invoke_catch2_tests(int argc, char* argv[])
 {
     Catch::Session session;
 
-    std::string filePath = "AQ110South-3DView.fbx";
+    std::string filePath = "";
 
     // Build a new parser on top of Catch2's
     using namespace Catch::Clara;
@@ -26,6 +26,12 @@ int invoke_catch2_tests(int argc, char* argv[])
     if( returnCode != 0 )
         return returnCode;
 
+    if(filePath.length() == 0)
+    {
+        std::cout << std::string("No modelfile supplied") << std::endl;    
+        return 0;
+    }
+
     // If set on the command line then the model file path is now set at this point
     set_test_model_file_path(filePath);
 
@@ -34,6 +40,5 @@ int invoke_catch2_tests(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-    invoke_catch2_tests(argc, argv);
-    return 0;
+    return invoke_catch2_tests(argc, argv);
 }
