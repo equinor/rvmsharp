@@ -8,11 +8,12 @@ public class FbxSdkWrapper : IDisposable
     private IntPtr _sdk;
 
     private readonly bool _isValidSdk;
+    private const string MinAcceptedFbxSdkVersion = "2020.3.2";
 
     public FbxSdkWrapper()
     {
         CreateSdk();
-        _isValidSdk = assert_fbxsdk_version("2020.3.2");
+        _isValidSdk = assert_fbxsdk_version_newer_or_equal_than(MinAcceptedFbxSdkVersion);
     }
 
     public bool IsValid()
@@ -25,8 +26,8 @@ public class FbxSdkWrapper : IDisposable
         DestroySdk();
     }
 
-    [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "assert_fbxsdk_version")]
-    private static extern bool assert_fbxsdk_version(string versionString);
+    [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "assert_fbxsdk_version_newer_or_equal_than")]
+    private static extern bool assert_fbxsdk_version_newer_or_equal_than(string minAcceptedFbxSdkVersion);
 
     [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_create")]
     private static extern IntPtr manager_create();

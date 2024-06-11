@@ -1,4 +1,4 @@
-# Build frontend
+# Build the library and tests
 FROM ubuntu:noble as build
 RUN apt update -y; \
     apt upgrade -y; \
@@ -6,6 +6,7 @@ RUN apt update -y; \
     apt clean -y
 WORKDIR /fbximporter
 COPY . .
+# Download FBX SDK from autodesk (https://aps.autodesk.com/developer/overview/fbx-sdk). Download link found under `Download SDK for Linux`
 RUN wget --no-check-certificate -O fbxsdk.tar.gz https://damassets.autodesk.net/content/dam/autodesk/www/files/fbx202037_fbxsdk_gcc_linux.tar.gz
 RUN tar -xzf fbxsdk.tar.gz; \
 rm fbxsdk.tar.gz

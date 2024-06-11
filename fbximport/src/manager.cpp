@@ -16,7 +16,7 @@ void manager_destroy(CFbxManager manager)
     fbxManager->Destroy();
 }
 
-bool assert_fbxsdk_version(const char* minFbxVersion)
+bool assert_fbxsdk_version_newer_or_equal_than(const char* minFbxVersion)
 {
     auto min = std::string(minFbxVersion);
     auto version = std::string(FBXSDK_VERSION);

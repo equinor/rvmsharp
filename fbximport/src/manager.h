@@ -8,7 +8,7 @@ extern "C" {
     CFBX_API CFbxManager manager_create();
     CFBX_API void manager_destroy(CFbxManager manager);
 
-    CFBX_API bool assert_fbxsdk_version(const char* minFbxVersion);
+    CFBX_API bool assert_fbxsdk_version_newer_or_equal_than(const char* minFbxVersion);
 }
 
 #endif // __CFBX_SDK_H__
