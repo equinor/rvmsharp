@@ -142,6 +142,10 @@ public static class CadRevealComposerRunner
     {
         var maxTreeIndex = allPrimitives.Max(x => x.TreeIndex);
 
+        var meshes = allPrimitives.OfType<TriangleMesh>();
+
+        var boxes = meshes.Select(x => BestFitBoundingBox.CalculateBestFittingBox(x.Mesh)).Cast<APrimitive>().ToArray();
+
         var stopwatch = Stopwatch.StartNew();
 
         ISectorSplitter splitter;
@@ -158,12 +162,12 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(boxes).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 
         stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+        SceneCreator.CreateSceneFile(boxes, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
     }
