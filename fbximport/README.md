@@ -9,18 +9,30 @@ Most of the FBX functionality is not supported. This library should:
 - Be as simple as possible
 - Have unit tests
 
-## Requirements
+## Building on Windows or Mac
+
+### Requirements
 
 - Visual Studio 2019 or later for Windows
 - FBX SDK 2020.3.2 or later
   - `FBX_ROOT` environment variable must be set.
 
-## Building
+### Building
+
+Run the following commands to build the library and test project. The binaries are places in the `build/bin` folder.
 
 ```script
-cmake -B build -S . -D FBXSDK_VERSION=2020.3.2
+cmake -B build -S . -D FBXSDK_VERSION=<version>
 cmake --build build --config Release
 ```
+
+Where `<version>` is installed fbxsdk version. E.g. *2020.3.2*
+
+## Building for Linux
+
+To build, make sure *Docker* is installed and running, then simply run the `build-linux.ps1` script.
+
+This will build the *Dockerfile*, which is set up to build the *fbximporter*, and copy the built library to `CadRevealFbxProvider/lib` folder. The library and test binaries can also be found in the `build/bin` folder.
 
 ## Testing
 

@@ -4,6 +4,11 @@ project (cfbx LANGUAGES CXX VERSION 0.0.1)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
+if (NOT WIN32 AND NOT APPLE)
+   # assume we are on Linux
+   set(LINUX 1)
+endif()
+
 # FBX SDK section
 set(FBX_ROOT "$ENV{FBX_ROOT}")
 if(FBX_ROOT)
@@ -29,10 +34,6 @@ if(NOT ${FBX_ROOT} MATCHES ${FBXSDK_VERSION})
 endif()
 
 include_directories(SYSTEM "${FBX_ROOT}/include")
-if (NOT WIN32 AND NOT APPLE)
-   # assume we are on Linux
-   SET(FBX_SHARED 1)
-endif()
 include(fbx)
 
 # http://www.cmake.org/Wiki/CMake_FAQ#How_can_I_build_my_MSVC_application_with_a_static_runtime.3F
@@ -46,8 +47,8 @@ if(MSVC AND protobuf_MSVC_STATIC_RUNTIME)
   endforeach()
 endif()
 
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 
 add_subdirectory(src)
 add_subdirectory(tests)

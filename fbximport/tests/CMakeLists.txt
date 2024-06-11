@@ -6,7 +6,12 @@ set(SOURCES
     fbx_info.cpp
 )
 
-include(catch2)
+if(LINUX)
+    find_package(Catch2 3 REQUIRED)
+else()
+    include(catch2)
+endif()
+
 include_directories(${cfbx_SOURCE_DIR}/src)
 
 add_executable(tests ${SOURCES})

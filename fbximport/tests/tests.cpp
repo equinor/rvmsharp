@@ -54,10 +54,10 @@ TEST_CASE("Load and iterate", "[FBX sdk]")
 #endif
 }
 
-TEST_CASE("Get sdk version", "[FBX sdk]")
+TEST_CASE("Assert sdk version", "[FBX version]")
 {
-    auto version = get_fbxsdk_version();
-    REQUIRE(version->compare("-1") != 0);
+    REQUIRE(assert_fbxsdk_version("3020.3.2") == false);
+    REQUIRE(assert_fbxsdk_version("2020.3.2") == true);
 }
 
 TEST_CASE("Check ignore normals", "[FBX sdk]")
