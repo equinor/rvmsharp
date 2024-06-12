@@ -180,6 +180,23 @@ public static class CadRevealComposerRunner
             }
         }
 
+        var highlighTreeIndexSectorIdList = new Dictionary<ulong, List<uint>>(); // treeIndex, sectorId
+        foreach (var sector in highlightSectors)
+        {
+            var sectorId = sector.SectorId;
+            foreach (var node in sector.Geometries)
+            {
+                if (highlighTreeIndexSectorIdList.ContainsKey(node.TreeIndex))
+                {
+                    highlighTreeIndexSectorIdList[node.TreeIndex].Add(sectorId);
+                }
+                else
+                {
+                    highlighTreeIndexSectorIdList.Add(node.TreeIndex, new List<uint>() { sectorId });
+                }
+            }
+        }
+
         // Sector in metadata hack //////////////////
         var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
         using (var connection = new SqliteConnection($"Data Source={databasePath}"))
@@ -188,17 +205,19 @@ public static class CadRevealComposerRunner
 
             var createTableCommand = connection.CreateCommand();
             createTableCommand.CommandText =
-                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, sectorId)) WITHOUT ROWID; ";
+                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, highlightSectorId TEXT NOT NULL, PRIMARY KEY (treeindex, sectorId, highlightSectorId)) WITHOUT ROWID; ";
             createTableCommand.ExecuteNonQuery();
 
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId) VALUES ($TreeIndex, $SectorId)";
+            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId, highlightSectorId) VALUES ($TreeIndex, $SectorId, $HighlightSectorId)";
             var treeIndexParameter = command.CreateParameter();
             treeIndexParameter.ParameterName = "$TreeIndex";
             var sectorIdParameter = command.CreateParameter();
             sectorIdParameter.ParameterName = "$SectorId";
+            var highlightSectorIdParameter = command.CreateParameter();
+            highlightSectorIdParameter.ParameterName = $"HighlightSectorId";
 
-            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter]);
+            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter, highlightSectorIdParameter]);
 
             var transaction = connection.BeginTransaction();
             command.Transaction = transaction;
@@ -206,6 +225,17 @@ public static class CadRevealComposerRunner
             {
                 treeIndexParameter.Value = pair.treeIndex;
                 sectorIdParameter.Value = pair.sectorId;
+
+                var hs = highlighTreeIndexSectorIdList.GetValueOrNull(pair.treeIndex);
+                if (hs == null)
+                {
+                    highlightSectorIdParameter.Value = "";
+                }
+                else
+                {                    
+                    highlightSectorIdParameter.Value = string.Join(";", hs.Distinct());
+                }
+
                 command.ExecuteNonQuery();
             }
             transaction.Commit();
@@ -228,6 +258,9 @@ public static class CadRevealComposerRunner
         ///
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
+
+
+
         return treeIndexSectorIdList.ToArray();
     }
 
