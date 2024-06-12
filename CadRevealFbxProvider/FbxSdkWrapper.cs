@@ -26,7 +26,11 @@ public class FbxSdkWrapper : IDisposable
         DestroySdk();
     }
 
-    [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "assert_fbxsdk_version_newer_or_equal_than")]
+    [DllImport(
+        FbxLibraryName,
+        CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "assert_fbxsdk_version_newer_or_equal_than"
+    )]
     private static extern bool assert_fbxsdk_version_newer_or_equal_than(string minAcceptedFbxSdkVersion);
 
     [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "manager_create")]
