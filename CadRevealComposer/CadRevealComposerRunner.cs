@@ -122,16 +122,69 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
-        var treeIndexWithSector = ProcessPrimitives(
+        var sectorTreeIndexes = ProcessPrimitives(
             geometriesToProcessArray,
             outputDirectory,
             modelParameters,
             composerParameters
         );
 
+        var treeIndexSectorIdList = sectorTreeIndexes.Item1;
+        var highlightTreeIndexSectorIdDictionary = sectorTreeIndexes.Item2;
+
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
         exportHierarchyDatabaseTask.Wait();
+
+
+        // Sector in metadata hack //////////////////
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
+        {
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText =
+                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, highlightSectorId TEXT NOT NULL, PRIMARY KEY (treeindex, sectorId, highlightSectorId)) WITHOUT ROWID; ";
+            createTableCommand.ExecuteNonQuery();
+
+            var command = connection.CreateCommand();
+            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId, highlightSectorId) VALUES ($TreeIndex, $SectorId, $HighlightSectorId)";
+            var treeIndexParameter = command.CreateParameter();
+            treeIndexParameter.ParameterName = "$TreeIndex";
+            var sectorIdParameter = command.CreateParameter();
+            sectorIdParameter.ParameterName = "$SectorId";
+            var highlightSectorIdParameter = command.CreateParameter();
+            highlightSectorIdParameter.ParameterName = $"HighlightSectorId";
+
+            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter, highlightSectorIdParameter]);
+
+            var transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+            foreach (var pair in treeIndexSectorIdList)
+            {
+                treeIndexParameter.Value = pair.treeIndex;
+                sectorIdParameter.Value = pair.sectorId;
+
+                var hs = highlightTreeIndexSectorIdDictionary.GetValueOrNull(pair.treeIndex);
+                if (hs == null)
+                {
+                    highlightSectorIdParameter.Value = "";
+                }
+                else
+                {
+                    highlightSectorIdParameter.Value = string.Join(";", hs.Distinct());
+                }
+
+                command.ExecuteNonQuery();
+            }
+            transaction.Commit();
+        }
+        //////////////////////////////////////////////
+
+
+
+
 
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
@@ -140,7 +193,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static (ulong treeIndex, uint sectorId)[] ProcessPrimitives(
+    public static ((ulong treeIndex, uint sectorId)[], Dictionary<ulong, List<uint>>) ProcessPrimitives(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -197,52 +250,6 @@ public static class CadRevealComposerRunner
             }
         }
 
-        // Sector in metadata hack //////////////////
-        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
-        {
-            connection.Open();
-
-            var createTableCommand = connection.CreateCommand();
-            createTableCommand.CommandText =
-                "CREATE TABLE sectors (treeindex INTEGER NOT NULL, sectorId INTEGER NOT NULL, highlightSectorId TEXT NOT NULL, PRIMARY KEY (treeindex, sectorId, highlightSectorId)) WITHOUT ROWID; ";
-            createTableCommand.ExecuteNonQuery();
-
-            var command = connection.CreateCommand();
-            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId, highlightSectorId) VALUES ($TreeIndex, $SectorId, $HighlightSectorId)";
-            var treeIndexParameter = command.CreateParameter();
-            treeIndexParameter.ParameterName = "$TreeIndex";
-            var sectorIdParameter = command.CreateParameter();
-            sectorIdParameter.ParameterName = "$SectorId";
-            var highlightSectorIdParameter = command.CreateParameter();
-            highlightSectorIdParameter.ParameterName = $"HighlightSectorId";
-
-            command.Parameters.AddRange([treeIndexParameter, sectorIdParameter, highlightSectorIdParameter]);
-
-            var transaction = connection.BeginTransaction();
-            command.Transaction = transaction;
-            foreach (var pair in treeIndexSectorIdList.ToArray())
-            {
-                treeIndexParameter.Value = pair.treeIndex;
-                sectorIdParameter.Value = pair.sectorId;
-
-                var hs = highlighTreeIndexSectorIdList.GetValueOrNull(pair.treeIndex);
-                if (hs == null)
-                {
-                    highlightSectorIdParameter.Value = "";
-                }
-                else
-                {                    
-                    highlightSectorIdParameter.Value = string.Join(";", hs.Distinct());
-                }
-
-                command.ExecuteNonQuery();
-            }
-            transaction.Commit();
-        }
-        //////////////////////////////////////////////
-
-
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 
         stopwatch.Restart();
@@ -261,7 +268,7 @@ public static class CadRevealComposerRunner
 
 
 
-        return treeIndexSectorIdList.ToArray();
+        return (treeIndexSectorIdList.ToArray(), highlighTreeIndexSectorIdList);
     }
 
     /// <summary>
