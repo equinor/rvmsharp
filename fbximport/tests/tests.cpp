@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #ifdef _MSC_VER
-#define _CRTDBG_MAP_ALLOC  
+#define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #define VS_MEM_CHECK _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #else
@@ -54,10 +54,13 @@ TEST_CASE("Load and iterate", "[FBX sdk]")
 #endif
 }
 
-TEST_CASE("Get sdk version", "[FBX sdk]")
+TEST_CASE("Assert that the fbxsdk is newer or equal to a specified version", "[FBX version]")
 {
-    auto version = get_fbxsdk_version();
-    REQUIRE(version->compare("-1") != 0);
+    //We don't require a specific fbx-sdk version, but it needs to be version 2020.3.2 or newer
+    REQUIRE(assert_fbxsdk_version_newer_or_equal_than("2020.3.2") == true);
+
+    //Test that assert_fbxsdk_version_newer_or_equal_than with (nonexisting) future version fails.
+    REQUIRE(assert_fbxsdk_version_newer_or_equal_than("3020.3.2") == false);
 }
 
 TEST_CASE("Check ignore normals", "[FBX sdk]")

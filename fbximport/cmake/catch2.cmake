@@ -1,7 +1,7 @@
 # Using FetchContent which is not a full fledged package manager.
 # It does not do subdepenndencies etc but works OK for catch2.
 
-Include(FetchContent)
+include(FetchContent)
 
 FetchContent_Declare(
   Catch2
