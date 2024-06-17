@@ -81,7 +81,7 @@ public class Mesh : IEquatable<Mesh>
     /// <param name="transform">Optionally add a transform to the mesh while calculating the bounding box.</param>
     /// <returns>A Bounding Box</returns>
     /// <exception cref="Exception">Throws if the Mesh has 0 vertices.</exception>
-    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform)
+    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform = null)
     {
         var vertices = this._vertices;
 
