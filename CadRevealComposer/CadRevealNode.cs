@@ -4,6 +4,7 @@ using Primitives;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Numerics;
 
 [ProtoContract(SkipConstructor = true)]
@@ -35,6 +36,17 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     public BoundingBox Encapsulate(BoundingBox other)
     {
         return new BoundingBox(Vector3.Min(Min, other.Min), Vector3.Max(Max, other.Max));
+    }
+
+    /// <summary>
+    /// Creates an <see cref="Box"/> primitive to visualize the AxisAlignedBoundingBox
+    /// Mostly useful as a debug utility.
+    /// </summary>
+    /// <returns>A Box with the equal Matrix and BoundingBox to this <see cref="BoundingBox"/></returns>
+    public Box ToBoxPrimitive(uint treeIndex, Color color)
+    {
+        var matrix = Matrix4x4.CreateScale(Extents) * Matrix4x4.CreateTranslation(Center);
+        return new Box(matrix, treeIndex, color, this);
     }
 };
 
