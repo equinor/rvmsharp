@@ -4,7 +4,22 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
 
-public record struct FbxNode(IntPtr NodeAddress);
+public record FbxNode(IntPtr NodeAddress, FbxNode? Parent, int Depth)
+{
+    /// <summary>
+    /// Gets the LocalSpace Transform of the node in the FBX file.
+    ///
+    /// Wrapper for <see cref="FbxNodeWrapper.GetTransform"/>
+    /// </summary>
+    public Matrix4x4 LocalTransform => FbxNodeWrapper.GetTransform(this);
+
+    /// <summary>
+    /// Gets the WorldSpace Transform of the node in the FBX file.
+    ///
+    /// Wrapper for <see cref="FbxNodeWrapper.GetTransform"/> for Self and all parents.
+    /// </summary>
+    public Matrix4x4 WorldTransform => (Parent?.WorldTransform ?? Matrix4x4.Identity) * LocalTransform;
+};
 
 public static class FbxNodeWrapper
 {
@@ -33,7 +48,7 @@ public static class FbxNodeWrapper
 
     public static FbxNode GetChild(int index, FbxNode node)
     {
-        return new FbxNode(node_get_child(node.NodeAddress, index));
+        return new FbxNode(node_get_child(node.NodeAddress, index), node, node.Depth + 1);
     }
 
     [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_transform")]

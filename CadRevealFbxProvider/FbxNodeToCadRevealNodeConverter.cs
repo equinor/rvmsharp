@@ -6,11 +6,8 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Drawing;
-using System.IO;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -131,7 +128,7 @@ public static class FbxNodeToCadRevealNodeConverter
     )
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
-        var transform = FbxNodeWrapper.GetTransform(node);
+        var transform = node.WorldTransform;
 
         if (nodeGeometryPtr == IntPtr.Zero)
         {
@@ -160,7 +157,6 @@ public static class FbxNodeToCadRevealNodeConverter
         var mesh = meshData.Value.Mesh;
         var meshPtr = meshData.Value.MeshPtr;
 
-        var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
         if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
         {
             ulong instanceId = instanceIdGenerator.GetNextId();
@@ -171,16 +167,19 @@ public static class FbxNodeToCadRevealNodeConverter
                 transform,
                 treeIndex,
                 Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                bb
+                mesh.CalculateAxisAlignedBoundingBox(transform)
             );
             return instancedMesh;
         }
 
+        // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
+        var worldSpaceMesh = mesh.Clone(); // TODO: Clone is not actually needed here since we discard the mesh anyway. Should we remove it?
+        worldSpaceMesh.Apply(node.WorldTransform);
         var triangleMesh = new TriangleMesh(
-            mesh,
+            worldSpaceMesh,
             treeIndex,
             Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-            bb
+            worldSpaceMesh.CalculateAxisAlignedBoundingBox()
         );
 
         return triangleMesh;
