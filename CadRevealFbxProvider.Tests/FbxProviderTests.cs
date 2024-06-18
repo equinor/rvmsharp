@@ -70,14 +70,14 @@ public class FbxProviderTests
 
     private void Iterate(FbxNode root)
     {
-        Console.WriteLine(FbxNodeWrapper.GetNodeName(root));
-        var childCount = FbxNodeWrapper.GetChildCount(root);
-        Matrix4x4 t = FbxNodeWrapper.GetTransform(root);
+        Console.WriteLine(root.GetNodeName());
+        var childCount = root.GetChildCount();
+        Matrix4x4 t = root.GetLocalTransform();
         Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
         FbxMeshWrapper.GetGeometricData(root);
         for (var i = 0; i < childCount; i++)
         {
-            var child = FbxNodeWrapper.GetChild(i, root);
+            var child = root.GetChild(i);
             Iterate(child);
         }
     }
@@ -86,9 +86,9 @@ public class FbxProviderTests
     public void Fbx_Importer_GetUniqueMeshesInFileCount()
     {
         using var test = new FbxImporter();
-        var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
 
-        var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(RootNode);
+        var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(rootNode);
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
@@ -231,7 +231,7 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        (var nodes, var metadata) = modelFormatProviderFbx.ParseFiles(
+        (IReadOnlyList<CadRevealNode> nodes, _) = modelFormatProviderFbx.ParseFiles(
             inputDirectoryMissingAttr.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,

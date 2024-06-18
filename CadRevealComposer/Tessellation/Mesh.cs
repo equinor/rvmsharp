@@ -83,27 +83,25 @@ public class Mesh : IEquatable<Mesh>
     /// <exception cref="Exception">Throws if the Mesh has 0 vertices.</exception>
     public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform = null)
     {
-        var vertices = this._vertices;
-
-        if (vertices.Length == 0)
+        if (_vertices.Length == 0)
             throw new Exception("Cannot find BoundingBox of a Mesh with 0 Vertices.");
 
         Vector3 min = Vector3.One * float.MaxValue;
         Vector3 max = Vector3.One * float.MinValue;
         if (transform is not null and { IsIdentity: false }) // Skip applying the transform if its an identity transform.
         {
-            for (int i = 1; i < vertices.Length; i++)
+            for (int i = 1; i < _vertices.Length; i++)
             {
-                var transformedVertice = Vector3.Transform(vertices[i], transform.Value);
-                min = Vector3.Min(min, transformedVertice);
-                max = Vector3.Max(max, transformedVertice);
+                var transformedVertex = Vector3.Transform(_vertices[i], transform.Value);
+                min = Vector3.Min(min, transformedVertex);
+                max = Vector3.Max(max, transformedVertex);
             }
         }
         else
         {
-            for (int i = 1; i < vertices.Length; i++)
+            for (int i = 1; i < _vertices.Length; i++)
             {
-                var vertex = vertices[i];
+                var vertex = _vertices[i];
                 min = Vector3.Min(min, vertex);
                 max = Vector3.Max(max, vertex);
             }
