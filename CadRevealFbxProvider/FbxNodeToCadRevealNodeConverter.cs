@@ -162,7 +162,7 @@ public static class FbxNodeToCadRevealNodeConverter
         if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
         {
             SimplificationLogObject simplificationLogObject = new();
-            Mesh simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, 0.01f);
+            Mesh simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, 0.03f);
 
             ulong instanceId = instanceIdGenerator.GetNextId();
             meshInstanceLookup.Add(meshPtr, (simplifiedMesh, instanceId));
