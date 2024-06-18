@@ -66,6 +66,7 @@ public static class FbxWorkload
             else
                 result.Add((fbxFilename, attributeFilename));
         }
+
         return result.ToArray();
     }
 
@@ -100,10 +101,8 @@ public static class FbxWorkload
                 var lines = File.ReadAllLines(infoTextFilename);
                 (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
                 // TODO: Should we crash if we dont have expected values?
-                if (scaffoldingMetadata.HasExpectedValues())
-                {
-                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
-                }
+
+                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);

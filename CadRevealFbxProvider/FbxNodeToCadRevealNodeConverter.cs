@@ -6,11 +6,8 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
 using System.Drawing;
-using System.IO;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
