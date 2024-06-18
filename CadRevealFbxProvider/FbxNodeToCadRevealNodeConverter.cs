@@ -6,6 +6,7 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
 using System.Drawing;
 using System.Text.RegularExpressions;
 
@@ -160,15 +161,20 @@ public static class FbxNodeToCadRevealNodeConverter
         var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
         if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
         {
+            SimplificationLogObject simplificationLogObject = new SimplificationLogObject();
+            Mesh simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, 0.01f);
             ulong instanceId = instanceIdGenerator.GetNextId();
-            meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+            meshInstanceLookup.Add(meshPtr, (simplifiedMesh, instanceId));
             var instancedMesh = new InstancedMesh(
                 instanceId,
-                mesh,
+                simplifiedMesh,
                 transform,
                 treeIndex,
                 Color.Magenta, // TODO: Temp debug color to distinguish first Instance
                 bb
+            );
+            Console.WriteLine(
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}Percent: {simplificationLogObject.SimplificationAfterTriangleCount / simplificationLogObject.SimplificationBeforeTriangleCount:P2}. Orig: {simplificationLogObject.SimplificationBeforeTriangleCount, 8} After: {simplificationLogObject.SimplificationAfterTriangleCount, 8}"
             );
             return instancedMesh;
         }

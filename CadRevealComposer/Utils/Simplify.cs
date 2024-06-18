@@ -6,6 +6,7 @@ using g3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
@@ -47,12 +48,13 @@ public static class Simplify
 
     /// <summary>
     /// Lossy Simplification of the Mesh.
-    /// This will reduce the quality of the mesh based on a threshold
+    /// This will reduce the quality of the mesh based on a threshold. It does not modify the original mesh object, so use the returned value.
     /// </summary>
     /// <param name="mesh"></param>
     /// <param name="simplificationLogObject"></param>
     /// <param name="thresholdInMeshUnits">Usually meters</param>
-    /// <returns></returns>
+    /// <returns>A simplified Copy of the mesh.</returns>
+    [Pure]
     public static Mesh SimplifyMeshLossy(
         Mesh mesh,
         SimplificationLogObject simplificationLogObject,
