@@ -14,12 +14,7 @@ public class ScaffoldingMetadata
     public const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
     public const string TotalWeightFieldName = "Scaffolding_TotalWeight";
 
-    public static readonly string[] ModelAttributesPerPart =
-    {
-        "Work order",
-        "Scaff build Operation number",
-        "Dismantle Operation number"
-    };
+    public static readonly string[] ModelAttributesPerPart = ["Work order"];
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
 
@@ -108,30 +103,28 @@ public class ScaffoldingMetadata
         return true;
     }
 
-    public static bool HasExpectedValuesFromAttributesPerPart(Dictionary<string, string> targetDict)
-    {
-        foreach (var modelAttribute in ModelAttributesPerPart)
-        {
-            if (!targetDict.ContainsKey(modelAttribute))
-                return false;
-
-            var value = targetDict.TryGetValue(modelAttribute, out string? existingValue) ? existingValue : null;
-            if (string.IsNullOrEmpty(value))
-                return false;
-        }
-
-        return true;
-    }
+    // public static bool HasExpectedValuesFromAttributesPerPart(Dictionary<string, string> targetDict)
+    // {
+    //     foreach (var modelAttribute in ModelAttributesPerPart)
+    //     {
+    //         if (!targetDict.ContainsKey(modelAttribute))
+    //             return false;
+    //
+    //         var value = targetDict.TryGetValue(modelAttribute, out string? existingValue) ? existingValue : null;
+    //         if (string.IsNullOrEmpty(value))
+    //             return false;
+    //     }
+    //
+    //     return true;
+    // }
 
     public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-        if (!HasExpectedValues())
-            throw new Exception("Cannot write metadata: invalid content");
 
         // the if above ensures that the fields and not null
-        targetDict.Add(WorkOrderFieldName, WorkOrder!);
-        targetDict.Add(BuildOpFieldName, BuildOperationNumber!);
-        targetDict.Add(DismantleOpFieldName, DismantleOperationNumber!);
-        targetDict.Add(TotalWeightFieldName, TotalWeight!);
+        targetDict.Add(WorkOrderFieldName, WorkOrder ?? "-1");
+        targetDict.Add(BuildOpFieldName, BuildOperationNumber ?? "-1");
+        targetDict.Add(DismantleOpFieldName, DismantleOperationNumber ?? "-1");
+        targetDict.Add(TotalWeightFieldName, TotalWeight?? "-1");
     }
 }
