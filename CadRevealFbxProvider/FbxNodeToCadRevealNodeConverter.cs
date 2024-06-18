@@ -161,8 +161,9 @@ public static class FbxNodeToCadRevealNodeConverter
         var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
         if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
         {
-            SimplificationLogObject simplificationLogObject = new SimplificationLogObject();
+            SimplificationLogObject simplificationLogObject = new();
             Mesh simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, 0.01f);
+
             ulong instanceId = instanceIdGenerator.GetNextId();
             meshInstanceLookup.Add(meshPtr, (simplifiedMesh, instanceId));
             var instancedMesh = new InstancedMesh(
@@ -174,7 +175,7 @@ public static class FbxNodeToCadRevealNodeConverter
                 bb
             );
             Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}Percent: {simplificationLogObject.SimplificationAfterTriangleCount / simplificationLogObject.SimplificationBeforeTriangleCount:P2}. Orig: {simplificationLogObject.SimplificationBeforeTriangleCount, 8} After: {simplificationLogObject.SimplificationAfterTriangleCount, 8}"
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
             );
             return instancedMesh;
         }
