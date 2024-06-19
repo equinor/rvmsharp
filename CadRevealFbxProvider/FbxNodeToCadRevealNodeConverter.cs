@@ -319,7 +319,7 @@ public static class FbxNodeToCadRevealNodeConverter
             meshVertices[j] = coordinate;
         }
 
-        var tolerance = 1E-1f;
+        const float tolerance = 0.01f; // ~1cm
         // Create the convex hull
         var convexHullOfMesh = ConvexHull.Create(meshVertices, tolerance);
 
@@ -342,7 +342,7 @@ public static class FbxNodeToCadRevealNodeConverter
 
         var reducedMesh = new Mesh(cadRevealVertices.ToArray(), cadRevealIndices.ToArray(), tolerance);
 
-        reducedMesh = Simplify.SimplifyMeshLossy(reducedMesh, new SimplificationLogObject(), 0.05f);
+        reducedMesh = Simplify.SimplifyMeshLossy(reducedMesh, new SimplificationLogObject(), 0.03f);
         return reducedMesh;
     }
 }
