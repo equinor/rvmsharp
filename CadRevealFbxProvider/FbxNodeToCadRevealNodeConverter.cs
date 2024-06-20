@@ -10,6 +10,7 @@ using CadRevealComposer.Utils;
 using MIConvexHull;
 using System.Drawing;
 using System.Numerics;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 public static class FbxNodeToCadRevealNodeConverter
@@ -62,12 +63,14 @@ public static class FbxNodeToCadRevealNodeConverter
             if (!validateNodeAttributes(attributes, name))
                 return null;
 
+        var triCount = geometry != null ? GetTriCountForGeometry(geometry) : null;
         var cadRevealNode = new CadRevealNode
         {
             TreeIndex = id,
             Name = name,
             Parent = parent,
-            Geometries = geometry != null ? new[] {geometry} : Array.Empty<APrimitive>(),
+            Geometries = geometry != null ? [geometry] : [],
+            OptionalDiagnosticInfo = JsonSerializer.Serialize(new {triCount, geometryType = geometry?.GetType()})
         };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
@@ -99,6 +102,16 @@ public static class FbxNodeToCadRevealNodeConverter
         cadRevealNode.Children = children.ToArray();
         cadRevealNode.BoundingBoxAxisAligned = axisAlignedBoundingBoxIncludingChildNodes;
         return cadRevealNode;
+
+        int? GetTriCountForGeometry(APrimitive primitive)
+        {
+            return primitive switch
+            {
+                TriangleMesh triangleMesh => triangleMesh.Mesh.TriangleCount,
+                InstancedMesh instancedMesh => instancedMesh.TemplateMesh.TriangleCount,
+                _ => null
+            };
+        }
     }
 
     private static BoundingBox? ExtendBoundingBoxWithChildrenBounds(
