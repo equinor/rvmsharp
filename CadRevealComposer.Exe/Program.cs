@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 public static class Program
 {
@@ -17,6 +19,7 @@ public static class Program
 
     static void Main(string[] args)
     {
+        Console.WriteLine("Args: " + string.Join(" ", args));
         // use full Profile Guided Optimization
         Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
@@ -72,7 +75,7 @@ public static class Program
             throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
         }
 
-        var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider(), new FbxProvider() };
+        var providers = new List<IModelFormatProvider>() { new FbxProvider(), new ObjProvider(), new RvmProvider(), };
 
         CadRevealComposerRunner.Process(
             options.InputDirectory,
