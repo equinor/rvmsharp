@@ -13,18 +13,16 @@ using CadRevealComposer.Primitives;
 [TestFixture]
 public class FbxProviderTests
 {
-    private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples//correct");
-    private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples//correct");
+    private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
+    private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
-    private static readonly DirectoryInfo InputDirectoryMissingAttr = new(
-        @"TestSamples//missingattributes"
-    );
+    private static readonly DirectoryInfo InputDirectoryMissingAttr = new("TestSamples/missingattributes");
 
-    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples//missingkey");
-    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples//missingkey");
+    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingkey");
+    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingkey");
 
-    private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples//mismatch");
-    private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples//mismatch");
+    private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
+    private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
 
     private static readonly ModelParameters ModelParameters = new(
         new ProjectId(1),

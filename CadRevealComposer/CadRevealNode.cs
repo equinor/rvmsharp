@@ -49,9 +49,16 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
         return new Box(matrix, treeIndex, color, this);
     }
 
-    public bool Same(BoundingBox other)
+    /// <summary>
+    /// Check if bounding box of this node is equal to other bounding box
+    /// </summary>
+    /// <param name="other"></param>
+    /// <param name="precisionDigits">The number of fractional digits to keep</param>
+    /// <returns>True if bounding boxes are equal up to specified precision level</returns>
+    public bool EqualTo(BoundingBox other, int precisionDigits=3)
     {
-        return Min.EqualsWithinGridTolerance(other.Min, 3) && Max.EqualsWithinGridTolerance(other.Max, 3);
+        return Min.EqualsWithinGridTolerance(other.Min, precisionDigits) &&
+               Max.EqualsWithinGridTolerance(other.Max, precisionDigits);
     }
 };
 

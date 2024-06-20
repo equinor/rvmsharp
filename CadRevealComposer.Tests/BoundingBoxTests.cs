@@ -24,6 +24,34 @@ public class BoundingBoxTests
     }
 
     [Test]
+    public void EqualTo_GivenEqualBoundingBox_ReturnsTrue()
+    {
+        var boundingBox = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6));
+        var equalBoundingBox = new BoundingBox(new Vector3(1.00001f, 2, 3), new Vector3(4, 5, 6));
+
+        Assert.That(boundingBox.EqualTo(equalBoundingBox), Is.True);
+    }
+
+    [Test]
+    public void EqualTo_GivenNotEqualBoundingBox_ReturnsFalse()
+    {
+        var boundingBox = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6));
+        var notEqualBoundingBox = new BoundingBox(new Vector3(1.01f, 2, 3), new Vector3(4, 5, 6));
+
+        Assert.That(boundingBox.EqualTo(notEqualBoundingBox), Is.False);
+    }
+
+    [Test]
+    public void EqualToWithVaryingPrecision_GivenSimilarBoundingBox_ReturnsCorrectResult()
+    {
+        var boundingBox = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6));
+        var similarBoundingBox = new BoundingBox(new Vector3(1.001f, 2, 3), new Vector3(4, 5, 6));
+
+        Assert.That(boundingBox.EqualTo(similarBoundingBox), Is.False);
+        Assert.That(boundingBox.EqualTo(similarBoundingBox, 2), Is.True);
+    }
+
+    [Test]
     public void Center_ReturnsCenter()
     {
         var boundingBox = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6));
