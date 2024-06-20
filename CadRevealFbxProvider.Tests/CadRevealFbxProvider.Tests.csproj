@@ -67,6 +67,9 @@
     <None Update="TestSamples\attributes\wrong_attribute_count.csv">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="TestSamples\cube_and_instanced_cube_with_parent.fbx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

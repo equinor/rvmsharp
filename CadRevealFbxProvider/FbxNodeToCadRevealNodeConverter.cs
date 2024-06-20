@@ -103,7 +103,7 @@ public static class FbxNodeToCadRevealNodeConverter
         BoundingBox? optionalStartingBoundingBox
     )
     {
-        // Does not need to be recursive since all child are expected to have ran this method already.
+        // Does not need to be recursive since all child are expected to have run this method already.
         foreach (CadRevealNode childRevealNode in children)
         {
             var childBoundingBox = childRevealNode.BoundingBoxAxisAligned;
@@ -129,6 +129,8 @@ public static class FbxNodeToCadRevealNodeConverter
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
         var worldTransform = node.WorldTransform;
+
+        var translation = node.GetLocalTransform().Translation;
 
         if (nodeGeometryPtr == IntPtr.Zero)
         {

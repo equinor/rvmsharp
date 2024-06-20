@@ -18,7 +18,7 @@ public record FbxNode(IntPtr NodeAddress, FbxNode? Parent, int Depth)
     ///
     /// Wrapper for <see cref="FbxNodeWrapper.GetLocalTransform"/> for Self and all parents.
     /// </summary>
-    public Matrix4x4 WorldTransform => (Parent?.WorldTransform ?? Matrix4x4.Identity) * LocalTransform;
+    public Matrix4x4 WorldTransform => LocalTransform * (Parent?.WorldTransform ?? Matrix4x4.Identity);
 };
 
 public static class FbxNodeWrapper

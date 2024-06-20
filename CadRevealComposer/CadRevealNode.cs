@@ -1,11 +1,11 @@
 namespace CadRevealComposer;
 
-using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
+using Utils;
 
 [ProtoContract(SkipConstructor = true)]
 public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: ProtoMember(2)] Vector3 Max)
@@ -48,6 +48,11 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
         var matrix = Matrix4x4.CreateScale(Extents) * Matrix4x4.CreateTranslation(Center);
         return new Box(matrix, treeIndex, color, this);
     }
+
+    public bool Same(BoundingBox other)
+    {
+        return Min.EqualsWithinGridTolerance(other.Min, 3) && Max.EqualsWithinGridTolerance(other.Max, 3);
+    }
 };
 
 public class CadRevealNode
@@ -57,11 +62,11 @@ public class CadRevealNode
 
     // TODO support Store, Model, File and maybe not RVM
     // public RvmGroup? Group; // PDMS inside, children inside
-    public Dictionary<string, string> Attributes = new Dictionary<string, string>();
+    public Dictionary<string, string> Attributes = new();
     public required CadRevealNode? Parent;
     public CadRevealNode[]? Children;
 
-    public APrimitive[] Geometries = Array.Empty<APrimitive>();
+    public APrimitive[] Geometries = [];
 
     /// <summary>
     /// This is a bounding box encapsulating all children bounding boxes.
