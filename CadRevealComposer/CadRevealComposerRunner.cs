@@ -233,42 +233,46 @@ public static class CadRevealComposerRunner
             }
         }
 
-        var highlighTreeIndexSectorIdList = new Dictionary<ulong, List<uint>>(); // treeIndex, sectorId
+        var highlightTreeIndexSectorIdList = new Dictionary<ulong, List<uint>>(); // treeIndex, sectorId
         foreach (var sector in highlightSectors)
         {
             var sectorId = sector.SectorId;
             foreach (var node in sector.Geometries)
             {
-                if (highlighTreeIndexSectorIdList.ContainsKey(node.TreeIndex))
+                if (highlightTreeIndexSectorIdList.ContainsKey(node.TreeIndex))
                 {
-                    highlighTreeIndexSectorIdList[node.TreeIndex].Add(sectorId);
+                    highlightTreeIndexSectorIdList[node.TreeIndex].Add(sectorId);
                 }
                 else
                 {
-                    highlighTreeIndexSectorIdList.Add(node.TreeIndex, new List<uint>() { sectorId });
+                    highlightTreeIndexSectorIdList.Add(node.TreeIndex, new List<uint>() { sectorId });
                 }
             }
         }
 
+        highlightSectors = highlightSectors.Select(x => x with { IsHighlightSector = true }).ToArray();
+
+        var allSectors = sectors.Concat(highlightSectors).ToArray();
+
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 
         stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, allSectors);
 
 
         /// Write Sectors outside scene
 
-        foreach (var highlightSector in highlightSectors)
-        {
-            SceneCreator.SerializeSector(highlightSector, outputDirectory.FullName, "highlight_");
-        }
-        ///
+        // foreach (var highlightSector in highlightSectors)
+        // {
+        //     SceneCreator.SerializeSector(highlightSector, outputDirectory.FullName, "highlight_");
+        // }
+        // ///
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
 
 
-        return (treeIndexSectorIdList.ToArray(), highlighTreeIndexSectorIdList);
+        return (treeIndexSectorIdList.ToArray(), highlightTreeIndexSectorIdList);
     }
 
     /// <summary>

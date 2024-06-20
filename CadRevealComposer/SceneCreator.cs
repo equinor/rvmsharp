@@ -140,7 +140,7 @@ public static class SceneCreator
 
     private static void ExportSectorGeometries(
         IReadOnlyList<APrimitive> geometries,
-        string sectorFilename,
+        string? sectorFilename,
         string? outputDirectory
     )
     {
@@ -154,7 +154,19 @@ public static class SceneCreator
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"{sectorPrefix}sector_{p.SectorId}.glb" : null;
+        string? sectorFilename;
+
+        if (!p.IsHighlightSector)
+        {
+            sectorFilename = p.Geometries.Any() ? $"{sectorPrefix}sector_{p.SectorId}.glb" : null;
+        }
+        else
+        {
+            sectorFilename = p.Geometries.Any() ? $"highlight_sector_{p.SectorId}.glb" : null;
+        }
+
+
+
         var sectorInfo = new SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,
