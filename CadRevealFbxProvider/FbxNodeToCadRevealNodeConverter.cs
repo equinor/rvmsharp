@@ -198,7 +198,7 @@ public static class FbxNodeToCadRevealNodeConverter
                 bb
             );
             Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):7,P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
             );
             return instancedMesh;
         }
@@ -213,7 +213,7 @@ public static class FbxNodeToCadRevealNodeConverter
             );
 
             Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):7,P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
             );
             return triangleMesh;
         }
