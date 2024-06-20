@@ -70,7 +70,8 @@ public static class FbxNodeToCadRevealNodeConverter
             Name = name,
             Parent = parent,
             Geometries = geometry != null ? [geometry] : [],
-            OptionalDiagnosticInfo = JsonSerializer.Serialize(new {triCount, geometryType = geometry?.GetType().ToString()})
+            OptionalDiagnosticInfo =
+                JsonSerializer.Serialize(new {triCount, geometryType = geometry?.GetType().ToString()})
         };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
