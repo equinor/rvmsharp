@@ -68,6 +68,6 @@ public class FbxProvider : IModelFormatProvider
         InstanceIdGenerator instanceIdGenerator
     )
     {
-        return FbxNodeToCadRevealNodeConverter.ConvertToConvexHull(geometries, onlyOptimizeSmallVolumes: false);
+        return geometries;
     }
 }

@@ -67,7 +67,7 @@ public static class FbxNodeToCadRevealNodeConverter
             TreeIndex = id,
             Name = name,
             Parent = parent,
-            Geometries = geometry != null ? new[] { geometry } : Array.Empty<APrimitive>(),
+            Geometries = geometry != null ? new[] {geometry} : Array.Empty<APrimitive>(),
         };
 
         var childCount = FbxNodeWrapper.GetChildCount(node);
@@ -132,7 +132,7 @@ public static class FbxNodeToCadRevealNodeConverter
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
         var transform = FbxNodeWrapper.GetTransform(node);
-
+        var nodeName = FbxNodeWrapper.GetNodeName(node);
         if (nodeGeometryPtr == IntPtr.Zero)
         {
             return null;
@@ -161,8 +161,16 @@ public static class FbxNodeToCadRevealNodeConverter
         var meshPtr = meshData.Value.MeshPtr;
 
         var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
-        SimplificationLogObject simplificationLogObject = new();
-        Mesh simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, 0.03f);
+        string[] nodesToMakeConvex = ["Plank", "Beam", "FS", "Board"];
+        Mesh simplifiedMesh;
+        if (nodesToMakeConvex.Any(s => nodeName.Contains(s, StringComparison.OrdinalIgnoreCase)))
+        {
+            simplifiedMesh = ReduceMeshToConvexHull(mesh);
+        }
+        else
+        {
+            simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject(), 0.03f);
+        }
 
         if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
         {
@@ -177,22 +185,25 @@ public static class FbxNodeToCadRevealNodeConverter
                 bb
             );
             Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
             );
             return instancedMesh;
         }
+        else
+        {
+            simplifiedMesh.Apply(transform);
+            var triangleMesh = new TriangleMesh(
+                simplifiedMesh,
+                treeIndex,
+                Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
+                simplifiedMesh.CalculateAxisAlignedBoundingBox(null)
+            );
 
-        var triangleMesh = new TriangleMesh(
-            simplifiedMesh,
-            treeIndex,
-            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-            bb
-        );
-
-        Console.WriteLine(
-            $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
-        );
-        return triangleMesh;
+            Console.WriteLine(
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount):P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
+            );
+            return triangleMesh;
+        }
     }
 
     // Some models contain trash, i.e., objects that were intended to be removed were not deleted,
@@ -229,85 +240,9 @@ public static class FbxNodeToCadRevealNodeConverter
         return true;
     }
 
-    public static APrimitive[] ConvertToConvexHull(APrimitive[] geometries, bool onlyOptimizeSmallVolumes)
-    {
-        // TODO: Move me to separate file!
-        APrimitive[] geometriesOut = new APrimitive[geometries.Length];
-        int triangleCount = 0;
-        for (int i = 0; i < geometries.Length; i++)
-        {
-            var tG = geometries[i];
-            Console.WriteLine($"Type is {tG.GetType()}");
-            if (tG is InstancedMesh)
-            {
-                var t = (InstancedMesh)tG;
-                var originalMeshCount = t.TemplateMesh.TriangleCount;
-
-                Mesh reducedMesh;
-
-                BoundingBox bbox = t.TemplateMesh.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity);
-                float dX = bbox.Max.X - bbox.Min.X;
-                float dY = bbox.Max.Y - bbox.Min.Y;
-                float dZ = bbox.Max.Z - bbox.Min.Z;
-                float V = dX * dY * dZ;
-                if (V < 8.0f || !onlyOptimizeSmallVolumes)
-                {
-                    reducedMesh = ReduceMeshToConvexHull(t.TemplateMesh);
-                    Console.WriteLine($"{t.GetType().Name}: {t.TemplateMesh.Vertices.Length}");
-                    Console.WriteLine($"Reduced from {originalMeshCount} to {reducedMesh.TriangleCount}");
-
-                    triangleCount += reducedMesh.TriangleCount;
-                }
-                else
-                {
-                    var t2 = (InstancedMesh)geometries[i];
-                    reducedMesh = t2.TemplateMesh;
-
-                    /*
-                    // The below code does not work due to failure of the first CheckValidity()
-                    var meshCopy = MeshTools.OptimizeMesh(t2.TemplateMesh);
-                    var dMesh = ConvertMeshToDMesh3(meshCopy);
-                    dMesh.CheckValidity();
-                    var reducer = new Reducer(dMesh);
-                    reducer.ReduceToTriangleCount(50);
-                    dMesh.CheckValidity();
-                    reducedMesh = ConvertDMesh3ToMesh(dMesh);
-                    */
-
-                    reducedMesh = Simplify.SimplifyMeshLossy(reducedMesh, new SimplificationLogObject(), 0.05f);
-
-                    triangleCount += reducedMesh.TriangleCount;
-                }
-
-                // Replace the instanced mesh
-                geometriesOut[i] = new InstancedMesh(
-                    t.InstanceId,
-                    reducedMesh,
-                    t.InstanceMatrix,
-                    t.TreeIndex,
-                    t.Color,
-                    t.AxisAlignedBoundingBox
-                );
-            }
-            else if (tG is TriangleMesh)
-            {
-                var t = (TriangleMesh)tG;
-                t = t with { Mesh = ReduceMeshToConvexHull(t.Mesh) };
-                triangleCount += t.Mesh.TriangleCount;
-                geometriesOut[i] = geometries[i];
-            }
-            else
-            {
-                geometriesOut[i] = geometries[i];
-            }
-        }
-
-        Console.WriteLine($"TriCount: {triangleCount}");
-        return geometriesOut;
-    }
-
     private static Mesh ReduceMeshToConvexHull(Mesh mesh)
-    { // Build vertex list to hand to the convex hull algorithm
+    {
+        // Build vertex list to hand to the convex hull algorithm
         var meshVertexCount = mesh.Vertices.Length;
         var meshVertices = new double[meshVertexCount][];
         for (int j = 0; j < meshVertexCount; j++)
@@ -329,20 +264,21 @@ public static class FbxNodeToCadRevealNodeConverter
         var cadRevealIndices = new List<uint>();
         foreach (DefaultConvexFace<DefaultVertex> face in convexHullOfMesh.Result.Faces)
         {
-            var facePoints = face.Vertices.ToArray();
-            foreach (var r in facePoints)
+            var facePoints = face.Vertices;
+            foreach (var vertex in facePoints)
             {
-                double x = r.Position[0];
-                double y = r.Position[1];
-                double z = r.Position[2];
+                float x = (float)vertex.Position[0];
+                float y = (float)vertex.Position[1];
+                float z = (float)vertex.Position[2];
                 cadRevealIndices.Add(index++);
-                cadRevealVertices.Add(new Vector3((float)x, (float)y, (float)z));
+                cadRevealVertices.Add(new Vector3(x, y, z));
             }
         }
 
         var reducedMesh = new Mesh(cadRevealVertices.ToArray(), cadRevealIndices.ToArray(), tolerance);
 
-        reducedMesh = Simplify.SimplifyMeshLossy(reducedMesh, new SimplificationLogObject(), 0.03f);
+        // Simplify the convex hull if needed
+        reducedMesh = Simplify.SimplifyMeshLossy(reducedMesh, new SimplificationLogObject(), 0.01f);
         return reducedMesh;
     }
 }
