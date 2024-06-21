@@ -183,7 +183,9 @@ public static class DisjointMeshTools
                 // Start a traversal from the current unvisited face
                 var disjointPiece = TraverseDisjointPiece(face, visited);
 
-                disjointMeshes.Add(ConvertFacesToMesh(disjointPiece.ToArray()));
+                Mesh mesh = ConvertFacesToMesh(disjointPiece.ToArray());
+                mesh = MeshTools.OptimizeMesh(mesh); // Faces will be unordered etc, try optimizing render order.
+                disjointMeshes.Add(mesh);
             }
         }
 

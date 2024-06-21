@@ -156,15 +156,16 @@ public class RvmProvider : IModelFormatProvider
             var disjointTimer = Stopwatch.StartNew();
             var triangleMeshInput = meshes.OfType<TriangleMesh>().ToList();
             disjointedTriangleMeshes = triangleMeshInput
-                .AsParallel().SelectMany(x =>
+                .AsParallel().SelectMany(original =>
                 {
-                    var pieces = DisjointMeshTools.SplitDisjointPieces(x.Mesh);
+                    var pieces = DisjointMeshTools.SplitDisjointPieces(original.Mesh);
+                    if (pieces.Length == 1) return [original];
                     var results = new List<TriangleMesh>();
                     var i = 0;
                     foreach (Mesh p in pieces)
                     {
-                        var color = i == 0 ? x.Color : Color.Magenta; //
-                        results.Add(new TriangleMesh(p, x.TreeIndex, color, p.CalculateAxisAlignedBoundingBox(null)));
+                        var color = i == 0 ? original.Color : Color.Magenta; //
+                        results.Add(new TriangleMesh(p, original.TreeIndex, color, p.CalculateAxisAlignedBoundingBox(null)));
                         i++;
                     }
 
@@ -176,8 +177,10 @@ public class RvmProvider : IModelFormatProvider
                 $"Disjoint mesh split in {disjointTimer.Elapsed}, Was {triangleMeshInput.Count} now {disjointedTriangleMeshes.Count}"
             );
         }
+
         // TODO FIXME Refactor this code
-        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh && g is not TriangleMesh).Concat(disjointedTriangleMeshes
+        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh && g is not TriangleMesh).Concat(
+            disjointedTriangleMeshes
         ).Concat(meshes).ToArray();
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
