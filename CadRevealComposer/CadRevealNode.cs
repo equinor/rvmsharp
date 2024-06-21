@@ -55,10 +55,10 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     /// <param name="other"></param>
     /// <param name="precisionDigits">The number of fractional digits to keep</param>
     /// <returns>True if bounding boxes are equal up to specified precision level</returns>
-    public bool EqualTo(BoundingBox other, int precisionDigits=3)
+    public bool EqualTo(BoundingBox other, int precisionDigits = 3)
     {
-        return Min.EqualsWithinGridTolerance(other.Min, precisionDigits) &&
-               Max.EqualsWithinGridTolerance(other.Max, precisionDigits);
+        return Min.EqualsWithinGridTolerance(other.Min, precisionDigits)
+            && Max.EqualsWithinGridTolerance(other.Max, precisionDigits);
     }
 };
 

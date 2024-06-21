@@ -24,21 +24,16 @@ public class FbxProviderTests
     private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
     private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
 
-    private static readonly ModelParameters ModelParameters = new(
-        new ProjectId(1),
-        new ModelId(1),
-        new RevisionId(1),
-        new InstancingThreshold(1),
-        new TemplateCountLimit(100)
-    );
-    private static readonly ComposerParameters ComposerParameters = new(
-        false,
-        true,
-        false,
-        new NodeNameExcludeRegex(null),
-        0f,
-        null
-    );
+    private static readonly ModelParameters ModelParameters =
+        new(
+            new ProjectId(1),
+            new ModelId(1),
+            new RevisionId(1),
+            new InstancingThreshold(1),
+            new TemplateCountLimit(100)
+        );
+    private static readonly ComposerParameters ComposerParameters =
+        new(false, true, false, new NodeNameExcludeRegex(null), 0f, null);
 
     private static readonly List<IModelFormatProvider> Providers = [new FbxProvider()];
 
@@ -90,14 +85,16 @@ public class FbxProviderTests
     [Test]
     public void ModelAndAttributeFileMismatchGivesErrorMessage()
     {
-        Assert.Throws<Exception>(() => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
-            "An exception was expected, saying that the model and attribute file do not match, but got none.");
+        Assert.Throws<Exception>(
+            () => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
+            "An exception was expected, saying that the model and attribute file do not match, but got none."
+        );
     }
 
     [Test]
     public void WrongAttributeFormatGivesErrorMessage()
     {
-        Assert.Throws<Exception>(() =>Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
     }
 
     [Test]
@@ -215,11 +212,12 @@ public class FbxProviderTests
         }
     }
 
-    private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) => CadRevealComposerRunner.Process(
-        inputDirectory,
-        outputDirectory,
-        ModelParameters,
-        ComposerParameters,
-        Providers
-    );
+    private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>
+        CadRevealComposerRunner.Process(
+            inputDirectory,
+            outputDirectory,
+            ModelParameters,
+            ComposerParameters,
+            Providers
+        );
 }

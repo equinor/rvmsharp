@@ -1,11 +1,11 @@
 namespace CadRevealFbxProvider.Tests;
 
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
-using System.Numerics;
 
 [TestFixture]
 public class FbxNodeToCadRevealNodeConverterTests
@@ -37,7 +37,8 @@ public class FbxNodeToCadRevealNodeConverterTests
         AssertCadRevealNode<TriangleMesh>(
             baseObject,
             "Base",
-            new BoundingBox(new Vector3(-1.5f, -1.5f, -1.5f), new Vector3(0.5f, 0.5f, 0.5f)));
+            new BoundingBox(new Vector3(-1.5f, -1.5f, -1.5f), new Vector3(0.5f, 0.5f, 0.5f))
+        );
 
         Assert.That(baseObject.Children, Has.Length.EqualTo(2));
 
@@ -45,13 +46,15 @@ public class FbxNodeToCadRevealNodeConverterTests
         AssertCadRevealNode<InstancedMesh>(
             cube,
             "Cube",
-            new BoundingBox(new Vector3(-0.5f, -0.5f, -0.5f), new Vector3(0.5f, 0.5f, 0.5f)));
+            new BoundingBox(new Vector3(-0.5f, -0.5f, -0.5f), new Vector3(0.5f, 0.5f, 0.5f))
+        );
 
         var instanced = baseObject.Children[1];
         AssertCadRevealNode<InstancedMesh>(
             instanced,
             "Instanced",
-            new BoundingBox(new Vector3(-0.25f, -0.25f, -1.25f), new Vector3(0.25f, 0.25f, -0.75f)));
+            new BoundingBox(new Vector3(-0.25f, -0.25f, -1.25f), new Vector3(0.25f, 0.25f, -0.75f))
+        );
         return;
 
         void AssertCadRevealNode<T>(CadRevealNode? node, string name, BoundingBox expectedBoundingBox)
