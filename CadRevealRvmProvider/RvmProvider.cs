@@ -146,7 +146,7 @@ public class RvmProvider : IModelFormatProvider
             instanceIdGenerator,
             composerParameters.SimplificationThreshold
         );
-
+        List<TriangleMesh> disjointedTriangleMeshes;
         using (new TeamCityLogBlock("Split Disjoined Meshes to separate TriangleMeshes"))
         {
             // The idea behind this is that we can avoid loading smaller parts of disjoined meshes.
@@ -155,7 +155,7 @@ public class RvmProvider : IModelFormatProvider
             // THIS CODE IS HACKY AND MUST BE REFACTORED BEFORE MERGING
             var disjointTimer = Stopwatch.StartNew();
             var triangleMeshInput = meshes.OfType<TriangleMesh>().ToList();
-            var triangleMeshes = triangleMeshInput
+            disjointedTriangleMeshes = triangleMeshInput
                 .AsParallel().SelectMany(x =>
                 {
                     var pieces = DisjointMeshTools.SplitDisjointPieces(x.Mesh);
@@ -173,11 +173,12 @@ public class RvmProvider : IModelFormatProvider
                 .ToList();
 
             Console.WriteLine(
-                $"Disjoint mesh split in {disjointTimer.Elapsed}, Was {triangleMeshInput.Count} now {triangleMeshes.Count}"
+                $"Disjoint mesh split in {disjointTimer.Elapsed}, Was {triangleMeshInput.Count} now {disjointedTriangleMeshes.Count}"
             );
         }
-
-        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh).Concat(meshes).ToArray();
+        // TODO FIXME Refactor this code
+        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh && g is not TriangleMesh).Concat(disjointedTriangleMeshes
+        ).Concat(meshes).ToArray();
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
