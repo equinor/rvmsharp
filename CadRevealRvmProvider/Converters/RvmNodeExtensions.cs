@@ -1,7 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
-using RvmSharp.Primitives;
 using System.Drawing;
+using RvmSharp.Primitives;
 
 public static class RvmNodeExtensions
 {

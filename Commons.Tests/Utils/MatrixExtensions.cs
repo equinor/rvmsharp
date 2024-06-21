@@ -1,7 +1,7 @@
 ﻿namespace Commons.Tests.Utils;
 
-using Commons.Utils;
 using System.Numerics;
+using Commons.Utils;
 
 [TestFixture]
 public class MatrixExtensions

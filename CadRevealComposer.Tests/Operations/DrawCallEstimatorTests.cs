@@ -1,10 +1,10 @@
 ﻿namespace CadRevealComposer.Tests.Operations;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Operations;
 using NUnit.Framework.Legacy;
 using Primitives;
-using System.Drawing;
-using System.Numerics;
 
 [TestFixture]
 public class DrawCallEstimatorTests

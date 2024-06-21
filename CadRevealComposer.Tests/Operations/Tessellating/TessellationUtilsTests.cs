@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
-using CadRevealComposer.Operations.Tessellating;
 using System.Numerics;
+using CadRevealComposer.Operations.Tessellating;
 
 [TestFixture]
 public class TessellationUtilsTests

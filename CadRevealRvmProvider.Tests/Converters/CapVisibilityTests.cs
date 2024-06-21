@@ -1,11 +1,11 @@
 ﻿namespace CadRevealComposer.Tests.Primitives.Converters;
 
+using System.Numerics;
 using CadRevealRvmProvider.Converters;
 using CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 using NUnit.Framework.Legacy;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
-using System.Numerics;
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 [TestFixture]

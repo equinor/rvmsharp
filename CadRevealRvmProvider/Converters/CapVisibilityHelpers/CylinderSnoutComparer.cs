@@ -1,8 +1,8 @@
 namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 
+using System.Diagnostics;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 
 public static class CylinderSnoutComparer
 {

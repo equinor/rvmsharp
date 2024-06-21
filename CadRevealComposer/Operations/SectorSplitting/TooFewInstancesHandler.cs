@@ -1,7 +1,7 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using Primitives;
 using System.Linq;
+using Primitives;
 
 /// <summary>
 /// If there are too few instances of a template in a sector we assume that the cost of batching it is greater than the reward.

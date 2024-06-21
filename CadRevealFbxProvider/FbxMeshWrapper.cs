@@ -1,8 +1,8 @@
 ﻿namespace CadRevealFbxProvider;
 
-using CadRevealComposer.Tessellation;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using CadRevealComposer.Tessellation;
 
 public static class FbxMeshWrapper
 {

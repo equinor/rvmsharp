@@ -1,5 +1,6 @@
 namespace CadRevealFbxProvider.Tests;
 
+using System.Numerics;
 using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
@@ -8,7 +9,6 @@ using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealFbxProvider.Attributes;
-using System.Numerics;
 
 [TestFixture]
 public class FbxProviderTests

@@ -1,11 +1,11 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmCylinderConverter
 {

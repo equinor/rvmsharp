@@ -1,10 +1,10 @@
 namespace CadRevealComposer.Operations;
 
-using Primitives;
 using System;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Primitives;
 
 public static class CameraPositioning
 {

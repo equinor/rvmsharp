@@ -1,9 +1,9 @@
 ﻿namespace CadRevealComposer;
 
-using Configuration;
 using System;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using Configuration;
 using Utils;
 
 public class Scene

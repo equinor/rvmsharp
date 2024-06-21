@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
+using System.Numerics;
 using CadRevealComposer.Operations;
 using Primitives;
-using System.Numerics;
 
 // ReSharper disable once UnusedMember.Global
 public class HierarchyComposerConverterTests

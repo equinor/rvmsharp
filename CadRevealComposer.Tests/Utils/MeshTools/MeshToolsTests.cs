@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils.MeshTools;
 
-using CadRevealComposer.Utils.MeshOptimization;
 using System.Numerics;
+using CadRevealComposer.Utils.MeshOptimization;
 using Tessellation;
 
 [TestFixture]

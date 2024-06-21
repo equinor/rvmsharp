@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Utils;
 
-using Primitives;
 using System;
 using System.Collections.Generic;
+using Primitives;
 
 [Serializable]
 public class GeometryDistributionStats

@@ -1,12 +1,12 @@
 ﻿namespace CadRevealRvmProvider.Tests.Utils;
 
+using System.Text.Json;
 using BatchUtils;
 using NUnit.Framework.Legacy;
 using Operations;
 using RvmSharp.Exporters;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
-using System.Text.Json;
 
 /// <summary>
 /// Use methods provided here to manually extract and inspect data
