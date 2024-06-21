@@ -9,13 +9,16 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using CadRevealComposer.Utils.MeshOptimization;
 using Commons;
 using Converters;
 using Converters.CapVisibilityHelpers;
 using Operations;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
+using System.Drawing;
 using Tessellation;
 
 public class RvmProvider : IModelFormatProvider
@@ -116,6 +119,7 @@ public class RvmProvider : IModelFormatProvider
                 $"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc)."
             );
         }
+
         RvmPyramidInstancer.Result[] pyramidInstancingResult;
         if (composerParameters.NoInstancing)
         {
@@ -142,6 +146,36 @@ public class RvmProvider : IModelFormatProvider
             instanceIdGenerator,
             composerParameters.SimplificationThreshold
         );
+
+        using (new TeamCityLogBlock("Split Disjoined Meshes to separate TriangleMeshes"))
+        {
+            // The idea behind this is that we can avoid loading smaller parts of disjoined meshes.
+            // The disjoin check is fast, and we combine the meshes later so it should(TM) not impact performance too much.
+
+            // THIS CODE IS HACKY AND MUST BE REFACTORED BEFORE MERGING
+            var disjointTimer = Stopwatch.StartNew();
+            var triangleMeshInput = meshes.OfType<TriangleMesh>().ToList();
+            var triangleMeshes = triangleMeshInput
+                .AsParallel().SelectMany(x =>
+                {
+                    var pieces = DisjointMeshTools.SplitDisjointPieces(x.Mesh);
+                    var results = new List<TriangleMesh>();
+                    var i = 0;
+                    foreach (Mesh p in pieces)
+                    {
+                        var color = i == 0 ? x.Color : Color.Magenta; //
+                        results.Add(new TriangleMesh(p, x.TreeIndex, color, p.CalculateAxisAlignedBoundingBox(null)));
+                        i++;
+                    }
+
+                    return results;
+                })
+                .ToList();
+
+            Console.WriteLine(
+                $"Disjoint mesh split in {disjointTimer.Elapsed}, Was {triangleMeshInput.Count} now {triangleMeshes.Count}"
+            );
+        }
 
         var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh).Concat(meshes).ToArray();
 
