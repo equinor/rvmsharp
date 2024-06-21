@@ -156,14 +156,14 @@ public static class SceneCreator
 
         string? sectorFilename;
 
-        // if (!p.IsHighlightSector)
-        // {
+        if (!p.IsHighlightSector)
+        {
         sectorFilename = p.Geometries.Any() ? $"{sectorPrefix}sector_{p.SectorId}.glb" : null;
-        // }
-        // else
-        // {
-        //     sectorFilename = p.Geometries.Any() ? $"highlight_sector_{p.SectorId}.glb" : null;
-        // }
+        }
+        else
+        {
+            sectorFilename = p.Geometries.Any() ? $"highlight_sector_{p.SectorId}.glb" : null;
+        }
 
 
 
