@@ -1,18 +1,18 @@
 ﻿namespace CadRevealFbxProvider.Tests;
 
-using CadRevealFbxProvider.Attributes;
+using Attributes;
 using NUnit.Framework;
 
 [TestFixture]
 public class FbxProviderAttributeParserTests
 {
-    private DirectoryInfo attributeDirectory = new DirectoryInfo(@".\TestSamples\attributes");
+    private readonly DirectoryInfo _attributeDirectory = new("TestSamples/attributes");
 
-    [TestCase("\\fbx_test_model.csv")]
-    [TestCase("\\fbx_test_model_with_header_on_row_two.csv")]
+    [TestCase("/fbx_test_model.csv")]
+    [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
     public void ParseCorrectAttributesTest(string csvFileNmae)
     {
-        string infoTextFilename = attributeDirectory.FullName.ToString() + csvFileNmae;
+        string infoTextFilename = _attributeDirectory.FullName + csvFileNmae;
         var lines = File.ReadAllLines(infoTextFilename);
         (var attributes, var metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
 
@@ -21,7 +21,7 @@ public class FbxProviderAttributeParserTests
         {
             if (attribute.Value != null)
             {
-                Assert.That(attribute.Value.Count, Is.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
+                Assert.That(attribute.Value, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
             }
             else
             {
@@ -44,7 +44,7 @@ public class FbxProviderAttributeParserTests
         Assert.Throws<Exception>(
             () =>
             {
-                string infoTextFilename = attributeDirectory.FullName.ToString() + "\\missing_total_weight.csv";
+                string infoTextFilename = _attributeDirectory.FullName + "/missing_total_weight.csv";
                 var lines = File.ReadAllLines(infoTextFilename);
                 new ScaffoldingAttributeParser().ParseAttributes(lines);
             },
@@ -58,7 +58,7 @@ public class FbxProviderAttributeParserTests
         Assert.Throws<Exception>(
             () =>
             {
-                string infoTextFilename = attributeDirectory.FullName.ToString() + "\\missing_key_attribute.csv";
+                string infoTextFilename = _attributeDirectory.FullName + "/missing_key_attribute.csv";
                 var lines = File.ReadAllLines(infoTextFilename);
                 new ScaffoldingAttributeParser().ParseAttributes(lines);
             },
@@ -72,7 +72,7 @@ public class FbxProviderAttributeParserTests
         Assert.Throws<Exception>(
             () =>
             {
-                string infoTextFilename = attributeDirectory.FullName.ToString() + "\\wrong_attribute_count.csv";
+                string infoTextFilename = _attributeDirectory.FullName + "/wrong_attribute_count.csv";
                 var lines = File.ReadAllLines(infoTextFilename);
                 new ScaffoldingAttributeParser().ParseAttributes(lines);
             },
