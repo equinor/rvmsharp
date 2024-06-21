@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
-using CadRevealComposer.Utils;
 using System.Collections.Immutable;
+using CadRevealComposer.Utils;
 
 [TestFixture]
 public class LinqExtensionsTests

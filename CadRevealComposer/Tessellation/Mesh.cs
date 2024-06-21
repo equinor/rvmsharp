@@ -1,12 +1,12 @@
 ﻿namespace CadRevealComposer.Tessellation;
 
-using ProtoBuf;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using ProtoBuf;
 
 [ProtoContract(SkipConstructor = true)]
 public class Mesh : IEquatable<Mesh>

@@ -1,11 +1,11 @@
 namespace HierarchyComposer.Tests;
 
-using Functions;
-using Model;
-using NUnit.Framework;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
+using Functions;
+using Model;
+using NUnit.Framework;
 
 public class DatabaseComposerTests
 {

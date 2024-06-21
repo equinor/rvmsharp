@@ -1,8 +1,8 @@
 namespace CadRevealComposer.AlgebraExtensions;
 
-using Commons.Utils;
 using System;
 using System.Numerics;
+using Commons.Utils;
 using Utils;
 
 public readonly record struct Ray(Vector3 Origin, Vector3 Direction)

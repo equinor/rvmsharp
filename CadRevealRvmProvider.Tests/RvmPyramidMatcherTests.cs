@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Tests;
 
+using System.Numerics;
 using CadRevealComposer.Utils;
 using Operations;
 using RvmSharp.Primitives;
-using System.Numerics;
 
 [TestFixture]
 public class RvmPyramidMatcherTests

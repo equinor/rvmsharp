@@ -1,7 +1,7 @@
 namespace Commons;
 
-using Ben.Collections.Specialized;
 using System;
+using Ben.Collections.Specialized;
 
 /// <summary>
 /// String interning is used to avoid allocating new strings for each unique string in a metadata-set

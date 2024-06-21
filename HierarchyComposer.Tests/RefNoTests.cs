@@ -1,8 +1,8 @@
 ﻿namespace HierarchyComposer.Tests;
 
+using System;
 using Model;
 using NUnit.Framework;
-using System;
 
 public class RefNoTests
 {

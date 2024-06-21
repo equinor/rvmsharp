@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
-using CadRevealComposer.Primitives;
-using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
+using CadRevealComposer.Primitives;
+using RvmSharp.Primitives;
 
 public static class CircleConverterHelper
 {

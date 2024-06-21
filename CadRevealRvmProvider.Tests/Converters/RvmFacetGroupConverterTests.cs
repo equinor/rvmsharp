@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
-using CadRevealRvmProvider.Converters;
-using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
+using CadRevealRvmProvider.Converters;
+using RvmSharp.Primitives;
 
 public class RvmFacetGroupConverterTests
 {

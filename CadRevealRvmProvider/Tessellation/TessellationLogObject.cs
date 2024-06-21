@@ -1,7 +1,7 @@
 namespace CadRevealRvmProvider.Tessellation;
 
-using CadRevealComposer.Utils;
 using System.Collections.Concurrent;
+using CadRevealComposer.Utils;
 
 public class TessellationLogObject
 {

@@ -1,5 +1,11 @@
 ﻿namespace CadRevealComposer;
 
+using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using CadRevealComposer.Operations.SectorSplitting;
 using Commons.Utils;
 using Configuration;
@@ -8,12 +14,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
 using Primitives;
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using Utils;
 using Writers;
 

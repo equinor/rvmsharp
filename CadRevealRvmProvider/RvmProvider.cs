@@ -1,5 +1,6 @@
 ﻿namespace CadRevealRvmProvider;
 
+using System.Diagnostics;
 using BatchUtils;
 using Ben.Collections.Specialized;
 using CadRevealComposer;
@@ -15,7 +16,6 @@ using Converters.CapVisibilityHelpers;
 using Operations;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
-using System.Diagnostics;
 using Tessellation;
 
 public class RvmProvider : IModelFormatProvider
@@ -76,16 +76,13 @@ public class RvmProvider : IModelFormatProvider
 
         var facetGroupsWithEmbeddedProtoMeshes = geometries
             .OfType<ProtoMeshFromFacetGroup>()
-            .Select(
-                p =>
-                    new RvmFacetGroupWithProtoMesh(
-                        p,
-                        p.FacetGroup.Version,
-                        p.FacetGroup.Matrix,
-                        p.FacetGroup.BoundingBoxLocal,
-                        p.FacetGroup.Polygons
-                    )
-            )
+            .Select(p => new RvmFacetGroupWithProtoMesh(
+                p,
+                p.FacetGroup.Version,
+                p.FacetGroup.Matrix,
+                p.FacetGroup.BoundingBoxLocal,
+                p.FacetGroup.Polygons
+            ))
             .Cast<RvmFacetGroup>()
             .ToArray();
 
@@ -162,8 +159,8 @@ public class RvmProvider : IModelFormatProvider
 
     private static void LogRvmPrimitives(RvmStore rvmStore)
     {
-        var allRvmPrimitivesGroups = rvmStore.RvmFiles
-            .SelectMany(f => f.Model.Children)
+        var allRvmPrimitivesGroups = rvmStore
+            .RvmFiles.SelectMany(f => f.Model.Children)
             .SelectMany(RvmNode.GetAllPrimitivesFlat)
             .GroupBy(x => x.GetType());
 

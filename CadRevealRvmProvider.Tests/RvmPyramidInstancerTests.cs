@@ -1,10 +1,10 @@
 ﻿namespace CadRevealRvmProvider.Tests;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using Operations;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 [TestFixture]
 public class RvmPyramidInstancerTests
@@ -65,10 +65,12 @@ public class RvmPyramidInstancerTests
         var rvmPyramidCUnique = rvmPyramidA with { TopX = rvmPyramidA.TopX + 1 }; // Change proportions of a dimension (Should not match)
 
         var protoPyramids = new[] { rvmPyramidA, rvmPyramidAHalfScaled, rvmPyramidCUnique }
-            .Select(
-                rvmPyramid =>
-                    new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
-            )
+            .Select(rvmPyramid => new ProtoMeshFromRvmPyramid(
+                rvmPyramid,
+                0,
+                Color.Red,
+                new BoundingBox(Vector3.One, Vector3.One)
+            ))
             .ToArray();
 
         Assert.That(rvmPyramidA, Is.Not.EqualTo(rvmPyramidAHalfScaled));

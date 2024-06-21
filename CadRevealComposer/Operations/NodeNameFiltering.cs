@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Operations;
 
-using Configuration;
 using System;
 using System.Text.RegularExpressions;
+using Configuration;
 using Utils;
 
 public class NodeNameFiltering

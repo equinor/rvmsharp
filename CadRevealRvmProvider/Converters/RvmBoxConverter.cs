@@ -1,10 +1,10 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmBoxConverter
 {

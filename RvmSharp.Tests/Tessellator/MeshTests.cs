@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp.Tests.Tessellator;
 
+using System.Numerics;
 using NUnit.Framework;
 using RvmSharp.Primitives;
-using System.Numerics;
 using Tessellation;
 
 [TestFixture]

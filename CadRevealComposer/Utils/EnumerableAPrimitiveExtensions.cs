@@ -1,9 +1,9 @@
 namespace CadRevealComposer.Utils;
 
-using Primitives;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using Primitives;
 
 public static class EnumerableAPrimitiveExtensions
 {

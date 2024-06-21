@@ -1,12 +1,12 @@
 ﻿namespace RvmSharp.Tests;
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Ben.Collections.Specialized;
 using Commons;
 using JetBrains.dotMemoryUnit;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 [TestFixture]
 public class PdmsTextParserTests

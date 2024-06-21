@@ -1,11 +1,11 @@
 ﻿namespace CadRevealComposer.ModelFormatProvider;
 
+using System.Collections.Generic;
+using System.IO;
 using Configuration;
 using IdProviders;
 using Operations;
 using Primitives;
-using System.Collections.Generic;
-using System.IO;
 
 public interface IModelFormatProvider
 {

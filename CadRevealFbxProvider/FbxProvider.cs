@@ -1,5 +1,6 @@
 ﻿namespace CadRevealFbxProvider;
 
+using System.Diagnostics;
 using BatchUtils;
 using Ben.Collections.Specialized;
 using CadRevealComposer;
@@ -10,7 +11,6 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
-using System.Diagnostics;
 
 public class FbxProvider : IModelFormatProvider
 {

@@ -1,8 +1,8 @@
 namespace CadRevealComposer.Primitives;
 
-using ProtoBuf;
 using System.Drawing;
 using System.Numerics;
+using ProtoBuf;
 using Tessellation;
 
 // Reveal GLTF model

@@ -1,9 +1,9 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
-using System.Numerics;
 
 public class RvmSphericalDishConverterTests
 {

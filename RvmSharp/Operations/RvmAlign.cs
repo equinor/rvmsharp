@@ -1,12 +1,12 @@
 ﻿namespace RvmSharp.Operations;
 
-using Commons.Utils;
-using Containers;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
+using Commons.Utils;
+using Containers;
+using Primitives;
 
 // ReSharper disable once UnusedType.Global -- This is public API
 public static class RvmAlign

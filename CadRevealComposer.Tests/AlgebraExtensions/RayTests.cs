@@ -1,8 +1,8 @@
 namespace CadRevealComposer.Tests.AlgebraExtensions;
 
+using System.Numerics;
 using CadRevealComposer.AlgebraExtensions;
 using CadRevealComposer.Utils;
-using System.Numerics;
 
 [TestFixture]
 public class RayTests

@@ -1,12 +1,12 @@
 ﻿namespace RvmSharp.Tests.Primitives;
 
-using NUnit.Framework;
-using RvmSharp.Operations;
-using RvmSharp.Primitives;
 using System;
 using System.Collections;
 using System.Linq;
 using System.Numerics;
+using NUnit.Framework;
+using RvmSharp.Operations;
+using RvmSharp.Primitives;
 using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 [TestFixture]

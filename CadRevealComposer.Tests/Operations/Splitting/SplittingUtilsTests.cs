@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Splitting;
 
+using System.Numerics;
 using CadRevealComposer.Operations.SectorSplitting;
 using NUnit.Framework.Legacy;
-using System.Numerics;
 
 [TestFixture]
 public class SplittingUtilsTests

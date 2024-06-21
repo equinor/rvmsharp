@@ -1,10 +1,10 @@
 namespace CadRevealComposer;
 
-using Primitives;
-using ProtoBuf;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Primitives;
+using ProtoBuf;
 
 [ProtoContract(SkipConstructor = true)]
 public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: ProtoMember(2)] Vector3 Max)

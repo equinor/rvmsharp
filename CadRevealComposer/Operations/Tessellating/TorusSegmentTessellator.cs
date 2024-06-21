@@ -1,12 +1,12 @@
 ﻿namespace CadRevealComposer.Operations.Tessellating;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Tessellation;
-using Commons.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Tessellation;
+using Commons.Utils;
 using Utils;
 
 public static class TorusSegmentTessellator

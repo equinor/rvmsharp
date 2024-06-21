@@ -1,8 +1,5 @@
 ﻿namespace RvmSharp;
 
-using Containers;
-using Operations;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +7,9 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Containers;
+using Operations;
+using Primitives;
 
 public static class RvmParser
 {
