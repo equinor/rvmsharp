@@ -130,8 +130,6 @@ public static class FbxNodeToCadRevealNodeConverter
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
         var worldTransform = node.WorldTransform;
 
-        var translation = node.GetLocalTransform().Translation;
-
         if (nodeGeometryPtr == IntPtr.Zero)
         {
             return null;
