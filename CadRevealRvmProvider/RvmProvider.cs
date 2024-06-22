@@ -179,9 +179,14 @@ public class RvmProvider : IModelFormatProvider
         }
 
         // TODO FIXME Refactor this code
-        var geometriesIncludingMeshes = geometries.Where(g => g is not ProtoMesh && g is not TriangleMesh).Concat(
-            disjointedTriangleMeshes
-        ).Concat(meshes.Where(m => m is not TriangleMesh)).ToArray();
+        var geometriesIncludingMeshes = geometries
+            .Where(g => g is not ProtoMesh && g is not TriangleMesh)
+            .Concat(meshes
+                .Where(m => m is not TriangleMesh)
+                .Concat(
+                    disjointedTriangleMeshes
+                )
+            ).ToArray();
 
         Console.WriteLine($"Tessellated all meshes in {stopwatch.Elapsed}");
 
