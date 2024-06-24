@@ -59,24 +59,28 @@ public class DisjoinMeshesTests
     {
         var min = bb.Min;
         var max = bb.Max;
-        var vertexes = new[]
+
+        // create vertexes and triangles for a cube using min and max vectors
+        var vertexes = new List<Vector3>
         {
-            max,
-            min,
-            new Vector3(min.X, min.Y, max.Z),
-            new Vector3(min.X, max.Y, min.Z),
-            new Vector3(max.X, min.Y, min.Z),
-            new Vector3(max.X, max.Y, min.Z),
-            new Vector3(max.X, min.Y, max.Z),
-            new Vector3(min.X, max.Y, max.Z)
+            new(min.X, min.Y, min.Z), // 0
+            new(max.X, min.Y, min.Z), // 1
+            new(max.X, max.Y, min.Z), // 2
+            new(min.X, max.Y, min.Z), // 3
+            new(min.X, min.Y, max.Z), // 4
+            new(max.X, min.Y, max.Z), // 5
+            new(max.X, max.Y, max.Z), // 6
+            new(min.X, max.Y, max.Z) // 7
         };
-        // Triangles for a cube
-        // csharpier-ignore - prettier manual formatting
+        // csharpier-ignore -- prettier manual formatting
         var triangleIndexes = new uint[]
         {
-            0, 1, 2, 3, 4, 5, 6, 7, // front and back
-            1, 3, 0, 2, 5, 4, 7, 6, // top and bottom
-            0, 4, 1, 5, 2, 6, 3, 7 // left and right
+            0, 1, 2, 0, 2, 3, // front
+            1, 5, 6, 1, 6, 2, // right
+            5, 4, 7, 5, 7, 6, // back
+            4, 0, 3, 4, 3, 7, // left
+            3, 2, 6, 3, 6, 7, // top
+            4, 5, 1, 4, 1, 0  // bottom
         };
 
         return new Mesh(vertexes.ToArray(), triangleIndexes, 0);
