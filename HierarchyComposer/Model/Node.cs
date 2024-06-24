@@ -2,7 +2,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 
 public class Node
 {
@@ -28,7 +28,7 @@ public class Node
 
     public string? DiagnosticInfo { get; init; }
 
-    public static void RawInsertBatch(SQLiteCommand command, IEnumerable<Node> nodes)
+    public static void RawInsertBatch(SqliteCommand command, IEnumerable<Node> nodes)
     {
         command.CommandText =
             "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";

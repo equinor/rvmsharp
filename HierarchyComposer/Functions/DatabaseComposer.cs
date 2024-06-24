@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -108,7 +107,7 @@ public class DatabaseComposer
 
         var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
-        using var connection = new SQLiteConnection(connectionString);
+        using var connection = new SqliteConnection(connectionString);
         connection.Open();
 
         // ReSharper disable AccessToDisposedClosure
@@ -119,7 +118,7 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
 
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = connection.CreateCommand();
                 PDMSEntry.RawInsertBatch(cmd, pdmsEntries.Values);
 
                 transaction.Commit();
@@ -133,7 +132,7 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
 
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = connection.CreateCommand();
                 NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
 
                 transaction.Commit();
@@ -146,7 +145,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = connection.CreateCommand();
 
                 // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
                 // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
@@ -166,7 +165,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = connection.CreateCommand();
                 Node.RawInsertBatch(cmd, nodes.Values);
 
                 transaction.Commit();
@@ -179,7 +178,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = connection.CreateCommand();
                 cmd.CommandText = "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
@@ -200,7 +199,7 @@ public class DatabaseComposer
             () =>
             {
                 // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
-                using var cmd = new SQLiteCommand(connection);
+                using var cmd = connection.CreateCommand();
                 // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
                 cmd.CommandText = "pragma analyze";
                 cmd.ExecuteNonQuery();
@@ -221,16 +220,16 @@ public class DatabaseComposer
 #else
                 // Vacuum completely recreates the database but removes all "Extra Data" from it.
                 // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
-                using var vacuumCmds = new SQLiteCommand(connection);
+                using var vacuumCmds = connection.CreateCommand();
 
                 vacuumCmds.CommandText = "PRAGMA page_count";
-                var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar();
+                var pageCountBeforeVacuum = (Int64)(vacuumCmds.ExecuteScalar() ?? 0);
                 var timer = Stopwatch.StartNew();
                 // Vacuum the database. This is quite slow!
                 vacuumCmds.CommandText = "VACUUM";
                 vacuumCmds.ExecuteNonQuery();
                 vacuumCmds.CommandText = "PRAGMA page_count";
-                var pageCountAfterVacuum = (Int64)vacuumCmds.ExecuteScalar();
+                var pageCountAfterVacuum = (Int64)(vacuumCmds.ExecuteScalar() ?? 0);
 
                 // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
                 vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
