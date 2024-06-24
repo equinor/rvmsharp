@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Csv" Version="2.0.93" />
+    <PackageReference Include="Csv" />
   </ItemGroup>
 
 </Project>

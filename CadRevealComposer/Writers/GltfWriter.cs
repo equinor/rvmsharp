@@ -9,9 +9,9 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json.Nodes;
 using Commons.Utils;
 using Primitives;
-using SharpGLTF.IO;
 using SharpGLTF.Schema2;
 
 /// <summary>
@@ -179,7 +179,7 @@ public static class GltfWriter
             // create node
             var node = scene.CreateNode("InstanceMesh");
             var mesh = model.CreateMesh();
-            mesh.Extras = JsonContent.Parse(FormattableString.Invariant($"{{\"InstanceId\":{instanceId}}}"));
+            mesh.Extras = JsonNode.Parse(FormattableString.Invariant($"{{\"InstanceId\":{instanceId}}}"));
             var meshPrimitive = mesh.CreatePrimitive();
             meshPrimitive.SetIndexAccessor(indexAccessor);
             meshPrimitive.SetVertexAccessor("POSITION", vertexAccessor);
