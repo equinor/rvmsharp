@@ -6,6 +6,8 @@ using System.Linq;
 using System.Numerics;
 using Tessellation;
 /// <summary>
+/// Split meshes into their disjoint pieces.
+///
 /// This class is mostly written by chat.equinor.com / ChatGPT with some manual optimizations by nih.
 /// </summary>
 public static class DisjointMeshTools
@@ -20,7 +22,7 @@ public static class DisjointMeshTools
 
         public Vector3[] GetVertices() => _vertices;
 
-        public List<Face> AdjacentFaces { get; set; } = new List<Face>();
+        public List<Face> AdjacentFaces { get; set; } = [];
 
         public bool Equals(Face? other)
         {
@@ -204,19 +206,16 @@ public static class DisjointMeshTools
             Face currentFace = stack.Pop();
 
             // If the face has not been visited, process it
-            if (visited.Add(currentFace))
-            {
-                // Mark face as visited
-                disjointPieceFaces.Add(currentFace); // Add it to the current disjoint piece
+            if (!visited.Add(currentFace))
+                continue;
 
-                // Get the adjacent faces and add them to the stack if not visited
-                foreach (var adjacentFace in currentFace.AdjacentFaces)
-                {
-                    if (!visited.Contains(adjacentFace))
-                    {
-                        stack.Push(adjacentFace);
-                    }
-                }
+            // Mark face as visited
+            disjointPieceFaces.Add(currentFace); // Add it to the current disjoint piece
+
+            // Get the adjacent faces and add them to the stack if not visited
+            foreach (var adjacentFace in currentFace.AdjacentFaces.Where(adjacentFace => !visited.Contains(adjacentFace)))
+            {
+                stack.Push(adjacentFace);
             }
         }
 
