@@ -154,6 +154,7 @@ public class RvmProvider : IModelFormatProvider
 
             // THIS CODE IS HACKY AND MUST BE REFACTORED BEFORE MERGING
             var disjointTimer = Stopwatch.StartNew();
+            Color[] pieceColors = [Color.Magenta, Color.Cyan, Color.Pink, Color.Lime, Color.Gold, Color.Blue, Color.PowderBlue];
             var triangleMeshInput = meshes.OfType<TriangleMesh>().ToList();
             disjointedTriangleMeshes = triangleMeshInput
                 .AsParallel().SelectMany(original =>
@@ -164,8 +165,9 @@ public class RvmProvider : IModelFormatProvider
                     var i = 0;
                     foreach (Mesh p in pieces)
                     {
-                        var color = i == 0 ? original.Color : Color.Magenta; //
-                        results.Add(new TriangleMesh(p, original.TreeIndex, color, p.CalculateAxisAlignedBoundingBox(null)));
+                        var color = pieceColors[i % (pieceColors.Length - 1)]; //
+                        results.Add(new TriangleMesh(p, original.TreeIndex, color,
+                            p.CalculateAxisAlignedBoundingBox(null)));
                         i++;
                     }
 
