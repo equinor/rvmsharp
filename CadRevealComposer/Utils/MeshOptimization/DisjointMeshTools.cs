@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Tessellation;
+
 /// <summary>
 /// Split meshes into their disjoint pieces.
 ///
@@ -78,7 +79,6 @@ public static class DisjointMeshTools
         }
     }
 
-
     // Method to build adjacency list
     private static void BuildAdjacencyList(IList<Face> faces, int uniqueVerticesCount = 0)
     {
@@ -124,7 +124,6 @@ public static class DisjointMeshTools
             face.AdjacentFaces = adjacencySet.ToList();
         }
     }
-
 
     private static Mesh ConvertFacesToMesh(IList<Face> faces)
     {
@@ -213,7 +212,9 @@ public static class DisjointMeshTools
             disjointPieceFaces.Add(currentFace); // Add it to the current disjoint piece
 
             // Get the adjacent faces and add them to the stack if not visited
-            foreach (var adjacentFace in currentFace.AdjacentFaces.Where(adjacentFace => !visited.Contains(adjacentFace)))
+            foreach (
+                var adjacentFace in currentFace.AdjacentFaces.Where(adjacentFace => !visited.Contains(adjacentFace))
+            )
             {
                 stack.Push(adjacentFace);
             }
