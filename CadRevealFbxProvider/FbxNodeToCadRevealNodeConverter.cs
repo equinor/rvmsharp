@@ -175,7 +175,7 @@ public static class FbxNodeToCadRevealNodeConverter
         var meshPtr = meshData.Value.MeshPtr;
 
         var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
-        string[] nodesToMakeConvex = ["Plank", "Board", " DST ", "Pipe"];
+        string[] nodesToMakeConvex = ["Plank", "Board", "Pipe"];
         Mesh simplifiedMesh;
         if (nodesToMakeConvex.Any(s => nodeName.Contains(s, StringComparison.OrdinalIgnoreCase)))
         {
