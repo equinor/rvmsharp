@@ -4,10 +4,10 @@ using System.Numerics;
 using CadRevealComposer.Utils.MeshOptimization;
 using Tessellation;
 
-public class DisjoinMeshesTests
+public class LoosePiecesMeshToolsTests
 {
     [Test]
-    public void DisjoinMeshes_WhenGivenMeshWithTwoDistinctParts_SplitsIntoTwoMeshesWithExpectedCoordinates()
+    public void SplitMeshByLoosePieces_WhenGivenMeshWithTwoDistinctParts_SplitsIntoTwoMeshesWithExpectedCoordinates()
     {
         // No overlapping vertexes
         var bb1 = new BoundingBox(Vector3.One, Vector3.One * 2);
@@ -16,7 +16,7 @@ public class DisjoinMeshesTests
         var mesh1 = GenerateMeshFromBoundingBox(bb1);
         var mesh2 = GenerateMeshFromBoundingBox(bb2);
         var joinedMeshes = JoinMeshes(new[] { mesh1, mesh2 });
-        var result = DisjointMeshTools.SplitDisjointPieces(joinedMeshes);
+        var result = LoosePiecesMeshTools.SplitMeshByLoosePieces(joinedMeshes);
         Assert.That(result, Has.Exactly(2).Items);
         Assert.Multiple(() =>
         {
@@ -26,7 +26,7 @@ public class DisjoinMeshesTests
     }
 
     [Test]
-    public void DisjoinMeshes_WhenGivenMeshWithOverlappingVertexes_DoesNotSplit()
+    public void SplitMeshByLoosePieces_WhenGivenMeshWithOverlappingVertexes_DoesNotSplit()
     {
         // Overlaps by sharing the Vector3.One vertex.
         var bb1 = new BoundingBox(Vector3.One, Vector3.One * 2);
@@ -35,8 +35,9 @@ public class DisjoinMeshesTests
         var mesh1 = GenerateMeshFromBoundingBox(bb1);
         var mesh2 = GenerateMeshFromBoundingBox(bb2);
         var joinedMeshes = JoinMeshes(new[] { mesh1, mesh2 });
-        var result = DisjointMeshTools.SplitDisjointPieces(joinedMeshes);
+        var result = LoosePiecesMeshTools.SplitMeshByLoosePieces(joinedMeshes);
         Assert.That(result, Has.Exactly(1).Items);
+        Assert.That(result.First(), Is.EqualTo(joinedMeshes)); // Assuming the input is returned as is.
     }
 
     private static Mesh JoinMeshes(Mesh[] meshes)

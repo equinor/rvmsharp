@@ -157,10 +157,12 @@ public class RvmProvider : IModelFormatProvider
             Color[] pieceColors = [Color.Magenta, Color.Cyan, Color.Pink, Color.Lime, Color.Gold, Color.Blue, Color.PowderBlue];
             var triangleMeshInput = meshes.OfType<TriangleMesh>().ToList();
             disjointedTriangleMeshes = triangleMeshInput
-                .AsParallel().SelectMany(original =>
+                .AsParallel()
+                .SelectMany(original =>
                 {
-                    var pieces = DisjointMeshTools.SplitDisjointPieces(original.Mesh);
-                    if (pieces.Length == 1) return [original];
+                    var pieces = LoosePiecesMeshTools.SplitMeshByLoosePieces(original.Mesh);
+                    if (pieces.Length == 1)
+                        return [original];
                     var results = new List<TriangleMesh>();
                     var i = 0;
                     foreach (Mesh p in pieces)

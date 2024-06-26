@@ -11,7 +11,7 @@ using Tessellation;
 ///
 /// This class is mostly written by chat.equinor.com / ChatGPT with some manual optimizations by nih.
 /// </summary>
-public static class DisjointMeshTools
+public static class LoosePiecesMeshTools
 {
     private class Face(Vector3 v1, Vector3 v2, Vector3 v3) : IEquatable<Face>
     {
@@ -160,11 +160,11 @@ public static class DisjointMeshTools
     }
 
     /// <summary>
-    /// Split a mesh into disjoint pieces. A disjoint piece is a set of faces that are connected to each other.
+    /// Split a mesh into separate meshes per loose piece. A loose piece is a set of faces that are connected to each other, but not to other parts of the mesh.
     /// </summary>
-    /// <param name="input">A mesh to identify all disjoint pieces in</param>
-    /// <returns>A list of new meshes of all the disjoint pieces. If the original mesh has only 1 piece the original is returned.</returns>
-    public static Mesh[] SplitDisjointPieces(Mesh input)
+    /// <param name="input">A mesh to identify all loose pieces in</param>
+    /// <returns>A list of new meshes of all the loose pieces. If the original mesh has only 1 piece the original is returned.</returns>
+    public static Mesh[] SplitMeshByLoosePieces(Mesh input)
     {
         // A set to keep track of the visited faces
         HashSet<Face> visited = new HashSet<Face>();
