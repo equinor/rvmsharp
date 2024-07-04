@@ -79,6 +79,7 @@ public class ObjProvider : IModelFormatProvider
 
     public APrimitive[] ProcessGeometries(
         APrimitive[] geometries,
+        string[] names,
         ComposerParameters composerParameters,
         ModelParameters modelParameters,
         InstanceIdGenerator instanceIdGenerator

@@ -95,6 +95,48 @@ public static class Simplify
         }
     }
 
+    public static Mesh SimplifyMeshToBoundingBoxes(
+        Mesh mesh,
+        SimplificationLogObject simplificationLogObject,
+        float thresholdInMeshUnits = 0.01f
+    )
+    {
+        MeshTools.ReducePrecisionInPlace(mesh);
+
+        var meshCopy = MeshTools.OptimizeMesh(mesh);
+
+        var dMesh = ConvertMeshToDMesh3(meshCopy);
+
+        var reducer = new Reducer(dMesh)
+        {
+#if DEBUG
+            // Remark, veery slow Consider enabling if needed
+            // ENABLE_DEBUG_CHECKS = true,
+#endif
+            MinimizeQuadricPositionError = true,
+            PreserveBoundaryShape = true,
+            AllowCollapseFixedVertsWithSameSetID = true,
+        };
+
+        try
+        {
+            reducer.ReduceToEdgeLength(thresholdInMeshUnits);
+            // Remove optimized stuff from the mesh. This is important or the exporter will fail.
+
+            if (!dMesh.IsCompact)
+                dMesh.CompactInPlace();
+
+            var reducedMesh = ConvertDMesh3ToMesh(dMesh);
+            var lastPassMesh = MeshTools.OptimizeMesh(reducedMesh);
+            return lastPassMesh;
+        }
+        catch (Exception)
+        {
+            Interlocked.Add(ref simplificationLogObject.FailedOptimizations, 1);
+            return mesh;
+        }
+    }
+
     public static List<APrimitive> OptimizeVertexCountInMeshes(IEnumerable<APrimitive> geometriesToProcess)
     {
         var meshCount = 0;

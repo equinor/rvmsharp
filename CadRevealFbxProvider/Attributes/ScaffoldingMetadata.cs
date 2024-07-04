@@ -71,8 +71,9 @@ public class ScaffoldingMetadata
         if (!ColumnToAttributeMap.ContainsKey(key))
             return false;
 
+        bool updateKey = IsKeyToBeUpdated(key, value);
         var mappedKey = ColumnToAttributeMap[key];
-        if (!string.IsNullOrWhiteSpace(value))
+        if (updateKey)
         {
             switch (mappedKey)
             {
@@ -114,11 +115,11 @@ public class ScaffoldingMetadata
     {
         if (
             string.IsNullOrEmpty(WorkOrder)
-            || string.IsNullOrEmpty(BuildOperationNumber)
-            || string.IsNullOrEmpty(DismantleOperationNumber)
+//            || string.IsNullOrEmpty(BuildOperationNumber)
+//            || string.IsNullOrEmpty(DismantleOperationNumber)
             || string.IsNullOrEmpty(TotalWeight)
-            || string.IsNullOrEmpty(ScaffTagNumber)
-            || string.IsNullOrEmpty(ScaffType)
+//            || string.IsNullOrEmpty(ScaffTagNumber)
+//            || string.IsNullOrEmpty(ScaffType)
         )
         {
             return false;
@@ -134,8 +135,9 @@ public class ScaffoldingMetadata
             if (!targetDict.ContainsKey(modelAttribute))
                 return false;
 
+            bool forceAdd = IsKeyMarkedAsForceAdd(modelAttribute);
             var value = targetDict.TryGetValue(modelAttribute, out string? existingValue) ? existingValue : null;
-            if (string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value) && !forceAdd)
                 return false;
         }
 
@@ -154,5 +156,76 @@ public class ScaffoldingMetadata
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
         targetDict.Add(TagNumberFieldName, ScaffTagNumber!);
         targetDict.Add(TypeFieldName, ScaffType!);
+    }
+
+
+    private string? GetValue(string key)
+    {
+        var mappedKey = ColumnToAttributeMap[key];
+        switch (mappedKey)
+        {
+            case AttributeEnum.WorkOrderId: return WorkOrder;
+            case AttributeEnum.BuildOperationId: return BuildOperationNumber;
+            case AttributeEnum.DismantleOperationId: return DismantleOperationNumber;
+            case AttributeEnum.TotalWeight: return TotalWeight;
+            // case AttributeEnum.ScaffTagNumber: return ScaffTagNumber;
+            // case AttributeEnum.ScaffType: return ScaffType;
+            // case AttributeEnum.JobPack: return JobPack;
+            // case AttributeEnum.ProjectNumber: return ProjectNumber;
+            // case AttributeEnum.PlannedBuildDate: return PlannedBuildDate;
+            // case AttributeEnum.CompletionDate: return CompletionDate;
+            // case AttributeEnum.DismantleDate: return DismantleDate;
+            // case AttributeEnum.Area: return Area;
+            // case AttributeEnum.Discipline: return Discipline;
+            // case AttributeEnum.Purpose: return Purpose;
+        }
+
+        return null;
+    }
+
+    private static bool IsNewValueEmptyButHasExistedBefore(string? newValue, string? existingValue)
+    {
+        return string.IsNullOrWhiteSpace(newValue) && !string.IsNullOrWhiteSpace(existingValue);
+    }
+    private bool IsKeyToBeUpdated(string key, string value)
+    {
+        // If a key is marked to be forcefully added
+        // * and if all calls for a specific key have null value => key will never be updated and remain null (i.e., ignore)
+        // * and if all calls for a specific key have empty value => key will never be updated and remain null (i.e., ignore)
+        // * and if one or more calls for a specific key have non-empty value => key will be updated with the non-empty value, BUT WILL BE REPLACED BY EMPTY/NULL VALUES TO FOLLOW
+        // * and if one or more calls for a specific key have empty or null value => key will be updated with the last non-empty value
+        // If a key is marked NOT to be forcefully added
+        // * and if all calls for a specific key have null value => key will never be updated and remain null (i.e., ignore)
+        // * and if all calls for a specific key have empty value => key will never be updated and remain null (i.e., ignore)
+        // * and if one or more calls for a specific key have non-empty value => key will be updated with the non-empty value, BUT WILL BE REPLACED BY EMPTY/NULL VALUES TO FOLLOW
+        // * and if one or more calls for a specific key have empty or null value => key will be updated with the last non-empty value
+
+        bool forceUpdate = false;
+        if (IsKeyMarkedAsForceAdd(key))
+        {
+            string? existingValue = GetValue(key);
+            if (existingValue != null)
+            {
+                forceUpdate = !IsNewValueEmptyButHasExistedBefore(value, existingValue);
+            }
+        }
+
+        return !string.IsNullOrWhiteSpace(value) || forceUpdate;
+    }
+
+    private static bool IsKeyMarkedAsForceAdd(string key)
+    {
+        var mappedKey = ColumnToAttributeMap[key];
+
+        bool forceAdd = false;
+        switch (mappedKey)
+        {
+            case AttributeEnum.BuildOperationId: forceAdd = true; break;
+            case AttributeEnum.DismantleOperationId: forceAdd = true; break;
+            case AttributeEnum.ScaffType: forceAdd = true; break;
+            case AttributeEnum.ScaffTagNumber: forceAdd = true; break;
+        }
+
+        return forceAdd;
     }
 }

@@ -85,9 +85,11 @@ public static class CadRevealComposerRunner
             nodesToExport.AddRange(cadRevealNodes);
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
+            var inputNames = cadRevealNodes.AsParallel().AsOrdered().Where(x => x.Geometries.Length > 0).Select(x => x.Name).ToArray();
 
             var geometriesIncludingMeshes = modelFormatProvider.ProcessGeometries(
                 inputGeometries,
+                inputNames,
                 composerParameters,
                 modelParameters,
                 instanceIdGenerator

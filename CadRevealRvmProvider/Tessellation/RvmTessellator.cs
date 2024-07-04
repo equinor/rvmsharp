@@ -200,7 +200,7 @@ public class RvmTessellator
             ref simplificationLogObject.SimplificationBeforeTriangleCount,
             mesh.TriangleCount * numberOfInstances
         );
-        mesh = Simplify.SimplifyMeshLossy(mesh, simplificationLogObject, simplifierThreshold);
+        mesh = Simplify.SimplifyMeshToBoundingBoxes(mesh, simplificationLogObject, simplifierThreshold);
         Interlocked.Add(
             ref simplificationLogObject.SimplificationAfterVertexCount,
             mesh.Vertices.Length * numberOfInstances
