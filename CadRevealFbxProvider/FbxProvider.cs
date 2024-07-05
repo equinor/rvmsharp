@@ -608,7 +608,38 @@ public class FbxProvider : IModelFormatProvider
             triangleCountAfter += reducedMeshAndTriCount.triangleCount;
             histogramValues[histogramIndex] = (histogramValues[histogramIndex].fb, histogramValues[histogramIndex].fa + reducedMeshAndTriCount.triangleCount);
         }
-        else if (name.Contains("FS") || name.Contains("Stair") || name.Contains("Base Element"))
+        else if (name.Contains("StairwayGuard"))
+        {
+            var reducedMeshAndTriCount = ConvertToDecimatedMesh(inputMesh, 0.01f);
+            reducedMesh = reducedMeshAndTriCount.mesh;
+            triangleCountAfter+= reducedMeshAndTriCount.triangleCount;
+            histogramValues[histogramIndex] = (histogramValues[histogramIndex].fb, histogramValues[histogramIndex].fa + reducedMeshAndTriCount.triangleCount);
+        }
+        else if (name.Contains("Stair"))
+        {
+            Mesh[] disjointMeshes = MeshUtils.SplitDisjointPieces(inputMesh);
+            // We make the assumption that the larges element will be stair supports and will have a bounding box that encompass all other parts.
+            // Hence, we only want to decimate it and not use AABB or convex hull
+            var indexMaxVol = disjointMeshes
+                .Select((m, i) => new { m, i })
+                .OrderByDescending(v =>
+                {
+                    Vector3 ext = v.m.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity).Extents;
+                    return ext.X * ext.Y * ext.Z; // Volume
+                })
+                .First().i;
+            var reducedDisjointMeshes = new List<Mesh>();
+            for (int i = 0; i < disjointMeshes.Length; i++)
+            {
+                var disjointMesh = disjointMeshes[i];
+                (Mesh mesh, int triangleCount) reducedMeshAndTriCount = (i == indexMaxVol) ? ConvertToDecimatedMesh(disjointMesh) : ConvertToBoundingBox(disjointMesh);
+                reducedDisjointMeshes.Add(reducedMeshAndTriCount.mesh);
+                triangleCountAfter += reducedMeshAndTriCount.triangleCount;
+                histogramValues[histogramIndex] = (histogramValues[histogramIndex].fb, histogramValues[histogramIndex].fa + reducedMeshAndTriCount.triangleCount);
+            }
+            reducedMesh = CombineMeshes(reducedDisjointMeshes.ToArray(), inputMesh.Error);
+        }
+        else if (name.Contains("FS") || name.Contains("Base Element"))
         {
             Mesh[] disjointMeshes = MeshUtils.SplitDisjointPieces(inputMesh);
             var reducedDisjointMeshes = new List<Mesh>();

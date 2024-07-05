@@ -73,7 +73,7 @@ Increasing from 80 741 to 345 261 faces by including more accurate staircases is
 In the following, we will use key strings within the part names to identify which optimization method to use. Also note that parts, such as scaffold spears (FS), will contain geometries that are disjoint. We have implemented an algorithm that can separate out the disjoint parts, such that they can be optimized separately and then be rejoined. The table below shows the first attempt:
 
 | Key string                  | Optimization                                                                                    |
-+-----------------------------+-------------------------------------------------------------------------------------------------+
+|-----------------------------|-------------------------------------------------------------------------------------------------|
 | Plank                       | These are the boards of the scaffold and are replaced by axis aligned bounding boxes.           |
 | FS, Stair, Base Element     | Spears, stairs, and base elements are first disjoined and then replaced by convex hulls.        |
 | Beam                        | Ledger beams are replaced by ledger beams drawn by RvmSharp, based on their bounding boxes.     |
@@ -88,6 +88,32 @@ The screenshot below shows the optimized result. Specifically, the ledger beams 
 
 ![Optimized scaffold 2 with the above optimization strategies](./images/OptimizeScaffoldGeometry/figure11.png)
 
+We now attempt to fix the stairway guards by utilizing only decimation, as well as to split the stairs into their separate parts, and using decimation for the largest part by volume, where the remaining parts are replaced by axis aligned bounding boxes. It is then assumed that the part with the largest bounding box volume will encompass all other parts of the stairs either fully or partially and that the smaller parts are well approximated by bounding boxes (e.g., the steps and the planks of the staircase). This assumption may not hold for all stairs and should be looked into closer for a real implementation, but perhaps using a similar principle of selection. The updated key strings and their associated optimization methods are listed below:
+
+| Key string                  | Optimization                                                                                      |
+|-----------------------------|---------------------------------------------------------------------------------------------------|
+| Plank                       | These are the boards of the scaffold and are replaced by axis aligned bounding boxes.             |
+| FS, Base Element            | Spears, and base elements are first disjoined and then replaced by convex hulls.                  |
+| Stair                       | The largest volume part is decimates, while the rest are replaced by axis aligned bounding boxes. |
+| Beam                        | Ledger beams are replaced by ledger beams drawn by RvmSharp, based on their bounding boxes.       |
+| Kick board, BRM             | Kick boards and feet of spears are converted to convex hulls.                                     |
+| StairwayGuard               | Decimated using the gradient space reduce algorithm based on minimum distance.                    |
+| **The rest**                | Other parts are decimated using the gradient space reduce algorithm based on minimum distance.    |
+
+With these optimization strategies we find a reduction of faces for scaffold 2 to 1 607 683 faces, which yields a 94.10% reduction. This is only a slight increase compared to when stairs and their guards were represented by convex hulls.
+
+![Histrogram of face-count for optimized scaffold 2 with the above optimization strategies](./images/OptimizeScaffoldGeometry/figure12.png)
+
+The corresponding scaffold is shown below:
+
+![Optimized scaffold 2 with the above optimization strategies](./images/OptimizeScaffoldGeometry/figure13.png)
+
 ## Conclusion
 
+We have tried coarse geometry optimization by applying axis aligned bounding boxes for all parts, as well as convex hull for all parts. These were able to reduce face counts from the order of 27M down to between 60k and 80k faces, but yielded too poor quality of the resulting scaffolds.
+
+The best strategy was found to be by using different optimization strategies based on part name, where we used a combination of axis aligned bounding boxes, convex hulls, mesh decimation, and drawing lower resolution shapes that resemble the originals. We also divided parts into their respective disjoint parts and used geometric criteria to chose optimization methods. Using this, we could reduce face counts from the order of 27M to 1.6M, while still retaining a very detailed view of the scaffolds. However, by continuing this strategy, it should be possible to reduce the face count even further with decent details of the optimized scaffolds.
+
 ## Next steps
+
+Create a proper implementation based on the code and findings of the spike, using the same strategy as recommended in the conclusion. To achieve this, a more detailed overview of the scaffold parts must be made based on the scaffolds catalogues such that a secure optimization can be made. For example, it may be that some stairs consist of two large-volume parts which bounding boxes both cover smaller parts of the stairs. In that case, it would not suffice to only exclude the one part with largest bounding box from bounding box conversion, as done in the spike.
