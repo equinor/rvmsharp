@@ -221,7 +221,7 @@ public static class CadRevealComposerRunner
         var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
         var nextSectorId = sectors.Last().SectorId + 1;
         var prioritized = allPrimitives.Where(x => x.Priority == 1).ToArray();
-        var highlightSectors = splitter.SplitIntoSectors(prioritized, nextSectorId).OrderBy(x => x.SectorId).ToArray();
+        var highlightSectors = splitter.SplitIntoSectors(prioritized, nextSectorId, 4).OrderBy(x => x.SectorId).ToArray();
 
         var treeIndexSectorIdList = new List<(ulong treeIndex, uint sectorId)>();
         foreach (var sector in sectors)

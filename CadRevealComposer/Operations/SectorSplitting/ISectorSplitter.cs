@@ -7,6 +7,7 @@ public interface ISectorSplitter
 {
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
-        ulong nextSectorId
+        ulong nextSectorId,
+        long budgetDivider = 1
     );
 }
