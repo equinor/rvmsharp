@@ -43,6 +43,7 @@ public static class CadRevealComposerRunner
                 );
                 return;
             }
+
             Console.WriteLine(
                 "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
             );
@@ -122,6 +123,7 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
+
         var sectorTreeIndexes = ProcessPrimitives(
             geometriesToProcessArray,
             outputDirectory,
@@ -149,7 +151,8 @@ public static class CadRevealComposerRunner
             createTableCommand.ExecuteNonQuery();
 
             var command = connection.CreateCommand();
-            command.CommandText = "INSERT OR IGNORE INTO sectors (treeindex, sectorId, highlightSectorId) VALUES ($TreeIndex, $SectorId, $HighlightSectorId)";
+            command.CommandText =
+                "INSERT OR IGNORE INTO sectors (treeindex, sectorId, highlightSectorId) VALUES ($TreeIndex, $SectorId, $HighlightSectorId)";
             var treeIndexParameter = command.CreateParameter();
             treeIndexParameter.ParameterName = "$TreeIndex";
             var sectorIdParameter = command.CreateParameter();
@@ -178,13 +181,10 @@ public static class CadRevealComposerRunner
 
                 command.ExecuteNonQuery();
             }
+
             transaction.Commit();
         }
         //////////////////////////////////////////////
-
-
-
-
 
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
@@ -233,42 +233,61 @@ public static class CadRevealComposerRunner
             }
         }
 
-        var highlighTreeIndexSectorIdList = new Dictionary<ulong, List<uint>>(); // treeIndex, sectorId
+        var highlightTreeIndexSectorIdList = new Dictionary<ulong, List<uint>>(); // treeIndex, sectorId
         foreach (var sector in highlightSectors)
         {
             var sectorId = sector.SectorId;
             foreach (var node in sector.Geometries)
             {
-                if (highlighTreeIndexSectorIdList.ContainsKey(node.TreeIndex))
+                if (highlightTreeIndexSectorIdList.ContainsKey(node.TreeIndex))
                 {
-                    highlighTreeIndexSectorIdList[node.TreeIndex].Add(sectorId);
+                    highlightTreeIndexSectorIdList[node.TreeIndex].Add(sectorId);
                 }
                 else
                 {
-                    highlighTreeIndexSectorIdList.Add(node.TreeIndex, new List<uint>() { sectorId });
+                    highlightTreeIndexSectorIdList.Add(node.TreeIndex, new List<uint>() { sectorId });
                 }
             }
         }
 
+        // Remove dubplicated root
+
+        var oldParentId = highlightSectors.First().SectorId;
+        highlightSectors =
+            highlightSectors.Skip(1)
+                .Select(sector =>
+                {
+                    if (sector.ParentSectorId == oldParentId)
+                        return sector with { ParentSectorId = 0, IsHighlightSector = true };
+
+                    return sector with { IsHighlightSector = true };
+                }).ToArray();
+
+
+        // highlightSectors = highlightSectors.Where(x => !x.Path.Equals("/0")).Select(x => x with { IsHighlightSector = true }).ToArray();
+
+
+        var allSectors = sectors.Concat(highlightSectors).ToArray();
+
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 
         stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch,
+            allSectors);
 
 
         /// Write Sectors outside scene
 
-        foreach (var highlightSector in highlightSectors)
-        {
-            SceneCreator.SerializeSector(highlightSector, outputDirectory.FullName, "highlight_");
-        }
-        ///
+        // foreach (var highlightSector in highlightSectors)
+        // {
+        //     SceneCreator.SerializeSector(highlightSector, outputDirectory.FullName, "highlight_");
+        // }
+        // ///
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
 
-
-        return (treeIndexSectorIdList.ToArray(), highlighTreeIndexSectorIdList);
+        return (treeIndexSectorIdList.ToArray(), highlightTreeIndexSectorIdList);
     }
 
     /// <summary>
@@ -282,7 +301,8 @@ public static class CadRevealComposerRunner
     {
         var json = new
         {
-            note = "This file is not considered stable api. It is meant for humans to read, not computers. See 'scene.json' for a more stable file.",
+            note =
+                "This file is not considered stable api. It is meant for humans to read, not computers. See 'scene.json' for a more stable file.",
             modelParameters,
             composerParameters,
             timestampUtc = DateTimeOffset.UtcNow
