@@ -6,6 +6,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
+using SharpGLTF.Schema2;
 using System.Diagnostics;
 
 internal static class RvmStoreToCadRevealNodesConverter
@@ -41,19 +42,48 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
-        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
-        allNodes = allNodes.Select(node =>
+        foreach (var cadRevealRootNode in cadRevealRootNodes)
         {
-            var type = node.Attributes.GetValueOrNull("Type");
+            var children = cadRevealRootNode.Children;
 
-            if (type is "VALV")
+            if (children == null)
+                continue;
+
+            foreach (var child in children)
             {
-                var geometries = node.Geometries;
-                node.Geometries = geometries.Select(g => g with { Priority = 1 }).ToArray();
-            }
+                var tag = child.Attributes.GetValueOrNull("Tag");
 
-            return node;
-        }).ToArray();
+                if (tag != null)
+                {
+                    var allChildNodes = CadRevealNode.GetAllNodesFlat(child);
+                    foreach (var node in allChildNodes)
+                    {
+                        node.Geometries = node.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+                    }
+                }
+            }
+        }
+
+        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+        //allNodes = allNodes
+        //    .Select(node =>
+        //    {
+        //        var tag = node.Attributes.GetValueOrNull("Tag");
+
+        //        if (tag != null)
+        //            Console.WriteLine("mklfd");
+
+        //        //if (type is "VALV")
+        //        //{
+        //        //    var geometries = node.Geometries;
+        //        //    node.Geometries = geometries.Select(g => g with { Priority = 1 }).ToArray();
+        //        //}
+
+        //        return node;
+        //    })
+        //    .ToArray();
+
+        var allnodesWithGeometry = allNodes.Where(g => g.Geometries.Any()).ToArray();
 
         return allNodes;
     }
