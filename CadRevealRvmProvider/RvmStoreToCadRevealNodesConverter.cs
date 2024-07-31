@@ -42,29 +42,44 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
-        foreach (var cadRevealRootNode in cadRevealRootNodes)
+        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+
+        foreach (var node in allNodes)
         {
-            var children = cadRevealRootNode.Children;
+            var tag = node.Attributes.GetValueOrNull("Tag");
 
-            if (children == null)
-                continue;
-
-            foreach (var child in children)
+            if (tag != null)
             {
-                var tag = child.Attributes.GetValueOrNull("Tag");
-
-                if (tag != null)
+                var allChildren = CadRevealNode.GetAllNodesFlat(node);
+                foreach (var child in allChildren)
                 {
-                    var allChildNodes = CadRevealNode.GetAllNodesFlat(child);
-                    foreach (var node in allChildNodes)
-                    {
-                        node.Geometries = node.Geometries.Select(g => g with { Priority = 1 }).ToArray();
-                    }
+                    child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
                 }
             }
         }
 
-        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+        //foreach (var cadRevealRootNode in cadRevealRootNodes)
+        //{
+        //    var children = cadRevealRootNode.Children;
+
+        //    if (children == null)
+        //        continue;
+
+        //    foreach (var child in children)
+        //    {
+        //        var tag = child.Attributes.GetValueOrNull("Tag");
+
+        //        if (tag != null)
+        //        {
+        //            var allChildNodes = CadRevealNode.GetAllNodesFlat(child);
+        //            foreach (var node in allChildNodes)
+        //            {
+        //                node.Geometries = node.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+        //            }
+        //        }
+        //    }
+        //}
+
         //allNodes = allNodes
         //    .Select(node =>
         //    {
@@ -83,7 +98,12 @@ internal static class RvmStoreToCadRevealNodesConverter
         //    })
         //    .ToArray();
 
-        var allnodesWithGeometry = allNodes.Where(g => g.Geometries.Any()).ToArray();
+        var allGeometry = allNodes.SelectMany(g => g.Geometries).ToArray();
+
+        int allGeometryCount = allGeometry.Length;
+        var prioritizedGeometry = allGeometry.Where(g => g.Priority == 1).Count();
+
+        Console.WriteLine($"PRIORITIZING {prioritizedGeometry} OF {allGeometryCount} GEOMETRIES");
 
         return allNodes;
     }
