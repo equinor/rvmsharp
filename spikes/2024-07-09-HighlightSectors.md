@@ -57,7 +57,7 @@ With the highlight sector ids available in the sector culler, a simple weighting
 
 ## Results
 
-Pictures of the result can be found [here](!https://statoilsrm.sharepoint.com/:f:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/HighlightSectors?csf=1&web=1&e=QxT9pc).
+Pictures of the result can be found [here](https://statoilsrm.sharepoint.com/:f:/r/sites/Echo3DWeb/Shared%20Documents/RvmSharp/Spikes/HighlightSectors?csf=1&web=1&e=QxT9pc).
 
 The results show that the highlighted valves are shown no matter the budget or distance away. The cost does not seem to affect the user experience in any noticeable way (i.e. showing a lot less geometry in other places).
 
