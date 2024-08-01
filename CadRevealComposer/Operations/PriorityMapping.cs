@@ -46,18 +46,16 @@ public class PriorityMapping
         // if (_nodeNameRegex != null && _nodeNameRegex.IsMatch(nodeName))
         //     return NodePriority.High;
 
-
-        // TODO
-        //if (_disciplineRegex != null && _disciplineRegex.IsMatch(discipline))
-        //    return NodePriority.Medium;
+        if (_disciplineRegex != null && _disciplineRegex.IsMatch(discipline))
+            return NodePriority.Medium;
 
         // TODO
         //if (_lowDisciplineRegex != null && _lowDisciplineRegex.IsMatch(discipline))
         //    return NodePriority.Low;
 
         // Hardcoded low priority on STRU for testing
-        if (discipline.Equals("STRU"))
-            return NodePriority.Low;
+        //if (discipline.Equals("STRU"))
+        //    return NodePriority.Low;
 
         return NodePriority.Default;
     }

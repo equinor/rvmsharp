@@ -83,7 +83,7 @@ public class CommandLineOptions
         Required = false,
         HelpText = "A regex matching disciplines to be prioritized in sector splitting. Not case sensitive."
     )]
-    public string? PrioritizedDisciplineRegex { get; init; } = null;
+    public string? PrioritizedDisciplineRegex { get; init; } = "PIPE";
 
     [Option(
         longName: "LowPrioritizedDiscipline",
