@@ -1,9 +1,9 @@
 ﻿namespace RvmSharp.Containers;
 
-using Commons;
-using Primitives;
 using System.Collections.Generic;
 using System.Linq;
+using Commons;
+using Primitives;
 
 // Public Api
 public class RvmFile
@@ -81,13 +81,9 @@ public class RvmFile
             if (string.IsNullOrEmpty(rvmNode.Name))
                 continue;
 
-            if (dict.ContainsKey(rvmNode.Name))
+            if (!dict.TryAdd(rvmNode.Name, rvmNode))
             {
                 dict[rvmNode.Name] = null; // Discard nodes that have duplicate names.
-            }
-            else
-            {
-                dict.Add(rvmNode.Name, rvmNode);
             }
         }
 

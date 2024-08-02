@@ -1,21 +1,28 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using IdProviders;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using IdProviders;
+using Primitives;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
     private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
+
+    private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
+    private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
+
+    private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
+    private readonly TooFewPrimitivesHandler _tooFewPrimitivesHandler = new();
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries)
     {
@@ -30,7 +37,7 @@ public class SectorSplitterOctree : ISectorSplitter
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 
         var rootSectorId = (uint)sectorIdGenerator.GetNextId();
-        var rootPath = "/0";
+        const string rootPath = "/0";
 
         var prioritizedSectorId = (uint)sectorIdGenerator.GetNextId();
 
@@ -63,25 +70,58 @@ public class SectorSplitterOctree : ISectorSplitter
         var excludedOutliersCount = outlierNodes.Length;
         if (excludedOutliersCount > 0)
         {
-            var boundingBoxEncapsulatingOutlierNodes = outlierNodes.CalculateBoundingBox();
-
-            Console.WriteLine($"Warning, adding {excludedOutliersCount} outliers to special sector(s).");
-            var outlierSectors = SplitIntoSectorsRecursive(
-                    outlierNodes.ToArray(),
-                    20, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
-                    rootPath,
-                    rootSectorId,
-                    sectorIdGenerator,
-                    CalculateStartSplittingDepth(boundingBoxEncapsulatingOutlierNodes)
-                )
-                .ToArray();
-
+            // Group and split outliers
+            var outlierSectors = HandleOutlierSplitting(outlierNodes, rootPath, rootSectorId, sectorIdGenerator);
             foreach (var sector in outlierSectors)
             {
-                Console.WriteLine(
-                    $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
-                );
                 yield return sector;
+            }
+        }
+
+        Console.WriteLine(
+            $"Tried to convert {_tooFewPrimitivesHandler.TriedConvertedGroupsOfPrimitives} out of {_tooFewPrimitivesHandler.TotalGroupsOfPrimitive} total groups of primitives"
+        );
+        Console.WriteLine(
+            $"Successfully converted {_tooFewPrimitivesHandler.SuccessfullyConvertedGroupsOfPrimitives} groups of primitives"
+        );
+        Console.WriteLine(
+            $"This resulted in {_tooFewPrimitivesHandler.AdditionalNumberOfTriangles} additional triangles"
+        );
+    }
+
+    /// <summary>
+    /// Group outliers by distance, and run splitting on each separate group
+    /// </summary>
+    private IEnumerable<InternalSector> HandleOutlierSplitting(
+        Node[] outlierNodes,
+        string rootPath,
+        uint rootSectorId,
+        SequentialIdGenerator sectorIdGenerator
+    )
+    {
+        var outlierGroups = SplittingUtils.GroupOutliersRecursive(outlierNodes, OutlierGroupingDistance);
+
+        using (new TeamCityLogBlock("Outlier Sectors"))
+        {
+            foreach (var outlierGroup in outlierGroups)
+            {
+                var outlierSectors = SplitIntoSectorsRecursive(
+                        outlierGroup,
+                        OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                        rootPath,
+                        rootSectorId,
+                        sectorIdGenerator,
+                        0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                    )
+                    .ToArray();
+
+                foreach (var sector in outlierSectors)
+                {
+                    Console.WriteLine(
+                        $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
+                    );
+                    yield return sector;
+                }
             }
         }
     }
@@ -273,8 +313,25 @@ public class SectorSplitterOctree : ISectorSplitter
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
-        var tooFewInstancesHandler = new TooFewInstancesHandler();
-        geometries = tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        var geometriesCount = geometries.Length;
+
+        // NOTE: This increases triangle count
+        geometries = _tooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewInstancesHandler from {geometriesCount} to {geometries}"
+            );
+        }
+
+        // NOTE: This increases triangle count
+        geometries = _tooFewPrimitivesHandler.ConvertPrimitivesWhenTooFew(geometries);
+        if (geometries.Length != geometriesCount)
+        {
+            throw new Exception(
+                $"The number of primitives was changed when running TooFewPrimitives from {geometriesCount} to {geometries.Length}"
+            );
+        }
 
         return new InternalSector(
             sectorId,
@@ -315,7 +372,7 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long budget, int actualDepth)
+    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long byteSizeBudget, int actualDepth)
     {
         var selectedNodes = actualDepth switch
         {
@@ -325,23 +382,29 @@ public class SectorSplitterOctree : ISectorSplitter
             _ => nodes.ToArray(),
         };
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(
-            x => x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1)
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x =>
+            x.Diagonal * (x.Priority == NodePriority.Low ? 0.5f : 1)
         );
 
-        var budgetLeft = budget;
         var nodeArray = nodesInPrioritizedOrder.ToArray();
-        var primitiveBudget = SectorEstimatedPrimitiveBudget;
+        var byteSizeBudgetLeft = byteSizeBudget;
+        var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
+        var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            if (budgetLeft < 0 || primitiveBudget <= 0 && nodeArray.Length - i > 10)
+            if (
+                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
+                && nodeArray.Length - i > 10
+            )
             {
                 yield break;
             }
 
             var node = nodeArray[i];
-            budgetLeft -= node.EstimatedByteSize;
-            primitiveBudget -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            byteSizeBudgetLeft -= node.EstimatedByteSize;
+            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            trianglesBudgetLeft -= node.EstimatedTriangleCount;
+
             yield return node;
         }
     }

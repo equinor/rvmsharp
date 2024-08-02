@@ -27,8 +27,6 @@ extern "C" {
         float scaleX;
         float scaleY;
         float scaleZ;
-
-        ~Transform() {}
     };
 
     CFBX_API struct ExportableMesh {

@@ -1,8 +1,8 @@
 namespace CadRevealComposer.Operations;
 
-using Primitives;
 using System;
 using System.Linq;
+using Primitives;
 
 public static class DrawCallEstimator
 {

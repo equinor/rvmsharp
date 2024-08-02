@@ -1,5 +1,7 @@
 ﻿namespace CadRevealObjProvider;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
@@ -10,12 +12,10 @@ using CadRevealComposer.Tessellation;
 using ObjLoader.Loader.Data.Elements;
 using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Loaders;
-using System.Drawing;
-using System.Numerics;
 
 public class ObjProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -60,7 +60,7 @@ public class ObjProvider : IModelFormatProvider
             );
         }
 
-        return nodes;
+        return (nodes, null);
     }
 
     private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
@@ -166,10 +166,7 @@ public class ObjProvider : IModelFormatProvider
             Triangles = triangles.ToArray()
         };
 
-        if (mesh.Vertices.Length == 0)
-            return null;
-
-        return mesh;
+        return mesh.Vertices.Length == 0 ? null : mesh;
     }
 
     private static Vector3 ToVector3(Vertex x)

@@ -1,5 +1,8 @@
 namespace CadRevealFbxProvider.Tests;
 
+using System.Numerics;
+using System.Text.RegularExpressions;
+using Attributes;
 using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
@@ -7,41 +10,43 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
-using System.Numerics;
 
 [TestFixture]
 public class FbxProviderTests
 {
-    private static readonly DirectoryInfo outputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
-    private static readonly DirectoryInfo inputDirectoryCorrect = new DirectoryInfo(@".\TestSamples\correct");
+    private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
+    private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
-    private static readonly DirectoryInfo outputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\missingkey");
-    private static readonly DirectoryInfo inputDirectoryIncorrect = new DirectoryInfo(@".\TestSamples\missingkey");
+    private static readonly DirectoryInfo InputDirectoryMissingAttr = new("TestSamples/missingattributes");
 
-    private static readonly DirectoryInfo outputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
-    private static readonly DirectoryInfo inputDirectoryMismatch = new DirectoryInfo(@".\TestSamples\mismatch");
+    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingkey");
+    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingkey");
 
-    private static readonly ModelParameters modelParameters = new ModelParameters(
-        new ProjectId(1),
-        new ModelId(1),
-        new RevisionId(1),
-        new InstancingThreshold(1),
-        new TemplateCountLimit(100)
-    );
-    private static readonly ComposerParameters composerParameters = new ComposerParameters(
-        false,
-        true,
-        false,
-        new NodeNameExcludeRegex(null),
-        new PrioritizedDisciplinesRegex(null),
-        new LowPrioritizedDisciplineRegex(null),
-        new PrioritizedNodeNamesRegex(null)
-    );
+    private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
+    private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
 
-    private static readonly List<IModelFormatProvider> providers = new List<IModelFormatProvider>()
-    {
-        new FbxProvider()
-    };
+    private static readonly ModelParameters ModelParameters =
+        new(
+            new ProjectId(1),
+            new ModelId(1),
+            new RevisionId(1),
+            new InstancingThreshold(1),
+            new TemplateCountLimit(100)
+        );
+    private static readonly ComposerParameters ComposerParameters =
+        new(
+            false,
+            true,
+            false,
+            new NodeNameExcludeRegex(null),
+            new PrioritizedDisciplinesRegex(null),
+            new LowPrioritizedDisciplineRegex(null),
+            new PrioritizedNodeNamesRegex(null),
+            0f,
+            null
+        );
+
+    private static readonly List<IModelFormatProvider> Providers = [new FbxProvider()];
 
     [Test]
     public void FbxImporterSdkInitTest()
@@ -60,20 +65,20 @@ public class FbxProviderTests
     public void FbxImporterLoadFileTest()
     {
         using var test = new FbxImporter();
-        var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
-        Iterate(RootNode);
+        var rootNode = test.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        Iterate(rootNode);
     }
 
     private void Iterate(FbxNode root)
     {
-        Console.WriteLine(FbxNodeWrapper.GetNodeName(root));
-        var childCount = FbxNodeWrapper.GetChildCount(root);
-        Matrix4x4 t = FbxNodeWrapper.GetTransform(root);
+        Console.WriteLine(root.GetNodeName());
+        var childCount = root.GetChildCount();
+        Matrix4x4 t = root.GetLocalTransform();
         Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
         FbxMeshWrapper.GetGeometricData(root);
         for (var i = 0; i < childCount; i++)
         {
-            var child = FbxNodeWrapper.GetChild(i, root);
+            var child = root.GetChild(i);
             Iterate(child);
         }
     }
@@ -82,9 +87,9 @@ public class FbxProviderTests
     public void Fbx_Importer_GetUniqueMeshesInFileCount()
     {
         using var test = new FbxImporter();
-        var RootNode = test.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = test.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
 
-        var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(RootNode);
+        var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(rootNode);
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
@@ -92,16 +97,7 @@ public class FbxProviderTests
     public void ModelAndAttributeFileMismatchGivesErrorMessage()
     {
         Assert.Throws<Exception>(
-            () =>
-            {
-                CadRevealComposerRunner.Process(
-                    inputDirectoryMismatch,
-                    outputDirectoryMismatch,
-                    modelParameters,
-                    composerParameters,
-                    providers
-                );
-            },
+            () => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
             "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
     }
@@ -109,28 +105,13 @@ public class FbxProviderTests
     [Test]
     public void WrongAttributeFormatGivesErrorMessage()
     {
-        Assert.Throws<Exception>(() =>
-        {
-            CadRevealComposerRunner.Process(
-                inputDirectoryIncorrect,
-                outputDirectoryIncorrect,
-                modelParameters,
-                composerParameters,
-                providers
-            );
-        });
+        Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
     }
 
     [Test]
     public void SampleModel_SmokeTest()
     {
-        CadRevealComposerRunner.Process(
-            inputDirectoryCorrect,
-            outputDirectoryCorrect,
-            modelParameters,
-            composerParameters,
-            providers
-        );
+        Process(InputDirectoryCorrect, OutputDirectoryCorrect);
     }
 
     [Test]
@@ -140,8 +121,8 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
-        var nodes = modelFormatProviderFbx.ParseFiles(
-            inputDirectoryCorrect.EnumerateFiles(),
+        (var nodes, var metadata) = modelFormatProviderFbx.ParseFiles(
+            InputDirectoryCorrect.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null)),
@@ -154,10 +135,12 @@ public class FbxProviderTests
 
         Assert.That(nodes, Has.Count.EqualTo(28));
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(23));
-        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(23));
+        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
+        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
         Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
+        Assert.That(metadata, Is.Not.Null);
+        Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes));
     }
 
     [Test]
@@ -167,13 +150,14 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
 
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null
         );
 
         var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted!).ToArray();
@@ -190,14 +174,13 @@ public class FbxProviderTests
         Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
         CadRevealComposerRunner.ProcessPrimitives(
             geometriesToProcess.ToArray(),
-            outputDirectoryCorrect,
-            modelParameters,
-            composerParameters,
-            treeIndexGenerator
+            OutputDirectoryCorrect,
+            ModelParameters,
+            ComposerParameters
         );
 
         Console.WriteLine(
-            $"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectoryCorrect.FullName)}\""
+            $"Export Finished. Wrote output files to \"{Path.GetFullPath(OutputDirectoryCorrect.FullName)}\""
         );
     }
 
@@ -207,12 +190,13 @@ public class FbxProviderTests
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(inputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null,
             minInstanceCountThreshold: 5 // <-- We have a part which is only used twice, so this value should make those parts into 2 TriangleMeshes.,
         );
 
@@ -221,4 +205,41 @@ public class FbxProviderTests
         Assert.That(geometriesToProcess, Has.Exactly(2).TypeOf<TriangleMesh>());
         Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());
     }
+
+    [Test]
+    public void NodeMissingAttributesTest()
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        var priorityMapping = new PriorityMapping(
+            new PrioritizedDisciplinesRegex(null),
+            new LowPrioritizedDisciplineRegex(null),
+            new PrioritizedNodeNamesRegex(null)
+        );
+
+        (IReadOnlyList<CadRevealNode> nodes, _) = modelFormatProviderFbx.ParseFiles(
+            InputDirectoryMissingAttr.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            priorityMapping
+        );
+
+        // Ladders have no attributes, should thus be ignored
+        Assert.That(nodes, Has.Count.EqualTo(26));
+        foreach (var node in nodes)
+        {
+            Assert.That(node.Name, !Is.EqualTo("Ladder"));
+        }
+    }
+
+    private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>
+        CadRevealComposerRunner.Process(
+            inputDirectory,
+            outputDirectory,
+            ModelParameters,
+            ComposerParameters,
+            Providers
+        );
 }

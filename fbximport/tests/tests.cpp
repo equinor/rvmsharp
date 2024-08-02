@@ -1,69 +1,96 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "common.h"
-#include "node.h"
-#include "mesh.h"
-#include "importer.h"
-#include "manager.h"
+#ifdef _MSC_VER
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#define VS_MEM_CHECK _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#else
+#define VS_MEM_CHECK
+#endif
+
+#include "tests.h"
+#include "fbx_info.h"
+
+#include <node.h>
+#include <mesh.h>
+#include <importer.h>
+#include <manager.h>
 
 #include <iostream>
-#include <fbxsdk.h>
 
 using namespace std;
-using namespace fbxsdk;
 
+std::shared_ptr<std::string> test_model_file_path_;
 
-unsigned int Factorial( unsigned int number ) {
-    return number <= 1 ? number : Factorial(number-1)*number;
-}
-
-void iterate_children(FbxNode* parent, int ident = 0)
+void set_test_model_file_path(const std::string& file_path)
 {
-    char* name = new char[512];
-    node_get_name(parent, name, 512);
-    for (int i = 0; i < ident; i++) cout << "\t";
+    test_model_file_path_ = std::make_shared<std::string>(file_path);
+}
 
-    cout << ident << ": " << name << endl;
-    delete[] name;
+const std::string get_test_model_file_path()
+{
+    REQUIRE(test_model_file_path_.get() != nullptr);
+    return test_model_file_path_.get() ? *test_model_file_path_ : "";
+}
 
-    for (int i = 0; i < node_get_child_count(parent); i++)
+TEST_CASE("Load and iterate", "[FBX sdk]")
+{
+    VS_MEM_CHECK
+
+    std::cout << std::string("Using file path: ") << get_test_model_file_path() << std::endl;
+
+#ifdef _WIN32
+    _CrtMemState s1, s2, s3;
+    _CrtMemCheckpoint(&s1);
+#endif
+
+    FbxInfo fbx_info(get_test_model_file_path(), false);
+    std::cout << fbx_info.print_info();
+
+#ifdef _WIN32
+    _CrtMemCheckpoint(&s2);
+    _CrtMemDifference(&s3, &s1, &s2);
+    _CrtMemDumpStatistics(&s3);
+#endif
+}
+
+TEST_CASE("Assert that the fbxsdk is newer or equal to a specified version", "[FBX version]")
+{
+    //We don't require a specific fbx-sdk version, but it needs to be version 2020.3.2 or newer
+    REQUIRE(assert_fbxsdk_version_newer_or_equal_than("2020.3.2") == true);
+
+    //Test that assert_fbxsdk_version_newer_or_equal_than with (nonexisting) future version fails.
+    REQUIRE(assert_fbxsdk_version_newer_or_equal_than("3020.3.2") == false);
+}
+
+TEST_CASE("Check ignore normals", "[FBX sdk]")
+{
+    auto testModelPath = get_test_model_file_path();
+
+    std::cout << std::string("Using file path: ") << testModelPath << std::endl;
+
+    FbxInfo fbx_info1(testModelPath, false);
+    FbxInfo fbx_info2(testModelPath, true);
+
+    size_t node_count1 = fbx_info1.get_node_count();
+    size_t node_count2 = fbx_info2.get_node_count();
+    size_t count = (node_count1 < node_count2) ? node_count1 : node_count2;
+    REQUIRE(node_count1 > 0);
+    REQUIRE(node_count2 > 0);
+    REQUIRE(count > 0);
+
+    REQUIRE(node_count2 == node_count1);
+
+    for (size_t i=0; i<count; i++)
     {
-        iterate_children((FbxNode*)node_get_child(parent, i), ident + 1);
+        const FbxInfo::InfoItem& item1 = fbx_info1.get_node_info(i);
+        const FbxInfo::InfoItem& item2 = fbx_info2.get_node_info(i);
+
+        REQUIRE(item1.m_vertex_count >= item2.m_vertex_count);
+        REQUIRE(item1.m_triangle_count == item2.m_triangle_count);
     }
-    auto geometry = (FbxMesh*)node_get_mesh(parent);
-    if (geometry != nullptr)
-    {
-        auto data = mesh_get_geometry_data(geometry);
-        if (data->vertex_count == 0)
-        {
-            cerr << "Could not retreive geometry" << endl;
-        }
-        else {
-            cout << "Vertex count: " << data->vertex_count << endl;
-            cout << "Triangle count: " << data->index_count << endl;
-        }
-        delete data;
-    }
-}
 
-void load_and_iterate() {
-    auto sdk = manager_create();
-    const char* lInputFbxFilename = "D:/models/FBX/AQ110South-3DView.fbx";
-    auto root = (FbxNode*)load_file(lInputFbxFilename, sdk);
-
-    iterate_children(root);
-    root->Destroy();
-    manager_destroy(sdk);
-}
-
-TEST_CASE( "Factorials are computed", "[factorial]" ) {
-
-    REQUIRE( Factorial(1) == 1 );
-    REQUIRE( Factorial(2) == 2 );
-    REQUIRE( Factorial(3) == 6 );
-    REQUIRE( Factorial(10) == 3628800 );
-}
-
-TEST_CASE( "Load and iterate", "[FBX sdk]") {
-    load_and_iterate();
+    std::string output = FbxInfo::print_comparison(fbx_info1, fbx_info2);
+    REQUIRE(output.size() > 0);
+    std::cout << output;
 }

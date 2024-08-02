@@ -1,8 +1,8 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
+using System.Numerics;
 using CadRevealComposer.Operations;
 using Primitives;
-using System.Numerics;
 
 // ReSharper disable once UnusedMember.Global
 public class HierarchyComposerConverterTests
@@ -10,7 +10,7 @@ public class HierarchyComposerConverterTests
     [Test]
     public void ConvertToHierarchyNodes_GivenRevealNodes_ConvertsWithoutCrashing()
     {
-        var arrangedJson = @"{ ""myField"":""myValue"" }";
+        const string arrangedJson = @"{ ""myField"":""myValue"" }";
 
         var node2 = new CadRevealNode()
         {

@@ -1,5 +1,7 @@
 namespace CadRevealComposer.Configuration;
 
+using System.IO;
+
 public record ComposerParameters(
     bool NoInstancing,
     bool SingleSector,
@@ -7,7 +9,9 @@ public record ComposerParameters(
     NodeNameExcludeRegex NodeNameExcludeRegex,
     PrioritizedDisciplinesRegex PrioritizedDisciplinesRegex,
     LowPrioritizedDisciplineRegex LowPrioritizedDisciplineRegex,
-    PrioritizedNodeNamesRegex PrioritizedNodeNamesRegex
+    PrioritizedNodeNamesRegex PrioritizedNodeNamesRegex,
+    float SimplificationThreshold,
+    DirectoryInfo? DevPrimitiveCacheFolder
 );
 
 public record NodeNameExcludeRegex(string? Value);

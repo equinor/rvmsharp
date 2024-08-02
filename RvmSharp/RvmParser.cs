@@ -1,7 +1,5 @@
 ﻿namespace RvmSharp;
 
-using Containers;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +7,9 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Containers;
+using Operations;
+using Primitives;
 
 public static class RvmParser
 {
@@ -86,10 +87,18 @@ public static class RvmParser
         return (version, project, name);
     }
 
-    private static RvmPrimitive ReadPrimitive(Stream stream)
+    private static RvmPrimitive ReadPrimitive(Stream stream, bool hasOpacity = false)
     {
         var version = ReadUint(stream);
         var kind = (RvmPrimitiveKind)ReadUint(stream);
+
+        // some chunk types as obstruction or insulation have transparency
+        // we need to treat them in order to process the rest of the stream,
+        // but the opacity itself is not used in any way right now
+        if (hasOpacity)
+        {
+            var opacity = ReadUint(stream);
+        }
         // csharpier-ignore -- Keep matrix formatting
         var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
             ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
@@ -283,7 +292,33 @@ public static class RvmParser
                     group.AddChild(ReadCntb(stream));
                     break;
                 case "PRIM":
-                    group.AddChild(ReadPrimitive(stream));
+                    var primitive = ReadPrimitive(stream);
+                    if (Matrix4x4Helpers.MatrixContainsInfiniteValue(primitive.Matrix))
+                    {
+                        // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
+                        Console.WriteLine(
+                            "Invalid matrix found for primitive of " + name + ". " + " Discarding this primitive"
+                        );
+                    }
+                    else
+                    {
+                        group.AddChild(primitive);
+                    }
+                    break;
+                // types OBST (obstacle) and INSU (insulation) chunks were previously also throwing
+                // a NotImplementedException causing the building process to terminate
+                // now the corresponding stream is consumed, but they are skipped (not added to the scene)
+                //
+                // in order to add them to the scene, the primitive type needs to be extended as follows:
+                // -- add a field for storing the type of the chunk (primitive, obstacle, insulation)
+                // -- add a field for storing opacity if this should be supported by rendering
+                case "OBST":
+                    ReadPrimitive(stream, true);
+                    Console.WriteLine("Encountered OBST chunk, skipping.");
+                    break;
+                case "INSU":
+                    ReadPrimitive(stream, true);
+                    Console.WriteLine("Encountered INSU chunk, skipping.");
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {id}");
@@ -360,7 +395,6 @@ public static class RvmParser
 
             chunk = ReadChunkHeader(stream, out len, out dunno);
         }
-
         return new RvmFile(
             header,
             new RvmModel(

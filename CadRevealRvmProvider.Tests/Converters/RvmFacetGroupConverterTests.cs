@@ -1,13 +1,13 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
-using CadRevealRvmProvider.Converters;
-using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
+using CadRevealRvmProvider.Converters;
+using RvmSharp.Primitives;
 
 public class RvmFacetGroupConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmFacetGroup _rvmFacetGroup = null!;
 
     [SetUp]
@@ -24,7 +24,8 @@ public class RvmFacetGroupConverterTests
     [Test]
     public void RvmFacetGroupConverter_ReturnsProtoMeshFromFacetGroup()
     {
-        var geometries = _rvmFacetGroup.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmFacetGroup.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<ProtoMeshFromFacetGroup>());
         Assert.That(geometries.Length, Is.EqualTo(1));

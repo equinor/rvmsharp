@@ -1,14 +1,14 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public class RvmEllipticalDishConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmEllipticalDish _rvmEllipticalDish = null!;
 
     [SetUp]
@@ -26,7 +26,8 @@ public class RvmEllipticalDishConverterTests
     [Test]
     public void RvmEllipticalDishConverter_ReturnsEllipsoidSegmentWithCap()
     {
-        var geometries = _rvmEllipticalDish.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmEllipticalDish.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<EllipsoidSegment>());
         Assert.That(geometries[1], Is.TypeOf<Circle>());

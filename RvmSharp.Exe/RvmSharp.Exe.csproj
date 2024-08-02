@@ -2,23 +2,24 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
-	<!-- use server GC mode for improved GC performance - tested to work well with this workload -->
-	<ServerGarbageCollection>true</ServerGarbageCollection>
-	<!-- all pipeline processing is culture invariant so disable globalization for improved performance and less surface area -->
-	<InvariantGlobalization>true</InvariantGlobalization>
+    <!-- use server GC mode for improved GC performance - tested to work well with this workload -->
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <!-- all pipeline processing is culture invariant so disable globalization for improved performance and less surface area -->
+    <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="ShellProgressBar" Version="5.2.0" />
+    <PackageReference Include="CommandLineParser"/>
+    <PackageReference Include="ShellProgressBar"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
+    <ProjectReference Include="..\RvmSharp\RvmSharp.csproj"/>
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Operations;
 
-using RvmSharp.Primitives;
 using System.Numerics;
+using RvmSharp.Primitives;
 
 public static class RvmPyramidInstancer
 {

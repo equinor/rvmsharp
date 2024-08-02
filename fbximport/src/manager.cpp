@@ -16,21 +16,11 @@ void manager_destroy(CFbxManager manager)
     fbxManager->Destroy();
 }
 
-std::string* get_fbxsdk_version()
+bool assert_fbxsdk_version_newer_or_equal_than(const char* minFbxVersion)
 {
-#ifdef FBXSDK_VERSION
-    std::string* fbxVers = new std::string(FBXSDK_VERSION);
-    return fbxVers;
-#else
-    std::string* fbxVers = new std::string("-1");
-#endif
-    return fbxVers;
-}
+    auto min = std::string(minFbxVersion);
+    auto version = std::string(FBXSDK_VERSION);
+    auto compareResult = version.compare(min);
 
-void delete_fbxsdk_version(std::string* fbxVers)
-{
-    if (fbxVers == nullptr)
-        return;
-
-    delete fbxVers;
+    return version.compare(min) >= 0;
 }

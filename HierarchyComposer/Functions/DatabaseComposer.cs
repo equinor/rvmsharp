@@ -1,17 +1,17 @@
 ﻿namespace HierarchyComposer.Functions;
 
-using Extensions;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Model;
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Extensions;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Model;
 
 public class DatabaseComposer
 {
@@ -61,13 +61,12 @@ public class DatabaseComposer
             .GroupBy(kvp => kvp.GetGroupKey())
             .ToDictionary(
                 keySelector: g => g.Key,
-                elementSelector: g =>
-                    new PDMSEntry()
-                    {
-                        Id = ++pdmsEntryIdCounter,
-                        Key = g.First().Key,
-                        Value = g.First().Value
-                    }
+                elementSelector: g => new PDMSEntry()
+                {
+                    Id = ++pdmsEntryIdCounter,
+                    Key = g.First().Key,
+                    Value = g.First().Value
+                }
             );
 
         var aabbIdCounter = 0;
@@ -76,31 +75,25 @@ public class DatabaseComposer
             .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First().CopyWithNewId(++aabbIdCounter));
 
         var nodes = inputNodes
-            .Select(
-                inputNode =>
-                    new Node
+            .Select(inputNode => new Node
+            {
+                Id = inputNode.NodeId,
+                EndId = inputNode.EndId,
+                RefNoPrefix = inputNode.RefNoPrefix,
+                RefNoDb = inputNode.RefNoDb,
+                RefNoSequence = inputNode.RefNoSequence,
+                Name = inputNode.Name,
+                HasMesh = inputNode.HasMesh,
+                NodePDMSEntry = inputNode
+                    .PDMSData.Select(kvp => new NodePDMSEntry
                     {
-                        Id = inputNode.NodeId,
-                        EndId = inputNode.EndId,
-                        RefNoPrefix = inputNode.RefNoPrefix,
-                        RefNoDb = inputNode.RefNoDb,
-                        RefNoSequence = inputNode.RefNoSequence,
-                        Name = inputNode.Name,
-                        HasMesh = inputNode.HasMesh,
-                        NodePDMSEntry = inputNode.PDMSData
-                            .Select(
-                                kvp =>
-                                    new NodePDMSEntry
-                                    {
-                                        NodeId = inputNode.NodeId,
-                                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
-                                    }
-                            )
-                            .ToList(),
-                        AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
-                        DiagnosticInfo = inputNode.OptionalDiagnosticInfo
-                    }
-            )
+                        NodeId = inputNode.NodeId,
+                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+                    })
+                    .ToList(),
+                AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+                DiagnosticInfo = inputNode.OptionalDiagnosticInfo
+            })
             .ToDictionary(n => n.Id, n => n);
 
         foreach (var jsonNode in inputNodes)
@@ -154,6 +147,13 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
                 using var cmd = new SQLiteCommand(connection);
+
+                // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
+                // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
+                cmd.CommandText =
+                    "CREATE VIRTUAL TABLE AABBs USING rtree(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
+                cmd.ExecuteNonQuery();
+
                 AABB.RawInsertBatch(cmd, aabbs.Values);
 
                 transaction.Commit();

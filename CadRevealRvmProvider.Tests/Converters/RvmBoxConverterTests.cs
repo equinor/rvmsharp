@@ -1,15 +1,15 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 [TestFixture]
 public class RvmBoxConverterTests
 {
-    const int _treeIndex = 1337;
+    const int TreeIndex = 1337;
     private RvmBox _rvmBox = null!;
 
     [SetUp]
@@ -28,7 +28,8 @@ public class RvmBoxConverterTests
     [Test]
     public void RvmBoxConverter_ReturnsBox()
     {
-        var geometries = _rvmBox.ConvertToRevealPrimitive(_treeIndex, Color.Red).ToArray();
+        var logObject = new FailedPrimitivesLogObject();
+        var geometries = _rvmBox.ConvertToRevealPrimitive(TreeIndex, Color.Red, logObject).ToArray();
 
         Assert.That(geometries[0], Is.TypeOf<Box>());
         Assert.That(geometries.Length, Is.EqualTo(1));

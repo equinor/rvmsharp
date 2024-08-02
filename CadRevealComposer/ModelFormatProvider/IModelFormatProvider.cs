@@ -1,15 +1,15 @@
 ﻿namespace CadRevealComposer.ModelFormatProvider;
 
+using System.Collections.Generic;
+using System.IO;
 using Configuration;
 using IdProviders;
 using Operations;
 using Primitives;
-using System.Collections.Generic;
-using System.IO;
 
 public interface IModelFormatProvider
 {
-    IReadOnlyList<CadRevealNode> ParseFiles(
+    (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,

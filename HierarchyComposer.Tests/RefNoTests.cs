@@ -1,15 +1,15 @@
 ﻿namespace HierarchyComposer.Tests;
 
+using System;
 using Model;
 using NUnit.Framework;
-using System;
 
 public class RefNoTests
 {
     [Test]
     [TestCase("X")]
     [TestCase("=ABC/123")]
-    [TestCase("=123/123.4")] // Must be ints
+    [TestCase("=123/123.4")] // Must be integers
     [TestCase("=123/")]
     [TestCase("=-123/321")] // Must not be negative
     [TestCase("=123/123/123")] // Two Numbers

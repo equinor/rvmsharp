@@ -1,12 +1,12 @@
 namespace CadRevealComposer.Operations;
 
-using AlgebraExtensions;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using AlgebraExtensions;
+using Primitives;
 using Tessellation;
 using Utils;
 
@@ -14,8 +14,8 @@ using Utils;
 /// Split geometries into exterior and interior. The main use is too aid sector splitting, prioritizing the exterior higher up in the sector tree.
 /// - Primitives are grouped by node ID, and whole nodes are split into exterior and interior.
 /// - Ray casting is used to measure distance from outside vantage points to the nodes. The closest nodes are kept as exterior.
-/// - TriangleMesh and InstanceMesh are tessellated to triangles and raycasted.
-/// - Other primitives are raycasted using their bounding box. The justification is that primitives have a tight bounding box.
+/// - TriangleMesh and InstanceMesh are tessellated to triangles and ray casted.
+/// - Other primitives are ray casted using their bounding box. The justification is that primitives have a tight bounding box.
 /// </summary>
 public static class ExteriorSplitter
 {
@@ -51,6 +51,7 @@ public static class ExteriorSplitter
 
         // rays for XY plane
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
+        {
             for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
             {
                 var bounds = new BoundingBox(
@@ -70,9 +71,11 @@ public static class ExteriorSplitter
                     new Ray(new Vector3(x + halfCell, y + halfCell, rayOriginMax.Z), -Vector3.UnitZ)
                 );
             }
+        }
 
         // rays for XZ plane
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
+        {
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
                 var bounds = new BoundingBox(
@@ -92,9 +95,11 @@ public static class ExteriorSplitter
                     new Ray(new Vector3(x + halfCell, rayOriginMax.Y, z + halfCell), -Vector3.UnitY)
                 );
             }
+        }
 
         // rays for YZ plane
         for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
+        {
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
                 var bounds = new BoundingBox(
@@ -114,6 +119,7 @@ public static class ExteriorSplitter
                     new Ray(new Vector3(rayOriginMax.X, y + halfCell, z + halfCell), -Vector3.UnitX)
                 );
             }
+        }
     }
 
     public static (APrimitive[] Exterior, APrimitive[] Interior) Split(APrimitive[] primitives)
@@ -193,37 +199,37 @@ public static class ExteriorSplitter
         // positive if overlaps
         var diff = Vector3.Min(boundingBox.Max, rayBounds.Max) - Vector3.Max(boundingBox.Min, rayBounds.Min);
         var isHit = diff.X > 0f && diff.Y > 0f && diff.Z > 0f;
-        if (isHit)
+        if (!isHit)
         {
-            float distance;
-            if (ray.Direction.X < 0f)
-            {
-                distance = boundingBox.Min.X - ray.Origin.X;
-            }
-            else if (ray.Direction.Y < 0f)
-            {
-                distance = boundingBox.Min.Y - ray.Origin.Y;
-            }
-            else if (ray.Direction.Z < 0f)
-            {
-                distance = boundingBox.Min.Z - ray.Origin.Z;
-            }
-            else if (ray.Direction.X > 0f)
-            {
-                distance = ray.Origin.X - boundingBox.Max.X;
-            }
-            else if (ray.Direction.Y > 0f)
-            {
-                distance = ray.Origin.Y - boundingBox.Max.Y;
-            }
-            else
-            {
-                distance = ray.Origin.Z - boundingBox.Max.Z;
-            }
-            return (true, distance);
+            return (false, float.NaN);
         }
 
-        return (false, float.NaN);
+        float distance;
+        if (ray.Direction.X < 0f)
+        {
+            distance = boundingBox.Min.X - ray.Origin.X;
+        }
+        else if (ray.Direction.Y < 0f)
+        {
+            distance = boundingBox.Min.Y - ray.Origin.Y;
+        }
+        else if (ray.Direction.Z < 0f)
+        {
+            distance = boundingBox.Min.Z - ray.Origin.Z;
+        }
+        else if (ray.Direction.X > 0f)
+        {
+            distance = ray.Origin.X - boundingBox.Max.X;
+        }
+        else if (ray.Direction.Y > 0f)
+        {
+            distance = ray.Origin.Y - boundingBox.Max.Y;
+        }
+        else
+        {
+            distance = ray.Origin.Z - boundingBox.Max.Z;
+        }
+        return (true, distance);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -259,14 +265,13 @@ public static class ExteriorSplitter
             var boundingBox = nodeGroup.ToArray().CalculateBoundingBox();
 
             var primitives = nodeGroup
-                .Select(
-                    p =>
-                        p switch
-                        {
-                            InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
-                            TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
-                            _ => new Primitive(p)
-                        }
+                .Select(p =>
+                    p switch
+                    {
+                        InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
+                        TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
+                        _ => new Primitive(p)
+                    }
                 )
                 .WhereNotNull()
                 .ToArray();

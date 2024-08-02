@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp.Tests.Tessellator;
 
+using System.Numerics;
 using NUnit.Framework;
 using RvmSharp.Primitives;
-using System.Numerics;
 using Tessellation;
 
 [TestFixture]
@@ -24,8 +24,11 @@ public class MeshTests
     public void Mesh_Equals_ByContent()
     {
         var initialMesh = GenerateNewStandardMeshForTest();
+
+#pragma warning disable NUnit2009 // Sanity-check test for self equality
         Assert.That(initialMesh, Is.EqualTo(initialMesh));
         Assert.That(initialMesh.GetHashCode(), Is.EqualTo(initialMesh.GetHashCode()));
+#pragma warning restore NUnit2009
 
         var newIdenticalMesh = GenerateNewStandardMeshForTest();
         // Check assertions expected in Equals

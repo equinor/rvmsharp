@@ -17,7 +17,7 @@ public class DictionaryExtensionsTests
     {
         var emptyDict = new Dictionary<string, object>();
         var myTestObject = new object();
-        string myKey = "MyKey";
+        const string myKey = "MyKey";
         emptyDict[myKey] = myTestObject;
         var result = emptyDict.GetValueOrNull(myKey);
         Assert.That(result, Is.Not.Null);

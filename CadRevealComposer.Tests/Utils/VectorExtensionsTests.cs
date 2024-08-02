@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Tests.Utils;
 
-using CadRevealComposer.Utils;
 using System.Numerics;
+using CadRevealComposer.Utils;
 
 [TestFixture]
 class VectorExtensionsTests
@@ -44,19 +44,39 @@ class VectorExtensionsTests
     [Test]
     public void EqualsWithinTolerance()
     {
-        Assert.IsTrue(Vector3.One.EqualsWithinTolerance(Vector3.One, 0.000_001f));
-        Assert.IsFalse(Vector3.One.EqualsWithinTolerance(Vector3.Zero, 0.000_001f));
+        Assert.That(Vector3.One.EqualsWithinTolerance(Vector3.One, 0.000_001f));
+        Assert.That(Vector3.One.EqualsWithinTolerance(Vector3.Zero, 0.000_001f), Is.False);
+    }
+
+    [Test]
+    public void Round()
+    {
+        var vec3 = new Vector3(0.0001f, 1.001f, 1);
+        var res = new Vector3(0f, 1.001f, 1);
+
+        Assert.That(vec3.Round(3), Is.EqualTo(res));
+        Assert.That(vec3, Is.Not.EqualTo(res));
+    }
+
+    [Test]
+    public void RoundInPlace()
+    {
+        var vec3 = new Vector3(0.0001f, 1.001f, 1);
+        var res = new Vector3(0f, 1.001f, 1);
+
+        Assert.That(vec3.RoundInPlace(3), Is.EqualTo(res));
+        Assert.That(vec3, Is.EqualTo(res));
     }
 
     [Test]
     public void EqualsWithinFactor()
     {
-        Assert.IsTrue(Vector3.One.EqualsWithinFactor(Vector3.One, 0f));
-        Assert.IsFalse(Vector3.One.EqualsWithinFactor(Vector3.Zero, 0f));
+        Assert.That(Vector3.One.EqualsWithinFactor(Vector3.One, 0f));
+        Assert.That(Vector3.One.EqualsWithinFactor(Vector3.Zero, 0f), Is.False);
 
         // dividing zero with zero leads to NaN which is a special case
         var almostZero = new Vector3(1E-20f, 1E-20f, 1E-20f);
-        Assert.IsTrue(Vector3.Zero.EqualsWithinFactor(Vector3.Zero, 0f));
-        Assert.IsTrue(almostZero.EqualsWithinFactor(Vector3.Zero, 0f));
+        Assert.That(Vector3.Zero.EqualsWithinFactor(Vector3.Zero, 0f));
+        Assert.That(almostZero.EqualsWithinFactor(Vector3.Zero, 0f));
     }
 }

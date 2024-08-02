@@ -1,12 +1,14 @@
 namespace CadRevealComposer.Primitives;
 
-using Operations;
-using Operations.SectorSplitting;
 using System.Drawing;
 using System.Numerics;
+using Operations;
+using Operations.SectorSplitting;
+using ProtoBuf;
 using Tessellation;
 
 // Reveal GLTF model
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Box(
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
@@ -15,6 +17,7 @@ public sealed record Box(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Circle(
     Matrix4x4 InstanceMatrix,
     Vector3 Normal,
@@ -24,6 +27,7 @@ public sealed record Circle(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Cone(
     float Angle,
     float ArcAngle,
@@ -38,6 +42,7 @@ public sealed record Cone(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record EccentricCone(
     Vector3 CenterA,
     Vector3 CenterB,
@@ -50,6 +55,7 @@ public sealed record EccentricCone(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record EllipsoidSegment(
     float HorizontalRadius,
     float VerticalRadius,
@@ -62,6 +68,7 @@ public sealed record EllipsoidSegment(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record GeneralCylinder(
     float Angle,
     float ArcAngle,
@@ -77,6 +84,7 @@ public sealed record GeneralCylinder(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record GeneralRing(
     float Angle,
     float ArcAngle,
@@ -89,6 +97,7 @@ public sealed record GeneralRing(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Nut(
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
@@ -97,6 +106,7 @@ public sealed record Nut(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Quad(
     Matrix4x4 InstanceMatrix,
     ulong TreeIndex,
@@ -105,6 +115,7 @@ public sealed record Quad(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record TorusSegment(
     float ArcAngle,
     Matrix4x4 InstanceMatrix,
@@ -116,6 +127,7 @@ public sealed record TorusSegment(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Trapezium(
     Vector3 Vertex1,
     Vector3 Vertex2,
@@ -138,6 +150,7 @@ public sealed record Trapezium(
 /// <param name="TreeIndex">The Instances TreeIndex</param>
 /// <param name="Color"></param>
 /// <param name="AxisAlignedBoundingBox"></param>
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record InstancedMesh(
     ulong InstanceId,
     Mesh TemplateMesh,
@@ -148,6 +161,7 @@ public sealed record InstancedMesh(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record TriangleMesh(
     Mesh Mesh,
     ulong TreeIndex,
@@ -156,9 +170,23 @@ public sealed record TriangleMesh(
     NodePriority NodePriority = NodePriority.Default
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, NodePriority);
 
+[ProtoContract(SkipConstructor = true, IgnoreUnknownSubTypes = false)]
+[ProtoInclude(500, typeof(TriangleMesh))]
+[ProtoInclude(501, typeof(InstancedMesh))]
+[ProtoInclude(502, typeof(Trapezium))]
+[ProtoInclude(503, typeof(TorusSegment))]
+[ProtoInclude(504, typeof(Quad))]
+[ProtoInclude(505, typeof(Nut))]
+[ProtoInclude(506, typeof(GeneralRing))]
+[ProtoInclude(507, typeof(GeneralCylinder))]
+[ProtoInclude(508, typeof(EllipsoidSegment))]
+[ProtoInclude(509, typeof(Cone))]
+[ProtoInclude(510, typeof(Circle))]
+[ProtoInclude(511, typeof(Box))]
+[ProtoInclude(512, typeof(EccentricCone))]
 public abstract record APrimitive(
-    ulong TreeIndex,
-    Color Color,
-    BoundingBox AxisAlignedBoundingBox,
-    NodePriority NodePriority
+    [property: ProtoMember(1)] ulong TreeIndex,
+    [property: ProtoMember(2)] Color Color,
+    [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox,
+    [property: ProtoMember(4)] NodePriority NodePriority
 );

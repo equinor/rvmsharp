@@ -1,5 +1,6 @@
 ﻿namespace CadRevealFbxProvider;
 
+using System.Diagnostics;
 using BatchUtils;
 using Ben.Collections.Specialized;
 using CadRevealComposer;
@@ -10,11 +11,10 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
-using System.Diagnostics;
 
 public class FbxProvider : IModelFormatProvider
 {
-    public IReadOnlyList<CadRevealNode> ParseFiles(
+    public (IReadOnlyList<CadRevealNode>, ModelMetadata?) ParseFiles(
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
@@ -26,7 +26,7 @@ public class FbxProvider : IModelFormatProvider
         if (!workload.Any())
         {
             Console.WriteLine("Found no .fbx files. Skipping FBX Parser.");
-            return new List<CadRevealNode>();
+            return (new List<CadRevealNode>(), null);
         }
 
         var fbxTimer = Stopwatch.StartNew();
@@ -39,7 +39,7 @@ public class FbxProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
 
-        var nodes = FbxWorkload.ReadFbxData(
+        (var nodes, var metadata) = FbxWorkload.ReadFbxData(
             workload,
             treeIndexGenerator,
             instanceIdGenerator,
@@ -53,13 +53,13 @@ public class FbxProvider : IModelFormatProvider
         if (workload.Length == 0)
         {
             // returns empty list if there are no rvm files to process
-            return new List<CadRevealNode>();
+            return (new List<CadRevealNode>(), null);
         }
         Console.WriteLine(
             $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))"
         );
 
-        return nodes;
+        return (nodes, metadata);
     }
 
     public APrimitive[] ProcessGeometries(

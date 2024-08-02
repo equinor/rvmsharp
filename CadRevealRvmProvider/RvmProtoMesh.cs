@@ -1,12 +1,12 @@
 namespace CadRevealRvmProvider;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 // instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
 public abstract record ProtoMesh(

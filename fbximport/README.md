@@ -9,34 +9,33 @@ Most of the FBX functionality is not supported. This library should:
 - Be as simple as possible
 - Have unit tests
 
-## Requirements
+## Building on Windows or Mac
+
+### Requirements
 
 - Visual Studio 2019 or later for Windows
 - FBX SDK 2020.3.2 or later
-  - FBX_ROOT environment variable must be set
-  - FBXSDK_VERSION must be set at variable for the cmake build (for version checking)
-- VCPKG
-  - VCPKG_ROOT environment variable must be set to the VCPKG root folder without trailing slash
-    - Example: `C:\Users\username\vcpkg`
+  - `FBX_ROOT` environment variable must be set.
 
-## Building
+### Building
 
-```bash
-# bash
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -D FBXSDK_VERSION=2020.3.2
-cmake --build build
-# For release build:
+Run the following commands to build the library and test project. The binaries are places in the `build/bin` folder.
+
+```script
+cmake -B build -S . -D FBXSDK_VERSION=<version>
 cmake --build build --config Release
 ```
 
-```ps1
-# PowerShell
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-cmake --build build
-# For release build:
-cmake --build build --config Release
-```
+Where `<version>` is installed fbxsdk version. E.g. *2020.3.2*
+
+## Building for Linux
+
+To build, make sure *Docker* is installed and running, then simply run the `build-linux.ps1` script.
+
+This will build the *Dockerfile*, which is set up to build the *fbximporter*, and copy the built library to `CadRevealFbxProvider/lib` folder. The library and test binaries can also be found in the `build/bin` folder.
 
 ## Testing
 
-This library uses `catch2` for unit tests.
+The test binary is places in the `build/bin` folder.
+
+Run `tests -m <path-to-fbx-file>` to test the built library.

@@ -1,24 +1,33 @@
 namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
 using Commons.Utils;
+using MathNet.Numerics;
 using RvmSharp.Primitives;
-using System.Diagnostics;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmSnoutConverter
 {
-    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(this RvmSnout rvmSnout, ulong treeIndex, Color color)
+    public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
+        this RvmSnout rvmSnout,
+        ulong treeIndex,
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
+    )
     {
         if (!rvmSnout.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSnout.Matrix);
         }
 
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+        if (!rvmSnout.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+        {
+            return Array.Empty<APrimitive>();
+        }
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -35,12 +44,6 @@ public static class RvmSnoutConverter
 
         var radiusA = rvmSnout.RadiusTop * scale.X;
         var radiusB = rvmSnout.RadiusBottom * scale.X;
-
-        if (radiusA <= 0 && radiusB <= 0)
-        {
-            Console.WriteLine($"Snout was removed, because the radii were: {radiusA} and {radiusB}");
-            return Array.Empty<APrimitive>();
-        }
 
         var centerA = position + normal * halfLength;
         var centerB = position - normal * halfLength;
@@ -65,7 +68,8 @@ public static class RvmSnoutConverter
                     scale,
                     treeIndex,
                     color,
-                    bbox
+                    bbox,
+                    failedPrimitivesLogObject
                 );
             }
 
@@ -108,53 +112,47 @@ public static class RvmSnoutConverter
         var diameterA = 2f * radiusA;
         var diameterB = 2f * radiusB;
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
+        bool hasHeight = rvmSnout.Height != 0;
 
-        yield return new Cone(
-            Angle: 0f,
-            ArcAngle: 2f * MathF.PI,
-            centerA,
-            centerB,
-            localToWorldXAxis,
-            radiusA,
-            radiusB,
-            treeIndex,
-            color,
-            bbox
-        );
+        if (hasHeight)
+        {
+            yield return new Cone(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                centerA,
+                centerB,
+                localToWorldXAxis,
+                radiusA,
+                radiusB,
+                treeIndex,
+                color,
+                bbox
+            );
+        }
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA)
+        if (showCapA && radiusA.IsLarger(0, 5))
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(diameterA)
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(centerA);
 
-            yield return new Circle(
-                matrixCapA,
-                normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (showCapB)
+        if (!showCapB || !(radiusB.IsLarger(0, 5)) || !hasHeight)
         {
-            var matrixCapB =
-                Matrix4x4.CreateScale(diameterB)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(centerB);
-
-            yield return new Circle(
-                matrixCapB,
-                -normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield break;
         }
+
+        var matrixCapB =
+            Matrix4x4.CreateScale(diameterB)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        yield return CircleConverterHelper.ConvertCircle(matrixCapB, -normal, treeIndex, color);
     }
 
     private static IEnumerable<APrimitive> CreateEccentricCone(
@@ -194,43 +192,29 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-            rvmSnout,
-            eccentricCenterA,
-            eccentricCenterB
-        );
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
-        if (showCapA)
+        if (showCapA && radiusA.IsLarger(0, 5))
         {
             var matrixEccentricCapA =
                 Matrix4x4.CreateScale(diameterA)
                 * Matrix4x4.CreateFromQuaternion(rotation)
                 * Matrix4x4.CreateTranslation(eccentricCenterA);
 
-            yield return new Circle(
-                matrixEccentricCapA,
-                normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
-        if (showCapB)
+        if (!showCapB || !(radiusB.IsLarger(0, 5)))
         {
-            var matrixEccentricCapB =
-                Matrix4x4.CreateScale(diameterB)
-                * Matrix4x4.CreateFromQuaternion(rotation)
-                * Matrix4x4.CreateTranslation(eccentricCenterB);
-
-            yield return new Circle(
-                matrixEccentricCapB,
-                -normal,
-                treeIndex,
-                color,
-                bbox // Why we use the same bbox as RVM source
-            );
+            yield break;
         }
+
+        var matrixEccentricCapB =
+            Matrix4x4.CreateScale(diameterB)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(eccentricCenterB);
+
+        yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapB, -normal, treeIndex, color);
     }
 
     private static IEnumerable<APrimitive> CreateCylinderWithShear(
@@ -243,7 +227,8 @@ public static class RvmSnoutConverter
         Vector3 scale,
         ulong treeIndex,
         Color color,
-        BoundingBox bbox
+        BoundingBox bbox,
+        FailedPrimitivesLogObject? failedPrimitivesLogObject = null
     )
     {
         var localToWorldXAxis = Vector3.Transform(Vector3.UnitX, rotation);
@@ -254,10 +239,10 @@ public static class RvmSnoutConverter
         (var ellipsePolarA, _, _) = rvmSnout.GetTopCapEllipse();
         (var ellipsePolarB, _, _) = rvmSnout.GetBottomCapEllipse();
 
-        var semiMinorAxisA = ellipsePolarA.semiMinorAxis * scale.X;
-        var semiMajorAxisA = ellipsePolarA.semiMajorAxis * scale.X;
-        var semiMinorAxisB = ellipsePolarB.semiMinorAxis * scale.X;
-        var semiMajorAxisB = ellipsePolarB.semiMajorAxis * scale.X;
+        var semiMinorAxisA = ellipsePolarA.SemiMinorAxis * scale.X;
+        var semiMajorAxisA = ellipsePolarA.SemiMajorAxis * scale.X;
+        var semiMinorAxisB = ellipsePolarB.SemiMinorAxis * scale.X;
+        var semiMajorAxisB = ellipsePolarB.SemiMajorAxis * scale.X;
 
         // the slopes will extend the height of the cylinder with radius * tan(slope) (at top and bottom)
         var extendedHeightA = MathF.Tan(planeSlopeA) * (float)semiMinorAxisA;
@@ -266,8 +251,8 @@ public static class RvmSnoutConverter
         var extendedCenterA = centerA + normal * extendedHeightA;
         var extendedCenterB = centerB - normal * extendedHeightB;
 
-        var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height);
-        var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB);
+        var planeA = new Vector4(planeNormalA, 1 + extendedHeightB + height); // TODO: W (last value in the Vector4) isn't used by Reveal
+        var planeB = new Vector4(-planeNormalB, 1 + extendedHeightB); // TODO: W (last value in the Vector4) isn't used by Reveal
 
         yield return new GeneralCylinder(
             Angle: 0f,
@@ -283,9 +268,9 @@ public static class RvmSnoutConverter
             bbox
         );
 
-        var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(rvmSnout, centerA, centerB);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA)
+        if (showCapA && semiMajorAxisA > 0)
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisA, (float)semiMajorAxisA, 0) * 2.0f)
@@ -314,33 +299,35 @@ public static class RvmSnoutConverter
             }
         }
 
-        if (showCapB)
+        if (!showCapB || !(semiMajorAxisB > 0))
         {
-            var matrixCapB =
-                Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
-                * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
-                * Matrix4x4.CreateTranslation(centerB);
+            yield break;
+        }
 
-            if (matrixCapB.IsDecomposable())
-            {
-                yield return new GeneralRing(
-                    Angle: 0f,
-                    ArcAngle: 2f * MathF.PI,
-                    matrixCapB,
-                    -normal,
-                    Thickness: 1f,
-                    treeIndex,
-                    color,
-                    bbox // Why we use the same bbox as RVM source
-                );
-            }
-            else
-            {
-                // This should not happen, but happens in so few models as of now that we think we can ignore it.
-                Console.WriteLine(
-                    $"Failed to decompose matrix for {nameof(matrixCapB)} of node {treeIndex} geometry: {rvmSnout}"
-                );
-            }
+        var matrixCapB =
+            Matrix4x4.CreateScale(new Vector3((float)semiMinorAxisB, (float)semiMajorAxisB, 0) * 2.0f)
+            * Matrix4x4.CreateFromQuaternion(rotation * planeRotationB)
+            * Matrix4x4.CreateTranslation(centerB);
+
+        if (matrixCapB.IsDecomposable())
+        {
+            yield return new GeneralRing(
+                Angle: 0f,
+                ArcAngle: 2f * MathF.PI,
+                matrixCapB,
+                -normal,
+                Thickness: 1f,
+                treeIndex,
+                color,
+                bbox // Why we use the same bbox as RVM source
+            );
+        }
+        else
+        {
+            // This should not happen, but happens in so few models as of now that we think we can ignore it.
+            Console.WriteLine(
+                $"Failed to decompose matrix for {nameof(matrixCapB)} of node {treeIndex} geometry: {rvmSnout}"
+            );
         }
     }
 }

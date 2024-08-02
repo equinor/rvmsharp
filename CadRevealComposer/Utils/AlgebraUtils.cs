@@ -6,6 +6,7 @@ namespace CadRevealComposer.Utils;
 using System;
 using System.Diagnostics;
 using System.Numerics;
+using Commons.Utils;
 
 public static class AlgebraUtils
 {
@@ -223,23 +224,23 @@ public static class AlgebraUtils
         out Vector3 translation
     )
     {
-        if (Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
+        if (!Matrix4x4.Decompose(transform, out scale, out rotation, out translation))
         {
-            rotation = Quaternion.Normalize(rotation);
-            if (
-                rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold)
-                && rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold)
-                && rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold)
-                && rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold)
-            )
-            {
-                rotation = Quaternion.Identity;
-            }
-
-            return true;
+            return false;
         }
 
-        return false;
+        rotation = Quaternion.Normalize(rotation);
+        if (
+            rotation.X.ApproximatelyEquals(Quaternion.Identity.X, QuaternionApproximatelyEqualThreshold)
+            && rotation.Y.ApproximatelyEquals(Quaternion.Identity.Y, QuaternionApproximatelyEqualThreshold)
+            && rotation.Z.ApproximatelyEquals(Quaternion.Identity.Z, QuaternionApproximatelyEqualThreshold)
+            && rotation.W.ApproximatelyEquals(Quaternion.Identity.W, QuaternionApproximatelyEqualThreshold)
+        )
+        {
+            rotation = Quaternion.Identity;
+        }
+
+        return true;
     }
 
     /// <summary>

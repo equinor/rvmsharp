@@ -1,25 +1,27 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils;
-using RvmSharp.Primitives;
-using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
+using RvmSharp.Primitives;
 
 public static class RvmSphericalDishConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphericalDish rvmSphericalDish,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmSphericalDish.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphericalDish.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+        if (!rvmSphericalDish.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+            yield break;
 
         (Vector3 normal, _) = rotation.DecomposeQuaternion();
 
@@ -40,11 +42,11 @@ public static class RvmSphericalDishConverter
 
         yield return new EllipsoidSegment(sphereRadius, sphereRadius, height, center, normal, treeIndex, color, bbBox);
 
-        var showCap = PrimitiveCapHelper.CalculateCapVisibility(rvmSphericalDish, position);
+        var showCap = CapVisibility.IsCapVisible(rvmSphericalDish, position);
 
         if (showCap)
         {
-            yield return new Circle(matrixCap, -normal, treeIndex, color, bbBox);
+            yield return CircleConverterHelper.ConvertCircle(matrixCap, -normal, treeIndex, color);
         }
     }
 }

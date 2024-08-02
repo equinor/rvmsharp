@@ -1,9 +1,10 @@
 ﻿namespace CadRevealComposer.Tests.Operations;
 
-using CadRevealComposer.Operations;
-using Primitives;
 using System.Drawing;
 using System.Numerics;
+using CadRevealComposer.Operations;
+using NUnit.Framework.Legacy;
+using Primitives;
 
 [TestFixture]
 public class ExteriorSplitterTests
@@ -15,10 +16,10 @@ public class ExteriorSplitterTests
         var interior = CreateBoxCenteredInOrigin(2, 5);
         var (exteriorList, interiorList) = ExteriorSplitter.Split(new APrimitive[] { interior, exterior });
 
-        Assert.AreEqual(1, exteriorList.Length);
-        Assert.AreEqual(1, interiorList.Length);
-        Assert.AreEqual(exterior, exteriorList.Single());
-        Assert.AreEqual(interior, interiorList.Single());
+        Assert.That(exteriorList.Length, Is.EqualTo(1));
+        Assert.That(interiorList.Length, Is.EqualTo(1));
+        Assert.That(exteriorList.Single(), Is.EqualTo(exterior));
+        Assert.That(interiorList.Single(), Is.EqualTo(interior));
     }
 
     /// <summary>

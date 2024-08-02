@@ -1,20 +1,52 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Library</OutputType>
-        <TargetFrameworks>net7.0;netstandard2.1</TargetFrameworks>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>nullable;</WarningsAsErrors>
-		<LangVersion>latest</LangVersion>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable;</WarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+    
+    <IsPackable>true</IsPackable>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Disable message from Teronis.MSBuild.Packaging.ProjectBuildInPackage -->
+    <NoProjectBuildInPackageWelcome>true</NoProjectBuildInPackageWelcome>
 
-    <ItemGroup>
-      <PackageReference Include="LibTessDotNet" Version="1.1.15" />
-      <PackageReference Include="MathNet.Numerics" Version="5.0.0" />
-    </ItemGroup>
+    <!-- Package metadata -->
+    <Version>1.0.2</Version> <!-- Nuget Package Version. Try to keep somwehat SemVer updated -->
+    <Copyright>Equinor ASA</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Company>Equinor ASA</Company>
+    <PackageDescription>Rvmsharp is an Aveva .RVM file format reader</PackageDescription>
+    <RepositoryUrl>https://github.com/equinor/rvmsharp</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageId>Equinor.RvmSharp</PackageId>
+    <Authors>Equinor ASA</Authors>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <DebugSymbols>true</DebugSymbols>
+    <Description>RvmSharp is a fast AVEVA Rvm parser and converter, it can read .RVM files and attribute files and convert these files to meshes.</Description>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <!-- Include readme in nuget package -->
+    <None Include="README.md" Pack="true" PackagePath="\"/>
+  </ItemGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\Commons\Commons.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="LibTessDotNet"/>
+    <PackageReference Include="MathNet.Numerics"/>
+    <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage">
+      <!-- The Teronis.MSBuild.Packaging.ProjectBuildInPackage is added to make the dotnet pack command include the private dependencies in the build. Can be removed if dotnet pack ever solves this problem. -->
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- PrivateAssets="all" means that this will be referenced as an internal package in nuget (and is copied due to the ProjectBuildInPackage dependency)-->
+    <ProjectReference Include="..\Commons\Commons.csproj" PrivateAssets="all"/>
+  </ItemGroup>
 
 </Project>

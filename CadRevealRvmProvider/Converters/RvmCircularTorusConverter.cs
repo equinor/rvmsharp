@@ -1,23 +1,29 @@
 namespace CadRevealRvmProvider.Converters;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils;
-using RvmSharp.Primitives;
 using System.Drawing;
 using System.Numerics;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
+using CapVisibilityHelpers;
+using Commons.Utils;
+using RvmSharp.Primitives;
 
 public static class RvmCircularTorusConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCircularTorus rvmCircularTorus,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmCircularTorus.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCircularTorus.Matrix);
         }
+
+        if (!rvmCircularTorus.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+            yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();
 
@@ -37,51 +43,49 @@ public static class RvmCircularTorusConverter
             bbox
         );
 
-        if (isTorusSegment)
+        if (!isTorusSegment)
         {
-            var offset = rvmCircularTorus.Offset * scale.X;
-            var radius = rvmCircularTorus.Radius * scale.X;
-            var diameter = 2f * radius;
+            yield break;
+        }
 
-            var localToWorldXAxisA = Vector3.Transform(Vector3.UnitX, rotation);
-            var arcRotation = rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
-            var localToWorldXAxisB = Vector3.Transform(Vector3.UnitX, arcRotation);
+        var offset = rvmCircularTorus.Offset * scale.X;
+        var radius = rvmCircularTorus.Radius * scale.X;
+        var diameter = 2f * radius;
 
-            var positionCapA = position + localToWorldXAxisA * offset;
-            var positionCapB = position + localToWorldXAxisB * offset;
+        var localToWorldXAxisA = Vector3.Transform(Vector3.UnitX, rotation);
+        var arcRotation = rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitZ, arcAngle);
+        var localToWorldXAxisB = Vector3.Transform(Vector3.UnitX, arcRotation);
 
-            var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisA));
-            var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisB));
+        var positionCapA = position + localToWorldXAxisA * offset;
+        var positionCapB = position + localToWorldXAxisB * offset;
 
-            var (showCapA, showCapB) = PrimitiveCapHelper.CalculateCapVisibility(
-                rvmCircularTorus,
-                positionCapA,
-                positionCapB
-            );
+        var normalCapA = Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisA));
+        var normalCapB = -Vector3.Normalize(Vector3.Cross(normal, localToWorldXAxisB));
 
-            if (showCapA)
-            {
-                var matrixCapA =
-                    Matrix4x4.CreateScale(diameter, diameter, 1f)
-                    * Matrix4x4.CreateFromQuaternion(
-                        rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
-                    )
-                    * Matrix4x4.CreateTranslation(positionCapA);
+        var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmCircularTorus, positionCapA, positionCapB);
 
-                yield return new Circle(matrixCapA, normalCapA, treeIndex, color, bbox);
-            }
+        if (showCapA)
+        {
+            var matrixCapA =
+                Matrix4x4.CreateScale(diameter, diameter, 1f)
+                * Matrix4x4.CreateFromQuaternion(
+                    rotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
+                )
+                * Matrix4x4.CreateTranslation(positionCapA);
 
-            if (showCapB)
-            {
-                var matrixCapB =
-                    Matrix4x4.CreateScale(diameter, diameter, 1f)
-                    * Matrix4x4.CreateFromQuaternion(
-                        arcRotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
-                    )
-                    * Matrix4x4.CreateTranslation(positionCapB);
+            yield return CircleConverterHelper.ConvertCircle(matrixCapA, normalCapA, treeIndex, color);
+        }
 
-                yield return new Circle(matrixCapB, normalCapB, treeIndex, color, bbox);
-            }
+        if (showCapB)
+        {
+            var matrixCapB =
+                Matrix4x4.CreateScale(diameter, diameter, 1f)
+                * Matrix4x4.CreateFromQuaternion(
+                    arcRotation * Quaternion.CreateFromAxisAngle(Vector3.UnitX, MathF.PI / 2f)
+                )
+                * Matrix4x4.CreateTranslation(positionCapB);
+
+            yield return CircleConverterHelper.ConvertCircle(matrixCapB, normalCapB, treeIndex, color);
         }
     }
 }

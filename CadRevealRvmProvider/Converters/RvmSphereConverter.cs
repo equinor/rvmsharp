@@ -1,24 +1,26 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using RvmSharp.Primitives;
-using System.Diagnostics;
-using System.Drawing;
 
 public static class RvmSphereConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphere rvmSphere,
         ulong treeIndex,
-        Color color
+        Color color,
+        FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
         if (!rvmSphere.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
             throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmSphere.Matrix);
         }
-        Trace.Assert(scale.IsUniform(), $"Expected Uniform Scale. Was: {scale}");
+
+        if (!rvmSphere.CanBeConverted(scale, rotation, failedPrimitivesLogObject))
+            yield break;
 
         var (normal, _) = rotation.DecomposeQuaternion();
 

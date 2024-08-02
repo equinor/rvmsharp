@@ -1,7 +1,7 @@
 ﻿namespace RvmSharp.Exe;
 
-using CommandLine;
 using System.Collections.Generic;
+using CommandLine;
 
 internal class Options
 {

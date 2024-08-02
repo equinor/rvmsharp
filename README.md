@@ -1,12 +1,14 @@
 # RvmSharp
 
-[![Build Status](https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_apis/build/status/equinor.rvmsharp?branchName=master)](https://dev.azure.com/EquinorASA/DT%20%E2%80%93%20Digital%20Twin/_build/latest?definitionId=86&branchName=master)
+<https://www.nuget.org/packages/Equinor.RvmSharp>
 
-A library and utility for reading and converting RVM files into something else.
+A library and utility for reading and converting RVM files.
 
-Library supports .NET 6.0 and .NET Standard 2.1
+Library supports .NET 8.0+ and .NET Standard 2.1
 
-## Dependencies
+This repo also contains a pipeline for converting from Rvm to the Reveal file format. See [CadRevealComposer](#cad-reveal-composer)
+
+## RvmSharp Dependencies
 
 - [LibTessDotNet](https://github.com/speps/LibTessDotNet)
 - [System.Numerics.Vectors](https://www.nuget.org/packages/System.Numerics.Vectors/)
@@ -102,9 +104,13 @@ Install the addon for your IDE, and enable formatting when saving files to avoid
 > Remark:<br>
 > You need to run `dotnet tool restore` to install and update csharpier for the IDE addons to work as expected.
 
+## Releasing NuGet
+
+To update the RvmSharp package on nuget check the internal docs: <https://github.com/equinor/Echo/tree/master/docs/rvmsharp-sop-nuget.md>
+
 ## Credits
 
 This project is based on [rvmparser](https://github.com/cdyk/rvmparser) by @cdyk
 
 This repository contains sample data from the Equinor ASA - Huldra Dataset <https://data.equinor.com/dataset/Huldra>. A
-copy of the license can be found [here](./TestSamples/Huldra/Equinor_open_data_sharing_license_-_Huldra.pdf).
+copy of the Huldra dataset license can be found [here](./TestSamples/Huldra/Equinor_open_data_sharing_license_-_Huldra.pdf).

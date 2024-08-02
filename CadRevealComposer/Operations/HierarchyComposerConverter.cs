@@ -1,10 +1,10 @@
 namespace CadRevealComposer.Operations;
 
-using HierarchyComposer.Model;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using HierarchyComposer.Model;
 using Utils;
 
 public static class HierarchyComposerConverter
@@ -103,11 +103,10 @@ public static class HierarchyComposerConverter
     private static Dictionary<string, string> FilterRedundantAttributes(IDictionary<string, string> inputPdmsAttributes)
     {
         return inputPdmsAttributes
-            .Where(
-                kvp =>
-                    !string.Equals("Name", kvp.Key, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals("Position", kvp.Key, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals("RefNo", kvp.Key, StringComparison.OrdinalIgnoreCase)
+            .Where(kvp =>
+                !string.Equals("Name", kvp.Key, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals("Position", kvp.Key, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals("RefNo", kvp.Key, StringComparison.OrdinalIgnoreCase)
             )
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
     }

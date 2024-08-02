@@ -1,14 +1,14 @@
 ﻿namespace RvmSharp.Exe;
 
-using CommandLine;
-using Containers;
-using Operations;
-using ShellProgressBar;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using CommandLine;
+using Containers;
+using Operations;
+using ShellProgressBar;
 
 static class Program
 {
@@ -19,8 +19,8 @@ static class Program
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
 
-        var result = Parser.Default
-            .ParseArguments<Options>(args)
+        var result = Parser
+            .Default.ParseArguments<Options>(args)
             .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
         Environment.Exit(result);
     }

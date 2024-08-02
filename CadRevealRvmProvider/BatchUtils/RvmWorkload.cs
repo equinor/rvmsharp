@@ -1,10 +1,10 @@
 ﻿namespace CadRevealRvmProvider.BatchUtils;
 
+using System.Text.RegularExpressions;
 using Commons;
 using RvmSharp;
 using RvmSharp.Containers;
 using RvmSharp.Operations;
-using System.Text.RegularExpressions;
 
 public static class RvmWorkload
 {
@@ -29,10 +29,9 @@ public static class RvmWorkload
             .SelectMany(directory => Directory.GetFiles(directory, "*.rvm")) // Collect RVMs
             .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.txt"))) // Collect TXTs
             .Concat(
-                files.Where(
-                    x =>
-                        x.EndsWith(".rvm", StringComparison.OrdinalIgnoreCase)
-                        || x.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+                files.Where(x =>
+                    x.EndsWith(".rvm", StringComparison.OrdinalIgnoreCase)
+                    || x.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
                 )
             ) // Append single files
             .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex

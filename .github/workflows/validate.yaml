@@ -7,7 +7,7 @@ jobs:
     runs-on: windows-latest
     name: Check Formatting
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install tools
         run: |
           dotnet tool restore
@@ -17,17 +17,21 @@ jobs:
       - name: Check formatting using csharpier
         run: |
           dotnet csharpier --check .
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host ""
+            Write-Host "Tip: Install csharpier using ' dotnet tool restore ', and run it using ' dotnet csharpier . ' to autofix formatting."
+          }
 
   build:
     name: Build and test
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet-version: [ '7.0.x', '6.0.x' ]
+        dotnet-version: [ '8.0.x' ]
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup .NET Core SDK ${{ matrix.dotnet-version }}
+      - uses: actions/checkout@v4
+      - name: Setup .NET SDK ${{ matrix.dotnet-version }}
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ matrix.dotnet-version }}

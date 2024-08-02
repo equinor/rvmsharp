@@ -1,9 +1,5 @@
 ﻿namespace CadRevealComposer.Writers;
 
-using Commons.Utils;
-using Primitives;
-using SharpGLTF.IO;
-using SharpGLTF.Schema2;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,6 +9,10 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text.Json.Nodes;
+using Commons.Utils;
+using Primitives;
+using SharpGLTF.Schema2;
 
 /// <summary>
 /// Cognite Reveal format:
@@ -179,7 +179,7 @@ public static class GltfWriter
             // create node
             var node = scene.CreateNode("InstanceMesh");
             var mesh = model.CreateMesh();
-            mesh.Extras = JsonContent.Parse(FormattableString.Invariant($"{{\"InstanceId\":{instanceId}}}"));
+            mesh.Extras = JsonNode.Parse(FormattableString.Invariant($"{{\"InstanceId\":{instanceId}}}"));
             var meshPrimitive = mesh.CreatePrimitive();
             meshPrimitive.SetIndexAccessor(indexAccessor);
             meshPrimitive.SetVertexAccessor("POSITION", vertexAccessor);
@@ -237,8 +237,8 @@ public static class GltfWriter
             // write vertices
             var treeIndex = (float)triangleMesh.TreeIndex;
             var color = triangleMesh.Color;
-            var vertexBufferSpan = vertexBuffer.Content
-                .AsSpan()
+            var vertexBufferSpan = vertexBuffer
+                .Content.AsSpan()
                 .Slice(vertexOffset * vertexBufferByteStride, sourceMesh.Vertices.Length * vertexBufferByteStride);
 
             var bufferPos = 0;

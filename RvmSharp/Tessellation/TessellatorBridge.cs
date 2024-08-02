@@ -1,12 +1,13 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using Commons.Utils;
+using Primitives;
 using static Primitives.RvmFacetGroup;
 
 // ReSharper disable once UnusedType.Global -- Public API
@@ -16,8 +17,8 @@ public static class TessellatorBridge
 
     public static (RvmMesh, Color)[] Tessellate(RvmNode group, float tolerance)
     {
-        var meshes = group.Children
-            .OfType<RvmPrimitive>()
+        var meshes = group
+            .Children.OfType<RvmPrimitive>()
             .Select(primitive =>
             {
 #if DEBUG
@@ -184,7 +185,7 @@ public static class TessellatorBridge
 
         var capCount = cap.Count(c => c);
 
-        var error = 0.0f;
+        const float error = 0.0f;
 
         var vertices = new float[3 * 4 * capCount];
         var normals = new float[3 * 4 * capCount];
@@ -261,7 +262,7 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmRectangularTorus rectangularTorus, float scale, float tolerance)
     {
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(
+        var segments = SagittaUtils.SagittaBasedSegmentCount(
             rectangularTorus.Angle,
             rectangularTorus.RadiusOuter,
             scale,
@@ -269,7 +270,7 @@ public static class TessellatorBridge
         );
         var samples = segments + 1; // Assumed to be open, add extra sample.
 
-        var error = TessellationHelpers.SagittaBasedError(
+        var error = SagittaUtils.SagittaBasedError(
             rectangularTorus.Angle,
             rectangularTorus.RadiusOuter,
             scale,
@@ -283,12 +284,14 @@ public static class TessellatorBridge
         for (var i = 0; i < 2; i++)
         {
             var con = rectangularTorus.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasRectangularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasRectangularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
-                {
-                    cap[i] = false;
-                }
+                continue;
+            }
+
+            if (ConnectionInterface.DoInterfacesMatch(rectangularTorus, con))
+            {
+                cap[i] = false;
             }
         }
 
@@ -433,14 +436,14 @@ public static class TessellatorBridge
 
     private static RvmMesh Tessellate(RvmCircularTorus circularTorus, float scale, float tolerance)
     {
-        var segments_l = TessellationHelpers.SagittaBasedSegmentCount(
+        var segments_l = SagittaUtils.SagittaBasedSegmentCount(
             circularTorus.Angle,
             circularTorus.Offset + circularTorus.Radius,
             scale,
             tolerance
         ); // large radius, toroidal direction
         // FIXME: some assets have negative circularTorus.Radius. Find out if this is the correct solution
-        var segments_s = TessellationHelpers.SagittaBasedSegmentCount(
+        var segments_s = SagittaUtils.SagittaBasedSegmentCount(
             Math.PI * 2,
             Math.Abs(circularTorus.Radius),
             scale,
@@ -448,34 +451,36 @@ public static class TessellatorBridge
         ); // small radius, poloidal direction
 
         var error = Math.Max(
-            TessellationHelpers.SagittaBasedError(
+            SagittaUtils.SagittaBasedError(
                 circularTorus.Angle,
                 circularTorus.Offset + circularTorus.Radius,
                 scale,
                 segments_l
             ),
-            TessellationHelpers.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s)
+            SagittaUtils.SagittaBasedError(Math.PI * 2, circularTorus.Radius, scale, segments_s)
         );
         Debug.Assert(error <= tolerance);
 
         var samples_l = segments_l + 1; // Assumed to be open, add extra sample
         var samples_s = segments_s; // Assumed to be closed
 
-        bool shell = true;
+        const bool shell = true;
         bool[] cap = { true, true };
         for (var i = 0; i < 2; i++)
         {
             var con = circularTorus.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
-                {
-                    cap[i] = false;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
+            }
+
+            if (ConnectionInterface.DoInterfacesMatch(circularTorus, con))
+            {
+                cap[i] = false;
+            }
+            else
+            {
+                //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
             }
         }
 
@@ -677,7 +682,11 @@ public static class TessellatorBridge
                 faces_n++;
         }
 
-        if (faces_n > 0)
+        if (faces_n <= 0)
+        {
+            return new RvmMesh(new float[0], new float[0], new int[0], 0);
+        }
+
         {
             var vertices_n = 4 * faces_n;
             var vertices = new float[3 * vertices_n];
@@ -706,15 +715,13 @@ public static class TessellatorBridge
 
             var tri = new RvmMesh(vertices, normals, indices, 0.0f);
 
-            if (!(i_v == 3 * vertices_n) || !(i_p == 3 * triangles_n) || !(o == vertices_n))
+            if (i_v != 3 * vertices_n || i_p != 3 * triangles_n || o != vertices_n)
             {
                 throw new Exception();
             }
 
             return tri;
         }
-
-        return new RvmMesh(new float[0], new float[0], new int[0], 0);
     }
 
     private static RvmMesh Tessellate(RvmFacetGroup facetGroup)
@@ -749,8 +756,8 @@ public static class TessellatorBridge
 
             var vo = vertices.Count;
 
-            var adjustedContours = poly.Contours
-                .Select(v => new RvmContour(v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()))
+            var adjustedContours = poly
+                .Contours.Select(v => new RvmContour(v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()))
                 .ToArray();
 
             var outJob = TessNet.Tessellate(adjustedContours);
@@ -773,29 +780,28 @@ public static class TessellatorBridge
         //  return;
         //}
 
-        int segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, cylinder.Radius, scale, tolerance);
+        int segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, cylinder.Radius, scale, tolerance);
         int samples = segments; // Assumed to be closed
 
-        var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, cylinder.Radius, scale, segments);
 
-        bool shell = true;
+        const bool shell = true;
         bool[] shouldCap = { true, true };
 
         for (int i = 0; i < 2; i++)
         {
             var con = cylinder.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
-                {
-                    shouldCap[i] = false;
-                    //discardedCaps++;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
             }
+
+            if (ConnectionInterface.DoInterfacesMatch(cylinder, con))
+            {
+                shouldCap[i] = false;
+                //discardedCaps++;
+            }
+            //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
         }
 
         int vertCount = (shell ? 2 * samples : 0) + (shouldCap[0] ? samples : 0) + (shouldCap[1] ? samples : 0);
@@ -927,27 +933,26 @@ public static class TessellatorBridge
     private static RvmMesh Tessellate(RvmSnout snout, float scale, float tolerance)
     {
         var radius_max = Math.Max(snout.RadiusBottom, snout.RadiusTop);
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, radius_max, scale, tolerance);
         var samples = segments; // assumed to be closed
 
-        var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius_max, scale, segments);
 
-        bool shell = true;
+        const bool shell = true;
         bool[] cap = { true, true };
         for (var i = 0; i < 2; i++)
         {
             var con = snout.Connections[i];
-            if (con != null && con.ConnectionTypeFlags == RvmConnection.ConnectionType.HasCircularSide)
+            if (con == null || con.ConnectionTypeFlags != RvmConnection.ConnectionType.HasCircularSide)
             {
-                if (ConnectionInterface.DoInterfacesMatch(snout, con))
-                {
-                    cap[i] = false;
-                }
-                else
-                {
-                    //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
-                }
+                continue;
             }
+
+            if (ConnectionInterface.DoInterfacesMatch(snout, con))
+            {
+                cap[i] = false;
+            }
+            //store.addDebugLine(con.p.data, (con.p.data + 0.05f*con.d).data, 0x00ffff);
         }
 
         var t0 = new float[2 * samples];
@@ -1103,10 +1108,10 @@ public static class TessellatorBridge
         float tolerance
     )
     {
-        var segments = TessellationHelpers.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
+        var segments = SagittaUtils.SagittaBasedSegmentCount(Math.PI * 2, radius, scale, tolerance);
         var samples = segments; // Assumed to be closed
 
-        var error = TessellationHelpers.SagittaBasedError(Math.PI * 2, radius, scale, samples);
+        var error = SagittaUtils.SagittaBasedError(Math.PI * 2, radius, scale, samples);
 
         bool is_sphere = false;
         if (Math.PI - 1e-3 <= arc)
@@ -1115,7 +1120,7 @@ public static class TessellatorBridge
             is_sphere = true;
         }
 
-        var min_rings = 3; // arc <= half_pi ? 2 : 3;
+        const int min_rings = 3; // arc <= half_pi ? 2 : 3;
         var rings = (int)(Math.Max(min_rings, scale_z * samples * arc * (1.0f / Math.PI * 2)));
 
         var u0 = new int[rings];
@@ -1217,12 +1222,14 @@ public static class TessellatorBridge
                     indices.Add(o_n + ii_n);
                     indices.Add(o_c + ii_c);
 
-                    if (i_n != ii_n)
+                    if (i_n == ii_n)
                     {
-                        indices.Add(o_c + i_c);
-                        indices.Add(o_n + i_n);
-                        indices.Add(o_n + ii_n);
+                        continue;
                     }
+
+                    indices.Add(o_c + i_c);
+                    indices.Add(o_n + i_n);
+                    indices.Add(o_n + ii_n);
                 }
             }
 

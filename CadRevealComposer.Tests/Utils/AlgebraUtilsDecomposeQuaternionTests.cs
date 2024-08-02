@@ -1,8 +1,9 @@
 namespace CadRevealComposer.Tests.Utils;
 
-using CadRevealComposer.Utils;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using CadRevealComposer.Utils;
+using NUnit.Framework.Legacy;
 
 [TestFixture]
 public class AlgebraUtilsDecomposeQuaternionTests
@@ -57,6 +58,6 @@ public class AlgebraUtilsDecomposeQuaternionTests
         var normalExpected = new Vector3(test.NormalExpected.X, test.NormalExpected.Y, test.NormalExpected.Z);
         (Vector3 normalCalculated, float rotationAngleCalculated) = quaternionInput.DecomposeQuaternion();
         Assert.That(normalExpected.EqualsWithinTolerance(normalCalculated, 0.00001f));
-        Assert.AreEqual(rotationAngleCalculated, test.RotationAngleExpected, 0.01f);
+        Assert.That(test.RotationAngleExpected, Is.EqualTo(rotationAngleCalculated).Within(0.01f));
     }
 }

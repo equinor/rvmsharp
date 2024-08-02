@@ -16,10 +16,10 @@ variables:
 
 steps:
   - task: UseDotNet@2
-    displayName: Use .NET 7.0
+    displayName: Use .NET 8.0
     inputs:
       packageType: 'sdk' 
-      version: '7.0.x'
+      version: '8.0.x'
 
   - task: DotNetCoreCLI@2
     displayName: "Restore NuGet"
@@ -47,7 +47,7 @@ steps:
   - script: 'reportgenerator -reports:$(Agent.TempDirectory)/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/coverlet/reports -reporttypes:"Cobertura"'
     displayName: "Create coverage reports"
 
-  - task: PublishCodeCoverageResults@1
+  - task: PublishCodeCoverageResults@2
     displayName: "Publish code coverage"
     inputs:
       codeCoverageTool: Cobertura

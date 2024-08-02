@@ -2,12 +2,7 @@
 
 public class FbxImporter : IDisposable
 {
-    private readonly FbxSdkWrapper _sdk;
-
-    public FbxImporter()
-    {
-        _sdk = new FbxSdkWrapper();
-    }
+    private readonly FbxSdkWrapper _sdk = new();
 
     public bool HasValidSdk()
     {

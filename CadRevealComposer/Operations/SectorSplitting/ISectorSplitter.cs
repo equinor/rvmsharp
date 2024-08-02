@@ -1,7 +1,7 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
-using Primitives;
 using System.Collections.Generic;
+using Primitives;
 
 public interface ISectorSplitter
 {

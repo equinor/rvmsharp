@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using Primitives;
 using System;
 using System.Numerics;
+using Primitives;
 
 internal class ConnectionInterface
 {

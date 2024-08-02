@@ -6,9 +6,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using ProtoBuf;
 
+[ProtoContract(SkipConstructor = true)]
 public class Mesh : IEquatable<Mesh>
 {
+    /// <summary>
+    /// Represents the expected deviance from the
+    /// source data. Often Sagitta or Simplification. In meters.
+    /// </summary>
+    [ProtoMember(3)]
     public float Error { get; }
 
     /// <summary>
@@ -18,9 +25,15 @@ public class Mesh : IEquatable<Mesh>
 
     public uint[] Indices => _indices;
 
+    /// <summary>
+    /// Triangle Count is (Mesh.Indices.Count / 3). As three indices make one triangle.
+    /// </summary>
     public int TriangleCount => _indices.Length / 3;
 
+    [ProtoMember(1)]
     private readonly Vector3[] _vertices;
+
+    [ProtoMember(2)]
     private readonly uint[] _indices;
 
     public Mesh(IReadOnlyList<float> vertexes, int[] indexes, float error)
@@ -39,7 +52,7 @@ public class Mesh : IEquatable<Mesh>
 
     /// <summary>
     /// Create a mesh using vertices, indices and error
-    /// Note: Verticies and indices are referenced and not copied
+    /// Note: Vertices and indices are referenced and not copied
     /// </summary>
     /// <param name="vertices"></param>
     /// <param name="indices"></param>
@@ -68,29 +81,27 @@ public class Mesh : IEquatable<Mesh>
     /// <param name="transform">Optionally add a transform to the mesh while calculating the bounding box.</param>
     /// <returns>A Bounding Box</returns>
     /// <exception cref="Exception">Throws if the Mesh has 0 vertices.</exception>
-    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform)
+    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform = null)
     {
-        var vertices = this._vertices;
-
-        if (vertices.Length == 0)
+        if (_vertices.Length == 0)
             throw new Exception("Cannot find BoundingBox of a Mesh with 0 Vertices.");
 
         Vector3 min = Vector3.One * float.MaxValue;
         Vector3 max = Vector3.One * float.MinValue;
         if (transform is not null and { IsIdentity: false }) // Skip applying the transform if its an identity transform.
         {
-            for (int i = 1; i < vertices.Length; i++)
+            for (int i = 1; i < _vertices.Length; i++)
             {
-                var transformedVertice = Vector3.Transform(vertices[i], transform.Value);
-                min = Vector3.Min(min, transformedVertice);
-                max = Vector3.Max(max, transformedVertice);
+                var transformedVertex = Vector3.Transform(_vertices[i], transform.Value);
+                min = Vector3.Min(min, transformedVertex);
+                max = Vector3.Max(max, transformedVertex);
             }
         }
         else
         {
-            for (int i = 1; i < vertices.Length; i++)
+            for (int i = 1; i < _vertices.Length; i++)
             {
-                var vertex = vertices[i];
+                var vertex = _vertices[i];
                 min = Vector3.Min(min, vertex);
                 max = Vector3.Max(max, vertex);
             }
