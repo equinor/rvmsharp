@@ -160,4 +160,5 @@ public abstract record APrimitive(
 )
 {
     public int Priority { get; init; } = 0;
+    public string? Discipline { get; init; } = null;
 }

@@ -54,7 +54,9 @@ internal static class RvmStoreToCadRevealNodesConverter
                 var allChildren = CadRevealNode.GetAllNodesFlat(node);
                 foreach (var child in allChildren)
                 {
-                    child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+                    child.Geometries = child.Geometries
+                        .Select(g => g with { Priority = 1, Discipline = discipline })
+                        .ToArray();
                 }
             }
         }

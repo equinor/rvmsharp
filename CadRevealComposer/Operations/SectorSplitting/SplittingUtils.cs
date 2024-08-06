@@ -221,4 +221,26 @@ public static class SplittingUtils
 
         return listOfGroups;
     }
+
+    public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<ulong, APrimitive>> geometryGroups)
+    {
+        return geometryGroups
+            .Select(g =>
+            {
+                var geometries = g.Select(x => x).ToArray();
+                var boundingBox = geometries.CalculateBoundingBox();
+                if (boundingBox == null)
+                {
+                    throw new Exception("Unexpected error, the bounding box should not have been null.");
+                }
+                return new Node(
+                    g.Key,
+                    geometries,
+                    geometries.Sum(DrawCallEstimator.EstimateByteSize),
+                    EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,
+                    boundingBox
+                );
+            })
+            .ToArray();
+    }
 }
