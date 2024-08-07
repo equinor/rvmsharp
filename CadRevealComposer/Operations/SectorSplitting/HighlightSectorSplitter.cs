@@ -33,10 +33,14 @@ public class HighlightSectorSplitter : ISectorSplitter
             var geometryGroups = disciplineGroup.GroupBy(x => x.TreeIndex); // Group by treeindex to avoid having one treeindex uneccessary many sectors
             var nodes = SplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
 
-            var boundingBox = nodes.CalculateBoundingBox();
+            // TODO: Currently ignoring outlierNodes
+            (Node[] regularNodes, Node[] outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes();
+
+
+            var boundingBox = regularNodes.CalculateBoundingBox();
             var startSplittingDepth = CalculateStartSplittingDepth(boundingBox);
             sectors.AddRange(
-                SplitIntoSectorsRecursive(nodes, 1, rootPath, rootSectorId, sectorIdGenerator, startSplittingDepth)
+                SplitIntoSectorsRecursive(regularNodes, 1, rootPath, rootSectorId, sectorIdGenerator, startSplittingDepth)
             );
         }
 
