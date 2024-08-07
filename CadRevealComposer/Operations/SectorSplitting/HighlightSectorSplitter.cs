@@ -14,7 +14,7 @@ public class HighlightSectorSplitter : ISectorSplitter
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
-    private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 500_000; // bytes, Arbitrary value
     private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong nextSectorId)
