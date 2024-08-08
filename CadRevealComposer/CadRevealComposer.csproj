@@ -20,4 +20,10 @@
         <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="troa_tags.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

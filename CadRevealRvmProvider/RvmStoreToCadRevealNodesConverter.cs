@@ -44,7 +44,10 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
-        foreach (var node in allNodes)
+        var tagFilteredNodes = StidTagMapper.FilterNodesWithTag(allNodes);
+
+
+        foreach (var node in tagFilteredNodes)
         {
             var tag = node.Attributes.GetValueOrNull("Tag");
             var discipline = node.Attributes.GetValueOrNull("Discipline");
