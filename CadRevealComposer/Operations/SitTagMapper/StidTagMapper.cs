@@ -11,7 +11,7 @@ public static class StidTagMapper
     public static CadRevealNode[] FilterNodesWithTag(CadRevealNode[] nodes)
     {
         // string filename = "troa_tags.json";
-        string path = "\\ws1611\\AppResources\\TrollA\\Tags_temp2024-08-08\\troa_tags.json";
+        string path = @"\\ws1611\AppResources\TrollA\Tags_temp2024-08-08\troa_tags.json";
 
         var tagDataFromStid = ParseFromJson(path);
         return FilterNodesByStidTags(nodes, tagDataFromStid);
