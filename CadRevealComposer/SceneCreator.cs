@@ -6,13 +6,13 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using CadRevealComposer.Operations.SectorSplitting;
 using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
+using Operations.SectorSplitting;
 using Primitives;
 using Utils;
 using Writers;
@@ -31,7 +31,8 @@ public static class SceneCreator
         float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
-        BoundingBox? GeometryBoundingBox
+        BoundingBox? GeometryBoundingBox,
+        SectorSplittingMetadata Metadata
     )
     {
         public long DownloadSize { get; init; }
@@ -115,7 +116,8 @@ public static class SceneCreator
                 DownloadSize = sector.DownloadSize,
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
-                    GeometryDistributions = new GeometryDistributionStats(sector.Geometries)
+                    GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
+                    SplittingStats = sector.Metadata
                 }
             };
         }
@@ -167,7 +169,8 @@ public static class SceneCreator
             MaxNodeDiagonal: p.MaxNodeDiagonal,
             Geometries: p.Geometries,
             SubtreeBoundingBox: p.SubtreeBoundingBox,
-            GeometryBoundingBox: p.GeometryBoundingBox
+            GeometryBoundingBox: p.GeometryBoundingBox,
+            Metadata: p.Metadata
         );
 
         if (sectorFilename != null)

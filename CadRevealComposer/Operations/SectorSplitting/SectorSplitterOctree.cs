@@ -11,14 +11,15 @@ using Utils;
 public class SectorSplitterOctree : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
-    private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
+    private const long SectorEstimatesTrianglesBudget = 150_000; // triangles, Arbitrary value
     private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
-    private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
+    private const float DoNotChopSectorsSmallerThanMetersDiagonal = 17.4f; // Arbitrary value
     private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
     private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
     private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
 
     private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
+
     private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
 
     private readonly TooFewInstancesHandler _tooFewInstancesHandler = new();
@@ -202,7 +203,7 @@ public class SectorSplitterOctree : ISectorSplitter
             var subVoxelDiagonal = subVoxelNodes.CalculateBoundingBox().Diagonal;
 
             if (
-                subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter
+                subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersDiagonal
                 || sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget
             )
             {
@@ -254,7 +255,18 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
-        return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
+        return new InternalSector(
+            sectorId,
+            null,
+            0,
+            path,
+            0,
+            0,
+            Array.Empty<APrimitive>(),
+            subtreeBoundingBox,
+            null,
+            new SectorSplittingMetadata(0, 0, 0, 0, 0, 0, SplittingReason.RootSector)
+        );
     }
 
     private InternalSector CreateSector(
@@ -302,7 +314,38 @@ public class SectorSplitterOctree : ISectorSplitter
             maxDiagonal,
             geometries,
             subtreeBoundingBox,
-            geometryBoundingBox
+            geometryBoundingBox,
+            calculateSectorSplittingMetadata(nodes)
+        );
+    }
+
+    private SectorSplittingMetadata calculateSectorSplittingMetadata(Node[] geometries)
+    {
+        var numNodes = geometries.Length;
+        var numPrimitives = geometries.Sum(x => x.Geometries.Count(g => g is not (TriangleMesh or InstancedMesh)));
+        var numInstancedMeshes = geometries.Sum(x => x.Geometries.Count(g => g is InstancedMesh));
+        var numMeshes = geometries.Sum(x => x.Geometries.Count(g => g is TriangleMesh));
+        var byteSizeCost = geometries.Sum(x => x.EstimatedByteSize);
+        var estimatedTriangleCount = geometries.Sum(x => x.EstimatedTriangleCount);
+
+        var estimatedSplittingReason = SplittingReason.ByteSize;
+        if (numPrimitives >= SectorEstimatedPrimitiveBudget)
+        {
+            estimatedSplittingReason = SplittingReason.NumPrimitives;
+        }
+        else if (estimatedTriangleCount >= SectorEstimatesTrianglesBudget)
+        {
+            estimatedSplittingReason = SplittingReason.TriangleCount;
+        }
+
+        return new SectorSplittingMetadata(
+            byteSizeCost,
+            estimatedTriangleCount,
+            numNodes,
+            numPrimitives,
+            numInstancedMeshes,
+            numMeshes,
+            estimatedSplittingReason
         );
     }
 
@@ -352,7 +395,7 @@ public class SectorSplitterOctree : ISectorSplitter
         {
             if (
                 (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
-                && nodeArray.Length - i > 10
+                && nodeArray.Length - i > 10 // Avoid many sectors with few items if each item is large
             )
             {
                 yield break;

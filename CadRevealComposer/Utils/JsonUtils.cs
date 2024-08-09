@@ -2,6 +2,8 @@ namespace CadRevealComposer.Utils;
 
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using Operations.SectorSplitting;
 
 public static class JsonUtils
 {
@@ -9,7 +11,11 @@ public static class JsonUtils
     {
         var jsonData = JsonSerializer.Serialize(
             obj,
-            new JsonSerializerOptions(JsonSerializerDefaults.Web) { WriteIndented = writeIndented }
+            new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            {
+                WriteIndented = writeIndented,
+                Converters = { new JsonStringEnumConverter<SplittingReason>() }
+            }
         );
         File.WriteAllText(filename, jsonData);
     }

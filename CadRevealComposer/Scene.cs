@@ -4,6 +4,7 @@ using System;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Configuration;
+using Operations.SectorSplitting;
 using Utils;
 
 public class Scene
@@ -101,6 +102,7 @@ public class Sector
 public class SectorEchoDevMetadata
 {
     public GeometryDistributionStats? GeometryDistributions { get; set; } = null;
+    public SectorSplittingMetadata? SplittingStats { get; set; } = null;
 }
 
 public record SerializableBoundingBox(
@@ -108,6 +110,7 @@ public record SerializableBoundingBox(
     [property: JsonPropertyName("max")] SerializableVector3 Max
 );
 
+[JsonSerializable(typeof(SerializableVector3))]
 public record SerializableVector3(
     [property: JsonPropertyName("x")] float X,
     [property: JsonPropertyName("y")] float Y,

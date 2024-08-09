@@ -29,7 +29,8 @@ public class SectorSplitterSingle : ISectorSplitter
             geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
             geometries,
             bb,
-            null
+            null,
+            new SectorSplittingMetadata(0, 0, 0, 0, 0, 0, SplittingReason.RootSector) // Not implemented for Single Sector Splitter yet
         );
     }
 }
