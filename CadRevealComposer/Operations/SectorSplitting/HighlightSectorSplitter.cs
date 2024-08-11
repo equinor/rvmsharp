@@ -62,7 +62,7 @@ public class HighlightSectorSplitter : ISectorSplitter
 
         while (nodesUsed < nodes.Length)
         {
-            var nodesByBudget = GetNodesByBudgetSimple(nodes).ToArray();
+            var nodesByBudget = GetNodesByBudgetSimple(nodes, nodesUsed).ToArray();
             nodesUsed += nodesByBudget.Length;
 
             var sectorId = (uint)sectorIdGenerator.GetNextId();
@@ -203,11 +203,11 @@ public class HighlightSectorSplitter : ISectorSplitter
         }
     }
 
-    private static IEnumerable<Node> GetNodesByBudgetSimple(IReadOnlyList<Node> nodes)
+    private static IEnumerable<Node> GetNodesByBudgetSimple(IReadOnlyList<Node> nodes, int indexToStart)
     {
         var byteSizeBudget = SectorEstimatedByteSizeBudget;
 
-        for (int i = 0; i < nodes.Count; i++)
+        for (int i = indexToStart; i < nodes.Count; i++)
         {
             if (byteSizeBudget < 0)
             {
