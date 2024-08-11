@@ -36,17 +36,39 @@ public class HighlightSectorSplitter : ISectorSplitter
             // TODO: Currently ignoring outlierNodes
             (Node[] regularNodes, Node[] outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes();
 
-
             // var boundingBox = regularNodes.CalculateBoundingBox();
-            var startSplittingDepth = 3; //CalculateStartSplittingDepth(boundingBox); // Manually setting, because it always was 1
-            sectors.AddRange(
-                SplitIntoSectorsRecursive(regularNodes, 1, rootPath, rootSectorId, sectorIdGenerator, startSplittingDepth)
-            );
+            //var startSplittingDepth = 3; //CalculateStartSplittingDepth(boundingBox); // Manually setting, because it always was 1
+            //sectors.AddRange(
+            //    SplitIntoSectorsRecursive(regularNodes, 1, rootPath, rootSectorId, sectorIdGenerator, startSplittingDepth)
+            //);
+
+            sectors.AddRange(SplitIntoTreeIndexSectors(regularNodes, rootPath, rootSectorId, sectorIdGenerator));
         }
 
         foreach (var sector in sectors)
         {
             yield return sector;
+        }
+    }
+
+    private IEnumerable<InternalSector> SplitIntoTreeIndexSectors(
+        Node[] nodes,
+        string rootPath,
+        uint rootSectorId,
+        SequentialIdGenerator sectorIdGenerator
+    )
+    {
+        var nodesUsed = 0;
+
+        while (nodesUsed < nodes.Length)
+        {
+            var nodesByBudget = GetNodesByBudgetSimple(nodes).ToArray();
+            nodesUsed += nodesByBudget.Length;
+
+            var sectorId = (uint)sectorIdGenerator.GetNextId();
+            var subtreeBoundingBox = nodesByBudget.CalculateBoundingBox();
+
+            yield return CreateSector(nodesByBudget, sectorId, rootSectorId, rootPath, 1, subtreeBoundingBox);
         }
     }
 
@@ -178,6 +200,24 @@ public class HighlightSectorSplitter : ISectorSplitter
                     yield return sector;
                 }
             }
+        }
+    }
+
+    private static IEnumerable<Node> GetNodesByBudgetSimple(IReadOnlyList<Node> nodes)
+    {
+        var byteSizeBudget = SectorEstimatedByteSizeBudget;
+
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            if (byteSizeBudget < 0)
+            {
+                yield break;
+            }
+
+            var node = nodes[i];
+            byteSizeBudget -= node.EstimatedByteSize;
+
+            yield return node;
         }
     }
 
