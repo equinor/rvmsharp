@@ -224,7 +224,7 @@ public static class SplittingUtils
 
     public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<ulong, APrimitive>> geometryGroups)
     {
-        float sizeCutoff = 0.2f;
+        float sizeCutoff = 1f;
 
         return geometryGroups
             .Select(g =>
