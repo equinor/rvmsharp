@@ -224,10 +224,26 @@ public static class SplittingUtils
 
     public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<ulong, APrimitive>> geometryGroups)
     {
+        float sizeCutoff = 0.1f;
+
         return geometryGroups
             .Select(g =>
             {
-                var geometries = g.Select(x => x).ToArray();
+                var allGeometries = g.Select(x => x).ToArray();
+
+                var orderedBySizeDescending = allGeometries.OrderByDescending(x => x.AxisAlignedBoundingBox.Diagonal);
+
+                APrimitive[] geometries;
+
+                if (orderedBySizeDescending.First().AxisAlignedBoundingBox.Diagonal < sizeCutoff)
+                {
+                    geometries = allGeometries;
+                }
+                else
+                {
+                    geometries = allGeometries.Where(x => x.AxisAlignedBoundingBox.Diagonal > sizeCutoff).ToArray();
+                }
+
                 var boundingBox = geometries.CalculateBoundingBox();
                 if (boundingBox == null)
                 {
