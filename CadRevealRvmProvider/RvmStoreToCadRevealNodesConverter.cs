@@ -44,7 +44,7 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
-        var tagFilteredNodes = StidTagMapper.FilterNodesWithTag(allNodes); // TODO Remove when running TROA on build server
+        var tagFilteredNodes = allNodes; // StidTagMapper.FilterNodesWithTag(allNodes); // TODO Remove when running TROA on build server
 
         foreach (var node in tagFilteredNodes)
         {
