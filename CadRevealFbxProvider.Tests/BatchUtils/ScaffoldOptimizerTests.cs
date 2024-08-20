@@ -68,6 +68,7 @@ public class ScaffoldOptimizerTests
         foreach (var primitive in primitives)
         {
             Mesh? mesh = ToMesh(primitive);
+            Assert.That(mesh, Is.Not.Null);
             if (mesh != null)
             {
                 CheckMeshList(mesh.Vertices, truthVertices,
@@ -82,6 +83,7 @@ public class ScaffoldOptimizerTests
         for (int i = 0; i < primitives.Length; i++)
         {
             Mesh? mesh = ToMesh(primitives[i]);
+            Assert.That(mesh, Is.Not.Null);
             if (mesh != null)
             {
                 CheckMeshList(mesh.Vertices, originalMeshList[i].Vertices.ToList(),
