@@ -1,9 +1,11 @@
+namespace CadRevealFbxProvider.Tests.BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealFbxProvider.BatchUtils;
 using System.Drawing;
 using System.Numerics;
+using ScaffoldPartOptimizers;
 
 public class ScaffoldOptimizerTests
 {
@@ -19,13 +21,13 @@ public class ScaffoldOptimizerTests
         );
     }
 
-    private CadRevealNode CreateCadRevealNode(string partName)
+    private (CadRevealNode node, List<Mesh> nodeMeshes) CreateCadRevealNode(string partName)
     {
         var mesh1 = CreateMesh(5, 5, 5, 7, 7, 7, 3, 3, 3,0, 1, 2);
         var mesh2 = CreateMesh(1, 2, 3, 6, 7, 8, 9, 10, 11,0, 1, 2);
         var mesh3 = CreateMesh(6, 5, 4, 1, 3, 2, 14, 15, 16,0, 1, 2);
 
-        return new CadRevealNode { TreeIndex = 0, Name = partName, Parent = null, Geometries =
+        var node = new CadRevealNode { TreeIndex = 0, Name = partName, Parent = null, Geometries =
             [
                 new InstancedMesh(1, mesh1, Matrix4x4.Identity, 1, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))),
                 new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))),
@@ -33,6 +35,8 @@ public class ScaffoldOptimizerTests
                 new TriangleMesh(mesh1, 4, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1)))
             ]
         };
+
+        return (node, [mesh1, mesh2, mesh3, mesh1]);
     }
 
     private void CheckMeshList(Vector3[] resultVertices, List<Vector3> truthVertices, uint[] resultIndices, List<uint> truthIndices)
@@ -49,20 +53,39 @@ public class ScaffoldOptimizerTests
         }
     }
 
-    private void CheckGeometries(APrimitive[] primitives, ScaffoldPartOptimizerTest optimizer)
+    private Mesh? ToMesh(APrimitive primitive)
+    {
+        return primitive switch
+        {
+            TriangleMesh triangleMesh => triangleMesh.Mesh,
+            InstancedMesh instancedMesh => instancedMesh.TemplateMesh,
+            _ => null
+        };
+    }
+
+    private void CheckGeometries(APrimitive[] primitives, List<Vector3> truthVertices, List<uint> truthIndices)
     {
         foreach (var primitive in primitives)
         {
-            switch (primitive)
+            Mesh? mesh = ToMesh(primitive);
+            if (mesh != null)
             {
-                case TriangleMesh triangleMesh:
-                    CheckMeshList(triangleMesh.Mesh.Vertices, optimizer.GetVerticesTruth(),
-                        triangleMesh.Mesh.Indices, optimizer.GetIndicesTruth());
-                    break;
-                case InstancedMesh instancedMesh:
-                    CheckMeshList(instancedMesh.TemplateMesh.Vertices, optimizer.GetVerticesTruth(),
-                        instancedMesh.TemplateMesh.Indices, optimizer.GetIndicesTruth());
-                    break;
+                CheckMeshList(mesh.Vertices, truthVertices,
+                    mesh.Indices, truthIndices);
+            }
+        }
+    }
+
+    private void CheckThatMeshesHaveNotChanged(List<Mesh> originalMeshList, APrimitive[] primitives)
+    {
+        Assert.That(originalMeshList.ToArray(), Has.Length.EqualTo(primitives.Length));
+        for (int i = 0; i < primitives.Length; i++)
+        {
+            Mesh? mesh = ToMesh(primitives[i]);
+            if (mesh != null)
+            {
+                CheckMeshList(mesh.Vertices, originalMeshList[i].Vertices.ToList(),
+                    mesh.Indices, originalMeshList[i].Indices.ToList());
             }
         }
     }
@@ -71,24 +94,29 @@ public class ScaffoldOptimizerTests
     public void CheckScaffoldOptimizerActivation_GivenTestPartOptimizers_VerifyingTheReturnedNode()
     {
         // Set up the input
-        CadRevealNode nodeA = CreateCadRevealNode("TestNode, Test A test");
-        CadRevealNode nodeB = CreateCadRevealNode("TestNode, Test B test");
-        CadRevealNode nodeC = CreateCadRevealNode("TestNode, Another Test test");
-        CadRevealNode nodeD = CreateCadRevealNode("TestNode test");
+        CadRevealNode nodeA = CreateCadRevealNode("TestNode, Test A test").node;
+        CadRevealNode nodeB = CreateCadRevealNode("TestNode, Test B test").node;
+        CadRevealNode nodeC = CreateCadRevealNode("TestNode, Another BTest test").node;
+        (CadRevealNode nodeD, List<Mesh> nodeDMeshes) = CreateCadRevealNode("TestNode test");
+
+        // Create two optimizers
+        var optimizerA = new ScaffoldPartOptimizerTestPartA();
+        var optimizerB = new ScaffoldPartOptimizerTestPartB();
 
         // Configure the optimizer for testing
-        ScaffoldOptimizer.AddPartOptimizer(new ScaffoldPartOptimizerTestPartA());
-        ScaffoldOptimizer.AddPartOptimizer(new ScaffoldPartOptimizerTestPartB());
+        ScaffoldOptimizer.AddPartOptimizer(optimizerA);
+        ScaffoldOptimizer.AddPartOptimizer(optimizerB);
 
         // Invoke the optimizer
         ScaffoldOptimizer.OptimizeNode(nodeA);
         ScaffoldOptimizer.OptimizeNode(nodeB);
         ScaffoldOptimizer.OptimizeNode(nodeC);
+        ScaffoldOptimizer.OptimizeNode(nodeD);
 
         // Check the results
-        CheckGeometries(nodeA.Geometries, new ScaffoldPartOptimizerTestPartA());
-        CheckGeometries(nodeB.Geometries, new ScaffoldPartOptimizerTestPartB());
-        CheckGeometries(nodeC.Geometries, new ScaffoldPartOptimizerTestPartB());
-        // :TODO: Continue to check NodeD
+        CheckGeometries(nodeA.Geometries, optimizerA.GetVerticesTruth(), optimizerA.GetIndicesTruth());
+        CheckGeometries(nodeB.Geometries, optimizerB.GetVerticesTruth(), optimizerB.GetIndicesTruth());
+        CheckGeometries(nodeC.Geometries, optimizerB.GetVerticesTruth(), optimizerB.GetIndicesTruth());
+        CheckThatMeshesHaveNotChanged(nodeDMeshes, nodeD.Geometries);
     }
 }

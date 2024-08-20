@@ -3,86 +3,7 @@ using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using System.Linq;
-using System.Numerics;
-
-// :TODO: Move all ScaffoldPartOptimizer based classes to their own files!!!
-public abstract class ScaffoldPartOptimizer
-{
-    public abstract string GetName();
-    public abstract Mesh[] Optimize(Mesh mesh);
-    public abstract string[] GetPartNameTriggerKeywords();
-}
-
-public abstract class ScaffoldPartOptimizerTest : ScaffoldPartOptimizer
-{
-    public abstract List<Vector3> GetVerticesTruth();
-    public abstract List<uint> GetIndicesTruth();
-}
-
-public class ScaffoldPartOptimizerTestPartA : ScaffoldPartOptimizerTest
-{
-    public override List<Vector3> GetVerticesTruth()
-    {
-        return
-        [
-            new Vector3(1.0f, 0.0f, 0.0f),
-            new Vector3(0.0f, 1.0f, 0.0f),
-            new Vector3(0.0f, 0.0f, 1.0f)
-        ];
-    }
-
-    public override List<uint> GetIndicesTruth()
-    {
-        return [1, 0, 2];
-    }
-
-    public override string GetName()
-    {
-        return "Part A test optimizer";
-    }
-
-    public override Mesh[] Optimize(Mesh mesh)
-    {
-        return [new Mesh(GetVerticesTruth().ToArray(), GetIndicesTruth().ToArray(), mesh.Error)];
-    }
-
-    public override string[] GetPartNameTriggerKeywords()
-    {
-        return [ "Test A" ];
-    }
-}
-
-public class ScaffoldPartOptimizerTestPartB : ScaffoldPartOptimizerTest
-{
-    public override List<Vector3> GetVerticesTruth()
-    {
-        return
-        [
-            new Vector3(3.0f, 0.0f, 0.0f),
-            new Vector3(0.0f, 4.0f, 0.0f),
-            new Vector3(0.0f, 0.0f, 5.0f)
-        ];
-    }
-
-    public override List<uint> GetIndicesTruth()
-    {
-        return [2, 0, 1];
-    }
-
-    public override string GetName()
-    {
-        return "Part A test optimizer";
-    }
-    public override Mesh[] Optimize(Mesh mesh)
-    {
-        return [new Mesh(GetVerticesTruth().ToArray(), GetIndicesTruth().ToArray(), mesh.Error)];
-    }
-
-    public override string[] GetPartNameTriggerKeywords()
-    {
-        return [ "Test B", "Another Test" ];
-    }
-}
+using ScaffoldPartOptimizers;
 
 public static class ScaffoldOptimizer
 {
@@ -114,7 +35,7 @@ public static class ScaffoldOptimizer
                 {
                     Mesh[] meshes = OptimizeMesh(instancedMesh.TemplateMesh, name);
                     primitiveList.AddRange(meshes.Select(mesh => new InstancedMesh(instancedMesh.InstanceId, mesh,
-                        instancedMesh.InstanceMatrix, instancedMesh.TreeIndex, instancedMesh.Color, instancedMesh.AxisAlignedBoundingBox)).Cast<APrimitive>());
+                        instancedMesh.InstanceMatrix, instancedMesh.TreeIndex, instancedMesh.Color, instancedMesh.AxisAlignedBoundingBox)));
                     break;
                 }
             case TriangleMesh triangleMesh:

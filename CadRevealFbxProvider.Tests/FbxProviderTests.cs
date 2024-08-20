@@ -1,5 +1,6 @@
 namespace CadRevealFbxProvider.Tests;
 
+using CadRevealFbxProvider.BatchUtils;
 using System.Numerics;
 using Attributes;
 using BatchUtils;
