@@ -1,9 +1,8 @@
 namespace CadRevealFbxProvider.BatchUtils;
+
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using System.Linq;
-using System.Security.Cryptography;
 
 public class GeometryInstancer
 {
@@ -22,12 +21,19 @@ public class GeometryInstancer
                 }
 
                 var instanceAlreadyDone = instanceIDsAlreadyDone.Find(element =>
-                    (element != null) && (element.Value.id == instance.InstanceId));
+                    (element != null) && (element.Value.id == instance.InstanceId)
+                );
+
                 if (instanceAlreadyDone != null)
                 {
-                    node.Geometries[i] = new InstancedMesh(instance.InstanceId, instanceAlreadyDone.Value.mesh,
-                        instance.InstanceMatrix, instance.TreeIndex, instance.Color,
-                        instance.AxisAlignedBoundingBox);
+                    node.Geometries[i] = new InstancedMesh(
+                        instance.InstanceId,
+                        instanceAlreadyDone.Value.mesh,
+                        instance.InstanceMatrix,
+                        instance.TreeIndex,
+                        instance.Color,
+                        instance.AxisAlignedBoundingBox
+                    );
                 }
                 else
                 {

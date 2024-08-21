@@ -1,8 +1,9 @@
 namespace CadRevealFbxProvider.BatchUtils;
+
+using System.Linq;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using System.Linq;
 using ScaffoldPartOptimizers;
 
 public static class ScaffoldOptimizer
@@ -32,19 +33,33 @@ public static class ScaffoldOptimizer
         switch (primitive)
         {
             case InstancedMesh instancedMesh:
-                {
-                    Mesh[] meshes = OptimizeMesh(instancedMesh.TemplateMesh, name);
-                    primitiveList.AddRange(meshes.Select(mesh => new InstancedMesh(instancedMesh.InstanceId, mesh,
-                        instancedMesh.InstanceMatrix, instancedMesh.TreeIndex, instancedMesh.Color, instancedMesh.AxisAlignedBoundingBox)));
-                    break;
-                }
+            {
+                Mesh[] meshes = OptimizeMesh(instancedMesh.TemplateMesh, name);
+                primitiveList.AddRange(
+                    meshes.Select(mesh => new InstancedMesh(
+                        instancedMesh.InstanceId,
+                        mesh,
+                        instancedMesh.InstanceMatrix,
+                        instancedMesh.TreeIndex,
+                        instancedMesh.Color,
+                        instancedMesh.AxisAlignedBoundingBox
+                    ))
+                );
+                break;
+            }
             case TriangleMesh triangleMesh:
-                {
-                    Mesh[] meshes = OptimizeMesh(triangleMesh.Mesh, name);
-                    primitiveList.AddRange(meshes.Select(mesh => new TriangleMesh(mesh, triangleMesh.TreeIndex, triangleMesh.Color,
-                        triangleMesh.AxisAlignedBoundingBox)));
-                    break;
-                }
+            {
+                Mesh[] meshes = OptimizeMesh(triangleMesh.Mesh, name);
+                primitiveList.AddRange(
+                    meshes.Select(mesh => new TriangleMesh(
+                        mesh,
+                        triangleMesh.TreeIndex,
+                        triangleMesh.Color,
+                        triangleMesh.AxisAlignedBoundingBox
+                    ))
+                );
+                break;
+            }
         }
 
         return primitiveList.ToArray();
@@ -67,14 +82,20 @@ public static class ScaffoldOptimizer
 
             if (partNameContainsPartOptimizerTrigger)
             {
-                if (triggeredOptimizers.Count == 0) optimizedMesh = partOptimizer.Optimize(mesh);
+                if (triggeredOptimizers.Count == 0)
+                {
+                    optimizedMesh = partOptimizer.Optimize(mesh);
+                }
                 triggeredOptimizers.Add(partOptimizer);
             }
         }
 
         if (triggeredOptimizers.Count > 1)
         {
-            Console.WriteLine($"Warning, the '{name}' scaffold part triggered {triggeredOptimizers.Count} optimizers, where only the first was applied:");
+            Console.WriteLine(
+                $"Warning, the '{name}' scaffold part triggered {triggeredOptimizers.Count} optimizers, where only the first was applied:"
+            );
+
             foreach (ScaffoldPartOptimizer partOptimizer in triggeredOptimizers)
             {
                 Console.WriteLine($"    * Optimizer named '{partOptimizer.GetName()}' which triggers on:");
@@ -89,7 +110,7 @@ public static class ScaffoldOptimizer
     }
 
     private static readonly List<ScaffoldPartOptimizer> PartOptimizers =
-        [
-            // :TODO: Fill in the available part optimizers here
-        ];
+    [
+        // :TODO: Fill in the available part optimizers here
+    ];
 }

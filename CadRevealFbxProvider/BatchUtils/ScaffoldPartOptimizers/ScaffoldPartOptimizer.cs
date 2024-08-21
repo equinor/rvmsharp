@@ -1,4 +1,5 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldPartOptimizers;
+
 using CadRevealComposer.Tessellation;
 
 public abstract class ScaffoldPartOptimizer

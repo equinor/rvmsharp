@@ -1,21 +1,32 @@
 namespace CadRevealFbxProvider.Tests.BatchUtils;
+
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealFbxProvider.BatchUtils;
-using System.Drawing;
-using System.Numerics;
 using ScaffoldPartOptimizers;
 
 public class ScaffoldOptimizerTests
 {
-    private Mesh CreateMesh(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, uint i1, uint i2, uint i3)
+    private Mesh CreateMesh(
+        float x1,
+        float y1,
+        float z1,
+        float x2,
+        float y2,
+        float z2,
+        float x3,
+        float y3,
+        float z3,
+        uint i1,
+        uint i2,
+        uint i3
+    )
     {
-        return new Mesh
-        (
-            [
-                new Vector3(x1, y1, z1), new Vector3(x2, y2, z2), new Vector3(x3, y3, z3),
-            ],
+        return new Mesh(
+            [new Vector3(x1, y1, z1), new Vector3(x2, y2, z2), new Vector3(x3, y3, z3)],
             [i1, i2, i3],
             0.0f
         );
@@ -23,14 +34,33 @@ public class ScaffoldOptimizerTests
 
     private (CadRevealNode node, List<Mesh> nodeMeshes) CreateCadRevealNode(string partName)
     {
-        var mesh1 = CreateMesh(5, 5, 5, 7, 7, 7, 3, 3, 3,0, 1, 2);
-        var mesh2 = CreateMesh(1, 2, 3, 6, 7, 8, 9, 10, 11,0, 1, 2);
-        var mesh3 = CreateMesh(6, 5, 4, 1, 3, 2, 14, 15, 16,0, 1, 2);
+        var mesh1 = CreateMesh(5, 5, 5, 7, 7, 7, 3, 3, 3, 0, 1, 2);
+        var mesh2 = CreateMesh(1, 2, 3, 6, 7, 8, 9, 10, 11, 0, 1, 2);
+        var mesh3 = CreateMesh(6, 5, 4, 1, 3, 2, 14, 15, 16, 0, 1, 2);
 
-        var node = new CadRevealNode { TreeIndex = 0, Name = partName, Parent = null, Geometries =
+        var node = new CadRevealNode
+        {
+            TreeIndex = 0,
+            Name = partName,
+            Parent = null,
+            Geometries =
             [
-                new InstancedMesh(1, mesh1, Matrix4x4.Identity, 1, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))),
-                new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))),
+                new InstancedMesh(
+                    1,
+                    mesh1,
+                    Matrix4x4.Identity,
+                    1,
+                    Color.Black,
+                    new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))
+                ),
+                new InstancedMesh(
+                    2,
+                    mesh2,
+                    Matrix4x4.Identity,
+                    2,
+                    Color.Black,
+                    new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))
+                ),
                 new TriangleMesh(mesh3, 3, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))),
                 new TriangleMesh(mesh1, 4, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1)))
             ]
@@ -39,7 +69,12 @@ public class ScaffoldOptimizerTests
         return (node, [mesh1, mesh2, mesh3, mesh1]);
     }
 
-    private void CheckMeshList(Vector3[] resultVertices, List<Vector3> truthVertices, uint[] resultIndices, List<uint> truthIndices)
+    private void CheckMeshList(
+        Vector3[] resultVertices,
+        List<Vector3> truthVertices,
+        uint[] resultIndices,
+        List<uint> truthIndices
+    )
     {
         Assert.That(resultVertices.Length, Is.EqualTo(truthVertices.Count));
         Assert.That(resultIndices.Length, Is.EqualTo(truthIndices.Count));
@@ -71,8 +106,7 @@ public class ScaffoldOptimizerTests
             Assert.That(mesh, Is.Not.Null);
             if (mesh != null)
             {
-                CheckMeshList(mesh.Vertices, truthVertices,
-                    mesh.Indices, truthIndices);
+                CheckMeshList(mesh.Vertices, truthVertices, mesh.Indices, truthIndices);
             }
         }
     }
@@ -86,8 +120,12 @@ public class ScaffoldOptimizerTests
             Assert.That(mesh, Is.Not.Null);
             if (mesh != null)
             {
-                CheckMeshList(mesh.Vertices, originalMeshList[i].Vertices.ToList(),
-                    mesh.Indices, originalMeshList[i].Indices.ToList());
+                CheckMeshList(
+                    mesh.Vertices,
+                    originalMeshList[i].Vertices.ToList(),
+                    mesh.Indices,
+                    originalMeshList[i].Indices.ToList()
+                );
             }
         }
     }

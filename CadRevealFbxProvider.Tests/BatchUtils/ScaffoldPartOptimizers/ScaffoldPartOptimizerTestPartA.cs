@@ -1,4 +1,5 @@
 namespace CadRevealFbxProvider.Tests.BatchUtils.ScaffoldPartOptimizers;
+
 using System.Numerics;
 using CadRevealComposer.Tessellation;
 
@@ -6,12 +7,7 @@ public class ScaffoldPartOptimizerTestPartA : ScaffoldPartOptimizerTest
 {
     public override List<Vector3> GetVerticesTruth()
     {
-        return
-        [
-            new Vector3(1.0f, 0.0f, 0.0f),
-            new Vector3(0.0f, 1.0f, 0.0f),
-            new Vector3(0.0f, 0.0f, 1.0f)
-        ];
+        return [new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f)];
     }
 
     public override List<uint> GetIndicesTruth()
@@ -31,6 +27,6 @@ public class ScaffoldPartOptimizerTestPartA : ScaffoldPartOptimizerTest
 
     public override string[] GetPartNameTriggerKeywords()
     {
-        return [ "Test A" ];
+        return ["Test A"];
     }
 }
