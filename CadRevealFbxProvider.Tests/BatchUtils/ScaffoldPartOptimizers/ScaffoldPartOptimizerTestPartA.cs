@@ -15,9 +15,9 @@ public class ScaffoldPartOptimizerTestPartA : ScaffoldPartOptimizerTest
         return [1, 0, 2];
     }
 
-    public override string GetName()
+    public override string Name
     {
-        return "Part A test optimizer";
+        get { return "Part A test optimizer"; }
     }
 
     public override Mesh[] Optimize(Mesh mesh)

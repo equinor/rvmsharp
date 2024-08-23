@@ -6,27 +6,28 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using ScaffoldPartOptimizers;
 
-public static class ScaffoldOptimizer
+public class ScaffoldOptimizer
 {
-    public static void AddPartOptimizer(ScaffoldPartOptimizer optimizer)
+    public void AddPartOptimizer(IScaffoldPartOptimizer optimizer)
     {
-        PartOptimizers.Add(optimizer);
+        _partOptimizers.Add(optimizer);
     }
 
-    public static void OptimizeNode(CadRevealNode node)
+    public void OptimizeNode(CadRevealNode node)
     {
         var name = node.Name;
 
         var newGeometries = new List<APrimitive>();
         foreach (APrimitive primitive in node.Geometries)
         {
-            newGeometries.AddRange(OptimizePrimitive(primitive, name));
+            APrimitive[]? newPrimitiveList = OptimizePrimitive(primitive, name);
+            newGeometries.AddRange(newPrimitiveList ?? [primitive]);
         }
 
         node.Geometries = newGeometries.ToArray();
     }
 
-    private static APrimitive[] OptimizePrimitive(APrimitive primitive, string name)
+    private APrimitive[]? OptimizePrimitive(APrimitive primitive, string name)
     {
         // Handle only primitives that have their own Mesh objects, then pull out the mesh and optimize. These are the ones that need to be optimized.
         var primitiveList = new List<APrimitive>();
@@ -62,14 +63,14 @@ public static class ScaffoldOptimizer
             }
         }
 
-        return primitiveList.ToArray();
+        return primitiveList.Count > 0 ? primitiveList.ToArray() : null;
     }
 
-    private static Mesh[] OptimizeMesh(Mesh mesh, string name)
+    private Mesh[] OptimizeMesh(Mesh mesh, string name)
     {
         Mesh[] optimizedMesh = [mesh];
-        var triggeredOptimizers = new List<ScaffoldPartOptimizer>();
-        foreach (ScaffoldPartOptimizer partOptimizer in PartOptimizers)
+        var triggeredOptimizers = new List<IScaffoldPartOptimizer>();
+        foreach (IScaffoldPartOptimizer partOptimizer in _partOptimizers)
         {
             bool partNameContainsPartOptimizerTrigger = false;
             foreach (string partNameTriggerKeyword in partOptimizer.GetPartNameTriggerKeywords())
@@ -96,9 +97,9 @@ public static class ScaffoldOptimizer
                 $"Warning, the '{name}' scaffold part triggered {triggeredOptimizers.Count} optimizers, where only the first was applied:"
             );
 
-            foreach (ScaffoldPartOptimizer partOptimizer in triggeredOptimizers)
+            foreach (IScaffoldPartOptimizer partOptimizer in triggeredOptimizers)
             {
-                Console.WriteLine($"    * Optimizer named '{partOptimizer.GetName()}' which triggers on:");
+                Console.WriteLine($"    * Optimizer named '{partOptimizer.Name}' which triggers on:");
                 foreach (string partNameTriggerKeyword in partOptimizer.GetPartNameTriggerKeywords())
                 {
                     Console.WriteLine($"        - String '{partNameTriggerKeyword}'");
@@ -109,7 +110,7 @@ public static class ScaffoldOptimizer
         return optimizedMesh;
     }
 
-    private static readonly List<ScaffoldPartOptimizer> PartOptimizers =
+    private readonly List<IScaffoldPartOptimizer> _partOptimizers =
     [
         // :TODO: Fill in the available part optimizers here
     ];

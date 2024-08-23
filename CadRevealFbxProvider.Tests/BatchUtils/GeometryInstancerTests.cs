@@ -9,16 +9,13 @@ using CadRevealFbxProvider.BatchUtils;
 
 public class GeometryOptimizerTests
 {
-    private static ulong? GetInstaceId(APrimitive primitive)
+    private static ulong? GetInstanceId(APrimitive primitive)
     {
-        switch (primitive)
+        return primitive switch
         {
-            case InstancedMesh instancedMesh:
-                return instancedMesh.InstanceId;
-                break;
-        }
-
-        return null;
+            InstancedMesh instancedMesh => instancedMesh.InstanceId,
+            _ => null
+        };
     }
 
     private void AssertMeshReferences(APrimitive a, APrimitive b, bool equal)
@@ -26,17 +23,19 @@ public class GeometryOptimizerTests
         switch (a)
         {
             case TriangleMesh t1 when b is TriangleMesh t2:
-                Assert.That(Object.ReferenceEquals(t1.Mesh, t2.Mesh), Is.EqualTo(equal));
+                Assert.That(t1.Mesh, equal ? Is.SameAs(t2.Mesh) : Is.Not.SameAs(t2.Mesh));
                 break;
             case InstancedMesh i1 when b is InstancedMesh i2:
-                Assert.That(Object.ReferenceEquals(i1.TemplateMesh, i2.TemplateMesh), Is.EqualTo(equal));
+                Assert.That(i1.TemplateMesh, equal ? Is.SameAs(i2.TemplateMesh) : Is.Not.SameAs(i2.TemplateMesh));
                 break;
             case TriangleMesh t when b is InstancedMesh i:
-                Assert.That(Object.ReferenceEquals(t.Mesh, i.TemplateMesh), Is.EqualTo(equal));
+                Assert.That(t.Mesh, equal ? Is.SameAs(i.TemplateMesh) : Is.Not.SameAs(i.TemplateMesh));
                 break;
             case InstancedMesh i when b is TriangleMesh t:
-                Assert.That(Object.ReferenceEquals(i.TemplateMesh, t.Mesh), Is.EqualTo(equal));
+                Assert.That(i.TemplateMesh, equal ? Is.SameAs(t.Mesh) : Is.Not.SameAs(t.Mesh));
                 break;
+            default:
+                throw new Exception("No valid combination of TriangleMesh and InstanceMesh in a and b could be found");
         }
     }
 
@@ -244,23 +243,14 @@ public class GeometryOptimizerTests
     private void CheckNodePattern1(CadRevealNode node)
     {
         // Check that the non-instanced objects are still all distinct
-        for (var i = 1; i < node.Geometries.Length; i++)
+        foreach (var j in new[] { 0, 1, 5, 6 })
         {
-            AssertMeshReferences(node.Geometries[0], node.Geometries[i], false);
-        }
-        for (var i = 2; i < node.Geometries.Length; i++)
-        {
-            AssertMeshReferences(node.Geometries[1], node.Geometries[i], false);
-        }
-        for (var i = 2; i < node.Geometries.Length; i++)
-        {
-            if (i != 5)
-                AssertMeshReferences(node.Geometries[5], node.Geometries[i], false);
-        }
-        for (var i = 3; i < node.Geometries.Length; i++)
-        {
-            if (i != 6)
-                AssertMeshReferences(node.Geometries[6], node.Geometries[i], false);
+            for (var i = 0; i < node.Geometries.Length; i++)
+            {
+                if (i == j)
+                    continue;
+                AssertMeshReferences(node.Geometries[j], node.Geometries[i], false);
+            }
         }
 
         // Check that the instanced objects with same instance ID now share the same meshes
@@ -273,27 +263,14 @@ public class GeometryOptimizerTests
     private void CheckNodePattern2(CadRevealNode node)
     {
         // Check that the non-instanced objects are still all distinct
-        for (var i = 1; i < node.Geometries.Length; i++)
+        foreach (int j in new[] { 0, 1, 2, 5, 6 })
         {
-            AssertMeshReferences(node.Geometries[0], node.Geometries[i], false);
-        }
-        for (var i = 2; i < node.Geometries.Length; i++)
-        {
-            AssertMeshReferences(node.Geometries[1], node.Geometries[i], false);
-        }
-        for (var i = 3; i < node.Geometries.Length; i++)
-        {
-            AssertMeshReferences(node.Geometries[2], node.Geometries[i], false);
-        }
-        for (var i = 2; i < node.Geometries.Length; i++)
-        {
-            if (i != 5)
-                AssertMeshReferences(node.Geometries[5], node.Geometries[i], false);
-        }
-        for (var i = 2; i < node.Geometries.Length; i++)
-        {
-            if (i != 6)
-                AssertMeshReferences(node.Geometries[6], node.Geometries[i], false);
+            for (int i = 0; i < node.Geometries.Length; i++)
+            {
+                if (i == j)
+                    continue;
+                AssertMeshReferences(node.Geometries[j], node.Geometries[i], false);
+            }
         }
 
         // Check that the instanced objects with same instance ID now share the same meshes
@@ -365,13 +342,13 @@ public class GeometryOptimizerTests
         // Check that the instanced meshes are the same across nodes
         for (var i = 0; i < node1WithPattern2.Geometries.Length; i++)
         {
-            var instanceId1 = GetInstaceId(node1WithPattern2.Geometries[i]);
+            var instanceId1 = GetInstanceId(node1WithPattern2.Geometries[i]);
 
             if ((i is >= 0 and <= 2) || (i is >= 5 and <= 6))
                 continue;
             for (var j = 0; j < node2WithPattern2.Geometries.Length; j++)
             {
-                var instanceId2 = GetInstaceId(node2WithPattern2.Geometries[j]);
+                var instanceId2 = GetInstanceId(node2WithPattern2.Geometries[j]);
 
                 if ((j is >= 0 and <= 2) || (j is >= 5 and <= 6))
                     continue;
@@ -407,13 +384,13 @@ public class GeometryOptimizerTests
         // Check that the instanced meshes are the same across nodes
         for (var i = 0; i < nodeWithPattern1.Geometries.Length; i++)
         {
-            var instanceId1 = GetInstaceId(nodeWithPattern1.Geometries[i]);
+            var instanceId1 = GetInstanceId(nodeWithPattern1.Geometries[i]);
 
             if (i is < 2 or > 4)
                 continue;
             for (var j = 0; j < nodeWithPattern2.Geometries.Length; j++)
             {
-                var instanceId2 = GetInstaceId(nodeWithPattern2.Geometries[j]);
+                var instanceId2 = GetInstanceId(nodeWithPattern2.Geometries[j]);
 
                 if ((j is >= 0 and <= 2) || (j is >= 5 and <= 6))
                     continue;
