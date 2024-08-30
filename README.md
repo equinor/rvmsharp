@@ -53,22 +53,10 @@ dotnet.exe run --configuration Release --project "RvmSharp.Exe/RvmSharp.Exe.cspr
 The CAD Reveal Composer is a fast converter for RVM files into the Reveal formats used by
 the [cognite/reveal](https://github.com/cognitedata/reveal) 3D Viewer.
 
-It can be invoked using the script below:
-
-```ps1
-.\scripts\Convert-RvmToI3df.ps1 -InputDirectory $AFolderWithRvmAndTxtFiles -ProjectId 1 -ModelId 2 -RevisionId 1 -ArtifactDirectory $OutputDirectory 
-```
-
-Invoke from IDE
-
-```ide
--i $AFolderWithRvmAndTxtFiles -o $OutputDirectory -ProjectId 1 -ModelId 2 -RevisionId 1 
-```
-
 Invoke from CLI
 
 ```cli
-dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.exe" -i $AFolderWithRvmAndTxtFiles -o $OutputDirectory --ProjectId 1 --ModelId 1 --RevisionId 1
+dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.exe" -i $AFolderWithRvmAndTxtFiles -o pathto/reveal/examples/public/primitives --ProjectId 1 --ModelId 1 --RevisionId 1
 ```
 
 ## Example Data
