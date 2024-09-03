@@ -9,6 +9,13 @@ public class SequentialIdGenerator
 
     private ulong _internalIdCounter = ulong.MaxValue;
 
+    protected SequentialIdGenerator() { }
+
+    public SequentialIdGenerator(ulong startId)
+    {
+        _internalIdCounter = startId - 1; // It increments before selecting the id, hence -1
+    }
+
     public ulong GetNextId()
     {
         var candidate = Interlocked.Increment(ref _internalIdCounter);

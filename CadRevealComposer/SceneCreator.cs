@@ -154,7 +154,14 @@ public static class SceneCreator
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+        string? sectorFilename = !p.IsHighlightSector
+            ? p.Geometries.Any()
+                ? $"sector_{p.SectorId}.glb"
+                : null
+            : p.Geometries.Any()
+                ? $"highlight_sector_{p.SectorId}.glb"
+                : null;
+
         var sectorInfo = new SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,
