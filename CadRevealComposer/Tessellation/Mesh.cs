@@ -88,20 +88,19 @@ public class Mesh : IEquatable<Mesh>
 
         Vector3 min = Vector3.One * float.MaxValue;
         Vector3 max = Vector3.One * float.MinValue;
-        if (transform is not null and { IsIdentity: false }) // Skip applying the transform if its an identity transform.
+        if (transform is { IsIdentity: false }) // Skip applying the transform if its an identity transform.
         {
-            for (int i = 1; i < _vertices.Length; i++)
+            foreach (var vertex in _vertices)
             {
-                var transformedVertex = Vector3.Transform(_vertices[i], transform.Value);
+                var transformedVertex = Vector3.Transform(vertex, transform.Value);
                 min = Vector3.Min(min, transformedVertex);
                 max = Vector3.Max(max, transformedVertex);
             }
         }
         else
         {
-            for (int i = 1; i < _vertices.Length; i++)
+            foreach (var vertex in _vertices)
             {
-                var vertex = _vertices[i];
                 min = Vector3.Min(min, vertex);
                 max = Vector3.Max(max, vertex);
             }
