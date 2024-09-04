@@ -1,15 +1,13 @@
-﻿using System.Linq;
-
-namespace CadRevealComposer.Operations.SectorSplitting;
+﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
-using global::CadRevealComposer.IdProviders;
-using global::CadRevealComposer.Primitives;
-using global::CadRevealComposer.Utils;
+using CadRevealComposer.IdProviders;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
 
 public class HighlightSectorSplitter : ISectorSplitter
 {
@@ -35,21 +33,21 @@ public class HighlightSectorSplitter : ISectorSplitter
             var geometryGroups = disciplineGroup.GroupBy(x => x.TreeIndex); // Group by treeindex to avoid having one treeindex uneccessary many sectors
             var nodes = HighlightSplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
 
-            // TODO: Currently ignoring outlierNodes
+            // Ignore outlier nodes
+            // TODO: Decide if this is the right thing to do
             (Node[] regularNodes, Node[] outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes();
-
-            // var boundingBox = regularNodes.CalculateBoundingBox();
-            //var startSplittingDepth = 3; //CalculateStartSplittingDepth(boundingBox); // Manually setting, because it always was 1
-            //sectors.AddRange(
-            //    SplitIntoSectorsRecursive(regularNodes, 1, rootPath, rootSectorId, sectorIdGenerator, startSplittingDepth)
-            //);
 
             sectors.AddRange(SplitIntoTreeIndexSectors(regularNodes, rootPath, rootSectorId, sectorIdGenerator));
         }
 
         foreach (var sector in sectors)
         {
-            yield return sector;
+            // TODO Is there a better way to mark as highlightsector
+
+            yield return sector with
+            {
+                IsHighlightSector = true
+            };
         }
     }
 
@@ -283,31 +281,5 @@ public class HighlightSectorSplitter : ISectorSplitter
             subtreeBoundingBox,
             geometryBoundingBox
         );
-    }
-
-    private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
-    {
-        // If we start splitting too low in the octree, we might end up with way too many sectors
-        // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
-
-        var diagonalAtDepth = boundingBox.Diagonal;
-        int depth = 1;
-        // Todo: Arbitrary numbers in this method based on gut feeling.
-        // Assumes 3 levels of "LOD Splitting":
-        // 300x300 for Very large parts
-        // 150x150 for large parts
-        // 75x75 for > 1 meter parts
-        // 37,5 etc by budget
-        const float level1SectorsMaxDiagonal = 500;
-        while (diagonalAtDepth > level1SectorsMaxDiagonal)
-        {
-            diagonalAtDepth /= 2;
-            depth++;
-        }
-
-        Console.WriteLine(
-            $"Diagonal was: {boundingBox.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m"
-        );
-        return depth;
     }
 }

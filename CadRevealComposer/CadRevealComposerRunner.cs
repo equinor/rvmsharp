@@ -158,12 +158,44 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
+        var highlightSplitter = new HighlightSectorSplitter();
+
         var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
+
+        var prioritizedForHiglighting = allPrimitives.Where(x => x.Priority == 1).ToArray();
+
+        var nextSectorId = sectors.Last().SectorId + 1;
+        var highlightSectors = highlightSplitter
+            .SplitIntoSectors(prioritizedForHiglighting, nextSectorId)
+            .OrderBy(x => x.SectorId)
+            .ToArray();
+
+        // Remove redundant root and point to the original root
+        var originalRootId = sectors.First().SectorId;
+        var redundantRootId = highlightSectors.First().SectorId;
+        highlightSectors = highlightSectors
+            .Skip(1)
+            .Select(sector =>
+            {
+                return sector.ParentSectorId == redundantRootId
+                    ? (sector with { ParentSectorId = originalRootId })
+                    : sector;
+            })
+            .ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 
+        var allSectors = sectors.Concat(highlightSectors).ToArray();
+
         stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+        SceneCreator.CreateSceneFile(
+            allPrimitives,
+            outputDirectory,
+            modelParameters,
+            maxTreeIndex,
+            stopwatch,
+            allSectors
+        );
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
     }
