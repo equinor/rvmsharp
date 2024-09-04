@@ -40,6 +40,18 @@ public class LoosePiecesMeshToolsTests
         Assert.That(result.First(), Is.EqualTo(joinedMeshes)); // Assuming the input is returned as is.
     }
 
+    [Test]
+    public void SplitMeshByLoosePieces_WhenGivenMeshWithOnlyOnePiece_ReturnsOriginalInputMesh()
+    {
+        // Overlaps by sharing the Vector3.One vertex.
+        var bb1 = new BoundingBox(Vector3.One, Vector3.One * 2);
+
+        var mesh1 = GenerateMeshFromBoundingBox(bb1);
+        var result = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh1);
+        Assert.That(result, Has.Exactly(1).Items);
+        Assert.That(result.First(), Is.SameAs(mesh1)); // Assuming the input is returned as is.
+    }
+
     private static Mesh JoinMeshes(Mesh[] meshes)
     {
         var vertices = new List<Vector3>();

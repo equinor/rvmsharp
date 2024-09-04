@@ -190,6 +190,7 @@ public static class LoosePiecesMeshTools
             }
         }
 
+        // Most meshes will have one piece, so we return the original mesh to avoid unnecessary changes to the mesh
         return disjointMeshes.Count == 1 ? [input] : disjointMeshes.ToArray();
     }
 
