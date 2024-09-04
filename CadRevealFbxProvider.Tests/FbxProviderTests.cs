@@ -2,13 +2,13 @@ namespace CadRevealFbxProvider.Tests;
 
 using System.Numerics;
 using Attributes;
-using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
+using CadRevealFbxProvider.BatchUtils;
 
 [TestFixture]
 public class FbxProviderTests
