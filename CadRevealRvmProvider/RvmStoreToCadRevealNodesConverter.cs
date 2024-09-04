@@ -4,6 +4,7 @@ using System.Diagnostics;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
@@ -17,17 +18,16 @@ internal static class RvmStoreToCadRevealNodesConverter
     )
     {
         var failedPrimitiveConversionsLogObject = new FailedPrimitivesLogObject();
-        var cadRevealRootNodes = rvmStore.RvmFiles
-            .SelectMany(f => f.Model.Children)
-            .Select(
-                root =>
-                    CollectGeometryNodesRecursive(
-                        root,
-                        parent: null,
-                        treeIndexGenerator,
-                        nodeNameFiltering,
-                        failedPrimitiveConversionsLogObject
-                    )
+        var cadRevealRootNodes = rvmStore
+            .RvmFiles.SelectMany(f => f.Model.Children)
+            .Select(root =>
+                CollectGeometryNodesRecursive(
+                    root,
+                    parent: null,
+                    treeIndexGenerator,
+                    nodeNameFiltering,
+                    failedPrimitiveConversionsLogObject
+                )
             )
             .WhereNotNull()
             .ToArray();
@@ -43,66 +43,9 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
-        SetPriorityForHighlightSplitting(allNodes);
+        HighlightSplittingUtils.SetPriorityForHighlightSplitting(allNodes);
 
         return allNodes;
-    }
-
-    private static void SetPriorityForHighlightSplitting(CadRevealNode[] nodes)
-    {
-        var disciplineFilteredNodes = FilterAndSetDiscipline(nodes).ToArray();
-
-        // TODO
-        // Are we going to use the custom STID mapper, or should we wait for a more official solution?
-        // Notes: Uncommenting code below requires that a relevant file exists on build server
-        var tagMappingAndDisciplineFilteredNodes = disciplineFilteredNodes; // StidTagMapper.FilterNodesWithTag(disciplineFilteredNodes);
-
-        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(tagMappingAndDisciplineFilteredNodes).ToArray();
-        SetPriortyOnNodesAndChildren(tagAndDisciplineFilteredNodes);
-    }
-
-    private static IEnumerable<CadRevealNode> FilterAndSetDiscipline(CadRevealNode[] nodes)
-    {
-        foreach (var node in nodes)
-        {
-            var discipline = node.Attributes.GetValueOrNull("Discipline");
-
-            if (discipline != null && discipline != "STRU")
-            {
-                var children = CadRevealNode.GetAllNodesFlat(node);
-                foreach (var child in children)
-                {
-                    child.Geometries = child.Geometries.Select(g => g with { Discipline = discipline }).ToArray();
-                }
-
-                yield return node;
-            }
-        }
-    }
-
-    private static IEnumerable<CadRevealNode> FilterByIfTagExists(CadRevealNode[] nodes)
-    {
-        foreach (var node in nodes)
-        {
-            var tag = node.Attributes.GetValueOrNull("Tag");
-
-            if (tag != null)
-            {
-                yield return node;
-            }
-        }
-    }
-
-    private static void SetPriortyOnNodesAndChildren(CadRevealNode[] nodes)
-    {
-        foreach (var node in nodes)
-        {
-            var allChildren = CadRevealNode.GetAllNodesFlat(node);
-            foreach (var child in allChildren)
-            {
-                child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
-            }
-        }
     }
 
     private static CadRevealNode? CollectGeometryNodesRecursive(
@@ -130,8 +73,8 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
         {
-            childrenCadNodes = root.Children
-                .Select(child =>
+            childrenCadNodes = root
+                .Children.Select(child =>
                 {
                     switch (child)
                     {
@@ -163,17 +106,16 @@ internal static class RvmStoreToCadRevealNodesConverter
         }
         else
         {
-            childrenCadNodes = root.Children
-                .OfType<RvmNode>()
-                .Select(
-                    n =>
-                        CollectGeometryNodesRecursive(
-                            n,
-                            newNode,
-                            treeIndexGenerator,
-                            nodeNameFiltering,
-                            failedPrimitivesConversionLogObject
-                        )
+            childrenCadNodes = root
+                .Children.OfType<RvmNode>()
+                .Select(n =>
+                    CollectGeometryNodesRecursive(
+                        n,
+                        newNode,
+                        treeIndexGenerator,
+                        nodeNameFiltering,
+                        failedPrimitivesConversionLogObject
+                    )
                 )
                 .WhereNotNull()
                 .ToArray();
@@ -181,21 +123,20 @@ internal static class RvmStoreToCadRevealNodesConverter
         }
 
         newNode.Geometries = rvmGeometries
-            .SelectMany(
-                primitive =>
-                    RvmPrimitiveToAPrimitive.FromRvmPrimitive(
-                        newNode.TreeIndex,
-                        primitive,
-                        root,
-                        failedPrimitivesConversionLogObject
-                    )
+            .SelectMany(primitive =>
+                RvmPrimitiveToAPrimitive.FromRvmPrimitive(
+                    newNode.TreeIndex,
+                    primitive,
+                    root,
+                    failedPrimitivesConversionLogObject
+                )
             )
             .ToArray();
 
         newNode.Children = childrenCadNodes;
 
-        var primitiveBoundingBoxes = root.Children
-            .OfType<RvmPrimitive>()
+        var primitiveBoundingBoxes = root
+            .Children.OfType<RvmPrimitive>()
             .Select(x => x.CalculateAxisAlignedBoundingBox()?.ToCadRevealBoundingBox())
             .WhereNotNull()
             .ToArray();

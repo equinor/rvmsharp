@@ -158,7 +158,7 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
 

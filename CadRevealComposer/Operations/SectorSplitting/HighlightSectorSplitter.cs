@@ -2,14 +2,14 @@
 
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using global::CadRevealComposer.IdProviders;
-using global::CadRevealComposer.Primitives;
-using global::CadRevealComposer.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Numerics;
+using global::CadRevealComposer.IdProviders;
+using global::CadRevealComposer.Primitives;
+using global::CadRevealComposer.Utils;
 
 public class HighlightSectorSplitter : ISectorSplitter
 {
@@ -33,7 +33,7 @@ public class HighlightSectorSplitter : ISectorSplitter
         foreach (var disciplineGroup in primitivesGroupedByDiscipline)
         {
             var geometryGroups = disciplineGroup.GroupBy(x => x.TreeIndex); // Group by treeindex to avoid having one treeindex uneccessary many sectors
-            var nodes = SplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
+            var nodes = HighlightSplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
 
             // TODO: Currently ignoring outlierNodes
             (Node[] regularNodes, Node[] outlierNodes) = nodes.SplitNodesIntoRegularAndOutlierNodes();
