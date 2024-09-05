@@ -1,12 +1,5 @@
 ﻿namespace CadRevealComposer;
 
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
 using Configuration;
 using Devtools;
 using IdProviders;
@@ -14,6 +7,13 @@ using ModelFormatProvider;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Utils;
 
 public static class CadRevealComposerRunner
@@ -121,7 +121,7 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
-        ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
+        var treeIndexToPrioritizedSector = ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
@@ -129,11 +129,16 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
+        // TODO Is this the best place to do this?
+        var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
+        SceneCreator.AddPrioritizedSectorsToDatabase(treeIndexToPrioritizedSector, outputDirectory);
+        Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
+
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(
+    public static Dictionary<ulong, uint> ProcessPrimitives(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -162,11 +167,11 @@ public static class CadRevealComposerRunner
 
         var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
 
-        var prioritizedForHiglighting = allPrimitives.Where(x => x.Priority == 1).ToArray();
+        var prioritizedForHighlighting = allPrimitives.Where(x => x.Priority == 1).ToArray();
 
         var nextSectorId = sectors.Last().SectorId + 1;
         var highlightSectors = highlightSplitter
-            .SplitIntoSectors(prioritizedForHiglighting, nextSectorId)
+            .SplitIntoSectors(prioritizedForHighlighting, nextSectorId)
             .OrderBy(x => x.SectorId)
             .ToArray();
 
@@ -198,6 +203,23 @@ public static class CadRevealComposerRunner
         );
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
+
+        return GetTreeIndexToSectorIdDict(highlightSectors);
+    }
+
+    private static Dictionary<ulong, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
+    {
+        var sectorIdToTreeIndex = new Dictionary<ulong, uint>();
+        foreach (var sector in sectors)
+        {
+            var sectorId = sector.SectorId;
+            foreach (var node in sector.Geometries)
+            {
+                sectorIdToTreeIndex.TryAdd(node.TreeIndex, sectorId);
+            }
+        }
+
+        return sectorIdToTreeIndex;
     }
 
     /// <summary>

@@ -254,6 +254,49 @@ public class DatabaseComposer
         sqliteComposeTimer.LogCompletion();
     }
 
+    public static void AddTreeIndexToSectorToDatabase(Dictionary<ulong, uint> treeIndexToSectorId, DirectoryInfo outputDirectory)
+    {
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
+        {
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText =
+                "CREATE TABLE prioritizedSectors (treeindex INTEGER NOT NULL, highlightSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, highlightSectorId)) WITHOUT ROWID; ";
+            createTableCommand.ExecuteNonQuery();
+
+            var command = connection.CreateCommand();
+            command.CommandText =
+                "INSERT OR IGNORE INTO prioritizedSectors (treeindex, highlightSectorId) VALUES ($TreeIndex, $HighlightSectorId)";
+
+            var treeIndexParameter = command.CreateParameter();
+            treeIndexParameter.ParameterName = "$TreeIndex";
+            var highlightSectorIdParameter = command.CreateParameter();
+            highlightSectorIdParameter.ParameterName = $"HighlightSectorId";
+
+            command.Parameters.AddRange([treeIndexParameter, highlightSectorIdParameter]);
+
+            var transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+
+
+            foreach (var pair in treeIndexToSectorId)
+            {
+                treeIndexParameter.Value = pair.Key;
+            }
+
+            foreach (var pair in treeIndexToSectorId)
+            {
+                treeIndexParameter.Value = pair.Key;
+                highlightSectorIdParameter.Value = pair.Value;
+                command.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
+    }
+
     private static void CreateEmptyDatabase(DbContextOptions options)
     {
         using var context = new HierarchyContext(options);

@@ -53,6 +53,11 @@ public static class SceneCreator
         exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
     }
 
+    public static void AddPrioritizedSectorsToDatabase(Dictionary<ulong, uint> treeIndexToPrioritizedSector, DirectoryInfo outputDirectory)
+    {
+        DatabaseComposer.AddTreeIndexToSectorToDatabase(treeIndexToPrioritizedSector, outputDirectory);
+    }
+
     public static void CreateSceneFile(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
