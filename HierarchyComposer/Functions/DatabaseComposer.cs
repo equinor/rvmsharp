@@ -263,19 +263,19 @@ public class DatabaseComposer
 
             var createTableCommand = connection.CreateCommand();
             createTableCommand.CommandText =
-                "CREATE TABLE prioritizedSectors (treeindex INTEGER NOT NULL, highlightSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, highlightSectorId)) WITHOUT ROWID; ";
+                "CREATE TABLE prioritizedSectors (treeindex INTEGER NOT NULL, prioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, prioritizedSectorId)) WITHOUT ROWID; ";
             createTableCommand.ExecuteNonQuery();
 
             var command = connection.CreateCommand();
             command.CommandText =
-                "INSERT OR IGNORE INTO prioritizedSectors (treeindex, highlightSectorId) VALUES ($TreeIndex, $HighlightSectorId)";
+                "INSERT OR IGNORE INTO prioritizedSectors (treeindex, prioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
 
             var treeIndexParameter = command.CreateParameter();
             treeIndexParameter.ParameterName = "$TreeIndex";
-            var highlightSectorIdParameter = command.CreateParameter();
-            highlightSectorIdParameter.ParameterName = $"HighlightSectorId";
+            var prioritizedSectorIdParameter = command.CreateParameter();
+            prioritizedSectorIdParameter.ParameterName = $"PrioritizedSectorId";
 
-            command.Parameters.AddRange([treeIndexParameter, highlightSectorIdParameter]);
+            command.Parameters.AddRange([treeIndexParameter, prioritizedSectorIdParameter]);
 
             var transaction = connection.BeginTransaction();
             command.Transaction = transaction;
@@ -289,7 +289,7 @@ public class DatabaseComposer
             foreach (var pair in treeIndexToSectorId)
             {
                 treeIndexParameter.Value = pair.Key;
-                highlightSectorIdParameter.Value = pair.Value;
+                prioritizedSectorIdParameter.Value = pair.Value;
                 command.ExecuteNonQuery();
             }
 
