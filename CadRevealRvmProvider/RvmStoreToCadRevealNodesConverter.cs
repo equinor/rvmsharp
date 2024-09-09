@@ -43,7 +43,7 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
 
-        HighlightSplittingUtils.SetPriorityForHighlightSplitting(allNodes);
+        PrioritySplittingUtils.SetPriorityForHighlightSplitting(allNodes);
 
         return allNodes;
     }

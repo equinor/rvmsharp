@@ -6,8 +6,10 @@ using System.Linq;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 
-public static class HighlightSplittingUtils
+public static class PrioritySplittingUtils
 {
+    private static string[] PrioritizedDisciplines = { "PIPE" };
+
     public static void SetPriorityForHighlightSplitting(CadRevealNode[] nodes)
     {
         var disciplineFilteredNodes = FilterAndSetDiscipline(nodes).ToArray();
@@ -27,7 +29,7 @@ public static class HighlightSplittingUtils
         {
             var discipline = node.Attributes.GetValueOrNull("Discipline");
 
-            if (discipline != null && discipline != "STRU")
+            if (discipline != null && PrioritizedDisciplines.Contains(discipline))
             {
                 var children = CadRevealNode.GetAllNodesFlat(node);
                 foreach (var child in children)

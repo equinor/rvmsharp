@@ -1,12 +1,5 @@
 ﻿namespace CadRevealComposer;
 
-using Configuration;
-using Devtools;
-using IdProviders;
-using ModelFormatProvider;
-using Operations;
-using Operations.SectorSplitting;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Configuration;
+using Devtools;
+using IdProviders;
+using ModelFormatProvider;
+using Operations;
+using Operations.SectorSplitting;
+using Primitives;
 using Utils;
 
 public static class CadRevealComposerRunner
@@ -121,7 +121,12 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
-        var treeIndexToPrioritizedSector = ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
+        var treeIndexToPrioritizedSector = ProcessPrimitives(
+            geometriesToProcessArray,
+            outputDirectory,
+            modelParameters,
+            composerParameters
+        );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
@@ -163,7 +168,7 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var highlightSplitter = new HighlightSectorSplitter();
+        var highlightSplitter = new PrioritySectorSplitter();
 
         var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
 
