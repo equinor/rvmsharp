@@ -53,7 +53,10 @@ public static class SceneCreator
         exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
     }
 
-    public static void AddPrioritizedSectorsToDatabase(Dictionary<ulong, uint> treeIndexToPrioritizedSector, DirectoryInfo outputDirectory)
+    public static void AddPrioritizedSectorsToDatabase(
+        Dictionary<ulong, uint> treeIndexToPrioritizedSector,
+        DirectoryInfo outputDirectory
+    )
     {
         DatabaseComposer.AddTreeIndexToSectorToDatabase(treeIndexToPrioritizedSector, outputDirectory);
     }
@@ -164,7 +167,7 @@ public static class SceneCreator
                 ? $"sector_{p.SectorId}.glb"
                 : null
             : p.Geometries.Any()
-                ? $"highlight_sector_{p.SectorId}.glb"
+                ? $"highlight_sector_{p.SectorId}.glb" // TODO Rename to priority sector
                 : null;
 
         var sectorInfo = new SectorInfo(
