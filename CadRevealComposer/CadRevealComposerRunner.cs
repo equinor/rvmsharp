@@ -168,22 +168,22 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var highlightSplitter = new PrioritySectorSplitter();
+        var prioritySplitter = new PrioritySectorSplitter();
 
         var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
 
-        var prioritizedForHighlighting = allPrimitives.Where(x => x.Priority == 1).ToArray();
+        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority == 1).ToArray();
 
         var nextSectorId = sectors.Last().SectorId + 1;
-        var highlightSectors = highlightSplitter
-            .SplitIntoSectors(prioritizedForHighlighting, nextSectorId)
+        var prioritizedSectors = prioritySplitter
+            .SplitIntoSectors(prioritizedPrimitives, nextSectorId)
             .OrderBy(x => x.SectorId)
             .ToArray();
 
         // Remove redundant root and point to the original root
         var originalRootId = sectors.First().SectorId;
-        var redundantRootId = highlightSectors.First().SectorId;
-        highlightSectors = highlightSectors
+        var redundantRootId = prioritizedSectors.First().SectorId;
+        prioritizedSectors = prioritizedSectors
             .Skip(1)
             .Select(sector =>
             {
@@ -193,9 +193,11 @@ public static class CadRevealComposerRunner
             })
             .ToArray();
 
-        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+        Console.WriteLine(
+            $"Split into {sectors.Length} sectors and {prioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+        );
 
-        var allSectors = sectors.Concat(highlightSectors).ToArray();
+        var allSectors = sectors.Concat(prioritizedSectors).ToArray();
 
         stopwatch.Restart();
         SceneCreator.CreateSceneFile(
@@ -209,7 +211,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        return GetTreeIndexToSectorIdDict(highlightSectors);
+        return GetTreeIndexToSectorIdDict(prioritizedSectors);
     }
 
     private static Dictionary<ulong, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
