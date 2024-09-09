@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
+using Tessellation;
 using Utils;
 
 [ProtoContract(SkipConstructor = true)]
@@ -47,6 +48,36 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     {
         var matrix = Matrix4x4.CreateScale(Extents) * Matrix4x4.CreateTranslation(Center);
         return new Box(matrix, treeIndex, color, this);
+    }
+
+    /// <summary>
+    /// Creates a Mesh <see cref="Mesh"/> representing the bounding box coordinates.
+    /// </summary>
+    /// <returns>Mesh representing the bounding box.</returns>
+    public Mesh ToBoxMesh(float error)
+    {
+        Vector3[] boundingBoxVertices = new Vector3[8];
+
+        Vector3 d = Max - Min;
+        boundingBoxVertices[0] = Min;
+        boundingBoxVertices[1] = Min + new Vector3(d.X, 0.0f, 0.0f);
+        boundingBoxVertices[2] = Min + new Vector3(0.0f, d.Y, 0.0f);
+        boundingBoxVertices[3] = Min + new Vector3(d.X, d.Y, 0.0f);
+
+        boundingBoxVertices[4] = Min + new Vector3(0.0f, 0.0f, d.Z);
+        boundingBoxVertices[5] = Min + new Vector3(d.X, 0.0f, d.Z);
+        boundingBoxVertices[6] = Min + new Vector3(0.0f, d.Y, d.Z);
+        boundingBoxVertices[7] = Min + new Vector3(d.X, d.Y, d.Z);
+
+        var indices = new List<uint>();
+        indices.AddRange([0, 2, 3, 0, 3, 1]); // Indices for two triangles along the X-Y-near plane of the bounding box
+        indices.AddRange([0, 1, 4, 1, 5, 4]); // Indices for two triangles along the X-Z-near plane of the bounding box
+        indices.AddRange([0, 6, 2, 0, 4, 6]); // Indices for two triangles along the Y-Z-near plane of the bounding box
+        indices.AddRange([3, 2, 6, 3, 6, 7]); // Indices for two triangles along the X-Z-far plane of the bounding box
+        indices.AddRange([3, 5, 1, 3, 7, 1]); // Indices for two triangles along the Y-Z-far plane of the bounding box
+        indices.AddRange([4, 5, 7, 4, 7, 6]); // Indices for two triangles along the X-Y-far plane of the bounding box
+
+        return new Mesh(boundingBoxVertices, indices.ToArray(), error);
     }
 
     /// <summary>
