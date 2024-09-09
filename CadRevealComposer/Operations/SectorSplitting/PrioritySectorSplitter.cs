@@ -8,7 +8,7 @@ using CadRevealComposer.Primitives;
 
 public class PrioritySectorSplitter : ISectorSplitter
 {
-    private const long SectorEstimatedByteSizeBudget = 100_000; // bytes, Arbitrary value
+    private const long SectorEstimatedByteSizeBudget = 50_000; // bytes, Arbitrary value
 
     public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong nextSectorId)
     {
