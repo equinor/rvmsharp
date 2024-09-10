@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Extensions;
@@ -254,7 +253,10 @@ public class DatabaseComposer
         sqliteComposeTimer.LogCompletion();
     }
 
-    public static void AddTreeIndexToSectorToDatabase(Dictionary<ulong, uint> treeIndexToSectorId, DirectoryInfo outputDirectory)
+    public static void AddTreeIndexToSectorToDatabase(
+        Dictionary<ulong, uint> treeIndexToSectorId,
+        DirectoryInfo outputDirectory
+    )
     {
         var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
         using (var connection = new SqliteConnection($"Data Source={databasePath}"))
@@ -279,7 +281,6 @@ public class DatabaseComposer
 
             var transaction = connection.BeginTransaction();
             command.Transaction = transaction;
-
 
             foreach (var pair in treeIndexToSectorId)
             {
