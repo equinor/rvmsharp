@@ -97,7 +97,7 @@ public static class RvmWorkload
             }
         }
 
-        var rvmFiles = workload.Select(ParseRvmFile).ToArray();
+        var rvmFiles = workload.AsParallel().AsOrdered().Select(ParseRvmFile).ToArray();
 
         if (stringInternPool != null)
         {
