@@ -71,19 +71,33 @@ public static class RvmWorkload
 
         RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
         {
-            (string rvmFilename, string? txtFilename) = filePair;
-            using var stream = File.OpenRead(rvmFilename);
-            var rvmFile = RvmParser.ReadRvm(stream);
-            if (!string.IsNullOrEmpty(txtFilename))
+            try
             {
-                rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
-            }
+                (string rvmFilename, string? txtFilename) = filePair;
+                using var stream = File.OpenRead(rvmFilename);
+                var rvmFile = RvmParser.ReadRvm(stream);
+                if (!string.IsNullOrEmpty(txtFilename))
+                {
+                    rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
+                }
 
-            progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
-            return rvmFile;
+                progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
+                return rvmFile;
+            }
+            catch (Exception)
+            {
+                Console.Error.WriteLine(
+                    "Failed to parse RVM file:"
+                        + filePair.rvmFilename
+                        + " or its attributes file: "
+                        + filePair.txtFilename
+                        + ". Check the exception log."
+                );
+                throw;
+            }
         }
 
-        var rvmFiles = workload.AsParallel().AsOrdered().Select(ParseRvmFile).ToArray();
+        var rvmFiles = workload.Select(ParseRvmFile).ToArray();
 
         if (stringInternPool != null)
         {
