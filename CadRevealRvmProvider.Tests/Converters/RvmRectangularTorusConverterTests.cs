@@ -1,11 +1,11 @@
 ﻿namespace CadRevealRvmProvider.Tests.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 internal class RvmRectangularTorusConverterTests
 {

@@ -5,12 +5,14 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.4" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.4" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
+        <PackageReference Include="Microsoft.EntityFrameworkCore" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+        <PackageReference Include="System.Data.SqlClient" />
+        <PackageReference Include="System.Data.SQLite" />
+        <PackageReference Include="System.Drawing.Common" />
     </ItemGroup>
 </Project>

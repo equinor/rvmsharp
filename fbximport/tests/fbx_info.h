@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
-#include <fbxsdk.h>
+#include <common.h>
 
 class FbxInfo
 {
@@ -26,7 +26,7 @@ public:
     static std::string print_comparison(const FbxInfo& a, const FbxInfo& b);
 
 private:
-    void iterate(FbxNode* parent, const bool& ignore_normals, int ident = 0);
+    void iterate(CFbxNode parent, const bool& ignore_normals, int ident = 0);
     void load(const std::string& fileName, const bool& ignore_normals);
 
 private:

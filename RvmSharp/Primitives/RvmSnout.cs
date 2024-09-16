@@ -1,9 +1,9 @@
 namespace RvmSharp.Primitives;
 
-using Commons.Utils;
-using Operations;
 using System;
 using System.Numerics;
+using Commons.Utils;
+using Operations;
 
 public record RvmSnout(
     uint Version,

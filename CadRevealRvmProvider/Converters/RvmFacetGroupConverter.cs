@@ -1,8 +1,8 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
 using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
-using System.Drawing;
 
 public static class RvmFacetGroupConverter
 {

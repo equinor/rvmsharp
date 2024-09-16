@@ -9,69 +9,33 @@ Most of the FBX functionality is not supported. This library should:
 - Be as simple as possible
 - Have unit tests
 
-## Requirements
+## Building on Windows or Mac
+
+### Requirements
 
 - Visual Studio 2019 or later for Windows
 - FBX SDK 2020.3.2 or later
-  - FBX_ROOT environment variable must be set
-  - FBXSDK_VERSION must be set at variable for the cmake build (for version checking)
-- VCPKG (only if using the VCPKG package manager)
-  - VCPKG_ROOT environment variable must be set to the VCPKG root folder without trailing slash
-    - Example: `C:\Users\username\vcpkg`
+  - `FBX_ROOT` environment variable must be set.
 
-## Building on un-managed system
+### Building
 
-```bash
-# bash
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake -D FBXSDK_VERSION=2020.3.2
-cmake --build build
-# For release build:
+Run the following commands to build the library and test project. The binaries are places in the `build/bin` folder.
+
+```script
+cmake -B build -S . -D FBXSDK_VERSION=<version>
 cmake --build build --config Release
 ```
 
-```ps1
-# PowerShell
-cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
-cmake --build build
-# For release build:
-cmake --build build --config Release
-```
+Where `<version>` is installed fbxsdk version. E.g. *2020.3.2*
 
-## Building on managed system
+## Building for Linux
 
-On a managed system we are only allowed to run executables from the C:/Appl/ folder exclusively. This causes problems for the VCPKG package manager. This is because VCPKG will attempt to install its own version of PowerShell and run the executable from a predetermined folder to perform some operations.
+To build, make sure *Docker* is installed and running, then simply run the `build-linux.ps1` script.
 
-Because of the above limitations, we need to manually install any packages originally installed using VCPKG. How to do this is listed in the below subsections.
-
-### Installing Catch2 (test framework) manually
-
-To install Catch2:
-1. Find the Catch2 repository and perform a 'git pull' in the C:/Appl/ folder.
-2. Create a 'build' folder under C:/Appl/Catch2/
-3. Goto the C:/Apple/Catch2/build folder and execute
-```
-cmake ../CMakeLists.txt
-cd ..
-# For release
-cmake --build .\build\ --config Release
-cmake --install .\build\ --config Release
-# For debug
-cmake --build .\build\ --config Debug
-cmake --install .\build\ --config Debug
-```
-
-### Building fbximport
-
-Note that in case we compile for release the compiled libraries, such as Catch2, must also be compiled in release, and vice versa. To build, execute the following sequence:
-```ps1
-# PowerShell
-cmake -B build -S . -D FBXSDK_VERSION=2020.3.2
-# For release
-cmake --build build --config Release
-# For debug
-cmake --build build
-```
+This will build the *Dockerfile*, which is set up to build the *fbximporter*, and copy the built library to `CadRevealFbxProvider/lib` folder. The library and test binaries can also be found in the `build/bin` folder.
 
 ## Testing
 
-This library uses `catch2` for unit tests.
+The test binary is places in the `build/bin` folder.
+
+Run `tests -m <path-to-fbx-file>` to test the built library.

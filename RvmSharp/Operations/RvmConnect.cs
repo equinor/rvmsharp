@@ -1,12 +1,12 @@
 ﻿namespace RvmSharp.Operations;
 
-using Containers;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using Containers;
+using Primitives;
 
 /// <summary>
 /// Make connection between geometries that share a boundary and are aligned.

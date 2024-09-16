@@ -1,11 +1,11 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmCylinderConverter
 {
@@ -18,7 +18,15 @@ public static class RvmCylinderConverter
     {
         if (!rvmCylinder.Matrix.DecomposeAndNormalize(out var scale, out var rotation, out var position))
         {
-            throw new Exception("Failed to decompose matrix to transform. Input Matrix: " + rvmCylinder.Matrix);
+            // This should not be possible. But for now we log and skip the primitive.
+            Console.Error.WriteLine(
+                "Failed to decompose matrix to transform. Input Matrix: "
+                    + rvmCylinder.Matrix
+                    + " for treeIndex "
+                    + treeIndex
+                    + ". Skipping primitive."
+            );
+            yield break;
         }
 
         if (!rvmCylinder.CanBeConverted(scale, rotation, failedPrimitivesLogObject))

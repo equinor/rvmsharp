@@ -10,12 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibTessDotNet" Version="1.1.15"/>
-    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
+    <PackageReference Include="LibTessDotNet"/>
+    <PackageReference Include="System.Text.Encodings.Web" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ben.StringIntern" Version="0.1.8"/>
+    <PackageReference Include="Ben.StringIntern"/>
   </ItemGroup>
 
 </Project>

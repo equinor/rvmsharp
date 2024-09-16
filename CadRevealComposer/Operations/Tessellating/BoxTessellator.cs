@@ -1,9 +1,9 @@
 namespace CadRevealComposer.Operations.Tessellating;
 
-using Primitives;
 using System;
 using System.Linq;
 using System.Numerics;
+using Primitives;
 using Tessellation;
 using Utils;
 

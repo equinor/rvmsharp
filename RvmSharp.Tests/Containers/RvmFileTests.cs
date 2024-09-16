@@ -1,10 +1,10 @@
 ﻿namespace RvmSharp.Tests.Containers;
 
+using System.Collections.Generic;
+using System.Numerics;
 using NUnit.Framework;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
-using System.Collections.Generic;
-using System.Numerics;
 
 public class RvmFileTests
 {

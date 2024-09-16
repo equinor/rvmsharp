@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp.Primitives;
 
-using Containers;
 using System.Linq;
 using System.Numerics;
+using Containers;
 
 public abstract record RvmPrimitive(
     uint Version,

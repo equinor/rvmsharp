@@ -1,11 +1,11 @@
 namespace CadRevealRvmProvider.Converters.CapVisibilityHelpers;
 
+using System.Numerics;
 using MathNet.Numerics.LinearAlgebra.Double;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
-using System.Numerics;
-using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
+using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 public static class SnoutSnoutComparer
 {

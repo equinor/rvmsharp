@@ -1,9 +1,9 @@
 ﻿namespace RvmSharp.Operations;
 
-using Primitives;
 using System;
 using System.Linq;
 using System.Numerics;
+using Primitives;
 
 public static class RvmPrimitiveExtensions
 {

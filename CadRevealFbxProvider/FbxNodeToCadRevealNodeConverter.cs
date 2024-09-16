@@ -1,16 +1,13 @@
 ﻿namespace CadRevealFbxProvider;
 
+using System.Drawing;
+using System.Text.RegularExpressions;
 using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using System.Data.Entity.Core.Common.CommandTrees.ExpressionBuilder;
-using System.Drawing;
-using System.IO;
-using System.Text.RegularExpressions;
-using System.Xml.Linq;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -51,7 +48,7 @@ public static class FbxNodeToCadRevealNodeConverter
         Dictionary<string, Dictionary<string, string>?>? attributes
     )
     {
-        var name = FbxNodeWrapper.GetNodeName(node);
+        var name = node.GetNodeName();
         if (nodeNameFiltering.ShouldExcludeNode(name))
             return null;
 
@@ -59,7 +56,7 @@ public static class FbxNodeToCadRevealNodeConverter
         var geometry = ReadGeometry(id, node, instanceIdGenerator, meshInstanceLookup, geometriesThatShouldBeInstanced);
 
         if (attributes != null)
-            if (!validateNodeAttributes(attributes, name))
+            if (!ValidateNodeAttributes(attributes, name))
                 return null;
 
         var cadRevealNode = new CadRevealNode
@@ -67,14 +64,14 @@ public static class FbxNodeToCadRevealNodeConverter
             TreeIndex = id,
             Name = name,
             Parent = parent,
-            Geometries = geometry != null ? new[] { geometry } : Array.Empty<APrimitive>(),
+            Geometries = geometry != null ? [geometry] : [],
         };
 
-        var childCount = FbxNodeWrapper.GetChildCount(node);
-        List<CadRevealNode> children = new List<CadRevealNode>();
+        var childCount = node.GetChildCount();
+        List<CadRevealNode> children = [];
         for (var i = 0; i < childCount; i++)
         {
-            FbxNode child = FbxNodeWrapper.GetChild(i, node);
+            FbxNode child = node.GetChild(i);
             CadRevealNode? childCadRevealNode = ConvertRecursiveInternal(
                 child,
                 cadRevealNode,
@@ -106,7 +103,7 @@ public static class FbxNodeToCadRevealNodeConverter
         BoundingBox? optionalStartingBoundingBox
     )
     {
-        // Does not need to be recursive since all child are expected to have ran this method already.
+        // Does not need to be recursive since all child are expected to have run this method already.
         foreach (CadRevealNode childRevealNode in children)
         {
             var childBoundingBox = childRevealNode.BoundingBoxAxisAligned;
@@ -131,7 +128,7 @@ public static class FbxNodeToCadRevealNodeConverter
     )
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
-        var transform = FbxNodeWrapper.GetTransform(node);
+        var worldTransform = node.WorldTransform;
 
         if (nodeGeometryPtr == IntPtr.Zero)
         {
@@ -143,10 +140,10 @@ public static class FbxNodeToCadRevealNodeConverter
             var instancedMeshCopy = new InstancedMesh(
                 instanceData.instanceId,
                 instanceData.templateMesh,
-                transform,
+                worldTransform,
                 treeIndex,
                 Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform)
+                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(worldTransform)
             );
             return instancedMeshCopy;
         }
@@ -160,7 +157,6 @@ public static class FbxNodeToCadRevealNodeConverter
         var mesh = meshData.Value.Mesh;
         var meshPtr = meshData.Value.MeshPtr;
 
-        var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
         if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
         {
             ulong instanceId = instanceIdGenerator.GetNextId();
@@ -168,26 +164,28 @@ public static class FbxNodeToCadRevealNodeConverter
             var instancedMesh = new InstancedMesh(
                 instanceId,
                 mesh,
-                transform,
+                worldTransform,
                 treeIndex,
                 Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                bb
+                mesh.CalculateAxisAlignedBoundingBox(worldTransform)
             );
             return instancedMesh;
         }
 
+        // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
+        mesh.Apply(worldTransform);
         var triangleMesh = new TriangleMesh(
             mesh,
             treeIndex,
             Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-            bb
+            mesh.CalculateAxisAlignedBoundingBox()
         );
 
         return triangleMesh;
     }
 
     // Some models contain trash, i.e., objects that were intended to be removed were not deleted,
-    // but landed somewhere far away from the model).
+    // but landed somewhere far away from the model.
     // This is likely to happen in the future according to our domain expert.
     //
     // As a consequence, the bounding box becomes very big(encompasses the trash as well) and
@@ -195,7 +193,7 @@ public static class FbxNodeToCadRevealNodeConverter
     //
     // Our domain expert confirmed that we can(hopefully) fix this issue by ignoring all parts that
     // do now have attributes(empty fields) in the attribute file.
-    private static bool validateNodeAttributes(Dictionary<string, Dictionary<string, string>?> attributes, string name)
+    private static bool ValidateNodeAttributes(Dictionary<string, Dictionary<string, string>?> attributes, string name)
     {
         var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
 

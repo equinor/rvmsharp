@@ -1,7 +1,7 @@
 ﻿namespace HierarchyComposer.Extensions;
 
-using Model;
 using System.Collections.Generic;
+using Model;
 
 public static class KeyExtensions
 {

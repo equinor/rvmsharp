@@ -1,11 +1,11 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
+using System.Text.RegularExpressions;
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using Commons;
-using System.Text.RegularExpressions;
 
 public static class FbxWorkload
 {
@@ -30,10 +30,9 @@ public static class FbxWorkload
             .SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
             .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
             .Concat(
-                files.Where(
-                    x =>
-                        x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
-                        || x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                files.Where(x =>
+                    x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
+                    || x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
                 )
             ) // Append single files
             .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex

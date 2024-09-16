@@ -8,13 +8,11 @@
 
 #include "fbx_info.h"
 #include <iostream>
-#include "common.h"
-#include "node.h"
-#include "mesh.h"
-#include "manager.h"
-#include "importer.h"
+#include <node.h>
+#include <mesh.h>
+#include <manager.h>
+#include <importer.h>
 
-using namespace fbxsdk;
 using namespace std;
 
 FbxInfo::FbxInfo(const std::string& fileName, const bool& ignore_normals)
@@ -98,7 +96,7 @@ std::string FbxInfo::print_comparison(const FbxInfo& a, const FbxInfo& b)
     return output;
 }
 
-void FbxInfo::iterate(FbxNode* parent, const bool& ignore_normals, int ident)
+void FbxInfo::iterate(CFbxNode parent, const bool& ignore_normals, int ident)
 {
     char* name = new char[512];
     node_get_name(parent, name, 512);
@@ -109,9 +107,9 @@ void FbxInfo::iterate(FbxNode* parent, const bool& ignore_normals, int ident)
 
     for (int i = 0; i < node_get_child_count(parent); i++)
     {
-        iterate((FbxNode*)node_get_child(parent, i), ignore_normals, ident + 1);
+        iterate(node_get_child(parent, i), ignore_normals, ident + 1);
     }
-    auto geometry = (FbxMesh*)node_get_mesh(parent);
+    auto geometry = node_get_mesh(parent);
     if (geometry != nullptr)
     {
         auto data = mesh_get_geometry_data(geometry, ignore_normals);
@@ -126,10 +124,10 @@ void FbxInfo::load(const std::string& fileName, const bool& ignore_normals)
     m_ignore_normals = ignore_normals;
 
     auto sdk = manager_create();
-    auto root = (FbxNode*)load_file(fileName.c_str(), sdk);
+    auto root = load_file(fileName.c_str(), sdk);
 
     iterate(root, ignore_normals);
 
-    root->Destroy();
+    node_destroy(root);
     manager_destroy(sdk);
 }

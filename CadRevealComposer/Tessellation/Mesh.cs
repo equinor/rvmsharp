@@ -1,12 +1,12 @@
 ﻿namespace CadRevealComposer.Tessellation;
 
-using ProtoBuf;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using ProtoBuf;
 
 [ProtoContract(SkipConstructor = true)]
 public class Mesh : IEquatable<Mesh>
@@ -81,29 +81,26 @@ public class Mesh : IEquatable<Mesh>
     /// <param name="transform">Optionally add a transform to the mesh while calculating the bounding box.</param>
     /// <returns>A Bounding Box</returns>
     /// <exception cref="Exception">Throws if the Mesh has 0 vertices.</exception>
-    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform)
+    public BoundingBox CalculateAxisAlignedBoundingBox(Matrix4x4? transform = null)
     {
-        var vertices = this._vertices;
-
-        if (vertices.Length == 0)
+        if (_vertices.Length == 0)
             throw new Exception("Cannot find BoundingBox of a Mesh with 0 Vertices.");
 
         Vector3 min = Vector3.One * float.MaxValue;
         Vector3 max = Vector3.One * float.MinValue;
-        if (transform is not null and { IsIdentity: false }) // Skip applying the transform if its an identity transform.
+        if (transform is { IsIdentity: false }) // Skip applying the transform if its an identity transform.
         {
-            for (int i = 1; i < vertices.Length; i++)
+            foreach (var vertex in _vertices)
             {
-                var transformedVertice = Vector3.Transform(vertices[i], transform.Value);
-                min = Vector3.Min(min, transformedVertice);
-                max = Vector3.Max(max, transformedVertice);
+                var transformedVertex = Vector3.Transform(vertex, transform.Value);
+                min = Vector3.Min(min, transformedVertex);
+                max = Vector3.Max(max, transformedVertex);
             }
         }
         else
         {
-            for (int i = 1; i < vertices.Length; i++)
+            foreach (var vertex in _vertices)
             {
-                var vertex = vertices[i];
                 min = Vector3.Min(min, vertex);
                 max = Vector3.Max(max, vertex);
             }

@@ -1,8 +1,8 @@
 ﻿namespace HierarchyComposer;
 
-using Microsoft.Extensions.Logging;
 using System;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 internal class MopTimer
 {

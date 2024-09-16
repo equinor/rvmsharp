@@ -1,6 +1,5 @@
 ﻿namespace RvmSharp.Exporters;
 
-using Commons.Utils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -8,6 +7,7 @@ using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Commons.Utils;
 using Tessellation;
 
 public sealed class ObjExporter : IDisposable

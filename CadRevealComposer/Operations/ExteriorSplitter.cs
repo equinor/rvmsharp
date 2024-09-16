@@ -1,12 +1,12 @@
 namespace CadRevealComposer.Operations;
 
-using AlgebraExtensions;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
+using AlgebraExtensions;
+using Primitives;
 using Tessellation;
 using Utils;
 
@@ -51,6 +51,7 @@ public static class ExteriorSplitter
 
         // rays for XY plane
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
+        {
             for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
             {
                 var bounds = new BoundingBox(
@@ -70,9 +71,11 @@ public static class ExteriorSplitter
                     new Ray(new Vector3(x + halfCell, y + halfCell, rayOriginMax.Z), -Vector3.UnitZ)
                 );
             }
+        }
 
         // rays for XZ plane
         for (float x = gridMin.X; x < gridMax.X; x += cellSize)
+        {
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
                 var bounds = new BoundingBox(
@@ -92,9 +95,11 @@ public static class ExteriorSplitter
                     new Ray(new Vector3(x + halfCell, rayOriginMax.Y, z + halfCell), -Vector3.UnitY)
                 );
             }
+        }
 
         // rays for YZ plane
         for (float y = gridMin.Y; y < gridMax.Y; y += cellSize)
+        {
             for (float z = gridMin.Z; z < gridMax.Z; z += cellSize)
             {
                 var bounds = new BoundingBox(
@@ -114,6 +119,7 @@ public static class ExteriorSplitter
                     new Ray(new Vector3(rayOriginMax.X, y + halfCell, z + halfCell), -Vector3.UnitX)
                 );
             }
+        }
     }
 
     public static (APrimitive[] Exterior, APrimitive[] Interior) Split(APrimitive[] primitives)
@@ -259,14 +265,13 @@ public static class ExteriorSplitter
             var boundingBox = nodeGroup.ToArray().CalculateBoundingBox();
 
             var primitives = nodeGroup
-                .Select(
-                    p =>
-                        p switch
-                        {
-                            InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
-                            TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
-                            _ => new Primitive(p)
-                        }
+                .Select(p =>
+                    p switch
+                    {
+                        InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
+                        TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
+                        _ => new Primitive(p)
+                    }
                 )
                 .WhereNotNull()
                 .ToArray();

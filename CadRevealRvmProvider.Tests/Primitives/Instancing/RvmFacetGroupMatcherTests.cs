@@ -1,10 +1,10 @@
 ﻿namespace CadRevealRvmProvider.Tests.Primitives.Instancing;
 
+using System.Numerics;
 using CadRevealComposer.Utils;
 using Operations;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
-using System.Numerics;
 using Utils;
 
 [TestFixture]

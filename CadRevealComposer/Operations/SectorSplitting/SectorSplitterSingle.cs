@@ -1,9 +1,9 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Primitives;
 using Utils;
 
 public class SectorSplitterSingle : ISectorSplitter

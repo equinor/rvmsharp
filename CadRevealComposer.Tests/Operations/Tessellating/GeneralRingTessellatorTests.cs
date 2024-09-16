@@ -1,10 +1,10 @@
 ﻿namespace CadRevealComposer.Tests.Operations.Tessellating;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Operations.Tessellating;
 using NUnit.Framework.Legacy;
 using Primitives;
-using System.Drawing;
-using System.Numerics;
 
 [TestFixture]
 public class GeneralRingTessellatorTests

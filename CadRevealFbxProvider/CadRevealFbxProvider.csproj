@@ -16,10 +16,18 @@
       <Link>cfbx.dll</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include=".\lib\libcfbx.dylib">
+      <Link>libcfbx.dylib</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include=".\lib\libcfbx.so">
+      <Link>libcfbx.so</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Csv" Version="2.0.93" />
+    <PackageReference Include="Csv" />
   </ItemGroup>
 
 </Project>

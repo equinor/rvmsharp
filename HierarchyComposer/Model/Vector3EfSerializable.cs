@@ -1,8 +1,8 @@
 ﻿namespace HierarchyComposer.Model;
 
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Numerics;
+using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Vector3EfSerializable is ONLY used for serializing to Entity Framework, as EF does not (As of EFCore 6.0) support serializing Vector3

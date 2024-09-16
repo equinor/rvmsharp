@@ -1,13 +1,14 @@
 namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using CapVisibilityHelpers;
 using Commons.Utils;
+using MathNet.Numerics;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmSnoutConverter
 {
@@ -131,7 +132,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, centerA, centerB);
 
-        if (showCapA && radiusA > 0)
+        if (showCapA && radiusA.IsLarger(0, 5))
         {
             var matrixCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -141,7 +142,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixCapA, normal, treeIndex, color);
         }
 
-        if (!showCapB || !(radiusB > 0) || !hasHeight)
+        if (!showCapB || !(radiusB.IsLarger(0, 5)) || !hasHeight)
         {
             yield break;
         }
@@ -193,7 +194,7 @@ public static class RvmSnoutConverter
 
         var (showCapA, showCapB) = CapVisibility.IsCapsVisible(rvmSnout, eccentricCenterA, eccentricCenterB);
 
-        if (showCapA && radiusA > 0)
+        if (showCapA && radiusA.IsLarger(0, 5))
         {
             var matrixEccentricCapA =
                 Matrix4x4.CreateScale(diameterA)
@@ -203,7 +204,7 @@ public static class RvmSnoutConverter
             yield return CircleConverterHelper.ConvertCircle(matrixEccentricCapA, normal, treeIndex, color);
         }
 
-        if (!showCapB || !(radiusB > 0))
+        if (!showCapB || !(radiusB.IsLarger(0, 5)))
         {
             yield break;
         }

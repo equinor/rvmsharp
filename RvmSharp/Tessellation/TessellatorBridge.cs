@@ -1,13 +1,13 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using Commons.Utils;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
+using Commons.Utils;
+using Primitives;
 using static Primitives.RvmFacetGroup;
 
 // ReSharper disable once UnusedType.Global -- Public API
@@ -17,8 +17,8 @@ public static class TessellatorBridge
 
     public static (RvmMesh, Color)[] Tessellate(RvmNode group, float tolerance)
     {
-        var meshes = group.Children
-            .OfType<RvmPrimitive>()
+        var meshes = group
+            .Children.OfType<RvmPrimitive>()
             .Select(primitive =>
             {
 #if DEBUG
@@ -756,8 +756,8 @@ public static class TessellatorBridge
 
             var vo = vertices.Count;
 
-            var adjustedContours = poly.Contours
-                .Select(v => new RvmContour(v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()))
+            var adjustedContours = poly
+                .Contours.Select(v => new RvmContour(v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()))
                 .ToArray();
 
             var outJob = TessNet.Tessellate(adjustedContours);
