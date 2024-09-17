@@ -155,6 +155,9 @@ public class ScaffoldOptimizerTests
     [Test]
     public void CheckScaffoldOptimizerActivation_GivenTestPartOptimizers_VerifyingTheReturnedNode()
     {
+        ulong currentInstanceId = 100;
+        var onRequestNewInstanceId = () => currentInstanceId++;
+
         // Set up the input
         CadRevealNode nodeA = CreateCadRevealNode("TestNode, Test A test").node;
         CadRevealNode nodeB = CreateCadRevealNode("TestNode, Test B test").node;
@@ -173,10 +176,10 @@ public class ScaffoldOptimizerTests
         optimizer.AddPartOptimizer(optimizerB);
 
         // Invoke the optimizer
-        optimizer.OptimizeNode(nodeA);
-        optimizer.OptimizeNode(nodeB);
-        optimizer.OptimizeNode(nodeC);
-        optimizer.OptimizeNode(nodeD);
+        optimizer.OptimizeNode(nodeA, onRequestNewInstanceId);
+        optimizer.OptimizeNode(nodeB, onRequestNewInstanceId);
+        optimizer.OptimizeNode(nodeC, onRequestNewInstanceId);
+        optimizer.OptimizeNode(nodeD, onRequestNewInstanceId);
 
         // Check the results
         CheckGeometries(nodeA.Geometries, optimizerA.GetVerticesTruth(), optimizerA.GetIndicesTruth(), boundingBoxes);
