@@ -122,25 +122,14 @@ public static class SplittingUtils
     /// </summary>
     private static Vector3 TruncatedAverageCenter(this IReadOnlyCollection<Node> nodes)
     {
-        var avgCenterX = nodes
-            .OrderBy(x => x.BoundingBox.Center.X)
-            .Skip((int)(nodes.Count * 0.05))
-            .Take((int)(nodes.Count * 0.95))
-            .Average(x => x.BoundingBox.Center.X);
-
-        var avgCenterY = nodes
-            .OrderBy(x => x.BoundingBox.Center.Y)
-            .Skip((int)(nodes.Count * 0.05))
-            .Take((int)(nodes.Count * 0.95))
-            .Average(x => x.BoundingBox.Center.Y);
-
-        var avgCenterZ = nodes
-            .OrderBy(x => x.BoundingBox.Center.Z)
-            .Skip((int)(nodes.Count * 0.05))
-            .Take((int)(nodes.Count * 0.95))
-            .Average(x => x.BoundingBox.Center.Z);
+        var avgCenterX = AvgCenter(nodes.Select(node => node.BoundingBox.Center.X));
+        var avgCenterY = AvgCenter(nodes.Select(node => node.BoundingBox.Center.Y));
+        var avgCenterZ = AvgCenter(nodes.Select(node => node.BoundingBox.Center.Z));
 
         return new Vector3(avgCenterX, avgCenterY, avgCenterZ);
+
+        float AvgCenter(IEnumerable<float> values) =>
+            values.Order().Skip((int)(nodes.Count * 0.05)).Take((int)(nodes.Count * 0.95)).Average();
     }
 
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
