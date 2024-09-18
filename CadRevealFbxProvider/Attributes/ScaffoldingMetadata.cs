@@ -120,11 +120,10 @@ public class ScaffoldingMetadata
 
     public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-
         // the if above ensures that the fields and not null
         targetDict.Add(WorkOrderFieldName, WorkOrder ?? "-1");
         targetDict.Add(BuildOpFieldName, BuildOperationNumber ?? "-1");
         targetDict.Add(DismantleOpFieldName, DismantleOperationNumber ?? "-1");
-        targetDict.Add(TotalWeightFieldName, TotalWeight?? "-1");
+        targetDict.Add(TotalWeightFieldName, TotalWeight ?? "-1");
     }
 }
