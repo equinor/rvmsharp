@@ -10,6 +10,7 @@
 #include <iostream>
 #include <node.h>
 #include <mesh.h>
+#include <material.h>
 #include <manager.h>
 #include <importer.h>
 
@@ -47,6 +48,7 @@ std::string FbxInfo::print_info() const
         {
             output+= string("Vertex count: ") + to_string(item.m_vertex_count) + "\r\n";
             output+= string("Triangle count: ") + to_string(item.m_triangle_count) + "\r\n";
+            output+= string("Color: (") + to_string(item.m_color.r) + ", " + to_string(item.m_color.g) + ", " + to_string(item.m_color.b) + ", " + to_string(item.m_color.a) + ")\r\n";
         }
     }
 
@@ -112,8 +114,11 @@ void FbxInfo::iterate(CFbxNode parent, const bool& ignore_normals, int ident)
     auto geometry = node_get_mesh(parent);
     if (geometry != nullptr)
     {
+        auto material = node_get_material(parent);
+        auto color = material != nullptr ? material_get_color(material) : new Color();
+
         auto data = mesh_get_geometry_data(geometry, ignore_normals);
-        m_node_info.emplace_back(InfoItem(data->vertex_count, data->index_count));
+        m_node_info.emplace_back(InfoItem(data->vertex_count, data->index_count, color));
 
         delete data;
     }
