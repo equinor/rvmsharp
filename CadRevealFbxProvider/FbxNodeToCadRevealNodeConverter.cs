@@ -1,10 +1,8 @@
 ﻿namespace CadRevealFbxProvider;
 
 using System.Drawing;
-using System.Drawing;
 using System.Numerics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using System.Text.RegularExpressions;
 using BatchUtils;
 using CadRevealComposer;
@@ -13,6 +11,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using CadRevealComposer.Utils.MeshOptimization;
 using MIConvexHull;
 
 public static class FbxNodeToCadRevealNodeConverter
@@ -26,7 +25,7 @@ public static class FbxNodeToCadRevealNodeConverter
         int minInstanceCountThreshold = 2
     )
     {
-        var meshInstanceLookup = new Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)>();
+        var meshInstanceLookup = new Dictionary<IntPtr, InstancedMesh[]>();
         IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(
             node,
             minInstanceCountThreshold
@@ -48,7 +47,7 @@ public static class FbxNodeToCadRevealNodeConverter
         CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
-        Dictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
+        Dictionary<IntPtr, InstancedMesh[]> meshInstanceLookup,
         NodeNameFiltering nodeNameFiltering,
         IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced,
         Dictionary<string, Dictionary<string, string>?>? attributes
@@ -59,21 +58,28 @@ public static class FbxNodeToCadRevealNodeConverter
             return null;
 
         var id = treeIndexGenerator.GetNextId();
-        var geometry = ReadGeometry(id, node, instanceIdGenerator, meshInstanceLookup, geometriesThatShouldBeInstanced);
+        var geometries = ReadGeometry(
+                id,
+                node,
+                instanceIdGenerator,
+                meshInstanceLookup,
+                geometriesThatShouldBeInstanced
+            )
+            .ToArray();
 
         if (attributes != null)
             if (!ValidateNodeAttributes(attributes, name))
                 return null;
 
-        var triCount = geometry != null ? GetTriCountForGeometry(geometry) : null;
+        var triCount = geometries.Any() ? GetTriCountForGeometries(geometries) : null;
         var cadRevealNode = new CadRevealNode
         {
             TreeIndex = id,
             Name = name,
             Parent = parent,
-            Geometries = geometry != null ? [geometry] : [],
+            Geometries = geometries,
             OptionalDiagnosticInfo = JsonSerializer.Serialize(
-                new { triCount, geometryType = geometry?.GetType().ToString() }
+                new { triCount, geometryType = geometries?.GetType().ToString() }
             )
         };
 
@@ -100,12 +106,17 @@ public static class FbxNodeToCadRevealNodeConverter
         // Calculate bounding box based on child's bounds if any
         var axisAlignedBoundingBoxIncludingChildNodes = ExtendBoundingBoxWithChildrenBounds(
             children,
-            geometry?.AxisAlignedBoundingBox
+            BoundingBox.Encapsulate(geometries!.Select(x => x.AxisAlignedBoundingBox))
         );
 
         cadRevealNode.Children = children.ToArray();
         cadRevealNode.BoundingBoxAxisAligned = axisAlignedBoundingBoxIncludingChildNodes;
         return cadRevealNode;
+
+        int? GetTriCountForGeometries(IEnumerable<APrimitive> primitives)
+        {
+            return primitives.Sum(GetTriCountForGeometry);
+        }
 
         int? GetTriCountForGeometry(APrimitive primitive)
         {
@@ -139,11 +150,11 @@ public static class FbxNodeToCadRevealNodeConverter
         return optionalStartingBoundingBox;
     }
 
-    private static APrimitive? ReadGeometry(
+    private static IEnumerable<APrimitive> ReadGeometry(
         ulong treeIndex,
         FbxNode node,
         InstanceIdGenerator instanceIdGenerator,
-        IDictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,
+        IDictionary<IntPtr, InstancedMesh[]> alreadyProcceseMeshInstancingLookup,
         IReadOnlySet<IntPtr> geometriesThatShouldBeInstanced
     )
     {
@@ -152,21 +163,10 @@ public static class FbxNodeToCadRevealNodeConverter
         var nodeName = node.GetNodeName();
         if (nodeGeometryPtr == IntPtr.Zero)
         {
-            return null;
+            yield break;
         }
 
-        if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
-        {
-            var instancedMeshCopy = new InstancedMesh(
-                instanceData.instanceId,
-                instanceData.templateMesh,
-                worldTransform,
-                treeIndex,
-                Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(worldTransform)
-            );
-            return instancedMeshCopy;
-        }
+        string[] nodesToMakeBox = ["Plank", "Board", "Pipe"];
 
         var meshData = FbxMeshWrapper.GetGeometricData(node);
         if (!meshData.HasValue)
@@ -176,51 +176,105 @@ public static class FbxNodeToCadRevealNodeConverter
 
         var mesh = meshData.Value.Mesh;
         var meshPtr = meshData.Value.MeshPtr;
+        var isProcessed = false;
+
+        if (alreadyProcceseMeshInstancingLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
+        {
+            foreach (InstancedMesh instancedMesh in instanceData)
+            {
+                var instancedMeshCopy = instancedMesh with
+                {
+                    // We keep the instanceId and mesh reference unchanged.
+                    TreeIndex = treeIndex,
+                    InstanceMatrix = worldTransform,
+                    Color = Color.Aqua,
+                    AxisAlignedBoundingBox = instancedMesh.TemplateMesh.CalculateAxisAlignedBoundingBox(worldTransform)
+                };
+                yield return instancedMeshCopy;
+            }
+
+            isProcessed = true;
+        }
 
         string[] nodesToMakeConvex = ["Plank", "Board", "Pipe"];
-        Mesh simplifiedMesh;
+        Mesh maybeConvexMesh;
         if (nodesToMakeConvex.Any(s => nodeName.Contains(s, StringComparison.OrdinalIgnoreCase)))
         {
-            simplifiedMesh = ReduceMeshToConvexHull(mesh);
+            maybeConvexMesh = ReduceMeshToConvexHull(mesh);
         }
         else
         {
-            simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject(), 0.03f);
+            maybeConvexMesh = mesh;
         }
 
-        if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
-        {
-            ulong instanceId = instanceIdGenerator.GetNextId();
-            meshInstanceLookup.Add(meshPtr, (simplifiedMesh, instanceId));
-            var instancedMesh = new InstancedMesh(
-                instanceId,
-                simplifiedMesh,
-                worldTransform,
-                treeIndex,
-                Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                mesh.CalculateAxisAlignedBoundingBox(worldTransform)
-            );
-            Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount), 7:P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
-            );
-            return instancedMesh;
-        }
-        else
-        {
-            // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
-            simplifiedMesh.Apply(worldTransform);
-            var triangleMesh = new TriangleMesh(
-                simplifiedMesh,
-                treeIndex,
-                Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-                simplifiedMesh.CalculateAxisAlignedBoundingBox()
-            );
+        var looseParts = LoosePiecesMeshTools.SplitMeshByLoosePieces(maybeConvexMesh).ToList();
 
-            Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount), 7:P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
-            );
-            return triangleMesh;
+        // Special handling of loose parts for certain nodes
+        if (nodesToMakeBox.Any(s => nodeName.Contains(s, StringComparison.OrdinalIgnoreCase)))
+        {
+            const int magicNumberForCylinderTriangleCount = 1337;
+            foreach (
+                var loosePart in looseParts
+                    .Where(x =>
+                    {
+                        return x.TriangleCount == magicNumberForCylinderTriangleCount;
+                    })
+                    .ToArray()
+            )
+            {
+                yield return loosePart
+                    .CalculateAxisAlignedBoundingBox(worldTransform)
+                    .ToBoxPrimitive((uint)treeIndex, Color.Pink);
+                looseParts.Remove(loosePart);
+            }
         }
+
+        if (
+            geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr)
+            && !alreadyProcceseMeshInstancingLookup.ContainsKey(meshPtr)
+        )
+        {
+            var loosePartsTemplateInstances = new List<InstancedMesh>();
+            foreach (var loosePart in looseParts)
+            {
+                var loosePartMesh = new InstancedMesh(
+                    instanceIdGenerator.GetNextId(),
+                    Simplify.SimplifyMeshLossy(loosePart, new SimplificationLogObject()),
+                    worldTransform,
+                    treeIndex,
+                    Color.Magenta, // TODO: Temp debug color to distinguish first Instance
+                    mesh.CalculateAxisAlignedBoundingBox(worldTransform)
+                );
+                yield return loosePartMesh;
+                loosePartsTemplateInstances.Add(loosePartMesh);
+            }
+
+            alreadyProcceseMeshInstancingLookup.Add(meshPtr, loosePartsTemplateInstances.ToArray());
+            //
+            // Console.WriteLine(
+            //     $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount), 7:P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
+            // );
+        }
+
+        if (isProcessed)
+            yield break;
+
+        // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
+
+        var simplifiedMesh = Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject(), 0.03f);
+        simplifiedMesh.Apply(worldTransform);
+        var triangleMesh = new TriangleMesh(
+            simplifiedMesh,
+            treeIndex,
+            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
+            simplifiedMesh.CalculateAxisAlignedBoundingBox()
+        );
+
+        Console.WriteLine(
+            $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)maybeConvexMesh.TriangleCount / mesh.TriangleCount), 7:P2}. Orig: {mesh.TriangleCount, 8} After: {maybeConvexMesh.TriangleCount, 8}"
+        );
+
+        yield return triangleMesh;
     }
 
     // Some models contain trash, i.e., objects that were intended to be removed were not deleted,

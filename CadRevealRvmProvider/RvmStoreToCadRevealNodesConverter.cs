@@ -32,11 +32,9 @@ internal static class RvmStoreToCadRevealNodesConverter
             .ToArray();
         failedPrimitiveConversionsLogObject.LogFailedPrimitives();
 
-        var subBoundingBox = cadRevealRootNodes
-            .Select(x => x.BoundingBoxAxisAligned)
-            .WhereNotNull()
-            .ToArray()
-            .Aggregate((a, b) => a.Encapsulate(b));
+        var subBoundingBox = BoundingBox.Encapsulate(
+            cadRevealRootNodes.Select(x => x.BoundingBoxAxisAligned).WhereNotNull()
+        );
 
         Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
