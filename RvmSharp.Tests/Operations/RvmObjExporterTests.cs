@@ -1,14 +1,14 @@
 ﻿namespace RvmSharp.Tests.Operations;
 
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Numerics;
 using Exporters;
 using NUnit.Framework;
 using RvmSharp.Containers;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Numerics;
 using Tessellation;
 
 [TestFixture]
@@ -20,12 +20,10 @@ public class RvmObjExporterTests
         // create RvmStore
         var store = new RvmStore();
         var nodes = new List<RvmNode> { new RvmNode(1, "", Vector3.Zero, 1), new RvmNode(1, "", Vector3.Zero, 1), };
-        nodes[0].Children.Add(
-            new RvmBox(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One), 2, 2, 2)
-        );
-        nodes[1].Children.Add(
-            new RvmBox(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One), 2, 2, 2)
-        );
+        nodes[0]
+            .Children.Add(new RvmBox(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One), 2, 2, 2));
+        nodes[1]
+            .Children.Add(new RvmBox(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One), 2, 2, 2));
         store.RvmFiles.Add(
             new RvmFile(
                 new RvmFile.RvmHeader(1, "", "", "", "", ""),

@@ -1,8 +1,5 @@
 ﻿namespace CadRevealComposer.Utils;
 
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils.MeshOptimization;
-using g3;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +7,9 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Numerics;
 using System.Threading;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils.MeshOptimization;
+using g3;
 using Tessellation;
 
 public static class Simplify

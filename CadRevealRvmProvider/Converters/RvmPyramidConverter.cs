@@ -1,12 +1,12 @@
 ﻿namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons.Utils;
 using RvmSharp.Operations;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmPyramidConverter
 {

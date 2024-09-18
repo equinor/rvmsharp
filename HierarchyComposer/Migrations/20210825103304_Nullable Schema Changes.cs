@@ -82,12 +82,11 @@ namespace Mop.Hierarchy.Migrations
 
             migrationBuilder.CreateTable(
                 name: "NodeToPDMSEntry",
-                columns: table =>
-                    new
-                    {
-                        NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
-                        PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
-                    },
+                columns: table => new
+                {
+                    NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
+                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
+                },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NodeToPDMSEntry", x => new { x.NodeId, x.PDMSEntryId });
@@ -181,12 +180,11 @@ namespace Mop.Hierarchy.Migrations
 
             migrationBuilder.CreateTable(
                 name: "NodeToPDMSEntries",
-                columns: table =>
-                    new
-                    {
-                        NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
-                        PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
-                    },
+                columns: table => new
+                {
+                    NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
+                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
+                },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NodeToPDMSEntries", x => new { x.NodeId, x.PDMSEntryId });

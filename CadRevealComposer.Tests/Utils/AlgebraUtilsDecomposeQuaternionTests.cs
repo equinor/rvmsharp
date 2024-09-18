@@ -1,9 +1,9 @@
 namespace CadRevealComposer.Tests.Utils;
 
-using CadRevealComposer.Utils;
-using NUnit.Framework.Legacy;
 using System.Numerics;
 using System.Text.Json.Serialization;
+using CadRevealComposer.Utils;
+using NUnit.Framework.Legacy;
 
 [TestFixture]
 public class AlgebraUtilsDecomposeQuaternionTests

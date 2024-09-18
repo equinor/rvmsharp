@@ -1,11 +1,11 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using IdProviders;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using IdProviders;
+using Primitives;
 using Utils;
 
 public class SectorSplitterOctree : ISectorSplitter

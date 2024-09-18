@@ -1,7 +1,7 @@
 ﻿namespace Commons.Tests;
 
-using Commons.Utils;
 using System;
+using Commons.Utils;
 
 [TestFixture]
 public class SagittaUtilsTests

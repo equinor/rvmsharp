@@ -1,7 +1,7 @@
 ﻿namespace RvmSharp.Containers;
 
-using Primitives;
 using System.Collections.Generic;
+using Primitives;
 
 public record RvmModel
 {

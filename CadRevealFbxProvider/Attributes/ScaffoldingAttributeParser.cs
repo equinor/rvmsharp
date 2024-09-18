@@ -1,7 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
-using Csv;
 using System.Text.Json;
+using Csv;
 
 public class ScaffoldingAttributeParser
 {

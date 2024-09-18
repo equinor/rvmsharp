@@ -1,5 +1,11 @@
 ﻿namespace CadRevealFbxProvider;
 
+using System.Drawing;
+using System.Drawing;
+using System.Numerics;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
@@ -8,10 +14,6 @@ using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using MIConvexHull;
-using System.Drawing;
-using System.Numerics;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -52,7 +54,7 @@ public static class FbxNodeToCadRevealNodeConverter
         Dictionary<string, Dictionary<string, string>?>? attributes
     )
     {
-        var name = FbxNodeWrapper.GetNodeName(node);
+        var name = node.GetNodeName();
         if (nodeNameFiltering.ShouldExcludeNode(name))
             return null;
 
@@ -60,7 +62,7 @@ public static class FbxNodeToCadRevealNodeConverter
         var geometry = ReadGeometry(id, node, instanceIdGenerator, meshInstanceLookup, geometriesThatShouldBeInstanced);
 
         if (attributes != null)
-            if (!validateNodeAttributes(attributes, name))
+            if (!ValidateNodeAttributes(attributes, name))
                 return null;
 
         var triCount = geometry != null ? GetTriCountForGeometry(geometry) : null;
@@ -70,15 +72,16 @@ public static class FbxNodeToCadRevealNodeConverter
             Name = name,
             Parent = parent,
             Geometries = geometry != null ? [geometry] : [],
-            OptionalDiagnosticInfo =
-                JsonSerializer.Serialize(new {triCount, geometryType = geometry?.GetType().ToString()})
+            OptionalDiagnosticInfo = JsonSerializer.Serialize(
+                new { triCount, geometryType = geometry?.GetType().ToString() }
+            )
         };
 
-        var childCount = FbxNodeWrapper.GetChildCount(node);
-        List<CadRevealNode> children = new List<CadRevealNode>();
+        var childCount = node.GetChildCount();
+        List<CadRevealNode> children = [];
         for (var i = 0; i < childCount; i++)
         {
-            FbxNode child = FbxNodeWrapper.GetChild(i, node);
+            FbxNode child = node.GetChild(i);
             CadRevealNode? childCadRevealNode = ConvertRecursiveInternal(
                 child,
                 cadRevealNode,
@@ -120,7 +123,7 @@ public static class FbxNodeToCadRevealNodeConverter
         BoundingBox? optionalStartingBoundingBox
     )
     {
-        // Does not need to be recursive since all child are expected to have ran this method already.
+        // Does not need to be recursive since all child are expected to have run this method already.
         foreach (CadRevealNode childRevealNode in children)
         {
             var childBoundingBox = childRevealNode.BoundingBoxAxisAligned;
@@ -145,8 +148,8 @@ public static class FbxNodeToCadRevealNodeConverter
     )
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
-        var transform = FbxNodeWrapper.GetTransform(node);
-        var nodeName = FbxNodeWrapper.GetNodeName(node);
+        var worldTransform = node.WorldTransform;
+        var nodeName = node.GetNodeName();
         if (nodeGeometryPtr == IntPtr.Zero)
         {
             return null;
@@ -157,10 +160,10 @@ public static class FbxNodeToCadRevealNodeConverter
             var instancedMeshCopy = new InstancedMesh(
                 instanceData.instanceId,
                 instanceData.templateMesh,
-                transform,
+                worldTransform,
                 treeIndex,
                 Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(transform)
+                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(worldTransform)
             );
             return instancedMeshCopy;
         }
@@ -174,7 +177,6 @@ public static class FbxNodeToCadRevealNodeConverter
         var mesh = meshData.Value.Mesh;
         var meshPtr = meshData.Value.MeshPtr;
 
-        var bb = mesh.CalculateAxisAlignedBoundingBox(transform);
         string[] nodesToMakeConvex = ["Plank", "Board", "Pipe"];
         Mesh simplifiedMesh;
         if (nodesToMakeConvex.Any(s => nodeName.Contains(s, StringComparison.OrdinalIgnoreCase)))
@@ -193,35 +195,36 @@ public static class FbxNodeToCadRevealNodeConverter
             var instancedMesh = new InstancedMesh(
                 instanceId,
                 simplifiedMesh,
-                transform,
+                worldTransform,
                 treeIndex,
                 Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                bb
+                mesh.CalculateAxisAlignedBoundingBox(worldTransform)
             );
             Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount),7:P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount), 7:P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
             );
             return instancedMesh;
         }
         else
         {
-            simplifiedMesh.Apply(transform);
+            // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
+            simplifiedMesh.Apply(worldTransform);
             var triangleMesh = new TriangleMesh(
                 simplifiedMesh,
                 treeIndex,
                 Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-                simplifiedMesh.CalculateAxisAlignedBoundingBox(null)
+                simplifiedMesh.CalculateAxisAlignedBoundingBox()
             );
 
             Console.WriteLine(
-                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node),-50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount),7:P2}. Orig: {mesh.TriangleCount,8} After: {simplifiedMesh.TriangleCount,8}"
+                $"Simplification stats for mesh of node {FbxNodeWrapper.GetNodeName(node), -50}. Percent: {((float)simplifiedMesh.TriangleCount / mesh.TriangleCount), 7:P2}. Orig: {mesh.TriangleCount, 8} After: {simplifiedMesh.TriangleCount, 8}"
             );
             return triangleMesh;
         }
     }
 
     // Some models contain trash, i.e., objects that were intended to be removed were not deleted,
-    // but landed somewhere far away from the model).
+    // but landed somewhere far away from the model.
     // This is likely to happen in the future according to our domain expert.
     //
     // As a consequence, the bounding box becomes very big(encompasses the trash as well) and
@@ -229,7 +232,7 @@ public static class FbxNodeToCadRevealNodeConverter
     //
     // Our domain expert confirmed that we can(hopefully) fix this issue by ignoring all parts that
     // do now have attributes(empty fields) in the attribute file.
-    private static bool validateNodeAttributes(Dictionary<string, Dictionary<string, string>?> attributes, string name)
+    private static bool ValidateNodeAttributes(Dictionary<string, Dictionary<string, string>?> attributes, string name)
     {
         var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
 

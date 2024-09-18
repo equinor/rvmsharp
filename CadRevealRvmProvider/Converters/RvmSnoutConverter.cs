@@ -1,5 +1,7 @@
 namespace CadRevealRvmProvider.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
@@ -7,8 +9,6 @@ using CapVisibilityHelpers;
 using Commons.Utils;
 using MathNet.Numerics;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 public static class RvmSnoutConverter
 {

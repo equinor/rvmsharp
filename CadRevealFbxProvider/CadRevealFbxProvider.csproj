@@ -27,8 +27,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Csv" Version="2.0.93" />
-    <PackageReference Include="MIConvexHull" Version="1.1.19.1019" />
+    <PackageReference Include="Csv" />
+    <PackageReference Include="MIConvexHull" />
   </ItemGroup>
 
 </Project>

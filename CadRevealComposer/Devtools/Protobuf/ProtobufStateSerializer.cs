@@ -1,13 +1,13 @@
 ﻿namespace CadRevealComposer.Devtools.Protobuf;
 
-using Primitives;
-using ProtoBuf;
-using ProtoBuf.Meta;
 using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Numerics;
+using Primitives;
+using ProtoBuf;
+using ProtoBuf.Meta;
 
 public static class ProtobufStateSerializer
 {

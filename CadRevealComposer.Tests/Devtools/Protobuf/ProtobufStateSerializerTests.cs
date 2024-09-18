@@ -1,9 +1,9 @@
 ﻿namespace CadRevealComposer.Tests.Devtools.Protobuf;
 
-using CadRevealComposer.Devtools.Protobuf;
-using Primitives;
 using System.Drawing;
 using System.Numerics;
+using CadRevealComposer.Devtools.Protobuf;
+using Primitives;
 using Tessellation;
 
 public class ProtobufStateSerializerTests

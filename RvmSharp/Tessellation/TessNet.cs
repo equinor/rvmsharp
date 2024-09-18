@@ -1,10 +1,10 @@
 ﻿namespace RvmSharp.Tessellation;
 
-using LibTessDotNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using LibTessDotNet;
 using static Primitives.RvmFacetGroup;
 
 public static class TessNet
@@ -30,8 +30,8 @@ public static class TessNet
                 continue;
             }
 
-            var cv = contour.Vertices
-                .Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal))
+            var cv = contour
+                .Vertices.Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal))
                 .ToArray();
             tess.AddContour(cv);
             var n = contour.Vertices[0].Normal;

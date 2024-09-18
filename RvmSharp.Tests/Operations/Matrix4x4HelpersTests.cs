@@ -1,8 +1,8 @@
 ﻿namespace RvmSharp.Tests.Operations;
 
+using System.Numerics;
 using NUnit.Framework;
 using RvmSharp.Operations;
-using System.Numerics;
 
 [TestFixture]
 public class Matrix4x4HelpersTests

@@ -1,12 +1,12 @@
 ﻿namespace RvmSharp.Operations;
 
-using Containers;
-using Exporters;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using Containers;
+using Exporters;
+using Primitives;
 using Tessellation;
 
 public static class RvmObjExporter

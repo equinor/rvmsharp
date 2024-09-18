@@ -1,5 +1,7 @@
 ﻿namespace CadRevealObjProvider;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
@@ -10,8 +12,6 @@ using CadRevealComposer.Tessellation;
 using ObjLoader.Loader.Data.Elements;
 using ObjLoader.Loader.Data.VertexData;
 using ObjLoader.Loader.Loaders;
-using System.Drawing;
-using System.Numerics;
 
 public class ObjProvider : IModelFormatProvider
 {

@@ -4,10 +4,10 @@
 
 namespace CadRevealComposer.Exe;
 
-using CommandLine;
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using CommandLine;
 
 // ReSharper disable once ClassNeverInstantiated.Global - Its instantiated by CommandLineUtils NuGet Package
 public class CommandLineOptions

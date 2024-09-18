@@ -59,6 +59,6 @@ public class FbxSdkWrapper : IDisposable
 
     public FbxNode LoadFile(string filename)
     {
-        return new FbxNode(load_file(filename, _sdk));
+        return new FbxNode(load_file(filename, _sdk), null, 0);
     }
 }

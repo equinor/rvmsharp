@@ -2,8 +2,8 @@
 
 namespace RvmSharp.Tests;
 
-using NUnit.Framework;
 using System.IO;
+using NUnit.Framework;
 
 public static class TestFileHelpers
 {

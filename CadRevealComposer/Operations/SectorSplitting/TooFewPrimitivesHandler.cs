@@ -1,8 +1,8 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-using Primitives;
 using System.Collections.Generic;
 using System.Linq;
+using Primitives;
 using Tessellating;
 
 public class TooFewPrimitivesHandler

@@ -1,10 +1,10 @@
 namespace CadRevealRvmProvider.Tests.Converters;
 
+using System.Drawing;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealRvmProvider.Converters;
 using RvmSharp.Primitives;
-using System.Drawing;
-using System.Numerics;
 
 [TestFixture]
 public class RvmSnoutConverterTests

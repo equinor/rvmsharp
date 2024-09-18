@@ -1,12 +1,5 @@
 ﻿namespace CadRevealComposer;
 
-using Configuration;
-using Devtools;
-using IdProviders;
-using ModelFormatProvider;
-using Operations;
-using Operations.SectorSplitting;
-using Primitives;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,6 +7,13 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Configuration;
+using Devtools;
+using IdProviders;
+using ModelFormatProvider;
+using Operations;
+using Operations.SectorSplitting;
+using Primitives;
 using Utils;
 
 public static class CadRevealComposerRunner

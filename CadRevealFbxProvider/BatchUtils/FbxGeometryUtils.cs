@@ -7,15 +7,15 @@ public static class FbxGeometryUtils
     /// </summary>
     /// <param name="node">The start node</param>
     /// <returns>A list of all nodes, with no guarantee of ordering</returns>
-    public static IEnumerable<IntPtr> GetAllGeomPointersRecursive(FbxNode node)
+    private static IEnumerable<IntPtr> GetAllGeomPointersRecursive(FbxNode node)
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
         yield return nodeGeometryPtr;
 
-        var childCount = FbxNodeWrapper.GetChildCount(node);
+        var childCount = node.GetChildCount();
         for (var i = 0; i < childCount; i++)
         {
-            FbxNode child = FbxNodeWrapper.GetChild(i, node);
+            FbxNode child = node.GetChild(i);
             var allChildPointers = GetAllGeomPointersRecursive(child);
             foreach (IntPtr geomPointer in allChildPointers)
             {
@@ -28,14 +28,14 @@ public static class FbxGeometryUtils
     /// Gets all geometry pointers in the Fbx hierarchy with > 1 uses, so you can decide to reuse-instances or not
     /// </summary>
     /// <param name="node">Root node to start from</param>
+    /// <param name="minUses">Minimum number of uses needed before being added to list</param>
     /// <returns>A set of pointers to geometries with multiple uses.</returns>
     public static HashSet<IntPtr> GetAllGeomPointersWithXOrMoreUses(FbxNode node, int minUses = 2)
     {
         // TODO in the future consider maybe having a smarter limit, such as "total savings by instancing" or similar.
         // TODO-cont: This would avoid simple meshes having instances as the overhead of runtime instancing is very high,
         // TODO-cont2: so we want to maximize memory savings.
-        var pointersWithXUses = FbxGeometryUtils
-            .GetAllGeomPointersRecursive(node)
+        var pointersWithXUses = GetAllGeomPointersRecursive(node)
             .GroupBy(ptr => ptr) // Group identical pointers
             .Where(pointerGroup => pointerGroup.Count() >= minUses)
             .Select(pointerGroup => pointerGroup.First());

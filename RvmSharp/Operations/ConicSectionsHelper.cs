@@ -1,11 +1,11 @@
 ﻿namespace RvmSharp.Operations;
 
-using MathNet.Numerics.LinearAlgebra.Double;
 using System;
 using System.Diagnostics;
 using System.Numerics;
-using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
+using MathNet.Numerics.LinearAlgebra.Double;
 using MatrixD = MathNet.Numerics.LinearAlgebra.Matrix<double>;
+using VectorD = MathNet.Numerics.LinearAlgebra.Vector<double>;
 
 public sealed record Ellipse2DImplicitForm(double A, double B, double C, double D, double E, double F);
 

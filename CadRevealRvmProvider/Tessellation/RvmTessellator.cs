@@ -1,5 +1,7 @@
 ﻿namespace CadRevealRvmProvider.Tessellation;
 
+using System.Diagnostics;
+using System.Numerics;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
@@ -7,8 +9,6 @@ using CadRevealComposer.Utils;
 using Operations;
 using RvmSharp.Primitives;
 using RvmSharp.Tessellation;
-using System.Diagnostics;
-using System.Numerics;
 
 public class RvmTessellator
 {
@@ -102,19 +102,15 @@ public class RvmTessellator
         );
 
         var instancedMeshes = meshes
-            .SelectMany(
-                group =>
-                    group.InstanceGroup.Select(
-                        item =>
-                            new InstancedMesh(
-                                InstanceId: group.InstanceId,
-                                group.Mesh,
-                                item.Transform,
-                                item.ProtoMesh.TreeIndex,
-                                item.ProtoMesh.Color,
-                                item.ProtoMesh.AxisAlignedBoundingBox
-                            )
-                    )
+            .SelectMany(group =>
+                group.InstanceGroup.Select(item => new InstancedMesh(
+                    InstanceId: group.InstanceId,
+                    group.Mesh,
+                    item.Transform,
+                    item.ProtoMesh.TreeIndex,
+                    item.ProtoMesh.Color,
+                    item.ProtoMesh.AxisAlignedBoundingBox
+                ))
             )
             .ToArray();
 
@@ -126,14 +122,13 @@ public class RvmTessellator
         var triangleMeshes = facetGroupsNotInstanced
             .Concat(pyramidsNotInstanced)
             .AsParallel()
-            .Select(
-                x =>
-                    TessellateAndCreateTriangleMesh(
-                        x,
-                        simplifierThreshold,
-                        meshSimplificationLogObject,
-                        meshTessellationLogObject
-                    )
+            .Select(x =>
+                TessellateAndCreateTriangleMesh(
+                    x,
+                    simplifierThreshold,
+                    meshSimplificationLogObject,
+                    meshTessellationLogObject
+                )
             )
             .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
             .ToArray();

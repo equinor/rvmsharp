@@ -1,9 +1,9 @@
 namespace RvmSharp.Tests.Primitives;
 
-using NUnit.Framework;
-using RvmSharp.Primitives;
 using System.Linq;
 using System.Numerics;
+using NUnit.Framework;
+using RvmSharp.Primitives;
 
 [TestFixture]
 public class RvmNodeTests

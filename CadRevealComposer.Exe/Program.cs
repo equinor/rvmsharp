@@ -1,17 +1,15 @@
-﻿namespace CadRevealComposer.Exe;
+namespace CadRevealComposer.Exe;
 
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using CadRevealFbxProvider;
 using CadRevealObjProvider;
 using CadRevealRvmProvider;
 using CommandLine;
 using Configuration;
 using ModelFormatProvider;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 public static class Program
 {
@@ -25,8 +23,8 @@ public static class Program
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
 
-        var result = Parser.Default
-            .ParseArguments<CommandLineOptions>(args)
+        var result = Parser
+            .Default.ParseArguments<CommandLineOptions>(args)
             .MapResult(RunOptionsAndReturnExitCode, HandleParseError);
         Environment.Exit(result);
     }

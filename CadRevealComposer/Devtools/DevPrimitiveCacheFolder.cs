@@ -1,10 +1,10 @@
 ﻿namespace CadRevealComposer.Devtools;
 
-using Primitives;
-using Protobuf;
 using System;
 using System.IO;
 using System.Linq;
+using Primitives;
+using Protobuf;
 using Utils;
 
 public class DevPrimitiveCacheFolder
