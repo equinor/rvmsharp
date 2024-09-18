@@ -14,6 +14,7 @@
 typedef void* CFbxManager;
 typedef void* CFbxNode;
 typedef void* CFbxMesh;
+typedef void* CFbxMaterial;
 
 extern "C" {
     CFBX_API struct Transform {
@@ -57,6 +58,13 @@ extern "C" {
                 vertex_normal_data = nullptr;
             }
         }
+    };
+
+    CFBX_API struct Color {
+        float r;
+        float g;
+        float b;
+        float a;
     };
 }
 
