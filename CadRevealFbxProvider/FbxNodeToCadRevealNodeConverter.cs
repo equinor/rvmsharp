@@ -128,12 +128,12 @@ public static class FbxNodeToCadRevealNodeConverter
     )
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
-        var worldTransform = node.WorldTransform;
-
         if (nodeGeometryPtr == IntPtr.Zero)
         {
             return null;
         }
+
+        var worldTransform = node.WorldTransform;
 
         if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
         {
@@ -148,19 +148,16 @@ public static class FbxNodeToCadRevealNodeConverter
             return instancedMeshCopy;
         }
 
-        var meshData = FbxMeshWrapper.GetGeometricData(node);
-        if (!meshData.HasValue)
+        var mesh = FbxMeshWrapper.GetGeometricData(nodeGeometryPtr);
+        if (mesh == null)
         {
             throw new Exception("IntPtr" + nodeGeometryPtr + " was expected to have a mesh, but we found none.");
         }
 
-        var mesh = meshData.Value.Mesh;
-        var meshPtr = meshData.Value.MeshPtr;
-
-        if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
+        if (geometriesThatShouldBeInstanced.Contains(nodeGeometryPtr))
         {
             ulong instanceId = instanceIdGenerator.GetNextId();
-            meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+            meshInstanceLookup.Add(nodeGeometryPtr, (mesh, instanceId));
             var instancedMesh = new InstancedMesh(
                 instanceId,
                 mesh,
@@ -172,14 +169,11 @@ public static class FbxNodeToCadRevealNodeConverter
             return instancedMesh;
         }
 
+        var color = FbxMaterialWrapper.GetMaterialColor(node);
+
         // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
         mesh.Apply(worldTransform);
-        var triangleMesh = new TriangleMesh(
-            mesh,
-            treeIndex,
-            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-            mesh.CalculateAxisAlignedBoundingBox()
-        );
+        var triangleMesh = new TriangleMesh(mesh, treeIndex, color, mesh.CalculateAxisAlignedBoundingBox());
 
         return triangleMesh;
     }
