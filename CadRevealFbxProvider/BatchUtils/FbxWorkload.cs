@@ -5,10 +5,7 @@ using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
-using CadRevealComposer.Utils;
 using Commons;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using static CadRevealComposer.Operations.CameraPositioning;
 
 public static class FbxWorkload
 {
@@ -65,6 +62,7 @@ public static class FbxWorkload
             else
                 result.Add((fbxFilename, attributeFilename));
         }
+
         return result.ToArray();
     }
 
@@ -78,7 +76,9 @@ public static class FbxWorkload
     )
     {
         var progress = 0;
-        using var fbxImporter = new FbxImporter();
+
+        // FBX Importer is intentionally not disposed as the dispose operation takes too long. If this becomes a problem with memory leaks we need to investigate why the dispose is so slow.
+        var fbxImporter = new FbxImporter();
         if (!fbxImporter.HasValidSdk())
         {
             // returns an empty list and issues a warning
@@ -166,7 +166,7 @@ public static class FbxWorkload
 
         var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
 
-        if (stringInternPool != null)
+        if (stringInternPool is { Considered: > 0 })
         {
             Console.WriteLine(
                 $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."

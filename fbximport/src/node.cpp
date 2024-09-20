@@ -53,6 +53,20 @@ CFbxMesh node_get_mesh(CFbxNode node)
     return nullptr;
 }
 
+CFbxMaterial node_get_material(CFbxNode node)
+{
+    if (node == nullptr)
+        return nullptr;
+
+    const auto fbxNode = static_cast<FbxNode*>(node);
+    const auto materialCount = fbxNode->GetMaterialCount();
+
+    if (materialCount == 0)
+        return nullptr;
+
+    return static_cast<FbxSurfaceLambert*>(fbxNode->GetMaterial(0));
+}
+
 void node_destroy(CFbxNode node)
 {
     if (node == nullptr)
