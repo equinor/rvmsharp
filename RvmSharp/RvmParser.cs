@@ -35,7 +35,12 @@ public static class RvmParser
         return BitConverter.ToSingle(bytes);
     }
 
-    private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
+    private static string ReadChunkHeader(
+        Stream stream,
+        string nameForDebugging,
+        out uint nextHeaderOffset,
+        out uint dunno
+    )
     {
         var builder = new StringBuilder();
         Span<byte> bytes = stackalloc byte[4];
@@ -45,7 +50,9 @@ public static class RvmParser
             if (read < bytes.Length)
                 throw new IOException("Unexpected end of stream");
             if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
-                throw new IOException("Unexpected data in header");
+                throw new InvalidDataException(
+                    $"Unexpected data in header at position {("0x" + (stream.Position - read).ToString("x8"))} when parsing node \"{nameForDebugging}\""
+                );
             builder.Append((char)bytes[3]);
         }
 
@@ -283,7 +290,7 @@ public static class RvmParser
         uint unusedNextHeaderOffset;
         uint dontKnowWhatThisValueDoes;
 
-        var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+        var id = ReadChunkHeader(stream, name, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
         while (id != "CNTE")
         {
             switch (id)
@@ -304,6 +311,7 @@ public static class RvmParser
                     {
                         group.AddChild(primitive);
                     }
+
                     break;
                 // types OBST (obstacle) and INSU (insulation) chunks were previously also throwing
                 // a NotImplementedException causing the building process to terminate
@@ -324,7 +332,7 @@ public static class RvmParser
                     throw new NotImplementedException($"Unknown chunk: {id}");
             }
 
-            id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+            id = ReadChunkHeader(stream, name, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
         }
 
         if (id == "CNTE")
@@ -363,11 +371,11 @@ public static class RvmParser
         uint len,
             dunno;
 
-        var head = ReadChunkHeader(stream, out len, out dunno);
+        var head = ReadChunkHeader(stream, "HEADER", out len, out dunno);
         if (head != "HEAD")
             throw new IOException($"Expected HEAD, found {head}");
         var header = ReadHead(stream);
-        var modl = ReadChunkHeader(stream, out len, out dunno);
+        var modl = ReadChunkHeader(stream, "MODL", out len, out dunno);
         if (modl != "MODL")
             throw new IOException($"Expected MODL, found {modl}");
         var modelParameters = ReadModelParameters(stream);
@@ -375,7 +383,7 @@ public static class RvmParser
         var modelPrimitives = new List<RvmPrimitive>();
         var modelColors = new List<RvmColor>();
 
-        var chunk = ReadChunkHeader(stream, out len, out dunno);
+        var chunk = ReadChunkHeader(stream, "CHUNK HEADER", out len, out dunno);
         while (chunk != "END:")
         {
             switch (chunk)
@@ -393,8 +401,9 @@ public static class RvmParser
                     throw new NotImplementedException($"Unknown chunk: {chunk}");
             }
 
-            chunk = ReadChunkHeader(stream, out len, out dunno);
+            chunk = ReadChunkHeader(stream, "CHUNK", out len, out dunno);
         }
+
         return new RvmFile(
             header,
             new RvmModel(
