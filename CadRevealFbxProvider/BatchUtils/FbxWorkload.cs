@@ -99,10 +99,8 @@ public static class FbxWorkload
                 var lines = File.ReadAllLines(infoTextFilename);
                 (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
                 // TODO: Should we crash if we dont have expected values?
-                if (scaffoldingMetadata.HasExpectedValues())
-                {
-                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
-                }
+
+                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
@@ -131,13 +129,12 @@ public static class FbxWorkload
                     {
                         var id = match.Groups[1].Value;
 
-                        if (attributes.ContainsKey(id))
+                        if (attributes.TryGetValue(id, out Dictionary<string, string>? attributesId))
                         {
                             totalMismatch = false;
-                            var attributes_id = attributes[id];
-                            if (attributes_id != null)
+                            if (attributesId != null)
                             {
-                                foreach (var kvp in attributes_id)
+                                foreach (var kvp in attributesId)
                                 {
                                     cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
                                 }

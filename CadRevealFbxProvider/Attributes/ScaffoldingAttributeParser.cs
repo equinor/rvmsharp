@@ -74,11 +74,11 @@ public class ScaffoldingAttributeParser
                         entireScaffoldingMetadata.TryAddValue(key, value);
                         kvp[key] = value;
                     }
-                    if (!ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(kvp))
-                    {
-                        Console.WriteLine("Invalid attribute line: " + v[itemCodeIdColumn].ToString());
-                        return null;
-                    }
+                    // if (!ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(kvp))
+                    // {
+                    //     Console.WriteLine("Invalid attribute line: " + v[itemCodeIdColumn].ToString());
+                    //     return null;
+                    // }
                     return kvp;
                 }
             );

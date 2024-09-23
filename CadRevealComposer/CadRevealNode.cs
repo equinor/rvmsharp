@@ -2,6 +2,7 @@ namespace CadRevealComposer;
 
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
@@ -59,6 +60,28 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     {
         return Min.EqualsWithinGridTolerance(other.Min, precisionDigits)
             && Max.EqualsWithinGridTolerance(other.Max, precisionDigits);
+    }
+
+    /// <summary>
+    /// Encapsulates all the given bounds into a single bounding box.
+    /// Will return null if the bounds collection is empty.
+    /// </summary>
+    /// <param name="bounds">An arroy of bounds</param>
+    /// <returns>Bounding Box encompassing all the given Bounds</returns>
+    public static BoundingBox? Encapsulate(IEnumerable<BoundingBox> bounds)
+    {
+        Vector3 min = new Vector3(float.MaxValue);
+        Vector3 max = new Vector3(float.MinValue);
+
+        var inputHadAtLeastOneItem = false;
+        foreach (BoundingBox bound in bounds)
+        {
+            min = Vector3.Min(min, bound.Min);
+            max = Vector3.Max(max, bound.Max);
+            inputHadAtLeastOneItem = true;
+        }
+
+        return inputHadAtLeastOneItem ? new BoundingBox(min, max) : null;
     }
 };
 
