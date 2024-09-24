@@ -77,53 +77,52 @@ void node_destroy(CFbxNode node)
     fbxNode = nullptr;
 }
 
+
+void BuildOutTransform(Transform& transform_out, fbxsdk::FbxDouble3& t, fbxsdk::FbxQuaternion& r, fbxsdk::FbxDouble3& s)
+{
+
+    transform_out.posX = t[0];
+    transform_out.posY = t[1];
+    transform_out.posZ = t[2];
+    transform_out.rotX = r[0];
+    transform_out.rotY = r[1];
+    transform_out.rotZ = r[2];
+    transform_out.rotW = r[3];
+    transform_out.scaleX = s[0];
+    transform_out.scaleY = s[1];
+    transform_out.scaleZ = s[2];
+}
+
 Transform node_get_transform(CFbxNode node)
 {
-    Transform transform_out{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    Transform transform_out{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     if (node == nullptr)
         return transform_out;
 
     const auto fbxNode = static_cast<FbxNode*>(node);
+
     auto t = fbxNode->LclTranslation.Get();
     FbxQuaternion r;
     r.ComposeSphericalXYZ(fbxNode->LclRotation.Get());
     auto s = fbxNode->LclScaling.Get();
 
-    transform_out.posX = t[0];
-    transform_out.posY = t[1];
-    transform_out.posZ = t[2];
-    transform_out.rotX = r[0];
-    transform_out.rotY = r[1];
-    transform_out.rotZ = r[2];
-    transform_out.rotW = r[3];
-    transform_out.scaleX = s[0];
-    transform_out.scaleY = s[1];
-    transform_out.scaleZ = s[2];
+    BuildOutTransform(transform_out, t, r, s);
     return transform_out;
 }
 
-Transform node_get_global_transform(CFbxNode node)
+
+Transform node_get_geometric_transform(CFbxNode node)
 {
-    Transform transform_out{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    Transform transform_out{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     if (node == nullptr)
         return transform_out;
 
     const auto fbxNode = static_cast<FbxNode*>(node);
 
-    auto transform = fbxNode->EvaluateGlobalTransform();
-    auto t = transform.GetT();
-    auto r = transform.GetR();
-    auto s = transform.GetS();
-
-    transform_out.posX = t[0];
-    transform_out.posY = t[1];
-    transform_out.posZ = t[2];
-    transform_out.rotX = r[0];
-    transform_out.rotY = r[1];
-    transform_out.rotZ = r[2];
-    transform_out.rotW = r[3];
-    transform_out.scaleX = s[0];
-    transform_out.scaleY = s[1];
-    transform_out.scaleZ = s[2];
+    auto t = fbxNode->GeometricTranslation.Get();
+    FbxQuaternion r;
+    r.ComposeSphericalXYZ(fbxNode->GeometricRotation.Get());
+    auto s = fbxNode->GeometricScaling.Get();
+    BuildOutTransform(transform_out, t, r, s);
     return transform_out;
 }

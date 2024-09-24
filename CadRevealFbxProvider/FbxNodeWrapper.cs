@@ -19,6 +19,13 @@ public record FbxNode(IntPtr NodeAddress, FbxNode? Parent, int Depth)
     /// Wrapper for <see cref="FbxNodeWrapper.GetLocalTransform"/> for Self and all parents.
     /// </summary>
     public Matrix4x4 WorldTransform => LocalTransform * (Parent?.WorldTransform ?? Matrix4x4.Identity);
+
+    public Matrix4x4 LocalGeometricTransform => this.GetGeometricTransform();
+
+    /// <summary>
+    /// TODO: ADD COMMENT HERE
+    /// </summary>
+    public Matrix4x4 WorldGeometricTransform => this.GetGeometricTransform() * this.WorldTransform;
 };
 
 public static class FbxNodeWrapper
@@ -57,6 +64,15 @@ public static class FbxNodeWrapper
     public static Matrix4x4 GetLocalTransform(this FbxNode node)
     {
         var transform = node_get_transform(node.NodeAddress);
+        return FbxTransformConverter.ToMatrix4x4(transform);
+    }
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_geometric_transform")]
+    private static extern FbxTransform node_get_geometric_transform(IntPtr node);
+
+    public static Matrix4x4 GetGeometricTransform(this FbxNode node)
+    {
+        var transform = node_get_geometric_transform(node.NodeAddress);
         return FbxTransformConverter.ToMatrix4x4(transform);
     }
 }

@@ -14,7 +14,7 @@ extern "C" {
 
     // this function should be replaced by corresponding FBX calls, transform should be initialized
     CFBX_API Transform node_get_transform(CFbxNode node);
-    CFBX_API Transform node_get_global_transform(CFbxNode node);
+    CFBX_API Transform node_get_geometric_transform(CFbxNode node);
 }
 
 

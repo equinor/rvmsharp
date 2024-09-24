@@ -133,17 +133,17 @@ public static class FbxNodeToCadRevealNodeConverter
             return null;
         }
 
-        var worldTransform = node.WorldTransform;
+        var meshTransform = node.WorldGeometricTransform;
 
         if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
         {
             var instancedMeshCopy = new InstancedMesh(
                 instanceData.instanceId,
                 instanceData.templateMesh,
-                worldTransform,
+                meshTransform,
                 treeIndex,
                 Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(worldTransform)
+                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(meshTransform)
             );
             return instancedMeshCopy;
         }
@@ -161,10 +161,10 @@ public static class FbxNodeToCadRevealNodeConverter
             var instancedMesh = new InstancedMesh(
                 instanceId,
                 mesh,
-                worldTransform,
+                meshTransform,
                 treeIndex,
                 Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                mesh.CalculateAxisAlignedBoundingBox(worldTransform)
+                mesh.CalculateAxisAlignedBoundingBox(meshTransform)
             );
             return instancedMesh;
         }
@@ -172,7 +172,7 @@ public static class FbxNodeToCadRevealNodeConverter
         var color = FbxMaterialWrapper.GetMaterialColor(node);
 
         // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
-        mesh.Apply(worldTransform);
+        mesh.Apply(meshTransform);
         var triangleMesh = new TriangleMesh(mesh, treeIndex, color, mesh.CalculateAxisAlignedBoundingBox());
 
         return triangleMesh;
