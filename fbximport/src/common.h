@@ -11,13 +11,15 @@
 #define CFBX_API
 #endif
 
-typedef void* CFbxManager;
-typedef void* CFbxNode;
-typedef void* CFbxMesh;
-typedef void* CFbxMaterial;
+typedef void *CFbxManager;
+typedef void *CFbxNode;
+typedef void *CFbxMesh;
+typedef void *CFbxMaterial;
 
-extern "C" {
-    CFBX_API struct Transform {
+extern "C"
+{
+    struct CFBX_API Transform
+    {
         float posX;
         float posY;
         float posZ;
@@ -30,13 +32,14 @@ extern "C" {
         float scaleZ;
     };
 
-    CFBX_API struct ExportableMesh {
+    struct CFBX_API ExportableMesh
+    {
         bool valid;
         int vertex_count;
         int index_count;
-        float* vertex_position_data;
-        float* vertex_normal_data;
-        int* index_data;
+        float *vertex_position_data;
+        float *vertex_normal_data;
+        int *index_data;
 
         ~ExportableMesh()
         {
@@ -60,7 +63,8 @@ extern "C" {
         }
     };
 
-    CFBX_API struct Color {
+    struct CFBX_API Color
+    {
         float r;
         float g;
         float b;
