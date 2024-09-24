@@ -101,3 +101,29 @@ Transform node_get_transform(CFbxNode node)
     transform_out.scaleZ = s[2];
     return transform_out;
 }
+
+Transform node_get_global_transform(CFbxNode node)
+{
+    Transform transform_out{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    if (node == nullptr)
+        return transform_out;
+
+    const auto fbxNode = static_cast<FbxNode*>(node);
+
+    auto transform = fbxNode->EvaluateGlobalTransform();
+    auto t = transform.GetT();
+    auto r = transform.GetR();
+    auto s = transform.GetS();
+
+    transform_out.posX = t[0];
+    transform_out.posY = t[1];
+    transform_out.posZ = t[2];
+    transform_out.rotX = r[0];
+    transform_out.rotY = r[1];
+    transform_out.rotZ = r[2];
+    transform_out.rotW = r[3];
+    transform_out.scaleX = s[0];
+    transform_out.scaleY = s[1];
+    transform_out.scaleZ = s[2];
+    return transform_out;
+}
