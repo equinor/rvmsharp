@@ -1,6 +1,5 @@
 ﻿namespace CadRevealFbxProvider;
 
-using System.Drawing;
 using System.Text.RegularExpressions;
 using BatchUtils;
 using CadRevealComposer;
@@ -145,6 +144,8 @@ public static class FbxNodeToCadRevealNodeConverter
             );
             return null;
         }
+        var color = FbxMaterialWrapper.GetMaterialColor(node);
+
         if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
         {
             var instancedMeshCopy = new InstancedMesh(
@@ -152,7 +153,7 @@ public static class FbxNodeToCadRevealNodeConverter
                 instanceData.templateMesh,
                 meshTransform,
                 treeIndex,
-                Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
+                color,
                 instanceData.templateMesh.CalculateAxisAlignedBoundingBox(meshTransform)
             );
             return instancedMeshCopy;
@@ -173,13 +174,11 @@ public static class FbxNodeToCadRevealNodeConverter
                 mesh,
                 meshTransform,
                 treeIndex,
-                Color.Magenta, // TODO: Temp debug color to distinguish first Instance
+                color,
                 mesh.CalculateAxisAlignedBoundingBox(meshTransform)
             );
             return instancedMesh;
         }
-
-        var color = FbxMaterialWrapper.GetMaterialColor(node);
 
         // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
         mesh.Apply(meshTransform);

@@ -47,7 +47,7 @@ internal static class FbxMaterialWrapper
         var materialPtr = node_get_material(node.NodeAddress);
         if (materialPtr == IntPtr.Zero)
         {
-            return Color.Yellow;
+            return Color.Magenta;
         }
 
         var colorPtr = material_get_color(materialPtr);
