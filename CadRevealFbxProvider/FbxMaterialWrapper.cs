@@ -14,6 +14,22 @@ internal static class FbxMaterialWrapper
         public float g;
         public float b;
         public float a;
+
+        /// <summary>
+        /// Converts the FbxColor to a System.Drawing.Color
+        /// </summary>
+        public Color ToColor() =>
+            Color.FromArgb(
+                NormalizedFloatToByte(a),
+                NormalizedFloatToByte(r),
+                NormalizedFloatToByte(g),
+                NormalizedFloatToByte(b)
+            );
+
+        /// <summary>
+        /// Converts a float [0..1] fraction to a byte [0..255]
+        /// </summary>
+        static byte NormalizedFloatToByte(float value) => (byte)(value * 255);
     }
 
     [DllImport(FbxLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "material_clean_memory")]
@@ -35,11 +51,9 @@ internal static class FbxMaterialWrapper
         }
 
         var colorPtr = material_get_color(materialPtr);
-        var color = Marshal.PtrToStructure<FbxColor>(colorPtr);
+        var fbxColor = Marshal.PtrToStructure<FbxColor>(colorPtr);
         material_clean_memory(colorPtr);
 
-        return Color.FromArgb(ToInt(color.a), ToInt(color.r), ToInt(color.g), ToInt(color.b));
-
-        int ToInt(float value) => (int)(value * 255);
+        return fbxColor.ToColor();
     }
 }
