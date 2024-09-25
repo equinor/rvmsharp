@@ -18,7 +18,7 @@ typedef void *CFbxMaterial;
 
 extern "C"
 {
-    struct CFBX_API Transform
+    CFBX_API struct Transform
     {
         float posX;
         float posY;
@@ -32,7 +32,7 @@ extern "C"
         float scaleZ;
     };
 
-    struct CFBX_API ExportableMesh
+    CFBX_API struct ExportableMesh
     {
         bool valid;
         int vertex_count;
@@ -63,7 +63,7 @@ extern "C"
         }
     };
 
-    struct CFBX_API Color
+    CFBX_API struct Color
     {
         float r;
         float g;
