@@ -8,6 +8,7 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using Commons.Utils;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -134,7 +135,16 @@ public static class FbxNodeToCadRevealNodeConverter
         }
 
         var meshTransform = node.WorldGeometricTransform;
-
+        if (!meshTransform.IsDecomposable())
+        {
+            Console.Error.WriteLine(
+                "Failed to decompose transform for node: "
+                    + node.GetNodeName()
+                    + ". (ignoring). Had transform "
+                    + meshTransform
+            );
+            return null;
+        }
         if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
         {
             var instancedMeshCopy = new InstancedMesh(
