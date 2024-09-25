@@ -11,19 +11,27 @@ public record FbxNode(IntPtr NodeAddress, FbxNode? Parent, int Depth)
     ///
     /// Wrapper for <see cref="FbxNodeWrapper.GetLocalTransform"/>
     /// </summary>
-    private Matrix4x4 LocalTransform => this.GetLocalTransform();
+    // ReSharper disable once MemberCanBePrivate.Global -- May be useful for debugging
+    public Matrix4x4 LocalTransform => this.GetLocalTransform();
 
     /// <summary>
     /// Gets the WorldSpace Transform of the node in the FBX file.
     ///
     /// Wrapper for <see cref="FbxNodeWrapper.GetLocalTransform"/> for Self and all parents.
     /// </summary>
+    // ReSharper disable once MemberCanBePrivate.Global -- May be useful for debugging
     public Matrix4x4 WorldTransform => LocalTransform * (Parent?.WorldTransform ?? Matrix4x4.Identity);
 
+    /// <summary>
+    /// The local geometric transform of the node in the FBX file.
+    /// This is the transform that should be applied to the geometry (mesh) of the node, BUT does not apply to the nodes children (if any).
+    /// </summary>
+    // ReSharper disable once UnusedMember.Global -- May be useful for debugging
     public Matrix4x4 LocalGeometricTransform => this.GetGeometricTransform();
 
     /// <summary>
-    /// TODO: ADD COMMENT HERE
+    /// The WorldSpace Geometric Transform of the node in the FBX file.
+    /// This is the transform that should be applied to the geometry (mesh) of the node, BUT does not apply to the nodes children (if any).
     /// </summary>
     public Matrix4x4 WorldGeometricTransform => this.GetGeometricTransform() * this.WorldTransform;
 };
