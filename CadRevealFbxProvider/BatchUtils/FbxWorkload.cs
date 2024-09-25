@@ -96,14 +96,6 @@ public static class FbxWorkload
             );
         }
 
-        // TODO: check if/how something similar has to be done for FBX models
-        //var rvmStore = new RvmStore();
-        //rvmStore.RvmFiles.AddRange(fbxFiles);
-        //progressReport?.Report(("Connecting geometry", 0, 2));
-        //RvmConnect.Connect(rvmStore);
-        //progressReport?.Report(("Aligning geometry", 1, 2));
-        //RvmAlign.Align(rvmStore);
-        //progressReport?.Report(("Import finished", 2, 2));
         return (fbxNodesFlat, new ModelMetadata(metadata));
 
         IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
