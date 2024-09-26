@@ -81,12 +81,22 @@ public static class FbxWorkload
         var fbxImporter = new FbxImporter();
         if (!fbxImporter.HasValidSdk())
         {
-            // returns an empty list and issues a warning
             Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
             throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
         }
 
         Dictionary<string, string> metadata = new();
+
+        var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
+
+        if (stringInternPool != null)
+        {
+            Console.WriteLine(
+                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
+            );
+        }
+
+        return (fbxNodesFlat, new ModelMetadata(metadata));
 
         IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
         {
@@ -115,7 +125,7 @@ public static class FbxWorkload
             );
 
             if (rootNodeConverted == null)
-                return Array.Empty<CadRevealNode>();
+                return [];
 
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
@@ -134,10 +144,10 @@ public static class FbxWorkload
                         if (attributes.ContainsKey(id))
                         {
                             totalMismatch = false;
-                            var attributes_id = attributes[id];
-                            if (attributes_id != null)
+                            var attributesId = attributes[id];
+                            if (attributesId != null)
                             {
-                                foreach (var kvp in attributes_id)
+                                foreach (var kvp in attributesId)
                                 {
                                     cadRevealNode.Attributes.Add(kvp.Key, kvp.Value);
                                 }
@@ -163,24 +173,5 @@ public static class FbxWorkload
             progressReport?.Report((Path.GetFileNameWithoutExtension(fbxFilename), ++progress, workload.Count));
             return flatNodes;
         }
-
-        var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
-
-        if (stringInternPool is { Considered: > 0 })
-        {
-            Console.WriteLine(
-                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
-            );
-        }
-
-        // TODO: check if/how something similar has to be done for FBX models
-        //var rvmStore = new RvmStore();
-        //rvmStore.RvmFiles.AddRange(fbxFiles);
-        //progressReport?.Report(("Connecting geometry", 0, 2));
-        //RvmConnect.Connect(rvmStore);
-        //progressReport?.Report(("Aligning geometry", 1, 2));
-        //RvmAlign.Align(rvmStore);
-        //progressReport?.Report(("Import finished", 2, 2));
-        return (fbxNodesFlat, new ModelMetadata(metadata));
     }
 }

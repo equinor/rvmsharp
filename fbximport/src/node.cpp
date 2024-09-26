@@ -77,17 +77,9 @@ void node_destroy(CFbxNode node)
     fbxNode = nullptr;
 }
 
-Transform node_get_transform(CFbxNode node)
-{
-    Transform transform_out{0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    if (node == nullptr)
-        return transform_out;
 
-    const auto fbxNode = static_cast<FbxNode*>(node);
-    auto t = fbxNode->LclTranslation.Get();
-    FbxQuaternion r;
-    r.ComposeSphericalXYZ(fbxNode->LclRotation.Get());
-    auto s = fbxNode->LclScaling.Get();
+void BuildOutTransform(Transform& transform_out, fbxsdk::FbxDouble3& t, fbxsdk::FbxQuaternion& r, fbxsdk::FbxDouble3& s)
+{
 
     transform_out.posX = t[0];
     transform_out.posY = t[1];
@@ -99,5 +91,38 @@ Transform node_get_transform(CFbxNode node)
     transform_out.scaleX = s[0];
     transform_out.scaleY = s[1];
     transform_out.scaleZ = s[2];
+}
+
+Transform node_get_transform(CFbxNode node)
+{
+    Transform transform_out{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    if (node == nullptr)
+        return transform_out;
+
+    const auto fbxNode = static_cast<FbxNode*>(node);
+
+    auto t = fbxNode->LclTranslation.Get();
+    FbxQuaternion r;
+    r.ComposeSphericalXYZ(fbxNode->LclRotation.Get());
+    auto s = fbxNode->LclScaling.Get();
+
+    BuildOutTransform(transform_out, t, r, s);
+    return transform_out;
+}
+
+
+Transform node_get_geometric_transform(CFbxNode node)
+{
+    Transform transform_out{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    if (node == nullptr)
+        return transform_out;
+
+    const auto fbxNode = static_cast<FbxNode*>(node);
+
+    auto t = fbxNode->GeometricTranslation.Get();
+    FbxQuaternion r;
+    r.ComposeSphericalXYZ(fbxNode->GeometricRotation.Get());
+    auto s = fbxNode->GeometricScaling.Get();
+    BuildOutTransform(transform_out, t, r, s);
     return transform_out;
 }

@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using Commons.Utils;
 using ProtoBuf;
+using Utils;
 
 [ProtoContract(SkipConstructor = true)]
 public class Mesh : IEquatable<Mesh>
@@ -106,6 +108,7 @@ public class Mesh : IEquatable<Mesh>
             }
         }
 
+        Trace.Assert(min.IsFinite() && max.IsFinite(), "min.IsFinite() && max.IsFinite()");
         return new BoundingBox(min, max);
     }
 
@@ -115,13 +118,18 @@ public class Mesh : IEquatable<Mesh>
     /// <param name="matrix"></param>
     public void Apply(Matrix4x4 matrix)
     {
+        if (!matrix.IsDecomposable())
+        {
+            throw new ArgumentException("Matrix is not decomposable. Is the input data valid?", nameof(matrix));
+        }
+
         for (var i = 0; i < _vertices.Length; i++)
         {
             var newVertex = Vector3.Transform(_vertices[i], matrix);
 
-            Debug.Assert(float.IsFinite(newVertex.X));
-            Debug.Assert(float.IsFinite(newVertex.Y));
-            Debug.Assert(float.IsFinite(newVertex.Z));
+            Trace.Assert(float.IsFinite(newVertex.X), "float.IsFinite(newVertex.X)");
+            Trace.Assert(float.IsFinite(newVertex.Y), "float.IsFinite(newVertex.Y)");
+            Trace.Assert(float.IsFinite(newVertex.Z), "float.IsFinite(newVertex.Z)");
 
             _vertices[i] = newVertex;
         }
