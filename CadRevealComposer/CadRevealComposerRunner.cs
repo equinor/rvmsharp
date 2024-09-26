@@ -121,7 +121,12 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
-        ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
+        var treeIndexToPrioritizedSector = ProcessPrimitives(
+            geometriesToProcessArray,
+            outputDirectory,
+            modelParameters,
+            composerParameters
+        );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
@@ -129,11 +134,16 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
+        // TODO Is this the best place to do this?
+        var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
+        SceneCreator.AddPrioritizedSectorsToDatabase(treeIndexToPrioritizedSector, outputDirectory);
+        Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
+
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(
+    public static Dictionary<ulong, uint> ProcessPrimitives(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -158,14 +168,65 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
+        var prioritySplitter = new PrioritySectorSplitter();
 
-        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
+        var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
+
+        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority == 1).ToArray();
+
+        var nextSectorId = sectors.Last().SectorId + 1;
+        var prioritizedSectors = prioritySplitter
+            .SplitIntoSectors(prioritizedPrimitives, nextSectorId)
+            .OrderBy(x => x.SectorId)
+            .ToArray();
+
+        // Remove redundant root and point to the original root
+        var originalRootId = sectors.First().SectorId;
+        var redundantRootId = prioritizedSectors.First().SectorId;
+        prioritizedSectors = prioritizedSectors
+            .Skip(1)
+            .Select(sector =>
+            {
+                return sector.ParentSectorId == redundantRootId
+                    ? (sector with { ParentSectorId = originalRootId })
+                    : sector;
+            })
+            .ToArray();
+
+        Console.WriteLine(
+            $"Split into {sectors.Length} sectors and {prioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+        );
+
+        var allSectors = sectors.Concat(prioritizedSectors).ToArray();
 
         stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
+        SceneCreator.CreateSceneFile(
+            allPrimitives,
+            outputDirectory,
+            modelParameters,
+            maxTreeIndex,
+            stopwatch,
+            allSectors
+        );
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
+
+        return GetTreeIndexToSectorIdDict(prioritizedSectors);
+    }
+
+    private static Dictionary<ulong, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
+    {
+        var sectorIdToTreeIndex = new Dictionary<ulong, uint>();
+        foreach (var sector in sectors)
+        {
+            var sectorId = sector.SectorId;
+            foreach (var node in sector.Geometries)
+            {
+                sectorIdToTreeIndex.TryAdd(node.TreeIndex, sectorId);
+            }
+        }
+
+        return sectorIdToTreeIndex;
     }
 
     /// <summary>

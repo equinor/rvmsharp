@@ -53,6 +53,14 @@ public static class SceneCreator
         exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
     }
 
+    public static void AddPrioritizedSectorsToDatabase(
+        Dictionary<ulong, uint> treeIndexToPrioritizedSector,
+        DirectoryInfo outputDirectory
+    )
+    {
+        DatabaseComposer.AddTreeIndexToSectorToDatabase(treeIndexToPrioritizedSector, outputDirectory);
+    }
+
     public static void CreateSceneFile(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
@@ -138,7 +146,7 @@ public static class SceneCreator
         JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: EnvUtil.IsDebugBuild); // We don't want indentation in prod, it doubles the size. Format in an editor if needed.
     }
 
-    public static void ExportSectorGeometries(
+    private static void ExportSectorGeometries(
         IReadOnlyList<APrimitive> geometries,
         string sectorFilename,
         string? outputDirectory
@@ -154,7 +162,14 @@ public static class SceneCreator
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+        string? sectorFilename = !p.IsHighlightSector
+            ? p.Geometries.Any()
+                ? $"sector_{p.SectorId}.glb"
+                : null
+            : p.Geometries.Any()
+                ? $"highlight_sector_{p.SectorId}.glb" // TODO Rename to priority sector
+                : null;
+
         var sectorInfo = new SectorInfo(
             SectorId: p.SectorId,
             ParentSectorId: p.ParentSectorId,

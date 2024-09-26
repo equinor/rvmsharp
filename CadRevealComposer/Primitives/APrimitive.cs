@@ -157,4 +157,9 @@ public abstract record APrimitive(
     [property: ProtoMember(1)] ulong TreeIndex,
     [property: ProtoMember(2)] Color Color,
     [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox
-);
+)
+{
+    // TODO: Should these be a part of protobuf?
+    public int Priority { get; init; } = 0;
+    public string? Discipline { get; init; } = null;
+}

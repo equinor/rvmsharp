@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Extensions;
@@ -252,6 +251,51 @@ public class DatabaseComposer
 
         // ReSharper restore AccessToDisposedClosure
         sqliteComposeTimer.LogCompletion();
+    }
+
+    public static void AddTreeIndexToSectorToDatabase(
+        Dictionary<ulong, uint> treeIndexToSectorId,
+        DirectoryInfo outputDirectory
+    )
+    {
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
+        {
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText =
+                "CREATE TABLE prioritizedSectors (treeindex INTEGER NOT NULL, prioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, prioritizedSectorId)) WITHOUT ROWID; ";
+            createTableCommand.ExecuteNonQuery();
+
+            var command = connection.CreateCommand();
+            command.CommandText =
+                "INSERT OR IGNORE INTO prioritizedSectors (treeindex, prioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
+
+            var treeIndexParameter = command.CreateParameter();
+            treeIndexParameter.ParameterName = "$TreeIndex";
+            var prioritizedSectorIdParameter = command.CreateParameter();
+            prioritizedSectorIdParameter.ParameterName = $"PrioritizedSectorId";
+
+            command.Parameters.AddRange([treeIndexParameter, prioritizedSectorIdParameter]);
+
+            var transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+
+            foreach (var pair in treeIndexToSectorId)
+            {
+                treeIndexParameter.Value = pair.Key;
+            }
+
+            foreach (var pair in treeIndexToSectorId)
+            {
+                treeIndexParameter.Value = pair.Key;
+                prioritizedSectorIdParameter.Value = pair.Value;
+                command.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
     }
 
     private static void CreateEmptyDatabase(DbContextOptions options)
