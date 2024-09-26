@@ -3,6 +3,7 @@
 using System.Drawing;
 using System.Numerics;
 using CadRevealComposer;
+using CadRevealComposer.Operations;
 using Operations;
 using RvmSharp.Primitives;
 
@@ -23,9 +24,27 @@ public class RvmPyramidInstancerTests
         // Mark: These two input pyramids will be identical as they are Records with identical values.
         ProtoMeshFromRvmPyramid[] protoPyramids = new[]
         {
-            new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromRvmPyramid(rvmPyramidNotMatching, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
+            new ProtoMeshFromRvmPyramid(
+                rvmPyramid,
+                0,
+                Color.Red,
+                new BoundingBox(Vector3.One, Vector3.One),
+                NodePriority.Default
+            ),
+            new ProtoMeshFromRvmPyramid(
+                rvmPyramid,
+                0,
+                Color.Red,
+                new BoundingBox(Vector3.One, Vector3.One),
+                NodePriority.Default
+            ),
+            new ProtoMeshFromRvmPyramid(
+                rvmPyramidNotMatching,
+                0,
+                Color.Red,
+                new BoundingBox(Vector3.One, Vector3.One),
+                NodePriority.Default
+            )
         };
 
         var res = RvmPyramidInstancer.Process(protoPyramids, _ => true);
@@ -69,7 +88,8 @@ public class RvmPyramidInstancerTests
                 rvmPyramid,
                 0,
                 Color.Red,
-                new BoundingBox(Vector3.One, Vector3.One)
+                new BoundingBox(Vector3.One, Vector3.One),
+                NodePriority.Default
             ))
             .ToArray();
 

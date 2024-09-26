@@ -7,7 +7,8 @@ public record Node(
     APrimitive[] Geometries,
     long EstimatedByteSize,
     long EstimatedTriangleCount,
-    BoundingBox BoundingBox
+    BoundingBox BoundingBox,
+    NodePriority Priority
 )
 {
     public float Diagonal => BoundingBox.Diagonal;

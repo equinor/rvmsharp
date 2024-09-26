@@ -8,6 +8,7 @@ using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
@@ -24,7 +25,8 @@ public class RvmProvider : IModelFormatProvider
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        PriorityMapping priorityMapping
     )
     {
         var workload = RvmWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
@@ -58,7 +60,8 @@ public class RvmProvider : IModelFormatProvider
         var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
             rvmStore,
             treeIndexGenerator,
-            nodeNameFiltering
+            nodeNameFiltering,
+            priorityMapping
         );
         Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
 
