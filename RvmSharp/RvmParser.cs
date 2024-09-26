@@ -24,13 +24,13 @@ public static class RvmParser
     // csharpier-ignore -- Keep four byte formatting
     private static readonly byte[] ExpectedV4Bytes =
     [
-        0, 0, 0, 0, // The first four bytes may represent the same as in version 3?
-        120, 181, 140, 82,
-        68, 21, 175, 29,
-        120, 181, 140, 70,
-        68, 21, 175, 29,
-        120, 181, 140, 97,
-        68, 21, 175, 29
+        0x00, 0x00, 0x00, 0x00, // The first four bytes may represent the same as in version 3?
+        0x78, 0xB5, 0x8C, 0x52,
+        0x44, 0x15, 0xAF, 0x1D,
+        0x78, 0xB5, 0x8C, 0x46,
+        0x44, 0x15, 0xAF, 0x1D,
+        0x78, 0xB5, 0x8C, 0x61,
+        0x44, 0x15, 0xAF, 0x1D
     ];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -41,6 +41,7 @@ public static class RvmParser
             throw new IOException("Unexpected end of stream");
         if (BitConverter.IsLittleEndian)
             bytes.Reverse();
+
         return BitConverter.ToUInt32(bytes);
     }
 
@@ -303,7 +304,7 @@ public static class RvmParser
         var materialId = ReadUint(stream);
         if (version == 3)
         {
-            Span<byte> bytes = stackalloc byte[4 * 7];
+            Span<byte> bytes = stackalloc byte[4];
             stream.ReadExactly(bytes);
             // Ignore the bytes for now.
             // Byte 1 may be transparency
@@ -312,7 +313,7 @@ public static class RvmParser
         }
         else if (version == 4)
         {
-            Console.WriteLine(name);
+            Console.WriteLine("--- Node with name " + name + " was a v4 node"); // TODO: Remove me when we have more controll of the v4 nodes. Currently may be related to "ARCHIV 1, but not known"
             Span<byte> bytes = stackalloc byte[4 * 7];
             stream.ReadExactly(bytes);
             if (!bytes.SequenceEqual(ExpectedV4Bytes))
