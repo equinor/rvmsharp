@@ -13,21 +13,21 @@ public class ScaffoldOptimizer
         _partOptimizers.Add(optimizer);
     }
 
-    public void OptimizeNode(CadRevealNode node)
+    public void OptimizeNode(CadRevealNode node, Func<ulong> requestNewInstanceId)
     {
-        var name = node.Name;
+        var partName = node.Name;
 
         var newGeometries = new List<APrimitive>();
         foreach (APrimitive primitive in node.Geometries)
         {
-            APrimitive[]? newPrimitiveList = OptimizePrimitive(primitive, name);
+            APrimitive[]? newPrimitiveList = OptimizePrimitive(primitive, partName, requestNewInstanceId);
             newGeometries.AddRange(newPrimitiveList ?? [primitive]);
         }
 
         node.Geometries = newGeometries.ToArray();
     }
 
-    private APrimitive[]? OptimizePrimitive(APrimitive primitive, string name)
+    private APrimitive[]? OptimizePrimitive(APrimitive primitive, string partName, Func<ulong> requestNewInstanceId)
     {
         // Handle only primitives that have their own Mesh objects, then pull out the mesh and optimize. These are the ones that need to be optimized.
         var primitiveList = new List<APrimitive>();
@@ -35,40 +35,61 @@ public class ScaffoldOptimizer
         {
             case InstancedMesh instancedMesh:
             {
-                Mesh[] meshes = OptimizeMesh(instancedMesh.TemplateMesh, name);
-                primitiveList.AddRange(
-                    meshes.Select(mesh => new InstancedMesh(
-                        instancedMesh.InstanceId,
-                        mesh,
-                        instancedMesh.InstanceMatrix,
-                        instancedMesh.TreeIndex,
-                        instancedMesh.Color,
-                        instancedMesh.AxisAlignedBoundingBox
-                    ))
-                );
+                OptimizeMeshAndAddResult(instancedMesh.TemplateMesh);
                 break;
             }
             case TriangleMesh triangleMesh:
             {
-                Mesh[] meshes = OptimizeMesh(triangleMesh.Mesh, name);
-                primitiveList.AddRange(
-                    meshes.Select(mesh => new TriangleMesh(
-                        mesh,
-                        triangleMesh.TreeIndex,
-                        triangleMesh.Color,
-                        triangleMesh.AxisAlignedBoundingBox
-                    ))
-                );
+                OptimizeMeshAndAddResult(triangleMesh.Mesh);
                 break;
             }
         }
 
         return primitiveList.Count > 0 ? primitiveList.ToArray() : null;
+
+        void OptimizeMeshAndAddResult(Mesh mesh)
+        {
+            IScaffoldOptimizerResult[] results = OptimizeMesh(primitive, mesh, partName, requestNewInstanceId);
+            primitiveList.AddRange(results.Select(result => result.Get()));
+        }
     }
 
-    private Mesh[] OptimizeMesh(Mesh mesh, string name)
+    private ulong OnRequestChildMeshInstanceId(
+        ulong instanceIdParentMesh,
+        int indexChildMesh,
+        Func<ulong> requestNewInstanceId
+    )
     {
-        Mesh[] optimizedMesh = [mesh];
+        if (_childMeshInstanceIdLookup.TryGetValue(instanceIdParentMesh, out Dictionary<int, ulong>? retInstanceIdDict))
+        {
+            if (retInstanceIdDict.TryGetValue(indexChildMesh, out ulong retInstanceId))
+            {
+                return retInstanceId;
+            }
+
+            _childMeshInstanceIdLookup[instanceIdParentMesh].Add(indexChildMesh, requestNewInstanceId());
+            return _childMeshInstanceIdLookup[instanceIdParentMesh][indexChildMesh];
+        }
+
+        _childMeshInstanceIdLookup.Add(instanceIdParentMesh, new Dictionary<int, ulong>());
+        _childMeshInstanceIdLookup[instanceIdParentMesh].Add(indexChildMesh, requestNewInstanceId());
+        return _childMeshInstanceIdLookup[instanceIdParentMesh][indexChildMesh];
+    }
+
+    private IScaffoldOptimizerResult[] OptimizeMesh(
+        APrimitive basePrimitive,
+        Mesh mesh,
+        string name,
+        Func<ulong> requestNewInstanceId
+    )
+    {
+        var onRequestChildMeshInstanceId = (ulong instanceIdParentMesh, int indexChildMesh) =>
+            OnRequestChildMeshInstanceId(instanceIdParentMesh, indexChildMesh, requestNewInstanceId);
+
+        IScaffoldOptimizerResult[] optimizedResult =
+        [
+            new ScaffoldOptimizerResult(basePrimitive, mesh, 0, onRequestChildMeshInstanceId)
+        ];
         var triggeredOptimizers = new List<IScaffoldPartOptimizer>();
         foreach (IScaffoldPartOptimizer partOptimizer in _partOptimizers)
         {
@@ -85,7 +106,7 @@ public class ScaffoldOptimizer
             {
                 if (triggeredOptimizers.Count == 0)
                 {
-                    optimizedMesh = partOptimizer.Optimize(mesh);
+                    optimizedResult = partOptimizer.Optimize(basePrimitive, mesh, onRequestChildMeshInstanceId);
                 }
                 triggeredOptimizers.Add(partOptimizer);
             }
@@ -107,9 +128,11 @@ public class ScaffoldOptimizer
             }
         }
 
-        return optimizedMesh;
+        return optimizedResult;
     }
 
+    private readonly Dictionary<ulong, Dictionary<int, ulong>> _childMeshInstanceIdLookup =
+        new Dictionary<ulong, Dictionary<int, ulong>>();
     private readonly List<IScaffoldPartOptimizer> _partOptimizers =
     [
         // :TODO: Fill in the available part optimizers here
