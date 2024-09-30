@@ -7,14 +7,20 @@ using CadRevealFbxProvider.BatchUtils.ScaffoldPartOptimizers;
 
 public class ScaffoldPartOptimizerTestPartA : ScaffoldPartOptimizerTest
 {
-    public override List<Vector3> GetVerticesTruth()
+    public override List<List<Vector3>> GetVerticesTruth()
     {
-        return [new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f)];
+        return
+        [
+            [new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f)]
+        ];
     }
 
-    public override List<uint> GetIndicesTruth()
+    public override List<List<uint>> GetIndicesTruth()
     {
-        return [1, 0, 2];
+        return
+        [
+            [1, 0, 2]
+        ];
     }
 
     public override string Name
@@ -32,7 +38,7 @@ public class ScaffoldPartOptimizerTestPartA : ScaffoldPartOptimizerTest
         [
             new ScaffoldOptimizerResult(
                 basePrimitive,
-                new Mesh(GetVerticesTruth().ToArray(), GetIndicesTruth().ToArray(), mesh.Error),
+                new Mesh(GetVerticesTruth()[0].ToArray(), GetIndicesTruth()[0].ToArray(), mesh.Error),
                 0,
                 requestChildPartInstanceId
             )

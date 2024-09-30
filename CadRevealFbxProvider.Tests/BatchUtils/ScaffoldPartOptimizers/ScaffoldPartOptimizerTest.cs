@@ -15,6 +15,6 @@ public abstract class ScaffoldPartOptimizerTest : IScaffoldPartOptimizer
     );
     public abstract string[] GetPartNameTriggerKeywords();
 
-    public abstract List<Vector3> GetVerticesTruth();
-    public abstract List<uint> GetIndicesTruth();
+    public abstract List<List<Vector3>> GetVerticesTruth();
+    public abstract List<List<uint>> GetIndicesTruth();
 }
