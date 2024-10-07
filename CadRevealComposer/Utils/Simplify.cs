@@ -9,6 +9,7 @@ using System.Threading;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils.MeshOptimization;
 using g3;
+using MIConvexHull;
 using Tessellation;
 
 public static class Simplify
@@ -128,5 +129,28 @@ public static class Simplify
         }
 
         return processedGeometries;
+    }
+
+    public static Mesh ConvertToConvexHull(Mesh inputMesh, float tolerance = 1.0E-1f)
+    {
+        // Build vertex list to hand to the convex hull algorithm
+        var meshVertices = inputMesh.Vertices.Select(v => new double[] { v.X, v.Y, v.Z });
+
+        // Create the convex hull
+        var convexHullOfMesh = ConvexHull.Create(meshVertices.ToArray(), tolerance);
+        if (convexHullOfMesh.ErrorMessage.Length != 0)
+        {
+            Console.WriteLine($"Convex hull simplification failed with error : {convexHullOfMesh.ErrorMessage}");
+            return inputMesh;
+        }
+
+        // Create the convex hull vertices and indices in CadRevealComposer internal format
+        var cadRevealVertices = convexHullOfMesh.Result.Faces.SelectMany(face =>
+            face.Vertices.Select(r => new Vector3((float)r.Position[0], (float)r.Position[1], (float)r.Position[2]))
+        );
+        IEnumerable<Vector3> cadRevealVerticesEnumerable = cadRevealVertices.ToArray();
+        var cadRevealIndices = cadRevealVerticesEnumerable.Select((item, index) => (uint)index);
+
+        return new Mesh(cadRevealVerticesEnumerable.ToArray(), cadRevealIndices.ToArray(), inputMesh.Error);
     }
 }
