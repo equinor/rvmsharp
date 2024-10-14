@@ -2,6 +2,7 @@
 
 using System.Drawing;
 using System.Numerics;
+using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons.Utils;
@@ -47,7 +48,8 @@ public static class RvmPyramidConverter
                 rvmPyramid,
                 treeIndex,
                 color,
-                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox()
+                rvmPyramid.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox(),
+                NodePriority.Default
             );
         }
     }

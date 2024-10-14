@@ -40,7 +40,7 @@ public class RvmTessellator
                 tessellationLogObject
             );
 
-            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox);
+            return new TriangleMesh(mesh, p.TreeIndex, p.Color, p.AxisAlignedBoundingBox, p.NodePriority);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
@@ -109,7 +109,8 @@ public class RvmTessellator
                     item.Transform,
                     item.ProtoMesh.TreeIndex,
                     item.ProtoMesh.Color,
-                    item.ProtoMesh.AxisAlignedBoundingBox
+                    item.ProtoMesh.AxisAlignedBoundingBox,
+                    item.ProtoMesh.NodePriority
                 ))
             )
             .ToArray();
