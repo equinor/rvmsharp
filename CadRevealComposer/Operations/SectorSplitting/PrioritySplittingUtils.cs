@@ -8,11 +8,11 @@ using CadRevealComposer.Utils;
 
 public static class PrioritySplittingUtils
 {
-    private static string[] PrioritizedDisciplines = { "PIPE" };
+    private static readonly string[] PrioritizedDisciplines = ["PIPE"];
 
-    public static void SetPriorityForHighlightSplitting(CadRevealNode[] nodes)
+    public static void SetPriorityForHighlightSplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
-        var disciplineFilteredNodes = FilterAndSetDiscipline(nodes).ToArray();
+        var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes).ToArray();
 
         // TODO
         // Are we going to use the custom STID mapper, or should we wait for a more official solution?
@@ -20,25 +20,27 @@ public static class PrioritySplittingUtils
         var tagMappingAndDisciplineFilteredNodes = disciplineFilteredNodes; // StidTagMapper.FilterNodesWithTag(disciplineFilteredNodes);
 
         var tagAndDisciplineFilteredNodes = FilterByIfTagExists(tagMappingAndDisciplineFilteredNodes).ToArray();
-        SetPriortyOnNodesAndChildren(tagAndDisciplineFilteredNodes);
+        SetPriorityOnNodesAndChildren(tagAndDisciplineFilteredNodes);
     }
 
-    private static IEnumerable<CadRevealNode> FilterAndSetDiscipline(CadRevealNode[] nodes)
+    private static IEnumerable<CadRevealNode> FilterByDisciplineAndAddDisciplineMetadata(
+        IReadOnlyList<CadRevealNode> nodes
+    )
     {
         foreach (var node in nodes)
         {
             var discipline = node.Attributes.GetValueOrNull("Discipline");
 
-            if (discipline != null && PrioritizedDisciplines.Contains(discipline))
-            {
-                var children = CadRevealNode.GetAllNodesFlat(node);
-                foreach (var child in children)
-                {
-                    child.Geometries = child.Geometries.Select(g => g with { Discipline = discipline }).ToArray();
-                }
+            if (!PrioritizedDisciplines.Contains(discipline))
+                continue;
 
-                yield return node;
+            var children = CadRevealNode.GetAllNodesFlat(node);
+            foreach (var child in children)
+            {
+                child.Geometries = child.Geometries.Select(g => g with { Discipline = discipline }).ToArray();
             }
+
+            yield return node;
         }
     }
 
@@ -55,7 +57,7 @@ public static class PrioritySplittingUtils
         }
     }
 
-    private static void SetPriortyOnNodesAndChildren(CadRevealNode[] nodes)
+    private static void SetPriorityOnNodesAndChildren(CadRevealNode[] nodes)
     {
         foreach (var node in nodes)
         {
@@ -67,7 +69,7 @@ public static class PrioritySplittingUtils
         }
     }
 
-    public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<ulong, APrimitive>> geometryGroups)
+    public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<uint, APrimitive>> geometryGroups)
     {
         float sizeCutoff = 0.1f;
 

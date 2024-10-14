@@ -255,7 +255,7 @@ public class DatabaseComposer
     }
 
     public static void AddTreeIndexToSectorToDatabase(
-        Dictionary<ulong, uint> treeIndexToSectorId,
+        Dictionary<uint, uint> treeIndexToSectorId,
         DirectoryInfo outputDirectory
     )
     {

@@ -37,9 +37,9 @@ public static class CadRevealComposerRunner
             if (cachedAPrimitives != null)
             {
                 Console.WriteLine("Using developer cache file: " + cacheFile);
-                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
+                SplitAndExportSectors(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
                 Console.WriteLine(
-                    $"Ran {nameof(ProcessPrimitives)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
+                    $"Ran {nameof(SplitAndExportSectors)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
                 );
                 return;
             }
@@ -56,7 +56,7 @@ public static class CadRevealComposerRunner
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
 
-        ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
+        ModelMetadata metadataFromAllFiles = new ModelMetadata(new Dictionary<string, string>());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
@@ -85,6 +85,9 @@ public static class CadRevealComposerRunner
 
             // collect all nodes for later sector division of the entire scene
             nodesToExport.AddRange(cadRevealNodes);
+
+            // Todo should this return a new list of cadrevealnodes instead of mutating the input?
+            PrioritySplittingUtils.SetPriorityForHighlightSplittingWithMutation(cadRevealNodes);
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
@@ -124,7 +127,7 @@ public static class CadRevealComposerRunner
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
 
-        var treeIndexToPrioritizedSector = ProcessPrimitives(
+        var treeIndexToPrioritizedSector = SplitAndExportSectors(
             geometriesToProcessArray,
             outputDirectory,
             modelParameters,
@@ -139,14 +142,19 @@ public static class CadRevealComposerRunner
 
         // TODO Is this the best place to do this?
         var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
-        SceneCreator.AddPrioritizedSectorsToDatabase(treeIndexToPrioritizedSector, outputDirectory);
+        SceneCreator.AddPrioritizedSectorsToDatabase(
+            treeIndexToPrioritizedSector.TreeIndexToSectorIdMap,
+            outputDirectory
+        );
         Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static Dictionary<ulong, uint> ProcessPrimitives(
+    public record SplitAndExportResults(Dictionary<uint, uint> TreeIndexToSectorIdMap);
+
+    public static SplitAndExportResults SplitAndExportSectors(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -209,7 +217,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        return GetTreeIndexToSectorIdDict(prioritizedSectors);
+        return new SplitAndExportResults(TreeIndexToSectorIdMap: GetTreeIndexToSectorIdDict(prioritizedSectors));
     }
 
     /// <summary>
@@ -231,9 +239,9 @@ public static class CadRevealComposerRunner
         return remappedPrioritizedSectors;
     }
 
-    private static Dictionary<ulong, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
+    private static Dictionary<uint, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
     {
-        var sectorIdToTreeIndex = new Dictionary<ulong, uint>();
+        var sectorIdToTreeIndex = new Dictionary<uint, uint>();
         foreach (var sector in sectors)
         {
             var sectorId = sector.SectorId;

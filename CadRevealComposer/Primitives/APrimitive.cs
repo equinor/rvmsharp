@@ -7,14 +7,14 @@ using Tessellation;
 
 // Reveal GLTF model
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
-public sealed record Box(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
+public sealed record Box(Matrix4x4 InstanceMatrix, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
     : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Circle(
     Matrix4x4 InstanceMatrix,
     Vector3 Normal,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -28,7 +28,7 @@ public sealed record Cone(
     Vector3 LocalXAxis,
     float RadiusA,
     float RadiusB,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -40,7 +40,7 @@ public sealed record EccentricCone(
     Vector3 Normal,
     float RadiusA,
     float RadiusB,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -52,7 +52,7 @@ public sealed record EllipsoidSegment(
     float Height,
     Vector3 Center,
     Vector3 Normal,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -67,7 +67,7 @@ public sealed record GeneralCylinder(
     Vector4 PlaneA,
     Vector4 PlaneB,
     float Radius,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -79,17 +79,17 @@ public sealed record GeneralRing(
     Matrix4x4 InstanceMatrix,
     Vector3 Normal,
     float Thickness,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
-public sealed record Nut(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
+public sealed record Nut(Matrix4x4 InstanceMatrix, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
     : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
-public sealed record Quad(Matrix4x4 InstanceMatrix, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
+public sealed record Quad(Matrix4x4 InstanceMatrix, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
     : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
@@ -98,7 +98,7 @@ public sealed record TorusSegment(
     Matrix4x4 InstanceMatrix,
     float Radius,
     float TubeRadius,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -109,7 +109,7 @@ public sealed record Trapezium(
     Vector3 Vertex2,
     Vector3 Vertex3,
     Vector3 Vertex4,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
@@ -130,13 +130,13 @@ public sealed record InstancedMesh(
     ulong InstanceId,
     Mesh TemplateMesh,
     Matrix4x4 InstanceMatrix,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
-public sealed record TriangleMesh(Mesh Mesh, ulong TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
+public sealed record TriangleMesh(Mesh Mesh, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
     : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
 
 [ProtoContract(SkipConstructor = true, IgnoreUnknownSubTypes = false)]
@@ -154,7 +154,7 @@ public sealed record TriangleMesh(Mesh Mesh, ulong TreeIndex, Color Color, Bound
 [ProtoInclude(511, typeof(Box))]
 [ProtoInclude(512, typeof(EccentricCone))]
 public abstract record APrimitive(
-    [property: ProtoMember(1)] ulong TreeIndex,
+    [property: ProtoMember(1)] uint TreeIndex,
     [property: ProtoMember(2)] Color Color,
     [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox
 )

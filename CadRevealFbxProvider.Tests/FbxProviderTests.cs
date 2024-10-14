@@ -156,7 +156,7 @@ public class FbxProviderTests
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
         Assert.That(geometriesToProcess, Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
         Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
-        CadRevealComposerRunner.ProcessPrimitives(
+        CadRevealComposerRunner.SplitAndExportSectors(
             geometriesToProcess.ToArray(),
             OutputDirectoryCorrect,
             ModelParameters,

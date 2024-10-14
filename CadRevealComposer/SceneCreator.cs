@@ -54,7 +54,7 @@ public static class SceneCreator
     }
 
     public static void AddPrioritizedSectorsToDatabase(
-        Dictionary<ulong, uint> treeIndexToPrioritizedSector,
+        Dictionary<uint, uint> treeIndexToPrioritizedSector,
         DirectoryInfo outputDirectory
     )
     {

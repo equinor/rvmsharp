@@ -12,7 +12,7 @@ public static class RvmPyramidConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmPyramid rvmPyramid,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
