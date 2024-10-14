@@ -127,7 +127,7 @@ public static class CadRevealComposerRunner
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
 
-        var treeIndexToPrioritizedSector = SplitAndExportSectors(
+        var splitExportResults = SplitAndExportSectors(
             geometriesToProcessArray,
             outputDirectory,
             modelParameters,
@@ -140,19 +140,19 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
-        // TODO Is this the best place to do this?
+        // TODO Is this the best place to add sector id mapping to the database?
+        // TODO Cont: Today we start hierarchy export before we have the sector id mapping ready. Is it ok to mutate the database after it has been exported?
         var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
-        SceneCreator.AddPrioritizedSectorsToDatabase(
-            treeIndexToPrioritizedSector.TreeIndexToSectorIdMap,
-            outputDirectory
-        );
+        SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorId, outputDirectory);
         Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public record SplitAndExportResults(Dictionary<uint, uint> TreeIndexToSectorIdMap);
+    public record SplitAndExportResults(List<TreeIndexSectorIdPair> TreeIndexToSectorId);
+
+    public record TreeIndexSectorIdPair(uint TreeIndex, uint SectorId);
 
     public static SplitAndExportResults SplitAndExportSectors(
         APrimitive[] allPrimitives,
@@ -217,7 +217,7 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
         stopwatch.Restart();
 
-        return new SplitAndExportResults(TreeIndexToSectorIdMap: GetTreeIndexToSectorIdDict(prioritizedSectors));
+        return new SplitAndExportResults(TreeIndexToSectorId: GetTreeIndexToSectorIdDict(prioritizedSectors));
     }
 
     /// <summary>
@@ -239,20 +239,19 @@ public static class CadRevealComposerRunner
         return remappedPrioritizedSectors;
     }
 
-    private static Dictionary<uint, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
+    private static List<TreeIndexSectorIdPair> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
     {
-        var sectorIdToTreeIndex = new Dictionary<uint, uint>();
+        var sectorIdToTreeIndex = new HashSet<TreeIndexSectorIdPair>();
         foreach (var sector in sectors)
         {
             var sectorId = sector.SectorId;
             foreach (var geometry in sector.Geometries)
             {
-                // TODO: Cant a TreeIndex be in many sectors? // NIH
-                sectorIdToTreeIndex.TryAdd(geometry.TreeIndex, sectorId);
+                sectorIdToTreeIndex.Add(new TreeIndexSectorIdPair(geometry.TreeIndex, sectorId));
             }
         }
 
-        return sectorIdToTreeIndex;
+        return sectorIdToTreeIndex.ToList();
     }
 
     /// <summary>

@@ -255,7 +255,7 @@ public class DatabaseComposer
     }
 
     public static void AddTreeIndexToSectorToDatabase(
-        Dictionary<uint, uint> treeIndexToSectorId,
+        IReadOnlyList<(uint TreeIndex, uint SectorId)> treeIndexToSectorId,
         DirectoryInfo outputDirectory
     )
     {
@@ -266,12 +266,12 @@ public class DatabaseComposer
 
             var createTableCommand = connection.CreateCommand();
             createTableCommand.CommandText =
-                "CREATE TABLE prioritizedSectors (treeindex INTEGER NOT NULL, prioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, prioritizedSectorId)) WITHOUT ROWID; ";
+                "CREATE TABLE PrioritizedSectors (treeindex INTEGER NOT NULL, prioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, prioritizedSectorId)) WITHOUT ROWID; ";
             createTableCommand.ExecuteNonQuery();
 
             var command = connection.CreateCommand();
             command.CommandText =
-                "INSERT OR IGNORE INTO prioritizedSectors (treeindex, prioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
+                "INSERT INTO PrioritizedSectors (treeindex, prioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
 
             var treeIndexParameter = command.CreateParameter();
             treeIndexParameter.ParameterName = "$TreeIndex";
@@ -283,15 +283,10 @@ public class DatabaseComposer
             var transaction = connection.BeginTransaction();
             command.Transaction = transaction;
 
-            foreach (var pair in treeIndexToSectorId)
+            foreach (var pair in treeIndexToSectorId.Distinct())
             {
-                treeIndexParameter.Value = pair.Key;
-            }
-
-            foreach (var pair in treeIndexToSectorId)
-            {
-                treeIndexParameter.Value = pair.Key;
-                prioritizedSectorIdParameter.Value = pair.Value;
+                treeIndexParameter.Value = pair.TreeIndex;
+                prioritizedSectorIdParameter.Value = pair.SectorId;
                 command.ExecuteNonQuery();
             }
 

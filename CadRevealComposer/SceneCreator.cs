@@ -54,11 +54,14 @@ public static class SceneCreator
     }
 
     public static void AddPrioritizedSectorsToDatabase(
-        Dictionary<uint, uint> treeIndexToPrioritizedSector,
+        IReadOnlyList<CadRevealComposerRunner.TreeIndexSectorIdPair> treeIndexToPrioritizedSector,
         DirectoryInfo outputDirectory
     )
     {
-        DatabaseComposer.AddTreeIndexToSectorToDatabase(treeIndexToPrioritizedSector, outputDirectory);
+        DatabaseComposer.AddTreeIndexToSectorToDatabase(
+            treeIndexToPrioritizedSector.Select(x => (x.TreeIndex, x.SectorId)).ToList(),
+            outputDirectory
+        );
     }
 
     public static void CreateSceneFile(
