@@ -146,19 +146,19 @@ public static class SplittingUtils
     public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
     {
         return primitives
-            .Select(g =>
+            .Select(primitive =>
             {
-                var geometries = new[] { g };
-                var boundingBox = geometries.CalculateBoundingBox();
+                APrimitive[] primitiveGeometry = [primitive];
+                var boundingBox = primitiveGeometry.CalculateBoundingBox();
                 if (boundingBox == null)
                 {
                     throw new Exception("Unexpected error, the bounding box should not have been null.");
                 }
                 return new Node(
-                    g.TreeIndex,
-                    geometries,
-                    geometries.Sum(DrawCallEstimator.EstimateByteSize),
-                    EstimatedTriangleCount: DrawCallEstimator.Estimate(geometries).EstimatedTriangleCount,
+                    primitive.TreeIndex,
+                    [primitive],
+                    primitiveGeometry.Sum(DrawCallEstimator.EstimateByteSize),
+                    EstimatedTriangleCount: DrawCallEstimator.Estimate(primitiveGeometry).EstimatedTriangleCount,
                     boundingBox
                 );
             })
