@@ -71,22 +71,25 @@ public static class PrioritySplittingUtils
 
     public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<uint, APrimitive>> geometryGroups)
     {
-        float sizeCutoff = 0.1f;
+        const float sizeCutoff = 0.10f; // Arbitrary value
 
         return geometryGroups
             .Select(g =>
             {
                 var allGeometries = g.Select(x => x).ToArray();
-                var orderedBySizeDescending = allGeometries.OrderByDescending(x => x.AxisAlignedBoundingBox.Diagonal);
+                var largestPart = allGeometries.Max(x => x.AxisAlignedBoundingBox.Diagonal);
                 APrimitive[] geometries;
-                if (orderedBySizeDescending.First().AxisAlignedBoundingBox.Diagonal < sizeCutoff)
+                if (largestPart < sizeCutoff)
                 {
+                    // The idea here is: If the largest geometry is smaller than the size cutoff, we include all geometries because we
+                    // believe the sum of the parts may represent a larger "whole"
                     geometries = allGeometries;
                 }
                 else
                 {
                     geometries = allGeometries.Where(x => x.AxisAlignedBoundingBox.Diagonal > sizeCutoff).ToArray();
                 }
+
                 var boundingBox = geometries.CalculateBoundingBox();
                 if (boundingBox == null)
                 {

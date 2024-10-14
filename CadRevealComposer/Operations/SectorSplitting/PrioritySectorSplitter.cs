@@ -15,27 +15,21 @@ public class PrioritySectorSplitter : ISectorSplitter
         SequentialIdGenerator sectorIdGenerator
     )
     {
-        var rootSectorId = sectorIdGenerator.GetNextId();
-        const string rootPath = "/0";
-        yield return SplittingUtils.CreateRootSector(
-            rootSectorId,
-            rootPath,
-            new BoundingBox(Vector3.Zero, Vector3.One)
-        );
-
+        var rootSector = SplittingUtils.CreateRootSector(0, "/0", new BoundingBox(Vector3.Zero, Vector3.One));
+        yield return rootSector;
         var primitivesGroupedByDiscipline = allGeometries.GroupBy(x => x.Discipline);
 
         var sectors = new List<InternalSector>();
         foreach (var disciplineGroup in primitivesGroupedByDiscipline)
         {
-            var geometryGroups = disciplineGroup.GroupBy(x => x.TreeIndex); // Group by treeindex to avoid having one treeindex uneccessary many sectors
+            var geometryGroups = disciplineGroup.GroupBy(x => x.TreeIndex).OrderBy(x => x.Key); // Group by treeindex to avoid having one treeindex uneccessary many sectors
             var nodes = PrioritySplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
 
             // Ignore outlier nodes
             // TODO: Decide if this is the right thing to do
             (Node[] regularNodes, _) = nodes.SplitNodesIntoRegularAndOutlierNodes();
 
-            sectors.AddRange(SplitIntoTreeIndexSectors(regularNodes, rootPath, rootSectorId, sectorIdGenerator));
+            sectors.AddRange(SplitIntoTreeIndexSectors(regularNodes, rootSector, sectorIdGenerator));
         }
 
         foreach (var sector in sectors)
@@ -49,8 +43,7 @@ public class PrioritySectorSplitter : ISectorSplitter
 
     private IEnumerable<InternalSector> SplitIntoTreeIndexSectors(
         Node[] nodes,
-        string rootPath,
-        uint rootSectorId,
+        InternalSector rootSector,
         SequentialIdGenerator sectorIdGenerator
     )
     {
@@ -58,18 +51,24 @@ public class PrioritySectorSplitter : ISectorSplitter
 
         while (nodesUsed < nodes.Length)
         {
-            var nodesByBudget = GetNodesByBudgetSimple(nodes, nodesUsed).ToArray();
+            // TODO: Should this use spatially aware splitting? Should it place nodes with similar attributes together? Ex: tags?
+            var nodesByBudget = GetNodesByBudgetSimple(
+                    nodes
+                        .OrderBy(x => x.TreeIndex) // Sorting by Id as we believe the TreeIndex to group similar parts in the hierarchy together
+                        .ToArray(),
+                    nodesUsed
+                )
+                .ToArray();
             nodesUsed += nodesByBudget.Length;
 
-            var sectorId = (uint)sectorIdGenerator.GetNextId();
+            var sectorId = sectorIdGenerator.GetNextId();
             var subtreeBoundingBox = nodesByBudget.CalculateBoundingBox();
 
             yield return SplittingUtils.CreateSector(
                 nodesByBudget,
                 sectorId,
-                rootSectorId,
-                rootPath,
-                1,
+                rootSector,
+                rootSector.Depth + 1,
                 subtreeBoundingBox
             );
         }

@@ -109,8 +109,8 @@ public static class SplittingUtils
             return (nodes.ToArray(), Array.Empty<Node>());
         }
 
-        var regularNodes = orderedNodes.Take(outlierStartIndex).ToArray();
-        var outlierNodes = orderedNodes.Skip(outlierStartIndex).ToArray();
+        var regularNodes = orderedNodes.Take(outlierStartIndex).OrderBy(x => x.TreeIndex).ToArray();
+        var outlierNodes = orderedNodes.Skip(outlierStartIndex).OrderBy(x => x.TreeIndex).ToArray();
 
         return (regularNodes, outlierNodes);
     }
@@ -230,22 +230,21 @@ public static class SplittingUtils
     public static InternalSector CreateSector(
         Node[] nodes,
         uint sectorId,
-        uint? parentSectorId,
-        string parentPath,
+        InternalSector parent,
         int depth,
         BoundingBox subtreeBoundingBox
     )
     {
-        var path = $"{parentPath}/{sectorId}";
-
         var minDiagonal = nodes.Any() ? nodes.Min(n => n.Diagonal) : 0;
         var maxDiagonal = nodes.Any() ? nodes.Max(n => n.Diagonal) : 0;
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
+        var path = parent.Path + "/" + sectorId;
+
         return new InternalSector(
             sectorId,
-            parentSectorId,
+            parent.SectorId,
             depth,
             path,
             minDiagonal,
