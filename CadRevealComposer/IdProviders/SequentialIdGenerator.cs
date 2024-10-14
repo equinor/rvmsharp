@@ -3,26 +3,19 @@
 using System;
 using System.Threading;
 
-public class SequentialIdGenerator
+public class SequentialIdGenerator(uint firstIdReturned = 0)
 {
-    public const ulong MaxSafeInteger = (1L << 53) - 1;
+    public static readonly uint MaxSafeInteger = (uint)Math.Pow(2, 24) - 1; // Max sequential whole integer in a 32-bit float as used in reveal shaders.
 
-    private ulong _internalIdCounter = ulong.MaxValue;
+    private long _internalIdCounter = ((long)firstIdReturned) - 1; // It increments before selecting the id, hence -1
 
-    protected SequentialIdGenerator() { }
-
-    public SequentialIdGenerator(ulong startId)
-    {
-        _internalIdCounter = startId - 1; // It increments before selecting the id, hence -1
-    }
-
-    public ulong GetNextId()
+    public uint GetNextId()
     {
         var candidate = Interlocked.Increment(ref _internalIdCounter);
         if (candidate > MaxSafeInteger)
             throw new Exception("Too many ids generated");
-        return candidate;
+        return (uint)candidate;
     }
 
-    public ulong CurrentMaxGeneratedIndex => Interlocked.Read(ref _internalIdCounter);
+    public uint CurrentMaxGeneratedIndex => (uint)Interlocked.Read(ref _internalIdCounter);
 }

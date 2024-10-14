@@ -21,10 +21,11 @@ public class SectorSplitterOctree : ISectorSplitter
     private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
     private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong nextSectorId)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        SequentialIdGenerator sectorIdGenerator
+    )
     {
-        var sectorIdGenerator = new SequentialIdGenerator(nextSectorId);
-
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
         (Node[] regularNodes, Node[] outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes();
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();

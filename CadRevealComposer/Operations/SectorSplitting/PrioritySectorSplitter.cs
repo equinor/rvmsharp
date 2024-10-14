@@ -10,11 +10,12 @@ public class PrioritySectorSplitter : ISectorSplitter
 {
     private const long SectorEstimatedByteSizeBudget = 50_000; // bytes, Arbitrary value
 
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong nextSectorId)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        SequentialIdGenerator sectorIdGenerator
+    )
     {
-        var sectorIdGenerator = new SequentialIdGenerator(nextSectorId);
-
-        var rootSectorId = (uint)sectorIdGenerator.GetNextId();
+        var rootSectorId = sectorIdGenerator.GetNextId();
         const string rootPath = "/0";
         yield return SplittingUtils.CreateRootSector(
             rootSectorId,

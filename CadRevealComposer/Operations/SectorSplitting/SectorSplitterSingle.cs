@@ -3,14 +3,18 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using IdProviders;
 using Primitives;
 using Utils;
 
 public class SectorSplitterSingle : ISectorSplitter
 {
-    public IEnumerable<InternalSector> SplitIntoSectors(APrimitive[] allGeometries, ulong nextSectorId)
+    public IEnumerable<InternalSector> SplitIntoSectors(
+        APrimitive[] allGeometries,
+        SequentialIdGenerator sectorIdGenerator
+    )
     {
-        yield return CreateRootSector(0, allGeometries);
+        yield return CreateRootSector(sectorIdGenerator.GetNextId(), allGeometries);
     }
 
     private InternalSector CreateRootSector(uint sectorId, APrimitive[] geometries)

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -42,6 +43,7 @@ public static class CadRevealComposerRunner
                 );
                 return;
             }
+
             Console.WriteLine(
                 "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
             );
@@ -121,6 +123,7 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
+
         var treeIndexToPrioritizedSector = ProcessPrimitives(
             geometriesToProcessArray,
             outputDirectory,
@@ -168,36 +171,31 @@ public static class CadRevealComposerRunner
             splitter = new SectorSplitterOctree();
         }
 
-        var prioritySplitter = new PrioritySectorSplitter();
-
-        var sectors = splitter.SplitIntoSectors(allPrimitives, 0).OrderBy(x => x.SectorId).ToArray();
-
-        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority == 1).ToArray();
-
-        var nextSectorId = sectors.Last().SectorId + 1;
-        var prioritizedSectors = prioritySplitter
-            .SplitIntoSectors(prioritizedPrimitives, nextSectorId)
+        const uint rootSectorId = 0;
+        var sectorIdGenerator = new SequentialIdGenerator(firstIdReturned: rootSectorId);
+        // First split into normal sectors for the entire model
+        var normalSectors = splitter
+            .SplitIntoSectors(allPrimitives, sectorIdGenerator)
             .OrderBy(x => x.SectorId)
             .ToArray();
 
-        // Remove redundant root and point to the original root
-        var originalRootId = sectors.First().SectorId;
-        var redundantRootId = prioritizedSectors.First().SectorId;
-        prioritizedSectors = prioritizedSectors
-            .Skip(1)
-            .Select(sector =>
-            {
-                return sector.ParentSectorId == redundantRootId
-                    ? (sector with { ParentSectorId = originalRootId })
-                    : sector;
-            })
+        // Then split into prioritized sectors, these are loaded on demand based on metadata in the Hierarchy database
+        var prioritySplitter = new PrioritySectorSplitter();
+        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority > 0).ToArray();
+        var prioritizedSectors = prioritySplitter
+            .SplitIntoSectors(prioritizedPrimitives, sectorIdGenerator)
+            .OrderBy(x => x.SectorId)
             .ToArray();
 
-        Console.WriteLine(
-            $"Split into {sectors.Length} sectors and {prioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+        InternalSector[] remappedPrioritizedSectors = RemapPrioritizedSectorsRootSectorId(
+            prioritizedSectors,
+            rootSectorId
         );
+        var allSectors = normalSectors.Concat(remappedPrioritizedSectors).OrderBy(x => x.SectorId).ToArray();
 
-        var allSectors = sectors.Concat(prioritizedSectors).ToArray();
+        Console.WriteLine(
+            $"Split into {normalSectors.Length} sectors and {remappedPrioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+        );
 
         stopwatch.Restart();
         SceneCreator.CreateSceneFile(
@@ -214,15 +212,35 @@ public static class CadRevealComposerRunner
         return GetTreeIndexToSectorIdDict(prioritizedSectors);
     }
 
+    /// <summary>
+    /// Remap Root sector ids to the given input rootId for all sectors in input
+    /// </summary>
+    [Pure]
+    private static InternalSector[] RemapPrioritizedSectorsRootSectorId(
+        InternalSector[] prioritizedSectors,
+        uint newRootId
+    )
+    {
+        var redundantRootId = prioritizedSectors.Min(x => x.SectorId);
+        var remappedPrioritizedSectors = prioritizedSectors
+            .Where(x => x.SectorId != redundantRootId)
+            .Select(sector =>
+                sector.ParentSectorId == redundantRootId ? (sector with { ParentSectorId = newRootId }) : sector
+            )
+            .ToArray();
+        return remappedPrioritizedSectors;
+    }
+
     private static Dictionary<ulong, uint> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
     {
         var sectorIdToTreeIndex = new Dictionary<ulong, uint>();
         foreach (var sector in sectors)
         {
             var sectorId = sector.SectorId;
-            foreach (var node in sector.Geometries)
+            foreach (var geometry in sector.Geometries)
             {
-                sectorIdToTreeIndex.TryAdd(node.TreeIndex, sectorId);
+                // TODO: Cant a TreeIndex be in many sectors? // NIH
+                sectorIdToTreeIndex.TryAdd(geometry.TreeIndex, sectorId);
             }
         }
 
