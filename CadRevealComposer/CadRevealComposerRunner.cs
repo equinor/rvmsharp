@@ -141,7 +141,7 @@ public static class CadRevealComposerRunner
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         // TODO Is this the best place to add sector id mapping to the database?
-        // TODO Cont: Today we start hierarchy export before we have the sector id mapping ready. Is it ok to mutate the database after it has been exported?
+        // TODO Cont: Is it ok to mutate the database after it has been exported? Yes?
         SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorIdDict, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
