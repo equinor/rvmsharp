@@ -49,16 +49,13 @@ public class PrioritySectorSplitter : ISectorSplitter
     {
         var nodesUsed = 0;
 
+        // Sorting by Id as we believe the TreeIndex to group similar parts in the hierarchy together
+        var nodesOrderedByTreeIndex = nodes.OrderBy(x => x.TreeIndex).ToArray();
+
         while (nodesUsed < nodes.Length)
         {
             // TODO: Should this use spatially aware splitting? Should it place nodes with similar attributes together? Ex: tags?
-            var nodesByBudget = GetNodesByBudgetSimple(
-                    nodes
-                        .OrderBy(x => x.TreeIndex) // Sorting by Id as we believe the TreeIndex to group similar parts in the hierarchy together
-                        .ToArray(),
-                    nodesUsed
-                )
-                .ToArray();
+            var nodesByBudget = GetNodesByBudgetSimple(nodesOrderedByTreeIndex, nodesUsed).ToArray();
             nodesUsed += nodesByBudget.Length;
 
             var sectorId = sectorIdGenerator.GetNextId();

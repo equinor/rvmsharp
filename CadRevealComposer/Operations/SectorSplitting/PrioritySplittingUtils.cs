@@ -3,8 +3,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils;
+using Primitives;
+using Utils;
 
 public static class PrioritySplittingUtils
 {
