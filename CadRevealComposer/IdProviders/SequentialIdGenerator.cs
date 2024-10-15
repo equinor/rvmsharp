@@ -1,11 +1,10 @@
 ﻿namespace CadRevealComposer.IdProviders;
 
 using System;
-using System.Threading;
 
 public class SequentialIdGenerator(uint firstIdReturned = 0)
 {
-    private static readonly uint MaxSafeIdForFloats = (uint)Math.Pow(2, 24) - 1; // Max sequential whole integer in a 32-bit float as used in reveal shaders.
+    private static readonly uint MaxSafeIdForReveal = (uint)Math.Pow(2, 24); // Max number of cells in a 4k texture (in reveal)
 
     private uint _internalIdCounter = firstIdReturned; // It increments before selecting the id, hence -1
 
@@ -13,7 +12,7 @@ public class SequentialIdGenerator(uint firstIdReturned = 0)
     {
         var idToReturn = _internalIdCounter;
         _internalIdCounter++;
-        if (idToReturn > MaxSafeIdForFloats)
+        if (idToReturn > MaxSafeIdForReveal)
             throw new Exception("Too many ids generated");
         return idToReturn;
     }

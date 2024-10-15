@@ -24,6 +24,7 @@ public class SequentialIdGeneratorTests
     {
         // This test tests N random values. It should never fail.
         var sequentialIdGenerator = new SequentialIdGenerator((uint)Math.Pow(2, 24));
+        _ = sequentialIdGenerator.GetNextId(); // Should not throw yet.
         Assert.That(
             () => sequentialIdGenerator.GetNextId(),
             Throws.Exception.With.Message.EqualTo("Too many ids generated")
