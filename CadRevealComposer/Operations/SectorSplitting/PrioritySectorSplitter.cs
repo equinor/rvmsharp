@@ -18,12 +18,12 @@ public class PrioritySectorSplitter : ISectorSplitter
         if (sectorIdGenerator.PeekNextId == 0)
             _ = sectorIdGenerator.GetNextId(); // Get and discard id 0, as 0 is hardcoded below
         var dummyRootSector = SplittingUtils.CreateRootSector(0, "/0", new BoundingBox(Vector3.Zero, Vector3.One));
-        yield return dummyRootSector;
-        var primitivesGroupedByDiscipline = allGeometries.GroupBy(x => x.Discipline);
+        yield return dummyRootSector; // Using dummy root sector because we need to remap it to the non-priority sector root later on
 
         var sectors = new List<InternalSector>();
         // We split the geometries into sectors based on the discipline because there are very few highlight cases that are cross-discipline
         // This helps reduce the overhead of a highlight sector, since highlighting of multiple tags within the same discipline is more common
+        var primitivesGroupedByDiscipline = allGeometries.GroupBy(x => x.Discipline);
         foreach (var disciplineGroup in primitivesGroupedByDiscipline)
         {
             var geometryGroups = disciplineGroup.GroupBy(primitive => primitive.TreeIndex); // Group by treeindex to avoid having one treeindex unnecessary many sectors

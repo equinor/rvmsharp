@@ -165,13 +165,9 @@ public static class SceneCreator
     {
         var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
 
-        string? sectorFilename = !p.IsHighlightSector
-            ? p.Geometries.Any()
-                ? $"sector_{p.SectorId}.glb"
-                : null
-            : p.Geometries.Any()
-                ? $"highlight_sector_{p.SectorId}.glb" // TODO Rename to priority sector
-                : null;
+        string? sectorFilename = !p.Geometries.Any()
+            ? null
+            : (!p.IsHighlightSector ? $"sector_{p.SectorId}.glb" : $"highlight_sector_{p.SectorId}.glb"); // The highlight_sector name is used in the frontend to identify the highlight sectors, don't rename without syncing with the frontend.
 
         var sectorInfo = new SectorInfo(
             SectorId: p.SectorId,
