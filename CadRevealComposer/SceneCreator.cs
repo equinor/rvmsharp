@@ -58,10 +58,12 @@ public static class SceneCreator
         DirectoryInfo outputDirectory
     )
     {
+        var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
         DatabaseComposer.AddTreeIndexToSectorToDatabase(
             treeIndexToPrioritizedSector.Select(x => (x.TreeIndex, x.SectorId)).ToList(),
             outputDirectory
         );
+        Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
     }
 
     public static void CreateSceneFile(

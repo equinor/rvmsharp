@@ -142,15 +142,13 @@ public static class CadRevealComposerRunner
 
         // TODO Is this the best place to add sector id mapping to the database?
         // TODO Cont: Today we start hierarchy export before we have the sector id mapping ready. Is it ok to mutate the database after it has been exported?
-        var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
-        SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorId, outputDirectory);
-        Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
+        SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorIdDict, outputDirectory);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public record SplitAndExportResults(List<TreeIndexSectorIdPair> TreeIndexToSectorId);
+    public record SplitAndExportResults(List<TreeIndexSectorIdPair> TreeIndexToSectorIdDict);
 
     public record TreeIndexSectorIdPair(uint TreeIndex, uint SectorId);
 
@@ -190,7 +188,7 @@ public static class CadRevealComposerRunner
         );
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
 
-        return new SplitAndExportResults(TreeIndexToSectorId: GetTreeIndexToSectorIdDict(prioritizedSectors));
+        return new SplitAndExportResults(TreeIndexToSectorIdDict: GetTreeIndexToSectorIdDict(prioritizedSectors));
     }
 
     /// <summary>
