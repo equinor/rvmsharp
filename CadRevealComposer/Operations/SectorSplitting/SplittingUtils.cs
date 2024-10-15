@@ -215,7 +215,6 @@ public static class SplittingUtils
         Node[] nodes,
         uint sectorId,
         InternalSector parent,
-        int depth,
         BoundingBox subtreeBoundingBox
     )
     {
@@ -229,7 +228,7 @@ public static class SplittingUtils
         return new InternalSector(
             sectorId,
             parent.SectorId,
-            depth,
+            parent.Depth + 1,
             path,
             minDiagonal,
             maxDiagonal,
