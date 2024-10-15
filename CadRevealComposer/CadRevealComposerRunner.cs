@@ -165,44 +165,18 @@ public static class CadRevealComposerRunner
 
         var stopwatch = Stopwatch.StartNew();
 
-        ISectorSplitter splitter;
-        if (composerParameters.SingleSector)
-        {
-            splitter = new SectorSplitterSingle();
-        }
-        else if (composerParameters.SplitIntoZones)
-        {
-            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
-        }
-        else
-        {
-            splitter = new SectorSplitterOctree();
-        }
-
         const uint rootSectorId = 0;
         var sectorIdGenerator = new SequentialIdGenerator(firstIdReturned: rootSectorId);
         // First split into normal sectors for the entire model
-        var normalSectors = splitter
-            .SplitIntoSectors(allPrimitives, sectorIdGenerator)
-            .OrderBy(x => x.SectorId)
-            .ToArray();
+        var normalSectors = PerformSectorSplitting(allPrimitives, composerParameters, sectorIdGenerator);
 
         // Then split into prioritized sectors, these are loaded on demand based on metadata in the Hierarchy database
-        var prioritySplitter = new PrioritySectorSplitter();
-        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority > 0).ToArray();
-        var prioritizedSectors = prioritySplitter
-            .SplitIntoSectors(prioritizedPrimitives, sectorIdGenerator)
-            .OrderBy(x => x.SectorId)
-            .ToArray();
+        var prioritizedSectors = PerformPrioritizedSectorSplitting(allPrimitives, sectorIdGenerator, rootSectorId);
 
-        InternalSector[] remappedPrioritizedSectors = RemapPrioritizedSectorsRootSectorId(
-            prioritizedSectors,
-            rootSectorId
-        );
-        var allSectors = normalSectors.Concat(remappedPrioritizedSectors).OrderBy(x => x.SectorId).ToArray();
+        var allSectors = normalSectors.Concat(prioritizedSectors).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine(
-            $"Split into {normalSectors.Length} sectors and {remappedPrioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+            $"Split into {normalSectors.Length} sectors and {prioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
         );
 
         stopwatch.Restart();
@@ -215,7 +189,6 @@ public static class CadRevealComposerRunner
             allSectors
         );
         Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
-        stopwatch.Restart();
 
         return new SplitAndExportResults(TreeIndexToSectorId: GetTreeIndexToSectorIdDict(prioritizedSectors));
     }
@@ -237,6 +210,40 @@ public static class CadRevealComposerRunner
             )
             .ToArray();
         return remappedPrioritizedSectors;
+    }
+
+    private static InternalSector[] PerformSectorSplitting(
+        APrimitive[] allPrimitives,
+        ComposerParameters composerParameters,
+        SequentialIdGenerator sectorIdGenerator
+    )
+    {
+        if (composerParameters.SplitIntoZones)
+        {
+            throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
+        }
+
+        ISectorSplitter splitter = composerParameters.SingleSector
+            ? new SectorSplitterSingle()
+            : new SectorSplitterOctree();
+
+        return splitter.SplitIntoSectors(allPrimitives, sectorIdGenerator).OrderBy(x => x.SectorId).ToArray();
+    }
+
+    private static InternalSector[] PerformPrioritizedSectorSplitting(
+        APrimitive[] allPrimitives,
+        SequentialIdGenerator sectorIdGenerator,
+        uint rootSectorId
+    )
+    {
+        var prioritySplitter = new PrioritySectorSplitter();
+        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority > 0).ToArray();
+        var prioritizedSectors = prioritySplitter
+            .SplitIntoSectors(prioritizedPrimitives, sectorIdGenerator)
+            .OrderBy(x => x.SectorId)
+            .ToArray();
+
+        return RemapPrioritizedSectorsRootSectorId(prioritizedSectors, rootSectorId);
     }
 
     private static List<TreeIndexSectorIdPair> GetTreeIndexToSectorIdDict(InternalSector[] sectors)

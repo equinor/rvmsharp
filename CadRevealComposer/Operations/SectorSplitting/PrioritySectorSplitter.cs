@@ -3,8 +3,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using CadRevealComposer.IdProviders;
-using CadRevealComposer.Primitives;
+using IdProviders;
+using Primitives;
 
 public class PrioritySectorSplitter : ISectorSplitter
 {
@@ -22,7 +22,7 @@ public class PrioritySectorSplitter : ISectorSplitter
         var sectors = new List<InternalSector>();
         foreach (var disciplineGroup in primitivesGroupedByDiscipline)
         {
-            var geometryGroups = disciplineGroup.GroupBy(x => x.TreeIndex).OrderBy(x => x.Key); // Group by treeindex to avoid having one treeindex uneccessary many sectors
+            var geometryGroups = disciplineGroup.GroupBy(primitive => primitive.TreeIndex); // Group by treeindex to avoid having one treeindex unnecessary many sectors
             var nodes = PrioritySplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
 
             // Ignore outlier nodes
@@ -41,7 +41,7 @@ public class PrioritySectorSplitter : ISectorSplitter
         }
     }
 
-    private IEnumerable<InternalSector> SplitIntoTreeIndexSectors(
+    private static IEnumerable<InternalSector> SplitIntoTreeIndexSectors(
         Node[] nodes,
         InternalSector rootSector,
         SequentialIdGenerator sectorIdGenerator

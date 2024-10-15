@@ -89,30 +89,21 @@ public static class SplittingUtils
         var truncatedAverage = TruncatedAverageCenter(nodes);
 
         var orderedNodes = nodes.OrderBy(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage)).ToArray();
+        var orderedNodeDistances = orderedNodes
+            .Select(x => Vector3.Distance(x.BoundingBox.Center, truncatedAverage))
+            .ToArray();
 
-        bool outliersExist = false;
-        int outlierStartIndex = 0;
-        for (int i = 1; i < orderedNodes.Length; i++)
+        for (int i = 1; i < orderedNodeDistances.Length; i++)
         {
-            var firstDistance = Vector3.Distance(orderedNodes[i - 1].BoundingBox.Center, truncatedAverage);
-            var secondDistance = Vector3.Distance(orderedNodes[i].BoundingBox.Center, truncatedAverage);
-            if (secondDistance - firstDistance >= outlierDistance)
+            if (orderedNodeDistances[i] - orderedNodeDistances[i - 1] >= outlierDistance)
             {
-                outliersExist = true;
-                outlierStartIndex = i;
-                break;
+                var regularNodes = orderedNodes.Take(i).ToArray();
+                var outlierNodes = orderedNodes.Skip(i).ToArray();
+                return (regularNodes, outlierNodes);
             }
         }
 
-        if (!outliersExist)
-        {
-            return (nodes.ToArray(), Array.Empty<Node>());
-        }
-
-        var regularNodes = orderedNodes.Take(outlierStartIndex).OrderBy(x => x.TreeIndex).ToArray();
-        var outlierNodes = orderedNodes.Skip(outlierStartIndex).OrderBy(x => x.TreeIndex).ToArray();
-
-        return (regularNodes, outlierNodes);
+        return (nodes.ToArray(), []);
     }
 
     /// <summary>
@@ -128,11 +119,15 @@ public static class SplittingUtils
 
         return new Vector3(avgCenterX, avgCenterY, avgCenterZ);
 
-        float AvgCenter(IEnumerable<float> values) =>
-            values.Order().Skip((int)(nodes.Count * 0.05)).Take((int)(nodes.Count * 0.95)).Average();
+        float AvgCenter(IEnumerable<float> values)
+        {
+            var discardCount = (int)(nodes.Count * 0.05);
+            var keepCount = nodes.Count - 2 * discardCount;
+            return values.Order().Skip(discardCount).Take(keepCount).Average();
+        }
     }
 
-    public static Node[] ConvertPrimitivesToNodes(APrimitive[] primitives)
+    public static Node[] ConvertPrimitivesToNodes(IEnumerable<APrimitive> primitives)
     {
         return primitives
             .Select(primitive =>
