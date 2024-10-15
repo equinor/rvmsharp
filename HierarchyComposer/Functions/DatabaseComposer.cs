@@ -266,12 +266,12 @@ public class DatabaseComposer
 
             var createTableCommand = connection.CreateCommand();
             createTableCommand.CommandText =
-                "CREATE TABLE PrioritizedSectors (treeindex INTEGER NOT NULL, prioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (treeindex, prioritizedSectorId)) WITHOUT ROWID; ";
+                "CREATE TABLE PrioritizedSectors (TreeIndex INTEGER NOT NULL, PrioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (TreeIndex, PrioritizedSectorId)) WITHOUT ROWID; ";
             createTableCommand.ExecuteNonQuery();
 
             var command = connection.CreateCommand();
             command.CommandText =
-                "INSERT INTO PrioritizedSectors (treeindex, prioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
+                "INSERT INTO PrioritizedSectors (TreeIndex, PrioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
 
             var treeIndexParameter = command.CreateParameter();
             treeIndexParameter.ParameterName = "$TreeIndex";
