@@ -18,4 +18,15 @@ public class SequentialIdGeneratorTests
         Assert.That(nextId2, Is.EqualTo(firstIdReturned + 1));
         Assert.That(nextId2, Is.EqualTo(expectedNextIdFromPeekNextBeforeGetNextId));
     }
+
+    [Test]
+    public void GetNextId_WhenIdIsAboveFloatMaxInt_ThrowsException()
+    {
+        // This test tests N random values. It should never fail.
+        var sequentialIdGenerator = new SequentialIdGenerator((uint)Math.Pow(2, 24));
+        Assert.That(
+            () => sequentialIdGenerator.GetNextId(),
+            Throws.Exception.With.Message.EqualTo("Too many ids generated")
+        );
+    }
 }
