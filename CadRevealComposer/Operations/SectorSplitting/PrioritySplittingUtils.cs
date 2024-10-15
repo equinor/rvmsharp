@@ -13,13 +13,7 @@ public static class PrioritySplittingUtils
     public static void SetPriorityForHighlightSplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
         var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes).ToArray();
-
-        // TODO
-        // Are we going to use the custom STID mapper, or should we wait for a more official solution?
-        // Notes: Uncommenting code below requires that a relevant file exists on build server
-        var tagMappingAndDisciplineFilteredNodes = disciplineFilteredNodes; // StidTagMapper.FilterNodesWithTag(disciplineFilteredNodes);
-
-        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(tagMappingAndDisciplineFilteredNodes).ToArray();
+        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(disciplineFilteredNodes).ToArray();
         SetPriorityOnNodesAndChildren(tagAndDisciplineFilteredNodes);
     }
 
