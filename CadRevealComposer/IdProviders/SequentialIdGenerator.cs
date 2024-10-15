@@ -5,17 +5,21 @@ using System.Threading;
 
 public class SequentialIdGenerator(uint firstIdReturned = 0)
 {
-    public static readonly uint MaxSafeInteger = (uint)Math.Pow(2, 24) - 1; // Max sequential whole integer in a 32-bit float as used in reveal shaders.
+    private static readonly uint MaxSafeIdForFloats = (uint)Math.Pow(2, 24) - 1; // Max sequential whole integer in a 32-bit float as used in reveal shaders.
 
-    private long _internalIdCounter = ((long)firstIdReturned) - 1; // It increments before selecting the id, hence -1
+    private uint _internalIdCounter = firstIdReturned; // It increments before selecting the id, hence -1
 
     public uint GetNextId()
     {
-        var candidate = Interlocked.Increment(ref _internalIdCounter);
-        if (candidate > MaxSafeInteger)
+        var idToReturn = _internalIdCounter;
+        _internalIdCounter++;
+        if (idToReturn > MaxSafeIdForFloats)
             throw new Exception("Too many ids generated");
-        return (uint)candidate;
+        return idToReturn;
     }
 
-    public uint CurrentMaxGeneratedIndex => (uint)Interlocked.Read(ref _internalIdCounter);
+    /// <summary>
+    /// Look at the next id that will be generated
+    /// </summary>
+    public uint PeekNextId => _internalIdCounter;
 }
