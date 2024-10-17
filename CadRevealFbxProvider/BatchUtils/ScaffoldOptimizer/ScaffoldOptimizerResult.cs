@@ -1,4 +1,4 @@
-namespace CadRevealFbxProvider.BatchUtils.ScaffoldPartOptimizers;
+namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
@@ -6,9 +6,9 @@ using CadRevealComposer.Tessellation;
 public class ScaffoldOptimizerResult : IScaffoldOptimizerResult
 {
     public ScaffoldOptimizerResult(
-        APrimitive basePrimitive,
-        Mesh optimizedMesh,
-        int indexChildMesh,
+        APrimitive basePrimitive, // When we split a primitive/mesh into several pieces, this is the origin of that split (before splitting)
+        Mesh optimizedMesh, // This is the optimized mesh. In case of splitting into several pieces, there will be multiple ScaffoldOptimizerResult instances with the same basePrimitive, but different indexChildMesh
+        int indexChildMesh, // This is the zero based index of the meshes that are produced during a mesh splitting
         Func<ulong, int, ulong> requestChildMeshInstanceId
     )
     {

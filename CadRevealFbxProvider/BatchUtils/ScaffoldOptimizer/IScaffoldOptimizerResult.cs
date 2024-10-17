@@ -1,4 +1,4 @@
-namespace CadRevealFbxProvider.BatchUtils.ScaffoldPartOptimizers;
+namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
 using CadRevealComposer.Primitives;
 
