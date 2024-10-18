@@ -6,7 +6,7 @@ using RvmSharp.Primitives;
 public static class RvmPrimitiveToAPrimitive
 {
     public static IEnumerable<APrimitive> FromRvmPrimitive(
-        ulong treeIndex,
+        uint treeIndex,
         RvmPrimitive rvmPrimitive,
         RvmNode rvmNode,
         FailedPrimitivesLogObject failedPrimitivesLogObject

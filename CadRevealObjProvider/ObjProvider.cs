@@ -62,7 +62,7 @@ public class ObjProvider : IModelFormatProvider
         return (nodes, null);
     }
 
-    private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, ulong treeIndex)
+    private static APrimitive[] ConvertObjMeshToAPrimitive(ObjMesh mesh, uint treeIndex)
     {
         return new APrimitive[]
         {

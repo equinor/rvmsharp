@@ -11,7 +11,7 @@ public static class RvmRectangularTorusConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmRectangularTorus rvmRectangularTorus,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )

@@ -12,7 +12,7 @@ public static class RvmCircularTorusConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCircularTorus rvmCircularTorus,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )

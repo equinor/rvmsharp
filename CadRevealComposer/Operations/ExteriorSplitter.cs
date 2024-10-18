@@ -260,7 +260,7 @@ public static class ExteriorSplitter
             return new TessellatedPrimitive(triangles, primitive);
         }
 
-        static Node ConvertNode(IGrouping<ulong, APrimitive> nodeGroup)
+        static Node ConvertNode(IGrouping<uint, APrimitive> nodeGroup)
         {
             var boundingBox = nodeGroup.ToArray().CalculateBoundingBox();
 

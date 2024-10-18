@@ -15,7 +15,7 @@ public static class CircleConverterHelper
     /// <param name="treeIndex"></param>
     /// <param name="color"></param>
     /// <returns></returns>
-    public static Circle ConvertCircle(Matrix4x4 matrix, Vector3 normal, ulong treeIndex, Color color)
+    public static Circle ConvertCircle(Matrix4x4 matrix, Vector3 normal, uint treeIndex, Color color)
     {
         // Circles don't have bounding boxes in RVM, since they are only used as caps
         // This means that we have to calculate a new bounding box for the circle

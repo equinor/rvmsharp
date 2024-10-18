@@ -9,7 +9,7 @@ public static class RvmSphereConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSphere rvmSphere,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )

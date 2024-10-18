@@ -64,7 +64,7 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
 
 public class CadRevealNode
 {
-    public required ulong TreeIndex { get; init; }
+    public required uint TreeIndex { get; init; }
     public required string Name { get; init; }
 
     // TODO support Store, Model, File and maybe not RVM

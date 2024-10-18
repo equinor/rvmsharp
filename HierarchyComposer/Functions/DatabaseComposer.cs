@@ -254,6 +254,46 @@ public class DatabaseComposer
         sqliteComposeTimer.LogCompletion();
     }
 
+    public static void AddTreeIndexToSectorToDatabase(
+        IReadOnlyList<(uint TreeIndex, uint SectorId)> treeIndexToSectorId,
+        DirectoryInfo outputDirectory
+    )
+    {
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        using (var connection = new SqliteConnection($"Data Source={databasePath}"))
+        {
+            connection.Open();
+
+            var createTableCommand = connection.CreateCommand();
+            createTableCommand.CommandText =
+                "CREATE TABLE PrioritizedSectors (TreeIndex INTEGER NOT NULL, PrioritizedSectorId INTEGER NOT NULL, PRIMARY KEY (TreeIndex, PrioritizedSectorId)) WITHOUT ROWID; ";
+            createTableCommand.ExecuteNonQuery();
+
+            var command = connection.CreateCommand();
+            command.CommandText =
+                "INSERT INTO PrioritizedSectors (TreeIndex, PrioritizedSectorId) VALUES ($TreeIndex, $PrioritizedSectorId)";
+
+            var treeIndexParameter = command.CreateParameter();
+            treeIndexParameter.ParameterName = "$TreeIndex";
+            var prioritizedSectorIdParameter = command.CreateParameter();
+            prioritizedSectorIdParameter.ParameterName = $"PrioritizedSectorId";
+
+            command.Parameters.AddRange([treeIndexParameter, prioritizedSectorIdParameter]);
+
+            var transaction = connection.BeginTransaction();
+            command.Transaction = transaction;
+
+            foreach (var pair in treeIndexToSectorId.Distinct())
+            {
+                treeIndexParameter.Value = pair.TreeIndex;
+                prioritizedSectorIdParameter.Value = pair.SectorId;
+                command.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
+        }
+    }
+
     private static void CreateEmptyDatabase(DbContextOptions options)
     {
         using var context = new HierarchyContext(options);

@@ -25,7 +25,7 @@ public class ExteriorSplitterTests
     /// <summary>
     /// The exterior splitter uses axis aligned bounding box for Box primitive. All other data is irrelevant.
     /// </summary>
-    private static Box CreateBoxCenteredInOrigin(ulong treeIndex, float boxSize)
+    private static Box CreateBoxCenteredInOrigin(uint treeIndex, float boxSize)
     {
         return new Box(
             Matrix4x4.Identity,
