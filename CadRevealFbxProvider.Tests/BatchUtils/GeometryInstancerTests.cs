@@ -5,7 +5,7 @@ using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using CadRevealFbxProvider.BatchUtils;
+using CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
 public class GeometryOptimizerTests
 {
