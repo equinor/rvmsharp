@@ -9,11 +9,23 @@ public:
     class InfoItem
     {
     public:
-        InfoItem(const int& vertex_count, const int& triangle_count) { m_vertex_count = vertex_count; m_triangle_count = triangle_count; }
+        InfoItem(
+            const int& vertex_count,
+            const int& triangle_count,
+            const Color* color)
+        {
+            m_vertex_count = vertex_count;
+            m_triangle_count = triangle_count;
+            m_color.r = color->r;
+            m_color.g = color->g;
+            m_color.b = color->b;
+            m_color.a = color->a;
+        }
 
     public:
         int m_vertex_count = 0;
         int m_triangle_count = 0;
+        Color m_color;
     };
 
 public:

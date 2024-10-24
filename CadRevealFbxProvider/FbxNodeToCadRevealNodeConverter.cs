@@ -1,6 +1,5 @@
 ﻿namespace CadRevealFbxProvider;
 
-using System.Drawing;
 using System.Text.RegularExpressions;
 using BatchUtils;
 using CadRevealComposer;
@@ -8,6 +7,7 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using Commons.Utils;
 
 public static class FbxNodeToCadRevealNodeConverter
 {
@@ -128,58 +128,61 @@ public static class FbxNodeToCadRevealNodeConverter
     )
     {
         var nodeGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(node);
-        var worldTransform = node.WorldTransform;
-
         if (nodeGeometryPtr == IntPtr.Zero)
         {
             return null;
         }
+
+        var meshTransform = node.WorldGeometricTransform;
+        if (!meshTransform.IsDecomposable())
+        {
+            Console.Error.WriteLine(
+                "Failed to decompose transform for node: "
+                    + node.GetNodeName()
+                    + ". (ignoring). Had transform "
+                    + meshTransform
+            );
+            return null;
+        }
+        var color = FbxMaterialWrapper.GetMaterialColor(node);
 
         if (meshInstanceLookup.TryGetValue(nodeGeometryPtr, out var instanceData))
         {
             var instancedMeshCopy = new InstancedMesh(
                 instanceData.instanceId,
                 instanceData.templateMesh,
-                worldTransform,
+                meshTransform,
                 treeIndex,
-                Color.Aqua, // TODO: Temp debug color to distinguish copies of an instanced mesh
-                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(worldTransform)
+                color,
+                instanceData.templateMesh.CalculateAxisAlignedBoundingBox(meshTransform)
             );
             return instancedMeshCopy;
         }
 
-        var meshData = FbxMeshWrapper.GetGeometricData(node);
-        if (!meshData.HasValue)
+        var mesh = FbxMeshWrapper.GetGeometricData(nodeGeometryPtr);
+        if (mesh == null)
         {
             throw new Exception("IntPtr" + nodeGeometryPtr + " was expected to have a mesh, but we found none.");
         }
 
-        var mesh = meshData.Value.Mesh;
-        var meshPtr = meshData.Value.MeshPtr;
-
-        if (geometriesThatShouldBeInstanced.Contains(meshData.Value.MeshPtr))
+        if (geometriesThatShouldBeInstanced.Contains(nodeGeometryPtr))
         {
             ulong instanceId = instanceIdGenerator.GetNextId();
-            meshInstanceLookup.Add(meshPtr, (mesh, instanceId));
+            meshInstanceLookup.Add(nodeGeometryPtr, (mesh, instanceId));
             var instancedMesh = new InstancedMesh(
                 instanceId,
                 mesh,
-                worldTransform,
+                meshTransform,
                 treeIndex,
-                Color.Magenta, // TODO: Temp debug color to distinguish first Instance
-                mesh.CalculateAxisAlignedBoundingBox(worldTransform)
+                color,
+                mesh.CalculateAxisAlignedBoundingBox(meshTransform)
             );
             return instancedMesh;
         }
 
         // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
-        mesh.Apply(worldTransform);
-        var triangleMesh = new TriangleMesh(
-            mesh,
-            treeIndex,
-            Color.Yellow, // TODO: Temp debug color to distinguish un-instanced
-            mesh.CalculateAxisAlignedBoundingBox()
-        );
+        mesh.Apply(meshTransform);
+        var triangleMesh = new TriangleMesh(mesh, treeIndex, color, mesh.CalculateAxisAlignedBoundingBox());
 
         return triangleMesh;
     }

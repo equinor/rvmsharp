@@ -1,5 +1,5 @@
 # Build the library and tests
-FROM ubuntu:noble as build
+FROM ubuntu:noble AS build
 RUN apt update -y; \
     apt upgrade -y; \
     apt install -y build-essential catch2 cmake wget libxml2-dev; \

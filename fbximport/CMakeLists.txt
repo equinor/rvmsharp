@@ -14,7 +14,7 @@ set(FBX_ROOT "$ENV{FBX_ROOT}")
 if(FBX_ROOT)
     message(STATUS "FBX found in ${FBX_ROOT}")
 else()
-    message(FATAL_ERROR "FBX_ROOT is not set in enviroment variables!")
+    message(FATAL_ERROR "FBX_ROOT is not set in environment variables!")
 endif()
 
 if(FBXSDK_VERSION)
