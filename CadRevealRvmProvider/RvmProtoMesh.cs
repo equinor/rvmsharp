@@ -12,7 +12,7 @@ public abstract record ProtoMesh(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,

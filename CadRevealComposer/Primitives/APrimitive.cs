@@ -8,7 +8,7 @@ using Tessellation;
 // Reveal GLTF model
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Box(Matrix4x4 InstanceMatrix, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Circle(
@@ -17,7 +17,7 @@ public sealed record Circle(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Cone(
@@ -31,7 +31,7 @@ public sealed record Cone(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record EccentricCone(
@@ -43,7 +43,7 @@ public sealed record EccentricCone(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record EllipsoidSegment(
@@ -55,7 +55,7 @@ public sealed record EllipsoidSegment(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record GeneralCylinder(
@@ -70,7 +70,7 @@ public sealed record GeneralCylinder(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record GeneralRing(
@@ -82,15 +82,15 @@ public sealed record GeneralRing(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Nut(Matrix4x4 InstanceMatrix, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Quad(Matrix4x4 InstanceMatrix, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record TorusSegment(
@@ -101,7 +101,7 @@ public sealed record TorusSegment(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record Trapezium(
@@ -112,7 +112,7 @@ public sealed record Trapezium(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 /// <summary>
 /// Defines an "Instance" of a Template. A instance that shares a Geometry representation with other instances of a shared "Template" reference.
@@ -133,11 +133,11 @@ public sealed record InstancedMesh(
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(ImplicitFields = ImplicitFields.AllPublic, SkipConstructor = true)]
 public sealed record TriangleMesh(Mesh Mesh, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
-    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+    : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 [ProtoContract(SkipConstructor = true, IgnoreUnknownSubTypes = false)]
 [ProtoInclude(500, typeof(TriangleMesh))]
@@ -156,10 +156,7 @@ public sealed record TriangleMesh(Mesh Mesh, uint TreeIndex, Color Color, Boundi
 public abstract record APrimitive(
     [property: ProtoMember(1)] uint TreeIndex,
     [property: ProtoMember(2)] Color Color,
-    [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox
-)
-{
-    // TODO: Should these be a part of protobuf?
-    public int Priority { get; init; } = 0;
-    public string? Discipline { get; init; } = null;
-}
+    [property: ProtoMember(3)] BoundingBox AxisAlignedBoundingBox,
+    [property: ProtoMember(4)] int Priority,
+    [property: ProtoMember(5)] string? Discipline
+);
