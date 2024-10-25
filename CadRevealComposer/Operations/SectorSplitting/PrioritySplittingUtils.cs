@@ -12,13 +12,13 @@ public static class PrioritySplittingUtils
 
     public static void SetPriorityForHighlightSplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
-        var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes).ToArray();
-        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(disciplineFilteredNodes).ToArray();
+        var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes);
+        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(disciplineFilteredNodes);
         SetPriorityOnNodesAndChildren(tagAndDisciplineFilteredNodes);
     }
 
     private static IEnumerable<CadRevealNode> FilterByDisciplineAndAddDisciplineMetadata(
-        IReadOnlyList<CadRevealNode> nodes
+        IEnumerable<CadRevealNode> nodes
     )
     {
         foreach (var node in nodes)
@@ -38,12 +38,10 @@ public static class PrioritySplittingUtils
         }
     }
 
-    private static IEnumerable<CadRevealNode> FilterByIfTagExists(CadRevealNode[] nodes)
-    {
-        return nodes.Where(node => node.Attributes.ContainsKey("Tag"));
-    }
+    private static IEnumerable<CadRevealNode> FilterByIfTagExists(IEnumerable<CadRevealNode> nodes) =>
+        nodes.Where(node => node.Attributes.ContainsKey("Tag"));
 
-    private static void SetPriorityOnNodesAndChildren(CadRevealNode[] nodes)
+    private static void SetPriorityOnNodesAndChildren(IEnumerable<CadRevealNode> nodes)
     {
         foreach (var node in nodes)
         {
