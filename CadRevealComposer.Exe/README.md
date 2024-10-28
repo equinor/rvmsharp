@@ -1,5 +1,3 @@
-[![SCM Compliance](https://scm-compliance-api.radix.equinor.com/repos/equinor/rvmsharp/badge)](https://scm-compliance-api.radix.equinor.com/repos/equinor/rvmsharp/badge)
-
 # Cad Reveal Composer
 
 The Cad Reveal Composer project uses the rvmsharp parser to read RVM data, and converts the data into the Reveal v8
