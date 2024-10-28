@@ -1,5 +1,7 @@
 # RvmSharp
 
+[![SCM Compliance](https://scm-compliance-api.radix.equinor.com/repos/equinor/rvmsharp/badge)](https://scm-compliance-api.radix.equinor.com/repos/equinor/rvmsharp/badge)
+
 <https://www.nuget.org/packages/Equinor.RvmSharp>
 
 A library and utility for reading and converting RVM files.
