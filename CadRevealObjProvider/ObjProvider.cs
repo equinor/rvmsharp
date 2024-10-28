@@ -19,7 +19,8 @@ public class ObjProvider : IModelFormatProvider
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        PriorityMapping priorityMapping
     )
     {
         var objLoaderFactory = new ObjLoaderFactory();

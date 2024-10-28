@@ -13,7 +13,8 @@ public interface IModelFormatProvider
         IEnumerable<FileInfo> filesToParse,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        PriorityMapping priorityMapping
     );
 
     public APrimitive[] ProcessGeometries(

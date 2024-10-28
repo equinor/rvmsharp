@@ -78,6 +78,27 @@ public class CommandLineOptions
     )]
     public string? NodeNameExcludeRegex { get; init; } = null;
 
+    [Option(
+        longName: "PrioritizedDiscipline",
+        Required = false,
+        HelpText = "A regex matching disciplines to be prioritized in sector splitting. Not case sensitive."
+    )]
+    public string? PrioritizedDisciplineRegex { get; init; } = "PIPE";
+
+    [Option(
+        longName: "LowPrioritizedDiscipline",
+        Required = false,
+        HelpText = "A regex matching disciplines to be prioritized lower in sector splitting. Not case sensitive."
+    )]
+    public string? LowPrioritizedDisciplineRegex { get; init; } = null;
+
+    [Option(
+        longName: "PrioritizedNodeName",
+        Required = false,
+        HelpText = "A regex matching node names to be prioritized in sector splitting. Not case sensitive."
+    )]
+    public string? PrioritizedNodeNameRegex { get; init; } = null;
+
     [Option(longName: "SplitIntoZones", shortName: 'z', Required = false, HelpText = "Split models into zones.")]
     public bool SplitIntoZones { get; init; }
 

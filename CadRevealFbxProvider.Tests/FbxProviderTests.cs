@@ -2,6 +2,7 @@ namespace CadRevealFbxProvider.Tests;
 
 using System.Drawing;
 using System.Numerics;
+using System.Text.RegularExpressions;
 using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
@@ -35,7 +36,17 @@ public class FbxProviderTests
             new TemplateCountLimit(100)
         );
     private static readonly ComposerParameters ComposerParameters =
-        new(false, true, false, new NodeNameExcludeRegex(null), 0f, null);
+        new(
+            false,
+            true,
+            false,
+            new NodeNameExcludeRegex(null),
+            new PrioritizedDisciplinesRegex(null),
+            new LowPrioritizedDisciplineRegex(null),
+            new PrioritizedNodeNamesRegex(null),
+            0f,
+            null
+        );
 
     private static readonly List<IModelFormatProvider> Providers = [new FbxProvider()];
 
@@ -153,7 +164,12 @@ public class FbxProviderTests
             InputDirectoryCorrect.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            new PriorityMapping(
+                new PrioritizedDisciplinesRegex(null),
+                new LowPrioritizedDisciplineRegex(null),
+                new PrioritizedNodeNamesRegex(null)
+            )
         );
 
         Assert.That(nodes, Has.Count.EqualTo(28));
@@ -235,12 +251,18 @@ public class FbxProviderTests
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
+        var priorityMapping = new PriorityMapping(
+            new PrioritizedDisciplinesRegex(null),
+            new LowPrioritizedDisciplineRegex(null),
+            new PrioritizedNodeNamesRegex(null)
+        );
 
         (IReadOnlyList<CadRevealNode> nodes, _) = modelFormatProviderFbx.ParseFiles(
             InputDirectoryMissingAttr.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
-            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            priorityMapping
         );
 
         // Ladders have no attributes, should thus be ignored
