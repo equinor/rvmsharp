@@ -6,7 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
+using Commons.Utils;
 using ProtoBuf;
+using Utils;
 
 [ProtoContract(SkipConstructor = true)]
 public class Mesh : IEquatable<Mesh>
@@ -88,25 +90,25 @@ public class Mesh : IEquatable<Mesh>
 
         Vector3 min = Vector3.One * float.MaxValue;
         Vector3 max = Vector3.One * float.MinValue;
-        if (transform is not null and { IsIdentity: false }) // Skip applying the transform if its an identity transform.
+        if (transform is { IsIdentity: false }) // Skip applying the transform if its an identity transform.
         {
-            for (int i = 1; i < _vertices.Length; i++)
+            foreach (var vertex in _vertices)
             {
-                var transformedVertex = Vector3.Transform(_vertices[i], transform.Value);
+                var transformedVertex = Vector3.Transform(vertex, transform.Value);
                 min = Vector3.Min(min, transformedVertex);
                 max = Vector3.Max(max, transformedVertex);
             }
         }
         else
         {
-            for (int i = 1; i < _vertices.Length; i++)
+            foreach (var vertex in _vertices)
             {
-                var vertex = _vertices[i];
                 min = Vector3.Min(min, vertex);
                 max = Vector3.Max(max, vertex);
             }
         }
 
+        Trace.Assert(min.IsFinite() && max.IsFinite(), "min.IsFinite() && max.IsFinite()");
         return new BoundingBox(min, max);
     }
 
@@ -116,13 +118,18 @@ public class Mesh : IEquatable<Mesh>
     /// <param name="matrix"></param>
     public void Apply(Matrix4x4 matrix)
     {
+        if (!matrix.IsDecomposable())
+        {
+            throw new ArgumentException("Matrix is not decomposable. Is the input data valid?", nameof(matrix));
+        }
+
         for (var i = 0; i < _vertices.Length; i++)
         {
             var newVertex = Vector3.Transform(_vertices[i], matrix);
 
-            Debug.Assert(float.IsFinite(newVertex.X));
-            Debug.Assert(float.IsFinite(newVertex.Y));
-            Debug.Assert(float.IsFinite(newVertex.Z));
+            Trace.Assert(float.IsFinite(newVertex.X), "float.IsFinite(newVertex.X)");
+            Trace.Assert(float.IsFinite(newVertex.Y), "float.IsFinite(newVertex.Y)");
+            Trace.Assert(float.IsFinite(newVertex.Z), "float.IsFinite(newVertex.Z)");
 
             _vertices[i] = newVertex;
         }

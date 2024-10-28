@@ -1,18 +1,20 @@
 namespace CadRevealFbxProvider.Tests;
 
+using System.Drawing;
 using System.Numerics;
 using Attributes;
-using BatchUtils;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
+using CadRevealFbxProvider.BatchUtils;
 
 [TestFixture]
 public class FbxProviderTests
 {
+    private static readonly DirectoryInfo TestSamplesDirectory = new("TestSamples");
     private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
     private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
@@ -58,13 +60,50 @@ public class FbxProviderTests
         Iterate(rootNode);
     }
 
+    [Test]
+    public void GreenAndRedCube_LoadFile_VerifyCorrectColors()
+    {
+        using var test = new FbxImporter();
+        var rootNode = test.LoadFile(TestSamplesDirectory + "\\green_and_red_cubes.fbx");
+
+        var revealNode = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
+            rootNode,
+            new TreeIndexGenerator(),
+            new InstanceIdGenerator(),
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            null
+        );
+
+        Assert.That(revealNode, Is.Not.Null);
+
+        var children = revealNode!.Children;
+        Assert.That(children, Is.Not.Null);
+        Assert.That(children, Has.Length.EqualTo(2));
+
+        AssertHasOnePrimitiveWithColor(children[0], Color.FromArgb(255, 204, 0, 1));
+        AssertHasOnePrimitiveWithColor(children[1], Color.FromArgb(255, 2, 204, 0));
+        return;
+
+        void AssertHasOnePrimitiveWithColor(CadRevealNode node, Color expectedColor)
+        {
+            var primitives = node.Geometries;
+            Assert.That(primitives, Has.Length.EqualTo(1));
+            var color = primitives[0].Color;
+            Assert.That(color, Is.EqualTo(expectedColor));
+        }
+    }
+
     private void Iterate(FbxNode root)
     {
         Console.WriteLine(root.GetNodeName());
         var childCount = root.GetChildCount();
         Matrix4x4 t = root.GetLocalTransform();
         Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
-        FbxMeshWrapper.GetGeometricData(root);
+        IntPtr meshGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(root);
+        if (meshGeometryPtr != IntPtr.Zero)
+        {
+            FbxMeshWrapper.GetGeometricData(meshGeometryPtr);
+        }
         for (var i = 0; i < childCount; i++)
         {
             var child = root.GetChild(i);

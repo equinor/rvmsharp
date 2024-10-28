@@ -10,9 +10,29 @@ using System.Text;
 using Containers;
 using Operations;
 using Primitives;
+#if DOTNET7_0_OR_GREATER
+#else
+using Utils;
+#endif
 
 public static class RvmParser
 {
+    /// <summary>
+    /// These are the known bytes we have seen in v4 nodes in just 1 file. We have no documentation on what the data represents.
+    /// Add docs to the code if you find out what the data represents.
+    /// </summary>
+    // csharpier-ignore -- Keep four byte formatting
+    private static readonly byte[] ExpectedV4Bytes =
+    [
+        0x00, 0x00, 0x00, 0x00, // The first four bytes may represent the same as in version 3?
+        0x78, 0xB5, 0x8C, 0x52,
+        0x44, 0x15, 0xAF, 0x1D,
+        0x78, 0xB5, 0x8C, 0x46,
+        0x44, 0x15, 0xAF, 0x1D,
+        0x78, 0xB5, 0x8C, 0x61,
+        0x44, 0x15, 0xAF, 0x1D
+    ];
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ReadUint(Stream stream)
     {
@@ -21,6 +41,7 @@ public static class RvmParser
             throw new IOException("Unexpected end of stream");
         if (BitConverter.IsLittleEndian)
             bytes.Reverse();
+
         return BitConverter.ToUInt32(bytes);
     }
 
@@ -35,7 +56,12 @@ public static class RvmParser
         return BitConverter.ToSingle(bytes);
     }
 
-    private static string ReadChunkHeader(Stream stream, out uint nextHeaderOffset, out uint dunno)
+    private static string ReadChunkHeader(
+        Stream stream,
+        string nameForDebugging,
+        out uint nextHeaderOffset,
+        out uint dunno
+    )
     {
         var builder = new StringBuilder();
         Span<byte> bytes = stackalloc byte[4];
@@ -45,7 +71,9 @@ public static class RvmParser
             if (read < bytes.Length)
                 throw new IOException("Unexpected end of stream");
             if (bytes[0] != 0 || bytes[1] != 0 || bytes[2] != 0)
-                throw new IOException("Unexpected data in header");
+                throw new InvalidDataException(
+                    $"Unexpected data in header at position {("0x" + (stream.Position - read).ToString("x8"))} when parsing node \"{nameForDebugging}\""
+                );
             builder.Append((char)bytes[3]);
         }
 
@@ -97,7 +125,8 @@ public static class RvmParser
         // but the opacity itself is not used in any way right now
         if (hasOpacity)
         {
-            var opacity = ReadUint(stream);
+            // ReSharper disable once UnusedVariable --
+            var unusedOpacity = ReadUint(stream);
         }
         // csharpier-ignore -- Keep matrix formatting
         var matrix = new Matrix4x4(ReadFloat(stream), ReadFloat(stream), ReadFloat(stream), 0,
@@ -266,6 +295,7 @@ public static class RvmParser
     private static RvmNode ReadCntb(Stream stream)
     {
         var version = ReadUint(stream);
+        GuardKnownVersion(version);
         var name = ReadString(stream);
 
         const float mmToM = 0.001f;
@@ -274,8 +304,26 @@ public static class RvmParser
         var materialId = ReadUint(stream);
         if (version == 3)
         {
-            // FIXME: On version 3 there is an unknown value
-            ReadUint(stream);
+            Span<byte> bytes = stackalloc byte[4];
+            stream.ReadExactly(bytes);
+            // Ignore the bytes for now.
+            // Byte 1 may be transparency
+            // byte 2 may be a type identifier
+            // Byte 3 and 4 are always 0 in the known data with version 3
+        }
+        else if (version == 4)
+        {
+            Console.WriteLine("--- Node with name " + name + " was a v4 node"); // TODO: Remove me when we have more controll of the v4 nodes. Currently may be related to "ARCHIV 1, but not known"
+            Span<byte> bytes = stackalloc byte[4 * 7];
+            stream.ReadExactly(bytes);
+            if (!bytes.SequenceEqual(ExpectedV4Bytes))
+            {
+                throw new Exception(
+                    "New bytes in version 4 cntb. Was: "
+                        + String.Join(",", bytes.ToArray())
+                        + "\n Please update the C# code to allow the new values. This exception only exists to try to decipher the values in the v4 format."
+                );
+            }
         }
 
         var group = new RvmNode(version, name, translation, materialId);
@@ -283,7 +331,7 @@ public static class RvmParser
         uint unusedNextHeaderOffset;
         uint dontKnowWhatThisValueDoes;
 
-        var id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+        var id = ReadChunkHeader(stream, name, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
         while (id != "CNTE")
         {
             switch (id)
@@ -304,6 +352,7 @@ public static class RvmParser
                     {
                         group.AddChild(primitive);
                     }
+
                     break;
                 // types OBST (obstacle) and INSU (insulation) chunks were previously also throwing
                 // a NotImplementedException causing the building process to terminate
@@ -324,7 +373,7 @@ public static class RvmParser
                     throw new NotImplementedException($"Unknown chunk: {id}");
             }
 
-            id = ReadChunkHeader(stream, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+            id = ReadChunkHeader(stream, name, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
         }
 
         if (id == "CNTE")
@@ -363,11 +412,11 @@ public static class RvmParser
         uint len,
             dunno;
 
-        var head = ReadChunkHeader(stream, out len, out dunno);
+        var head = ReadChunkHeader(stream, "HEADER", out len, out dunno);
         if (head != "HEAD")
             throw new IOException($"Expected HEAD, found {head}");
         var header = ReadHead(stream);
-        var modl = ReadChunkHeader(stream, out len, out dunno);
+        var modl = ReadChunkHeader(stream, "MODL", out len, out dunno);
         if (modl != "MODL")
             throw new IOException($"Expected MODL, found {modl}");
         var modelParameters = ReadModelParameters(stream);
@@ -375,7 +424,7 @@ public static class RvmParser
         var modelPrimitives = new List<RvmPrimitive>();
         var modelColors = new List<RvmColor>();
 
-        var chunk = ReadChunkHeader(stream, out len, out dunno);
+        var chunk = ReadChunkHeader(stream, "CHUNK HEADER", out len, out dunno);
         while (chunk != "END:")
         {
             switch (chunk)
@@ -393,8 +442,9 @@ public static class RvmParser
                     throw new NotImplementedException($"Unknown chunk: {chunk}");
             }
 
-            chunk = ReadChunkHeader(stream, out len, out dunno);
+            chunk = ReadChunkHeader(stream, "CHUNK", out len, out dunno);
         }
+
         return new RvmFile(
             header,
             new RvmModel(
@@ -406,5 +456,27 @@ public static class RvmParser
                 modelColors
             )
         );
+    }
+
+    /// <summary>
+    /// Ensure the input version is known. If not throw an error!
+    /// This is done to avoid parsing unknown versions without handling them explicitly
+    /// </summary>
+    private static void GuardKnownVersion(uint version)
+    {
+        switch (version)
+        {
+            case 1
+            or 2
+            or 3
+            or 4:
+                return;
+            default:
+                throw new Exception(
+                    "Got node with version "
+                        + version
+                        + ". This is untested. Edit the C# code to allow this node, and update the C# code when the version is handled ok!"
+                );
+        }
     }
 }
