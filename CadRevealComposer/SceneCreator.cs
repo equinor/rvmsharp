@@ -169,7 +169,7 @@ public static class SceneCreator
 
         string? sectorFilename = !p.Geometries.Any()
             ? null
-            : (!p.IsHighlightSector ? $"sector_{p.SectorId}.glb" : $"highlight_sector_{p.SectorId}.glb"); // The highlight_sector name is used in the frontend to identify the highlight sectors, don't rename without syncing with the frontend.
+            : (!p.IsPrioritizedSector ? $"sector_{p.SectorId}.glb" : $"highlight_sector_{p.SectorId}.glb"); // The highlight_sector name is used in the frontend to identify the highlight sectors, don't rename without syncing with the frontend.
 
         var sectorInfo = new SectorInfo(
             SectorId: p.SectorId,

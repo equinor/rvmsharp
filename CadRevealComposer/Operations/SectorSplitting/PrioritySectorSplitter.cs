@@ -22,7 +22,7 @@ public class PrioritySectorSplitter : ISectorSplitter
 
         var sectors = new List<InternalSector>();
         // We split the geometries into sectors based on the discipline because there are very few highlight cases that are cross-discipline
-        // This helps reduce the overhead of a highlight sector, since highlighting of multiple tags within the same discipline is more common
+        // This helps reduce the overhead of a priority sector, since highlighting of multiple tags within the same discipline is more common
         var primitivesGroupedByDiscipline = allGeometries.GroupBy(x => x.Discipline);
         foreach (var disciplineGroup in primitivesGroupedByDiscipline)
         {
@@ -40,7 +40,7 @@ public class PrioritySectorSplitter : ISectorSplitter
         {
             yield return sector with
             {
-                IsHighlightSector = true
+                IsPrioritizedSector = true
             };
         }
     }

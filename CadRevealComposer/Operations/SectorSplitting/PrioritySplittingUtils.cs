@@ -10,7 +10,7 @@ public static class PrioritySplittingUtils
 {
     private static readonly string[] PrioritizedDisciplines = ["PIPE"];
 
-    public static void SetPriorityForHighlightSplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
+    public static void SetPriorityForPrioritySplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
         var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes);
         var tagAndDisciplineFilteredNodes = FilterByIfTagExists(disciplineFilteredNodes);

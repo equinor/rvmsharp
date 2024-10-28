@@ -87,7 +87,7 @@ public static class CadRevealComposerRunner
             nodesToExport.AddRange(cadRevealNodes);
 
             // Todo should this return a new list of cadrevealnodes instead of mutating the input?
-            PrioritySplittingUtils.SetPriorityForHighlightSplittingWithMutation(cadRevealNodes);
+            PrioritySplittingUtils.SetPriorityForPrioritySplittingWithMutation(cadRevealNodes);
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 

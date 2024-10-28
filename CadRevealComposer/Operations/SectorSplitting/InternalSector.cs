@@ -12,5 +12,5 @@ public record InternalSector(
     APrimitive[] Geometries,
     BoundingBox SubtreeBoundingBox,
     BoundingBox? GeometryBoundingBox,
-    bool IsHighlightSector = false
+    bool IsPrioritizedSector = false
 );

@@ -13,7 +13,7 @@ public class PrioritySplittingUtilsTests
     const string DisciplineCable = "CABLE";
 
     [Test]
-    public void CadRevealNodesWithVariousConfigurations_SetPriorityForHighlightSplittingWithMutation_VerifyCorrectlyMutated()
+    public void CadRevealNodesWithVariousConfigurations_SetPriorityForPrioritySplittingWithMutation_VerifyCorrectlyMutated()
     {
         const uint treeIndexDisciplinePipeWithTag = 0;
         const uint treeIndexDisciplinePipeMissingTag = 1;
@@ -28,7 +28,7 @@ public class PrioritySplittingUtilsTests
             CreateCadRevealNode(treeIndexDisciplineCableMissingTag, DisciplineCable, false),
         ];
 
-        PrioritySplittingUtils.SetPriorityForHighlightSplittingWithMutation(nodes);
+        PrioritySplittingUtils.SetPriorityForPrioritySplittingWithMutation(nodes);
 
         AssertDisciplineAndPriority(nodes[treeIndexDisciplinePipeWithTag].Geometries[0], DisciplinePipe, 1);
         AssertDisciplineAndPriority(nodes[treeIndexDisciplinePipeMissingTag].Geometries[0], DisciplinePipe, 0);
