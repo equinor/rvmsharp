@@ -194,6 +194,7 @@ public static class SceneCreator
         if (sector.Geometries.Length == 0)
             return null;
 
+        // "sector" as prefix is reserved for normal sectors, do not start any other sector filenames with "sector"
         return sector.IsPrioritizedSector
             ? $"prioritized_sector_{sector.SectorId}.glb"
             : $"sector_{sector.SectorId}.glb";

@@ -3,7 +3,6 @@
 using System.Drawing;
 using System.Numerics;
 using CadRevealComposer.Operations;
-using NUnit.Framework.Legacy;
 using Primitives;
 
 [TestFixture]

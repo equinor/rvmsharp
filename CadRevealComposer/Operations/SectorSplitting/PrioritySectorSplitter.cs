@@ -58,8 +58,8 @@ public class PrioritySectorSplitter : ISectorSplitter
 
         while (nodesProcessed < nodes.Length)
         {
-            // TODO: Should this use spatially aware splitting? Should it place nodes with similar attributes together? Ex: tags?
-            var nodesByBudget = GetNodesByBudgetSimple(nodesOrderedByTreeIndex, nodesProcessed).ToArray();
+            // Batching nodes in groups by budget from list on nodes ordered by TreeIndex
+            var nodesByBudget = GetNodesByBudget(nodesOrderedByTreeIndex, nodesProcessed).ToArray();
             nodesProcessed += nodesByBudget.Length;
 
             var sectorId = sectorIdGenerator.GetNextId();
@@ -69,7 +69,7 @@ public class PrioritySectorSplitter : ISectorSplitter
         }
     }
 
-    private static IEnumerable<Node> GetNodesByBudgetSimple(Node[] nodes, int indexToStart)
+    private static IEnumerable<Node> GetNodesByBudget(Node[] nodes, int indexToStart)
     {
         var remainingBudget = SectorEstimatedByteSizeBudget;
 
