@@ -6,20 +6,20 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using CadRevealComposer.Operations.SectorSplitting;
 using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
+using Operations.SectorSplitting;
 using Primitives;
 using Utils;
 using Writers;
 
 public static class SceneCreator
 {
-    public record SectorInfo(
+    private record SectorInfo(
         uint SectorId,
         uint? ParentSectorId,
         long Depth,
@@ -163,32 +163,40 @@ public static class SceneCreator
         gltfSectorFile.Flush(true);
     }
 
-    private static SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    private static SectorInfo SerializeSector(InternalSector sector, string outputDirectory)
     {
-        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(sector.Geometries);
 
-        string? sectorFilename = !p.Geometries.Any()
-            ? null
-            : (!p.IsPrioritizedSector ? $"sector_{p.SectorId}.glb" : $"highlight_sector_{p.SectorId}.glb"); // The highlight_sector name is used in the frontend to identify the highlight sectors, don't rename without syncing with the frontend.
+        var sectorFilename = GetSectorFileName(sector);
 
         var sectorInfo = new SectorInfo(
-            SectorId: p.SectorId,
-            ParentSectorId: p.ParentSectorId,
-            Depth: p.Depth,
-            Path: p.Path,
+            SectorId: sector.SectorId,
+            ParentSectorId: sector.ParentSectorId,
+            Depth: sector.Depth,
+            Path: sector.Path,
             Filename: sectorFilename,
             EstimatedTriangleCount: estimatedTriangleCount,
             EstimatedDrawCalls: estimatedDrawCalls,
-            MinNodeDiagonal: p.MinNodeDiagonal,
-            MaxNodeDiagonal: p.MaxNodeDiagonal,
-            Geometries: p.Geometries,
-            SubtreeBoundingBox: p.SubtreeBoundingBox,
-            GeometryBoundingBox: p.GeometryBoundingBox
+            MinNodeDiagonal: sector.MinNodeDiagonal,
+            MaxNodeDiagonal: sector.MaxNodeDiagonal,
+            Geometries: sector.Geometries,
+            SubtreeBoundingBox: sector.SubtreeBoundingBox,
+            GeometryBoundingBox: sector.GeometryBoundingBox
         );
 
         if (sectorFilename != null)
             ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
         return sectorInfo;
+    }
+
+    private static string? GetSectorFileName(InternalSector sector)
+    {
+        if (sector.Geometries.Length == 0)
+            return null;
+
+        return sector.IsPrioritizedSector
+            ? $"prioritized_sector_{sector.SectorId}.glb"
+            : $"sector_{sector.SectorId}.glb";
     }
 
     private static IEnumerable<SectorInfo> CalculateDownloadSizes(
