@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -30,8 +31,11 @@ public class PrioritySectorSplitter : ISectorSplitter
             var nodes = PrioritySplittingUtils.ConvertPrimitiveGroupsToNodes(geometryGroups);
 
             // Ignore outlier nodes
-            // TODO: Decide if this is the right thing to do
-            (Node[] regularNodes, _) = nodes.SplitNodesIntoRegularAndOutlierNodes();
+            (Node[] regularNodes, Node[] outliers) = nodes.SplitNodesIntoRegularAndOutlierNodes();
+            if (outliers.Length > 0)
+            {
+                Console.WriteLine("{0} outliers found in priority sector splitting", outliers.Length);
+            }
 
             sectors.AddRange(SplitIntoTreeIndexSectors(regularNodes, dummyRootSector, sectorIdGenerator));
         }
