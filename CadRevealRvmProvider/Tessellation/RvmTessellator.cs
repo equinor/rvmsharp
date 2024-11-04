@@ -40,8 +40,15 @@ public class RvmTessellator
                 tessellationLogObject
             );
 
-            // Recalculating AABB, since some instances of the transformed (p.AxisAlignedBoundingBox) AABB were incorrect
-            return new TriangleMesh(mesh, p.TreeIndex, p.Color, mesh.CalculateAxisAlignedBoundingBox());
+            var boundingBox = p.AxisAlignedBoundingBox;
+            if (mesh.Vertices.Length > 0)
+            {
+                // Recalculating AABB, since some instances of the transformed (p.AxisAlignedBoundingBox) AABB were incorrect
+                // Guarded agaings meshes with zero vertices, to avoid throwing an exception
+                boundingBox = mesh.CalculateAxisAlignedBoundingBox();
+            }
+
+            return new TriangleMesh(mesh, p.TreeIndex, p.Color, boundingBox);
         }
 
         var facetGroupsNotInstanced = facetGroupInstancingResult
