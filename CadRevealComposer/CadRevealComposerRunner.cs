@@ -86,7 +86,6 @@ public static class CadRevealComposerRunner
             // collect all nodes for later sector division of the entire scene
             nodesToExport.AddRange(cadRevealNodes);
 
-            // Todo should this return a new list of cadrevealnodes instead of mutating the input?
             PrioritySplittingUtils.SetPriorityForPrioritySplittingWithMutation(cadRevealNodes);
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
@@ -140,9 +139,7 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
-        // TODO Is this the best place to add sector id mapping to the database?
-        // TODO Cont: Is it ok to mutate the database after it has been exported? Yes?
-        SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorIdDict, outputDirectory);
+        ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
@@ -280,5 +277,16 @@ public static class CadRevealComposerRunner
             Path.Join(outputDirectory.FullName, "params.json"),
             JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true })
         );
+    }
+
+    /// <summary>
+    /// Try to keep all manipulations of the hierarchy database after processing the model here
+    /// </summary>
+    private static void ModifyHierarchyPostProcess(
+        DirectoryInfo outputDirectory,
+        SplitAndExportResults splitExportResults
+    )
+    {
+        SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorIdDict, outputDirectory);
     }
 }
