@@ -11,14 +11,29 @@ public record FbxNode(IntPtr NodeAddress, FbxNode? Parent, int Depth)
     ///
     /// Wrapper for <see cref="FbxNodeWrapper.GetLocalTransform"/>
     /// </summary>
-    private Matrix4x4 LocalTransform => this.GetLocalTransform();
+    // ReSharper disable once MemberCanBePrivate.Global -- May be useful for debugging
+    public Matrix4x4 LocalTransform => this.GetLocalTransform();
 
     /// <summary>
     /// Gets the WorldSpace Transform of the node in the FBX file.
     ///
     /// Wrapper for <see cref="FbxNodeWrapper.GetLocalTransform"/> for Self and all parents.
     /// </summary>
+    // ReSharper disable once MemberCanBePrivate.Global -- May be useful for debugging
     public Matrix4x4 WorldTransform => LocalTransform * (Parent?.WorldTransform ?? Matrix4x4.Identity);
+
+    /// <summary>
+    /// The local geometric transform of the node in the FBX file.
+    /// This is the transform that should be applied to the geometry (mesh) of the node, BUT does not apply to the nodes children (if any).
+    /// </summary>
+    // ReSharper disable once UnusedMember.Global -- May be useful for debugging
+    public Matrix4x4 LocalGeometricTransform => this.GetGeometricTransform();
+
+    /// <summary>
+    /// The WorldSpace Geometric Transform of the node in the FBX file.
+    /// This is the transform that should be applied to the geometry (mesh) of the node, BUT does not apply to the nodes children (if any).
+    /// </summary>
+    public Matrix4x4 WorldGeometricTransform => this.GetGeometricTransform() * this.WorldTransform;
 };
 
 public static class FbxNodeWrapper
@@ -57,6 +72,15 @@ public static class FbxNodeWrapper
     public static Matrix4x4 GetLocalTransform(this FbxNode node)
     {
         var transform = node_get_transform(node.NodeAddress);
+        return FbxTransformConverter.ToMatrix4x4(transform);
+    }
+
+    [DllImport(Library, CallingConvention = CallingConvention.Cdecl, EntryPoint = "node_get_geometric_transform")]
+    private static extern FbxTransform node_get_geometric_transform(IntPtr node);
+
+    public static Matrix4x4 GetGeometricTransform(this FbxNode node)
+    {
+        var transform = node_get_geometric_transform(node.NodeAddress);
         return FbxTransformConverter.ToMatrix4x4(transform);
     }
 }
