@@ -120,7 +120,7 @@ public static class FbxNodeToCadRevealNodeConverter
     }
 
     private static APrimitive? ReadGeometry(
-        ulong treeIndex,
+        uint treeIndex,
         FbxNode node,
         InstanceIdGenerator instanceIdGenerator,
         IDictionary<IntPtr, (Mesh templateMesh, ulong instanceId)> meshInstanceLookup,

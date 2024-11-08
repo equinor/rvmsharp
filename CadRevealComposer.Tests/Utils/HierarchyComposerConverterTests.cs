@@ -56,26 +56,4 @@ public class HierarchyComposerConverterTests
         );
         Assert.That(firstNode.OptionalDiagnosticInfo, Is.EqualTo(arrangedJson));
     }
-
-    [Test]
-    public void ConvertToHierarchyNodes_GivenRevealNodes_CrashesIfTreeIndexIsOutOfRange()
-    {
-        var node1 = new CadRevealNode()
-        {
-            TreeIndex = uint.MaxValue + 1L,
-            Children = Array.Empty<CadRevealNode>(),
-            BoundingBoxAxisAligned = new BoundingBox(-Vector3.One, Vector3.One),
-            Name = "RootNode",
-            Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } },
-            Parent = null,
-            Geometries = Array.Empty<APrimitive>()
-        };
-
-        var nodes = new[] { node1 };
-
-        Assert.That(
-            () => HierarchyComposerConverter.ConvertToHierarchyNodes(nodes),
-            Throws.Exception.Message.StartsWith("input was higher than the max uint32 value")
-        );
-    }
 }

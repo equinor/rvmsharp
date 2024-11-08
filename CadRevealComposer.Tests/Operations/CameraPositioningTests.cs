@@ -3,7 +3,6 @@
 using System.Drawing;
 using System.Numerics;
 using CadRevealComposer.Operations;
-using NUnit.Framework.Legacy;
 using Primitives;
 
 [TestFixture]
@@ -32,5 +31,5 @@ public class CameraPositioningTests
     }
 
     private record TestPrimitiveWithBoundingBox(Vector3 Min, Vector3 Max)
-        : APrimitive(int.MaxValue, Color.Red, new BoundingBox(Min, Max));
+        : APrimitive(int.MaxValue, Color.Red, new BoundingBox(Min, Max), 0, null);
 }

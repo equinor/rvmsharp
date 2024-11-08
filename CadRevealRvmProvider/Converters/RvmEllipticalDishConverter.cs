@@ -11,7 +11,7 @@ public static class RvmEllipticalDishConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmEllipticalDish rvmEllipticalDish,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )

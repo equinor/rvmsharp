@@ -8,9 +8,9 @@ using Primitives;
 /// The batching is done in Reveal and each type of template in each sector will create a separate batch.
 /// This can be avoided by converting to TriangleMesh.
 /// </summary>
-public class TooFewInstancesHandler
+public static class TooFewInstancesHandler
 {
-    public APrimitive[] ConvertInstancesWhenTooFew(APrimitive[] geometries)
+    public static APrimitive[] ConvertInstancesWhenTooFew(APrimitive[] geometries)
     {
         var instanceGroups = geometries.Where(g => g is InstancedMesh).GroupBy(i => ((InstancedMesh)i).InstanceId);
 
@@ -28,7 +28,7 @@ public class TooFewInstancesHandler
             .ToArray();
     }
 
-    private TriangleMesh ConvertInstanceToMesh(InstancedMesh instanceMesh)
+    private static TriangleMesh ConvertInstanceToMesh(InstancedMesh instanceMesh)
     {
         var templateMesh = instanceMesh.TemplateMesh;
 
@@ -57,7 +57,7 @@ public class TooFewInstancesHandler
     /// </summary>
     /// <param name="instanceGroup"></param>
     /// <returns></returns>
-    private bool ShouldConvert(IGrouping<ulong, APrimitive> instanceGroup)
+    private static bool ShouldConvert(IGrouping<ulong, APrimitive> instanceGroup)
     {
         const int numberOfInstancesThreshold = 100; // Always keep when the number of instances is exceeding the threshold
         const int numberOfTrianglesThreshold = 10000; // Alwyas keep when the number of triangles is exceeding the threshold

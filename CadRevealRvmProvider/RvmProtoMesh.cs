@@ -9,21 +9,21 @@ using RvmSharp.Primitives;
 // instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
 public abstract record ProtoMesh(
     RvmPrimitive RvmPrimitive,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
-) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox);
+) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
 
 public sealed record ProtoMeshFromRvmPyramid(
     RvmPyramid Pyramid,
-    ulong TreeIndex,
+    uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : ProtoMesh(Pyramid, TreeIndex, Color, AxisAlignedBoundingBox);

@@ -15,11 +15,4 @@ namespace CadRevealComposer.IdProviders;
 ///       7
 /// 8
 /// </summary>
-public class TreeIndexGenerator : SequentialIdGenerator
-{
-    public TreeIndexGenerator()
-    {
-        // "Pre-increment" the first id (which is zero) to avoid that being used anywhere else.
-        _ = GetNextId(); // This returns zero, but we discard it.
-    }
-}
+public class TreeIndexGenerator() : SequentialIdGenerator(firstIdReturned: 1);

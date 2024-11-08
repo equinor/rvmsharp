@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -36,12 +37,13 @@ public static class CadRevealComposerRunner
             if (cachedAPrimitives != null)
             {
                 Console.WriteLine("Using developer cache file: " + cacheFile);
-                ProcessPrimitives(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
+                SplitAndExportSectors(cachedAPrimitives, outputDirectory, modelParameters, composerParameters);
                 Console.WriteLine(
-                    $"Ran {nameof(ProcessPrimitives)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
+                    $"Ran {nameof(SplitAndExportSectors)} using cache file {cacheFile} in {totalTimeElapsed.Elapsed}"
                 );
                 return;
             }
+
             Console.WriteLine(
                 "Did not find a Primitive Cache file for the current input folder. Processing as normal, and saving a new cache for next run."
             );
@@ -54,7 +56,7 @@ public static class CadRevealComposerRunner
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
 
-        ModelMetadata metadataFromAllFiles = new ModelMetadata(new());
+        ModelMetadata metadataFromAllFiles = new ModelMetadata(new Dictionary<string, string>());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
@@ -83,6 +85,8 @@ public static class CadRevealComposerRunner
 
             // collect all nodes for later sector division of the entire scene
             nodesToExport.AddRange(cadRevealNodes);
+
+            PrioritySplittingUtils.SetPriorityForPrioritySplittingWithMutation(cadRevealNodes);
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
@@ -121,7 +125,13 @@ public static class CadRevealComposerRunner
             var devCache = new DevPrimitiveCacheFolder(composerParameters.DevPrimitiveCacheFolder);
             devCache.WriteToPrimitiveCache(geometriesToProcessArray, inputFolderPath);
         }
-        ProcessPrimitives(geometriesToProcessArray, outputDirectory, modelParameters, composerParameters);
+
+        var splitExportResults = SplitAndExportSectors(
+            geometriesToProcessArray,
+            outputDirectory,
+            modelParameters,
+            composerParameters
+        );
 
         if (!exportHierarchyDatabaseTask.IsCompleted)
             Console.WriteLine("Waiting for hierarchy export to complete...");
@@ -129,11 +139,17 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
+        ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
+
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    public static void ProcessPrimitives(
+    public record SplitAndExportResults(List<TreeIndexSectorIdPair> TreeIndexToSectorIdDict);
+
+    public record TreeIndexSectorIdPair(uint TreeIndex, uint SectorId);
+
+    public static SplitAndExportResults SplitAndExportSectors(
         APrimitive[] allPrimitives,
         DirectoryInfo outputDirectory,
         ModelParameters modelParameters,
@@ -144,28 +160,100 @@ public static class CadRevealComposerRunner
 
         var stopwatch = Stopwatch.StartNew();
 
-        ISectorSplitter splitter;
-        if (composerParameters.SingleSector)
-        {
-            splitter = new SectorSplitterSingle();
-        }
-        else if (composerParameters.SplitIntoZones)
+        const uint rootSectorId = 0;
+        var sectorIdGenerator = new SequentialIdGenerator(firstIdReturned: rootSectorId);
+        // First split into normal sectors for the entire model
+        var normalSectors = PerformSectorSplitting(allPrimitives, composerParameters, sectorIdGenerator);
+
+        // Then split into prioritized sectors, these are loaded on demand based on metadata in the Hierarchy database
+        var prioritizedSectors = PerformPrioritizedSectorSplitting(allPrimitives, sectorIdGenerator, rootSectorId);
+
+        var allSectors = normalSectors.Concat(prioritizedSectors).OrderBy(x => x.SectorId).ToArray();
+
+        Console.WriteLine(
+            $"Split into {normalSectors.Length} sectors and {prioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+        );
+
+        stopwatch.Restart();
+        SceneCreator.CreateSceneFile(
+            allPrimitives,
+            outputDirectory,
+            modelParameters,
+            maxTreeIndex,
+            stopwatch,
+            allSectors
+        );
+        Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
+
+        return new SplitAndExportResults(TreeIndexToSectorIdDict: GetTreeIndexToSectorIdDict(prioritizedSectors));
+    }
+
+    /// <summary>
+    /// Remap Root sector ids to the given input rootId for all sectors in input
+    /// </summary>
+    [Pure]
+    private static InternalSector[] RemapPrioritizedSectorsRootSectorId(
+        InternalSector[] prioritizedSectors,
+        uint newRootId
+    )
+    {
+        var redundantRootId = prioritizedSectors.Min(x => x.SectorId);
+        var remappedPrioritizedSectors = prioritizedSectors
+            .Where(x => x.SectorId != redundantRootId)
+            .Select(sector =>
+                sector.ParentSectorId == redundantRootId ? (sector with { ParentSectorId = newRootId }) : sector
+            )
+            .ToArray();
+        return remappedPrioritizedSectors;
+    }
+
+    private static InternalSector[] PerformSectorSplitting(
+        APrimitive[] allPrimitives,
+        ComposerParameters composerParameters,
+        SequentialIdGenerator sectorIdGenerator
+    )
+    {
+        if (composerParameters.SplitIntoZones)
         {
             throw new ArgumentException("SplitIntoZones is no longer supported. Use regular Octree splitting instead.");
         }
-        else
+
+        ISectorSplitter splitter = composerParameters.SingleSector
+            ? new SectorSplitterSingle()
+            : new SectorSplitterOctree();
+
+        return splitter.SplitIntoSectors(allPrimitives, sectorIdGenerator).OrderBy(x => x.SectorId).ToArray();
+    }
+
+    private static InternalSector[] PerformPrioritizedSectorSplitting(
+        APrimitive[] allPrimitives,
+        SequentialIdGenerator sectorIdGenerator,
+        uint rootSectorId
+    )
+    {
+        var prioritySplitter = new PrioritySectorSplitter();
+        var prioritizedPrimitives = allPrimitives.Where(x => x.Priority > 0).ToArray();
+        var prioritizedSectors = prioritySplitter
+            .SplitIntoSectors(prioritizedPrimitives, sectorIdGenerator)
+            .OrderBy(x => x.SectorId)
+            .ToArray();
+
+        return RemapPrioritizedSectorsRootSectorId(prioritizedSectors, rootSectorId);
+    }
+
+    private static List<TreeIndexSectorIdPair> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
+    {
+        var sectorIdToTreeIndex = new HashSet<TreeIndexSectorIdPair>();
+        foreach (var sector in sectors)
         {
-            splitter = new SectorSplitterOctree();
+            var sectorId = sector.SectorId;
+            foreach (var geometry in sector.Geometries)
+            {
+                sectorIdToTreeIndex.Add(new TreeIndexSectorIdPair(geometry.TreeIndex, sectorId));
+            }
         }
 
-        var sectors = splitter.SplitIntoSectors(allPrimitives).OrderBy(x => x.SectorId).ToArray();
-
-        Console.WriteLine($"Split into {sectors.Length} sectors in {stopwatch.Elapsed}");
-
-        stopwatch.Restart();
-        SceneCreator.CreateSceneFile(allPrimitives, outputDirectory, modelParameters, maxTreeIndex, stopwatch, sectors);
-        Console.WriteLine($"Wrote scene file in {stopwatch.Elapsed}");
-        stopwatch.Restart();
+        return sectorIdToTreeIndex.ToList();
     }
 
     /// <summary>
@@ -189,5 +277,16 @@ public static class CadRevealComposerRunner
             Path.Join(outputDirectory.FullName, "params.json"),
             JsonSerializer.Serialize(json, new JsonSerializerOptions { WriteIndented = true })
         );
+    }
+
+    /// <summary>
+    /// Try to keep all manipulations of the hierarchy database after processing the model here
+    /// </summary>
+    private static void ModifyHierarchyPostProcess(
+        DirectoryInfo outputDirectory,
+        SplitAndExportResults splitExportResults
+    )
+    {
+        SceneCreator.AddPrioritizedSectorsToDatabase(splitExportResults.TreeIndexToSectorIdDict, outputDirectory);
     }
 }

@@ -14,7 +14,7 @@ public static class RvmSnoutConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmSnout rvmSnout,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
@@ -104,7 +104,7 @@ public static class RvmSnoutConverter
         Vector3 normal,
         float radiusA,
         float radiusB,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         BoundingBox bbox
     )
@@ -164,7 +164,7 @@ public static class RvmSnoutConverter
         float radiusA,
         float radiusB,
         float length,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         BoundingBox bbox
     )
@@ -225,7 +225,7 @@ public static class RvmSnoutConverter
         Vector3 normal,
         float height,
         Vector3 scale,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         BoundingBox bbox,
         FailedPrimitivesLogObject? failedPrimitivesLogObject = null
