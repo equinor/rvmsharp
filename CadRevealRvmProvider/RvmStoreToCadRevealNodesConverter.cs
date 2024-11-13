@@ -4,6 +4,7 @@ using System.Diagnostics;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
@@ -41,6 +42,7 @@ internal static class RvmStoreToCadRevealNodesConverter
         Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
 
         var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+
         return allNodes;
     }
 

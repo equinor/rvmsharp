@@ -60,14 +60,14 @@ public static class HierarchyComposerConverter
 
         return new HierarchyNode
         {
-            NodeId = ConvertUlongToUintOrThrowIfTooLarge(revealNode.TreeIndex),
-            EndId = ConvertUlongToUintOrThrowIfTooLarge(GetLastIndexInChildrenIncludingSelf(revealNode)),
+            NodeId = revealNode.TreeIndex,
+            EndId = GetLastIndexInChildrenIncludingSelf(revealNode),
             RefNoPrefix = maybeRefNo?.Prefix,
             RefNoDb = maybeRefNo?.DbNo,
             RefNoSequence = maybeRefNo?.SequenceNo,
             Name = revealNode.Name,
-            TopNodeId = ConvertUlongToUintOrThrowIfTooLarge(rootNode.TreeIndex),
-            ParentId = maybeParent != null ? ConvertUlongToUintOrThrowIfTooLarge(maybeParent.TreeIndex) : null,
+            TopNodeId = rootNode.TreeIndex,
+            ParentId = maybeParent?.TreeIndex,
             PDMSData = FilterRedundantAttributes(revealNode.Attributes),
             HasMesh = hasMesh,
             AABB = aabb,
@@ -79,7 +79,7 @@ public static class HierarchyComposerConverter
     /// Finds the last index of this node or its children. Including its own index.
     /// Assumes children are sorted by index
     /// </summary>
-    private static ulong GetLastIndexInChildrenIncludingSelf(CadRevealNode node)
+    private static uint GetLastIndexInChildrenIncludingSelf(CadRevealNode node)
     {
         while (true)
         {

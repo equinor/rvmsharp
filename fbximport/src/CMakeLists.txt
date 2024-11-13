@@ -4,6 +4,8 @@ set(SOURCES
     node.cpp
     mesh.h
     mesh.cpp
+    material.h
+    material.cpp
     manager.h
     manager.cpp
     importer.h
