@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-public static class MatrixExtensions
+public static class Matrix4x4Extensions
 {
     /// <summary>
     /// Check if the matrix is decomposable. Used to validate matrices for use in 3D. Ensures all data is finite and that its decomposable.
@@ -14,6 +14,22 @@ public static class MatrixExtensions
     public static bool IsDecomposable(this Matrix4x4 m)
     {
         return m.AsEnumerableRowMajor().All(float.IsFinite) && Matrix4x4.Decompose(m, out _, out _, out _);
+    }
+
+    /// <summary>
+    /// Decomposes the matrix into scale, rotation and translation if possible.
+    /// Identical to <see cref="Matrix4x4"/>.<see cref="Matrix4x4.Decompose"/>
+    /// </summary>
+    /// <param name="m">This matrix</param>
+    /// <returns>The Scale, Rotation and Translation components</returns>
+    public static (Vector3 scale, Quaternion rotation, Vector3 translation)? TryDecompose(this Matrix4x4 m)
+    {
+        if (!m.AsEnumerableRowMajor().All(float.IsFinite))
+            return null;
+        var success = Matrix4x4.Decompose(m, out var scale, out var rotation, out var translation);
+        if (!success)
+            return null;
+        return (scale, rotation, translation);
     }
 
     /// <summary>
