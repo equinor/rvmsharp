@@ -11,7 +11,7 @@ using Tessellation;
 
 public static class SimplifyTests
 {
-    public enum EMeshType
+    public enum MeshType
     {
         MeshBox,
         MeshSphere
@@ -59,13 +59,13 @@ public static class SimplifyTests
         return new Mesh(vertices.ToArray(), indices.ToArray(), 0.01f);
     }
 
-    private static Mesh GenTestMesh(EMeshType meshType)
+    private static Mesh GenTestMesh(MeshType meshType)
     {
         switch (meshType)
         {
-            case EMeshType.MeshBox:
+            case MeshType.MeshBox:
                 return GenBoxMesh();
-            case EMeshType.MeshSphere:
+            case MeshType.MeshSphere:
                 return GenSphereMesh(new Vector3(0.0f, 0.0f, 0.0f));
         }
 
@@ -73,10 +73,10 @@ public static class SimplifyTests
     }
 
     [Test]
-    [TestCase(EMeshType.MeshSphere)]
-    [TestCase(EMeshType.MeshBox)]
+    [TestCase(MeshType.MeshSphere)]
+    [TestCase(MeshType.MeshBox)]
     public static void CheckConvertToConvexHull_GivenManifoldMesh_VerifyThatConvexHullConversionWasInvoked(
-        EMeshType meshType
+        MeshType meshType
     )
     {
         // Create mesh data to input into the convex hull algorithm
@@ -106,21 +106,15 @@ public static class SimplifyTests
     public static void CheckConvertToConvexHull_GivenNonManifoldMesh_VerifyThatConvexHullConversionDoNoChange()
     {
         // Create an empty mesh to provoke a failure of the convex hull conversion
-        var meshList = new List<Vector3>(0);
-        if (meshList == null)
-        {
-            throw new ArgumentNullException(nameof(meshList));
-        }
-
-        var testMesh = new Mesh(meshList.ToArray(), meshList.Select((r, i) => (uint)i).ToArray(), 0.01f);
+        var emptyTestMesh = new Mesh([], Array.Empty<uint>(), 0.01f);
 
         // Perform convex hull conversion
-        Mesh convertedMesh = CadRevealComposer.Utils.Simplify.ConvertToConvexHull(testMesh, 0.1f);
+        Mesh convertedMesh = CadRevealComposer.Utils.Simplify.ConvertToConvexHull(emptyTestMesh, 0.1f);
 
         // Check that the output is not null
         Assert.That(convertedMesh, Is.Not.Null);
 
         // Check that the conversion failed, and therefore that the output mesh is the same as the one we put in
-        Assert.That(convertedMesh, Is.SameAs(testMesh));
+        Assert.That(convertedMesh, Is.SameAs(emptyTestMesh));
     }
 }

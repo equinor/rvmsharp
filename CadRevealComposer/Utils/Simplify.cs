@@ -131,6 +131,20 @@ public static class Simplify
         return processedGeometries;
     }
 
+    /// <summary>
+    /// This method takes as input a mesh instance and outputs a new mesh, known as the convex hull, which is a new set
+    /// of points in three-dimensional space distributed on or close to the surface of the input mesh. To generate the
+    /// convex hull, we can imagine that the position of each vertex of the mesh is evaluated to see if it is on
+    /// a convex hull face or not, where a convex hull face is a best-fit plane between a set of points. To determine
+    /// if a point is to be considered part of that plane, i.e., if it is co-planar with the other points, the tolerance
+    /// parameter is introduced. Two points are considered coplanar if the distance of each point to the best-fit plane
+    /// defined by all the input vertices is less than or equal to the tolerance value. Therefore, reducing the tolerance
+    /// will result in less points being part of a best-fit plane, thus leading to more planes and a more detailed convex
+    /// hull and therefore more vertices in the final result.
+    /// </summary>
+    /// <param name="inputMesh">The input mesh.</param>
+    /// <param name="tolerance">The maximum distance between a best-fit plane and a point for which the point is considered part of that plane.</param>
+    /// <returns>A mesh instance, containing the convex hull points of the inputMesh.</returns>
     public static Mesh ConvertToConvexHull(Mesh inputMesh, float tolerance = 1.0E-1f)
     {
         // Build vertex list to hand to the convex hull algorithm
@@ -138,7 +152,7 @@ public static class Simplify
 
         // Create the convex hull
         var convexHullOfMesh = ConvexHull.Create(meshVertices.ToArray(), tolerance);
-        if (convexHullOfMesh.ErrorMessage.Length != 0)
+        if (convexHullOfMesh.Outcome != ConvexHullCreationResultOutcome.Success)
         {
             Console.WriteLine($"Convex hull simplification failed with error : {convexHullOfMesh.ErrorMessage}");
             return inputMesh;
