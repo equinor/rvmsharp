@@ -3,14 +3,10 @@
 using System.Collections.Generic;
 using System.Text.Json;
 
-public class ModelMetadata
+public class ModelMetadata(Dictionary<string, string> metadata)
 {
-    private readonly Dictionary<string, string> _metadata;
-
-    public ModelMetadata(Dictionary<string, string> metadata)
-    {
-        this._metadata = metadata;
-    }
+    private readonly Dictionary<string, string> _metadata = metadata;
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new() { WriteIndented = true };
 
     public int Count()
     {
@@ -28,6 +24,6 @@ public class ModelMetadata
 
     public static string Serialize(ModelMetadata metadata)
     {
-        return JsonSerializer.Serialize(metadata._metadata, new JsonSerializerOptions { WriteIndented = true });
+        return JsonSerializer.Serialize(metadata._metadata, JsonSerializerOptions);
     }
 }

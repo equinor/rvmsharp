@@ -1,21 +1,24 @@
 ﻿namespace CadRevealComposer.IdProviders;
 
 using System;
-using System.Threading;
 
-public class SequentialIdGenerator
+public class SequentialIdGenerator(uint firstIdReturned = 0)
 {
-    public const ulong MaxSafeInteger = (1L << 53) - 1;
+    private static readonly uint MaxSafeIdForReveal = (uint)Math.Pow(2, 24); // Max number of cells in a 4k texture (in reveal)
 
-    private ulong _internalIdCounter = ulong.MaxValue;
+    private uint _internalIdCounter = firstIdReturned; // It increments before selecting the id, hence -1
 
-    public ulong GetNextId()
+    public uint GetNextId()
     {
-        var candidate = Interlocked.Increment(ref _internalIdCounter);
-        if (candidate > MaxSafeInteger)
+        var idToReturn = _internalIdCounter;
+        _internalIdCounter++;
+        if (idToReturn > MaxSafeIdForReveal)
             throw new Exception("Too many ids generated");
-        return candidate;
+        return idToReturn;
     }
 
-    public ulong CurrentMaxGeneratedIndex => Interlocked.Read(ref _internalIdCounter);
+    /// <summary>
+    /// Look at the next id that will be generated
+    /// </summary>
+    public uint PeekNextId => _internalIdCounter;
 }

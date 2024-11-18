@@ -1,5 +1,6 @@
 ﻿namespace CadRevealFbxProvider;
 
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 public class FbxSdkWrapper : IDisposable
@@ -49,9 +50,11 @@ public class FbxSdkWrapper : IDisposable
 
     private void DestroySdk()
     {
+        var destroyTimer = Stopwatch.StartNew();
+        Console.WriteLine("Disposing FBX SDK...");
         manager_destroy(_sdk);
-
-        Console.WriteLine("Disposing FBX SDK");
+        // For some reason this may be very slow on some files (hours...) Adding log, so it's easy to see what's happening.
+        Console.WriteLine("Disposed FBX Sdk in " + destroyTimer.Elapsed);
     }
 
     [DllImport(FbxLibraryName, CallingConvention = CallingConvention.Cdecl, EntryPoint = "load_file")]

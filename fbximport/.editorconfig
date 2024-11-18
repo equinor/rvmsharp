@@ -1,0 +1,4 @@
+# C++ files and headers
+[{*.cpp,*.h}]
+indent_style = space
+indent_size = 4

@@ -10,7 +10,7 @@ public static class RvmBoxConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmBox rvmBox,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )

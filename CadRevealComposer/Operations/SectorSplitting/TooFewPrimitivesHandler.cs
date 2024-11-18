@@ -5,16 +5,16 @@ using System.Linq;
 using Primitives;
 using Tessellating;
 
-public class TooFewPrimitivesHandler
+public static class TooFewPrimitivesHandler
 {
     private const int NumberOfPrimitivesThreshold = 10; // Arbitrary number
 
-    public int TotalGroupsOfPrimitive { get; private set; }
-    public int TriedConvertedGroupsOfPrimitives { get; private set; }
-    public int SuccessfullyConvertedGroupsOfPrimitives { get; private set; }
-    public int AdditionalNumberOfTriangles { get; private set; }
+    public static int TotalGroupsOfPrimitive { get; private set; }
+    public static int TriedConvertedGroupsOfPrimitives { get; private set; }
+    public static int SuccessfullyConvertedGroupsOfPrimitives { get; private set; }
+    public static int AdditionalNumberOfTriangles { get; private set; }
 
-    public APrimitive[] ConvertPrimitivesWhenTooFew(APrimitive[] geometries)
+    public static APrimitive[] ConvertPrimitivesWhenTooFew(APrimitive[] geometries)
     {
         var newGeometries = new List<APrimitive>();
         var primitiveGroups = geometries.GroupBy(x => x.GetType());

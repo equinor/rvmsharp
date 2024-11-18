@@ -11,7 +11,7 @@ public static class RvmCylinderConverter
 {
     public static IEnumerable<APrimitive> ConvertToRevealPrimitive(
         this RvmCylinder rvmCylinder,
-        ulong treeIndex,
+        uint treeIndex,
         Color color,
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )

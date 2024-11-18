@@ -11,6 +11,10 @@ public class FbxImporter : IDisposable
 
     public FbxNode LoadFile(string filename)
     {
+        if (!File.Exists(filename))
+        {
+            throw new FileNotFoundException(filename + " was not found");
+        }
         //this should never be called in the first place if the SDK is invalid
         if (!_sdk.IsValid())
         {

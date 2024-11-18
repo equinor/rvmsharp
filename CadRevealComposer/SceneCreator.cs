@@ -6,20 +6,20 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using CadRevealComposer.Operations.SectorSplitting;
 using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
+using Operations.SectorSplitting;
 using Primitives;
 using Utils;
 using Writers;
 
 public static class SceneCreator
 {
-    public record SectorInfo(
+    private record SectorInfo(
         uint SectorId,
         uint? ParentSectorId,
         long Depth,
@@ -51,6 +51,19 @@ public static class SceneCreator
         ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
         var exporter = new DatabaseComposer(databaseLogger);
         exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
+    }
+
+    public static void AddPrioritizedSectorsToDatabase(
+        IReadOnlyList<CadRevealComposerRunner.TreeIndexSectorIdPair> treeIndexToPrioritizedSector,
+        DirectoryInfo outputDirectory
+    )
+    {
+        var prioritizedSectorInsertionStopwatch = Stopwatch.StartNew();
+        DatabaseComposer.AddTreeIndexToSectorToDatabase(
+            treeIndexToPrioritizedSector.Select(x => (x.TreeIndex, x.SectorId)).ToList(),
+            outputDirectory
+        );
+        Console.WriteLine($"Inserted prioritized sectors in db in {prioritizedSectorInsertionStopwatch.Elapsed}");
     }
 
     public static void CreateSceneFile(
@@ -138,7 +151,7 @@ public static class SceneCreator
         JsonUtils.JsonSerializeToFile(scene, scenePath, writeIndented: EnvUtil.IsDebugBuild); // We don't want indentation in prod, it doubles the size. Format in an editor if needed.
     }
 
-    public static void ExportSectorGeometries(
+    private static void ExportSectorGeometries(
         IReadOnlyList<APrimitive> geometries,
         string sectorFilename,
         string? outputDirectory
@@ -150,29 +163,41 @@ public static class SceneCreator
         gltfSectorFile.Flush(true);
     }
 
-    private static SectorInfo SerializeSector(InternalSector p, string outputDirectory)
+    private static SectorInfo SerializeSector(InternalSector sector, string outputDirectory)
     {
-        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(p.Geometries);
+        var (estimatedTriangleCount, estimatedDrawCalls) = DrawCallEstimator.Estimate(sector.Geometries);
 
-        var sectorFilename = p.Geometries.Any() ? $"sector_{p.SectorId}.glb" : null;
+        var sectorFilename = GetSectorFileName(sector);
+
         var sectorInfo = new SectorInfo(
-            SectorId: p.SectorId,
-            ParentSectorId: p.ParentSectorId,
-            Depth: p.Depth,
-            Path: p.Path,
+            SectorId: sector.SectorId,
+            ParentSectorId: sector.ParentSectorId,
+            Depth: sector.Depth,
+            Path: sector.Path,
             Filename: sectorFilename,
             EstimatedTriangleCount: estimatedTriangleCount,
             EstimatedDrawCalls: estimatedDrawCalls,
-            MinNodeDiagonal: p.MinNodeDiagonal,
-            MaxNodeDiagonal: p.MaxNodeDiagonal,
-            Geometries: p.Geometries,
-            SubtreeBoundingBox: p.SubtreeBoundingBox,
-            GeometryBoundingBox: p.GeometryBoundingBox
+            MinNodeDiagonal: sector.MinNodeDiagonal,
+            MaxNodeDiagonal: sector.MaxNodeDiagonal,
+            Geometries: sector.Geometries,
+            SubtreeBoundingBox: sector.SubtreeBoundingBox,
+            GeometryBoundingBox: sector.GeometryBoundingBox
         );
 
         if (sectorFilename != null)
             ExportSectorGeometries(sectorInfo.Geometries, sectorFilename, outputDirectory);
         return sectorInfo;
+    }
+
+    private static string? GetSectorFileName(InternalSector sector)
+    {
+        if (sector.Geometries.Length == 0)
+            return null;
+
+        // "sector" as prefix is reserved for normal sectors, do not start any other sector filenames with "sector"
+        return sector.IsPrioritizedSector
+            ? $"prioritized_sector_{sector.SectorId}.glb"
+            : $"sector_{sector.SectorId}.glb";
     }
 
     private static IEnumerable<SectorInfo> CalculateDownloadSizes(
