@@ -11,8 +11,10 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Caching.Memory" />
         <PackageReference Include="System.Data.SqlClient" />
         <PackageReference Include="System.Data.SQLite" />
         <PackageReference Include="System.Drawing.Common" />
+        <PackageReference Include="System.Text.Json" />
     </ItemGroup>
 </Project>
