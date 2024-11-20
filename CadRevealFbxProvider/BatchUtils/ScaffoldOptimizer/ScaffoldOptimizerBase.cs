@@ -1,6 +1,5 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
-using System.Drawing;
 using System.Linq;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;

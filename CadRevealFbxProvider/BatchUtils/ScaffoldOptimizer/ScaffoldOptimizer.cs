@@ -27,9 +27,11 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         //
 
         var results = new List<ScaffoldOptimizerResult>();
-        if (nodeName.ContainsAny(["WordA", "WordB"]))
+        if (nodeName.ContainsAny(["Plank"]))
         {
-            // :TODO: Example if to be removed after the first optimization has been implemented!
+            APrimitive? optimizedPrimitive = meshes[0]?.CalculateAxisAlignedBoundingBox()
+                .ToBoxPrimitive(nodeGeometries[0].TreeIndex, nodeGeometries[0].Color);
+            if(optimizedPrimitive != null) results.Add(new ScaffoldOptimizerResult(optimizedPrimitive));
         }
         else if (nodeName.ContainsAny(["WordC", "WordD"]))
         {
