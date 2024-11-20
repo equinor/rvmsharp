@@ -9,6 +9,7 @@ using System.Threading;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils.MeshOptimization;
 using g3;
+using MIConvexHull;
 using Tessellation;
 
 public static class Simplify
@@ -128,5 +129,35 @@ public static class Simplify
         }
 
         return processedGeometries;
+    }
+
+    /// <summary>
+    /// Generates a convex hull as output from a mesh input. The resulting hull consists of new
+    /// points distributed on or close to the surface of the original mesh in three-dimensional space.
+    /// </summary>
+    /// <param name="inputMesh">The input mesh.</param>
+    /// <param name="tolerance">Maximum distance that a point can be from a best-fit convex hull plane and still be considered part of that plane.</param>
+    /// <returns>Mesh instance containing the generated convex hull points.</returns>
+    public static Mesh ConvertToConvexHull(Mesh inputMesh, float tolerance = 1.0E-1f)
+    {
+        // Build vertex list to hand to the convex hull algorithm
+        var meshVertices = inputMesh.Vertices.Select(v => new double[] { v.X, v.Y, v.Z });
+
+        // Create the convex hull
+        var convexHullOfMesh = ConvexHull.Create(meshVertices.ToArray(), tolerance);
+        if (convexHullOfMesh.Outcome != ConvexHullCreationResultOutcome.Success)
+        {
+            Console.WriteLine($"Convex hull simplification failed with error : {convexHullOfMesh.ErrorMessage}");
+            return inputMesh;
+        }
+
+        // Create the convex hull vertices and indices in CadRevealComposer internal format
+        var cadRevealVertices = convexHullOfMesh.Result.Faces.SelectMany(face =>
+            face.Vertices.Select(r => new Vector3((float)r.Position[0], (float)r.Position[1], (float)r.Position[2]))
+        );
+        IEnumerable<Vector3> cadRevealVerticesEnumerable = cadRevealVertices.ToArray();
+        var cadRevealIndices = cadRevealVerticesEnumerable.Select((item, index) => (uint)index);
+
+        return new Mesh(cadRevealVerticesEnumerable.ToArray(), cadRevealIndices.ToArray(), inputMesh.Error);
     }
 }
