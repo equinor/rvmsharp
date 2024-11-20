@@ -15,7 +15,7 @@
     <NoProjectBuildInPackageWelcome>true</NoProjectBuildInPackageWelcome>
 
     <!-- Package metadata -->
-    <Version>1.0.2</Version> <!-- Nuget Package Version. Try to keep somwehat SemVer updated -->
+    <Version>1.0.3</Version> <!-- Nuget Package Version. Try to keep somwehat SemVer updated -->
     <Copyright>Equinor ASA</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Company>Equinor ASA</Company>
@@ -37,8 +37,8 @@
   <ItemGroup>
     <PackageReference Include="LibTessDotNet"/>
     <PackageReference Include="MathNet.Numerics"/>
-    <PackageReference Include="Teronis.MSBuild.Packaging.ProjectBuildInPackage">
-      <!-- The Teronis.MSBuild.Packaging.ProjectBuildInPackage is added to make the dotnet pack command include the private dependencies in the build. Can be removed if dotnet pack ever solves this problem. -->
+    <PackageReference Include="Tenekon.MSBuild.Packaging.ProjectBuildInPackage">
+      <!-- The Tenekon.MSBuild.Packaging.ProjectBuildInPackage is added to make the dotnet pack command include the private dependencies in the build. Can be removed if dotnet pack ever solves this problem. -->
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
