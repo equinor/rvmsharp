@@ -1,11 +1,11 @@
 namespace CadRevealComposer.Tests.Utils;
 
+using System.Drawing;
+using System.Numerics;
 using System.Text.RegularExpressions;
 using CadRevealComposer.Utils;
 using MathNet.Numerics;
 using Primitives;
-using System.Drawing;
-using System.Numerics;
 using Tessellation;
 
 class GeometryDistributionNodeStatsTest : IGeometryDistributionNodeStats
@@ -31,7 +31,7 @@ class GeometryDistributionNodeStatsTest : IGeometryDistributionNodeStats
                 CountTriangleMesh = 130;
                 CountInstancedMesh = 140;
                 CountTrapezium = 150;
-                CountTorusSegment =  160;
+                CountTorusSegment = 160;
                 CountQuad = 170;
                 CountNut = 180;
                 CountGeneralRing = 190;
@@ -61,7 +61,7 @@ class GeometryDistributionNodeStatsTest : IGeometryDistributionNodeStats
                 CountTriangleMesh = 13;
                 CountInstancedMesh = 14;
                 CountTrapezium = 15;
-                CountTorusSegment =  16;
+                CountTorusSegment = 16;
                 CountQuad = 17;
                 CountNut = 18;
                 CountGeneralRing = 19;
@@ -114,19 +114,22 @@ public class GeometryDistributionNodeStatsDiffTests
     {
         // Locate first row with "name" and then extract the following four numbers
         string regularExpression1 = "^.*" + name + ".*$";
-        const string regularExpression2 = @"[0-9\.]+";
+        const string regularExpression2 = @"[0-9\.,]+";
 
         // Perform regex query
         Match match1 = Regex.Match(table, regularExpression1, RegexOptions.Multiline);
-        MatchCollection match2 = match1.Success ? Regex.Matches(match1.ToString(), regularExpression2, RegexOptions.Singleline) : null;
+        MatchCollection match2 = match1.Success
+            ? Regex.Matches(match1.ToString(), regularExpression2, RegexOptions.Singleline)
+            : null;
 
         // Construct output from query result
-        return (match2 == null || match2.Count == 0) ? null : match2.Select(str => double.Parse(str.ToString())).ToList();
+        return (match2 == null || match2.Count == 0)
+            ? null
+            : match2.Select(str => double.Parse(str.ToString())).ToList();
     }
 
     [Test]
-    public void
-        UsingGeometryDistributionNodeStatDiff_GivenTwoGeometryDistributionNodeStatsInputs_VerifyDiffOutput()
+    public void UsingGeometryDistributionNodeStatDiff_GivenTwoGeometryDistributionNodeStatsInputs_VerifyDiffOutput()
     {
         // Prepare
         var stat0 = new GeometryDistributionNodeStatsTest(0);
@@ -170,8 +173,7 @@ public class GeometryDistributionNodeStatsDiffTests
     }
 
     [Test]
-    public void
-        UsingGeometryDistributionNodeStatDiff_GivenInputsWhereOutputIsKnown_VerifyCalcOfIncreaseInPercent()
+    public void UsingGeometryDistributionNodeStatDiff_GivenInputsWhereOutputIsKnown_VerifyCalcOfIncreaseInPercent()
     {
         // Prepare
         const int diff1 = 0;
@@ -186,7 +188,7 @@ public class GeometryDistributionNodeStatsDiffTests
         const int valueBefore3 = 486;
         const double trueIncrease3 = 100.0; // %
 
-        const int diff4 = 486*2;
+        const int diff4 = 486 * 2;
         const int valueBefore4 = 486;
         const double trueIncrease4 = 200.0; // %
 
@@ -207,8 +209,7 @@ public class GeometryDistributionNodeStatsDiffTests
     }
 
     [Test]
-    public void
-        UsingGeometryDistributionNodeStatDiff_GivenTwoGeometryDistributionNodeStatsInputs_VerifyPrintStatisticsOutput()
+    public void UsingGeometryDistributionNodeStatDiff_GivenTwoGeometryDistributionNodeStatsInputs_VerifyPrintStatisticsOutput()
     {
         // Prepare
         var stat0 = new GeometryDistributionNodeStatsTest(0);
@@ -228,93 +229,304 @@ public class GeometryDistributionNodeStatsDiffTests
             values = ExtractValuesFromTable("Instanced mesh", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountInstancedMesh));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountInstancedMesh, stat1.CountInstancedMesh)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountInstancedMesh,
+                            stat1.CountInstancedMesh
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInInstancedMeshes));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInInstancedMeshes, stat1.TriangleCountInInstancedMeshes)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInInstancedMeshes,
+                            stat1.TriangleCountInInstancedMeshes
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Triangle mesh", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountTriangleMesh));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountTriangleMesh, stat1.CountTriangleMesh)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountTriangleMesh,
+                            stat1.CountTriangleMesh
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInTriangleMeshes));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInTriangleMeshes, stat1.TriangleCountInTriangleMeshes)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInTriangleMeshes,
+                            stat1.TriangleCountInTriangleMeshes
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Trapezium", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountTrapezium));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountTrapezium, stat1.CountTrapezium)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountTrapezium,
+                            stat1.CountTrapezium
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInTrapeziums));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInTrapeziums, stat1.TriangleCountInTrapeziums)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInTrapeziums,
+                            stat1.TriangleCountInTrapeziums
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Torus segment", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountTorusSegment));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountTorusSegment, stat1.CountTorusSegment)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountTorusSegment,
+                            stat1.CountTorusSegment
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInTorusSegments));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInTorusSegments, stat1.TriangleCountInTorusSegments)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInTorusSegments,
+                            stat1.TriangleCountInTorusSegments
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Quad", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountQuad));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountQuad, stat1.CountQuad)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountQuad, stat1.CountQuad))
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInQuads));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInQuads, stat1.TriangleCountInQuads)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInQuads,
+                            stat1.TriangleCountInQuads
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Nut", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountNut));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountNut, stat1.CountNut)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountNut, stat1.CountNut))
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInNuts));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInNuts, stat1.TriangleCountInNuts)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInNuts,
+                            stat1.TriangleCountInNuts
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("General ring", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountGeneralRing));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountGeneralRing, stat1.CountGeneralRing)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountGeneralRing,
+                            stat1.CountGeneralRing
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInGeneralRing));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInGeneralRing, stat1.TriangleCountInGeneralRings)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInGeneralRing,
+                            stat1.TriangleCountInGeneralRings
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Ellipsoid segment", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountEllipsoidSegment));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountEllipsoidSegment, stat1.CountEllipsoidSegment)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountEllipsoidSegment,
+                            stat1.CountEllipsoidSegment
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInEllipsoidSegment));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInEllipsoidSegment, stat1.TriangleCountInEllipsoidSegments)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInEllipsoidSegment,
+                            stat1.TriangleCountInEllipsoidSegments
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Cone", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountCone));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountCone, stat1.CountCone)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountCone, stat1.CountCone))
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInCone));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInCone, stat1.TriangleCountInCones)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInCone,
+                            stat1.TriangleCountInCones
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Circle", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountCircle));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountCircle, stat1.CountCircle)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountCircle, stat1.CountCircle)
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInCircle));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInCircle, stat1.TriangleCountInCircles)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInCircle,
+                            stat1.TriangleCountInCircles
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Box", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountBox));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountBox, stat1.CountBox)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountBox, stat1.CountBox))
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInBox));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInBox, stat1.TriangleCountInBoxes)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInBox,
+                            stat1.TriangleCountInBoxes
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("Eccentric cone", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffCountEccentricCone));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffCountEccentricCone, stat1.CountEccentricCone)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffCountEccentricCone,
+                            stat1.CountEccentricCone
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffTriangleCountInEccentricCone));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffTriangleCountInEccentricCone, stat1.TriangleCountInEccentricCones)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffTriangleCountInEccentricCone,
+                            stat1.TriangleCountInEccentricCones
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
 
             values = ExtractValuesFromTable("SUM", result);
             Assert.That(values, Is.Not.EqualTo(null));
             Assert.That((int)values[0], Is.EqualTo(diff.DiffSumPrimitiveCount));
-            Assert.That(values[1], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffSumPrimitiveCount, stat1.SumPrimitiveCount)).Within(1.0E-3));
+            Assert.That(
+                values[1],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffSumPrimitiveCount,
+                            stat1.SumPrimitiveCount
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
             Assert.That((int)values[2], Is.EqualTo(diff.DiffSumTriangleCount));
-            Assert.That(values[3], Is.EqualTo(GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(diff.DiffSumTriangleCount, stat1.SumTriangleCount)).Within(1.0E-3));
+            Assert.That(
+                values[3],
+                Is.EqualTo(
+                        GeometryDistributionNodeStatsDiff.CalcIncreaseInPercent(
+                            diff.DiffSumTriangleCount,
+                            stat1.SumTriangleCount
+                        )
+                    )
+                    .Within(1.0E-3)
+            );
         });
     }
 }

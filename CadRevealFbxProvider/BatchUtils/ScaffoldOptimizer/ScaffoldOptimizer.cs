@@ -2,6 +2,7 @@ namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
 
 public class ScaffoldOptimizer : ScaffoldOptimizerBase
 {
@@ -27,15 +28,61 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         //
 
         var results = new List<ScaffoldOptimizerResult>();
+        if (nodeGeometries.Length != meshes.Length)
+        {
+            throw new Exception(
+                $"Found {nodeGeometries.Length} node geometries but a mesh array of size {meshes.Length}, but they should be equal!"
+            );
+        }
+
         if (nodeName.ContainsAny(["Plank"]))
         {
-            APrimitive? optimizedPrimitive = meshes[0]?.CalculateAxisAlignedBoundingBox()
-                .ToBoxPrimitive(nodeGeometries[0].TreeIndex, nodeGeometries[0].Color);
-            if(optimizedPrimitive != null) results.Add(new ScaffoldOptimizerResult(optimizedPrimitive));
+            // For each separate mesh found, convert it to a separate box primitive
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                APrimitive? optimizedPrimitive = meshes[i]
+                    ?.CalculateAxisAlignedBoundingBox()
+                    .ToBoxPrimitive(nodeGeometries[i].TreeIndex, nodeGeometries[i].Color);
+                if (optimizedPrimitive == null)
+                    continue;
+                results.Add(new ScaffoldOptimizerResult(optimizedPrimitive));
+            }
         }
-        else if (nodeName.ContainsAny(["WordC", "WordD"]))
+        else if (nodeName.ContainsAny(["Kick Board", "BRM"]))
         {
-            // :TODO: Example if to be removed after the first optimization has been implemented!
+            // For each separate mesh found, convert it to a separate convex hull mesh
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+                results.Add(
+                    new ScaffoldOptimizerResult(
+                        nodeGeometries[i],
+                        Simplify.ConvertToConvexHull(mesh),
+                        i,
+                        requestChildMeshInstanceId
+                    )
+                );
+            }
+        }
+        else if (nodeName.ContainsAny(["StairwayGuard"]))
+        {
+            // For each separate mesh found, convert it to a separate decimated mesh
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+                results.Add(
+                    new ScaffoldOptimizerResult(
+                        nodeGeometries[i],
+                        Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject()),
+                        i,
+                        requestChildMeshInstanceId
+                    )
+                );
+            }
         }
         else
         {

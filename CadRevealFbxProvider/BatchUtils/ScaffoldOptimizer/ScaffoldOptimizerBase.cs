@@ -7,7 +7,8 @@ using CadRevealComposer.Tessellation;
 
 static class ScaffoldOptimizerExtensions
 {
-    public static bool ContainsAny(this string str, string[] keywordList) => keywordList.Any(str.Contains);
+    public static bool ContainsAny(this string str, string[] keywordList) =>
+        keywordList.Select(s => s.ToUpper()).Any(str.ToUpper().Contains);
 }
 
 public class ScaffoldOptimizerBase

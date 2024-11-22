@@ -1,11 +1,11 @@
 namespace CadRevealComposer.Tests.Utils;
 
-using System.Text.RegularExpressions;
+using System.Drawing;
 using System.Linq;
+using System.Numerics;
+using System.Text.RegularExpressions;
 using CadRevealComposer.Utils;
 using Primitives;
-using System.Drawing;
-using System.Numerics;
 using Tessellation;
 
 [TestFixture]
@@ -46,7 +46,8 @@ public class GeometryDistributionNodeStatsTests
         int circleCount,
         int boxCount,
         int eccentricConeCount,
-        int nodeCount)
+        int nodeCount
+    )
     {
         var geometries = new List<APrimitive>();
 
@@ -135,12 +136,7 @@ public class GeometryDistributionNodeStatsTests
         for (int i = 0; i < nutCount; i++)
         {
             geometries.Add(
-                new Nut(
-                    Matrix4x4.Identity,
-                    0,
-                    Color.Black,
-                    new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))
-                )
+                new Nut(Matrix4x4.Identity, 0, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1)))
             );
         }
 
@@ -215,12 +211,7 @@ public class GeometryDistributionNodeStatsTests
         for (int i = 0; i < boxCount; i++)
         {
             geometries.Add(
-                new Box(
-                    Matrix4x4.Identity,
-                    0,
-                    Color.Black,
-                    new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1))
-                )
+                new Box(Matrix4x4.Identity, 0, Color.Black, new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1)))
             );
         }
 
@@ -244,10 +235,15 @@ public class GeometryDistributionNodeStatsTests
         var nodes = new List<CadRevealNode>();
         for (int i = 0; i < nodeCount; i++)
         {
-            nodes.Add(new CadRevealNode
-            {
-                TreeIndex = 0, Name = "Test", Parent = null, Geometries = geometries.ToArray()
-            });
+            nodes.Add(
+                new CadRevealNode
+                {
+                    TreeIndex = 0,
+                    Name = "Test",
+                    Parent = null,
+                    Geometries = geometries.ToArray()
+                }
+            );
         }
 
         return nodes;
@@ -261,7 +257,9 @@ public class GeometryDistributionNodeStatsTests
 
         // Perform regex query
         Match match1 = Regex.Match(table, regularExpression1, RegexOptions.Multiline);
-        MatchCollection match2 = match1.Success ? Regex.Matches(match1.ToString(), regularExpression2, RegexOptions.Singleline) : null;
+        MatchCollection match2 = match1.Success
+            ? Regex.Matches(match1.ToString(), regularExpression2, RegexOptions.Singleline)
+            : null;
 
         // Construct output from query result
         return (match2 == null || match2.Count == 0) ? null : match2.Select(str => int.Parse(str.ToString())).ToList();
@@ -300,7 +298,8 @@ public class GeometryDistributionNodeStatsTests
         int circleCount,
         int boxCount,
         int eccentricConeCount,
-        int nodeCount)
+        int nodeCount
+    )
     {
         // Prepare
         List<CadRevealNode> nodes = GenNodes(
@@ -316,7 +315,8 @@ public class GeometryDistributionNodeStatsTests
             circleCount,
             boxCount,
             eccentricConeCount,
-            nodeCount);
+            nodeCount
+        );
 
         // Act
         var stats = new GeometryDistributionNodeStats(nodes);
@@ -352,18 +352,36 @@ public class GeometryDistributionNodeStatsTests
                 + (eccentricConeCount * nodeCount);
             Assert.That(stats.SumPrimitiveCount, Is.EqualTo(sumPrimitiveCount));
 
-            Assert.That(stats.TriangleCountInInstancedMeshes, Is.EqualTo(instancedMeshStatTriCnt * instancedMeshStatCnt * nodeCount));
-            Assert.That(stats.TriangleCountInTriangleMeshes, Is.EqualTo(triangleMeshesStatTriCnt * triangleMeshesStatCnt * nodeCount));
+            Assert.That(
+                stats.TriangleCountInInstancedMeshes,
+                Is.EqualTo(instancedMeshStatTriCnt * instancedMeshStatCnt * nodeCount)
+            );
+            Assert.That(
+                stats.TriangleCountInTriangleMeshes,
+                Is.EqualTo(triangleMeshesStatTriCnt * triangleMeshesStatCnt * nodeCount)
+            );
             Assert.That(stats.TriangleCountInTrapeziums, Is.EqualTo(2 * trapeziumCount * nodeCount));
-            Assert.That(stats.TriangleCountInTorusSegments, (torusSegmentCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0));
+            Assert.That(
+                stats.TriangleCountInTorusSegments,
+                (torusSegmentCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0)
+            );
             Assert.That(stats.TriangleCountInQuads, Is.EqualTo(2 * quadCount * nodeCount));
             Assert.That(stats.TriangleCountInNuts, Is.EqualTo(24 * nutCount * nodeCount));
-            Assert.That(stats.TriangleCountInGeneralRings, (generalRingCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0));
+            Assert.That(
+                stats.TriangleCountInGeneralRings,
+                (generalRingCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0)
+            );
             Assert.That(stats.TriangleCountInEllipsoidSegments, Is.EqualTo(4 * ellipsoidSegmentCount * nodeCount));
             Assert.That(stats.TriangleCountInCones, (coneCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0));
-            Assert.That(stats.TriangleCountInCircles, (circleCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0));
+            Assert.That(
+                stats.TriangleCountInCircles,
+                (circleCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0)
+            );
             Assert.That(stats.TriangleCountInBoxes, Is.EqualTo(12 * boxCount * nodeCount));
-            Assert.That(stats.TriangleCountInEccentricCones, (eccentricConeCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0));
+            Assert.That(
+                stats.TriangleCountInEccentricCones,
+                (eccentricConeCount * nodeCount) > 0 ? Is.GreaterThan(0) : Is.EqualTo(0)
+            );
 
             Assert.That(stats.SumPrimitiveCount, sumPrimitiveCount > 0 ? Is.GreaterThan(0) : Is.EqualTo(0));
         });

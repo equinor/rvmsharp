@@ -2,8 +2,8 @@ namespace CadRevealComposer.Utils;
 
 using System;
 using System.Collections.Generic;
-using Primitives;
 using Operations.Tessellating;
+using Primitives;
 
 public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
 {
@@ -72,16 +72,32 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
             CountEccentricCone += distribution.EccentricCones;
         }
 
-        SumPrimitiveCount = CountTriangleMesh + CountInstancedMesh + CountTrapezium + CountTorusSegment +
-                            CountQuad +
-                            CountNut + CountGeneralRing + CountEllipsoidSegment + CountCone + CountCircle +
-                            CountBox +
-                            CountEccentricCone;
-        SumTriangleCount = TriangleCountInInstancedMeshes + TriangleCountInTriangleMeshes +
-                           TriangleCountInTrapeziums + TriangleCountInTorusSegments + TriangleCountInQuads +
-                           TriangleCountInNuts + TriangleCountInGeneralRings + TriangleCountInEllipsoidSegments +
-                           TriangleCountInCones + TriangleCountInCircles + TriangleCountInBoxes +
-                           TriangleCountInEccentricCones;
+        SumPrimitiveCount =
+            CountTriangleMesh
+            + CountInstancedMesh
+            + CountTrapezium
+            + CountTorusSegment
+            + CountQuad
+            + CountNut
+            + CountGeneralRing
+            + CountEllipsoidSegment
+            + CountCone
+            + CountCircle
+            + CountBox
+            + CountEccentricCone;
+        SumTriangleCount =
+            TriangleCountInInstancedMeshes
+            + TriangleCountInTriangleMeshes
+            + TriangleCountInTrapeziums
+            + TriangleCountInTorusSegments
+            + TriangleCountInQuads
+            + TriangleCountInNuts
+            + TriangleCountInGeneralRings
+            + TriangleCountInEllipsoidSegments
+            + TriangleCountInCones
+            + TriangleCountInCircles
+            + TriangleCountInBoxes
+            + TriangleCountInEccentricCones;
     }
 
     public void PrintStatistics(string heading = "")
@@ -90,18 +106,18 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
         Console.WriteLine("+====================+=======================+=======================+");
         Console.WriteLine("| Primitive          | Primitive count       | Triangle count        |");
         Console.WriteLine("+--------------------+-----------------------+-----------------------+");
-        Console.WriteLine($" Instanced mesh       {CountInstancedMesh,-24}{TriangleCountInInstancedMeshes,-24}");
-        Console.WriteLine($" Triangle mesh        {CountTriangleMesh,-24}{TriangleCountInTriangleMeshes,-24}");
-        Console.WriteLine($" Trapezium            {CountTrapezium,-24}{TriangleCountInTrapeziums,-24}");
-        Console.WriteLine($" Torus segment        {CountTorusSegment,-24}{TriangleCountInTorusSegments,-24}");
-        Console.WriteLine($" Quad                 {CountQuad,-24}{TriangleCountInQuads,-24}");
-        Console.WriteLine($" Nut                  {CountNut,-24}{TriangleCountInNuts,-24}");
-        Console.WriteLine($" General ring         {CountGeneralRing,-24}{TriangleCountInGeneralRings,-24}");
-        Console.WriteLine($" Ellipsoid segment    {CountEllipsoidSegment,-24}{TriangleCountInEllipsoidSegments,-24}");
-        Console.WriteLine($" Cone                 {CountCone,-24}{TriangleCountInCones,-24}");
-        Console.WriteLine($" Circle               {CountCircle,-24}{TriangleCountInCircles,-24}");
-        Console.WriteLine($" Box                  {CountBox,-24}{TriangleCountInBoxes,-24}");
-        Console.WriteLine($" Eccentric cone       {CountEccentricCone,-24}{TriangleCountInEccentricCones,-24}");
+        Console.WriteLine($" Instanced mesh       {CountInstancedMesh, -24}{TriangleCountInInstancedMeshes, -24}");
+        Console.WriteLine($" Triangle mesh        {CountTriangleMesh, -24}{TriangleCountInTriangleMeshes, -24}");
+        Console.WriteLine($" Trapezium            {CountTrapezium, -24}{TriangleCountInTrapeziums, -24}");
+        Console.WriteLine($" Torus segment        {CountTorusSegment, -24}{TriangleCountInTorusSegments, -24}");
+        Console.WriteLine($" Quad                 {CountQuad, -24}{TriangleCountInQuads, -24}");
+        Console.WriteLine($" Nut                  {CountNut, -24}{TriangleCountInNuts, -24}");
+        Console.WriteLine($" General ring         {CountGeneralRing, -24}{TriangleCountInGeneralRings, -24}");
+        Console.WriteLine($" Ellipsoid segment    {CountEllipsoidSegment, -24}{TriangleCountInEllipsoidSegments, -24}");
+        Console.WriteLine($" Cone                 {CountCone, -24}{TriangleCountInCones, -24}");
+        Console.WriteLine($" Circle               {CountCircle, -24}{TriangleCountInCircles, -24}");
+        Console.WriteLine($" Box                  {CountBox, -24}{TriangleCountInBoxes, -24}");
+        Console.WriteLine($" Eccentric cone       {CountEccentricCone, -24}{TriangleCountInEccentricCones, -24}");
         Console.WriteLine("---------------------------------------------------------------------+");
         Console.WriteLine($" SUM                  {SumPrimitiveCount, -24}{SumTriangleCount, -24}");
         Console.WriteLine("+====================================================================+");
@@ -136,4 +152,3 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
     public int SumPrimitiveCount { get; }
     public int SumTriangleCount { get; }
 }
-
