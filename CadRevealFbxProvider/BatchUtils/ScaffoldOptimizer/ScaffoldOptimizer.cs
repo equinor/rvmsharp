@@ -3,6 +3,9 @@ namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using CadRevealComposer.Utils.MeshOptimization;
+using System.Numerics;
+using System.Linq;
 
 public class ScaffoldOptimizer : ScaffoldOptimizerBase
 {
@@ -82,6 +85,53 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                         requestChildMeshInstanceId
                     )
                 );
+            }
+        }
+        else if (nodeName.ContainsAny(["Stair"]))
+        {
+            // For each separate mesh found, split its disjoint (non-manifold) parts into separate pieces and optimize separately
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+
+                Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
+
+                var indexMaxVol = splitMesh
+                    .Select((m, idx) => new { m, i = idx })
+                    .OrderByDescending(v =>
+                    {
+                        Vector3 ext = v.m.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity).Extents;
+                        return ext.X * ext.Y * ext.Z; // Volume
+                    })
+                    .First().i;
+
+                for (int j = 0; j < splitMesh.Length; j++)
+                {
+                    var disjointMesh = splitMesh[j];
+                    if (j == indexMaxVol)
+                    {
+                        // The support for the stairs (assumed largest volume) is only subjected to light geometry optimization
+                        results.Add(
+                            new ScaffoldOptimizerResult(
+                                nodeGeometries[i],
+                                Simplify.SimplifyMeshLossy(disjointMesh, new SimplificationLogObject()),
+                                i,
+                                requestChildMeshInstanceId
+                            )
+                        );
+                    }
+                    else
+                    {
+                        // The smaller parts, assumed to be steps and similar, will be converted to boxes
+                        results.Add(
+                            new ScaffoldOptimizerResult(
+                                disjointMesh.CalculateAxisAlignedBoundingBox().ToBoxPrimitive(nodeGeometries[i].TreeIndex, nodeGeometries[i].Color)
+                            )
+                        );
+                    }
+                }
             }
         }
         else
