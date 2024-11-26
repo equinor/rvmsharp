@@ -1,11 +1,11 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
+using System.Linq;
+using System.Numerics;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using CadRevealComposer.Utils.MeshOptimization;
-using System.Numerics;
-using System.Linq;
 
 public class ScaffoldOptimizer : ScaffoldOptimizerBase
 {
@@ -105,7 +105,8 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                         Vector3 ext = v.m.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity).Extents;
                         return ext.X * ext.Y * ext.Z; // Volume
                     })
-                    .First().i;
+                    .First()
+                    .i;
 
                 for (int j = 0; j < splitMesh.Length; j++)
                 {
@@ -127,7 +128,9 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                         // The smaller parts, assumed to be steps and similar, will be converted to boxes
                         results.Add(
                             new ScaffoldOptimizerResult(
-                                disjointMesh.CalculateAxisAlignedBoundingBox().ToBoxPrimitive(nodeGeometries[i].TreeIndex, nodeGeometries[i].Color)
+                                disjointMesh
+                                    .CalculateAxisAlignedBoundingBox()
+                                    .ToBoxPrimitive(nodeGeometries[i].TreeIndex, nodeGeometries[i].Color)
                             )
                         );
                     }
