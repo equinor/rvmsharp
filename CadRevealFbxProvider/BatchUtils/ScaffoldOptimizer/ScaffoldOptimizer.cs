@@ -32,7 +32,6 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         //      3) Add everything in the combination into the results list through ScaffoldOptimizerResult entries,
         //         which can take InstancesMesh, TriangleMesh, or non-mesh primitives as input.
         //
-
         var results = new List<ScaffoldOptimizerResult>();
         if (nodeGeometries.Length != meshes.Length)
         {
@@ -50,7 +49,11 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 if (mesh == null)
                     continue;
 
-                results.Add(new ScaffoldOptimizerResult(ToBoxPrimitive(nodeGeometries[i], mesh)));
+                Mesh maxMesh = LoosePiecesMeshTools
+                    .SplitMeshByLoosePieces(mesh)
+                    .MaxBy(x => x.CalculateAxisAlignedBoundingBox().Diagonal)!;
+
+                results.Add(new ScaffoldOptimizerResult(ToBoxPrimitive(nodeGeometries[i], maxMesh)));
             }
         }
         else if (nodeName.ContainsAny(["Kick Board", "BRM"]))
