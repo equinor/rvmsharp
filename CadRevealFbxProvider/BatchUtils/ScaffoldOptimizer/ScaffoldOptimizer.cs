@@ -64,7 +64,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 results.Add(
                     new ScaffoldOptimizerResult(
                         nodeGeometries[i],
-                        Simplify.ConvertToConvexHull(mesh),
+                        Simplify.ConvertToConvexHull(mesh, 0.01f),
                         i,
                         requestChildMeshInstanceId
                     )
