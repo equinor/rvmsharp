@@ -165,7 +165,6 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     )
                 );
             }
-            //            return null;
         }
 
         return results;
@@ -193,7 +192,11 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
 
     private List<Mesh> ConstructArtificialLedgerBeam(Mesh inputMesh)
     {
-        BoundingBox bbox = inputMesh.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity);
+        Mesh maxMesh = LoosePiecesMeshTools
+            .SplitMeshByLoosePieces(inputMesh)
+            .MaxBy(x => x.CalculateAxisAlignedBoundingBox().Diagonal)!;
+
+        BoundingBox bbox = maxMesh.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity);
 
         float lx = bbox.Max.X - bbox.Min.X;
         float ly = bbox.Max.Y - bbox.Min.Y;
@@ -212,7 +215,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         // Find the start vector of the upper cylinder
         var centerTopMin = new Vector3();
         centerTopMin[minLen.i] = (bbox.Max[minLen.i] + bbox.Min[minLen.i]) / 2.0f;
-        centerTopMin[middleLen.i] = bbox.Max[middleLen.i] - cylinderRadius;
+        centerTopMin[middleLen.i] = bbox.Max[middleLen.i] - 2.0f * cylinderRadius;
         centerTopMin[maxLen.i] = bbox.Min[maxLen.i];
 
         // Find the end vector of the upper cylinder
@@ -223,7 +226,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
 
         // Find displacement vector needed to displace the top cylinder to the bottom cylinder
         Vector3 displacement = new Vector3(0.0f, 0.0f, 0.0f);
-        displacement[middleLen.i] = middleLen.l + cylinderRadius;
+        displacement[middleLen.i] = middleLen.l - 2.0f * cylinderRadius;
 
         // Find the start and end vector of the lower cylinder
         var centerBottomMin = centerTopMin - displacement;
@@ -279,9 +282,9 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
 
         // Create a thin box below upper cylinder
         var depthOfBoxVec = new Vector3();
-        depthOfBoxVec[middleLen.i] = 0.11f; // [m]
+        depthOfBoxVec[middleLen.i] = 0.05f; // [m]
         var thicknessOfBoxVec = new Vector3();
-        thicknessOfBoxVec[middleLen.i] = 0.005f; // [m]
+        thicknessOfBoxVec[minLen.i] = 0.005f; // [m]
         displacement[middleLen.i] = cylinderRadius - 0.01f;
         BoundingBox bboxUpper = new BoundingBox(
             centerTopMin - displacement,
@@ -296,8 +299,8 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         );
         var boxLower = CreateBoundingBoxMesh(bboxLower, inputMesh.Error);
 
-        // Create thin support boxes, 8cm wide, 12cm apart
-        float supportWidth = 4.0f * 0.08f; // [m]?
+        // Create thin support boxes, 5cm wide, 12cm apart
+        float supportWidth = 4.0f * 0.05f; // [m]?
         float openingWidth = 4.0f * 0.12f; // [m]?
         float supportPlusOpeningWidth = supportWidth + openingWidth; // Can be thought of as opening with half a support on each side
         int numOpeningsWith2HalfSupport = (int)(maxLen.l / supportPlusOpeningWidth);
@@ -312,7 +315,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         supportWidthVec[maxLen.i] = supportWidth;
 
         var heightOfSupportVec = new Vector3(0.0f, 0.0f, 0.0f);
-        heightOfSupportVec[middleLen.i] = middleLen.l - cylinderRadius;
+        heightOfSupportVec[middleLen.i] = middleLen.l - 2.0f * cylinderRadius;
 
         var startPosLeftEndSupport = centerTopMin;
         var endPosLeftEndSupport = centerTopMin + widthOfEndSupportVec + thicknessOfBoxVec - heightOfSupportVec;
@@ -345,9 +348,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         {
             combinedMeshes.Add(box);
         }
-        /*        Mesh combinedMesh = CombineMeshes(combinedMeshes.ToArray(), inputMesh.Error);
-        
-                return (combinedMesh, combinedMesh.TriangleCount);*/
+
         return combinedMeshes;
     }
 
