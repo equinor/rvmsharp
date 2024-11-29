@@ -203,8 +203,12 @@ public static class RvmFacetGroupMatcher
             .AsParallel()
             .GroupBy(CalculateKey)
             .Select(g =>
+                // ReSharper disable once MultipleOrderBy -- If all items are equal
                 g.OrderByDescending(x =>
-                        x.BoundingBoxLocal.Extents.X * x.BoundingBoxLocal.Extents.Y * x.BoundingBoxLocal.Extents.Z // Use volume to start with the largest parts so we avoid precision issues when scaling the template
+                        // This has a potential to return 0 if one axis is 0m if this is a problem we maye need to adjust this.
+                        x.BoundingBoxLocal.Extents.X
+                        * x.BoundingBoxLocal.Extents.Y
+                        * x.BoundingBoxLocal.Extents.Z // Use volume to start with the largest parts so we avoid precision issues when scaling the template
                     )
                     .ToArray()
             )
