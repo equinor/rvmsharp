@@ -202,7 +202,12 @@ public static class RvmFacetGroupMatcher
         var groupedFacetGroups = allFacetGroups
             .AsParallel()
             .GroupBy(CalculateKey)
-            .Select(g => g.OrderByDescending(x => x.BoundingBoxLocal.Diagonal).ToArray())
+            .Select(g =>
+                g.OrderByDescending(x =>
+                        x.BoundingBoxLocal.Extents.X * x.BoundingBoxLocal.Extents.Y * x.BoundingBoxLocal.Extents.Z // Use volume to start with the largest parts so we avoid precision issues when scaling the template
+                    )
+                    .ToArray()
+            )
             .ToArray();
 
         var groupCount = groupedFacetGroups.Count(shouldMakeTemplateOf);
