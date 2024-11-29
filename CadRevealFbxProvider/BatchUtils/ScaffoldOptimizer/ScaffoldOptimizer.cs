@@ -40,7 +40,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
             );
         }
 
-        if (nodeName.ContainsAny(["Plank"]))
+        if (nodeName.ContainsAny(["Plank"]) && !nodeName.Contains("0,17"))
         {
             // For each separate mesh found, convert it to a separate box primitive
             for (int i = 0; i < nodeGeometries.Length; i++)
@@ -92,7 +92,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 );
             }
         }
-        else if (nodeName.ContainsAny(["Stair"]))
+        else if (nodeName.ContainsAny(["Stair UTV"]))
         {
             // For each separate mesh found, split its disjoint (non-manifold) parts into separate pieces and optimize separately
             for (int i = 0; i < nodeGeometries.Length; i++)
