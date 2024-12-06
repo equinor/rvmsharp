@@ -1,6 +1,6 @@
 ﻿namespace CadRevealFbxProvider.Tests;
 
-using Attributes;
+using CadRevealFbxProvider.Attributes;
 using NUnit.Framework;
 
 [TestFixture]
