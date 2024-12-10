@@ -165,6 +165,7 @@ public class ScaffoldingMetadataTests
     [Test]
     public void GivenAScaffoldingMetadataInstance_WhenItIsComplete_ThenTryWriteToGenericMetadataDictShouldFillTheTargetDict()
     {
+        // Arrange
         var metadata = new ScaffoldingMetadata();
         var targetDict = new Dictionary<string, string>();
 
@@ -184,6 +185,33 @@ public class ScaffoldingMetadataTests
             Assert.That(targetDict["Scaffolding_WorkOrder_DismantleOperationNumber"], Is.EqualTo("9123"));
             Assert.That(targetDict["Scaffolding_TotalVolume"], Is.EqualTo("1423"));
             Assert.That(targetDict["Scaffolding_TotalWeight"], Is.EqualTo("4321"));
+        });
+    }
+
+    [Test]
+    public void GivenScaffoldingMetadataWeightAndVolime_WhenValuesHaveUnits_ThenOutputIsWithoutUnits()
+    {
+        // Arrange
+        var metadataWeight1 = new ScaffoldingMetadata();
+        var metadataWeight2 = new ScaffoldingMetadata();
+        var metadataVolume1 = new ScaffoldingMetadata();
+
+        // Act
+        var retWeight1 = metadataWeight1.TryAddValue("Grand total", "12.34 kg");
+        var retWeight2 = metadataWeight2.TryAddValue("Grand total", "12_34e-45kg");
+        var retVolume1 = metadataVolume1.TryAddValue("Size (m\u00b3)", "567.8 m\u00b3");
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(retWeight1, Is.True);
+            Assert.That(metadataWeight1.TotalWeight, Is.EqualTo("12.34"));
+
+            Assert.That(retWeight2, Is.True);
+            Assert.That(metadataWeight2.TotalWeight, Is.EqualTo("12_34e-45"));
+
+            Assert.That(retVolume1, Is.True);
+            Assert.That(metadataVolume1.TotalVolume, Is.EqualTo("567.8"));
         });
     }
 }

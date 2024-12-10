@@ -1,6 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Collections.Generic;
+using System.Numerics;
 
 public class ScaffoldingMetadata
 {
@@ -61,6 +62,24 @@ public class ScaffoldingMetadata
             );
     }
 
+    private string StripUnit(string stringWithUnit)
+    {
+        string strippedString = "";
+        bool lastDigitFound = false;
+        foreach (var c in stringWithUnit)
+        {
+            if (!lastDigitFound && IsNumber(c))
+                strippedString += c;
+            else
+                lastDigitFound = true;
+        }
+
+        return strippedString;
+
+        bool IsNumber(char c) =>
+            char.IsNumber(c) || char.IsPunctuation(c) || c == 'e' || c == '_' || c == '\'' || c == '+' || c == '-';
+    }
+
     public bool TryAddValue(string key, string value)
     {
         if (!ColumnToAttributeMap.ContainsKey(key))
@@ -84,10 +103,12 @@ public class ScaffoldingMetadata
                     DismantleOperationNumber = value;
                     break;
                 case AttributeEnum.TotalVolume:
+                    value = StripUnit(value);
                     GuardForInvalidValues(value, TotalVolume);
                     TotalVolume = value;
                     break;
                 case AttributeEnum.TotalWeight:
+                    value = StripUnit(value);
                     GuardForInvalidValues(value, TotalWeight);
                     TotalWeight = value;
                     break;
