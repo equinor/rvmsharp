@@ -21,8 +21,7 @@ public class ScaffoldingMetadata
     {
         "Work order",
         "Scaff build Operation number",
-        "Dismantle Operation number",
-        "Size (m\u00b3)"
+        "Dismantle Operation number"
     };
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
@@ -129,7 +128,6 @@ public class ScaffoldingMetadata
             string.IsNullOrEmpty(WorkOrder)
             || string.IsNullOrEmpty(BuildOperationNumber)
             || string.IsNullOrEmpty(DismantleOperationNumber)
-            || string.IsNullOrEmpty(TotalVolume)
             || string.IsNullOrEmpty(TotalWeight)
         )
         {

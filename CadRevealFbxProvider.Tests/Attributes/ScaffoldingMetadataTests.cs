@@ -92,7 +92,6 @@ public class ScaffoldingMetadataTests
         metadata.TryAddValue("Work order", "1234");
         metadata.TryAddValue("Scaff build Operation number", "5678");
         metadata.TryAddValue("Dismantle Operation number", "9123");
-        metadata.TryAddValue("Size (m\u00b3)", "1423");
         metadata.TryAddValue("Grand total", "4321");
 
         // Assert
@@ -111,8 +110,7 @@ public class ScaffoldingMetadataTests
         {
             { "Work order", "1234" },
             { "Scaff build Operation number", "5678" },
-            { "Dismantle Operation number", "91011" },
-            { "Size (m\u00b3)", "121314" },
+            { "Dismantle Operation number", "91011" }
         };
 
         var targetDictIncomplete = new Dictionary<string, string>()
@@ -126,7 +124,6 @@ public class ScaffoldingMetadataTests
             { "Work order", "1234" },
             { "Scaff build Operation number", "5678" },
             { "Dismantle Operation number", "91011" },
-            { "Size (m\u00b3)", "121314" },
             { "Test entry", "4321" }
         };
 
@@ -134,8 +131,7 @@ public class ScaffoldingMetadataTests
         {
             { "Work order", "1234" },
             { "Scaff build Operation number", "" },
-            { "Dismantle Operation number", "91011" },
-            { "Size (m\u00b3)", "121314" },
+            { "Dismantle Operation number", "91011" }
         };
 
         // Assert
@@ -189,7 +185,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void GivenScaffoldingMetadataWeightAndVolime_WhenValuesHaveUnits_ThenOutputIsWithoutUnits()
+    public void GivenScaffoldingMetadataWeightAndVolume_WhenValuesHaveUnits_ThenOutputIsWithoutUnits()
     {
         // Arrange
         var metadataWeight1 = new ScaffoldingMetadata();
