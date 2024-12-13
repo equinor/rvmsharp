@@ -138,7 +138,7 @@ public class FbxProviderAttributeParserTests
         {
             Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
-            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76"));
+            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
     }
 
@@ -167,7 +167,7 @@ public class FbxProviderAttributeParserTests
         {
             Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
-            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76"));
+            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
     }
 
@@ -240,7 +240,7 @@ public class FbxProviderAttributeParserTests
         {
             Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
-            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76"));
+            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
     }
 }

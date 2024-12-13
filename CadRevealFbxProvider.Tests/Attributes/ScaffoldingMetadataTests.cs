@@ -185,7 +185,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void GivenScaffoldingMetadataWeightAndVolume_WhenValuesHaveUnits_ThenOutputIsWithoutUnits()
+    public void GivenScaffoldingMetadataWeightAndVolume_WhenValuesHaveUnits_ThenOutputIsStillWithUnits()
     {
         // Arrange
         var metadataWeight1 = new ScaffoldingMetadata();
@@ -201,13 +201,13 @@ public class ScaffoldingMetadataTests
         Assert.Multiple(() =>
         {
             Assert.That(retWeight1, Is.True);
-            Assert.That(metadataWeight1.TotalWeight, Is.EqualTo("12.34"));
+            Assert.That(metadataWeight1.TotalWeight, Is.EqualTo("12.34 kg"));
 
             Assert.That(retWeight2, Is.True);
-            Assert.That(metadataWeight2.TotalWeight, Is.EqualTo("12_34e-45"));
+            Assert.That(metadataWeight2.TotalWeight, Is.EqualTo("12_34e-45kg"));
 
             Assert.That(retVolume1, Is.True);
-            Assert.That(metadataVolume1.TotalVolume, Is.EqualTo("567.8"));
+            Assert.That(metadataVolume1.TotalVolume, Is.EqualTo("567.8 m\u00b3"));
         });
     }
 }
