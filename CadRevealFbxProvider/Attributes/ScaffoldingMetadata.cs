@@ -1,37 +1,41 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Collections.Generic;
+using System.Numerics;
 
 public class ScaffoldingMetadata
 {
     public string? WorkOrder { get; set; }
     public string? BuildOperationNumber { get; set; }
     public string? DismantleOperationNumber { get; set; }
+    public string? TotalVolume { get; set; }
     public string? TotalWeight { get; set; }
 
-    public const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
-    public const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
-    public const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
-    public const string TotalWeightFieldName = "Scaffolding_TotalWeight";
+    private const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
+    private const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
+    private const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
+    private const string TotalVolumeFieldName = "Scaffolding_TotalVolume";
+    private const string TotalWeightFieldName = "Scaffolding_TotalWeight";
 
     public static readonly string[] ModelAttributesPerPart =
     {
-        "Work order",
-        "Scaff build Operation number",
-        "Dismantle Operation number"
+        "Work order"
+        //        "Scaff build Operation number",
+        //        "Dismantle Operation number"
     };
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
 
-    public enum AttributeEnum
+    private enum AttributeEnum
     {
         WorkOrderId,
         BuildOperationId,
         DismantleOperationId,
+        TotalVolume,
         TotalWeight
     }
 
-    public static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<
+    private static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<
         string,
         AttributeEnum
     >
@@ -39,10 +43,11 @@ public class ScaffoldingMetadata
         { "Work order", AttributeEnum.WorkOrderId },
         { "Scaff build Operation number", AttributeEnum.BuildOperationId },
         { "Dismantle Operation number", AttributeEnum.DismantleOperationId },
+        { "Size (m\u00b3)", AttributeEnum.TotalVolume },
         { "Grand total", AttributeEnum.TotalWeight }
     };
 
-    public void GuardForInvalidValues(string newValue, string? existingValue)
+    private static void GuardForInvalidValues(string newValue, string? existingValue)
     {
         if (newValue == existingValue)
             return;
@@ -56,13 +61,33 @@ public class ScaffoldingMetadata
             );
     }
 
+    private static bool OverrideNullOrWhiteSpaceCheck(AttributeEnum mappedKey)
+    {
+        return mappedKey switch
+        {
+            AttributeEnum.TotalVolume => true,
+            AttributeEnum.BuildOperationId => true,
+            AttributeEnum.DismantleOperationId => true,
+            _ => false
+        };
+    }
+
+    private static string? MakeStringEmptyIfDuplicate(string newValue, string? existingValue)
+    {
+        if (newValue == "")
+            return existingValue;
+        if (existingValue == null)
+            return newValue;
+        return (newValue != existingValue) ? "" : newValue;
+    }
+
     public bool TryAddValue(string key, string value)
     {
         if (!ColumnToAttributeMap.ContainsKey(key))
             return false;
 
         var mappedKey = ColumnToAttributeMap[key];
-        if (!string.IsNullOrWhiteSpace(value))
+        if (!string.IsNullOrWhiteSpace(value) || OverrideNullOrWhiteSpaceCheck(mappedKey))
         {
             switch (mappedKey)
             {
@@ -71,12 +96,13 @@ public class ScaffoldingMetadata
                     WorkOrder = value;
                     break;
                 case AttributeEnum.BuildOperationId:
-                    GuardForInvalidValues(value, BuildOperationNumber);
-                    BuildOperationNumber = value;
+                    BuildOperationNumber = MakeStringEmptyIfDuplicate(value, BuildOperationNumber);
                     break;
                 case AttributeEnum.DismantleOperationId:
-                    GuardForInvalidValues(value, DismantleOperationNumber);
-                    DismantleOperationNumber = value;
+                    DismantleOperationNumber = MakeStringEmptyIfDuplicate(value, DismantleOperationNumber);
+                    break;
+                case AttributeEnum.TotalVolume:
+                    TotalVolume = MakeStringEmptyIfDuplicate(value, TotalVolume);
                     break;
                 case AttributeEnum.TotalWeight:
                     GuardForInvalidValues(value, TotalWeight);
@@ -97,8 +123,8 @@ public class ScaffoldingMetadata
         if (
             // Do not include PlannedBuildDate, CompletionDate, and DismantleDate here, since these may be allowed empty
             string.IsNullOrEmpty(WorkOrder)
-            || string.IsNullOrEmpty(BuildOperationNumber)
-            || string.IsNullOrEmpty(DismantleOperationNumber)
+            //            || string.IsNullOrEmpty(BuildOperationNumber)
+            //            || string.IsNullOrEmpty(DismantleOperationNumber)
             || string.IsNullOrEmpty(TotalWeight)
         )
         {
@@ -128,10 +154,11 @@ public class ScaffoldingMetadata
         if (!HasExpectedValues())
             throw new Exception("Cannot write metadata: invalid content");
 
-        // the if above ensures that the fields and not null
+        // The if above ensures that the fields are not null
         targetDict.Add(WorkOrderFieldName, WorkOrder!);
         targetDict.Add(BuildOpFieldName, BuildOperationNumber!);
         targetDict.Add(DismantleOpFieldName, DismantleOperationNumber!);
+        targetDict.Add(TotalVolumeFieldName, TotalVolume!);
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
     }
 }
