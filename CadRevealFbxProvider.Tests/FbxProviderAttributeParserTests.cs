@@ -172,7 +172,7 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
-    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctVolumesInList_ThenThrowOnAttributeParsing()
+    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctVolumesInList_ThenWeHaveExpectedValuesOnReturnedMetadataAndNoThrowOnWritingToDictAndVolumeIsEmpty()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -188,12 +188,20 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
         };
 
-        // Act + Assert
-        Assert.Throws<Exception>(() => new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray()));
+        // Act
+        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
+        });
     }
 
     [Test]
-    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctVolumesAndEmptyVolumeEntryInList_ThenThrowOnAttributeParsing()
+    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctVolumesAndEmptyVolumeEntryInList_ThenWeHaveExpectedValuesOnReturnedMetadataAndNoThrowOnWritingToDictAndVolumeIsEmpty()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -210,8 +218,16 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
         };
 
-        // Act + Assert
-        Assert.Throws<Exception>(() => new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray()));
+        // Act
+        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
+        });
     }
 
     [Test]

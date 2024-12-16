@@ -61,13 +61,29 @@ public class ScaffoldingMetadata
             );
     }
 
+    private static bool OverrideNullOrWhiteSpaceCheck(AttributeEnum mappedKey)
+    {
+        return mappedKey switch
+        {
+            AttributeEnum.TotalVolume => true,
+            _ => false
+        };
+    }
+
+    private static string? MakeStringEmptyIfDuplicate(string newValue, string? existingValue)
+    {
+        if (newValue == "") return existingValue;
+        if (existingValue == null) return newValue;
+        return (newValue != existingValue) ? "" : newValue;
+    }
+
     public bool TryAddValue(string key, string value)
     {
         if (!ColumnToAttributeMap.ContainsKey(key))
             return false;
 
         var mappedKey = ColumnToAttributeMap[key];
-        if (!string.IsNullOrWhiteSpace(value))
+        if (!string.IsNullOrWhiteSpace(value) || OverrideNullOrWhiteSpaceCheck(mappedKey))
         {
             switch (mappedKey)
             {
@@ -84,8 +100,7 @@ public class ScaffoldingMetadata
                     DismantleOperationNumber = value;
                     break;
                 case AttributeEnum.TotalVolume:
-                    GuardForInvalidValues(value, TotalVolume);
-                    TotalVolume = value;
+                    TotalVolume = MakeStringEmptyIfDuplicate(value, TotalVolume);
                     break;
                 case AttributeEnum.TotalWeight:
                     GuardForInvalidValues(value, TotalWeight);
