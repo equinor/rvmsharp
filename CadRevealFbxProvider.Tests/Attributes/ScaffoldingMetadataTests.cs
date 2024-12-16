@@ -28,20 +28,18 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void GivenMetadataKeyWeightAndVolumeWithEmptyValue_WhenCallingTryAdd_ThenReturnFalse()
+    public void GivenMetadataKeyWeightWithEmptyValue_WhenCallingTryAdd_ThenReturnFalse()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
 
         // Act
         bool retWeight = metadata.TryAddValue("Grand total", "");
-        bool retVolume = metadata.TryAddValue("Size (m\u00b3)", "");
 
         // Assert
         Assert.Multiple(() =>
         {
             Assert.That(retWeight, Is.False);
-            Assert.That(retVolume, Is.False);
         });
     }
 
@@ -70,8 +68,8 @@ public class ScaffoldingMetadataTests
         var metadata = new ScaffoldingMetadata();
 
         // Act
-        bool retSpace = metadata.TryAddValue("Size (m\u00b3)", " ");
-        bool retCrlf = metadata.TryAddValue("Size (m\u00b3)", "\r\n");
+        bool retSpace = metadata.TryAddValue("Work order", " ");
+        bool retCrlf = metadata.TryAddValue("Work order", "\r\n");
 
         // Assert
         Assert.Multiple(() =>
@@ -108,15 +106,15 @@ public class ScaffoldingMetadataTests
         // Arrange
         var targetDictComplete = new Dictionary<string, string>()
         {
-            { "Work order", "1234" },
-            { "Scaff build Operation number", "5678" },
-            { "Dismantle Operation number", "91011" }
+            { "Work order", "1234" }
+            //            { "Scaff build Operation number", "5678" },
+            //            { "Dismantle Operation number", "91011" }
         };
 
         var targetDictIncomplete = new Dictionary<string, string>()
         {
-            { "Work order", "1234" },
-            { "Dismantle Operation number", "91011" }
+            //            { "Work order", "1234" },
+            //            { "Dismantle Operation number", "91011" }
         };
 
         var targetDictBeyondComplete = new Dictionary<string, string>()
@@ -129,9 +127,9 @@ public class ScaffoldingMetadataTests
 
         var targetDictCompleteButEmptyValue = new Dictionary<string, string>()
         {
-            { "Work order", "1234" },
-            { "Scaff build Operation number", "" },
-            { "Dismantle Operation number", "91011" }
+            { "Work order", "" }
+            //            { "Scaff build Operation number", "" },
+            //            { "Dismantle Operation number", "91011" }
         };
 
         // Assert

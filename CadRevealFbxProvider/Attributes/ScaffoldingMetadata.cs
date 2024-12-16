@@ -19,9 +19,9 @@ public class ScaffoldingMetadata
 
     public static readonly string[] ModelAttributesPerPart =
     {
-        "Work order",
-        "Scaff build Operation number",
-        "Dismantle Operation number"
+        "Work order"
+        //        "Scaff build Operation number",
+        //        "Dismantle Operation number"
     };
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
@@ -66,14 +66,18 @@ public class ScaffoldingMetadata
         return mappedKey switch
         {
             AttributeEnum.TotalVolume => true,
+            AttributeEnum.BuildOperationId => true,
+            AttributeEnum.DismantleOperationId => true,
             _ => false
         };
     }
 
     private static string? MakeStringEmptyIfDuplicate(string newValue, string? existingValue)
     {
-        if (newValue == "") return existingValue;
-        if (existingValue == null) return newValue;
+        if (newValue == "")
+            return existingValue;
+        if (existingValue == null)
+            return newValue;
         return (newValue != existingValue) ? "" : newValue;
     }
 
@@ -92,12 +96,10 @@ public class ScaffoldingMetadata
                     WorkOrder = value;
                     break;
                 case AttributeEnum.BuildOperationId:
-                    GuardForInvalidValues(value, BuildOperationNumber);
-                    BuildOperationNumber = value;
+                    BuildOperationNumber = MakeStringEmptyIfDuplicate(value, BuildOperationNumber);
                     break;
                 case AttributeEnum.DismantleOperationId:
-                    GuardForInvalidValues(value, DismantleOperationNumber);
-                    DismantleOperationNumber = value;
+                    DismantleOperationNumber = MakeStringEmptyIfDuplicate(value, DismantleOperationNumber);
                     break;
                 case AttributeEnum.TotalVolume:
                     TotalVolume = MakeStringEmptyIfDuplicate(value, TotalVolume);
@@ -121,8 +123,8 @@ public class ScaffoldingMetadata
         if (
             // Do not include PlannedBuildDate, CompletionDate, and DismantleDate here, since these may be allowed empty
             string.IsNullOrEmpty(WorkOrder)
-            || string.IsNullOrEmpty(BuildOperationNumber)
-            || string.IsNullOrEmpty(DismantleOperationNumber)
+            //            || string.IsNullOrEmpty(BuildOperationNumber)
+            //            || string.IsNullOrEmpty(DismantleOperationNumber)
             || string.IsNullOrEmpty(TotalWeight)
         )
         {
