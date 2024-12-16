@@ -12,11 +12,6 @@ public class ScaffoldingAttributeParser
 
     public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
 
-    private static string ConvertStringToEmptyIfNullOrWhiteSpace(string? s)
-    {
-        return string.IsNullOrWhiteSpace(s) ? "" : s;
-    }
-
     public (
         Dictionary<string, Dictionary<string, string>?> attributesDictionary,
         ScaffoldingMetadata scaffoldingMetadata
@@ -103,10 +98,6 @@ public class ScaffoldingAttributeParser
                 "Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata)
             );
         }
-
-        entireScaffoldingMetadata.TotalVolume = ConvertStringToEmptyIfNullOrWhiteSpace(
-            entireScaffoldingMetadata.TotalVolume
-        );
 
         return (attributesDictionary, entireScaffoldingMetadata);
     }
