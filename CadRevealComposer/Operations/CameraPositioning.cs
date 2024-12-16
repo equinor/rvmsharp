@@ -16,9 +16,6 @@ public static class CameraPositioning
 
     public static CameraPosition CalculateInitialCamera(APrimitive[] geometries)
     {
-        static float PythagorasTan(float oppositeLeg, float angleRad) => oppositeLeg / MathF.Tan(angleRad);
-        static float DegToRad(float degree) => MathF.PI / 180f * degree;
-
         // Camera looks towards platform center, with tilt down.
         // The camera is positioned such that the longest side X or Y is in view.
 
@@ -26,7 +23,9 @@ public static class CameraPositioning
         const float additionalCameraDistanceFactor = 1.1f;
         const float cameraVerticalHorizonAngleDeg = 30f;
 
-        var (boundingBoxMin, boundingBoxMax) = GetPlatformBoundingBox(geometries);
+        (Vector3 boundingBoxMin, Vector3 boundingBoxMax) = GetApproximatePlatformBoundingBoxForCameraPosition(
+            geometries
+        );
         var platformSides = boundingBoxMax - boundingBoxMin;
         var platformCenter = boundingBoxMin + (platformSides / 2);
 
@@ -80,13 +79,17 @@ public static class CameraPositioning
             SerializableVector3.FromVector3(platformCenter),
             SerializableVector3.FromVector3(direction)
         );
+
+        static float PythagorasTan(float oppositeLeg, float angleRad) => oppositeLeg / MathF.Tan(angleRad);
+
+        static float DegToRad(float degree) => MathF.PI / 180f * degree;
     }
 
-    private static (Vector3 PlatformBoundingBoxMin, Vector3 PlatformBoundingBoxMax) GetPlatformBoundingBox(
-        APrimitive[] geometries
-    )
+    /// <summary>
+    /// Gets the bounding box, but tries to avoid outliers having too big impact on bounds.
+    /// </summary>
+    private static BoundingBox GetApproximatePlatformBoundingBoxForCameraPosition(APrimitive[] geometries)
     {
-        // TODO: does not handle empty geometries correctly
         if (geometries.Length == 0)
         {
             throw new Exception(
@@ -94,8 +97,8 @@ public static class CameraPositioning
             );
         }
 
-        // get bounding box for platform using approximation (99th percentile)
-        const double percentile = 0.01;
+        // get bounding box for platform using approximation (95th percentile)
+        const double percentile = 0.05;
         var platformMinX = geometries
             .Select(node => node.AxisAlignedBoundingBox.Min.X)
             .OrderBy(x => x)
@@ -129,6 +132,6 @@ public static class CameraPositioning
 
         var bbMin = new Vector3(platformMinX, platformMinY, platformMinZ);
         var bbMax = new Vector3(platformMaxX, platformMaxY, platformMaxZ);
-        return (bbMin, bbMax);
+        return new BoundingBox(bbMin, bbMax);
     }
 }
