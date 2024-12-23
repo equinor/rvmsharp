@@ -600,7 +600,7 @@ public class ScaffoldOptimizerTests
         );
 
         // Act
-        var optimizer = new ScaffoldOptimizer();
+        var optimizer = new CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ScaffoldOptimizer();
         optimizer.OptimizeNode(nodeDataNoAssignedForOptimization.node, OnRequestNewInstanceId);
         CadRevealNode nodeDataNoAssignedForOptimizationClone = CloneCadRevealNode(
             nodeDataNoAssignedForOptimization.node
@@ -635,7 +635,7 @@ public class ScaffoldOptimizerTests
         CadRevealNode nodeOptimized = CloneCadRevealNode(nodeData.node);
 
         // Act
-        var optimizer = new ScaffoldOptimizer();
+        var optimizer = new CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ScaffoldOptimizer();
         optimizer.OptimizeNode(nodeOptimized, OnRequestNewInstanceId);
 
         // Assert
@@ -666,7 +666,7 @@ public class ScaffoldOptimizerTests
         CadRevealNode nodeOptimized = CloneCadRevealNode(nodeData.node);
 
         // Act
-        var optimizer = new ScaffoldOptimizer();
+        var optimizer = new CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ScaffoldOptimizer();
         optimizer.OptimizeNode(nodeOptimized, OnRequestNewInstanceId);
 
         // Assert
