@@ -180,6 +180,12 @@ public static class FbxNodeToCadRevealNodeConverter
             return instancedMesh;
         }
 
+        if (mesh.Vertices.Length == 0)
+        {
+            Console.Error.WriteLine("Found mesh with zero vertices: " + node.GetNodeName() + ". (ignoring). ");
+            return null;
+        }
+
         // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
         mesh.Apply(meshTransform);
         var triangleMesh = new TriangleMesh(mesh, treeIndex, color, mesh.CalculateAxisAlignedBoundingBox());
