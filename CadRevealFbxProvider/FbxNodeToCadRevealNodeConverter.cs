@@ -180,14 +180,9 @@ public static class FbxNodeToCadRevealNodeConverter
             return instancedMesh;
         }
 
-
         if (mesh.Vertices.Length == 0)
         {
-            Console.Error.WriteLine(
-                "Found mesh with zero vertices: "
-                    + node.GetNodeName()
-                    + ". (ignoring). "
-            );
+            Console.Error.WriteLine("Found mesh with zero vertices: " + node.GetNodeName() + ". (ignoring). ");
             return null;
         }
 
