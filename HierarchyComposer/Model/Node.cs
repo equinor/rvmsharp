@@ -1,9 +1,12 @@
 ﻿namespace HierarchyComposer.Model;
 
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.SQLite;
 
+[Index(nameof(ParentId), IsUnique = false), Index(nameof(TopNodeId), IsUnique = false), Index(nameof(AABBId), IsUnique = false)]
 public class Node
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -16,19 +19,20 @@ public class Node
     public string? Name { get; init; }
     public bool HasMesh { get; init; }
 
-    [ForeignKey("ParentId")]
-    public virtual Node? Parent { get; set; }
+    public uint? ParentId { get; init; }
 
-    [ForeignKey("TopNodeId")]
-    public virtual Node? TopNode { get; set; }
+    public uint TopNodeId { get; init; }
 
     public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
 
+    public uint? AABBId { get; init; }
+
+    [NotMapped]
     public AABB? AABB { get; init; }
 
     public string? DiagnosticInfo { get; init; }
 
-    public static void RawInsertBatch(SQLiteCommand command, IEnumerable<Node> nodes)
+    public static void RawInsertBatch(SqliteCommand command, IEnumerable<Node> nodes)
     {
         command.CommandText =
             "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
@@ -76,15 +80,15 @@ public class Node
         {
             nodeIdParameter.Value = node.Id;
             nodeEndIdParameter.Value = node.EndId;
-            refNoPrefixParameter.Value = node.RefNoPrefix;
-            refNoDbParameter.Value = node.RefNoDb;
-            refNoSequenceParameter.Value = node.RefNoSequence;
+            refNoPrefixParameter.Value = node.RefNoPrefix ?? (object)DBNull.Value;
+            refNoDbParameter.Value = node.RefNoDb ?? (object)DBNull.Value;
+            refNoSequenceParameter.Value = node.RefNoSequence ?? (object)DBNull.Value;
             nameParameter.Value = node.Name;
             hasMeshParameter.Value = node.HasMesh;
-            parentIdParameter.Value = node.Parent?.Id ?? 0;
-            topNodeIdParameter.Value = node.TopNode?.Id ?? 0;
-            aabbIdParameter.Value = node.AABB?.Id ?? 0;
-            diagnosticInfoParameter.Value = node.DiagnosticInfo;
+            parentIdParameter.Value = node.ParentId ?? (object)DBNull.Value;
+            topNodeIdParameter.Value = node.TopNodeId;
+            aabbIdParameter.Value = node.AABB?.Id ?? (object)DBNull.Value;
+            diagnosticInfoParameter.Value = node.DiagnosticInfo ?? (object)DBNull.Value;
 
             command.ExecuteNonQuery();
         }

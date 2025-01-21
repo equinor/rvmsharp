@@ -25,8 +25,6 @@
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="SharpGLTF.Core" Version="1.0.3" />
     <PackageVersion Include="ShellProgressBar" Version="5.2.0" />
-    <PackageVersion Include="System.Data.SqlClient" Version="4.9.0" />
-    <PackageVersion Include="System.Data.SQLite" Version="1.0.119" />
     <PackageVersion Include="System.Drawing.Common" Version="9.0.0" />
     <PackageVersion Include="System.Text.Encodings.Web" Version="9.0.0" />
     <PackageVersion Include="System.Text.Json" Version="9.0.0" />
