@@ -1,9 +1,9 @@
 ﻿namespace HierarchyComposer.Model;
 
-using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using Microsoft.Data.Sqlite;
 
 public class AABB : IEquatable<AABB>
 {

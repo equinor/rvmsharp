@@ -1,12 +1,16 @@
 ﻿namespace HierarchyComposer.Model;
 
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 
-[Index(nameof(ParentId), IsUnique = false), Index(nameof(TopNodeId), IsUnique = false), Index(nameof(AABBId), IsUnique = false)]
+[
+    Index(nameof(ParentId), IsUnique = false),
+    Index(nameof(TopNodeId), IsUnique = false),
+    Index(nameof(AABBId), IsUnique = false)
+]
 public class Node
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]

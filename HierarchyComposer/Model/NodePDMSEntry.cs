@@ -1,7 +1,7 @@
 ﻿namespace HierarchyComposer.Model;
 
-using Microsoft.Data.Sqlite;
 using System.Collections.Generic;
+using Microsoft.Data.Sqlite;
 
 public class NodePDMSEntry
 {
