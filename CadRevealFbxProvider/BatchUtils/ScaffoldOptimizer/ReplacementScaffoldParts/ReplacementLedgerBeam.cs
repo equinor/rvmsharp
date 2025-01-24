@@ -5,12 +5,13 @@ using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils.MeshOptimization;
+using CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
 public class ReplacementLedgerBeam(Mesh ledgerBeam)
 {
-    public List<Mesh> MakeReplacement()
+    public List<Mesh?> MakeReplacement()
     {
         Mesh maxMesh = LoosePiecesMeshTools
             .SplitMeshByLoosePieces(_ledgerBeam)
@@ -57,12 +58,12 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
 
         (Vector3 centerTopMin, Vector3 centerTopMax) = sortedBoundingBoxExtent.CalcPointsAtEndOfABeamShapedBox(
             SortedBoundingBoxExtent.DisplacementOrigin.BeamTop,
-            2.0f * cylinderRadius
+            cylinderRadius
         );
 
         (Vector3 centerBottomMin, Vector3 centerBottomMax) = sortedBoundingBoxExtent.CalcPointsAtEndOfABeamShapedBox(
             SortedBoundingBoxExtent.DisplacementOrigin.BeamBottom,
-            2.0f * cylinderRadius
+            cylinderRadius
         );
 
         /*
@@ -76,6 +77,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         */
 
         // Tessellate the cylinders
+        /*
         Vector3 lengthVec = centerTopMax - centerTopMin;
         Vector3 unitNormal = lengthVec * (1.0f / lengthVec.Length());
         EccentricCone cone1A = new EccentricCone(
@@ -121,7 +123,9 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         var cylinder1A = EccentricConeTessellator.Tessellate(cone1A);
         var cylinder1B = EccentricConeTessellator.Tessellate(cone1B);
         var cylinder2A = EccentricConeTessellator.Tessellate(cone2A);
-        var cylinder2B = EccentricConeTessellator.Tessellate(cone2B);
+        var cylinder2B = EccentricConeTessellator.Tessellate(cone2B);*/
+        (TriangleMesh? cylinderUpperFront, TriangleMesh? cylinderUpperBack) = PartReplacementUtils.TessellateCylinderPart(centerTopMin, centerTopMax, cylinderRadius);
+        (TriangleMesh? cylinderLowerFront, TriangleMesh? cylinderLowerBack) = PartReplacementUtils.TessellateCylinderPart(centerBottomMin, centerBottomMax, cylinderRadius);
 
         // Create a thin box below upper cylinder
         var depthOfBoxVec = new Vector3();
@@ -186,8 +190,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         boxes.Add(CreateBoundingBoxMesh(bboxBox, _ledgerBeam.Error));
 
         // Combine meshed parts
-        List<Mesh> combinedMeshes =
-            new([cylinder1A.Mesh, cylinder1B.Mesh, cylinder2A.Mesh, cylinder2B.Mesh, boxUpper, boxLower]);
+        List<Mesh?> combinedMeshes =
+            new([cylinderUpperFront?.Mesh, cylinderUpperBack?.Mesh, cylinderLowerFront?.Mesh, cylinderLowerBack?.Mesh, boxUpper, boxLower]);
         foreach (var box in boxes)
         {
             combinedMeshes.Add(box);
