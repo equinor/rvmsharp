@@ -32,7 +32,7 @@ public class DatabaseComposer
             DataSource = outputDatabaseFullPath,
             Pooling = false, // We do not need pooling yet, and the tests fail as the database is not fully closed until the app exits when pooling is enabled.
             Mode = SqliteOpenMode.ReadWriteCreate,
-            ForeignKeys = false,
+            ForeignKeys = false, // We ignore foreign keys so we can populate the database as fast as possible by filling one table at a time. (FKs has no impact on read-performance)
         };
         var connectionString = connectionStringBuilder.ToString();
 
