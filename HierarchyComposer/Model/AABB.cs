@@ -2,8 +2,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 using System.Numerics;
+using Microsoft.Data.Sqlite;
 
 public class AABB : IEquatable<AABB>
 {
@@ -21,7 +21,7 @@ public class AABB : IEquatable<AABB>
         };
     }
 
-    public static void RawInsertBatch(SQLiteCommand command, IEnumerable<AABB> aabbs)
+    public static void RawInsertBatch(SqliteCommand command, IEnumerable<AABB> aabbs)
     {
         command.CommandText =
             "INSERT INTO AABBs (Id, min_x, min_y, min_z, max_x, max_y, max_z) VALUES ($Id, $min_x, $min_y, $min_z, $max_x, $max_y, $max_z)";
