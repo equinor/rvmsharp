@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Data.SQLite;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -32,7 +33,6 @@ public class DatabaseComposer
             DataSource = outputDatabaseFullPath,
             Pooling = false, // We do not need pooling yet, and the tests fail as the database is not fully closed until the app exits when pooling is enabled.
             Mode = SqliteOpenMode.ReadWriteCreate,
-            ForeignKeys = false, // We ignore foreign keys so we can populate the database as fast as possible by filling one table at a time. (FKs has no impact on read-performance)
         };
         var connectionString = connectionStringBuilder.ToString();
 
@@ -84,8 +84,6 @@ public class DatabaseComposer
                 RefNoSequence = inputNode.RefNoSequence,
                 Name = inputNode.Name,
                 HasMesh = inputNode.HasMesh,
-                ParentId = inputNode.ParentId,
-                TopNodeId = inputNode.TopNodeId,
                 NodePDMSEntry = inputNode
                     .PDMSData.Select(kvp => new NodePDMSEntry
                     {
@@ -98,11 +96,19 @@ public class DatabaseComposer
             })
             .ToDictionary(n => n.Id, n => n);
 
+        foreach (var jsonNode in inputNodes)
+        {
+            nodes[jsonNode.NodeId].TopNode = nodes[jsonNode.TopNodeId];
+            if (!jsonNode.ParentId.HasValue)
+                continue;
+            nodes[jsonNode.NodeId].Parent = nodes[jsonNode.ParentId.Value];
+        }
+
         var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
 
         var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
-        using var connection = new SqliteConnection(connectionString);
+        using var connection = new SQLiteConnection(connectionString);
         connection.Open();
 
         // ReSharper disable AccessToDisposedClosure
@@ -113,7 +119,7 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
 
-                using var cmd = connection.CreateCommand();
+                using var cmd = new SQLiteCommand(connection);
                 PDMSEntry.RawInsertBatch(cmd, pdmsEntries.Values);
 
                 transaction.Commit();
@@ -127,7 +133,7 @@ public class DatabaseComposer
             {
                 using var transaction = connection.BeginTransaction();
 
-                using var cmd = connection.CreateCommand();
+                using var cmd = new SQLiteCommand(connection);
                 NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
 
                 transaction.Commit();
@@ -140,7 +146,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
+                using var cmd = new SQLiteCommand(connection);
 
                 // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
                 // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
@@ -160,7 +166,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
+                using var cmd = new SQLiteCommand(connection);
                 Node.RawInsertBatch(cmd, nodes.Values);
 
                 transaction.Commit();
@@ -173,7 +179,7 @@ public class DatabaseComposer
             () =>
             {
                 using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
+                using var cmd = new SQLiteCommand(connection);
                 cmd.CommandText = "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
@@ -194,7 +200,7 @@ public class DatabaseComposer
             () =>
             {
                 // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
-                using var cmd = connection.CreateCommand();
+                using var cmd = new SQLiteCommand(connection);
                 // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
                 cmd.CommandText = "pragma analyze";
                 cmd.ExecuteNonQuery();
@@ -215,16 +221,16 @@ public class DatabaseComposer
 #else
                 // Vacuum completely recreates the database but removes all "Extra Data" from it.
                 // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
-                using var vacuumCmds = connection.CreateCommand();
+                using var vacuumCmds = new SQLiteCommand(connection);
 
                 vacuumCmds.CommandText = "PRAGMA page_count";
-                var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar()!;
+                var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar();
                 var timer = Stopwatch.StartNew();
                 // Vacuum the database. This is quite slow!
                 vacuumCmds.CommandText = "VACUUM";
                 vacuumCmds.ExecuteNonQuery();
                 vacuumCmds.CommandText = "PRAGMA page_count";
-                var pageCountAfterVacuum = (Int64)vacuumCmds.ExecuteScalar()!;
+                var pageCountAfterVacuum = (Int64)vacuumCmds.ExecuteScalar();
 
                 // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
                 vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
