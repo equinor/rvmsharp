@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.Sqlite;
+using System.Data.SQLite;
 
 public class PDMSEntry : IEquatable<PDMSEntry>
 {
@@ -11,21 +11,21 @@ public class PDMSEntry : IEquatable<PDMSEntry>
     public string? Value { get; init; }
     public virtual ICollection<NodePDMSEntry> NodePDMSEntry { get; set; } = null!; // Navigation property
 
-    public void RawInsert(SqliteCommand command)
+    public void RawInsert(SQLiteCommand command)
     {
         command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES (@Id, @Key, @Value);";
         command.Parameters.AddRange(
             new[]
             {
-                new SqliteParameter("@Id", Id),
-                new SqliteParameter("@Key", Key),
-                new SqliteParameter("@Value", Value)
+                new SQLiteParameter("@Id", Id),
+                new SQLiteParameter("@Key", Key),
+                new SQLiteParameter("@Value", Value)
             }
         );
         command.ExecuteNonQuery();
     }
 
-    public static void RawInsertBatch(SqliteCommand command, IEnumerable<PDMSEntry> pdmsEntries)
+    public static void RawInsertBatch(SQLiteCommand command, IEnumerable<PDMSEntry> pdmsEntries)
     {
         command.CommandText = "INSERT INTO PDMSEntries (Id, Key, Value) VALUES ($Id, $Key, $Value);";
 
