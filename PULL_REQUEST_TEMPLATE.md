@@ -21,10 +21,14 @@ Example: This feature can be verified working as expected by observing the runti
          I also need a code review. I have self-commented in the review with some areas I would like to discuss if I could do this differently.
 -->
 
-### [Optional] Screenshot or Profiling data 🤳 <!-- Adjust title, or remove this section if unused -->
+### Screenshot or Profiling data 🤳 
+
+<!-- Remove the "Screenshot or Profiling data" section if unused -->
 
 <!-- Screenshots and gifs can be useful to understand how a feature should look or work.
 Tip: Use `Windows-Shift-S` to take a quick screenshot, and press `Ctrl-V` to auto embed the image.
+REMINDER: The rvmsharp repo is Public! Consider if screenshots would contain internal information.
+          Screenshots of 3D models should either be of the Huldra dataset or be unidentifiable to where and what is imaged.
 -->
 
 ### Did I remember everything checklist?
