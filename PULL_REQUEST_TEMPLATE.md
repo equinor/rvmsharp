@@ -31,19 +31,19 @@ Tip: Use `Windows-Shift-S` to take a quick screenshot, and press `Ctrl-V` to aut
 <!-- If any task is not applicable, just check it or strikethrough like this ~~This text will be strikethroughed~~  -->
 <!-- If anything wont be checked, consider writing why in a sub-point
 How to bulletpoints:
-* [ ] I wrote some awesome code! 😎
-  * There is no code :(
+- [ ] I wrote some awesome code! 😎
+  - There is no code :(
 -->
 
-* [x] I made some awesome changes! 😎
-* [ ] I left the code in a better state than when I started working on it. ✨
-* [ ] I wrote unit and/or integration tests. 👾
-* [ ] I have considered any security implications, and requested review of them explicitly. 🔐
-* [ ] I verified that it checks the acceptance criteria. 📜
-* [ ] I have tested this change in the Echo DEV environment, or requested someone to test it for me 🚀
-* [ ] I updated the documentation/readme. 📚
-* [ ] I made the PR title descriptive and human-readable 👨‍👩‍👦‍👦
-* [ ] Existing unreported issues I found but could not fix was added as a new Issues 🚧
+- [x] I made some awesome changes! 😎
+- [ ] I left the code in a better state than when I started working on it ✨
+- [ ] I wrote unit and/or integration tests 👾
+- [ ] I have considered any security implications, and requested review of them explicitly 🔐
+- [ ] I verified that it checks the acceptance criteria. 📜
+- [ ] I have tested this change in the Echo DEV environment, or requested someone to test it for me 🚀
+- [ ] I updated the documentation/readme 📚
+- [ ] I made the PR title descriptive and human-readable 👨‍👩‍👦‍👦
+- [ ] Existing unreported issues I found but could not fix was added as a new Issues 🚧
 
 <!-- Metadata:
       The most updated source of this template is found in https://github.com/equinor/Echo/blob/master/docs/github.md#pull-request-templates
