@@ -27,11 +27,6 @@ end {
     [Console]::ResetColor()
     $ErrorActionPreference = 'Stop'
     $scriptTimer = [system.diagnostics.stopwatch]::StartNew()
-    if ($IsLinux) {
-        # Known Linux compability issues: We do not yet have a binary for the CTMConv for Linux.
-        # Ctmconv for linux can be built and added, but has not yet been prioritized. See the readme in the ctmconv directory.
-        Write-Error "This script is not yet tested for Linux. If you want to try running it, please remove this line and beware of dragons!"
-    }
     #endregion PsSetup
 
 
