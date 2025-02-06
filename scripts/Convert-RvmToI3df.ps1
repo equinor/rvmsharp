@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)][string] $InputDirectory, #Example "../TestData/HDA_RVM"),
-    [Parameter(Mandatory = $false)][string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
+    [Parameter(Mandatory = $false)][string] $WorkDirectory = $(Join-Path "$PSScriptRoot" "./work_temp/"),
     [Parameter(Mandatory = $true)][long] $ProjectId, #Example value:  1,
     [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
