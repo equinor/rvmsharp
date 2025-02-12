@@ -1,7 +1,14 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
+using System.Drawing;
+using System.Linq;
+using System.Numerics;
+using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
+using CadRevealComposer.Utils.MeshOptimization;
+using ReplacementScaffoldParts;
 
 public class ScaffoldOptimizer : ScaffoldOptimizerBase
 {
@@ -25,21 +32,165 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         //      3) Add everything in the combination into the results list through ScaffoldOptimizerResult entries,
         //         which can take InstancesMesh, TriangleMesh, or non-mesh primitives as input.
         //
-
         var results = new List<ScaffoldOptimizerResult>();
-        if (nodeName.ContainsAny(["WordA", "WordB"]))
+        if (nodeGeometries.Length != meshes.Length)
         {
-            // :TODO: Example if to be removed after the first optimization has been implemented!
+            throw new Exception(
+                $"Found {nodeGeometries.Length} node geometries but a mesh array of size {meshes.Length}, but they should be equal!"
+            );
         }
-        else if (nodeName.ContainsAny(["WordC", "WordD"]))
+
+        if (nodeName.ContainsAny(["Plank"]) && !nodeName.Contains("0,17"))
         {
-            // :TODO: Example if to be removed after the first optimization has been implemented!
+            // For each separate mesh found, convert it to a separate box primitive
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                var mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+
+                Mesh maxMesh = LoosePiecesMeshTools
+                    .SplitMeshByLoosePieces(mesh)
+                    .MaxBy(x => x.CalculateAxisAlignedBoundingBox().Diagonal)!;
+
+                results.Add(new ScaffoldOptimizerResult(ToBoxPrimitive(nodeGeometries[i], maxMesh)));
+            }
+        }
+        else if (nodeName.ContainsAny(["Kick Board", "BRM"]))
+        {
+            // For each separate mesh found, convert it to a separate convex hull mesh
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+                results.Add(
+                    new ScaffoldOptimizerResult(
+                        nodeGeometries[i],
+                        Simplify.ConvertToConvexHull(mesh, 0.01f),
+                        i,
+                        requestChildMeshInstanceId
+                    )
+                );
+            }
+        }
+        else if (nodeName.ContainsAny(["StairwayGuard"]))
+        {
+            // For each separate mesh found, convert it to a separate decimated mesh
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+                results.Add(
+                    new ScaffoldOptimizerResult(
+                        nodeGeometries[i],
+                        Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject()),
+                        i,
+                        requestChildMeshInstanceId
+                    )
+                );
+            }
+        }
+        else if (nodeName.ContainsAny(["Stair UTV"]))
+        {
+            // For each separate mesh found, split its disjoint (non-manifold) parts into separate pieces and optimize separately
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+
+                Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
+
+                var indexMaxVol = splitMesh
+                    .Select((m, idx) => new { m, i = idx })
+                    .OrderByDescending(v =>
+                    {
+                        Vector3 ext = v.m.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity).Extents;
+                        return ext.X * ext.Y * ext.Z; // Volume
+                    })
+                    .First()
+                    .i;
+
+                for (int j = 0; j < splitMesh.Length; j++)
+                {
+                    var disjointMesh = splitMesh[j];
+                    if (j == indexMaxVol)
+                    {
+                        // The support for the stairs (assumed largest volume) is only subjected to light geometry optimization
+                        results.Add(
+                            new ScaffoldOptimizerResult(
+                                nodeGeometries[i],
+                                Simplify.SimplifyMeshLossy(disjointMesh, new SimplificationLogObject()),
+                                j,
+                                requestChildMeshInstanceId
+                            )
+                        );
+                    }
+                    else
+                    {
+                        // The smaller parts, assumed to be steps and similar, will be converted to boxes
+                        results.Add(new ScaffoldOptimizerResult(ToBoxPrimitive(nodeGeometries[i], disjointMesh)));
+                    }
+                }
+            }
+        }
+        else if (nodeName.ContainsAny(["Beam"]))
+        {
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? ledgerBeamMesh = meshes[i];
+                if (ledgerBeamMesh == null)
+                    continue;
+
+                var replacementBeam = new ReplacementLedgerBeam(ledgerBeamMesh);
+                List<Mesh> partsOfLedgerBeam = replacementBeam.MakeReplacement();
+                for (int j = 0; j < partsOfLedgerBeam.Count; j++)
+                {
+                    Mesh mesh = partsOfLedgerBeam[j];
+                    results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], mesh, j, requestChildMeshInstanceId));
+                }
+            }
         }
         else
         {
-            return null;
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+                results.Add(
+                    new ScaffoldOptimizerResult(
+                        nodeGeometries[i],
+                        Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject()),
+                        i,
+                        requestChildMeshInstanceId
+                    )
+                );
+            }
         }
 
         return results;
+    }
+
+    private static Box ToBoxPrimitive(APrimitive geometry, Mesh mesh)
+    {
+        // :TODO: Try to move this, or part of this, into BoundingBox::ToBoxPrimitive()
+        var matrix = (geometry as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
+
+        var scale = new Vector3();
+        var rot = new Quaternion();
+        var trans = new Vector3();
+        matrix.DecomposeAndNormalize(out scale, out rot, out trans);
+
+        BoundingBox boundingBoxTransformed = mesh.CalculateAxisAlignedBoundingBox(matrix);
+        BoundingBox boundingBox = mesh.CalculateAxisAlignedBoundingBox(Matrix4x4.CreateScale(scale));
+
+        var matrix2 =
+            Matrix4x4.CreateScale(boundingBox.Extents)
+            * Matrix4x4.CreateFromQuaternion(rot)
+            * Matrix4x4.CreateTranslation(boundingBoxTransformed.Center);
+        return new Box(matrix2, geometry.TreeIndex, geometry.Color, boundingBoxTransformed);
     }
 }
