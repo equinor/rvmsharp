@@ -124,28 +124,62 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         var cylinder1B = EccentricConeTessellator.Tessellate(cone1B);
         var cylinder2A = EccentricConeTessellator.Tessellate(cone2A);
         var cylinder2B = EccentricConeTessellator.Tessellate(cone2B);*/
-        (TriangleMesh? cylinderUpperFront, TriangleMesh? cylinderUpperBack) = PartReplacementUtils.TessellateCylinderPart(centerTopMin, centerTopMax, cylinderRadius);
-        (TriangleMesh? cylinderLowerFront, TriangleMesh? cylinderLowerBack) = PartReplacementUtils.TessellateCylinderPart(centerBottomMin, centerBottomMax, cylinderRadius);
+        (TriangleMesh? cylinderUpperFront, TriangleMesh? cylinderUpperBack) =
+            PartReplacementUtils.TessellateCylinderPart(centerTopMin, centerTopMax, cylinderRadius);
+        (TriangleMesh? cylinderLowerFront, TriangleMesh? cylinderLowerBack) =
+            PartReplacementUtils.TessellateCylinderPart(centerBottomMin, centerBottomMax, cylinderRadius);
 
         // Create a thin box below upper cylinder
+        /*
         var depthOfBoxVec = new Vector3();
         depthOfBoxVec[middleLen.i] = 0.05f; // [m]
-        var thicknessOfBoxVec = new Vector3();
-        thicknessOfBoxVec[minLen.i] = 0.005f; // [m]
         Vector3 displacement = new Vector3(0.0f, 0.0f, 0.0f);
         displacement[middleLen.i] = cylinderRadius - 0.01f;
         BoundingBox bboxUpper = new BoundingBox(
             centerTopMin - displacement,
             centerTopMax - displacement - depthOfBoxVec + thicknessOfBoxVec
         );
-        var boxUpper = CreateBoundingBoxMesh(bboxUpper, _ledgerBeam.Error);
+        var boxUpper = CreateBoundingBoxMesh(bboxUpper, _ledgerBeam.Error);*/
+
+        const float heightCylinderSupport = 0.05f; // [m]
+        const float thicknessCylinderSupport = 0.005f; // [m]
+        Vector3 displacementTopCylinderPart = new Vector3
+        {
+            [middleLen.i] = cylinderRadius + heightCylinderSupport / 2.0f - 0.01f,
+            [minLen.i] = thicknessCylinderSupport / 2.0f
+        };
+        var boxUpper = PartReplacementUtils
+            .TessellateBoxPart(
+                centerTopMin - displacementTopCylinderPart,
+                centerTopMax - displacementTopCylinderPart,
+                new Vector3 { [minLen.i] = 1.0f },
+                thicknessCylinderSupport,
+                heightCylinderSupport
+            )
+            ?.Mesh;
 
         // Create a thin box above lower cylinder
+        /*
         BoundingBox bboxLower = new BoundingBox(
             centerBottomMin + displacement,
             centerBottomMax + displacement + depthOfBoxVec + thicknessOfBoxVec
         );
-        var boxLower = CreateBoundingBoxMesh(bboxLower, _ledgerBeam.Error);
+        var boxLower = CreateBoundingBoxMesh(bboxLower, _ledgerBeam.Error);*/
+
+        Vector3 displacementBottomCylinderPart = new Vector3
+        {
+            [middleLen.i] = cylinderRadius + heightCylinderSupport / 2.0f - 0.01f,
+            [minLen.i] = -thicknessCylinderSupport / 2.0f
+        };
+        var boxLower = PartReplacementUtils
+            .TessellateBoxPart(
+                centerBottomMin + displacementBottomCylinderPart,
+                centerBottomMax + displacementBottomCylinderPart,
+                new Vector3 { [minLen.i] = 1.0f },
+                thicknessCylinderSupport,
+                heightCylinderSupport
+            )
+            ?.Mesh;
 
         // Create thin support boxes, 5cm wide, 12cm apart
         float supportWidth = 4.0f * 0.05f; // [m]?
@@ -165,6 +199,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         var heightOfSupportVec = new Vector3(0.0f, 0.0f, 0.0f);
         heightOfSupportVec[middleLen.i] = middleLen.l - 2.0f * cylinderRadius;
 
+        var thicknessOfBoxVec = new Vector3();
+        thicknessOfBoxVec[minLen.i] = 0.005f; // [m]
         var startPosLeftEndSupport = centerTopMin;
         var endPosLeftEndSupport = centerTopMin + widthOfEndSupportVec + thicknessOfBoxVec - heightOfSupportVec;
         var startPosRightEndSupport = centerTopMax - widthOfEndSupportVec;
@@ -191,7 +227,16 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
 
         // Combine meshed parts
         List<Mesh?> combinedMeshes =
-            new([cylinderUpperFront?.Mesh, cylinderUpperBack?.Mesh, cylinderLowerFront?.Mesh, cylinderLowerBack?.Mesh, boxUpper, boxLower]);
+            new(
+                [
+                    cylinderUpperFront?.Mesh,
+                    cylinderUpperBack?.Mesh,
+                    cylinderLowerFront?.Mesh,
+                    cylinderLowerBack?.Mesh,
+                    boxUpper,
+                    boxLower
+                ]
+            );
         foreach (var box in boxes)
         {
             combinedMeshes.Add(box);
