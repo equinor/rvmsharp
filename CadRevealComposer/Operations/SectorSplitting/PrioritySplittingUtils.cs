@@ -8,7 +8,7 @@ using Utils;
 
 public static class PrioritySplittingUtils
 {
-    private static readonly string[] PrioritizedDisciplines = ["PIPE", "ELEC", "SAFE"];
+    private static readonly string[] PrioritizedDisciplines = ["PIPE", "ELEC", "SAFE", "INST"];
 
     public static void SetPriorityForPrioritySplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
