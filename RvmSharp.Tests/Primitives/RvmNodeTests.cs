@@ -50,4 +50,34 @@ public class RvmNodeTests
         Assert.That(primitives.OfType<RvmBox>(), Has.Exactly(1).Items);
         Assert.That(primitives.OfType<RvmCylinder>(), Has.Exactly(2).Items);
     }
+
+    [Test]
+    public void EnumerateAllNodes_WhenIncludeSelfTrue_ReturnsAllNodesIncludingSelf()
+    {
+        var nodes = _rootNode.EnumerateNodesRecursive(includeSelf: true).ToArray();
+
+        Assert.That(nodes, Has.Exactly(7).Items);
+        Assert.That(
+            nodes.Select(n => n.Name),
+            Is.EquivalentTo((string[])["root", "c1", "c11", "c12", "c121", "c2", "c21"])
+        );
+    }
+
+    [Test]
+    public void EnumerateAllNodes_WhenIncludeSelfFalse_ReturnsAllNodesExcludingSelf()
+    {
+        var nodes = _rootNode.EnumerateNodesRecursive(includeSelf: false).ToArray();
+
+        Assert.That(nodes, Has.Exactly(6).Items);
+        Assert.That(nodes.Select(n => n.Name), Is.EquivalentTo((string[])["c1", "c11", "c12", "c121", "c2", "c21"]));
+    }
+
+    [Test]
+    [TestCase(true, 10)]
+    [TestCase(false, 9)]
+    public void EnumerateRecursive_WhenIncludeSelfTrue_ReturnsAllNodesIncludingSelf(bool includeSelf, int expectedCount)
+    {
+        var nodes = _rootNode.EnumerateRecursive(includeSelf).ToArray();
+        Assert.That(nodes, Has.Exactly(expectedCount).Items);
+    }
 }
