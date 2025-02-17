@@ -11,6 +11,17 @@ using RvmSharp.Primitives;
 
 internal static class RvmStoreToCadRevealNodesConverter
 {
+    class VariousStatsLogObject
+    {
+        internal int NumberOfExcludedEmptyNodes = 0;
+
+        public void LogStats()
+        {
+            Console.WriteLine("Various stats:");
+            Console.WriteLine($"\tNumber of squashed empty nodes: {NumberOfExcludedEmptyNodes}");
+        }
+    }
+
     public static CadRevealNode[] RvmStoreToCadRevealNodes(
         RvmStore rvmStore,
         TreeIndexGenerator treeIndexGenerator,
@@ -18,6 +29,7 @@ internal static class RvmStoreToCadRevealNodesConverter
     )
     {
         var failedPrimitiveConversionsLogObject = new FailedPrimitivesLogObject();
+        var variousStatsLogObject = new VariousStatsLogObject();
         var cadRevealRootNodes = rvmStore
             .RvmFiles.SelectMany(f => f.Model.Children)
             .Select(root =>
@@ -26,12 +38,15 @@ internal static class RvmStoreToCadRevealNodesConverter
                     parent: null,
                     treeIndexGenerator,
                     nodeNameFiltering,
-                    failedPrimitiveConversionsLogObject
+                    failedPrimitiveConversionsLogObject,
+                    variousStatsLogObject
                 )
             )
             .WhereNotNull()
             .ToArray();
         failedPrimitiveConversionsLogObject.LogFailedPrimitives();
+
+        variousStatsLogObject.LogStats();
 
         var subBoundingBox = cadRevealRootNodes
             .Select(x => x.BoundingBoxAxisAligned)
@@ -51,7 +66,8 @@ internal static class RvmStoreToCadRevealNodesConverter
         CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
         NodeNameFiltering nodeNameFiltering,
-        FailedPrimitivesLogObject failedPrimitivesConversionLogObject
+        FailedPrimitivesLogObject failedPrimitivesConversionLogObject,
+        VariousStatsLogObject statsLogObject
     )
     {
         if (nodeNameFiltering.ShouldExcludeNode(root.Name))
@@ -69,12 +85,11 @@ internal static class RvmStoreToCadRevealNodesConverter
         CadRevealNode[] childrenCadNodes;
         RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
 
-        if (GetChildRvmNodesRecursive(root).Any() && GetChildRvmNodesRecursive(root).All(x => x.Attributes.Count == 0))
+        if (GetChildRvmNodesRecursive(root).All(x => x.Attributes.Count == 0))
         {
-            // These nodes have no attributes and we believe they are safe to remove
-            Console.WriteLine(
-                $"Squashing empty nodes as children of {root.Name, -60}. Moving geometry up.This saved {GetChildRvmNodesRecursive(root).Count(), 4} treeindexes."
-            );
+            // These nodes have no attributes so we believe they are safe to remove if we need to save TreeIndexes
+            // We may need to save TreeIndexes on assets where we have over 2^24 nodes
+            statsLogObject.NumberOfExcludedEmptyNodes += GetChildRvmNodesRecursive(root).Count();
             rvmGeometries = GetChildrenPrimitivesRecursive(root).ToArray();
             childrenCadNodes = [];
         }
@@ -94,7 +109,8 @@ internal static class RvmStoreToCadRevealNodesConverter
                                 newNode,
                                 treeIndexGenerator,
                                 nodeNameFiltering,
-                                failedPrimitivesConversionLogObject
+                                failedPrimitivesConversionLogObject,
+                                statsLogObject
                             );
                         case RvmNode rvmNode:
                             return CollectGeometryNodesRecursive(
@@ -102,7 +118,8 @@ internal static class RvmStoreToCadRevealNodesConverter
                                 newNode,
                                 treeIndexGenerator,
                                 nodeNameFiltering,
-                                failedPrimitivesConversionLogObject
+                                failedPrimitivesConversionLogObject,
+                                statsLogObject
                             );
                         default:
                             throw new Exception();
@@ -121,7 +138,8 @@ internal static class RvmStoreToCadRevealNodesConverter
                         newNode,
                         treeIndexGenerator,
                         nodeNameFiltering,
-                        failedPrimitivesConversionLogObject
+                        failedPrimitivesConversionLogObject,
+                        statsLogObject
                     )
                 )
                 .WhereNotNull()
