@@ -40,7 +40,10 @@ public class RvmProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
         var rvmStore = RvmWorkload.ReadRvmFiles(workload, progressReport, stringInternPool);
-        var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
+        var rvmFileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
+        var txtFileSizesTotal = workload
+            .Where(x => x.txtFilename != null)
+            .Sum(w => new FileInfo(w.txtFilename!).Length);
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
         if (workload.Length == 0)
@@ -51,16 +54,25 @@ public class RvmProvider : IModelFormatProvider
 
         LogRvmPrimitives(rvmStore);
         Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
+            $"Read RvmData in {rvmTimer.Elapsed}. (~{rvmFileSizesTotal / 1024 / 1024:F1}mb of .rvm files (and (~{txtFileSizesTotal / 1024 / 1024:F1}mb .txt file size))"
         );
 
         var stopwatch = Stopwatch.StartNew();
+        int rvmNodeCount = rvmStore
+            .RvmFiles.SelectMany(x => x.Model.Children)
+            .SelectMany(x => x.EnumerateNodesRecursive())
+            .Count();
+        Console.WriteLine($"RvmNode count: {rvmNodeCount}");
         var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
             rvmStore,
             treeIndexGenerator,
             nodeNameFiltering
         );
-        Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
+        Console.WriteLine(
+            "CadRevealNodeCount: " + nodes.Length + ". TreeIndex count is " + treeIndexGenerator.PeekNextId
+        );
+
+        Console.WriteLine($"Converted RVM files to Reveal nodes in {stopwatch.Elapsed}");
 
         return (nodes, null);
     }
