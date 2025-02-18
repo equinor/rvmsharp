@@ -25,7 +25,7 @@ public class PartReplacementUtilsTests
         Vector3 n = Vector3.Normalize(Vector3.Cross(u, v));
         float r2Len = r2.Length();
         float testLength = (r2 - 0.5f * r2Len * n).Length();
-        bool normalPointsInwards = (testLength < r2Len) ? true : false;
+        bool normalPointsInwards = (testLength < r2Len);
 
         return (normalPointsInwards, 2);
     }
@@ -420,7 +420,7 @@ public class PartReplacementUtilsTests
         // Arrange
         // Act
         var mesh = PartReplacementUtils.TessellateBoxPart(
-            // Asymmetric around X=0, startPoint = min, axis aligned, half length of 1
+            // Asymmetric around X=0, startPoint = min, axis aligned, half-length of 1
             new Vector3(0, 0, 0),
             new Vector3(1, 0, 0),
             new Vector3(0, 0, 1),
@@ -447,7 +447,7 @@ public class PartReplacementUtilsTests
         // Arrange
         // Act
         var mesh = PartReplacementUtils.TessellateBoxPart(
-            // Asymmetric around X=0, startPoint = max, axis aligned, half length of 1
+            // Asymmetric around X=0, startPoint = max, axis aligned, half-length of 1
             new Vector3(1, 0, 0),
             new Vector3(0, 0, 0),
             new Vector3(0, 0, 1),
@@ -480,7 +480,7 @@ public class PartReplacementUtilsTests
 
         // Act
         var mesh = PartReplacementUtils.TessellateBoxPart(
-            // Asymmetric around X=0, startPoint = max, axis aligned, half length of 1
+            // Asymmetric around X=0, startPoint = max, axis aligned, half-length of 1
             startPoint,
             endPoint,
             surfaceDirGuide,
