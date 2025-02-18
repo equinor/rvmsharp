@@ -54,7 +54,7 @@ public class RvmProvider : IModelFormatProvider
 
         LogRvmPrimitives(rvmStore);
         Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{rvmFileSizesTotal / 1024 / 1024:F1}mb of .rvm files (and (~{txtFileSizesTotal / 1024 / 1024:F1}mb .txt file size))"
+            $"Read RvmData in {rvmTimer.Elapsed}. (~{rvmFileSizesTotal / 1024 / 1024}mb of .rvm files (and (~{txtFileSizesTotal / 1024 / 1024}mb .txt file size))"
         );
 
         var stopwatch = Stopwatch.StartNew();
@@ -63,10 +63,18 @@ public class RvmProvider : IModelFormatProvider
             .SelectMany(x => x.EnumerateNodesRecursive())
             .Count();
         Console.WriteLine($"RvmNode count: {rvmNodeCount}");
+
+        bool truncateEmptyNodes = rvmNodeCount > TreeIndexGenerator.MaxTreeIndex * 0.95;
+        if (truncateEmptyNodes)
+        {
+            Console.WriteLine($"Truncating empty nodes due to very high node count {rvmNodeCount}");
+        }
+
         var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
             rvmStore,
             treeIndexGenerator,
-            nodeNameFiltering
+            nodeNameFiltering,
+            truncateNodesWithoutMetadata: truncateEmptyNodes
         );
         Console.WriteLine(
             "CadRevealNodeCount: " + nodes.Length + ". TreeIndex count is " + treeIndexGenerator.PeekNextId

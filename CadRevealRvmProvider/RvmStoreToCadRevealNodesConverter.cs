@@ -25,7 +25,8 @@ internal static class RvmStoreToCadRevealNodesConverter
     public static CadRevealNode[] RvmStoreToCadRevealNodes(
         RvmStore rvmStore,
         TreeIndexGenerator treeIndexGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        bool truncateNodesWithoutMetadata
     )
     {
         var failedPrimitiveConversionsLogObject = new FailedPrimitivesLogObject();
@@ -33,10 +34,11 @@ internal static class RvmStoreToCadRevealNodesConverter
         var cadRevealRootNodes = rvmStore
             .RvmFiles.SelectMany(f => f.Model.Children)
             .Select(root =>
-                CollectGeometryNodesRecursive(
+                ConvertRvmNodesToCadRevealNodesRecursive(
                     root,
                     parent: null,
                     treeIndexGenerator,
+                    truncateNodesWithoutMetadata,
                     nodeNameFiltering,
                     failedPrimitiveConversionsLogObject,
                     variousStatsLogObject
@@ -61,10 +63,11 @@ internal static class RvmStoreToCadRevealNodesConverter
         return allNodes;
     }
 
-    private static CadRevealNode? CollectGeometryNodesRecursive(
+    private static CadRevealNode? ConvertRvmNodesToCadRevealNodesRecursive(
         RvmNode root,
         CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
+        bool truncateNodesWithoutMetadata,
         NodeNameFiltering nodeNameFiltering,
         FailedPrimitivesLogObject failedPrimitivesConversionLogObject,
         VariousStatsLogObject statsLogObject
@@ -85,7 +88,11 @@ internal static class RvmStoreToCadRevealNodesConverter
         CadRevealNode[] childrenCadNodes;
         RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
 
-        if (GetChildRvmNodesRecursive(root).All(x => x.Attributes.Count == 0))
+        if (
+            truncateNodesWithoutMetadata
+            && GetChildRvmNodesRecursive(root).Any()
+            && GetChildRvmNodesRecursive(root).All(x => x.Attributes.Count == 0)
+        )
         {
             // These nodes have no attributes so we believe they are safe to remove if we need to save TreeIndexes
             // We may need to save TreeIndexes on assets where we have over 2^24 nodes
@@ -101,22 +108,24 @@ internal static class RvmStoreToCadRevealNodesConverter
                     switch (child)
                     {
                         case RvmPrimitive rvmPrimitive:
-                            return CollectGeometryNodesRecursive(
+                            return ConvertRvmNodesToCadRevealNodesRecursive(
                                 new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
                                 {
                                     Children = { rvmPrimitive }
                                 },
                                 newNode,
                                 treeIndexGenerator,
+                                truncateNodesWithoutMetadata,
                                 nodeNameFiltering,
                                 failedPrimitivesConversionLogObject,
                                 statsLogObject
                             );
                         case RvmNode rvmNode:
-                            return CollectGeometryNodesRecursive(
+                            return ConvertRvmNodesToCadRevealNodesRecursive(
                                 rvmNode,
                                 newNode,
                                 treeIndexGenerator,
+                                truncateNodesWithoutMetadata,
                                 nodeNameFiltering,
                                 failedPrimitivesConversionLogObject,
                                 statsLogObject
@@ -133,10 +142,11 @@ internal static class RvmStoreToCadRevealNodesConverter
             childrenCadNodes = root
                 .Children.OfType<RvmNode>()
                 .Select(n =>
-                    CollectGeometryNodesRecursive(
+                    ConvertRvmNodesToCadRevealNodesRecursive(
                         n,
                         newNode,
                         treeIndexGenerator,
+                        truncateNodesWithoutMetadata,
                         nodeNameFiltering,
                         failedPrimitivesConversionLogObject,
                         statsLogObject
