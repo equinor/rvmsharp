@@ -15,105 +15,87 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
     {
         Top = 0,
         Bottom = 1
-    };
+    }
+
+    private enum EdgeLocation
+    {
+        Left = 0,
+        Right = 1
+    }
 
     public List<Mesh?> MakeReplacement()
     {
+        // Assign parameters that can be used to adjust the details of the ledger beam
         const float tubeRadiusFactor = 1.5f; // Make the tube slightly thicker by dividing by 1.5 instead of 2.0
         const float heightTubeSupport = 0.05f; // [m]
-        const float thicknessTubeSupport = 0.005f; // [m]
+        const float tubeSupportThickness = 0.005f; // [m]
+        const float couplerWidth = 0.20f; // 20 cm
+        const float couplerSpacingWidth = 0.48f; // 48 cm
 
-        BoundingBox bbox = ObtainBoundingBoxOfLargestDisconnectedMeshPiece(ledgerBeam);
-        var extents = new SortedBoundingBoxExtent(bbox);
-        float tubeRadius = extents.ValueOfSmallest / tubeRadiusFactor;
-        var tubeUpper = TessellateLegerBeamTube(tubeRadius, Placement.Top, extents);
-        var tubeLower = TessellateLegerBeamTube(tubeRadius, Placement.Bottom, extents);
+        // Calculate essential parameters used to correctly place each part of the ledger beam
+        BoundingBox ledgerBoundingBox = ObtainBoundingBoxOfLargestDisconnectedMeshPiece(ledgerBeam);
+        var ledgerExtent = new SortedBoundingBoxExtent(ledgerBoundingBox);
+        float tubeRadius = ledgerExtent.ValueOfSmallest / tubeRadiusFactor;
+        Vector3 centerLedgerLeft = CalculateLedgerEdgeCenter(EdgeLocation.Left, ledgerBoundingBox, ledgerExtent);
+        Vector3 centerLedgerRight = CalculateLedgerEdgeCenter(EdgeLocation.Right, ledgerBoundingBox, ledgerExtent);
+        float couplerHeight = ledgerExtent.ValueOfMiddle - 4.0f * tubeRadius;
+
+        // Tessellate the ledger beam tubes
+        var tubeUpper = TessellateLegerBeamTube(ledgerExtent, Placement.Top, tubeRadius);
+        var tubeLower = TessellateLegerBeamTube(ledgerExtent, Placement.Bottom, tubeRadius);
+
+        // Tessellate the supports for each of the
         var tubeSupportUpper = TessellateLedgerBeamTubeSupport(
-            thicknessTubeSupport,
-            heightTubeSupport,
+            ledgerExtent,
             tubeRadius,
             Placement.Top,
-            extents
+            heightTubeSupport,
+            tubeSupportThickness
         )?.Mesh;
         var tubeSupportLower = TessellateLedgerBeamTubeSupport(
-            thicknessTubeSupport,
-            heightTubeSupport,
+            ledgerExtent,
             tubeRadius,
             Placement.Bottom,
-            extents
+            heightTubeSupport,
+            tubeSupportThickness
         )?.Mesh;
 
-        // Create coupler boxes, 20cm wide, 48cm apart
-        const float couplerWidth = 0.20f; // [m]?
-        const float couplerSpacingWidth = 0.48f; // [m]?
-        const float couplerPlusSpacingWidth = couplerWidth + couplerSpacingWidth; // Can be thought of as spacing with half a coupling on each side
-        int numSpacingsWith2HalfCouplers = (int)(extents.ValueOfLargest / couplerPlusSpacingWidth);
-        float endCouplerWidth =
-            (extents.ValueOfLargest - (float)numSpacingsWith2HalfCouplers * couplerPlusSpacingWidth) / 2.0f; // Need to extend end supports to account for beams not being an exact integer multiple of supportPlusOpeningWidth
-        int numNonEndCouplers = numSpacingsWith2HalfCouplers - 1;
-        float couplerHeight = extents.ValueOfMiddle - 4.0f * tubeRadius;
-
-        Vector3 centerLedgerMin = new Vector3
-        {
-            [extents.AxisIndexOfLargest] = bbox.Min[extents.AxisIndexOfLargest],
-            [extents.AxisIndexOfSmallest] =
-                (bbox.Max[extents.AxisIndexOfSmallest] + bbox.Min[extents.AxisIndexOfSmallest]) / 2.0f,
-            [extents.AxisIndexOfMiddle] =
-                (bbox.Max[extents.AxisIndexOfMiddle] + bbox.Min[extents.AxisIndexOfMiddle]) / 2.0f
-        };
-        Vector3 centerLedgerMax = new Vector3
-        {
-            [extents.AxisIndexOfLargest] = bbox.Max[extents.AxisIndexOfLargest],
-            [extents.AxisIndexOfSmallest] =
-                (bbox.Max[extents.AxisIndexOfSmallest] + bbox.Min[extents.AxisIndexOfSmallest]) / 2.0f,
-            [extents.AxisIndexOfMiddle] =
-                (bbox.Max[extents.AxisIndexOfMiddle] + bbox.Min[extents.AxisIndexOfMiddle]) / 2.0f
-        };
-        var boxes = new List<Mesh?>();
-        boxes.Add(
-            PartReplacementUtils
-                .TessellateBoxPart(
-                    centerLedgerMin,
-                    centerLedgerMin + new Vector3 { [extents.AxisIndexOfLargest] = endCouplerWidth },
-                    new Vector3 { [extents.AxisIndexOfSmallest] = 1.0f },
-                    thicknessTubeSupport,
-                    couplerHeight
-                )
-                ?.Mesh
+        // Tessellate the couplers at each end of the ledger beam
+        var couplers = new List<Mesh?>();
+        couplers.Add(
+            TessellateEdgeCoupler(
+                ledgerExtent,
+                EdgeLocation.Left,
+                centerLedgerLeft,
+                couplerWidth,
+                couplerHeight,
+                tubeSupportThickness,
+                couplerSpacingWidth
+            )
         );
-        boxes.Add(
-            PartReplacementUtils
-                .TessellateBoxPart(
-                    centerLedgerMax - new Vector3 { [extents.AxisIndexOfLargest] = endCouplerWidth },
-                    centerLedgerMax,
-                    new Vector3 { [extents.AxisIndexOfSmallest] = 1.0f },
-                    thicknessTubeSupport,
-                    couplerHeight
-                )
-                ?.Mesh
+        couplers.Add(
+            TessellateEdgeCoupler(
+                ledgerExtent,
+                EdgeLocation.Right,
+                centerLedgerRight,
+                couplerWidth,
+                couplerHeight,
+                tubeSupportThickness,
+                couplerSpacingWidth
+            )
         );
 
-        Vector3 startPosCenterFirstNonEndCouplerVec =
-            centerLedgerMin + new Vector3 { [extents.AxisIndexOfLargest] = endCouplerWidth };
-        for (int i = 0; i < numNonEndCouplers; i++)
-        {
-            var centerVec =
-                startPosCenterFirstNonEndCouplerVec
-                + new Vector3 { [extents.AxisIndexOfLargest] = (float)(i + 1) * couplerPlusSpacingWidth };
-            var startVec = centerVec - new Vector3 { [extents.AxisIndexOfLargest] = 0.5f * couplerWidth };
-            var endVec = centerVec + new Vector3 { [extents.AxisIndexOfLargest] = 0.5f * couplerWidth };
-            boxes.Add(
-                PartReplacementUtils
-                    .TessellateBoxPart(
-                        startVec,
-                        endVec,
-                        new Vector3 { [extents.AxisIndexOfSmallest] = 1.0f },
-                        thicknessTubeSupport,
-                        couplerHeight
-                    )
-                    ?.Mesh
-            );
-        }
+        // Tessellate the remaining couplers of the ledger beam
+        couplers.AddRange(
+            TessellateCouplers(
+                ledgerExtent,
+                centerLedgerLeft,
+                couplerWidth,
+                couplerHeight,
+                tubeSupportThickness,
+                couplerSpacingWidth
+            )
+        );
 
         // Combine meshed parts
         List<Mesh?> combinedMeshes =
@@ -125,9 +107,118 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             tubeSupportUpper,
             tubeSupportLower
         ];
-        combinedMeshes.AddRange(boxes);
+        combinedMeshes.AddRange(couplers);
 
         return combinedMeshes;
+    }
+
+    static float CalculateEndCouplerWidth(
+        SortedBoundingBoxExtent ledgerExtent,
+        float mainCouplerWidth,
+        float couplerSpacingWidth
+    )
+    {
+        // Coupler plus spacing width can be thought of as spacing with half a coupling on each side
+        float couplerPlusSpacingWidth = mainCouplerWidth + couplerSpacingWidth;
+
+        // Calculate the number of "holes" in the ledger beam, in-between the couplers
+        int numCouplerSpaces = (int)(ledgerExtent.ValueOfLargest / couplerPlusSpacingWidth);
+
+        // End supports are calculated to account for ledger beams not being an exact integer multiple of supportPlusOpeningWidth
+        return (ledgerExtent.ValueOfLargest - (float)numCouplerSpaces * couplerPlusSpacingWidth) / 2.0f;
+    }
+
+    static List<Mesh?> TessellateCouplers(
+        SortedBoundingBoxExtent ledgerExtent,
+        Vector3 ledgerEdgeCenterLeft,
+        float width,
+        float height,
+        float thickness,
+        float spacingWidth
+    )
+    {
+        float couplerPlusSpacingWidth = width + spacingWidth;
+        int numSpaces = (int)(ledgerExtent.ValueOfLargest / couplerPlusSpacingWidth);
+        int numNonEndCouplers = numSpaces - 1;
+        float endCouplerWidth = CalculateEndCouplerWidth(ledgerExtent, width, spacingWidth);
+        Vector3 startPosCenterFirstNonEndCouplerVec =
+            ledgerEdgeCenterLeft + new Vector3 { [ledgerExtent.AxisIndexOfLargest] = endCouplerWidth };
+
+        var couplers = new List<Mesh?>();
+        for (int i = 0; i < numNonEndCouplers; i++)
+        {
+            var centerVec =
+                startPosCenterFirstNonEndCouplerVec
+                + new Vector3 { [ledgerExtent.AxisIndexOfLargest] = (float)(i + 1) * couplerPlusSpacingWidth };
+            var startVec = centerVec - new Vector3 { [ledgerExtent.AxisIndexOfLargest] = 0.5f * width };
+            var endVec = centerVec + new Vector3 { [ledgerExtent.AxisIndexOfLargest] = 0.5f * width };
+            couplers.Add(
+                PartReplacementUtils
+                    .TessellateBoxPart(
+                        startVec,
+                        endVec,
+                        new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
+                        thickness,
+                        height
+                    )
+                    ?.Mesh
+            );
+        }
+
+        return couplers;
+    }
+
+    static Mesh? TessellateEdgeCoupler(
+        SortedBoundingBoxExtent ledgerExtent,
+        EdgeLocation edgeLocation,
+        Vector3 ledgerEdgeCenter,
+        float mainCouplerWidth,
+        float height,
+        float thickness,
+        float spacingWidth
+    )
+    {
+        float width = CalculateEndCouplerWidth(ledgerExtent, mainCouplerWidth, spacingWidth);
+
+        var endDisplacement = new Vector3
+        {
+            [ledgerExtent.AxisIndexOfLargest] = (edgeLocation == EdgeLocation.Left) ? width : -width
+        };
+
+        return PartReplacementUtils
+            .TessellateBoxPart(
+                ledgerEdgeCenter,
+                ledgerEdgeCenter + endDisplacement,
+                new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
+                thickness,
+                height
+            )
+            ?.Mesh;
+    }
+
+    static Vector3 CalculateLedgerEdgeCenter(
+        EdgeLocation edgeLocation,
+        BoundingBox ledgerBoundingBox,
+        SortedBoundingBoxExtent ledgerExtent
+    )
+    {
+        return new Vector3
+        {
+            [ledgerExtent.AxisIndexOfLargest] =
+                (edgeLocation == EdgeLocation.Left)
+                    ? ledgerBoundingBox.Min[ledgerExtent.AxisIndexOfLargest]
+                    : ledgerBoundingBox.Max[ledgerExtent.AxisIndexOfLargest],
+            [ledgerExtent.AxisIndexOfSmallest] =
+                (
+                    ledgerBoundingBox.Max[ledgerExtent.AxisIndexOfSmallest]
+                    + ledgerBoundingBox.Min[ledgerExtent.AxisIndexOfSmallest]
+                ) / 2.0f,
+            [ledgerExtent.AxisIndexOfMiddle] =
+                (
+                    ledgerBoundingBox.Max[ledgerExtent.AxisIndexOfMiddle]
+                    + ledgerBoundingBox.Min[ledgerExtent.AxisIndexOfMiddle]
+                ) / 2.0f
+        };
     }
 
     static BoundingBox ObtainBoundingBoxOfLargestDisconnectedMeshPiece(Mesh mesh)
@@ -139,33 +230,33 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
     }
 
     static (TriangleMesh? front, TriangleMesh? back) TessellateLegerBeamTube(
-        float pipeRadius,
+        SortedBoundingBoxExtent ledgerBeamExtents,
         Placement placement,
-        SortedBoundingBoxExtent ledgerBeamExtents
+        float radius
     )
     {
         (Vector3 centerMin, Vector3 centerMax) = ledgerBeamExtents.CalcPointsAtEndOfABeamShapedBox(
             (placement == Placement.Top)
                 ? SortedBoundingBoxExtent.DisplacementOrigin.BeamTop
                 : SortedBoundingBoxExtent.DisplacementOrigin.BeamBottom,
-            pipeRadius
+            radius
         );
 
         (TriangleMesh? front, TriangleMesh? back) = PartReplacementUtils.TessellateCylinderPart(
             centerMin,
             centerMax,
-            pipeRadius
+            radius
         );
 
         return (front, back);
     }
 
     static TriangleMesh? TessellateLedgerBeamTubeSupport(
-        float thickness,
-        float height,
+        SortedBoundingBoxExtent ledgerBeamExtents,
         float ledgerBeamTubeRadius,
         Placement placement,
-        SortedBoundingBoxExtent ledgerBeamExtents
+        float height,
+        float thickness
     )
     {
         Vector3 displacement = new Vector3

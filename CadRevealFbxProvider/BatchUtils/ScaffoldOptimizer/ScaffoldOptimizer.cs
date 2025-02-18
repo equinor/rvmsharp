@@ -145,11 +145,14 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     continue;
 
                 var replacementBeam = new ReplacementLedgerBeam(ledgerBeamMesh);
-                List<Mesh> partsOfLedgerBeam = replacementBeam.MakeReplacement();
+                List<Mesh?> partsOfLedgerBeam = replacementBeam.MakeReplacement();
                 for (int j = 0; j < partsOfLedgerBeam.Count; j++)
                 {
-                    Mesh mesh = partsOfLedgerBeam[j];
-                    results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], mesh, j, requestChildMeshInstanceId));
+                    Mesh? mesh = partsOfLedgerBeam[j];
+                    if (mesh != null)
+                    {
+                        results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], mesh, j, requestChildMeshInstanceId));
+                    }
                 }
             }
         }
@@ -179,10 +182,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         // :TODO: Try to move this, or part of this, into BoundingBox::ToBoxPrimitive()
         var matrix = (geometry as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
 
-        var scale = new Vector3();
-        var rot = new Quaternion();
-        var trans = new Vector3();
-        matrix.DecomposeAndNormalize(out scale, out rot, out trans);
+        matrix.DecomposeAndNormalize(out Vector3 scale, out Quaternion rot, out Vector3 trans);
 
         BoundingBox boundingBoxTransformed = mesh.CalculateAxisAlignedBoundingBox(matrix);
         BoundingBox boundingBox = mesh.CalculateAxisAlignedBoundingBox(Matrix4x4.CreateScale(scale));
