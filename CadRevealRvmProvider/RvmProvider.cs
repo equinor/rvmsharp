@@ -64,7 +64,7 @@ public class RvmProvider : IModelFormatProvider
             .Count();
         Console.WriteLine($"RvmNode count: {rvmNodeCount}");
 
-        bool truncateEmptyNodes = rvmNodeCount > TreeIndexGenerator.MaxTreeIndex * 0.95;
+        bool truncateEmptyNodes = rvmNodeCount > TreeIndexGenerator.MaxTreeIndex * 0.7;
         if (truncateEmptyNodes)
         {
             Console.WriteLine($"Truncating empty nodes due to very high node count {rvmNodeCount}");

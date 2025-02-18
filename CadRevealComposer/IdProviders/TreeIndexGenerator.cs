@@ -21,5 +21,5 @@ public class TreeIndexGenerator() : SequentialIdGenerator(firstIdReturned: 1)
     /// The maximal TreeIndex supported in Reveal
     /// Avoid having higher TreeIndex than this.
     /// </summary>
-    public static uint MaxTreeIndex => MaxSafeIdForReveal;
+    public const uint MaxTreeIndex = MaxSafeIdForReveal;
 }
