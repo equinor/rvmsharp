@@ -7,7 +7,8 @@ using Containers;
 /// <summary>
 /// RvmPrimitive is the base class for all primitives in the RVM file format.
 ///
-/// Primitives are the lowest level of the RVM file format and are used to represent the actual geometry.
+/// Primitives is a base-class for all the actual geometry in a RvmFile.
+/// A primitive is always a child of a <see cref="RvmNode"/>, and is a leaf node (primitives do not have children).
 /// </summary>
 /// <param name="Version">RvmVersion, unknown usecase.</param>
 /// <param name="Kind">Primitive Kind</param>
