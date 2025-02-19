@@ -86,18 +86,18 @@ internal static class RvmStoreToCadRevealNodesConverter
         };
 
         CadRevealNode[] childrenCadNodes;
-        RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
+        RvmPrimitive[] rvmGeometries = [];
 
         if (
             truncateNodesWithoutMetadata
-            && GetChildRvmNodesRecursive(root).Any()
-            && GetChildRvmNodesRecursive(root).All(x => x.Attributes.Count == 0)
+            && root.EnumerateNodesRecursive(includeSelf: false).Any()
+            && root.EnumerateNodesRecursive(includeSelf: false).All(x => x.Attributes.Count == 0)
         )
         {
             // These nodes have no attributes so we believe they are safe to remove if we need to save TreeIndexes
             // We may need to save TreeIndexes on assets where we have over 2^24 nodes
-            statsLogObject.NumberOfExcludedEmptyNodes += GetChildRvmNodesRecursive(root).Count();
-            rvmGeometries = GetChildrenPrimitivesRecursive(root).ToArray();
+            statsLogObject.NumberOfExcludedEmptyNodes += root.EnumerateNodesRecursive(includeSelf: false).Count();
+            rvmGeometries = root.EnumerateRecursive(false).OfType<RvmPrimitive>().ToArray();
             childrenCadNodes = [];
         }
         else if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
@@ -183,56 +183,5 @@ internal static class RvmStoreToCadRevealNodesConverter
             : null;
 
         return newNode;
-    }
-
-    /// <summary>
-    /// Gets the Children of a node, and the children of the children etc, recursively.
-    /// Does not include the input node itself.
-    /// </summary>
-    /// <param name="node"></param>
-    /// <returns></returns>
-    private static IEnumerable<RvmNode> GetChildRvmNodesRecursive(RvmNode node)
-    {
-        foreach (var child in node.Children)
-        {
-            if (child is not RvmNode rvmNode)
-                continue;
-
-            foreach (var rvmNode1 in GetRvmNodesRecursive(rvmNode))
-                yield return rvmNode1;
-        }
-    }
-
-    private static IEnumerable<RvmNode> GetRvmNodesRecursive(RvmNode node)
-    {
-        yield return node;
-        foreach (var child in node.Children)
-        {
-            if (child is not RvmNode rvmNode)
-                continue;
-
-            foreach (var rvmNode1 in GetChildRvmNodesRecursive(rvmNode))
-                yield return rvmNode1;
-        }
-    }
-
-    private static IEnumerable<RvmPrimitive> GetChildrenPrimitivesRecursive(RvmNode node)
-    {
-        foreach (var child in node.Children)
-        {
-            switch (child)
-            {
-                case RvmPrimitive rvmPrimitive:
-                    yield return rvmPrimitive;
-                    break;
-                case RvmNode rvmNode:
-                    foreach (var rvmPrimitive in GetChildrenPrimitivesRecursive(rvmNode))
-                    {
-                        yield return rvmPrimitive;
-                    }
-
-                    break;
-            }
-        }
     }
 }

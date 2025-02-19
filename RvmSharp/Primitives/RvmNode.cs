@@ -65,7 +65,7 @@ public record RvmNode(uint Version, string Name, Vector3 Translation, uint Mater
     /// <summary>
     /// Enumerate all children recursively in depth-first order.
     /// </summary>
-    /// <param name="includeSelf">Should this Node be included in the Enumeration?</param>
+    /// <param name="includeSelf">Should `this` Node be included in the Enumeration?</param>
     /// <returns>All the RvmGroups in depth first order</returns>
     public IEnumerable<RvmGroup> EnumerateRecursive(bool includeSelf = true)
     {
