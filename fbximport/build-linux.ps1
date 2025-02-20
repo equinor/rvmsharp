@@ -4,7 +4,7 @@ $buildPath = "build/bin"
 $libPath = "../CadRevealFbxProvider/lib"
 
 # Build Dockerfile and output the binaries
-docker build --output=$buildPath --target=binaries .
+docker build --platform linux/amd64 --output=$buildPath --target=binaries .
 
 # Copy the cfbx library file to CadRevealFbxProvider
 Copy-Item "$buildPath/libcfbx.so" $libPath
