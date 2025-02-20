@@ -4,6 +4,16 @@ using System.Linq;
 using System.Numerics;
 using Containers;
 
+/// <summary>
+/// RvmPrimitive is the base class for all primitives in the RVM file format.
+///
+/// Primitives is a base-class for all the actual geometry in a RvmFile.
+/// A primitive is always a child of a <see cref="RvmNode"/>, and is a leaf node (primitives do not have children).
+/// </summary>
+/// <param name="Version">RvmVersion, unknown usecase.</param>
+/// <param name="Kind">Primitive Kind</param>
+/// <param name="Matrix">The Matrix for where the primitive is placed.</param>
+/// <param name="BoundingBoxLocal">The Local bounding box of the RvmPrimitive.</param>
 public abstract record RvmPrimitive(
     uint Version,
     RvmPrimitiveKind Kind,

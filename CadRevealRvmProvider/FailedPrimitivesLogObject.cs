@@ -2,19 +2,25 @@ namespace CadRevealRvmProvider;
 
 using CadRevealComposer.Utils;
 
+/// <summary>
+/// Helps track failed conversions
+/// </summary>
 public class FailedPrimitivesLogObject
 {
-    public FailedConversionCases FailedBoxes = new("boxes");
-    public FailedConversionCases FailedEllipticalDishes = new("elliptical disches");
-    public FailedConversionCases FailedPyramids = new("pyramids");
-    public FailedConversionCases FailedSpheres = new("spheres");
-    public FailedConversionCases FailedSphericalDishes = new("spherical dishes");
-    public FailedConversionCases FailedCylinders = new("cylinders");
-    public FailedConversionCases FailedCircularToruses = new("circular toruses");
-    public FailedConversionCases FailedSnouts = new("snouts");
-    public FailedConversionCases FailedRectangularTorus = new("rectangular toruses");
+    // ReSharper disable ArrangeObjectCreationWhenTypeEvident
+    public readonly FailedConversionCases FailedBoxes = new("boxes");
+    public readonly FailedConversionCases FailedEllipticalDishes = new("elliptical dishes");
+    public readonly FailedConversionCases FailedPyramids = new("pyramids");
+    public readonly FailedConversionCases FailedSpheres = new("spheres");
+    public readonly FailedConversionCases FailedSphericalDishes = new("spherical dishes");
+    public readonly FailedConversionCases FailedCylinders = new("cylinders");
+    public readonly FailedConversionCases FailedCircularToruses = new("circular toruses");
+    public readonly FailedConversionCases FailedSnouts = new("snouts");
+    public readonly FailedConversionCases FailedRectangularTorus = new("rectangular toruses");
 
-    public struct FailedConversionCases
+    // ReSharper enable ArrangeObjectCreationWhenTypeEvident
+
+    public record FailedConversionCases
     {
         public readonly string PrimitiveType;
 

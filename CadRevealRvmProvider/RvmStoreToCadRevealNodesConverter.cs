@@ -11,27 +11,44 @@ using RvmSharp.Primitives;
 
 internal static class RvmStoreToCadRevealNodesConverter
 {
+    class VariousStatsLogObject
+    {
+        internal int NumberOfExcludedEmptyNodes = 0;
+
+        public void LogStats()
+        {
+            Console.WriteLine("Various stats:");
+            Console.WriteLine($"\tNumber of squashed empty nodes: {NumberOfExcludedEmptyNodes}");
+        }
+    }
+
     public static CadRevealNode[] RvmStoreToCadRevealNodes(
         RvmStore rvmStore,
         TreeIndexGenerator treeIndexGenerator,
-        NodeNameFiltering nodeNameFiltering
+        NodeNameFiltering nodeNameFiltering,
+        bool truncateNodesWithoutMetadata
     )
     {
         var failedPrimitiveConversionsLogObject = new FailedPrimitivesLogObject();
+        var variousStatsLogObject = new VariousStatsLogObject();
         var cadRevealRootNodes = rvmStore
             .RvmFiles.SelectMany(f => f.Model.Children)
             .Select(root =>
-                CollectGeometryNodesRecursive(
+                ConvertRvmNodesToCadRevealNodesRecursive(
                     root,
                     parent: null,
                     treeIndexGenerator,
+                    truncateNodesWithoutMetadata,
                     nodeNameFiltering,
-                    failedPrimitiveConversionsLogObject
+                    failedPrimitiveConversionsLogObject,
+                    variousStatsLogObject
                 )
             )
             .WhereNotNull()
             .ToArray();
         failedPrimitiveConversionsLogObject.LogFailedPrimitives();
+
+        variousStatsLogObject.LogStats();
 
         var subBoundingBox = cadRevealRootNodes
             .Select(x => x.BoundingBoxAxisAligned)
@@ -46,12 +63,14 @@ internal static class RvmStoreToCadRevealNodesConverter
         return allNodes;
     }
 
-    private static CadRevealNode? CollectGeometryNodesRecursive(
+    private static CadRevealNode? ConvertRvmNodesToCadRevealNodesRecursive(
         RvmNode root,
         CadRevealNode? parent,
         TreeIndexGenerator treeIndexGenerator,
+        bool truncateNodesWithoutMetadata,
         NodeNameFiltering nodeNameFiltering,
-        FailedPrimitivesLogObject failedPrimitivesConversionLogObject
+        FailedPrimitivesLogObject failedPrimitivesConversionLogObject,
+        VariousStatsLogObject statsLogObject
     )
     {
         if (nodeNameFiltering.ShouldExcludeNode(root.Name))
@@ -67,9 +86,21 @@ internal static class RvmStoreToCadRevealNodesConverter
         };
 
         CadRevealNode[] childrenCadNodes;
-        RvmPrimitive[] rvmGeometries = Array.Empty<RvmPrimitive>();
+        RvmPrimitive[] rvmGeometries = [];
 
-        if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
+        if (
+            truncateNodesWithoutMetadata
+            && root.EnumerateNodesRecursive(includeSelf: false).Any()
+            && root.EnumerateNodesRecursive(includeSelf: false).All(x => x.Attributes.Count == 0)
+        )
+        {
+            // These nodes have no attributes so we believe they are safe to remove if we need to save TreeIndexes
+            // We may need to save TreeIndexes on assets where we have over 2^24 nodes
+            statsLogObject.NumberOfExcludedEmptyNodes += root.EnumerateNodesRecursive(includeSelf: false).Count();
+            rvmGeometries = root.EnumerateRecursive(false).OfType<RvmPrimitive>().ToArray();
+            childrenCadNodes = [];
+        }
+        else if (root.Children.OfType<RvmPrimitive>().Any() && root.Children.OfType<RvmNode>().Any())
         {
             childrenCadNodes = root
                 .Children.Select(child =>
@@ -77,23 +108,27 @@ internal static class RvmStoreToCadRevealNodesConverter
                     switch (child)
                     {
                         case RvmPrimitive rvmPrimitive:
-                            return CollectGeometryNodesRecursive(
+                            return ConvertRvmNodesToCadRevealNodesRecursive(
                                 new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
                                 {
                                     Children = { rvmPrimitive }
                                 },
                                 newNode,
                                 treeIndexGenerator,
+                                truncateNodesWithoutMetadata,
                                 nodeNameFiltering,
-                                failedPrimitivesConversionLogObject
+                                failedPrimitivesConversionLogObject,
+                                statsLogObject
                             );
                         case RvmNode rvmNode:
-                            return CollectGeometryNodesRecursive(
+                            return ConvertRvmNodesToCadRevealNodesRecursive(
                                 rvmNode,
                                 newNode,
                                 treeIndexGenerator,
+                                truncateNodesWithoutMetadata,
                                 nodeNameFiltering,
-                                failedPrimitivesConversionLogObject
+                                failedPrimitivesConversionLogObject,
+                                statsLogObject
                             );
                         default:
                             throw new Exception();
@@ -107,12 +142,14 @@ internal static class RvmStoreToCadRevealNodesConverter
             childrenCadNodes = root
                 .Children.OfType<RvmNode>()
                 .Select(n =>
-                    CollectGeometryNodesRecursive(
+                    ConvertRvmNodesToCadRevealNodesRecursive(
                         n,
                         newNode,
                         treeIndexGenerator,
+                        truncateNodesWithoutMetadata,
                         nodeNameFiltering,
-                        failedPrimitivesConversionLogObject
+                        failedPrimitivesConversionLogObject,
+                        statsLogObject
                     )
                 )
                 .WhereNotNull()
