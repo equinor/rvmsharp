@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param (
     [Parameter(Mandatory = $true)][string] $InputDirectory, #Example "../TestData/HDA_RVM"),
-    [Parameter(Mandatory = $false)][string] $WorkDirectory = $(Join-Path "$PSScriptRoot" ".\work_temp\"),
+    [Parameter(Mandatory = $false)][string] $WorkDirectory = $(Join-Path "$PSScriptRoot" "./work_temp/"),
     [Parameter(Mandatory = $true)][long] $ProjectId, #Example value:  1,
     [Parameter(Mandatory = $true)][long] $ModelId, #Example value: 2
     [Parameter(Mandatory = $true)][long] $RevisionId, #Example value: 3
@@ -27,11 +27,6 @@ end {
     [Console]::ResetColor()
     $ErrorActionPreference = 'Stop'
     $scriptTimer = [system.diagnostics.stopwatch]::StartNew()
-    if ($IsLinux) {
-        # Known Linux compability issues: We do not yet have a binary for the CTMConv for Linux.
-        # Ctmconv for linux can be built and added, but has not yet been prioritized. See the readme in the ctmconv directory.
-        Write-Error "This script is not yet tested for Linux. If you want to try running it, please remove this line and beware of dragons!"
-    }
     #endregion PsSetup
 
 
@@ -52,7 +47,7 @@ end {
 
     #region Reveal Composer
 
-    $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
+    $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.Exe" "CadRevealComposer.Exe.csproj"
 
     $composerArgs = @()
     $composerArgs += "--InputDirectory"
