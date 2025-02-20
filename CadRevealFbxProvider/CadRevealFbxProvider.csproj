@@ -21,7 +21,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include=".\lib\libcfbx.so">
-      <Link>libcfbx.so</Link>
+      <!-- Link: Path under the output directory to place the file -->
+      <Link>runtimes/linux-x64/native/libcfbx.so</Link>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
