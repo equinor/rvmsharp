@@ -329,10 +329,10 @@ public static class RvmParser
 
             if (!bytes.SequenceEqual(ExpectedV4Bytes) && !V4BytesFoundOnEwModel.Any(x => x.SequenceEqual(bytesArray)))
             {
-                throw new Exception(
+                Console.Error.WriteLine(
                     "New bytes in version 4 cntb. Was: "
-                        + String.Join(",", bytes.ToArray())
-                        + "\n Please update the C# code to allow the new values. This exception only exists to try to decipher the values in the v4 format."
+                        + String.Join(",", bytesArray.Select(x => "0x" + x.ToString("X")).ToArray())
+                        + "\n Please update the C# code to allow the new values. This error only exists to try to decipher the values in the v4 format."
                 );
             }
         }
