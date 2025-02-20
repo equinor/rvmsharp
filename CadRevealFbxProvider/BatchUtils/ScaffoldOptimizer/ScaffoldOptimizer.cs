@@ -151,7 +151,9 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     Mesh? mesh = partsOfLedgerBeam[j];
                     if (mesh != null)
                     {
-                        results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], mesh, j, requestChildMeshInstanceId));
+                        results.Add(
+                            new ScaffoldOptimizerResult(nodeGeometries[i], mesh, j, requestChildMeshInstanceId)
+                        );
                     }
                 }
             }
@@ -177,20 +179,14 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         return results;
     }
 
-    private static Box ToBoxPrimitive(APrimitive geometry, Mesh mesh)
+    private static Box ToBoxPrimitive(APrimitive geometryWithTransform, Mesh meshToBound)
     {
-        // :TODO: Try to move this, or part of this, into BoundingBox::ToBoxPrimitive()
-        var matrix = (geometry as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
-
-        matrix.DecomposeAndNormalize(out Vector3 scale, out Quaternion rot, out Vector3 trans);
-
-        BoundingBox boundingBoxTransformed = mesh.CalculateAxisAlignedBoundingBox(matrix);
-        BoundingBox boundingBox = mesh.CalculateAxisAlignedBoundingBox(Matrix4x4.CreateScale(scale));
-
-        var matrix2 =
-            Matrix4x4.CreateScale(boundingBox.Extents)
-            * Matrix4x4.CreateFromQuaternion(rot)
-            * Matrix4x4.CreateTranslation(boundingBoxTransformed.Center);
-        return new Box(matrix2, geometry.TreeIndex, geometry.Color, boundingBoxTransformed);
+        var matrix = (geometryWithTransform as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
+        return BoundingBox.ToBoxPrimitive(
+            meshToBound,
+            matrix,
+            geometryWithTransform.TreeIndex,
+            geometryWithTransform.Color
+        );
     }
 }

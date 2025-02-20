@@ -255,6 +255,7 @@ public class ScaffoldOptimizerTests
 
         var mesh4 = MeshCreator.Create(1000);
         var mesh5 = MeshCreator.CreateCone();
+        Assert.That(mesh5, Is.Not.Null);
 
         switch (testPurpose)
         {
