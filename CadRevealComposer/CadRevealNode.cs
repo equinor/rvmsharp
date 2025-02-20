@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
+using Tessellation;
 using Utils;
 
 [ProtoContract(SkipConstructor = true)]
@@ -47,6 +48,25 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     {
         var matrix = Matrix4x4.CreateScale(Extents) * Matrix4x4.CreateTranslation(Center);
         return new Box(matrix, treeIndex, color, this);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="Box"/> primitive to visualize the given bounding box of
+    /// the given mesh, where the bounding box is transformed using the input transform matrix.
+    /// </summary>
+    /// <returns>A transformed Box object representing the Mesh bounding box.</returns>
+    public static Box ToBoxPrimitive(Mesh meshToBound, Matrix4x4 transform, uint treeIndex, Color color)
+    {
+        transform.DecomposeAndNormalize(out Vector3 scale, out Quaternion rot, out Vector3 trans);
+
+        BoundingBox boundingBoxTransformed = meshToBound.CalculateAxisAlignedBoundingBox(transform);
+        BoundingBox boundingBox = meshToBound.CalculateAxisAlignedBoundingBox(Matrix4x4.CreateScale(scale));
+
+        var matrix2 =
+            Matrix4x4.CreateScale(boundingBox.Extents)
+            * Matrix4x4.CreateFromQuaternion(rot)
+            * Matrix4x4.CreateTranslation(boundingBoxTransformed.Center);
+        return new Box(matrix2, treeIndex, color, boundingBoxTransformed);
     }
 
     /// <summary>
