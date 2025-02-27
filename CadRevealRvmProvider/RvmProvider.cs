@@ -11,6 +11,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
+using Commons.Utils;
 using Converters;
 using Converters.CapVisibilityHelpers;
 using Operations;
@@ -40,10 +41,7 @@ public class RvmProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
         var rvmStore = RvmWorkload.ReadRvmFiles(workload, progressReport, stringInternPool);
-        var rvmFileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
-        var txtFileSizesTotal = workload
-            .Where(x => x.txtFilename != null)
-            .Sum(w => new FileInfo(w.txtFilename!).Length);
+
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
         if (workload.Length == 0)
@@ -53,8 +51,12 @@ public class RvmProvider : IModelFormatProvider
         }
 
         LogRvmPrimitives(rvmStore);
+
+        var rvmFilesSizeMb = GetFileSizeInMegaBytes(workload.Select(w => w.rvmFilename));
+        var txtFilesSizeMb = GetFileSizeInMegaBytes(workload.Select(w => w.txtFilename).WhereNotNull());
+
         Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{rvmFileSizesTotal / 1024 / 1024}mb of .rvm files (and (~{txtFileSizesTotal / 1024 / 1024}mb .txt file size))"
+            $"Read RvmData in {rvmTimer.Elapsed}. (~{rvmFilesSizeMb:F2}MB of .rvm files (and (~{txtFilesSizeMb:F2}MB .txt file size) (sum: {rvmFilesSizeMb + txtFilesSizeMb:F2}MB)"
         );
 
         var stopwatch = Stopwatch.StartNew();
@@ -191,5 +193,15 @@ public class RvmProvider : IModelFormatProvider
                 Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
             }
         }
+    }
+
+    /// <summary>
+    /// Get the total size of the files in all the filenames in MegaBytes.
+    /// </summary>
+    /// <param name="filenames">A list of filenames</param>
+    /// <returns>Total file size in MegaBytes (MB)</returns>
+    private static double GetFileSizeInMegaBytes(IEnumerable<string> filenames)
+    {
+        return ByteUtils.BytesToMegabytes(filenames.Sum(filename => new FileInfo(filename).Length));
     }
 }
