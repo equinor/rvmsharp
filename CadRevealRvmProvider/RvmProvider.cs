@@ -11,6 +11,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
+using Commons.Utils;
 using Converters;
 using Converters.CapVisibilityHelpers;
 using Operations;
@@ -40,7 +41,7 @@ public class RvmProvider : IModelFormatProvider
 
         var stringInternPool = new BenStringInternPool(new SharedInternPool());
         var rvmStore = RvmWorkload.ReadRvmFiles(workload, progressReport, stringInternPool);
-        var fileSizesTotal = workload.Sum(w => new FileInfo(w.rvmFilename).Length);
+
         teamCityReadRvmFilesLogBlock.CloseBlock();
 
         if (workload.Length == 0)
@@ -50,17 +51,38 @@ public class RvmProvider : IModelFormatProvider
         }
 
         LogRvmPrimitives(rvmStore);
+
+        var rvmFilesSizeMb = GetFileSizeInMegaBytes(workload.Select(w => w.rvmFilename));
+        var txtFilesSizeMb = GetFileSizeInMegaBytes(workload.Select(w => w.txtFilename).WhereNotNull());
+
         Console.WriteLine(
-            $"Read RvmData in {rvmTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .rvm files (excluding .txt file size))"
+            $"Read RvmData in {rvmTimer.Elapsed}. (~{rvmFilesSizeMb:F2}MB of .rvm files (and (~{txtFilesSizeMb:F2}MB .txt file size) (sum: {rvmFilesSizeMb + txtFilesSizeMb:F2}MB)"
         );
 
         var stopwatch = Stopwatch.StartNew();
+        int rvmNodeCount = rvmStore
+            .RvmFiles.SelectMany(x => x.Model.Children)
+            .SelectMany(x => x.EnumerateNodesRecursive())
+            .Count();
+        Console.WriteLine($"RvmNode count: {rvmNodeCount}");
+
+        bool truncateEmptyNodes = rvmNodeCount > TreeIndexGenerator.MaxTreeIndex * 0.7;
+        if (truncateEmptyNodes)
+        {
+            Console.WriteLine($"Truncating empty nodes due to very high node count {rvmNodeCount}");
+        }
+
         var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
             rvmStore,
             treeIndexGenerator,
-            nodeNameFiltering
+            nodeNameFiltering,
+            truncateNodesWithoutMetadata: truncateEmptyNodes
         );
-        Console.WriteLine($"Converted to reveal nodes in {stopwatch.Elapsed}");
+        Console.WriteLine(
+            "CadRevealNodeCount: " + nodes.Length + ". TreeIndex count is " + treeIndexGenerator.PeekNextId
+        );
+
+        Console.WriteLine($"Converted RVM files to Reveal nodes in {stopwatch.Elapsed}");
 
         return (nodes, null);
     }
@@ -171,5 +193,15 @@ public class RvmProvider : IModelFormatProvider
                 Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
             }
         }
+    }
+
+    /// <summary>
+    /// Get the total size of the files in all the filenames in MegaBytes.
+    /// </summary>
+    /// <param name="filenames">A list of filenames</param>
+    /// <returns>Total file size in MegaBytes (MB)</returns>
+    private static double GetFileSizeInMegaBytes(IEnumerable<string> filenames)
+    {
+        return ByteUtils.BytesToMegabytes(filenames.Sum(filename => new FileInfo(filename).Length));
     }
 }
