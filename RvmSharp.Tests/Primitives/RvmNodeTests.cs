@@ -75,7 +75,7 @@ public class RvmNodeTests
     [Test]
     [TestCase(true, 10)]
     [TestCase(false, 9)]
-    public void EnumerateRecursive_WhenIncludeSelfTrue_ReturnsAllNodesIncludingSelf(bool includeSelf, int expectedCount)
+    public void EnumerateRecursive_IncludeSelf_ReturnsExpectedNodeCount(bool includeSelf, int expectedCount)
     {
         var nodes = _rootNode.EnumerateRecursive(includeSelf).ToArray();
         Assert.That(nodes, Has.Exactly(expectedCount).Items);
