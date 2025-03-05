@@ -104,8 +104,6 @@ public static class Simplify
         var timer = Stopwatch.StartNew();
         // Optimize TriangleMesh meshes for least memory use
         var processedGeometries = geometriesToProcess
-            .AsParallel()
-            .AsOrdered()
             .Select(primitive =>
             {
                 if (primitive is not TriangleMesh triangleMesh)
