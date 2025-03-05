@@ -52,9 +52,9 @@ public class DatabaseComposerTests
                 AABB = new AABB
                 {
                     min = new Vector3EfSerializable(-Vector3.One),
-                    max = new Vector3EfSerializable(Vector3.One)
-                }
-            }
+                    max = new Vector3EfSerializable(Vector3.One),
+                },
+            },
         };
 
         databaseComposer.ComposeDatabase(nodes, TestFilePath);

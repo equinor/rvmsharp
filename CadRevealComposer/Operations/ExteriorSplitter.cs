@@ -154,7 +154,7 @@ public static class ExteriorSplitter
                     var result = primitive switch
                     {
                         TessellatedPrimitive rayCast => MatchRayCast(rayCast.Triangles, ray.Ray),
-                        _ => MatchBoundingBox(primitive.OriginalPrimitive.AxisAlignedBoundingBox, ray.Box, ray.Ray)
+                        _ => MatchBoundingBox(primitive.OriginalPrimitive.AxisAlignedBoundingBox, ray.Box, ray.Ray),
                     };
                     if (result.Hit && result.Distance < distance)
                     {
@@ -270,7 +270,7 @@ public static class ExteriorSplitter
                     {
                         InstancedMesh instancedMesh => TessellateInstancedMesh(instancedMesh),
                         TriangleMesh triangleMesh => TessellateTriangleMesh(triangleMesh),
-                        _ => new Primitive(p)
+                        _ => new Primitive(p),
                     }
                 )
                 .WhereNotNull()

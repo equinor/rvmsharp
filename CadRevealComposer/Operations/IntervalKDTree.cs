@@ -132,21 +132,21 @@ internal class IntervalKdTree<T>
             {
                 0 => (Max.X + Min.X) / 2,
                 1 => (Max.Y + Min.Y) / 2,
-                _ => (Max.Z + Min.Z) / 2
+                _ => (Max.Z + Min.Z) / 2,
             };
 
             _lowChild = dimension switch
             {
                 0 => new Node(_tree, _depth + 1, Min, new Vector3(_divisionBoundary, Max.Y, Max.Z)),
                 1 => new Node(_tree, _depth + 1, Min, new Vector3(Max.X, _divisionBoundary, Max.Z)),
-                _ => new Node(_tree, _depth + 1, Min, new Vector3(Max.X, Max.Y, _divisionBoundary))
+                _ => new Node(_tree, _depth + 1, Min, new Vector3(Max.X, Max.Y, _divisionBoundary)),
             };
 
             _highChild = dimension switch
             {
                 0 => new Node(_tree, _depth + 1, new Vector3(_divisionBoundary, Min.Y, Min.Z), Max),
                 1 => new Node(_tree, _depth + 1, new Vector3(Min.X, _divisionBoundary, Min.Z), Max),
-                _ => new Node(_tree, _depth + 1, new Vector3(Min.X, Min.Y, _divisionBoundary), Max)
+                _ => new Node(_tree, _depth + 1, new Vector3(Min.X, Min.Y, _divisionBoundary), Max),
             };
 
             IList<Box> oldBoxList = _boxes;
@@ -175,7 +175,7 @@ internal class IntervalKdTree<T>
             {
                 0 => Max.X < boundary,
                 1 => Max.Y < boundary,
-                _ => Max.Z < boundary
+                _ => Max.Z < boundary,
             };
         }
 
@@ -186,7 +186,7 @@ internal class IntervalKdTree<T>
             {
                 0 => boundary <= Min.X,
                 1 => boundary <= Min.Y,
-                _ => boundary <= Min.Z
+                _ => boundary <= Min.Z,
             };
         }
 

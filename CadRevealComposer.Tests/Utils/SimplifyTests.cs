@@ -14,7 +14,7 @@ public static class SimplifyTests
     public enum MeshType
     {
         MeshBox,
-        MeshSphere
+        MeshSphere,
     }
 
     private static Mesh GenBoxMesh()

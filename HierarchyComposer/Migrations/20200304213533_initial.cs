@@ -16,7 +16,7 @@ namespace Mop.Hierarchy.Migrations
                     min_z = table.Column<float>(nullable: true),
                     max_x = table.Column<float>(nullable: true),
                     max_y = table.Column<float>(nullable: true),
-                    max_z = table.Column<float>(nullable: true)
+                    max_z = table.Column<float>(nullable: true),
                 },
                 constraints: table =>
                 {
@@ -30,7 +30,7 @@ namespace Mop.Hierarchy.Migrations
                 {
                     Id = table.Column<long>(nullable: false).Annotation("Sqlite:Autoincrement", true),
                     Key = table.Column<string>(nullable: true),
-                    Value = table.Column<string>(nullable: true)
+                    Value = table.Column<string>(nullable: true),
                 },
                 constraints: table =>
                 {
@@ -47,7 +47,7 @@ namespace Mop.Hierarchy.Migrations
                     HasMesh = table.Column<bool>(nullable: false),
                     ParentId = table.Column<uint>(nullable: true),
                     TopNodeId = table.Column<uint>(nullable: true),
-                    AABBId = table.Column<int>(nullable: true)
+                    AABBId = table.Column<int>(nullable: true),
                 },
                 constraints: table =>
                 {
@@ -81,7 +81,7 @@ namespace Mop.Hierarchy.Migrations
                 columns: table => new
                 {
                     NodeId = table.Column<uint>(nullable: false),
-                    PDMSEntryId = table.Column<long>(nullable: false)
+                    PDMSEntryId = table.Column<long>(nullable: false),
                 },
                 constraints: table =>
                 {

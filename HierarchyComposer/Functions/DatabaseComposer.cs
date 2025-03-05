@@ -65,7 +65,7 @@ public class DatabaseComposer
                 {
                     Id = ++pdmsEntryIdCounter,
                     Key = g.First().Key,
-                    Value = g.First().Value
+                    Value = g.First().Value,
                 }
             );
 
@@ -90,11 +90,11 @@ public class DatabaseComposer
                     .PDMSData.Select(kvp => new NodePDMSEntry
                     {
                         NodeId = inputNode.NodeId,
-                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id,
                     })
                     .ToList(),
                 AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
-                DiagnosticInfo = inputNode.OptionalDiagnosticInfo
+                DiagnosticInfo = inputNode.OptionalDiagnosticInfo,
             })
             .ToDictionary(n => n.Id, n => n);
 

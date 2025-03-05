@@ -51,7 +51,7 @@ public static class SplittingUtils
             (true, false, false) => SubVoxelE,
             (true, false, true) => SubVoxelF,
             (true, true, false) => SubVoxelG,
-            (true, true, true) => SubVoxelH
+            (true, true, true) => SubVoxelH,
         };
     }
 

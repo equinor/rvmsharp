@@ -83,7 +83,7 @@ public class LoosePiecesMeshToolsTests
             new(min.X, min.Y, max.Z), // 4
             new(max.X, min.Y, max.Z), // 5
             new(max.X, max.Y, max.Z), // 6
-            new(min.X, max.Y, max.Z) // 7
+            new(min.X, max.Y, max.Z), // 7
         };
         // csharpier-ignore -- prettier manual formatting
         var triangleIndexes = new uint[]

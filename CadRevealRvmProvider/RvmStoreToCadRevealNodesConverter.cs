@@ -82,7 +82,7 @@ internal static class RvmStoreToCadRevealNodesConverter
             Parent = parent,
             Children = null,
             Name = root.Name,
-            Attributes = root.Attributes
+            Attributes = root.Attributes,
         };
 
         CadRevealNode[] childrenCadNodes;
@@ -111,7 +111,7 @@ internal static class RvmStoreToCadRevealNodesConverter
                             return ConvertRvmNodesToCadRevealNodesRecursive(
                                 new RvmNode(2, "Implicit geometry", root.Translation, root.MaterialId)
                                 {
-                                    Children = { rvmPrimitive }
+                                    Children = { rvmPrimitive },
                                 },
                                 newNode,
                                 treeIndexGenerator,

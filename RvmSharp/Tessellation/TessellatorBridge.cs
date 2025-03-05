@@ -134,13 +134,13 @@ public static class TessellatorBridge
                 new Vector3(-bx - ox, -by - oy, -halfHeight),
                 new Vector3(bx - ox, -by - oy, -halfHeight),
                 new Vector3(bx - ox, by - oy, -halfHeight),
-                new Vector3(-bx - ox, by - oy, -halfHeight)
+                new Vector3(-bx - ox, by - oy, -halfHeight),
             },
             {
                 new Vector3(-tx + ox, -ty + oy, halfHeight),
                 new Vector3(tx + ox, -ty + oy, halfHeight),
                 new Vector3(tx + ox, ty + oy, halfHeight),
-                new Vector3(-tx + ox, ty + oy, halfHeight)
+                new Vector3(-tx + ox, ty + oy, halfHeight),
             },
         };
 
@@ -164,7 +164,7 @@ public static class TessellatorBridge
             true,
             true,
             MinimumThreshold <= Math.Min(Math.Abs(pyramid.BottomX), Math.Abs(pyramid.BottomY)),
-            MinimumThreshold <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY))
+            MinimumThreshold <= Math.Min(Math.Abs(pyramid.TopX), Math.Abs(pyramid.TopY)),
         };
 
         for (var i = 0; i < 6; i++)
@@ -635,7 +635,7 @@ public static class TessellatorBridge
             { new Vector3(xp, ym, zm), new Vector3(xp, ym, zp), new Vector3(xm, ym, zp), new Vector3(xm, ym, zm) },
             { new Vector3(xm, yp, zm), new Vector3(xm, yp, zp), new Vector3(xp, yp, zp), new Vector3(xp, yp, zm) },
             { new Vector3(xm, yp, zm), new Vector3(xp, yp, zm), new Vector3(xp, ym, zm), new Vector3(xm, ym, zm) },
-            { new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp), new Vector3(xm, yp, zp) }
+            { new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp), new Vector3(xm, yp, zp) },
         };
 
         Vector3[] n =
@@ -645,7 +645,7 @@ public static class TessellatorBridge
             new Vector3(0, -1, 0),
             new Vector3(0, 1, 0),
             new Vector3(0, 0, -1),
-            new Vector3(0, 0, 1)
+            new Vector3(0, 0, 1),
         };
 
         bool[] faces =
