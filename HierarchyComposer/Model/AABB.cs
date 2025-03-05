@@ -17,7 +17,7 @@ public class AABB : IEquatable<AABB>
         {
             Id = id,
             min = this.min,
-            max = this.max
+            max = this.max,
         };
     }
 
@@ -50,7 +50,7 @@ public class AABB : IEquatable<AABB>
                 minZParameter,
                 maxXParameter,
                 maxYParameter,
-                maxZParameter
+                maxZParameter,
             }
         );
 

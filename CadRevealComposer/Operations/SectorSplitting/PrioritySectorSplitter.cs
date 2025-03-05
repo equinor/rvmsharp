@@ -44,7 +44,7 @@ public class PrioritySectorSplitter : ISectorSplitter
         {
             yield return sector with
             {
-                IsPrioritizedSector = true
+                IsPrioritizedSector = true,
             };
         }
     }

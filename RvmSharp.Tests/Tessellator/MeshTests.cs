@@ -65,7 +65,7 @@ public class MeshTests
 
         var scaledUnitPyramid = unitPyramid with
         {
-            Matrix = Matrix4x4.Multiply(unitPyramid.Matrix, Matrix4x4.CreateScale(widePyramidWidth, 1, 1))
+            Matrix = Matrix4x4.Multiply(unitPyramid.Matrix, Matrix4x4.CreateScale(widePyramidWidth, 1, 1)),
         };
         var scaledUnitPyramidMesh = TessellatorBridge.Tessellate(scaledUnitPyramid, unusedTolerance);
 

@@ -22,7 +22,7 @@ public class ScaffoldOptimizerBase
             {
                 InstancedMesh instancedMesh => instancedMesh.TemplateMesh,
                 TriangleMesh triangleMesh => triangleMesh.Mesh,
-                _ => null
+                _ => null,
             };
 
             meshes.Add(mesh);

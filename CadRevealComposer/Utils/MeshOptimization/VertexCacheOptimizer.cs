@@ -94,7 +94,7 @@ public static class VertexCacheOptimizer
             0.490f,
             0.112f,
             0.050f,
-            0.131f
+            0.131f,
         },
         Live = new[] { 0, 0.956f, 0.786f, 0.577f, 0.558f, 0.618f, 0.549f, 0.499f, 0.489f },
     };

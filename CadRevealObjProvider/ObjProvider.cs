@@ -54,7 +54,7 @@ public class ObjProvider : IModelFormatProvider
                     TreeIndex = treeIndex,
                     Parent = null,
                     Name = meshGroup.Name,
-                    Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex)
+                    Geometries = ConvertObjMeshToAPrimitive(meshGroup, treeIndex),
                 }
             );
         }
@@ -73,7 +73,7 @@ public class ObjProvider : IModelFormatProvider
                 Color.Magenta /* TODO: Add color support */
                 ,
                 mesh.CalculateBoundingBox()
-            )
+            ),
         };
     }
 
@@ -162,7 +162,7 @@ public class ObjProvider : IModelFormatProvider
             Name = group.Name,
             Normals = vertexData.Select(x => x.Normal).ToArray(),
             Vertices = vertexData.Select(x => x.Vertex).ToArray(),
-            Triangles = triangles.ToArray()
+            Triangles = triangles.ToArray(),
         };
 
         return mesh.Vertices.Length == 0 ? null : mesh;

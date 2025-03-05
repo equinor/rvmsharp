@@ -19,7 +19,7 @@ public class RvmObjExporterTests
     {
         // create RvmStore
         var store = new RvmStore();
-        var nodes = new List<RvmNode> { new RvmNode(1, "", Vector3.Zero, 1), new RvmNode(1, "", Vector3.Zero, 1), };
+        var nodes = new List<RvmNode> { new RvmNode(1, "", Vector3.Zero, 1), new RvmNode(1, "", Vector3.Zero, 1) };
         nodes[0]
             .Children.Add(new RvmBox(1, Matrix4x4.Identity, new RvmBoundingBox(-Vector3.One, Vector3.One), 2, 2, 2));
         nodes[1]
