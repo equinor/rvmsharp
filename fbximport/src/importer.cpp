@@ -46,5 +46,7 @@ void* load_file(const char* filename, void* sdk)
 
     FbxNode* lRoot = lScene->GetRootNode();
 
+    lImporter->Destroy();
+
     return lRoot;
 }

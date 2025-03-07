@@ -1,7 +1,7 @@
 #include "node.h"
 #include <fbxsdk.h>
 
-void node_get_name(CFbxNode node, char* output, int output_size)
+void node_get_name(CFbxNode* node, char* output, int output_size)
 {
     if (node == nullptr)
         return;
@@ -12,16 +12,16 @@ void node_get_name(CFbxNode node, char* output, int output_size)
     output[output_size - 1] = '\0';
 }
 
-CFbxNode node_get_parent(CFbxNode node)
+CFbxNode* node_get_parent(CFbxNode* node)
 {
     if (node == nullptr)
         return nullptr;
 
     const auto fbxNode = static_cast<FbxNode*>(node);
-    return static_cast<CFbxNode>(fbxNode->GetParent());
+    return static_cast<CFbxNode*>(fbxNode->GetParent());
 }
 
-int node_get_child_count(CFbxNode node)
+int node_get_child_count(CFbxNode* node)
 {
     if (node == nullptr)
         return 0;
@@ -30,16 +30,16 @@ int node_get_child_count(CFbxNode node)
     return fbxNode->GetChildCount();
 }
 
-CFbxNode node_get_child(CFbxNode node, int index)
+CFbxNode* node_get_child(CFbxNode* node, int index)
 {
     if (node == nullptr)
         return nullptr;
 
     const auto fbxNode = static_cast<FbxNode*>(node);
-    return static_cast<CFbxNode>(fbxNode->GetChild(index));
+    return static_cast<CFbxNode*>(fbxNode->GetChild(index));
 }
 
-CFbxMesh node_get_mesh(CFbxNode node)
+CFbxMesh* node_get_mesh(CFbxNode* node)
 {
     if (node == nullptr)
         return nullptr;
@@ -53,7 +53,7 @@ CFbxMesh node_get_mesh(CFbxNode node)
     return nullptr;
 }
 
-CFbxMaterial node_get_material(CFbxNode node)
+CFbxMaterial* node_get_material(CFbxNode* node)
 {
     if (node == nullptr)
         return nullptr;
@@ -67,7 +67,7 @@ CFbxMaterial node_get_material(CFbxNode node)
     return static_cast<FbxSurfaceLambert*>(fbxNode->GetMaterial(0));
 }
 
-void node_destroy(CFbxNode node)
+void node_destroy(CFbxNode* node)
 {
     if (node == nullptr)
         return;
@@ -77,10 +77,8 @@ void node_destroy(CFbxNode node)
     fbxNode = nullptr;
 }
 
-
 void BuildOutTransform(Transform& transform_out, fbxsdk::FbxDouble3& t, fbxsdk::FbxQuaternion& r, fbxsdk::FbxDouble3& s)
 {
-
     transform_out.posX = t[0];
     transform_out.posY = t[1];
     transform_out.posZ = t[2];
@@ -93,7 +91,7 @@ void BuildOutTransform(Transform& transform_out, fbxsdk::FbxDouble3& t, fbxsdk::
     transform_out.scaleZ = s[2];
 }
 
-Transform node_get_transform(CFbxNode node)
+Transform node_get_transform(CFbxNode* node)
 {
     Transform transform_out{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     if (node == nullptr)
@@ -110,8 +108,7 @@ Transform node_get_transform(CFbxNode node)
     return transform_out;
 }
 
-
-Transform node_get_geometric_transform(CFbxNode node)
+Transform node_get_geometric_transform(CFbxNode* node)
 {
     Transform transform_out{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     if (node == nullptr)

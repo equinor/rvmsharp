@@ -44,7 +44,7 @@ TEST_CASE("Load and iterate", "[FBX sdk]")
     _CrtMemCheckpoint(&s1);
 #endif
 
-    FbxInfo fbx_info(get_test_model_file_path(), false);
+    FbxInfo fbx_info(get_test_model_file_path());
     std::cout << fbx_info.print_info();
 
 #ifdef _WIN32
@@ -62,15 +62,15 @@ TEST_CASE("Assert that the fbxsdk is newer or equal to a specified version", "[F
     //Test that assert_fbxsdk_version_newer_or_equal_than with (nonexisting) future version fails.
     REQUIRE(assert_fbxsdk_version_newer_or_equal_than("3020.3.2") == false);
 }
-
+/*
 TEST_CASE("Check ignore normals", "[FBX sdk]")
 {
     auto testModelPath = get_test_model_file_path();
 
     std::cout << std::string("Using file path: ") << testModelPath << std::endl;
 
-    FbxInfo fbx_info1(testModelPath, false);
-    FbxInfo fbx_info2(testModelPath, true);
+    FbxInfo fbx_info1(testModelPath);
+    FbxInfo fbx_info2(testModelPath);
 
     size_t node_count1 = fbx_info1.get_node_count();
     size_t node_count2 = fbx_info2.get_node_count();
@@ -93,4 +93,4 @@ TEST_CASE("Check ignore normals", "[FBX sdk]")
     std::string output = FbxInfo::print_comparison(fbx_info1, fbx_info2);
     REQUIRE(output.size() > 0);
     std::cout << output;
-}
+}*/

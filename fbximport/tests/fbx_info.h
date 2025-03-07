@@ -29,7 +29,7 @@ public:
     };
 
 public:
-    FbxInfo(const std::string& fileName, const bool& ignore_normals);
+    FbxInfo(const std::string& fileName);
 
 public:
     size_t get_node_count() const;
@@ -38,10 +38,9 @@ public:
     static std::string print_comparison(const FbxInfo& a, const FbxInfo& b);
 
 private:
-    void iterate(CFbxNode parent, const bool& ignore_normals, int ident = 0);
-    void load(const std::string& fileName, const bool& ignore_normals);
+    void iterate(CFbxNode* parent, int ident = 0);
+    void load(const std::string& fileName);
 
 private:
     std::vector<InfoItem> m_node_info;
-    bool m_ignore_normals = false;
 };

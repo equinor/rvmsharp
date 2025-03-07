@@ -15,7 +15,6 @@ public static class FbxMeshWrapper
         public int vertex_count;
         public int index_count;
         public IntPtr vertex_position_data;
-        public IntPtr vertex_normal_data;
         public IntPtr index_data;
     }
 
@@ -32,11 +31,11 @@ public static class FbxMeshWrapper
 
     // the underlying umanaged code allocates memory, you must call mesh_clean_memory to free it later
     [DllImport(FbxLib, CallingConvention = CallingConvention.Cdecl, EntryPoint = "mesh_get_geometry_data")]
-    private static extern IntPtr mesh_get_geometry_data(IntPtr mesh, bool ignore_normals); // IntPtr out is FbxMesh*
+    private static extern IntPtr mesh_get_geometry_data(IntPtr mesh); // IntPtr out is FbxMesh*
 
     public static Mesh? GetGeometricData(IntPtr meshPtr)
     {
-        var geomPtr = mesh_get_geometry_data(meshPtr, true); // Reveal does not use surface normals, hence we ignore them and treat vertices with different normals, but same location, as equivalent.
+        var geomPtr = mesh_get_geometry_data(meshPtr); // Reveal does not use surface normals, hence we ignore them and treat vertices with different normals, but same location, as equivalent.
         var geom = Marshal.PtrToStructure<FbxMesh>(geomPtr);
 
         // geometry can be invalid if, e.g., the extraction of normal vectors failed
@@ -45,19 +44,15 @@ public static class FbxMeshWrapper
             var vCount = geom.vertex_count;
             var iCount = geom.index_count;
             var vertices = new float[vCount * 3];
-            var normals = new float[vCount * 3];
             var indices = new int[iCount];
             Marshal.Copy(geom.vertex_position_data, vertices, 0, vertices.Length);
-            Marshal.Copy(geom.vertex_normal_data, normals, 0, normals.Length);
             Marshal.Copy(geom.index_data, indices, 0, indices.Length);
             mesh_clean_memory(geomPtr);
             var vv = new Vector3[vCount];
-            var nn = new Vector3[vCount];
 
             for (var i = 0; i < vCount; i++)
             {
                 vv[i] = new Vector3(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
-                nn[i] = new Vector3(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
             }
 
             var ii = indices.Select(a => (uint)a).ToArray();
