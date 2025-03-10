@@ -77,14 +77,6 @@ public static class FbxWorkload
     {
         var progress = 0;
 
-        // FBX Importer is intentionally not disposed as the dispose operation takes too long. If this becomes a problem with memory leaks we need to investigate why the dispose is so slow.
-        using var fbxImporter = new FbxImporter();
-        if (!fbxImporter.HasValidSdk())
-        {
-            Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
-            throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
-        }
-
         Dictionary<string, string> metadata = new();
 
         var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
@@ -115,6 +107,14 @@ public static class FbxWorkload
                 }
             }
 
+            // FBX Importer is intentionally not disposed as the dispose operation takes too long. If this becomes a problem with memory leaks we need to investigate why the dispose is so slow.
+            var fbxImporter = new FbxImporter();
+            if (!fbxImporter.HasValidSdk())
+            {
+                Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
+                throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
+            }
+
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
             var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
                 rootNodeOfModel,
@@ -123,6 +123,8 @@ public static class FbxWorkload
                 nodeNameFiltering,
                 attributes
             );
+
+            fbxImporter.Dispose();
 
             if (rootNodeConverted == null)
                 return [];
