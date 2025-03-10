@@ -11,9 +11,9 @@ public static class TessNet
 {
     public class TessellateResult
     {
-        public Vector3[] VertexData = Array.Empty<Vector3>();
-        public Vector3[] NormalData = Array.Empty<Vector3>();
-        public readonly List<int> Indices = new List<int>();
+        public Vector3[] VertexData = [];
+        public Vector3[] NormalData = [];
+        public readonly List<int> Indices = [];
     }
 
     public static TessellateResult Tessellate(RvmContour[] contours)
@@ -30,9 +30,12 @@ public static class TessNet
                 continue;
             }
 
-            var cv = contour
-                .Vertices.Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal))
-                .ToArray();
+            var cv = new ContourVertex[contour.Vertices.Length];
+            for (int i = 0; i < contour.Vertices.Length; i++)
+            {
+                var v = contour.Vertices[i];
+                cv[i] = new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal);
+            }
             tess.AddContour(cv);
             var n = contour.Vertices[0].Normal;
             normal = new Vec3(n.X, n.Y, n.Z);
@@ -45,8 +48,18 @@ public static class TessNet
         var result = new TessellateResult();
 
         tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, CombineNormals, normal);
-        result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
-        result.NormalData = tess.Vertices.Select(v => (Vector3)v.Data).ToArray();
+
+        var vertexData = new List<Vector3>(tess.Vertices.Length);
+        var normalData = new List<Vector3>(tess.Vertices.Length);
+
+        foreach (var v in tess.Vertices)
+        {
+            vertexData.Add(new Vector3(v.Position.X, v.Position.Y, v.Position.Z));
+            normalData.Add((Vector3)v.Data);
+        }
+
+        result.VertexData = vertexData.ToArray();
+        result.NormalData = normalData.ToArray();
 
         for (var i = 0; i < tess.ElementCount; i++)
         {
