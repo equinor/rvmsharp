@@ -48,7 +48,7 @@ end {
 
     #region Reveal Composer
 
-    $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.exe" "CadRevealComposer.exe.csproj"
+    $cadRevealComposerPath = Join-Path "$PSScriptRoot" ".." "CadRevealComposer.Exe" "CadRevealComposer.Exe.csproj"
 
     $composerArgs = @()
     $composerArgs += "--InputDirectory"

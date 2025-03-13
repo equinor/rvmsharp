@@ -58,7 +58,7 @@ the [cognite/reveal](https://github.com/cognitedata/reveal) 3D Viewer.
 Invoke from CLI
 
 ```cli
-dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.exe" -i $AFolderWithRvmAndTxtFiles -o pathto/reveal/examples/public/primitives --ProjectId 1 --ModelId 1 --RevisionId 1
+dotnet run -c Release --project "..\rvmsharp\CadRevealComposer.Exe" -i $AFolderWithRvmAndTxtFiles -o pathto/reveal/examples/public/primitives --ProjectId 1 --ModelId 1 --RevisionId 1
 ```
 
 ## Example Data
