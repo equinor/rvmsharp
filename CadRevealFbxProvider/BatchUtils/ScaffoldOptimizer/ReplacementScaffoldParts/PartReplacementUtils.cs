@@ -5,17 +5,49 @@ using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
-using CadRevealComposer.Utils;
-using g3;
-using SharpGLTF.Schema2;
+using CadRevealComposer.Tessellation;
 
 public static class PartReplacementUtils
 {
-    public static (TriangleMesh? front, TriangleMesh? back) TessellateCylinderPart(
-        Vector3 startPoint,
-        Vector3 endPoint,
-        float radius
-    )
+    public static EccentricCone? CreatePrimitiveCylinderPart(Mesh mesh)
+    {
+        // :TODO: In the below procedure we are assuming a cylinder mesh that is axis aligned.
+        // Hence, at the moment we do not support non-axis aligned cylinders as input.
+        var boundingBox = mesh.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity);
+        var sortedBoundingBoxExtent = new SortedBoundingBoxExtent(boundingBox);
+        var a = new Vector3
+        {
+            [sortedBoundingBoxExtent.AxisIndexOfLargest] = boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfLargest],
+            [sortedBoundingBoxExtent.AxisIndexOfMiddle] =
+                (
+                    boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfMiddle]
+                    + boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfMiddle]
+                ) / 2.0f,
+            [sortedBoundingBoxExtent.AxisIndexOfSmallest] =
+                (
+                    boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfSmallest]
+                    + boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfSmallest]
+                ) / 2.0f
+        };
+        var b = new Vector3
+        {
+            [sortedBoundingBoxExtent.AxisIndexOfLargest] = boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfLargest],
+            [sortedBoundingBoxExtent.AxisIndexOfMiddle] =
+                (
+                    boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfMiddle]
+                    + boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfMiddle]
+                ) / 2.0f,
+            [sortedBoundingBoxExtent.AxisIndexOfSmallest] =
+                (
+                    boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfSmallest]
+                    + boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfSmallest]
+                ) / 2.0f
+        };
+        var r = (sortedBoundingBoxExtent.ValueOfSmallest + sortedBoundingBoxExtent.ValueOfMiddle) / 4.0f;
+        return CreatePrimitiveCylinderPart(a, b, r);
+    }
+
+    public static EccentricCone? CreatePrimitiveCylinderPart(Vector3 startPoint, Vector3 endPoint, float radius)
     {
         // Estimate an axis aligned bounding box for the ledger beam cylinder
         var radiusVec = new Vector3(radius, radius, radius);
@@ -36,17 +68,7 @@ public static class PartReplacementUtils
         // Create cylinders from eccentric cones
         Vector3 lengthVec = endPoint - startPoint;
         Vector3 unitNormal = lengthVec * (1.0f / lengthVec.Length());
-        EccentricCone coneFront = new EccentricCone(
-            startPoint,
-            endPoint,
-            unitNormal,
-            radius,
-            radius,
-            0,
-            Color.Brown,
-            estimatedCylinderAxisAlignedBoundingBox
-        );
-        EccentricCone coneBack = new EccentricCone(
+        return new EccentricCone(
             startPoint,
             endPoint,
             -unitNormal,
@@ -56,12 +78,15 @@ public static class PartReplacementUtils
             Color.Brown,
             estimatedCylinderAxisAlignedBoundingBox
         );
+    }
+
+    public static TriangleMesh? TessellateCylinderPart(Vector3 startPoint, Vector3 endPoint, float radius)
+    {
+        // Create primitive eccentric cones
+        var primitiveCylinder = CreatePrimitiveCylinderPart(startPoint, endPoint, radius);
 
         // Tessellate the eccentric cones
-        var cylinderFront = EccentricConeTessellator.Tessellate(coneFront);
-        var cylinderBack = EccentricConeTessellator.Tessellate(coneBack);
-
-        return (cylinderFront, cylinderBack);
+        return (primitiveCylinder != null) ? EccentricConeTessellator.Tessellate(primitiveCylinder) : null;
     }
 
     public static TriangleMesh? TessellateBoxPart(
@@ -140,5 +165,21 @@ public static class PartReplacementUtils
         );
 
         return mesh;
+    }
+
+    public static int FindIndexWithLargestBoundingBoxVolume(List<Mesh?> meshList)
+    {
+        return meshList
+            .Select((m, idx) => new { m, i = idx })
+            .OrderByDescending(v =>
+            {
+                Vector3 ext =
+                    (v.m != null)
+                        ? v.m.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity).Extents
+                        : new Vector3(0.0f, 0.0f, 0.0f);
+                return ext.X * ext.Y * ext.Z; // Volume
+            })
+            .First()
+            .i;
     }
 }

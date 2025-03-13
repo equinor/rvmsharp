@@ -73,6 +73,28 @@ public class SortedBoundingBoxExtentTests
     }
 
     [Test]
+    public void GivenABoundingBox_WhenLenZIsLargestAndLenXAndYAreSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
+    {
+        // Arrange
+        var boundingBox = new BoundingBox(new Vector3(-15.0f, 24.0f, -30.0f), new Vector3(-14.0f, 25.0f, -20.0f));
+
+        // Act
+        var sortedBoundingBox = new SortedBoundingBoxExtent(boundingBox);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(sortedBoundingBox.ValueOfLargest, Is.EqualTo(boundingBox.Extents.Z).Within(1.0E-13f));
+            Assert.That(sortedBoundingBox.ValueOfMiddle, Is.EqualTo(boundingBox.Extents.Y).Within(1.0E-13f));
+            Assert.That(sortedBoundingBox.ValueOfSmallest, Is.EqualTo(boundingBox.Extents.X).Within(1.0E-13f));
+            Assert.That(sortedBoundingBox.AxisIndexOfLargest, Is.EqualTo(2));
+            Assert.That(sortedBoundingBox.AxisIndexOfMiddle, Is.EqualTo(1).Or.EqualTo(0));
+            Assert.That(sortedBoundingBox.AxisIndexOfSmallest, Is.EqualTo(0).Or.EqualTo(1));
+            Assert.That(sortedBoundingBox.AxisIndexOfSmallest, Is.Not.EqualTo(sortedBoundingBox.AxisIndexOfMiddle));
+        });
+    }
+
+    [Test]
     public void GivenBoundingBox_WhenShapedAsABeam_ThenCalculatePointsAtEndOfBeamCenteredRelativeToBeamThicknessAndTopOfBeam()
     {
         // Arrange

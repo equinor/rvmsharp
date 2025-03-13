@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using CadRevealComposer;
+using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
@@ -53,7 +54,22 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     .SplitMeshByLoosePieces(mesh)
                     .MaxBy(x => x.CalculateAxisAlignedBoundingBox().Diagonal)!;
 
-                results.Add(new ScaffoldOptimizerResult(ToBoxPrimitive(nodeGeometries[i], maxMesh)));
+                var boxPlank = ToBoxPrimitive(nodeGeometries[i], maxMesh, 1.0f);
+                if (boxPlank != null)
+                {
+                    results.Add(new ScaffoldOptimizerResult(boxPlank));
+                }
+                else
+                {
+                    results.Add(
+                        new ScaffoldOptimizerResult(
+                            nodeGeometries[i],
+                            Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject()),
+                            i,
+                            requestChildMeshInstanceId
+                        )
+                    );
+                }
             }
         }
         else if (nodeName.ContainsAny(["Kick Board", "BRM"]))
@@ -102,21 +118,14 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     continue;
 
                 Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
-
-                var indexMaxVol = splitMesh
-                    .Select((m, idx) => new { m, i = idx })
-                    .OrderByDescending(v =>
-                    {
-                        Vector3 ext = v.m.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity).Extents;
-                        return ext.X * ext.Y * ext.Z; // Volume
-                    })
-                    .First()
-                    .i;
+                var indexLargestBoundingBoxVol = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(
+                    splitMesh.ToList()!
+                );
 
                 for (int j = 0; j < splitMesh.Length; j++)
                 {
                     var disjointMesh = splitMesh[j];
-                    if (j == indexMaxVol)
+                    if (j == indexLargestBoundingBoxVol)
                     {
                         // The support for the stairs (assumed largest volume) is only subjected to light geometry optimization
                         results.Add(
@@ -131,13 +140,89 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     else
                     {
                         // The smaller parts, assumed to be steps and similar, will be converted to boxes
-                        results.Add(new ScaffoldOptimizerResult(ToBoxPrimitive(nodeGeometries[i], disjointMesh)));
+                        var boxStep = ToBoxPrimitive(nodeGeometries[i], disjointMesh, 1000.0f);
+                        if (boxStep != null)
+                            results.Add(new ScaffoldOptimizerResult(boxStep));
                     }
                 }
             }
         }
-        else if (nodeName.ContainsAny(["Beam"]))
+        else if (nodeName.ContainsAny(["Base Element"]))
         {
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+
+                Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
+
+                results.AddRange(
+                    splitMesh.Select(
+                        (disjointMesh, j) =>
+                            new ScaffoldOptimizerResult(
+                                nodeGeometries[i],
+                                Simplify.ConvertToConvexHull(disjointMesh, 0.01f),
+                                j,
+                                requestChildMeshInstanceId
+                            )
+                    )
+                );
+            }
+        }
+        else if (nodeName.ContainsAny(["FS"]))
+        {
+            for (int i = 0; i < nodeGeometries.Length; i++)
+            {
+                Mesh? mesh = meshes[i];
+                if (mesh == null)
+                    continue;
+
+                Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
+                var indexLargestBoundingBoxVol = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(
+                    splitMesh.ToList()!
+                );
+
+                for (int j = 0; j < splitMesh.Length; j++)
+                {
+                    var disjointMesh = splitMesh[j];
+                    if (j == indexLargestBoundingBoxVol)
+                    {
+                        // The largest piece of a spear is a cylinder
+                        var primitiveCylinder = PartReplacementUtils.CreatePrimitiveCylinderPart(disjointMesh);
+                        if (primitiveCylinder == null)
+                            continue;
+                        var cylinder = EccentricConeTessellator.Tessellate(primitiveCylinder); // :TODO: At some point, do not tessellate here, but rather return an EccentricCone directly. This does not yet work.
+                        if (cylinder != null)
+                        {
+                            results.Add(
+                                new ScaffoldOptimizerResult(
+                                    nodeGeometries[i],
+                                    cylinder.Mesh,
+                                    j,
+                                    requestChildMeshInstanceId
+                                )
+                            );
+                        }
+                    }
+                    else
+                    {
+                        // The rest of the spear should be optimized using convex hull
+                        results.Add(
+                            new ScaffoldOptimizerResult(
+                                nodeGeometries[i],
+                                Simplify.ConvertToConvexHull(disjointMesh, 0.01f),
+                                j,
+                                requestChildMeshInstanceId
+                            )
+                        );
+                    }
+                }
+            }
+        }
+        else if (nodeName.ContainsAny(["Ledger Beam"]))
+        {
+            bool failed = false;
             for (int i = 0; i < nodeGeometries.Length; i++)
             {
                 Mesh? ledgerBeamMesh = meshes[i];
@@ -146,6 +231,12 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
 
                 var replacementBeam = new ReplacementLedgerBeam(ledgerBeamMesh);
                 List<Mesh?> partsOfLedgerBeam = replacementBeam.MakeReplacement();
+                if (partsOfLedgerBeam.Count == 0)
+                {
+                    failed = true;
+                    break;
+                }
+
                 for (int j = 0; j < partsOfLedgerBeam.Count; j++)
                 {
                     Mesh? mesh = partsOfLedgerBeam[j];
@@ -155,6 +246,24 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                             new ScaffoldOptimizerResult(nodeGeometries[i], mesh, j, requestChildMeshInstanceId)
                         );
                     }
+                }
+            }
+
+            if (failed)
+            {
+                for (int i = 0; i < nodeGeometries.Length; i++)
+                {
+                    Mesh? mesh = meshes[i];
+                    if (mesh == null)
+                        continue;
+                    results.Add(
+                        new ScaffoldOptimizerResult(
+                            nodeGeometries[i],
+                            Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject()),
+                            i,
+                            requestChildMeshInstanceId
+                        )
+                    );
                 }
             }
         }
@@ -179,14 +288,22 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         return results;
     }
 
-    private static Box ToBoxPrimitive(APrimitive geometryWithTransform, Mesh meshToBound)
+    private static Box? ToBoxPrimitive(APrimitive geometryWithTransform, Mesh meshToBound, float heightThreshold)
     {
         var matrix = (geometryWithTransform as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
-        return BoundingBox.ToBoxPrimitive(
+        Box box = BoundingBox.ToBoxPrimitive(
             meshToBound,
             matrix,
             geometryWithTransform.TreeIndex,
             geometryWithTransform.Color
         );
+
+        // :TODO: In the above procedure we are assuming a meshToBound that is axis aligned.
+        // Hence, at the moment we do not support non-axis aligned cylinders as input. To detect
+        // if the mesh may have been non-axis aligned we will set a threshold on the mesh
+        // height to see if it is unnaturally tall. If so, we return null as failure. Remove
+        // this test once we support non-axis aligned input.
+        var sortedBoundingBoxExtent = new SortedBoundingBoxExtent(meshToBound.CalculateAxisAlignedBoundingBox());
+        return sortedBoundingBoxExtent.ValueOfMiddle > heightThreshold ? null : box;
     }
 }

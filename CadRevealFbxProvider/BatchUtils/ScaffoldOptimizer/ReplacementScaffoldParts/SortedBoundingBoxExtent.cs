@@ -34,11 +34,22 @@ public class SortedBoundingBoxExtent
             (lx > ly) ? ((lx > lz) ? (lx, 0) : (lz, 2)) : ((ly > lz) ? (ly, 1) : (lz, 2));
         (ValueOfSmallest, AxisIndexOfSmallest) =
             (lx < ly) ? ((lx < lz) ? (lx, 0) : (lz, 2)) : ((ly < lz) ? (ly, 1) : (lz, 2));
-        (ValueOfMiddle, AxisIndexOfMiddle) = (
-            (lx > ValueOfSmallest && lx < ValueOfLargest)
-                ? (lx, 0)
-                : ((ly > ValueOfSmallest && ly < ValueOfLargest) ? (ly, 1) : (lz, 2))
-        );
+        (ValueOfMiddle, AxisIndexOfMiddle) =
+            (AxisIndexOfSmallest == 0 && AxisIndexOfLargest == 1)
+                ? (lz, 2)
+                : (
+                    (AxisIndexOfSmallest == 0 && AxisIndexOfLargest == 2)
+                        ? (ly, 1)
+                        : (
+                            (AxisIndexOfSmallest == 1 && AxisIndexOfLargest == 0)
+                                ? (lz, 2)
+                                : (
+                                    (AxisIndexOfSmallest == 1 && AxisIndexOfLargest == 2)
+                                        ? (lx, 0)
+                                        : ((AxisIndexOfSmallest == 2 && AxisIndexOfLargest == 0) ? (ly, 1) : (lx, 0))
+                                )
+                        )
+                );
     }
 
     public (Vector3 p1, Vector3 p2) CalcPointsAtEndOfABeamShapedBox(

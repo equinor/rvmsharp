@@ -71,6 +71,29 @@ static class MeshCreator
         return ConeTessellator.Tessellate(cone)?.Mesh;
     }
 
+    public static Mesh CreateValidAxisAlignedPlank()
+    {
+        var coordinates = new List<Vector3>();
+        var indices = new List<uint>();
+
+        coordinates.Add(new Vector3(0.0f, 0.0f, 0.0f));
+        coordinates.Add(new Vector3(6.2f, 0.0f, 0.0f));
+        coordinates.Add(new Vector3(0.0f, 0.7f, 0.0f));
+        coordinates.Add(new Vector3(6.2f, 0.7f, 0.0f));
+
+        coordinates.Add(new Vector3(0.0f, 0.0f, 0.3f));
+        coordinates.Add(new Vector3(6.2f, 0.0f, 0.3f));
+        coordinates.Add(new Vector3(0.0f, 0.7f, 0.3f));
+        coordinates.Add(new Vector3(6.2f, 0.7f, 0.3f));
+
+        for (int i = 0; i < coordinates.Count; i++)
+        {
+            indices.Add((uint)i);
+        }
+
+        return new Mesh(coordinates.ToArray(), indices.ToArray(), 0.01f);
+    }
+
     public static void ValidateMesh(
         APrimitive primitive,
         float x1Truth,
@@ -236,7 +259,8 @@ public class ScaffoldOptimizerTests
         TestWithOnlyNonMeshPrimitives,
         TestInstancing,
         TestOptimizationSteps,
-        TestOptimizationOnTesselatedObject
+        TestOptimizationOnTessellatedObject,
+        TestPlankOptimization
     }
 
     private static (
@@ -255,6 +279,9 @@ public class ScaffoldOptimizerTests
 
         var mesh4 = MeshCreator.Create(1000);
         var mesh5 = MeshCreator.CreateCone();
+
+        var mesh6 = MeshCreator.CreateValidAxisAlignedPlank();
+        var bbox6 = mesh6.CalculateAxisAlignedBoundingBox();
         Assert.That(mesh5, Is.Not.Null);
 
         switch (testPurpose)
@@ -332,7 +359,7 @@ public class ScaffoldOptimizerTests
                     ]
                 };
                 return (node4, [mesh4], [mesh4.CalculateAxisAlignedBoundingBox()], []);
-            case TestPurpose.TestOptimizationOnTesselatedObject:
+            case TestPurpose.TestOptimizationOnTessellatedObject:
                 var node5 = new CadRevealNode
                 {
                     TreeIndex = 0,
@@ -351,6 +378,19 @@ public class ScaffoldOptimizerTests
                     ]
                 };
                 return (node5, [mesh5], [mesh5.CalculateAxisAlignedBoundingBox()], []);
+            case TestPurpose.TestPlankOptimization:
+                var node6 = new CadRevealNode
+                {
+                    TreeIndex = 0,
+                    Name = partName,
+                    Parent = null,
+                    Geometries =
+                    [
+                        new InstancedMesh(1, mesh6, Matrix4x4.Identity, 1, Color.Black, bbox6),
+                        new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, bbox1),
+                    ]
+                };
+                return (node6, [mesh6, mesh2], [bbox6, bbox1], []);
             default:
                 throw new ArgumentOutOfRangeException(nameof(testPurpose), testPurpose, null);
         }
@@ -632,7 +672,7 @@ public class ScaffoldOptimizerTests
         ulong currentInstanceId = 0;
 
         // Prepare
-        var nodeData = CreateCadRevealNode(partName, TestPurpose.TestGeometryAssignment);
+        var nodeData = CreateCadRevealNode(partName, TestPurpose.TestPlankOptimization);
         CadRevealNode nodeOptimized = CloneCadRevealNode(nodeData.node);
 
         // Act
@@ -654,7 +694,7 @@ public class ScaffoldOptimizerTests
     [Test]
     [TestCase("some kick board", TestPurpose.TestOptimizationSteps)]
     [TestCase("some brm", TestPurpose.TestOptimizationSteps)]
-    [TestCase("StairwayGuard", TestPurpose.TestOptimizationOnTesselatedObject)]
+    [TestCase("StairwayGuard", TestPurpose.TestOptimizationOnTessellatedObject)]
     public void TestMeshOutput_GivenAPartForConvexHullOrDecimationOptimization_CheckThatTheOptimizationWasDone(
         string partName,
         TestPurpose testPurpose
