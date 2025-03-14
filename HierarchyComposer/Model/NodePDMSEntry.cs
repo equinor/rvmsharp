@@ -1,7 +1,7 @@
 ﻿namespace HierarchyComposer.Model;
 
 using System.Collections.Generic;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 
 public class NodePDMSEntry
 {
@@ -11,16 +11,16 @@ public class NodePDMSEntry
     public long PDMSEntryId { get; set; }
     public PDMSEntry PDMSEntry { get; set; } = null!;
 
-    public void RawInsert(SQLiteCommand command)
+    public void RawInsert(SqliteCommand command)
     {
         command.CommandText = "INSERT INTO NodeToPDMSEntry (NodeId, PDMSEntryId) VALUES (@NodeId, @PDMSEntryId);";
         command.Parameters.AddRange(
-            new[] { new SQLiteParameter("@NodeId", NodeId), new SQLiteParameter("@PDMSEntryId", PDMSEntryId) }
+            new[] { new SqliteParameter("@NodeId", NodeId), new SqliteParameter("@PDMSEntryId", PDMSEntryId) }
         );
         command.ExecuteNonQuery();
     }
 
-    public static void RawInsertBatch(SQLiteCommand command, IEnumerable<NodePDMSEntry> nodePdmsEntries)
+    public static void RawInsertBatch(SqliteCommand command, IEnumerable<NodePDMSEntry> nodePdmsEntries)
     {
         command.CommandText = "INSERT INTO NodeToPDMSEntry (NodeId, PDMSEntryId) VALUES ($NodeId, $PDMSEntryId);";
 

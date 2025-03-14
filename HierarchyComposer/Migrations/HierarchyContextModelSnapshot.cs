@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
+#nullable disable
+
 namespace Mop.Hierarchy.Migrations
 {
     [DbContext(typeof(HierarchyContext))]
@@ -13,30 +15,21 @@ namespace Mop.Hierarchy.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.9");
-
-            modelBuilder.Entity("HierarchyComposer.Model.AABB", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("AABBs");
-                });
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.8");
 
             modelBuilder.Entity("HierarchyComposer.Model.Node", b =>
                 {
                     b.Property<uint>("Id")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("AABBId")
+                    b.Property<uint?>("AABBId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("DiagnosticInfo")
                         .HasColumnType("TEXT");
+
+                    b.Property<uint>("EndId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("HasMesh")
                         .HasColumnType("INTEGER");
@@ -50,10 +43,13 @@ namespace Mop.Hierarchy.Migrations
                     b.Property<int?>("RefNoDb")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("RefNoPrefix")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("RefNoSequence")
                         .HasColumnType("INTEGER");
 
-                    b.Property<uint?>("TopNodeId")
+                    b.Property<uint>("TopNodeId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
@@ -64,7 +60,7 @@ namespace Mop.Hierarchy.Migrations
 
                     b.HasIndex("TopNodeId");
 
-                    b.ToTable("Nodes");
+                    b.ToTable("Nodes", (string)null);
                 });
 
             modelBuilder.Entity("HierarchyComposer.Model.NodePDMSEntry", b =>
@@ -96,81 +92,7 @@ namespace Mop.Hierarchy.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("PDMSEntries");
-                });
-
-            modelBuilder.Entity("HierarchyComposer.Model.AABB", b =>
-                {
-                    b.OwnsOne("HierarchyComposer.Model.Vector3EfSerializable", "max", b1 =>
-                        {
-                            b1.Property<int>("AABBId")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<double>("x")
-                                .HasColumnType("REAL");
-
-                            b1.Property<double>("y")
-                                .HasColumnType("REAL");
-
-                            b1.Property<double>("z")
-                                .HasColumnType("REAL");
-
-                            b1.HasKey("AABBId");
-
-                            b1.ToTable("AABBs");
-
-                            b1.WithOwner()
-                                .HasForeignKey("AABBId");
-                        });
-
-                    b.OwnsOne("HierarchyComposer.Model.Vector3EfSerializable", "min", b1 =>
-                        {
-                            b1.Property<int>("AABBId")
-                                .HasColumnType("INTEGER");
-
-                            b1.Property<double>("x")
-                                .HasColumnType("REAL");
-
-                            b1.Property<double>("y")
-                                .HasColumnType("REAL");
-
-                            b1.Property<double>("z")
-                                .HasColumnType("REAL");
-
-                            b1.HasKey("AABBId");
-
-                            b1.ToTable("AABBs");
-
-                            b1.WithOwner()
-                                .HasForeignKey("AABBId");
-                        });
-
-                    b.Navigation("max")
-                        .IsRequired();
-
-                    b.Navigation("min")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("HierarchyComposer.Model.Node", b =>
-                {
-                    b.HasOne("HierarchyComposer.Model.AABB", "AABB")
-                        .WithMany()
-                        .HasForeignKey("AABBId");
-
-                    b.HasOne("HierarchyComposer.Model.Node", "Parent")
-                        .WithMany()
-                        .HasForeignKey("ParentId");
-
-                    b.HasOne("HierarchyComposer.Model.Node", "TopNode")
-                        .WithMany()
-                        .HasForeignKey("TopNodeId");
-
-                    b.Navigation("Parent");
-
-                    b.Navigation("TopNode");
-
-                    b.Navigation("AABB");
+                    b.ToTable("PDMSEntries", (string)null);
                 });
 
             modelBuilder.Entity("HierarchyComposer.Model.NodePDMSEntry", b =>
