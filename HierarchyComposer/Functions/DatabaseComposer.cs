@@ -107,6 +107,22 @@ public class DatabaseComposer
 
         // ReSharper disable AccessToDisposedClosure
         MopTimer.RunAndMeasure(
+            "Setup Connection Pragmas",
+            _logger,
+            () =>
+            {
+                using var cmd = connection.CreateCommand();
+                cmd.CommandText = "PRAGMA synchronous = OFF";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "PRAGMA journal_mode = OFF";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "PRAGMA cache_size = 10000";
+                cmd.ExecuteNonQuery();
+            }
+        );
+
+        // ReSharper disable AccessToDisposedClosure
+        MopTimer.RunAndMeasure(
             "Insert PDMSEntries",
             _logger,
             () =>
