@@ -49,17 +49,16 @@ public static class TessNet
 
         tess.Tessellate(WindingRule.EvenOdd, ElementType.Polygons, 3, CombineNormals, normal);
 
-        var vertexData = new List<Vector3>(tess.Vertices.Length);
-        var normalData = new List<Vector3>(tess.Vertices.Length);
+        result.VertexData = new Vector3[tess.Vertices.Length];
+        result.NormalData = new Vector3[tess.Vertices.Length];
 
+        int index = 0;
         foreach (var v in tess.Vertices)
         {
-            vertexData.Add(new Vector3(v.Position.X, v.Position.Y, v.Position.Z));
-            normalData.Add((Vector3)v.Data);
+            result.VertexData[index] = new Vector3(v.Position.X, v.Position.Y, v.Position.Z);
+            result.NormalData[index] = (Vector3)v.Data;
+            index++;
         }
-
-        result.VertexData = vertexData.ToArray();
-        result.NormalData = normalData.ToArray();
 
         for (var i = 0; i < tess.ElementCount; i++)
         {
@@ -75,7 +74,7 @@ public static class TessNet
 
     private static object CombineNormals(Vec3 position, object[] data, float[] weights)
     {
-        var max = weights.Select((w, i) => (w, i)).OrderByDescending(p => p.w).Select(p => p.i).First();
+        var max = Array.IndexOf(weights, weights.Max());
         return data[max];
     }
 }

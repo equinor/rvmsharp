@@ -73,9 +73,11 @@ public class RvmFile
     ///
     /// This decision may be wrong, so if any issues occur due to this filtering we must rewrite.
     /// </summary>
+    ///
     private static Dictionary<string, RvmNode?> ToNameLookupDiscardNodesWithDuplicateNames(IReadOnlyList<RvmNode> a)
     {
         var dict = new Dictionary<string, RvmNode?>();
+
         foreach (RvmNode rvmNode in a)
         {
             if (string.IsNullOrEmpty(rvmNode.Name))

@@ -45,7 +45,7 @@ public record RvmNode(uint Version, string Name, Vector3 Translation, uint Mater
 
     /// <summary>
     /// Enumerates child RvmNodes recursively in depth-first order.
-    /// Excludes any RvmPrimitive childs!
+    /// Excludes any RvmPrimitive children!
     /// </summary>
     /// <param name="includeSelf">Should this Node be included in the Enumeration?</param>
     /// <returns>All the RvmNodes in depth first order</returns>

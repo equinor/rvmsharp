@@ -50,81 +50,80 @@ public static class PdmsTextParser
     {
         var pdmsNodes = new List<PdmsNode>();
 
-        using (var reader = new StatefulReader(pdmsTxtFilePath))
+        using var reader = new StatefulReader(pdmsTxtFilePath);
+
+        var indentationStack = new Stack<int>();
+        PdmsNode? currentPdmsNode = null;
+
+        var headerInfo = ParseHeader(reader);
+        var newItemSeparator = headerInfo.StartSeparator.AsSpan();
+        int newItemSeparatorLength = newItemSeparator.Length;
+        var endItemSeparator = headerInfo.EndSeparator.AsSpan();
+        while (!reader.EndOfStream)
         {
-            var indentationStack = new Stack<int>();
-            PdmsNode? currentPdmsNode = null;
+            var line = reader.ReadLine();
+            if (line == null)
+                throw new NullReferenceException($"Unexpected null in {nameof(line)}");
 
-            var headerInfo = ParseHeader(reader);
-            var newItemSeparator = headerInfo.StartSeparator.AsSpan();
-            int newItemSeparatorLength = newItemSeparator.Length;
-            var endItemSeparator = headerInfo.EndSeparator.AsSpan();
-            while (!reader.EndOfStream)
+            var lineSpan = line.AsSpan();
+
+            var trimmedLine = lineSpan.Trim();
+            if (trimmedLine.StartsWith(newItemSeparator, StringComparison.Ordinal))
             {
-                var line = reader.ReadLine();
-                if (line == null)
-                    throw new NullReferenceException($"Unexpected null in {nameof(line)}");
+                var pdmsNode = new PdmsNode(
+                    Name: trimmedLine[newItemSeparatorLength..].Trim().ToString(),
+                    MetadataDict: new Dictionary<string, string>(),
+                    Parent: currentPdmsNode,
+                    Children: new List<PdmsNode>()
+                );
 
-                var lineSpan = line.AsSpan();
+                indentationStack.Push(lineSpan[..lineSpan.IndexOf(newItemSeparator[0])].Length);
 
-                var trimmedLine = lineSpan.Trim();
-                if (trimmedLine.StartsWith(newItemSeparator, StringComparison.Ordinal))
-                {
-                    var pdmsNode = new PdmsNode(
-                        Name: trimmedLine[newItemSeparatorLength..].Trim().ToString(),
-                        MetadataDict: new Dictionary<string, string>(),
-                        Parent: currentPdmsNode,
-                        Children: new List<PdmsNode>()
-                    );
-
-                    indentationStack.Push(lineSpan[..lineSpan.IndexOf(newItemSeparator[0])].Length);
-
-                    if (currentPdmsNode == null)
-                        pdmsNodes.Add(pdmsNode);
-                    else
-                        currentPdmsNode.Children.Add(pdmsNode);
-
-                    currentPdmsNode = pdmsNode;
-                }
+                if (currentPdmsNode == null)
+                    pdmsNodes.Add(pdmsNode);
                 else
+                    currentPdmsNode.Children.Add(pdmsNode);
+
+                currentPdmsNode = pdmsNode;
+            }
+            else
+            {
+                if (trimmedLine.Equals(endItemSeparator, StringComparison.Ordinal))
                 {
-                    if (trimmedLine.Equals(endItemSeparator, StringComparison.Ordinal))
+                    var indentation = lineSpan[..lineSpan.IndexOf(endItemSeparator[0])].Length;
+                    if (indentation != indentationStack.Peek())
                     {
-                        var indentation = lineSpan[..lineSpan.IndexOf(endItemSeparator[0])].Length;
-                        if (indentation != indentationStack.Peek())
-                        {
-                            Console.Error.WriteLine($"Invalid END at line number: {reader.LineNumber}");
-                        }
-                        else
-                        {
-                            indentationStack.Pop();
-                            currentPdmsNode = currentPdmsNode!.Parent;
-                        }
+                        Console.Error.WriteLine($"Invalid END at line number: {reader.LineNumber}");
                     }
                     else
                     {
-                        var nameSeparatorIndex = trimmedLine.IndexOf(
-                            headerInfo.NameEnd,
-                            StringComparison.InvariantCulture
-                        );
-                        var key = GetKey(trimmedLine, nameSeparatorIndex);
+                        indentationStack.Pop();
+                        currentPdmsNode = currentPdmsNode!.Parent;
+                    }
+                }
+                else
+                {
+                    var nameSeparatorIndex = trimmedLine.IndexOf(
+                        headerInfo.NameEnd,
+                        StringComparison.InvariantCulture
+                    );
+                    var key = GetKey(trimmedLine, nameSeparatorIndex);
 
-                        if (IsExcludedAttribute(key, attributesToExclude))
-                        {
-                            continue;
-                        }
+                    if (IsExcludedAttribute(key, attributesToExclude))
+                    {
+                        continue;
+                    }
 
-                        var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
-                        if (stringInternPool != null)
-                        {
-                            var keyInterned = stringInternPool.Intern(key);
-                            var valueInterned = stringInternPool.Intern(StripQuotes(value));
-                            currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
-                        }
-                        else
-                        {
-                            currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
-                        }
+                    var value = GetValue(trimmedLine, nameSeparatorIndex + headerInfo.NameEnd.Length);
+                    if (stringInternPool != null)
+                    {
+                        var keyInterned = stringInternPool.Intern(key);
+                        var valueInterned = stringInternPool.Intern(StripQuotes(value));
+                        currentPdmsNode!.MetadataDict[keyInterned] = valueInterned;
+                    }
+                    else
+                    {
+                        currentPdmsNode!.MetadataDict[key.ToString()] = StripQuotes(value).ToString();
                     }
                 }
             }
