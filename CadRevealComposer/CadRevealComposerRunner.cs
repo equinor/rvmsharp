@@ -119,7 +119,7 @@ public static class CadRevealComposerRunner
 
         Thread.Sleep(1000); // May trigger GC after processing some hierarchy nodes?
         Console.WriteLine("Imports done. Forcing aggressive Garbage Collection");
-        GC.Collect(0, GCCollectionMode.Aggressive);
+        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive);
         Console.WriteLine("Garbage Collection Done");
 
         geometriesToProcess = Simplify.OptimizeVertexCountInMeshes(geometriesToProcess);
