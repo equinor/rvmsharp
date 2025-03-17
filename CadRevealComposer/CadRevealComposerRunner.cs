@@ -7,6 +7,7 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Configuration;
 using Devtools;
@@ -115,6 +116,11 @@ public static class CadRevealComposerRunner
                 $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
             );
         });
+
+        Thread.Sleep(1000); // May trigger GC after processing some hierarchy nodes?
+        Console.WriteLine("Imports done. Forcing aggressive Garbage Collection");
+        GC.Collect(0, GCCollectionMode.Aggressive);
+        Console.WriteLine("Garbage Collection Done");
 
         geometriesToProcess = Simplify.OptimizeVertexCountInMeshes(geometriesToProcess);
 
