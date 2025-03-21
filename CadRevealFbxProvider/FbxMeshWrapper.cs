@@ -35,7 +35,7 @@ public static class FbxMeshWrapper
 
     public static Mesh? GetGeometricData(IntPtr meshPtr)
     {
-        var geomPtr = mesh_get_geometry_data(meshPtr); // Reveal does not use surface normals, hence we ignore them and treat vertices with different normals, but same location, as equivalent.
+        var geomPtr = mesh_get_geometry_data(meshPtr);
         var geom = Marshal.PtrToStructure<FbxMesh>(geomPtr);
 
         // geometry can be invalid if, e.g., the extraction of normal vectors failed

@@ -77,7 +77,6 @@ public static class FbxWorkload
     {
         var progress = 0;
 
-        // FBX Importer is intentionally not disposed as the dispose operation takes too long. If this becomes a problem with memory leaks we need to investigate why the dispose is so slow.
         using var fbxImporter = new FbxImporter();
         if (!fbxImporter.HasValidSdk())
         {
