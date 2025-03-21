@@ -1,5 +1,8 @@
 ﻿namespace CadRevealFbxProvider.Tests;
 
+using System.Collections.Generic;
+using System.Globalization;
+using System.Net.Sockets;
 using CadRevealFbxProvider.Attributes;
 using NUnit.Framework;
 
@@ -7,6 +10,27 @@ using NUnit.Framework;
 public class FbxProviderAttributeParserTests
 {
     private readonly DirectoryInfo _attributeDirectory = new("TestSamples/attributes");
+    private readonly List<string> fileLinesOneManufacturer = new List<string>
+    {
+        "Schedules-Export;;;",
+        "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+        ";;;;;;;;;;;;;;;;;;;;;;;;",
+        "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+        "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+        "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+        "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+    };
+
+    private readonly List<string> fileLinesTwoManufacturers = new List<string>
+    {
+        "Schedules-Export;;;",
+        "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+        ";;;;;;;;;;;;;;;;;;;;;;;;",
+        ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+        "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+        "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+        "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+    };
 
     [TestCase("/fbx_test_model.csv")]
     [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
@@ -15,7 +39,6 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileNmae;
         var lines = File.ReadAllLines(infoTextFilename);
         (var attributes, var metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
-
         int countNodesWithMissingAttrib = 0;
         foreach (var attribute in attributes)
         {
@@ -28,13 +51,11 @@ public class FbxProviderAttributeParserTests
                 countNodesWithMissingAttrib++;
             }
         }
-
         Assert.Multiple(() =>
         {
             // expects three lines with missing attributes
             Assert.That(countNodesWithMissingAttrib, Is.EqualTo(3));
             Assert.That(metadata.HasExpectedValues());
-
             Assert.That(
                 ScaffoldingMetadata.ModelAttributesPerPart.Length + 4,
                 Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes)
@@ -82,6 +103,133 @@ public class FbxProviderAttributeParserTests
             },
             "Was expecting an exception saying that the attribute count is off, but got none"
         );
+    }
+
+    // Testing matrix
+
+    // COLUMNS
+    // Test reading total volume from attribute file -> check
+    // Test reading description and weight and
+    // Creating enhanced description string
+
+    // ROWS
+    //  -- only 1 manufacturer -> check
+    //  -- 2 manufacturers -> check
+    //  -- 2 manufacturers where one of them is NOT Aluhak -> TODO:
+    //  -- 3 manufacturers -> TODO:
+
+    [Test]
+    public void GivenOneManufacturer_WhenProcessingAttributeFile_ThenTotalWeightIsCorrect()
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+
+        // Act
+        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
+            Assert.That(result.scaffoldingMetadata.TotalWeight, Is.EqualTo("8.3"));
+        });
+    }
+
+    [Test]
+    public void GivenTwoManufacturers_WhenProcessingAttributeFile_ThenTotalWeightIsCorrect()
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+
+        // Act
+        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesTwoManufacturers.ToArray());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
+            Assert.DoesNotThrow(
+                () => float.Parse(result.scaffoldingMetadata.TotalWeight!, CultureInfo.InvariantCulture)
+            );
+            var tw = float.Parse(result.scaffoldingMetadata.TotalWeight!, CultureInfo.InvariantCulture);
+            Assert.That(tw, Is.EqualTo(16.7).Within(0.000001f));
+        });
+    }
+
+    [Test]
+    public void GivenOneManufacturer_WhenProcessingAttributeFile_ThenDescriptionAndWeightNotEmpty()
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+
+        // Act
+        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.attributesDictionary.Values.Count > 0);
+
+            Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+
+            // check if all lines are not null
+            Assert.That(result.attributesDictionary.Values.All(v => v != null));
+
+            // Checks if all weights can be cast to floats
+            Assert.DoesNotThrow(
+                () =>
+                    result.attributesDictionary.Values.Select(line =>
+                        float.Parse(line!["Weight kg"], CultureInfo.InvariantCulture)
+                    )
+            );
+
+            float[] weights = { 1.5f, 3.4f, 3.4f };
+
+            var index = 0;
+            foreach (var line in result.attributesDictionary.Values)
+            {
+                Assert.That(float.Parse(line!["Weight kg"], CultureInfo.InvariantCulture) == weights[index]);
+                index++;
+            }
+
+            // checks if all lines have a description with something in it
+            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
+        });
+    }
+
+    [Test]
+    public void GivenTwoManufacturers_WhenProcessingAttributeFile_ThenDescriptionIsEnhanced()
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+
+        // Act
+        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            // checks if all lines have a description with something in it
+            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
+
+            // checks if the first of the lines contains HAKI and the others do not
+            Assert.That(result.attributesDictionary.Values.First()!["Description"].Contains("HAKI"));
+            var index = 0;
+            foreach (var line in result.attributesDictionary.Values)
+            {
+                if(index == 0) Assert.That(line!["Description"].Contains("HAKI"));
+                else
+                {
+                    Assert.That(line!["Description"].Contains("HAKI"), Is.False);
+                }
+                index++;
+            }
+        });
+
     }
 
     [Test]

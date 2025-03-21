@@ -1,5 +1,6 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
+using System.Globalization;
 using System.Text.Json;
 using System.Windows.Markup;
 using Csv;
@@ -143,7 +144,7 @@ public class ScaffoldingAttributeParser
                     var w = v.Replace(" kg", String.Empty);
                     try
                     {
-                        return float.Parse(w);
+                        return float.Parse(w, CultureInfo.InvariantCulture);
                     }
                     catch 
                     {
@@ -151,7 +152,7 @@ public class ScaffoldingAttributeParser
                     }
                 });
             var totalWeight = weights.Sum(v => v);
-            entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, totalWeight.ToString());
+            entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, totalWeight.ToString(CultureInfo.InvariantCulture));
         }
         else
         {
