@@ -1,6 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Globalization;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Windows.Markup;
 using Csv;
@@ -77,32 +78,28 @@ public class ScaffoldingAttributeParser
                     // these columns need to be merged into one
 
                     var description = v
-                        .Headers.Where(h => h.ToLower().Contains("description"))
-                        .Select(
-                            (h, i) =>
-                            {
-                                var producerName = h.ToLower().Replace("description", String.Empty).ToUpper();
-                                var partDescription = v.Values[i];
-                                if (partDescription.Length > 0)
-                                    return producerName + partDescription;
+                        .Headers.Select((h, i) => new { header = h, index = i })
+                        .Where(el => el.header.ToLower().Contains("description"))
+                        .Select(el =>
+                        {
+                            var manufacturerName = el.header.ToLower().Replace("description", String.Empty).ToUpper();
+                            var partDescription = v.Values[el.index];
+                            if (partDescription.Length > 0)
+                                return manufacturerName + partDescription;
 
-                                return String.Empty;
-                            }
-                        )
+                            return String.Empty;
+                        })
                         .ToList();
 
                     kvp["Description"] = String.Join(String.Empty, description);
 
                     var weights = v
-                        .Headers.Where(h => h.ToLower().Contains("weight"))
-                        .Select(
-                            (h, i) =>
-                            {
-                                return v.Values[i];
-                            }
-                        )
-                        .ToList();
+                        .Headers.Select((h, i) => new { header = h, index = i })
+                        .Where(el => el.header.ToLower().Contains("weight"))
+                        .Select(el => v.Values[el.index]);
 
+                    // weights are expected to either in one column or the other, never both at the same time
+                    // there merging them is done via joining the strings
                     kvp["Weight kg"] = String.Join(String.Empty, weights);
 
                     for (int col = 0; col < v.ColumnCount; col++)
@@ -110,7 +107,7 @@ public class ScaffoldingAttributeParser
                         if (itemCodeIdColumn == col)
                             continue; // Ignore it
 
-                        // ignore description and weight, will are added as an aggregate description of parts
+                        // ignore description and weight, they are added as an aggregate of several columns
                         if (v.Headers[col].ToLower().Contains("description"))
                             continue;
                         if (v.Headers[col].ToLower().Contains("weight"))
@@ -146,13 +143,16 @@ public class ScaffoldingAttributeParser
                     {
                         return float.Parse(w, CultureInfo.InvariantCulture);
                     }
-                    catch 
+                    catch
                     {
                         throw new Exception("Total weight line in the attribute file has an unknown format.");
                     }
                 });
             var totalWeight = weights.Sum(v => v);
-            entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, totalWeight.ToString(CultureInfo.InvariantCulture));
+            entireScaffoldingMetadata.TryAddValue(
+                HeaderTotalWeight,
+                totalWeight.ToString(CultureInfo.InvariantCulture)
+            );
         }
         else
         {

@@ -24,7 +24,7 @@ public class FbxProviderAttributeParserTests
     private readonly List<string> fileLinesTwoManufacturers = new List<string>
     {
         "Schedules-Export;;;",
-        "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+        "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
         ";;;;;;;;;;;;;;;;;;;;;;;;",
         ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
         "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -34,7 +34,7 @@ public class FbxProviderAttributeParserTests
 
     [TestCase("/fbx_test_model.csv")]
     [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
-    public void ParseCorrectAttributesTest(string csvFileNmae)
+    public void ParseAttributes_ValidCsv_ExtractsCorrectAttributes(string csvFileNmae)
     {
         string infoTextFilename = _attributeDirectory.FullName + csvFileNmae;
         var lines = File.ReadAllLines(infoTextFilename);
@@ -64,7 +64,7 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
-    public void MissingTotalWeightTest()
+    public void ParseAttributes_TotalWeightMissingInCsv_ThrowsError()
     {
         Assert.Throws<Exception>(
             () =>
@@ -78,7 +78,7 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
-    public void MissingKeyAttributesTest()
+    public void ParseAttributes_KeyAttributeMissingInCsv_ThrowsError()
     {
         Assert.Throws<Exception>(
             () =>
@@ -92,7 +92,7 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
-    public void WrongNumberAttributesTest()
+    public void ParseAttributes_WrongAttributeCountInCsv_ThrowsError()
     {
         Assert.Throws<Exception>(
             () =>
@@ -119,7 +119,7 @@ public class FbxProviderAttributeParserTests
     //  -- 3 manufacturers -> TODO:
 
     [Test]
-    public void GivenOneManufacturer_WhenProcessingAttributeFile_ThenTotalWeightIsCorrect()
+    public void ParseAttributes_OneManufacturer_TotalWeightIsCorrect()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -138,7 +138,7 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
-    public void GivenTwoManufacturers_WhenProcessingAttributeFile_ThenTotalWeightIsCorrect()
+    public void ParseAttributes_TwoManufacturers_ExtractsCorrectTotalWeight()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -161,7 +161,29 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
-    public void GivenOneManufacturer_WhenProcessingAttributeFile_ThenDescriptionAndWeightNotEmpty()
+    public void ParseAttributes_OneManufacturer_ReadsDataWithoutException()
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+
+        // Act
+        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+
+        // Assert
+        Assert.That(result.attributesDictionary.Values.Count > 0);
+
+        Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+
+        // check if all lines are not null
+        Assert.That(result.attributesDictionary.Values.All(v => v != null));
+    }
+
+    [Test]
+    // (line index, element weight)
+    [TestCase(0, 1.5f)]
+    [TestCase(1, 3.4f)]
+    [TestCase(2, 3.4f)]
+    public void ParseAttributes_OneManufacturer_ExtractsWeightsCorrectly(int lineIndex, float weight)
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -179,30 +201,27 @@ public class FbxProviderAttributeParserTests
             // check if all lines are not null
             Assert.That(result.attributesDictionary.Values.All(v => v != null));
 
+            var line = result.attributesDictionary.Values.ElementAt(lineIndex);
+
+            var actualWeight = line!["Weight kg"].Replace(" kg", String.Empty);
+
             // Checks if all weights can be cast to floats
-            Assert.DoesNotThrow(
-                () =>
-                    result.attributesDictionary.Values.Select(line =>
-                        float.Parse(line!["Weight kg"], CultureInfo.InvariantCulture)
-                    )
-            );
-
-            float[] weights = { 1.5f, 3.4f, 3.4f };
-
-            var index = 0;
-            foreach (var line in result.attributesDictionary.Values)
+            Assert.DoesNotThrow(() =>
             {
-                Assert.That(float.Parse(line!["Weight kg"], CultureInfo.InvariantCulture) == weights[index]);
-                index++;
-            }
+                float.Parse(actualWeight, CultureInfo.InvariantCulture);
+            });
 
-            // checks if all lines have a description with something in it
-            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
+            // Check their correctness
+            Assert.That(float.Parse(actualWeight, CultureInfo.InvariantCulture), Is.EqualTo(weight));
         });
     }
 
     [Test]
-    public void GivenTwoManufacturers_WhenProcessingAttributeFile_ThenDescriptionIsEnhanced()
+    // (line index)
+    [TestCase(0)]
+    [TestCase(1)]
+    [TestCase(2)]
+    public void ParseAttributes_OneManufacturer_ExtractsDescription(int lineIndex)
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -213,23 +232,42 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
+            Assert.That(result.attributesDictionary.Values.Count > 0);
+
+            Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+
+            // check if all lines are not null
+            Assert.That(result.attributesDictionary.Values.All(v => v != null));
+
+            var line = result.attributesDictionary.Values.ElementAt(lineIndex);
+
+            // checks if all lines have a description with something in it
+            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
+        });
+    }
+
+    [Test]
+    // (line index)
+    [TestCase(0, "MAKI 450 Lattice Beam 2220 Pockets AL")]
+    [TestCase(1, "Base Element BS 600 X 34 Hollow")]
+    [TestCase(2, "Base Element BS 600 X 34 Hollow")]
+    public void ParseAttributes_TwoManufacturers_ExtractsEnhancedDescription(int lineIndex, string enhancedDescr)
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+
+        // Act
+        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesTwoManufacturers.ToArray());
+        var line = result.attributesDictionary.Values.ElementAt(lineIndex);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
             // checks if all lines have a description with something in it
             Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
 
-            // checks if the first of the lines contains HAKI and the others do not
-            Assert.That(result.attributesDictionary.Values.First()!["Description"].Contains("HAKI"));
-            var index = 0;
-            foreach (var line in result.attributesDictionary.Values)
-            {
-                if(index == 0) Assert.That(line!["Description"].Contains("HAKI"));
-                else
-                {
-                    Assert.That(line!["Description"].Contains("HAKI"), Is.False);
-                }
-                index++;
-            }
+            Assert.That(line!["Description"], Is.EqualTo(enhancedDescr));
         });
-
     }
 
     [Test]
