@@ -9,7 +9,6 @@ using Csv;
 public class ScaffoldingAttributeParser
 {
     private static readonly string AttributeKey = "Item code";
-    private static readonly int TotalWeightIndex = 1;
     private static readonly string HeaderTotalWeight = "Grand total";
     private static readonly int AttributeTableColCount = 23;
 
