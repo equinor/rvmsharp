@@ -9,7 +9,10 @@ using CadRevealComposer.Tessellation;
 
 public static class PartReplacementUtils
 {
-    public static EccentricCone? CreatePrimitiveCylinderPart(Mesh mesh)
+    public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) CreatePrimitiveCylinderPart(
+        Mesh mesh,
+        uint treeIndex
+    )
     {
         // :TODO: In the below procedure we are assuming a cylinder mesh that is axis aligned.
         // Hence, at the moment we do not support non-axis aligned cylinders as input.
@@ -44,12 +47,17 @@ public static class PartReplacementUtils
                 ) / 2.0f
         };
         var r = (sortedBoundingBoxExtent.ValueOfSmallest + sortedBoundingBoxExtent.ValueOfMiddle) / 4.0f;
-        return CreatePrimitiveCylinderPart(a, b, r);
+        return CreatePrimitiveCylinderPart(a, b, r, treeIndex);
     }
 
-    public static EccentricCone? CreatePrimitiveCylinderPart(Vector3 startPoint, Vector3 endPoint, float radius)
+    public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) CreatePrimitiveCylinderPart(
+        Vector3 startPoint,
+        Vector3 endPoint,
+        float radius,
+        uint treeIndex
+    )
     {
-        // Estimate an axis aligned bounding box for the ledger beam cylinder
+        // Estimate an axis aligned bounding box for the cylinder
         var radiusVec = new Vector3(radius, radius, radius);
         Vector3 minPoint = new Vector3(
             Math.Min(startPoint.X, endPoint.X),
@@ -65,28 +73,96 @@ public static class PartReplacementUtils
         maxPoint += radiusVec;
         var estimatedCylinderAxisAlignedBoundingBox = new BoundingBox(minPoint, maxPoint);
 
-        // Create cylinders from eccentric cones
+        // Create cylinder from an eccentric cone
         Vector3 lengthVec = endPoint - startPoint;
         Vector3 unitNormal = lengthVec * (1.0f / lengthVec.Length());
-        return new EccentricCone(
+        var cylinder = new EccentricCone(
             startPoint,
             endPoint,
             -unitNormal,
             radius,
             radius,
-            0,
+            treeIndex,
             Color.Brown,
             estimatedCylinderAxisAlignedBoundingBox
         );
+
+        // Create caps for the cylinder
+        var scale = Matrix4x4.CreateScale(2.0f * radius);
+        var startCap = new Circle(
+            scale * Matrix4x4.CreateTranslation(startPoint),
+            -unitNormal,
+            treeIndex,
+            Color.Brown,
+            estimatedCylinderAxisAlignedBoundingBox
+        );
+        var endCap = new Circle(
+            scale * Matrix4x4.CreateTranslation(endPoint),
+            unitNormal,
+            treeIndex,
+            Color.Brown,
+            estimatedCylinderAxisAlignedBoundingBox
+        );
+
+        return (cylinder, startCap, endCap);
     }
 
-    public static TriangleMesh? TessellateCylinderPart(Vector3 startPoint, Vector3 endPoint, float radius)
+    public static (TriangleMesh? cylinder, TriangleMesh? startCap, TriangleMesh? endCap) TessellateCylinderPart(
+        Vector3 startPoint,
+        Vector3 endPoint,
+        float radius,
+        uint treeIndex,
+        bool createCaps = false
+    )
     {
         // Create primitive eccentric cones
-        var primitiveCylinder = CreatePrimitiveCylinderPart(startPoint, endPoint, radius);
+        var primitiveCylinder = CreatePrimitiveCylinderPart(startPoint, endPoint, radius, treeIndex);
 
         // Tessellate the eccentric cones
-        return (primitiveCylinder != null) ? EccentricConeTessellator.Tessellate(primitiveCylinder) : null;
+        var cylinderMesh =
+            (primitiveCylinder.cylinder != null)
+                ? EccentricConeTessellator.Tessellate(primitiveCylinder.cylinder)
+                : null;
+
+        // Tessellate circles representing the cylinder caps
+        var startCapsMesh =
+            (primitiveCylinder.startCap != null && createCaps)
+                ? CircleTessellator.Tessellate(primitiveCylinder.startCap)
+                : null;
+        var endCapsMesh =
+            (primitiveCylinder.endCap != null && createCaps)
+                ? CircleTessellator.Tessellate(primitiveCylinder.endCap)
+                : null;
+
+        return (cylinderMesh, startCapsMesh, endCapsMesh);
+    }
+
+    public static (TriangleMesh? cylinder, TriangleMesh? startCap, TriangleMesh? endCap) TessellateCylinderPart(
+        Mesh mesh,
+        uint treeIndex,
+        bool createCaps = false
+    )
+    {
+        // Create primitive eccentric cones
+        var primitiveCylinder = CreatePrimitiveCylinderPart(mesh, treeIndex);
+
+        // Tessellate the eccentric cones
+        var cylinderMesh =
+            (primitiveCylinder.cylinder != null)
+                ? EccentricConeTessellator.Tessellate(primitiveCylinder.cylinder)
+                : null;
+
+        // Tessellate circles representing the cylinder caps
+        var startCapsMesh =
+            (primitiveCylinder.startCap != null && createCaps)
+                ? CircleTessellator.Tessellate(primitiveCylinder.startCap)
+                : null;
+        var endCapsMesh =
+            (primitiveCylinder.endCap != null && createCaps)
+                ? CircleTessellator.Tessellate(primitiveCylinder.endCap)
+                : null;
+
+        return (cylinderMesh, startCapsMesh, endCapsMesh);
     }
 
     public static TriangleMesh? TessellateBoxPart(
@@ -94,7 +170,8 @@ public static class PartReplacementUtils
         Vector3 endPoint,
         Vector3 surfaceDirGuide,
         float thickness,
-        float height
+        float height,
+        uint treeIndex
     )
     {
         // Calculate equivalent scale vector with length along X
@@ -161,7 +238,7 @@ public static class PartReplacementUtils
 
         // Tessellate box, where the box is a unit box, scaled, rotated, and translated
         TriangleMesh? mesh = BoxTessellator.Tessellate(
-            new Box(instanceMatrix, 0, Color.Black, new BoundingBox(startPoint, endPoint))
+            new Box(instanceMatrix, treeIndex, Color.Black, new BoundingBox(startPoint, endPoint))
         );
 
         return mesh;

@@ -23,7 +23,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         Right = 1
     }
 
-    public List<Mesh?> MakeReplacement()
+    public List<Mesh?> MakeReplacement(uint treeIndex)
     {
         // :TODO:: In the below procedure we are assuming a ledger beam mesh that is axis aligned.
         // Hence, at the moment we do not support non-axis aligned ledger beams as input.
@@ -50,8 +50,10 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         float couplerHeight = ledgerExtent.ValueOfMiddle - 4.0f * tubeRadius;
 
         // Tessellate the ledger beam tubes
-        var tubeUpper = TessellateLegerBeamTube(ledgerExtent, Placement.Top, tubeRadius);
-        var tubeLower = TessellateLegerBeamTube(ledgerExtent, Placement.Bottom, tubeRadius);
+        var tubeUpper = TessellateLegerBeamTube(ledgerExtent, Placement.Top, tubeRadius, treeIndex);
+        var tubeLower = TessellateLegerBeamTube(ledgerExtent, Placement.Bottom, tubeRadius, treeIndex);
+        var endCapsUpper = TessellateLegerBeamTubeEndCaps(ledgerExtent, Placement.Top, tubeRadius, treeIndex);
+        var endCapsLower = TessellateLegerBeamTubeEndCaps(ledgerExtent, Placement.Bottom, tubeRadius, treeIndex);
 
         // Tessellate the supports for each of the
         var tubeSupportUpper = TessellateLedgerBeamTubeSupport(
@@ -59,14 +61,16 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             tubeRadius,
             Placement.Top,
             heightTubeSupport,
-            tubeSupportThickness
+            tubeSupportThickness,
+            treeIndex
         )?.Mesh;
         var tubeSupportLower = TessellateLedgerBeamTubeSupport(
             ledgerExtent,
             tubeRadius,
             Placement.Bottom,
             heightTubeSupport,
-            tubeSupportThickness
+            tubeSupportThickness,
+            treeIndex
         )?.Mesh;
 
         // Tessellate the couplers at each end of the ledger beam
@@ -79,7 +83,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
                 couplerWidth,
                 couplerHeight,
                 tubeSupportThickness,
-                couplerSpacingWidth
+                couplerSpacingWidth,
+                treeIndex
             )
         );
         couplers.Add(
@@ -90,7 +95,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
                 couplerWidth,
                 couplerHeight,
                 tubeSupportThickness,
-                couplerSpacingWidth
+                couplerSpacingWidth,
+                treeIndex
             )
         );
 
@@ -102,12 +108,23 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
                 couplerWidth,
                 couplerHeight,
                 tubeSupportThickness,
-                couplerSpacingWidth
+                couplerSpacingWidth,
+                treeIndex
             )
         );
 
         // Combine meshed parts
-        List<Mesh?> combinedMeshes = [tubeUpper?.Mesh, tubeLower?.Mesh, tubeSupportUpper, tubeSupportLower];
+        List<Mesh?> combinedMeshes =
+        [
+            tubeUpper?.Mesh,
+            tubeLower?.Mesh,
+            tubeSupportUpper,
+            tubeSupportLower,
+            endCapsUpper.left?.Mesh,
+            endCapsUpper.right?.Mesh,
+            endCapsLower.left?.Mesh,
+            endCapsLower.right?.Mesh
+        ];
         combinedMeshes.AddRange(couplers);
 
         return combinedMeshes;
@@ -135,7 +152,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         float width,
         float height,
         float thickness,
-        float spacingWidth
+        float spacingWidth,
+        uint treeIndex
     )
     {
         float couplerPlusSpacingWidth = width + spacingWidth;
@@ -160,7 +178,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
                         endVec,
                         new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
                         thickness,
-                        height
+                        height,
+                        treeIndex
                     )
                     ?.Mesh
             );
@@ -176,7 +195,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         float mainCouplerWidth,
         float height,
         float thickness,
-        float spacingWidth
+        float spacingWidth,
+        uint treeIndex
     )
     {
         float width = CalculateEndCouplerWidth(ledgerExtent, mainCouplerWidth, spacingWidth);
@@ -192,7 +212,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
                 ledgerEdgeCenter + endDisplacement,
                 new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
                 thickness,
-                height
+                height,
+                treeIndex
             )
             ?.Mesh;
     }
@@ -208,7 +229,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
     static TriangleMesh? TessellateLegerBeamTube(
         SortedBoundingBoxExtent ledgerBeamExtents,
         Placement placement,
-        float radius
+        float radius,
+        uint treeIndex
     )
     {
         (Vector3 centerMin, Vector3 centerMax) = ledgerBeamExtents.CalcPointsAtEndOfABeamShapedBox(
@@ -218,9 +240,49 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             radius
         );
 
-        TriangleMesh? mesh = PartReplacementUtils.TessellateCylinderPart(centerMin, centerMax, radius);
+        TriangleMesh? mesh = PartReplacementUtils
+            .TessellateCylinderPart(centerMin, centerMax, radius, treeIndex)
+            .cylinder;
 
         return mesh;
+    }
+
+    static (TriangleMesh? left, TriangleMesh? right) TessellateLegerBeamTubeEndCaps(
+        SortedBoundingBoxExtent ledgerBeamExtents,
+        Placement placement,
+        float radius,
+        uint treeIndex
+    )
+    {
+        (Vector3 centerMin, Vector3 centerMax) = ledgerBeamExtents.CalcPointsAtEndOfABeamShapedBox(
+            (placement == Placement.Top)
+                ? SortedBoundingBoxExtent.DisplacementOrigin.BeamTop
+                : SortedBoundingBoxExtent.DisplacementOrigin.BeamBottom,
+            (placement == Placement.Top) ? 0.0f : 2.0f * radius
+        );
+
+        var tubeVerticalVec = new Vector3() { [ledgerBeamExtents.AxisIndexOfMiddle] = 1.0f };
+        var tubeDirVec = Vector3.Normalize(centerMin - centerMax);
+        centerMin += 0.015f * tubeDirVec;
+        TriangleMesh? meshL = PartReplacementUtils.TessellateBoxPart(
+            centerMin,
+            centerMin - 2.5f * radius * tubeVerticalVec,
+            tubeDirVec,
+            0.6f * radius,
+            2.0f * radius,
+            treeIndex
+        );
+        centerMax -= 0.015f * tubeDirVec;
+        TriangleMesh? meshR = PartReplacementUtils.TessellateBoxPart(
+            centerMax,
+            centerMax - 2.5f * radius * tubeVerticalVec,
+            tubeDirVec,
+            0.6f * radius,
+            2.0f * radius,
+            treeIndex
+        );
+
+        return (meshL, meshR);
     }
 
     static TriangleMesh? TessellateLedgerBeamTubeSupport(
@@ -228,7 +290,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         float ledgerBeamTubeRadius,
         Placement placement,
         float height,
-        float thickness
+        float thickness,
+        uint treeIndex
     )
     {
         Vector3 displacement = new Vector3
@@ -248,7 +311,8 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             (placement == Placement.Top) ? centerMax - displacement : centerMax + displacement,
             new Vector3 { [ledgerBeamExtents.AxisIndexOfSmallest] = 1.0f },
             thickness,
-            height
+            height,
+            treeIndex
         );
     }
 }

@@ -10,28 +10,6 @@ using CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts
 [TestFixture]
 public class PartReplacementUtilsTests
 {
-    private static (bool inwardNormal, int indicesIncrement) DoesNormalPointInwardsIntoCylinder(
-        int indexIntoIndices,
-        uint[] indices,
-        Vector3[] vertices
-    )
-    {
-        uint i1 = indices[indexIntoIndices];
-        uint i2 = indices[indexIntoIndices + 1];
-        uint i3 = indices[indexIntoIndices + 2];
-        Vector3 r1 = vertices[i1];
-        Vector3 r2 = vertices[i2];
-        Vector3 r3 = vertices[i3];
-        Vector3 u = r1 - r2;
-        Vector3 v = r3 - r2;
-        Vector3 n = Vector3.Normalize(Vector3.Cross(u, v));
-        float r2Len = r2.Length();
-        float testLength = (r2 - 0.5f * r2Len * n).Length();
-        bool normalPointsInwards = (testLength < r2Len);
-
-        return (normalPointsInwards, 2);
-    }
-
     private static void AssertThatAllPointsAreWithinTheBoundingBox(TriangleMesh triangleMesh)
     {
         BoundingBox bbox1 = triangleMesh.AxisAlignedBoundingBox;
@@ -59,27 +37,35 @@ public class PartReplacementUtilsTests
         var mesh = PartReplacementUtils.TessellateCylinderPart(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(1.0f, 0.0f, 0.0f),
-            1.0f
+            1.0f,
+            0,
+            true
         );
 
         // Assert
-        Assert.That(mesh, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(mesh.cylinder, Is.Not.Null);
+            Assert.That(mesh.startCap, Is.Not.Null);
+            Assert.That(mesh.endCap, Is.Not.Null);
+        });
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXSpecified_ThenRadiusAndLengthOfFrontCylinderIsValid()
+    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXSpecified_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
         var mesh = PartReplacementUtils.TessellateCylinderPart(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(1.0f, 0.0f, 0.0f),
-            2.5f
+            2.5f,
+            0
         );
 
         // Assert
-        Assert.That(mesh, Is.Not.Null);
-        foreach (var p in mesh.Mesh.Vertices)
+        Assert.That(mesh.cylinder, Is.Not.Null);
+        foreach (var p in mesh.cylinder.Mesh.Vertices)
         {
             var r = new Vector2(p.Y, p.Z);
 
@@ -96,19 +82,20 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongYIsSpecified_ThenRadiusAndLengthOfFrontCylinderIsValid()
+    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongYIsSpecified_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
         var mesh = PartReplacementUtils.TessellateCylinderPart(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 1.0f, 0.0f),
-            2.5f
+            2.5f,
+            0
         );
 
         // Assert
-        Assert.That(mesh, Is.Not.Null);
-        foreach (var p in mesh.Mesh.Vertices)
+        Assert.That(mesh.cylinder, Is.Not.Null);
+        foreach (var p in mesh.cylinder.Mesh.Vertices)
         {
             var r = new Vector2(p.X, p.Z);
 
@@ -125,19 +112,20 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongZ_ThenRadiusAndLengthOfFrontCylinderIsValid()
+    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongZ_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
         var mesh = PartReplacementUtils.TessellateCylinderPart(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 0.0f, 1.0f),
-            2.5f
+            2.5f,
+            0
         );
 
         // Assert
-        Assert.That(mesh, Is.Not.Null);
-        foreach (var p in mesh.Mesh.Vertices)
+        Assert.That(mesh.cylinder, Is.Not.Null);
+        foreach (var p in mesh.cylinder.Mesh.Vertices)
         {
             var r = new Vector2(p.X, p.Y);
 
@@ -154,35 +142,6 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXSpecified_ThenRadiusAndLengthOfBackCylinderIsValid()
-    {
-        // Arrange
-        // Act
-        var mesh = PartReplacementUtils.TessellateCylinderPart(
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.0f, 0.0f, 0.0f),
-            2.5f
-        );
-
-        // Assert
-        Assert.That(mesh, Is.Not.Null);
-        foreach (var p in mesh.Mesh.Vertices)
-        {
-            var r = new Vector2(p.Y, p.Z);
-
-            Assert.Multiple(() =>
-            {
-                // Assert that all points are equidistant from x-axis
-                Assert.That(r.Length(), Is.EqualTo(2.5).Within(0.01));
-
-                // Assert that all x-values are within the cylinder length
-                Assert.That(p.X, Is.LessThanOrEqualTo(1.0));
-                Assert.That(p.X, Is.GreaterThanOrEqualTo(0.0));
-            });
-        }
-    }
-
-    [Test]
     public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
     {
         // Arrange
@@ -190,12 +149,101 @@ public class PartReplacementUtilsTests
         var mesh = PartReplacementUtils.TessellateCylinderPart(
             new Vector3(1.0f, 2.0f, 3.0f),
             new Vector3(3.0f, 5.0f, 7.0f),
-            2.5f
+            2.5f,
+            0
         );
 
         // Assert
-        Assert.That(mesh, Is.Not.Null);
-        AssertThatAllPointsAreWithinTheBoundingBox(mesh);
+        Assert.That(mesh.cylinder, Is.Not.Null);
+        AssertThatAllPointsAreWithinTheBoundingBox(mesh.cylinder);
+    }
+
+    [Test]
+    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXYZSpecified_ThenCapsAreCorrectlyPlacedWithCorrectRadiusAndNormal()
+    {
+        // Arrange
+        // Act
+        var startPoint = new Vector3(1.0f, 2.0f, 3.0f);
+        var endPoint = new Vector3(3.0f, 5.0f, 7.0f);
+        const float radius = 2.5f;
+        var mesh = PartReplacementUtils.TessellateCylinderPart(startPoint, endPoint, radius, 0, true);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(mesh.startCap, Is.Not.Null);
+            Assert.That(mesh.endCap, Is.Not.Null);
+        });
+
+        Vector3 startCapCenter = CalcCenter(mesh.startCap.Mesh);
+        Vector3 endCapCenter = CalcCenter(mesh.endCap.Mesh);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(startCapCenter.X, Is.EqualTo(startPoint.X).Within(0.1));
+            Assert.That(startCapCenter.Y, Is.EqualTo(startPoint.Y).Within(0.1));
+            Assert.That(startCapCenter.Z, Is.EqualTo(startPoint.Z).Within(0.1));
+            Assert.That(endCapCenter.X, Is.EqualTo(endPoint.X).Within(0.1));
+            Assert.That(endCapCenter.Y, Is.EqualTo(endPoint.Y).Within(0.1));
+            Assert.That(endCapCenter.Z, Is.EqualTo(endPoint.Z).Within(0.1));
+        });
+
+        foreach (var p in mesh.startCap.Mesh.Vertices)
+        {
+            var d = p - startPoint;
+            if (d.Length() < 0.01)
+                continue; // Exclude vertices at the circle center
+            Assert.That(d.Length(), Is.EqualTo(radius).Within(0.1));
+        }
+        foreach (var p in mesh.endCap.Mesh.Vertices)
+        {
+            var d = p - endPoint;
+            if (d.Length() < 0.01)
+                continue; // Exclude vertices at the circle center
+            Assert.That(d.Length(), Is.EqualTo(radius).Within(0.1));
+        }
+
+        Vector3 startCapNormal = CalcAvgNormal(mesh.startCap.Mesh, startCapCenter);
+        Vector3 endCapNormal = CalcAvgNormal(mesh.endCap.Mesh, endCapCenter);
+        Vector3 normal = Vector3.Normalize(endPoint - startPoint);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(startCapNormal.X, Is.EqualTo(normal.X).Within(0.1).Or.EqualTo(-normal.X).Within(0.1));
+            Assert.That(startCapNormal.Y, Is.EqualTo(normal.Y).Within(0.1).Or.EqualTo(-normal.Y).Within(0.1));
+            Assert.That(startCapNormal.Z, Is.EqualTo(normal.Z).Within(0.1).Or.EqualTo(-normal.Z).Within(0.1));
+            Assert.That(endCapNormal.X, Is.EqualTo(normal.X).Within(0.1).Or.EqualTo(-normal.X).Within(0.1));
+            Assert.That(endCapNormal.Y, Is.EqualTo(normal.Y).Within(0.1).Or.EqualTo(-normal.Y).Within(0.1));
+            Assert.That(endCapNormal.Z, Is.EqualTo(normal.Z).Within(0.1).Or.EqualTo(-normal.Z).Within(0.1));
+        });
+
+        return;
+        Vector3 CalcCenter(Mesh m)
+        {
+            var c = new Vector3();
+            foreach (var p in m.Vertices)
+            {
+                if ((p - c).Length() < 0.01)
+                    continue; // Exclude vertices at the circle center
+                c += p;
+            }
+            return c / m.Vertices.Length;
+        }
+        Vector3 CalcAvgNormal(Mesh m, Vector3 c)
+        {
+            var n = new Vector3();
+            for (int i = 0; i < m.Vertices.Length - 1; i++)
+            {
+                var p1 = m.Vertices[i];
+                if ((p1 - c).Length() < 0.01)
+                    continue; // Exclude vertices at the circle center
+                var p2 = m.Vertices[i + 1];
+                if ((p2 - c).Length() < 0.01)
+                    continue; // Exclude vertices at the circle center
+                n += Vector3.Cross(p1 - c, p2 - c);
+            }
+            return Vector3.Normalize(n);
+        }
     }
 
     [Test]
@@ -206,12 +254,13 @@ public class PartReplacementUtilsTests
         var primitive = PartReplacementUtils.CreatePrimitiveCylinderPart(
             new Vector3(1.0f, 2.0f, 3.0f),
             new Vector3(3.0f, 5.0f, 7.0f),
-            2.5f
+            2.5f,
+            0
         );
 
         // Assert
-        Assert.That(primitive, Is.Not.Null);
-        var cylinder = EccentricConeTessellator.Tessellate(primitive);
+        Assert.That(primitive.cylinder, Is.Not.Null);
+        var cylinder = EccentricConeTessellator.Tessellate(primitive.cylinder);
         Assert.That(cylinder, Is.Not.Null);
         AssertThatAllPointsAreWithinTheBoundingBox(cylinder);
     }
@@ -255,7 +304,7 @@ public class PartReplacementUtilsTests
         var cylinderMesh = new Mesh(vertices.ToArray(), indices.ToArray(), 1.0E-6f);
 
         // Act
-        EccentricCone? mesh = PartReplacementUtils.CreatePrimitiveCylinderPart(cylinderMesh);
+        EccentricCone? mesh = PartReplacementUtils.CreatePrimitiveCylinderPart(cylinderMesh, 0).cylinder;
 
         // Assert
         Assert.That(mesh, Is.Not.Null);
@@ -311,7 +360,8 @@ public class PartReplacementUtilsTests
             new Vector3(1, 0, 0),
             new Vector3(0, 1, 0),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -329,7 +379,8 @@ public class PartReplacementUtilsTests
             new Vector3(1, 0, 0),
             new Vector3(0, 0, 1),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -356,7 +407,8 @@ public class PartReplacementUtilsTests
             new Vector3(0, 1, 0),
             new Vector3(0, 0, 1),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -383,7 +435,8 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             new Vector3(1, 0, 0),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -410,7 +463,8 @@ public class PartReplacementUtilsTests
             new Vector3(0.8f, 0, 0),
             new Vector3(0, 0, 1),
             0.02f,
-            0.08f
+            0.08f,
+            0
         );
 
         // Assert
@@ -437,7 +491,8 @@ public class PartReplacementUtilsTests
             new Vector3(-1, 0, 0),
             new Vector3(0, 0, 1),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -464,7 +519,8 @@ public class PartReplacementUtilsTests
             new Vector3(1, 0, 0),
             new Vector3(0, 0, 1),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -491,7 +547,8 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 0),
             new Vector3(0, 0, 1),
             0.05f,
-            0.1f
+            0.1f,
+            0
         );
 
         // Assert
@@ -524,7 +581,8 @@ public class PartReplacementUtilsTests
             endPoint,
             surfaceDirGuide,
             thickness,
-            height
+            height,
+            0
         );
 
         // Assert
@@ -602,7 +660,8 @@ public class PartReplacementUtilsTests
             endPoint,
             surfaceDirGuide,
             thickness,
-            height
+            height,
+            0
         );
 
         // Assert
@@ -649,31 +708,21 @@ public class PartReplacementUtilsTests
     public void GivenMeshList_WhenOneObjectHasLargestVolume_ThenReturnIndexOfLargestBoundingBoxVolume()
     {
         // Arrange
-        var meshXs = PartReplacementUtils.TessellateCylinderPart(
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.0f, 0.0f, 0.0f),
-            1.0f
-        );
-        var meshS = PartReplacementUtils.TessellateCylinderPart(
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.1f, 0.0f, 0.0f),
-            1.0f
-        );
-        var meshM = PartReplacementUtils.TessellateCylinderPart(
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.1f, 0.0f, 0.0f),
-            1.1f
-        );
-        var meshL = PartReplacementUtils.TessellateCylinderPart(
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.2f, 0.0f, 0.0f),
-            1.1f
-        );
-        var meshXl = PartReplacementUtils.TessellateCylinderPart(
-            new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(1.2f, 0.0f, 0.0f),
-            1.2f
-        );
+        var meshXs = PartReplacementUtils
+            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f), 1.0f, 0)
+            .cylinder;
+        var meshS = PartReplacementUtils
+            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.0f, 0)
+            .cylinder;
+        var meshM = PartReplacementUtils
+            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.1f, 0)
+            .cylinder;
+        var meshL = PartReplacementUtils
+            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.1f, 0)
+            .cylinder;
+        var meshXl = PartReplacementUtils
+            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.2f, 0)
+            .cylinder;
         var meshList1 = new List<Mesh?> { meshXs?.Mesh, meshS?.Mesh, meshM?.Mesh, meshL?.Mesh, meshXl?.Mesh };
         var meshList2 = new List<Mesh?> { meshXs?.Mesh, meshS?.Mesh, meshXl?.Mesh, meshM?.Mesh, meshL?.Mesh };
         var meshList3 = new List<Mesh?> { meshXl?.Mesh, meshXs?.Mesh, meshS?.Mesh, meshM?.Mesh, meshL?.Mesh };

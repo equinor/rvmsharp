@@ -72,7 +72,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 }
             }
         }
-        else if (nodeName.ContainsAny(["Kick Board", "BRM"]))
+        else if (nodeName.ContainsAny(["Kick Board"]))
         {
             // For each separate mesh found, convert it to a separate convex hull mesh
             for (int i = 0; i < nodeGeometries.Length; i++)
@@ -183,23 +183,47 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     splitMesh.ToList()!
                 );
 
+                int childMeshIndex = 0;
                 for (int j = 0; j < splitMesh.Length; j++)
                 {
                     var disjointMesh = splitMesh[j];
                     if (j == indexLargestBoundingBoxVol)
                     {
                         // The largest piece of a spear is a cylinder
-                        var primitiveCylinder = PartReplacementUtils.CreatePrimitiveCylinderPart(disjointMesh);
-                        if (primitiveCylinder == null)
-                            continue;
-                        var cylinder = EccentricConeTessellator.Tessellate(primitiveCylinder); // :TODO: At some point, do not tessellate here, but rather return an EccentricCone directly. This does not yet work.
-                        if (cylinder != null)
+                        var cylinderWithCaps = PartReplacementUtils.TessellateCylinderPart(
+                            disjointMesh,
+                            nodeGeometries[i].TreeIndex,
+                            true
+                        ); // :TODO: At some point, do not tessellate here, but rather return an EccentricCone directly. This does not yet work.
+                        if (cylinderWithCaps.cylinder != null)
                         {
                             results.Add(
                                 new ScaffoldOptimizerResult(
                                     nodeGeometries[i],
-                                    cylinder.Mesh,
-                                    j,
+                                    cylinderWithCaps.cylinder.Mesh,
+                                    childMeshIndex++,
+                                    requestChildMeshInstanceId
+                                )
+                            );
+                        }
+                        if (cylinderWithCaps.startCap != null)
+                        {
+                            results.Add(
+                                new ScaffoldOptimizerResult(
+                                    nodeGeometries[i],
+                                    cylinderWithCaps.startCap.Mesh,
+                                    childMeshIndex++,
+                                    requestChildMeshInstanceId
+                                )
+                            );
+                        }
+                        if (cylinderWithCaps.endCap != null)
+                        {
+                            results.Add(
+                                new ScaffoldOptimizerResult(
+                                    nodeGeometries[i],
+                                    cylinderWithCaps.endCap.Mesh,
+                                    childMeshIndex++,
                                     requestChildMeshInstanceId
                                 )
                             );
@@ -212,7 +236,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                             new ScaffoldOptimizerResult(
                                 nodeGeometries[i],
                                 Simplify.ConvertToConvexHull(disjointMesh, 0.01f),
-                                j,
+                                childMeshIndex++,
                                 requestChildMeshInstanceId
                             )
                         );
@@ -230,7 +254,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     continue;
 
                 var replacementBeam = new ReplacementLedgerBeam(ledgerBeamMesh);
-                List<Mesh?> partsOfLedgerBeam = replacementBeam.MakeReplacement();
+                List<Mesh?> partsOfLedgerBeam = replacementBeam.MakeReplacement(nodeGeometries[i].TreeIndex);
                 if (partsOfLedgerBeam.Count == 0)
                 {
                     failed = true;

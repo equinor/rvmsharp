@@ -693,7 +693,6 @@ public class ScaffoldOptimizerTests
 
     [Test]
     [TestCase("some kick board", TestPurpose.TestOptimizationSteps)]
-    [TestCase("some brm", TestPurpose.TestOptimizationSteps)]
     [TestCase("StairwayGuard", TestPurpose.TestOptimizationOnTessellatedObject)]
     public void TestMeshOutput_GivenAPartForConvexHullOrDecimationOptimization_CheckThatTheOptimizationWasDone(
         string partName,
