@@ -56,7 +56,7 @@ public class FbxProviderTests
     public void FbxImporterLoadFileTest()
     {
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
         Iterate(rootNode);
     }
 
@@ -64,7 +64,7 @@ public class FbxProviderTests
     public void GreenAndRedCube_LoadFile_VerifyCorrectColors()
     {
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(TestSamplesDirectory + "\\green_and_red_cubes.fbx");
+        var rootNode = test.LoadFile(TestSamplesDirectory + "/green_and_red_cubes.fbx");
 
         var revealNode = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -115,7 +115,7 @@ public class FbxProviderTests
     public void Fbx_Importer_GetUniqueMeshesInFileCount()
     {
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
 
         var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(rootNode);
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
@@ -173,7 +173,7 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
 
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -213,7 +213,7 @@ public class FbxProviderTests
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,

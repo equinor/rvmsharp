@@ -11,10 +11,10 @@
 #define CFBX_API
 #endif
 
-typedef void *CFbxManager;
-typedef void *CFbxNode;
-typedef void *CFbxMesh;
-typedef void *CFbxMaterial;
+typedef void CFbxManager;
+typedef void CFbxNode;
+typedef void CFbxMesh;
+typedef void CFbxMaterial;
 
 extern "C"
 {
@@ -38,7 +38,6 @@ extern "C"
         int vertex_count;
         int index_count;
         float *vertex_position_data;
-        float *vertex_normal_data;
         int *index_data;
 
         ~ExportableMesh()
@@ -53,12 +52,6 @@ extern "C"
             {
                 delete index_data;
                 index_data = nullptr;
-            }
-
-            if (vertex_normal_data)
-            {
-                delete vertex_normal_data;
-                vertex_normal_data = nullptr;
             }
         }
     };

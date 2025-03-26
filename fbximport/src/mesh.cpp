@@ -4,66 +4,50 @@
 #include <map>
 #include <tuple>
 #include <set>
+#include <iostream>
 
 using namespace fbxsdk;
 using namespace std;
-typedef std::tuple<float, float, float, float, float, float> vertex_tuple;
+typedef std::tuple<float, float, float> vertex_tuple;
 
 // this function allocates memory
 // there should be a corresponding mesh_clean call for each call of this function
 // it should never return nullptr, if the mesh is invalid for some reason, set the valid field to false
-ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry, bool ignore_normals)
+ExportableMesh* mesh_get_geometry_data(CFbxMesh* geometry)
 {
     ExportableMesh* mesh_out_tmp = new ExportableMesh();
     mesh_out_tmp->vertex_count = 0;
     mesh_out_tmp->vertex_position_data = nullptr;
-    mesh_out_tmp->vertex_normal_data = nullptr;
     mesh_out_tmp->index_count = 0;
     mesh_out_tmp->index_data = nullptr;
 
     auto mesh = (FbxMesh*)geometry;
 
+    // GetPolygonVertexCount() can be smaller than the value returned by GetControlPointsCount() (meaning that not all
+    // of the control points stored in the object are used to define the mesh). However, typically it will be much
+    // bigger since any given control point can be used to define a vertex on multiple polygons.
+
     auto fbxVertexPositionsCount = mesh->GetPolygonVertexCount();
     auto fbxVertexPositionIndexArray = mesh->GetPolygonVertices();
     auto controlPointCount = mesh->GetControlPointsCount();
 
-    // TODO find out difference between fbxVertexPositionsCount and controlPointCount
-    vector<FbxVector4> lFbxPositions;
-    for (auto i = 0; i < controlPointCount; i++)
-    {
-        auto cp = mesh->GetControlPointAt(i);
-        lFbxPositions.push_back(cp);
-    }
-
-    FbxArray<FbxVector4> lFbxNormals;
-    bool lSuccess = mesh->GetPolygonVertexNormals(lFbxNormals);
-    if (!lSuccess)
-    {
-        mesh_out_tmp->valid = false;
-        mesh_clean_memory(mesh_out_tmp);
-        return mesh_out_tmp;
-    }
-
     vector<float> lMeshOutVertexPositions;
-    vector<float> lMeshOutVertexNormals;
     vector<int> lMeshOutVertexIndices;
     std::map<vertex_tuple, int> vertex_data;
     
     for (auto i = 0; i < fbxVertexPositionsCount; i++)
     {
-        // Retrieve vertex index, position, and surface normal. If we have choosen to ignore the vertex surface normal,
+        // Retrieve vertex index and position. If we have choosen to ignore the vertex surface normal,
         // then we set it to (0, 0, 0). Subsequently, the position and normal are assembled into a tuple. Hence,
         // even if two equally positioned vertices have different surface normals, the normals will become zero, making
         // those two tuples equal during the process of removing duplicate tuples. The result is a possible reduction
         // in vertices that reduce the amount of vertices stored by Reveal, which do not need the surface normals. This 
         // has the potential of speeding up the performance in Reveal. 
         const auto fbxVertexPositionIndex = fbxVertexPositionIndexArray[i];
-        auto lVertex = lFbxPositions[fbxVertexPositionIndex];
-        auto lNormal = ignore_normals ? FbxVector4(0.0, 0.0, 0.0, 0.0) : lFbxNormals[i];
+        auto lVertex = mesh->GetControlPointAt(fbxVertexPositionIndex);
 
         float vx = (float)lVertex[0]; float vy = (float)lVertex[1]; float vz = (float)lVertex[2];
-        float nx = (float)lNormal[0]; float ny = (float)lNormal[1]; float nz = (float)lNormal[2];
-        const vertex_tuple vertex = std::make_tuple(vx, vy, vz, nx, ny, nz);
+        const vertex_tuple vertex = std::make_tuple(vx, vy, vz);
         
         const int newIndexCandidate = vertex_data.size();
         auto result = vertex_data.insert(std::pair(vertex, newIndexCandidate));
@@ -79,7 +63,6 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry, bool ignore_normals)
         else 
         {
             lMeshOutVertexPositions.insert(lMeshOutVertexPositions.end(), { vx, vy, vz });
-            lMeshOutVertexNormals.insert(lMeshOutVertexNormals.end(), { nx, ny, nz });
             lMeshOutVertexIndices.push_back(newIndexCandidate);
         }
     }
@@ -90,11 +73,9 @@ ExportableMesh* mesh_get_geometry_data(CFbxMesh geometry, bool ignore_normals)
 
     mesh_out_tmp->index_data = new int[mesh_out_tmp->index_count];
     mesh_out_tmp->vertex_position_data = new float[lMeshOutVertexPositions.size()];
-    mesh_out_tmp->vertex_normal_data = new float[lMeshOutVertexPositions.size()];
 
     std::copy(lMeshOutVertexIndices.begin(), lMeshOutVertexIndices.end(), mesh_out_tmp->index_data);
     std::copy(lMeshOutVertexPositions.begin(), lMeshOutVertexPositions.end(), mesh_out_tmp->vertex_position_data);
-    std::copy(lMeshOutVertexNormals.begin(), lMeshOutVertexNormals.end(), mesh_out_tmp->vertex_normal_data);
 
     return mesh_out_tmp;
 }

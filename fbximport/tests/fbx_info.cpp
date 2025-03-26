@@ -16,9 +16,9 @@
 
 using namespace std;
 
-FbxInfo::FbxInfo(const std::string& fileName, const bool& ignore_normals)
+FbxInfo::FbxInfo(const std::string& fileName)
 {
-    load(fileName, ignore_normals);
+    load(fileName);
 }
 
 size_t FbxInfo::get_node_count() const
@@ -35,8 +35,8 @@ std::string FbxInfo::print_info() const
 {
     std::string output;
 
-    output+= string("FBX info. Surface normals are ") + string(m_ignore_normals ? "ignored." : "used.") + "\r\n";
-    output+= string("-----------------------------------------------------") + "\r\n";
+    output+= string("FBX info\r\n");
+    output+= string("-----------------------------------------------------\r\n");
 
     for (const InfoItem& item : m_node_info)
     {
@@ -98,7 +98,7 @@ std::string FbxInfo::print_comparison(const FbxInfo& a, const FbxInfo& b)
     return output;
 }
 
-void FbxInfo::iterate(CFbxNode parent, const bool& ignore_normals, int ident)
+void FbxInfo::iterate(CFbxNode* parent, int ident)
 {
     char* name = new char[512];
     node_get_name(parent, name, 512);
@@ -109,7 +109,7 @@ void FbxInfo::iterate(CFbxNode parent, const bool& ignore_normals, int ident)
 
     for (int i = 0; i < node_get_child_count(parent); i++)
     {
-        iterate(node_get_child(parent, i), ignore_normals, ident + 1);
+        iterate(node_get_child(parent, i), ident + 1);
     }
     auto geometry = node_get_mesh(parent);
     if (geometry != nullptr)
@@ -117,21 +117,19 @@ void FbxInfo::iterate(CFbxNode parent, const bool& ignore_normals, int ident)
         auto material = node_get_material(parent);
         auto color = material != nullptr ? material_get_color(material) : new Color();
 
-        auto data = mesh_get_geometry_data(geometry, ignore_normals);
+        auto data = mesh_get_geometry_data(geometry);
         m_node_info.emplace_back(InfoItem(data->vertex_count, data->index_count, color));
 
         delete data;
     }
 }
 
-void FbxInfo::load(const std::string& fileName, const bool& ignore_normals)
+void FbxInfo::load(const std::string& fileName)
 {
-    m_ignore_normals = ignore_normals;
-
     auto sdk = manager_create();
     auto root = load_file(fileName.c_str(), sdk);
 
-    iterate(root, ignore_normals);
+    iterate(root);
 
     node_destroy(root);
     manager_destroy(sdk);
