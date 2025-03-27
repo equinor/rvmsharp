@@ -1,15 +1,12 @@
-using System.Drawing;
 using System.Numerics;
 using CadRevealComposer;
-using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils.MeshOptimization;
-using CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
-public class ReplacementLedgerBeam(Mesh ledgerBeam)
+public static class ReplacementLedgerBeam
 {
     private enum Placement
     {
@@ -23,7 +20,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         Right = 1
     }
 
-    public List<Mesh?> MakeReplacement(uint treeIndex)
+    public static List<Mesh?> ToReplacementLedgerBeam(this Mesh ledgerBeam, uint treeIndex)
     {
         // :TODO:: In the below procedure we are assuming a ledger beam mesh that is axis aligned.
         // Hence, at the moment we do not support non-axis aligned ledger beams as input.
@@ -173,7 +170,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             var endVec = centerVec + new Vector3 { [ledgerExtent.AxisIndexOfLargest] = 0.5f * width };
             couplers.Add(
                 PartReplacementUtils
-                    .TessellateBoxPart(
+                    .CreateTessellatedBoxPrimitive(
                         startVec,
                         endVec,
                         new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
@@ -207,7 +204,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         };
 
         return PartReplacementUtils
-            .TessellateBoxPart(
+            .CreateTessellatedBoxPrimitive(
                 ledgerEdgeCenter,
                 ledgerEdgeCenter + endDisplacement,
                 new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
@@ -241,7 +238,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         );
 
         TriangleMesh? mesh = PartReplacementUtils
-            .TessellateCylinderPart(centerMin, centerMax, radius, treeIndex)
+            .CreateTessellatedCylinderPrimitive(centerMin, centerMax, radius, treeIndex)
             .cylinder;
 
         return mesh;
@@ -264,7 +261,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
         var tubeVerticalVec = new Vector3() { [ledgerBeamExtents.AxisIndexOfMiddle] = 1.0f };
         var tubeDirVec = Vector3.Normalize(centerMin - centerMax);
         centerMin += 0.015f * tubeDirVec;
-        TriangleMesh? meshL = PartReplacementUtils.TessellateBoxPart(
+        TriangleMesh? meshL = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             centerMin,
             centerMin - 2.5f * radius * tubeVerticalVec,
             tubeDirVec,
@@ -273,7 +270,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             treeIndex
         );
         centerMax -= 0.015f * tubeDirVec;
-        TriangleMesh? meshR = PartReplacementUtils.TessellateBoxPart(
+        TriangleMesh? meshR = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             centerMax,
             centerMax - 2.5f * radius * tubeVerticalVec,
             tubeDirVec,
@@ -306,7 +303,7 @@ public class ReplacementLedgerBeam(Mesh ledgerBeam)
             ledgerBeamTubeRadius
         );
 
-        return PartReplacementUtils.TessellateBoxPart(
+        return PartReplacementUtils.CreateTessellatedBoxPrimitive(
             (placement == Placement.Top) ? centerMin - displacement : centerMin + displacement,
             (placement == Placement.Top) ? centerMax - displacement : centerMax + displacement,
             new Vector3 { [ledgerBeamExtents.AxisIndexOfSmallest] = 1.0f },

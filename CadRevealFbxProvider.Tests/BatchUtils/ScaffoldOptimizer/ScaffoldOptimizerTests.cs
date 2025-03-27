@@ -2,7 +2,6 @@ namespace CadRevealFbxProvider.Tests.BatchUtils;
 
 using System.Drawing;
 using System.Numerics;
-using System.Security.Cryptography;
 using CadRevealComposer;
 using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
@@ -722,5 +721,86 @@ public class ScaffoldOptimizerTests
 
         return;
         ulong OnRequestNewInstanceId() => currentInstanceId++;
+    }
+
+    [Test]
+    public void GivenSingleKeyword_WhenKeywordIsPresentInStringHandedToContainsAny_ThenReportTrue()
+    {
+        // Arrange
+        const string testString = "This is a test string";
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(testString.ContainsAny(["test"]), Is.True);
+            Assert.That(testString.ContainsAny(["Test"]), Is.True);
+            Assert.That(testString.ContainsAny(["TEST"]), Is.True);
+            Assert.That(testString.ContainsAny(["EST"]), Is.True);
+            Assert.That(testString.ContainsAny(["is a test"]), Is.True);
+        });
+    }
+
+    [Test]
+    public void GivenSingleKeyword_WhenKeywordIsNotPresentInStringHandedToContainsAny_ThenReportFalse()
+    {
+        // Arrange
+        const string testString = "This is a test string";
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(testString.ContainsAny(["is test"]), Is.False);
+            Assert.That(testString.ContainsAny(["fest"]), Is.False);
+        });
+    }
+
+    [Test]
+    public void GivenThreeKeywords_WhenOneKeywordIsPresentInStringHandedToContainsAny_ThenReportTrue()
+    {
+        // Arrange
+        const string testString = "This is a test string";
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(testString.ContainsAny(["this", "abc", "def"]), Is.True);
+            Assert.That(testString.ContainsAny(["THIS", "abc", "def"]), Is.True);
+        });
+    }
+
+    [Test]
+    public void GivenThreeKeywords_WhenTwoKeywordsArePresentInStringHandedToContainsAny_ThenReportTrue()
+    {
+        // Arrange
+        const string testString1 = "This is a test string";
+        const string testString2 = "This is a string";
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(testString1.ContainsAny(["this", "abc", "string"]), Is.True);
+            Assert.That(testString1.ContainsAny(["THIS", "abc", "STRING"]), Is.True);
+            Assert.That(testString2.ContainsAny(["this", "abc", "string"]), Is.True);
+            Assert.That(testString2.ContainsAny(["THIS", "abc", "STRING"]), Is.True);
+        });
+    }
+
+    [Test]
+    public void GivenThreeKeywords_WhenNoKeywordsArePresentInStringHandedToContainsAny_ThenReportFalse()
+    {
+        // Arrange
+        const string testString1 = "This is a test string";
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(testString1.ContainsAny(["this s", "abc", "stringy"]), Is.False);
+            Assert.That(testString1.ContainsAny(["THIS s", "abc", "STRINGY"]), Is.False);
+        });
     }
 }

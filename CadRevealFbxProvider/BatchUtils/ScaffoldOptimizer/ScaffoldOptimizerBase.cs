@@ -5,10 +5,10 @@ using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 
-static class ScaffoldOptimizerExtensions
+public static class ScaffoldOptimizerExtensions
 {
     public static bool ContainsAny(this string str, string[] keywordList) =>
-        keywordList.Select(s => s.ToUpper()).Any(str.ToUpper().Contains);
+        keywordList.Any(s => str.Contains(s, StringComparison.OrdinalIgnoreCase));
 }
 
 public class ScaffoldOptimizerBase

@@ -54,7 +54,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     .SplitMeshByLoosePieces(mesh)
                     .MaxBy(x => x.CalculateAxisAlignedBoundingBox().Diagonal)!;
 
-                var boxPlank = ToBoxPrimitive(nodeGeometries[i], maxMesh, 1.0f);
+                var boxPlank = maxMesh.ToBoxPrimitive(nodeGeometries[i], 1.0f);
                 if (boxPlank != null)
                 {
                     results.Add(new ScaffoldOptimizerResult(boxPlank));
@@ -118,21 +118,21 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     continue;
 
                 Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
-                var indexLargestBoundingBoxVol = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(
+                var meshWithLargestBoundingBoxVol = PartReplacementUtils.FindMeshWithLargestBoundingBoxVolume(
                     splitMesh.ToList()!
                 );
 
-                for (int j = 0; j < splitMesh.Length; j++)
+                int childMeshIndex = 0;
+                foreach (Mesh disjointMesh in splitMesh)
                 {
-                    var disjointMesh = splitMesh[j];
-                    if (j == indexLargestBoundingBoxVol)
+                    if (ReferenceEquals(disjointMesh, meshWithLargestBoundingBoxVol))
                     {
                         // The support for the stairs (assumed largest volume) is only subjected to light geometry optimization
                         results.Add(
                             new ScaffoldOptimizerResult(
                                 nodeGeometries[i],
                                 Simplify.SimplifyMeshLossy(disjointMesh, new SimplificationLogObject()),
-                                j,
+                                childMeshIndex++,
                                 requestChildMeshInstanceId
                             )
                         );
@@ -140,7 +140,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     else
                     {
                         // The smaller parts, assumed to be steps and similar, will be converted to boxes
-                        var boxStep = ToBoxPrimitive(nodeGeometries[i], disjointMesh, 1000.0f);
+                        var boxStep = disjointMesh.ToBoxPrimitive(nodeGeometries[i], 1000.0f);
                         if (boxStep != null)
                             results.Add(new ScaffoldOptimizerResult(boxStep));
                     }
@@ -179,19 +179,17 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     continue;
 
                 Mesh[] splitMesh = LoosePiecesMeshTools.SplitMeshByLoosePieces(mesh);
-                var indexLargestBoundingBoxVol = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(
+                var meshWithLargestBoundingBoxVol = PartReplacementUtils.FindMeshWithLargestBoundingBoxVolume(
                     splitMesh.ToList()!
                 );
 
                 int childMeshIndex = 0;
-                for (int j = 0; j < splitMesh.Length; j++)
+                foreach (Mesh disjointMesh in splitMesh)
                 {
-                    var disjointMesh = splitMesh[j];
-                    if (j == indexLargestBoundingBoxVol)
+                    if (ReferenceEquals(disjointMesh, meshWithLargestBoundingBoxVol))
                     {
                         // The largest piece of a spear is a cylinder
-                        var cylinderWithCaps = PartReplacementUtils.TessellateCylinderPart(
-                            disjointMesh,
+                        var cylinderWithCaps = disjointMesh.ToTessellatedCylinderPrimitive(
                             nodeGeometries[i].TreeIndex,
                             true
                         ); // :TODO: At some point, do not tessellate here, but rather return an EccentricCone directly. This does not yet work.
@@ -253,8 +251,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 if (ledgerBeamMesh == null)
                     continue;
 
-                var replacementBeam = new ReplacementLedgerBeam(ledgerBeamMesh);
-                List<Mesh?> partsOfLedgerBeam = replacementBeam.MakeReplacement(nodeGeometries[i].TreeIndex);
+                List<Mesh?> partsOfLedgerBeam = ledgerBeamMesh.ToReplacementLedgerBeam(nodeGeometries[i].TreeIndex);
                 if (partsOfLedgerBeam.Count == 0)
                 {
                     failed = true;
@@ -310,24 +307,5 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
         }
 
         return results;
-    }
-
-    private static Box? ToBoxPrimitive(APrimitive geometryWithTransform, Mesh meshToBound, float heightThreshold)
-    {
-        var matrix = (geometryWithTransform as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
-        Box box = BoundingBox.ToBoxPrimitive(
-            meshToBound,
-            matrix,
-            geometryWithTransform.TreeIndex,
-            geometryWithTransform.Color
-        );
-
-        // :TODO: In the above procedure we are assuming a meshToBound that is axis aligned.
-        // Hence, at the moment we do not support non-axis aligned cylinders as input. To detect
-        // if the mesh may have been non-axis aligned we will set a threshold on the mesh
-        // height to see if it is unnaturally tall. If so, we return null as failure. Remove
-        // this test once we support non-axis aligned input.
-        var sortedBoundingBoxExtent = new SortedBoundingBoxExtent(meshToBound.CalculateAxisAlignedBoundingBox());
-        return sortedBoundingBoxExtent.ValueOfMiddle > heightThreshold ? null : box;
     }
 }

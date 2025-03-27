@@ -1,5 +1,6 @@
 namespace CadRevealFbxProvider.Tests.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
+using System.Drawing;
 using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Operations.Tessellating;
@@ -30,11 +31,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithAValidCylinderSpecified_ThenReturnANonNullMesh()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithAValidCylinderSpecified_ThenReturnANonNullMesh()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateCylinderPart(
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(1.0f, 0.0f, 0.0f),
             1.0f,
@@ -52,11 +53,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXSpecified_ThenRadiusAndLengthOfCylinderIsValid()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongXSpecified_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateCylinderPart(
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(1.0f, 0.0f, 0.0f),
             2.5f,
@@ -82,11 +83,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongYIsSpecified_ThenRadiusAndLengthOfCylinderIsValid()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongYIsSpecified_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateCylinderPart(
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 1.0f, 0.0f),
             2.5f,
@@ -112,11 +113,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongZ_ThenRadiusAndLengthOfCylinderIsValid()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongZ_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateCylinderPart(
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 0.0f, 1.0f),
             2.5f,
@@ -142,11 +143,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateCylinderPart(
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
             new Vector3(1.0f, 2.0f, 3.0f),
             new Vector3(3.0f, 5.0f, 7.0f),
             2.5f,
@@ -159,14 +160,14 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingTessellateCylinderPartWithACylinderAlongXYZSpecified_ThenCapsAreCorrectlyPlacedWithCorrectRadiusAndNormal()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongXYZSpecified_ThenCapsAreCorrectlyPlacedWithCorrectRadiusAndNormal()
     {
         // Arrange
         // Act
         var startPoint = new Vector3(1.0f, 2.0f, 3.0f);
         var endPoint = new Vector3(3.0f, 5.0f, 7.0f);
         const float radius = 2.5f;
-        var mesh = PartReplacementUtils.TessellateCylinderPart(startPoint, endPoint, radius, 0, true);
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(startPoint, endPoint, radius, 0, true);
 
         // Assert
         Assert.Multiple(() =>
@@ -247,11 +248,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCallingCreatePrimitiveCylinderPartWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
+    public void GivenStartAndEndPointAndRadius_WhenCreatingCylinderPrimitiveWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
     {
         // Arrange
         // Act
-        var primitive = PartReplacementUtils.CreatePrimitiveCylinderPart(
+        var primitive = PartReplacementUtils.CreateCylinderPrimitive(
             new Vector3(1.0f, 2.0f, 3.0f),
             new Vector3(3.0f, 5.0f, 7.0f),
             2.5f,
@@ -268,7 +269,7 @@ public class PartReplacementUtilsTests
     [Test]
     [TestCase(-1.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 5.4f, 0.43f)]
     [TestCase(0.0f, -1.0f, 0.0f, 0.0f, 5.0f, 0.0f, 5.6f, 0.53f)]
-    public void GivenCoordinatesWithinACylinderWithLengthMuchGreaterThanDiameter_WhenCallingCreatePrimitiveCylinderPart_ThenReturnSmallestCylinderSurroundingAllPoints(
+    public void GivenCoordinatesWithinACylinderWithLengthMuchGreaterThanDiameter_WhenCreatingCylinderPrimitiveFromMesh_ThenReturnSmallestCylinderSurroundingAllPoints(
         float xA,
         float yA,
         float zA,
@@ -304,7 +305,7 @@ public class PartReplacementUtilsTests
         var cylinderMesh = new Mesh(vertices.ToArray(), indices.ToArray(), 1.0E-6f);
 
         // Act
-        EccentricCone? mesh = PartReplacementUtils.CreatePrimitiveCylinderPart(cylinderMesh, 0).cylinder;
+        EccentricCone? mesh = cylinderMesh.ToCylinderPrimitive(0).cylinder;
 
         // Assert
         Assert.That(mesh, Is.Not.Null);
@@ -351,11 +352,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight_WhenCallingTessellateBoxPartWithBoxPartAlongX_ThenReturnANonNullMesh()
+    public void GivenStartAndEndPointAndThicknessAndHeight_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenReturnANonNullMesh()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             new Vector3(0, 0, 0),
             new Vector3(1, 0, 0),
             new Vector3(0, 1, 0),
@@ -369,11 +370,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCallingTessellateBoxPartWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Symmetric around X=0, startPoint = min, axis aligned
             new Vector3(-1, 0, 0),
             new Vector3(1, 0, 0),
@@ -397,11 +398,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCallingTessellateBoxPartWithBoxPartAlongY_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongY_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Symmetric around Y=0, startPoint = min, axis aligned
             new Vector3(0, -1, 0),
             new Vector3(0, 1, 0),
@@ -425,11 +426,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCallingTessellateBoxPartWithBoxPartAlongZ_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongZ_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Symmetric around Z=0, startPoint = min, axis aligned
             new Vector3(0, 0, -1),
             new Vector3(0, 0, 1),
@@ -453,11 +454,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight2_WhenCallingTessellateBoxPartWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight2_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Symmetric around X=0, startPoint = min, axis aligned, but smaller scale than 1
             new Vector3(-0.8f, 0, 0),
             new Vector3(0.8f, 0, 0),
@@ -481,11 +482,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight3_WhenCallingTessellateBoxPartWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight3_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Symmetric around X=0, startPoint = max, axis aligned, same size as 1
             new Vector3(1, 0, 0),
             new Vector3(-1, 0, 0),
@@ -509,11 +510,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight4_WhenCallingTessellateBoxPartWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight4_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Asymmetric around X=0, startPoint = min, axis aligned, half-length of 1
             new Vector3(0, 0, 0),
             new Vector3(1, 0, 0),
@@ -537,11 +538,11 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight5_WhenCallingTessellateBoxPartWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight5_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Asymmetric around X=0, startPoint = max, axis aligned, half-length of 1
             new Vector3(1, 0, 0),
             new Vector3(0, 0, 0),
@@ -565,7 +566,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight6_WhenCallingTessellateBoxPartWithBoxPartAlongSomeAxis_ThenAllPointsAreWithinItsCylindricalBoundingBox()
+    public void GivenStartAndEndPointAndThicknessAndHeight6_WhenCreatingTessellatedBoxPrimitiveAlongSomeAxis_ThenAllPointsAreWithinItsCylindricalBoundingBox()
     {
         // Arrange
         var startPoint = new Vector3(3, 5, 4);
@@ -575,7 +576,7 @@ public class PartReplacementUtilsTests
         const float thickness = 0.05f;
 
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Asymmetric around X=0, startPoint = max, axis aligned, half-length of 1
             startPoint,
             endPoint,
@@ -634,7 +635,7 @@ public class PartReplacementUtilsTests
     [TestCase(1, 3, 2, 3, 5, 4, 0, 2, -2)] // Reverse of first
     [TestCase(-7, -5, -6, -9, -7, -8, 0, 2, -2)] // -10 from first
     [TestCase(3, 5, 4, 6, 3, 7, 0, -3, -2)] // Move second vector in first
-    public void GivenStartAndEndPointAndThicknessAndHeight6_WhenCallingTessellateBoxPartWithBoxPartAlongSomeAxis_ThenAllPointsAreWithinItsBoundingBox(
+    public void GivenStartAndEndPointAndThicknessAndHeight6_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongSomeAxis_ThenAllPointsAreWithinItsBoundingBox(
         float startX,
         float startY,
         float startZ,
@@ -654,7 +655,7 @@ public class PartReplacementUtilsTests
         const float thickness = 0.05f;
 
         // Act
-        var mesh = PartReplacementUtils.TessellateBoxPart(
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
             // Asymmetric around X=0, startPoint = max, axis aligned, half the length of 1
             startPoint,
             endPoint,
@@ -705,23 +706,23 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenMeshList_WhenOneObjectHasLargestVolume_ThenReturnIndexOfLargestBoundingBoxVolume()
+    public void GivenMeshListWhereOneObjectHasLargestVolume_WhenSearchingForMeshWithLargestBoundingBox_ThenReturnMeshWithLargestBoundingBoxVolume()
     {
         // Arrange
         var meshXs = PartReplacementUtils
-            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f), 1.0f, 0)
+            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f), 1.0f, 0)
             .cylinder;
         var meshS = PartReplacementUtils
-            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.0f, 0)
+            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.0f, 0)
             .cylinder;
         var meshM = PartReplacementUtils
-            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.1f, 0)
+            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.1f, 0)
             .cylinder;
         var meshL = PartReplacementUtils
-            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.1f, 0)
+            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.1f, 0)
             .cylinder;
         var meshXl = PartReplacementUtils
-            .TessellateCylinderPart(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.2f, 0)
+            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.2f, 0)
             .cylinder;
         var meshList1 = new List<Mesh?> { meshXs?.Mesh, meshS?.Mesh, meshM?.Mesh, meshL?.Mesh, meshXl?.Mesh };
         var meshList2 = new List<Mesh?> { meshXs?.Mesh, meshS?.Mesh, meshXl?.Mesh, meshM?.Mesh, meshL?.Mesh };
@@ -737,18 +738,341 @@ public class PartReplacementUtilsTests
         };
 
         // Act
-        int index1 = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(meshList1);
-        int index2 = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(meshList2);
-        int index3 = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(meshList3);
-        int index4 = PartReplacementUtils.FindIndexWithLargestBoundingBoxVolume(meshList4);
+        Mesh? mesh1 = PartReplacementUtils.FindMeshWithLargestBoundingBoxVolume(meshList1);
+        Mesh? mesh2 = PartReplacementUtils.FindMeshWithLargestBoundingBoxVolume(meshList2);
+        Mesh? mesh3 = PartReplacementUtils.FindMeshWithLargestBoundingBoxVolume(meshList3);
+        Mesh? mesh4 = PartReplacementUtils.FindMeshWithLargestBoundingBoxVolume(meshList4);
 
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(index1, Is.EqualTo(4));
-            Assert.That(index2, Is.EqualTo(2));
-            Assert.That(index3, Is.EqualTo(0));
-            Assert.That(index4, Is.EqualTo(1));
+            Assert.That(mesh1, Is.SameAs(meshXl?.Mesh));
+            Assert.That(mesh2, Is.SameAs(meshXl?.Mesh));
+            Assert.That(mesh3, Is.SameAs(meshXl?.Mesh));
+            Assert.That(mesh4, Is.SameAs(meshXl?.Mesh));
         });
+    }
+
+    [Test]
+    public void GivenA2by3by4CenteredMeshWhereTransformIsIdentity_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSame()
+    {
+        // Arrange
+        var vertices = new Vector3[]
+        {
+            new Vector3(-1.0f, 0.0f, 0.0f),
+            new Vector3(1.0f, 0.0f, 0.0f),
+            new Vector3(0.0f, -1.5f, 0.0f),
+            new Vector3(0.0f, 1.5f, 0.0f),
+            new Vector3(0.0f, 0.0f, -2.0f),
+            new Vector3(0.0f, 0.0f, 2.0f)
+        };
+        var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
+        var mesh = new Mesh(vertices, indices, 0.0f);
+        var instanceMesh = new InstancedMesh(
+            0,
+            mesh,
+            Matrix4x4.Identity,
+            0,
+            new Color(),
+            new BoundingBox(new Vector3(-1.0f, -1.5f, -2.0f), new Vector3(1.0f, 1.5f, 2.0f))
+        );
+
+        // Act
+        Box box = instanceMesh.TemplateMesh.ToBoxPrimitive(Matrix4x4.Identity, 0, new Color());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(box.InstanceMatrix[0, 0], Is.EqualTo(2.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[1, 1], Is.EqualTo(3.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[2, 2], Is.EqualTo(4.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 3], Is.EqualTo(1.0f).Within(1.0E-6));
+        });
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (i != j)
+                    Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(0.0f).Within(1.0E-6));
+            }
+        }
+    }
+
+    [Test]
+    public void GivenA2by3by4NotCenteredMeshWhereTransformIsIdentity_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSameButTranslated()
+    {
+        // Arrange
+        var vertices = new Vector3[]
+        {
+            new Vector3(0.0f, 0.0f, 0.0f),
+            new Vector3(2.0f, 0.0f, 0.0f),
+            new Vector3(0.0f, 0.0f, 0.0f),
+            new Vector3(0.0f, 3.0f, 0.0f),
+            new Vector3(0.0f, 0.0f, 0.0f),
+            new Vector3(0.0f, 0.0f, 4.0f)
+        };
+        var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
+        var mesh = new Mesh(vertices, indices, 0.0f);
+        var instanceMesh = new InstancedMesh(
+            0,
+            mesh,
+            Matrix4x4.Identity,
+            0,
+            new Color(),
+            new BoundingBox(new Vector3(-1.0f, -1.5f, -2.0f), new Vector3(1.0f, 1.5f, 2.0f))
+        );
+
+        // Act
+        Box box = instanceMesh.TemplateMesh.ToBoxPrimitive(Matrix4x4.Identity, 0, new Color());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(box.InstanceMatrix[0, 0], Is.EqualTo(2.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[1, 1], Is.EqualTo(3.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[2, 2], Is.EqualTo(4.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 3], Is.EqualTo(1.0f).Within(1.0E-6));
+
+            Assert.That(box.InstanceMatrix[3, 0], Is.EqualTo(1.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 1], Is.EqualTo(1.5f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 2], Is.EqualTo(2.0f).Within(1.0E-6));
+
+            Assert.That(box.InstanceMatrix[0, 3], Is.EqualTo(0.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[0, 3], Is.EqualTo(0.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[0, 3], Is.EqualTo(0.0f).Within(1.0E-6));
+        });
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (i != j)
+                    Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(0.0f).Within(1.0E-6));
+            }
+        }
+    }
+
+    [Test]
+    public void GivenA2by3by4CenteredMeshAndTransformWithTranslation_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSameButTranslated()
+    {
+        // Arrange
+        // csharpier-ignore
+        var transform = new Matrix4x4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.5f, 2.0f, 1.0f
+        );
+        // csharpier-restore
+        var vertices = new Vector3[]
+        {
+            new Vector3(-1.0f, 0.0f, 0.0f),
+            new Vector3(1.0f, 0.0f, 0.0f),
+            new Vector3(0.0f, -1.5f, 0.0f),
+            new Vector3(0.0f, 1.5f, 0.0f),
+            new Vector3(0.0f, 0.0f, -2.0f),
+            new Vector3(0.0f, 0.0f, 2.0f)
+        };
+        var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
+        var mesh = new Mesh(vertices, indices, 0.0f);
+        var instanceMesh = new InstancedMesh(
+            0,
+            mesh,
+            Matrix4x4.Identity,
+            0,
+            new Color(),
+            new BoundingBox(new Vector3(-1.0f, -1.5f, -2.0f), new Vector3(1.0f, 1.5f, 2.0f))
+        );
+
+        // Act
+        Box box = instanceMesh.TemplateMesh.ToBoxPrimitive(transform, 0, new Color());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(box.InstanceMatrix[0, 0], Is.EqualTo(2.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[1, 1], Is.EqualTo(3.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[2, 2], Is.EqualTo(4.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 3], Is.EqualTo(1.0f).Within(1.0E-6));
+
+            Assert.That(box.InstanceMatrix[3, 0], Is.EqualTo(1.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 1], Is.EqualTo(1.5f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 2], Is.EqualTo(2.0f).Within(1.0E-6));
+
+            Assert.That(box.InstanceMatrix[0, 3], Is.EqualTo(0.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[0, 3], Is.EqualTo(0.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[0, 3], Is.EqualTo(0.0f).Within(1.0E-6));
+        });
+
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                if (i != j)
+                    Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(0.0f).Within(1.0E-6));
+            }
+        }
+    }
+
+    [Test]
+    public void GivenA2by3by4CenteredMeshWhereTransformIsScaled_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSameAndThenByScaleInTransform()
+    {
+        // Arrange
+        // csharpier-ignore
+        var transform = new Matrix4x4(
+            4.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 5.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 6.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+        // csharpier-restore
+        var vertices = new Vector3[]
+        {
+            new Vector3(-1.0f, 0.0f, 0.0f),
+            new Vector3(1.0f, 0.0f, 0.0f),
+            new Vector3(0.0f, -1.5f, 0.0f),
+            new Vector3(0.0f, 1.5f, 0.0f),
+            new Vector3(0.0f, 0.0f, -2.0f),
+            new Vector3(0.0f, 0.0f, 2.0f)
+        };
+        var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
+        var mesh = new Mesh(vertices, indices, 0.0f);
+        var instanceMesh = new InstancedMesh(
+            0,
+            mesh,
+            Matrix4x4.Identity,
+            0,
+            new Color(),
+            new BoundingBox(new Vector3(-1.0f, -1.5f, -2.0f), new Vector3(1.0f, 1.5f, 2.0f))
+        );
+
+        // Act
+        Box box = instanceMesh.TemplateMesh.ToBoxPrimitive(transform, 0, new Color());
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(box.InstanceMatrix[0, 0], Is.EqualTo(2.0f * 4.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[1, 1], Is.EqualTo(3.0f * 5.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[2, 2], Is.EqualTo(4.0f * 6.0f).Within(1.0E-6));
+            Assert.That(box.InstanceMatrix[3, 3], Is.EqualTo(1.0f).Within(1.0E-6));
+        });
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (i != j)
+                    Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(0.0f).Within(1.0E-6));
+            }
+        }
+    }
+
+    [Test]
+    public void GivenA1by1by1CenteredMeshWhereTransformContainsRotZ_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatRotateAccordingly()
+    {
+        // Arrange
+        const double angle = Math.PI / 5.0;
+        // csharpier-ignore
+        var transform = new Matrix4x4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, (float)Math.Cos(angle), (float)Math.Sin(angle), 0.0f,
+            0.0f, -(float)Math.Sin(angle), (float)Math.Cos(angle), 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+        // csharpier-restore
+        var vertices = new Vector3[]
+        {
+            new Vector3(-0.5f, 0.0f, 0.0f),
+            new Vector3(0.5f, 0.0f, 0.0f),
+            new Vector3(0.0f, -0.5f, 0.0f),
+            new Vector3(0.0f, 0.5f, 0.0f),
+            new Vector3(0.0f, 0.0f, -0.5f),
+            new Vector3(0.0f, 0.0f, 0.5f)
+        };
+        var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
+        var mesh = new Mesh(vertices, indices, 0.0f);
+        var instanceMesh = new InstancedMesh(
+            0,
+            mesh,
+            Matrix4x4.Identity,
+            0,
+            new Color(),
+            new BoundingBox(new Vector3(-1.0f, -1.5f, -2.0f), new Vector3(1.0f, 1.5f, 2.0f))
+        );
+
+        // Act
+        Box box = instanceMesh.TemplateMesh.ToBoxPrimitive(transform, 0, new Color());
+
+        // Assert
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(transform[i, j]).Within(1.0E-6));
+            }
+        }
+    }
+
+    [Test]
+    public void GivenA1by1by1CenteredMeshWhereTransformContainsRotXYZ_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatRotateAccordingly()
+    {
+        // Arrange
+        const double angle = Math.PI / 5.0;
+        // csharpier-ignore
+        var rotZ = new Matrix4x4(
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, (float)Math.Cos(angle), (float)Math.Sin(angle), 0.0f,
+            0.0f, -(float)Math.Sin(angle), (float)Math.Cos(angle), 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+        // csharpier-ignore
+        var rotY = new Matrix4x4(
+            (float)Math.Cos(angle), 0.0f, -(float)Math.Sin(angle), 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            (float)Math.Sin(angle), 0.0f, (float)Math.Cos(angle), 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+        // csharpier-ignore
+        var rotX = new Matrix4x4(
+            (float)Math.Cos(angle), (float)Math.Sin(angle), 0.0f, 0.0f,
+            -(float)Math.Sin(angle), (float)Math.Cos(angle), 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f
+        );
+        // csharpier-restore
+        var transform = rotX * rotY * rotZ;
+        var vertices = new Vector3[]
+        {
+            new Vector3(-0.5f, 0.0f, 0.0f),
+            new Vector3(0.5f, 0.0f, 0.0f),
+            new Vector3(0.0f, -0.5f, 0.0f),
+            new Vector3(0.0f, 0.5f, 0.0f),
+            new Vector3(0.0f, 0.0f, -0.5f),
+            new Vector3(0.0f, 0.0f, 0.5f)
+        };
+        var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
+        var mesh = new Mesh(vertices, indices, 0.0f);
+        var instanceMesh = new InstancedMesh(
+            0,
+            mesh,
+            Matrix4x4.Identity,
+            0,
+            new Color(),
+            new BoundingBox(new Vector3(-1.0f, -1.5f, -2.0f), new Vector3(1.0f, 1.5f, 2.0f))
+        );
+
+        // Act
+        Box box = instanceMesh.TemplateMesh.ToBoxPrimitive(transform, 0, new Color());
+
+        // Assert
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(transform[i, j]).Within(1.0E-6));
+            }
+        }
     }
 }

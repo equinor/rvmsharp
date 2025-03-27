@@ -6,16 +6,47 @@ using CadRevealComposer;
 using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
 
 public static class PartReplacementUtils
 {
-    public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) CreatePrimitiveCylinderPart(
-        Mesh mesh,
+    public static Box ToBoxPrimitive(this Mesh meshToBound, Matrix4x4 transform, uint treeIndex, Color color)
+    {
+        transform.DecomposeAndNormalize(out Vector3 scale, out Quaternion rot, out Vector3 trans);
+
+        BoundingBox boundingBoxTransformed = meshToBound.CalculateAxisAlignedBoundingBox(transform);
+        BoundingBox boundingBox = meshToBound.CalculateAxisAlignedBoundingBox(Matrix4x4.CreateScale(scale));
+
+        var matrix2 =
+            Matrix4x4.CreateScale(boundingBox.Extents)
+            * Matrix4x4.CreateFromQuaternion(rot)
+            * Matrix4x4.CreateTranslation(boundingBoxTransformed.Center);
+        return new Box(matrix2, treeIndex, color, boundingBoxTransformed);
+    }
+
+    public static Box? ToBoxPrimitive(this Mesh meshToBound, APrimitive geometryWithTransform, float heightThreshold)
+    {
+        var matrix = (geometryWithTransform as InstancedMesh)?.InstanceMatrix ?? Matrix4x4.Identity;
+        Box box = meshToBound.ToBoxPrimitive(matrix, geometryWithTransform.TreeIndex, geometryWithTransform.Color);
+
+        // :TODO: In the above procedure we are assuming a meshToBound that is axis aligned.
+        // Hence, at the moment we do not support non-axis aligned cylinders as input. To detect
+        // if the mesh may have been non-axis aligned we will set a threshold on the mesh
+        // height to see if it is unnaturally tall. If so, we return null as failure. Remove
+        // this test once we support non-axis aligned input.
+        var sortedBoundingBoxExtent = new SortedBoundingBoxExtent(meshToBound.CalculateAxisAlignedBoundingBox());
+        return sortedBoundingBoxExtent.ValueOfMiddle > heightThreshold ? null : box;
+    }
+
+    public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) ToCylinderPrimitive(
+        this Mesh mesh,
         uint treeIndex
     )
     {
         // :TODO: In the below procedure we are assuming a cylinder mesh that is axis aligned.
         // Hence, at the moment we do not support non-axis aligned cylinders as input.
+        // This also means that, if we want to support non-axis aligned meshes, we need to
+        // apply any matrix transforms from instanced meshes before calculating a cylinders center axis.
         var boundingBox = mesh.CalculateAxisAlignedBoundingBox(Matrix4x4.Identity);
         var sortedBoundingBoxExtent = new SortedBoundingBoxExtent(boundingBox);
         var a = new Vector3
@@ -47,76 +78,17 @@ public static class PartReplacementUtils
                 ) / 2.0f
         };
         var r = (sortedBoundingBoxExtent.ValueOfSmallest + sortedBoundingBoxExtent.ValueOfMiddle) / 4.0f;
-        return CreatePrimitiveCylinderPart(a, b, r, treeIndex);
+        return CreateCylinderPrimitive(a, b, r, treeIndex);
     }
 
-    public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) CreatePrimitiveCylinderPart(
-        Vector3 startPoint,
-        Vector3 endPoint,
-        float radius,
-        uint treeIndex
-    )
-    {
-        // Estimate an axis aligned bounding box for the cylinder
-        var radiusVec = new Vector3(radius, radius, radius);
-        Vector3 minPoint = new Vector3(
-            Math.Min(startPoint.X, endPoint.X),
-            Math.Min(startPoint.Y, endPoint.Y),
-            Math.Min(startPoint.Z, endPoint.Z)
-        );
-        minPoint -= radiusVec;
-        Vector3 maxPoint = new Vector3(
-            Math.Max(startPoint.X, endPoint.X),
-            Math.Max(startPoint.Y, endPoint.Y),
-            Math.Max(startPoint.Z, endPoint.Z)
-        );
-        maxPoint += radiusVec;
-        var estimatedCylinderAxisAlignedBoundingBox = new BoundingBox(minPoint, maxPoint);
-
-        // Create cylinder from an eccentric cone
-        Vector3 lengthVec = endPoint - startPoint;
-        Vector3 unitNormal = lengthVec * (1.0f / lengthVec.Length());
-        var cylinder = new EccentricCone(
-            startPoint,
-            endPoint,
-            -unitNormal,
-            radius,
-            radius,
-            treeIndex,
-            Color.Brown,
-            estimatedCylinderAxisAlignedBoundingBox
-        );
-
-        // Create caps for the cylinder
-        var scale = Matrix4x4.CreateScale(2.0f * radius);
-        var startCap = new Circle(
-            scale * Matrix4x4.CreateTranslation(startPoint),
-            -unitNormal,
-            treeIndex,
-            Color.Brown,
-            estimatedCylinderAxisAlignedBoundingBox
-        );
-        var endCap = new Circle(
-            scale * Matrix4x4.CreateTranslation(endPoint),
-            unitNormal,
-            treeIndex,
-            Color.Brown,
-            estimatedCylinderAxisAlignedBoundingBox
-        );
-
-        return (cylinder, startCap, endCap);
-    }
-
-    public static (TriangleMesh? cylinder, TriangleMesh? startCap, TriangleMesh? endCap) TessellateCylinderPart(
-        Vector3 startPoint,
-        Vector3 endPoint,
-        float radius,
+    public static (TriangleMesh? cylinder, TriangleMesh? startCap, TriangleMesh? endCap) ToTessellatedCylinderPrimitive(
+        this Mesh mesh,
         uint treeIndex,
         bool createCaps = false
     )
     {
         // Create primitive eccentric cones
-        var primitiveCylinder = CreatePrimitiveCylinderPart(startPoint, endPoint, radius, treeIndex);
+        var primitiveCylinder = mesh.ToCylinderPrimitive(treeIndex);
 
         // Tessellate the eccentric cones
         var cylinderMesh =
@@ -137,35 +109,7 @@ public static class PartReplacementUtils
         return (cylinderMesh, startCapsMesh, endCapsMesh);
     }
 
-    public static (TriangleMesh? cylinder, TriangleMesh? startCap, TriangleMesh? endCap) TessellateCylinderPart(
-        Mesh mesh,
-        uint treeIndex,
-        bool createCaps = false
-    )
-    {
-        // Create primitive eccentric cones
-        var primitiveCylinder = CreatePrimitiveCylinderPart(mesh, treeIndex);
-
-        // Tessellate the eccentric cones
-        var cylinderMesh =
-            (primitiveCylinder.cylinder != null)
-                ? EccentricConeTessellator.Tessellate(primitiveCylinder.cylinder)
-                : null;
-
-        // Tessellate circles representing the cylinder caps
-        var startCapsMesh =
-            (primitiveCylinder.startCap != null && createCaps)
-                ? CircleTessellator.Tessellate(primitiveCylinder.startCap)
-                : null;
-        var endCapsMesh =
-            (primitiveCylinder.endCap != null && createCaps)
-                ? CircleTessellator.Tessellate(primitiveCylinder.endCap)
-                : null;
-
-        return (cylinderMesh, startCapsMesh, endCapsMesh);
-    }
-
-    public static TriangleMesh? TessellateBoxPart(
+    public static TriangleMesh? CreateTessellatedBoxPrimitive(
         Vector3 startPoint,
         Vector3 endPoint,
         Vector3 surfaceDirGuide,
@@ -244,7 +188,98 @@ public static class PartReplacementUtils
         return mesh;
     }
 
-    public static int FindIndexWithLargestBoundingBoxVolume(List<Mesh?> meshList)
+    public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) CreateCylinderPrimitive(
+        Vector3 startPoint,
+        Vector3 endPoint,
+        float radius,
+        uint treeIndex
+    )
+    {
+        // Estimate an axis aligned bounding box for the cylinder
+        var radiusVec = new Vector3(radius, radius, radius);
+        Vector3 minPoint = new Vector3(
+            Math.Min(startPoint.X, endPoint.X),
+            Math.Min(startPoint.Y, endPoint.Y),
+            Math.Min(startPoint.Z, endPoint.Z)
+        );
+        minPoint -= radiusVec;
+        Vector3 maxPoint = new Vector3(
+            Math.Max(startPoint.X, endPoint.X),
+            Math.Max(startPoint.Y, endPoint.Y),
+            Math.Max(startPoint.Z, endPoint.Z)
+        );
+        maxPoint += radiusVec;
+        var estimatedCylinderAxisAlignedBoundingBox = new BoundingBox(minPoint, maxPoint);
+
+        // Create cylinder from an eccentric cone
+        Vector3 lengthVec = endPoint - startPoint;
+        Vector3 unitNormal = lengthVec * (1.0f / lengthVec.Length());
+        var cylinder = new EccentricCone(
+            startPoint,
+            endPoint,
+            -unitNormal,
+            radius,
+            radius,
+            treeIndex,
+            Color.Brown,
+            estimatedCylinderAxisAlignedBoundingBox
+        );
+
+        // Create caps for the cylinder
+        var scale = Matrix4x4.CreateScale(2.0f * radius);
+        var startCap = new Circle(
+            scale * Matrix4x4.CreateTranslation(startPoint),
+            -unitNormal,
+            treeIndex,
+            Color.Brown,
+            estimatedCylinderAxisAlignedBoundingBox
+        );
+        var endCap = new Circle(
+            scale * Matrix4x4.CreateTranslation(endPoint),
+            unitNormal,
+            treeIndex,
+            Color.Brown,
+            estimatedCylinderAxisAlignedBoundingBox
+        );
+
+        return (cylinder, startCap, endCap);
+    }
+
+    public static (
+        TriangleMesh? cylinder,
+        TriangleMesh? startCap,
+        TriangleMesh? endCap
+    ) CreateTessellatedCylinderPrimitive(
+        Vector3 startPoint,
+        Vector3 endPoint,
+        float radius,
+        uint treeIndex,
+        bool createCaps = false
+    )
+    {
+        // Create primitive eccentric cones
+        var primitiveCylinder = CreateCylinderPrimitive(startPoint, endPoint, radius, treeIndex);
+
+        // Tessellate the eccentric cones
+        var cylinderMesh =
+            (primitiveCylinder.cylinder != null)
+                ? EccentricConeTessellator.Tessellate(primitiveCylinder.cylinder)
+                : null;
+
+        // Tessellate circles representing the cylinder caps
+        var startCapsMesh =
+            (primitiveCylinder.startCap != null && createCaps)
+                ? CircleTessellator.Tessellate(primitiveCylinder.startCap)
+                : null;
+        var endCapsMesh =
+            (primitiveCylinder.endCap != null && createCaps)
+                ? CircleTessellator.Tessellate(primitiveCylinder.endCap)
+                : null;
+
+        return (cylinderMesh, startCapsMesh, endCapsMesh);
+    }
+
+    public static Mesh? FindMeshWithLargestBoundingBoxVolume(List<Mesh?> meshList)
     {
         return meshList
             .Select((m, idx) => new { m, i = idx })
@@ -257,6 +292,6 @@ public static class PartReplacementUtils
                 return ext.X * ext.Y * ext.Z; // Volume
             })
             .First()
-            .i;
+            .m;
     }
 }
