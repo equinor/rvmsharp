@@ -1,7 +1,7 @@
 #include "material.h"
 #include <fbxsdk.h>
 
-Color* material_get_color(CFbxMaterial material)
+Color* material_get_color(CFbxMaterial* material)
 {
     const auto fbxMaterial = (FbxSurfaceLambert*)material;
     if(fbxMaterial == nullptr)
