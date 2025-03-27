@@ -15,4 +15,11 @@ namespace CadRevealComposer.IdProviders;
 ///       7
 /// 8
 /// </summary>
-public class TreeIndexGenerator() : SequentialIdGenerator(firstIdReturned: 1);
+public class TreeIndexGenerator() : SequentialIdGenerator(firstIdReturned: 1)
+{
+    /// <summary>
+    /// The maximal TreeIndex supported in Reveal
+    /// Avoid having higher TreeIndex than this.
+    /// </summary>
+    public const uint MaxTreeIndex = MaxSafeIdForReveal;
+}
