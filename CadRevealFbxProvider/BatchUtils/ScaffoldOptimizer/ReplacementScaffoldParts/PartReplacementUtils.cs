@@ -17,11 +17,11 @@ public static class PartReplacementUtils
         BoundingBox boundingBoxTransformed = meshToBound.CalculateAxisAlignedBoundingBox(transform);
         BoundingBox boundingBox = meshToBound.CalculateAxisAlignedBoundingBox(Matrix4x4.CreateScale(scale));
 
-        var matrix2 =
+        var instanceMatrix =
             Matrix4x4.CreateScale(boundingBox.Extents)
             * Matrix4x4.CreateFromQuaternion(rot)
             * Matrix4x4.CreateTranslation(boundingBoxTransformed.Center);
-        return new Box(matrix2, treeIndex, color, boundingBoxTransformed);
+        return new Box(instanceMatrix, treeIndex, color, boundingBoxTransformed);
     }
 
     public static Box? ToBoxPrimitive(this Mesh meshToBound, APrimitive geometryWithTransform, float heightThreshold)

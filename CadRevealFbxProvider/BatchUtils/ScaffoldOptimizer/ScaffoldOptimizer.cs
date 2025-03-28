@@ -1,14 +1,11 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
-using System.Drawing;
 using System.Linq;
-using System.Numerics;
-using CadRevealComposer;
-using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
 using CadRevealComposer.Utils.MeshOptimization;
+using Commons.Utils;
 using ReplacementScaffoldParts;
 
 public class ScaffoldOptimizer : ScaffoldOptimizerBase
@@ -41,7 +38,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
             );
         }
 
-        if (nodeName.ContainsAny(["Plank"]) && !nodeName.Contains("0,17"))
+        if (nodeName.ContainsAny(["Plank"], StringComparison.OrdinalIgnoreCase) && !nodeName.Contains("0,17"))
         {
             // For each separate mesh found, convert it to a separate box primitive
             for (int i = 0; i < nodeGeometries.Length; i++)
@@ -72,7 +69,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 }
             }
         }
-        else if (nodeName.ContainsAny(["Kick Board"]))
+        else if (nodeName.ContainsAny(["Kick Board"], StringComparison.OrdinalIgnoreCase))
         {
             // For each separate mesh found, convert it to a separate convex hull mesh
             for (int i = 0; i < nodeGeometries.Length; i++)
@@ -90,7 +87,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 );
             }
         }
-        else if (nodeName.ContainsAny(["StairwayGuard"]))
+        else if (nodeName.ContainsAny(["StairwayGuard"], StringComparison.OrdinalIgnoreCase))
         {
             // For each separate mesh found, convert it to a separate decimated mesh
             for (int i = 0; i < nodeGeometries.Length; i++)
@@ -108,7 +105,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 );
             }
         }
-        else if (nodeName.ContainsAny(["Stair UTV"]))
+        else if (nodeName.ContainsAny(["Stair UTV"], StringComparison.OrdinalIgnoreCase))
         {
             // For each separate mesh found, split its disjoint (non-manifold) parts into separate pieces and optimize separately
             for (int i = 0; i < nodeGeometries.Length; i++)
@@ -147,7 +144,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 }
             }
         }
-        else if (nodeName.ContainsAny(["Base Element"]))
+        else if (nodeName.ContainsAny(["Base Element"], StringComparison.OrdinalIgnoreCase))
         {
             for (int i = 0; i < nodeGeometries.Length; i++)
             {
@@ -170,7 +167,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 );
             }
         }
-        else if (nodeName.ContainsAny(["FS"]))
+        else if (nodeName.ContainsAny(["FS"], StringComparison.OrdinalIgnoreCase))
         {
             for (int i = 0; i < nodeGeometries.Length; i++)
             {
@@ -242,7 +239,7 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                 }
             }
         }
-        else if (nodeName.ContainsAny(["Ledger Beam"]))
+        else if (nodeName.ContainsAny(["Ledger Beam"], StringComparison.OrdinalIgnoreCase))
         {
             bool failed = false;
             for (int i = 0; i < nodeGeometries.Length; i++)

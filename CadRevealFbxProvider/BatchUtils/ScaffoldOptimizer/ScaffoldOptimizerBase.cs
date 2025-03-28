@@ -5,12 +5,6 @@ using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 
-public static class ScaffoldOptimizerExtensions
-{
-    public static bool ContainsAny(this string str, string[] keywordList) =>
-        keywordList.Any(s => str.Contains(s, StringComparison.OrdinalIgnoreCase));
-}
-
 public class ScaffoldOptimizerBase
 {
     private static Mesh?[] ExtractMeshes(APrimitive[] primitives)
