@@ -5,6 +5,7 @@ using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Utils;
 using Commons;
 
 public static class FbxWorkload
@@ -132,6 +133,16 @@ public static class FbxWorkload
             // attach attribute info to the nodes if there is any
             if (attributes != null)
             {
+                var requestNewInstanceId = new Func<ulong>(() => instanceIdGenerator.GetNextId());
+                var optimizer = new ScaffoldOptimizer.ScaffoldOptimizer();
+                var statisticsBefore = new GeometryDistributionNodeStats(flatNodes.ToList());
+                optimizer.OptimizeNodes(flatNodes.ToList(), requestNewInstanceId);
+                var statisticsAfter = new GeometryDistributionNodeStats(flatNodes.ToList());
+                var diffStatistics = new GeometryDistributionNodeStatsDiff(statisticsBefore, statisticsAfter);
+                statisticsBefore.PrintStatistics("scaffolds before optimization");
+                statisticsAfter.PrintStatistics("scaffolds after optimization");
+                diffStatistics.PrintStatistics("improvement of scaffolds geometry");
+
                 bool totalMismatch = true;
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)

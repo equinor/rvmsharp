@@ -22,7 +22,7 @@ public class ScaffoldOptimizerResult : IScaffoldOptimizerResult
                     instancedMesh.InstanceMatrix,
                     instancedMesh.TreeIndex,
                     instancedMesh.Color,
-                    optimizedMesh.CalculateAxisAlignedBoundingBox()
+                    optimizedMesh.CalculateAxisAlignedBoundingBox(instancedMesh.InstanceMatrix)
                 );
                 return;
             case TriangleMesh triangleMesh:
