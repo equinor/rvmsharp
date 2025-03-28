@@ -14,10 +14,7 @@ public class StringExtensionsTests
     [TestCase("fest", StringComparison.OrdinalIgnoreCase, ExpectedResult = false)]
     [TestCase("This", StringComparison.Ordinal, ExpectedResult = true)]
     [TestCase("THIS", StringComparison.Ordinal, ExpectedResult = false)]
-    public bool GivenSingleKeyword_WhenContainsAnyIsCalled_ThenCheckResult(
-        string keyword,
-        StringComparison comparisonType
-    )
+    public bool ContainsAny_GivenSingleKeyword_ThenCheckResult(string keyword, StringComparison comparisonType)
     {
         // Arrange
         const string testString = "This is a test string";
@@ -35,7 +32,7 @@ public class StringExtensionsTests
     [TestCase("This is a string", "THIS", "abc", "STRING", ExpectedResult = true)]
     [TestCase("This is a test string", "this s", "abc", "stringy", ExpectedResult = false)]
     [TestCase("This is a test string", "THIS s", "abc", "STRINGY", ExpectedResult = false)]
-    public bool GivenThreeKeywords_WhenContainsAnyIsCalled_ThenCheckResult(
+    public bool ContainsAny_GivenThreeKeywords_ThenCheckResult(
         string testString,
         string keyword1,
         string keyword2,

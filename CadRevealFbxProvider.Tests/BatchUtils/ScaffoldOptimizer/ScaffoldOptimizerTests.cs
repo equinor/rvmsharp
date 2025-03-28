@@ -407,7 +407,7 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshExtraction_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyExtracted()
+    public void OptimizeNode_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyExtracted()
     {
         ulong currentInstanceId = 0;
 
@@ -441,7 +441,7 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshOutput_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyOutput()
+    public void OptimizeNode_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyOutput()
     {
         ulong currentInstanceId = 0;
 
@@ -475,7 +475,7 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshOutput_GivenOnlyNonMeshPrimitiveNodeContent_CheckThatMeshesAreCorrectlyOutput()
+    public void OptimizeNode_GivenOnlyNonMeshPrimitiveNodeContent_CheckThatMeshesAreCorrectlyOutput()
     {
         ulong currentInstanceId = 0;
 
@@ -508,7 +508,7 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestInstanceIDAssignmentWithoutMeshSplit_GivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
+    public void OptimizeNodes_WithoutMeshSplitGivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
     {
         ulong currentInstanceId = 0;
 
@@ -557,7 +557,7 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestInstanceIDAssignmentAfterMeshSplit_GivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
+    public void OptimizeNodes_AfterMeshSplitGivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
     {
         ulong currentInstanceId = 0;
 
@@ -629,7 +629,7 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshOutput_GivenAPartNameNotAssignedForOptimization_CheckThatTheOptimizationWasNotDone()
+    public void OptimizeNode_GivenAPartNameNotAssignedForOptimization_CheckThatTheOptimizationWasNotDone()
     {
         ulong currentInstanceId = 0;
 
@@ -664,7 +664,7 @@ public class ScaffoldOptimizerTests
 
     [Test]
     [TestCase("some plank")]
-    public void TestMeshOutput_GivenAPartForAxisAlignedBoundingBoxOptimization_CheckThatTheOptimizationWasDone(
+    public void OptimizeNode_GivenAPartForAxisAlignedBoundingBoxOptimization_CheckThatTheOptimizationWasDone(
         string partName
     )
     {
@@ -693,7 +693,7 @@ public class ScaffoldOptimizerTests
     [Test]
     [TestCase("some kick board", TestPurpose.TestOptimizationSteps)]
     [TestCase("StairwayGuard", TestPurpose.TestOptimizationOnTessellatedObject)]
-    public void TestMeshOutput_GivenAPartForConvexHullOrDecimationOptimization_CheckThatTheOptimizationWasDone(
+    public void OptimizeNode_GivenAPartForConvexHullOrDecimationOptimization_CheckThatTheOptimizationWasDone(
         string partName,
         TestPurpose testPurpose
     )

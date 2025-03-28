@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 public class SortedBoundingBoxExtentTests
 {
     [Test]
-    public void GivenABoundingBox_WhenLenXIsLargestAndLenZIsSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
+    public void SortedBoundingBoxExtent_GivenABoundingBoxWhereLenXIsLargestAndLenZIsSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
     {
         // Arrange
         var boundingBox = new BoundingBox(new Vector3(-30.0f, 20.0f, -15.0f), new Vector3(-20.0f, 25.0f, -14.0f));
@@ -31,7 +31,7 @@ public class SortedBoundingBoxExtentTests
     }
 
     [Test]
-    public void GivenABoundingBox_WhenLenYIsLargestAndLenZIsSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
+    public void SortedBoundingBoxExtent_GivenABoundingBoxWhereLenYIsLargestAndLenZIsSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
     {
         // Arrange
         var boundingBox = new BoundingBox(new Vector3(20.0f, -30.0f, -15.0f), new Vector3(25.0f, -20.0f, -14.0f));
@@ -52,7 +52,7 @@ public class SortedBoundingBoxExtentTests
     }
 
     [Test]
-    public void GivenABoundingBox_WhenLenZIsLargestAndLenXIsSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
+    public void SortedBoundingBoxExtent_GivenABoundingBoxWhereLenZIsLargestAndLenXIsSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
     {
         // Arrange
         var boundingBox = new BoundingBox(new Vector3(-15.0f, 20.0f, -30.0f), new Vector3(-14.0f, 25.0f, -20.0f));
@@ -73,7 +73,7 @@ public class SortedBoundingBoxExtentTests
     }
 
     [Test]
-    public void GivenABoundingBox_WhenLenZIsLargestAndLenXAndYAreSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
+    public void SortedBoundingBoxExtent_GivenABoundingBoxWhereLenZIsLargestAndLenXAndYAreSmallest_ThenTheExtentIsSortedCorrectlyAndAxisIndicesAreCorrect()
     {
         // Arrange
         var boundingBox = new BoundingBox(new Vector3(-15.0f, 24.0f, -30.0f), new Vector3(-14.0f, 25.0f, -20.0f));
@@ -95,7 +95,7 @@ public class SortedBoundingBoxExtentTests
     }
 
     [Test]
-    public void GivenBoundingBox_WhenShapedAsABeam_ThenCalculatePointsAtEndOfBeamCenteredRelativeToBeamThicknessAndTopOfBeam()
+    public void CalcPointsAtEndOfABeamShapedBox_GivenBoundingBoxShapedAsABeam_ThenCalculatePointsAtEndOfBeamCenteredRelativeToBeamThicknessAndTopOfBeam()
     {
         // Arrange
         var boundingBox = new BoundingBox(new Vector3(-30.0f, 20.0f, -30.0f), new Vector3(-10, 20.5f, -25.0f)); // Length:20, Depth:0.5, Height:5
@@ -120,7 +120,7 @@ public class SortedBoundingBoxExtentTests
     }
 
     [Test]
-    public void GivenBoundingBox_WhenShapedAsABeam_ThenCalculatePointsAtEndOfBeamCenteredRelativeToBeamThicknessAndBottomOfBeam()
+    public void CalcPointsAtEndOfABeamShapedBox_GivenBoundingShapedAsABeam_ThenCalculatePointsAtEndOfBeamCenteredRelativeToBeamThicknessAndBottomOfBeam()
     {
         // Arrange
         var boundingBox = new BoundingBox(new Vector3(-30.0f, 20.0f, -30.0f), new Vector3(-10, 20.5f, -25.0f)); // Length:20, Depth:0.5, Height:5

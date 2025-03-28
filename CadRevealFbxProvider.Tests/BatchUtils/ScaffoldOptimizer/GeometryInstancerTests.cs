@@ -428,7 +428,7 @@ public class GeometryOptimizerTests
     }
 
     [Test]
-    public void CheckCorrectInstancingSingleNode_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade_1()
+    public void GeometryInstancerInvoke_WithSingleNodeGivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade_1()
     {
         CheckCorrectInstancingSingleNode_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade(
             PrepareNodePattern1,
@@ -438,7 +438,7 @@ public class GeometryOptimizerTests
     }
 
     [Test]
-    public void CheckCorrectInstancingSingleNode_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade_2()
+    public void GeometryInstancerInvoke_WithSingleNodeGivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade_2()
     {
         CheckCorrectInstancingSingleNode_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade(
             PrepareNodePattern2,
@@ -448,7 +448,7 @@ public class GeometryOptimizerTests
     }
 
     [Test]
-    public void CheckCorrectInstancingMultipleNodes_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade()
+    public void GeometryInstancerInvoke_WithMultipleNodesGivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade()
     {
         // Prepare a list of CadRevealNodes containing various InstanceMesh objects with same instance ID, but not sharing meshes
         var nodes = new List<CadRevealNode>();

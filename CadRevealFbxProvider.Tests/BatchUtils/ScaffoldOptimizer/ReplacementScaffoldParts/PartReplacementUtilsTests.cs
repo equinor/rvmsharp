@@ -31,7 +31,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithAValidCylinderSpecified_ThenReturnANonNullMesh()
+    public void CreateTessellatedCylinderPrimitive_WithAValidCylinderSpecified_ThenReturnANonNullMesh()
     {
         // Arrange
         // Act
@@ -53,7 +53,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongXSpecified_ThenRadiusAndLengthOfCylinderIsValid()
+    public void CreateTessellatedCylinderPrimitive_WithACylinderAlongXSpecified_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
@@ -83,7 +83,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongYIsSpecified_ThenRadiusAndLengthOfCylinderIsValid()
+    public void CreateTessellatedCylinderPrimitive_WithACylinderAlongYIsSpecified_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
@@ -113,7 +113,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongZ_ThenRadiusAndLengthOfCylinderIsValid()
+    public void CreateTessellatedCylinderPrimitive_WithACylinderAlongZ_ThenRadiusAndLengthOfCylinderIsValid()
     {
         // Arrange
         // Act
@@ -143,7 +143,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
+    public void CreateTessellatedCylinderPrimitive_WithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
     {
         // Arrange
         // Act
@@ -160,7 +160,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingTessellatedCylinderPrimitiveWithACylinderAlongXYZSpecified_ThenCapsAreCorrectlyPlacedWithCorrectRadiusAndNormal()
+    public void CreateTessellatedCylinderPrimitive_WithACylinderAlongXYZSpecified_ThenCapsAreCorrectlyPlacedWithCorrectRadiusAndNormal()
     {
         // Arrange
         // Act
@@ -248,7 +248,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndRadius_WhenCreatingCylinderPrimitiveWithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
+    public void CreateCylinderPrimitive_WithACylinderAlongXYZSpecified_ThenAllPointsAreWithinTheBoundingBox()
     {
         // Arrange
         // Act
@@ -269,7 +269,7 @@ public class PartReplacementUtilsTests
     [Test]
     [TestCase(-1.0f, 0.0f, 0.0f, 5.0f, 0.0f, 0.0f, 5.4f, 0.43f)]
     [TestCase(0.0f, -1.0f, 0.0f, 0.0f, 5.0f, 0.0f, 5.6f, 0.53f)]
-    public void GivenCoordinatesWithinACylinderWithLengthMuchGreaterThanDiameter_WhenCreatingCylinderPrimitiveFromMesh_ThenReturnSmallestCylinderSurroundingAllPoints(
+    public void ToCylinderPrimitive_GivenCoordinatesWithinACylinderWithLengthMuchGreaterThanDiameter_ThenReturnSmallestCylinderSurroundingAllPoints(
         float xA,
         float yA,
         float zA,
@@ -352,7 +352,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenReturnANonNullMesh()
+    public void CreateTessellatedBoxPrimitive_WithBoxAlongX_ThenReturnANonNullMesh()
     {
         // Arrange
         // Act
@@ -370,7 +370,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize1WithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -398,7 +398,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongY_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize1WithBoxPartAlongY_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -426,7 +426,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight1_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongZ_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize1WithBoxPartAlongZ_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -454,7 +454,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight2_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize2WithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -482,7 +482,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight3_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize3ithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -510,7 +510,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight4_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize4WithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -538,7 +538,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight5_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize5WithBoxPartAlongX_ThenAllPointsAreWithinItsBoundingBox()
     {
         // Arrange
         // Act
@@ -566,7 +566,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenStartAndEndPointAndThicknessAndHeight6_WhenCreatingTessellatedBoxPrimitiveAlongSomeAxis_ThenAllPointsAreWithinItsCylindricalBoundingBox()
+    public void CreateTessellatedBoxPrimitive_GivenSize6WithBoxPartAlongSomeAxis_ThenAllPointsAreWithinItsCylindricalBoundingBox()
     {
         // Arrange
         var startPoint = new Vector3(3, 5, 4);
@@ -635,7 +635,7 @@ public class PartReplacementUtilsTests
     [TestCase(1, 3, 2, 3, 5, 4, 0, 2, -2)] // Reverse of first
     [TestCase(-7, -5, -6, -9, -7, -8, 0, 2, -2)] // -10 from first
     [TestCase(3, 5, 4, 6, 3, 7, 0, -3, -2)] // Move second vector in first
-    public void GivenStartAndEndPointAndThicknessAndHeight6_WhenCreatingTessellatedBoxPrimitiveWithBoxPartAlongSomeAxis_ThenAllPointsAreWithinItsBoundingBox(
+    public void CreateTessellatedBoxPrimitive_GivenSize6_WithBoxPartAlongSomeAxis_ThenAllPointsAreWithinItsBoundingBox(
         float startX,
         float startY,
         float startZ,
@@ -706,7 +706,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenMeshListWhereOneObjectHasLargestVolume_WhenSearchingForMeshWithLargestBoundingBox_ThenReturnMeshWithLargestBoundingBoxVolume()
+    public void FindMeshWithLargestBoundingBoxVolume_GivenMeshListWhereOneObjectHasLargestVolume_ThenReturnMeshWithLargestBoundingBoxVolume()
     {
         // Arrange
         var meshXs = PartReplacementUtils
@@ -754,7 +754,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenA2by3by4CenteredMeshWhereTransformIsIdentity_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSame()
+    public void ToBoxPrimitive_GivenA2by3by4CenteredMeshWhereTransformIsIdentity_ThenProduceABoxMatrixThatScalesByTheSame()
     {
         // Arrange
         var vertices = new Vector3[]
@@ -800,7 +800,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenA2by3by4NotCenteredMeshWhereTransformIsIdentity_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSameButTranslated()
+    public void ToBoxPrimitive_GivenA2by3by4NotCenteredMeshWhereTransformIsIdentity_ThenProduceABoxMatrixThatScalesByTheSameButTranslated()
     {
         // Arrange
         var vertices = new Vector3[]
@@ -854,7 +854,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenA2by3by4CenteredMeshAndTransformWithTranslation_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSameButTranslated()
+    public void ToBoxPrimitive_GivenA2by3by4CenteredMeshAndTransformWithTranslation_ThenProduceABoxMatrixThatScalesByTheSameButTranslated()
     {
         // Arrange
         // csharpier-ignore
@@ -916,7 +916,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenA2by3by4CenteredMeshWhereTransformIsScaled_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatScalesByTheSameAndThenByScaleInTransform()
+    public void ToBoxPrimitive_GivenA2by3by4CenteredMeshWhereTransformIsScaled_ThenProduceABoxMatrixThatScalesByTheSameAndThenByScaleInTransform()
     {
         // Arrange
         // csharpier-ignore
@@ -970,7 +970,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenA1by1by1CenteredMeshWhereTransformContainsRotZ_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatRotateAccordingly()
+    public void ToBoxPrimitive_GivenA1by1by1CenteredMeshWhereTransformContainsRotZ_ThenProduceABoxMatrixThatRotateAccordingly()
     {
         // Arrange
         const double angle = Math.PI / 5.0;
@@ -1016,7 +1016,7 @@ public class PartReplacementUtilsTests
     }
 
     [Test]
-    public void GivenA1by1by1CenteredMeshWhereTransformContainsRotXYZ_WhenCreatingBoxPrimitiveFromMesh_ThenProduceABoxMatrixThatRotateAccordingly()
+    public void ToBoxPrimitive_GivenA1by1by1CenteredMeshWhereTransformContainsRotXYZ_ThenProduceABoxMatrixThatRotateAccordingly()
     {
         // Arrange
         const double angle = Math.PI / 5.0;
