@@ -95,7 +95,7 @@ public static class RvmFacetGroupMatcher
                                 )
                                 .ToArray()
                         ))
-                        .ToArray()
+                        .ToArray(),
                 }
             )
             .ToArray();
@@ -104,7 +104,7 @@ public static class RvmFacetGroupMatcher
         {
             Polygons = polygons,
             BoundingBoxLocal = new RvmBoundingBox(minBounds, maxBounds),
-            Matrix = Matrix4x4.Identity
+            Matrix = Matrix4x4.Identity,
         };
     }
 

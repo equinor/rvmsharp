@@ -89,7 +89,7 @@ internal class RvmRectangularTorusConverterTests
             Angle = MathF.PI / 2.0f,
             Height = 5.0f,
             RadiusOuter = 3.0f,
-            RadiusInner = 1.0f
+            RadiusInner = 1.0f,
         };
 
         var logObject = new FailedPrimitivesLogObject();

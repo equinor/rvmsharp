@@ -20,7 +20,7 @@ public static class BoxTessellator
             new(-0.5f, -0.5f, 0.5f),
             new(0.5f, -0.5f, 0.5f),
             new(0.5f, 0.5f, 0.5f),
-            new(-0.5f, 0.5f, 0.5f)
+            new(-0.5f, 0.5f, 0.5f),
         };
         // csharpier-ignore
         var indices = new uint[]

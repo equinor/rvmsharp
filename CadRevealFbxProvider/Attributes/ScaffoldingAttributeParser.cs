@@ -42,7 +42,7 @@ public class ScaffoldingAttributeParser
                     RowsToSkip = 0,
                     SkipRow = (ReadOnlyMemory<char> row, int idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
                     TrimData = true,
-                    Separator = ';'
+                    Separator = ';',
                 }
             )
             .ToArray();

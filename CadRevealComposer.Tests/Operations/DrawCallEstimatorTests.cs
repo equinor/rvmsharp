@@ -16,7 +16,7 @@ public class DrawCallEstimatorTests
         {
             new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One)),
             new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One)),
-            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One))
+            new Box(Matrix4x4.Identity, int.MaxValue, Color.Red, new BoundingBox(-Vector3.One, Vector3.One)),
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
         Assert.That(estimatedDrawCalls, Is.EqualTo(1));
@@ -52,7 +52,7 @@ public class DrawCallEstimatorTests
                 int.MaxValue,
                 Color.Red,
                 new BoundingBox(-Vector3.One, Vector3.One)
-            )
+            ),
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
         Assert.That(estimatedDrawCalls, Is.EqualTo(3)); // 2x circle and 1x cone segment
@@ -97,7 +97,7 @@ public class DrawCallEstimatorTests
                 int.MaxValue,
                 Color.Red,
                 new BoundingBox(-Vector3.One, Vector3.One)
-            )
+            ),
         };
         (long estimatedTriangleCount, int estimatedDrawCalls) = DrawCallEstimator.Estimate(geometry);
         Assert.That(estimatedDrawCalls, Is.EqualTo(4)); // circle, cone, ring segment, torus

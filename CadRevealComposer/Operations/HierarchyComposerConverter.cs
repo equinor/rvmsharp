@@ -48,7 +48,7 @@ public static class HierarchyComposerConverter
             aabb = new AABB
             {
                 min = new Vector3EfSerializable(boundingBox.Min),
-                max = new Vector3EfSerializable(boundingBox.Max)
+                max = new Vector3EfSerializable(boundingBox.Max),
             };
         }
 
@@ -71,7 +71,7 @@ public static class HierarchyComposerConverter
             PDMSData = FilterRedundantAttributes(revealNode.Attributes),
             HasMesh = hasMesh,
             AABB = aabb,
-            OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo
+            OptionalDiagnosticInfo = revealNode.OptionalDiagnosticInfo,
         };
     }
 

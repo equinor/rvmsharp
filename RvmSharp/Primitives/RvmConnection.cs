@@ -10,7 +10,7 @@ public class RvmConnection
     {
         None = 0,
         HasCircularSide = 1,
-        HasRectangularSide = 2
+        HasRectangularSide = 2,
         // NextFlag = 4
     }
 

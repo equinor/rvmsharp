@@ -25,7 +25,7 @@ public class RvmPyramidInstancerTests
         {
             new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
             new ProtoMeshFromRvmPyramid(rvmPyramid, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
-            new ProtoMeshFromRvmPyramid(rvmPyramidNotMatching, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One))
+            new ProtoMeshFromRvmPyramid(rvmPyramidNotMatching, 0, Color.Red, new BoundingBox(Vector3.One, Vector3.One)),
         };
 
         var res = RvmPyramidInstancer.Process(protoPyramids, _ => true);

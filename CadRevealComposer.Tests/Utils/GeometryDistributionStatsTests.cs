@@ -41,7 +41,7 @@ public class GeometryDistributionStatsTests
                 default
             ),
             new TorusSegment(default, default, default, default, default, default, default),
-            new EccentricCone(default, default, default, default, default, default, default, default)
+            new EccentricCone(default, default, default, default, default, default, default, default),
             // ReSharper enable AssignNullToNotNullAttribute
         };
 

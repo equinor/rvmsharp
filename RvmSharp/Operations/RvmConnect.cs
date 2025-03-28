@@ -183,7 +183,7 @@ public static class RvmConnect
                         new Vector3(0.0f, h, -((t.Y + o.Y) - (b.Y - o.Y))),
                         new Vector3(-h, 0.0f, (-t.X + o.X) - (-b.X - o.X)),
                         new Vector3(0.0f, 0.0f, -1.0f),
-                        new Vector3(0.0f, 0.0f, 1.0f)
+                        new Vector3(0.0f, 0.0f, 1.0f),
                     };
 
                     Vector3[] p =
@@ -193,7 +193,7 @@ public static class RvmConnect
                         new Vector3(0.0f, m.Y, 0.0f),
                         new Vector3(-m.X, 0.0f, 0.0f),
                         new Vector3(-o.X, -o.Y, -h),
-                        new Vector3(o.X, o.Y, h)
+                        new Vector3(o.X, o.Y, h),
                     };
 
                     for (uint i = 0; i < 6; i++)
@@ -212,7 +212,7 @@ public static class RvmConnect
                         new Vector3(0, -1, 0),
                         new Vector3(0, 1, 0),
                         new Vector3(0, 0, -1),
-                        new Vector3(0, 0, 1)
+                        new Vector3(0, 0, 1),
                     };
                     var xp = 0.5f * box.LengthX;
                     var xm = -xp;
@@ -227,7 +227,7 @@ public static class RvmConnect
                         new Vector3(0.0f, ym, 0.0f),
                         new Vector3(0.0f, yp, 0.0f),
                         new Vector3(0.0f, 0.0f, zm),
-                        new Vector3(0.0f, 0.0f, zp)
+                        new Vector3(0.0f, 0.0f, zp),
                     };
                     for (uint i = 0; i < 6; i++)
                         AddAnchor(context, box, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
@@ -283,12 +283,12 @@ public static class RvmConnect
                             -(float)Math.Sin(sn.TopShearX) * (float)Math.Cos(sn.TopShearY),
                             -(float)Math.Sin(sn.TopShearY),
                             (float)Math.Cos(sn.TopShearX) * (float)Math.Cos(sn.TopShearY)
-                        )
+                        ),
                     };
                     Vector3[] p =
                     {
                         new Vector3(-0.5f * sn.OffsetX, -0.5f * sn.OffsetY, -0.5f * sn.Height),
-                        new Vector3(0.5f * sn.OffsetX, 0.5f * sn.OffsetY, 0.5f * sn.Height)
+                        new Vector3(0.5f * sn.OffsetX, 0.5f * sn.OffsetY, 0.5f * sn.Height),
                     };
                     for (uint i = 0; i < 2; i++)
                         AddAnchor(context, sn, p[i], n[i], i, RvmConnection.ConnectionType.HasCircularSide);
@@ -301,7 +301,7 @@ public static class RvmConnect
                     Vector3[] p =
                     {
                         new Vector3(0, 0, -0.5f * cylinder.Height),
-                        new Vector3(0, 0, 0.5f * cylinder.Height)
+                        new Vector3(0, 0, 0.5f * cylinder.Height),
                     };
                     for (uint i = 0; i < 2; i++)
                         AddAnchor(context, cylinder, p[i], d[i], i, RvmConnection.ConnectionType.HasCircularSide);

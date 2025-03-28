@@ -19,7 +19,7 @@ public class PDMSEntry : IEquatable<PDMSEntry>
             {
                 new SqliteParameter("@Id", Id),
                 new SqliteParameter("@Key", Key),
-                new SqliteParameter("@Value", Value)
+                new SqliteParameter("@Value", Value),
             }
         );
         command.ExecuteNonQuery();

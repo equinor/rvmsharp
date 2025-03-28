@@ -20,7 +20,7 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
             new Vector3(Max.X, Min.Y, Min.Z),
             new Vector3(Max.X, Max.Y, Min.Z),
             new Vector3(Max.X, Min.Y, Max.Z),
-            new Vector3(Min.X, Max.Y, Max.Z)
+            new Vector3(Min.X, Max.Y, Max.Z),
         };
 
         return cube;
