@@ -67,8 +67,6 @@ public static class CadRevealComposerRunner
                 filtering
             );
 
-            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true);
-
             if (generalMetadata != null)
             {
                 // Log that we added some metadata
@@ -141,7 +139,6 @@ public static class CadRevealComposerRunner
     private static Task WriteHierarchyOnSideThread(DirectoryInfo outputDirectory, IReadOnlyList<CadRevealNode> nodes)
     {
         var hierarchyNodes = HierarchyComposerConverter.ConvertToHierarchyNodes(nodes);
-        GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, blocking: true);
         return Task.Run(() =>
         {
             var hierarchyExportTimer = Stopwatch.StartNew();
