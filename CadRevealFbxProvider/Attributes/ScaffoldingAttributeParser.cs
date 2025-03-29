@@ -81,7 +81,11 @@ public class ScaffoldingAttributeParser
                         .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
                         .Select(el =>
                         {
-                            var manufacturerName = el.header.ToLower().Replace("description", String.Empty).ToUpper().Trim();
+                            var manufacturerName = el
+                                .header.ToLower()
+                                .Replace("description", String.Empty)
+                                .ToUpper()
+                                .Trim();
                             var partDescription = v.Values[el.index];
                             if (partDescription.Length > 0)
                                 return manufacturerName + " " + partDescription;
