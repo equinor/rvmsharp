@@ -78,13 +78,13 @@ public class ScaffoldingAttributeParser
 
                     var description = v
                         .Headers.Select((h, i) => new { header = h, index = i })
-                        .Where(el => el.header.ToLower().Contains("description"))
+                        .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
                         .Select(el =>
                         {
-                            var manufacturerName = el.header.ToLower().Replace("description", String.Empty).ToUpper();
+                            var manufacturerName = el.header.ToLower().Replace("description", String.Empty).ToUpper().Trim();
                             var partDescription = v.Values[el.index];
                             if (partDescription.Length > 0)
-                                return manufacturerName + partDescription;
+                                return manufacturerName + " " + partDescription;
 
                             return String.Empty;
                         })
@@ -94,7 +94,7 @@ public class ScaffoldingAttributeParser
 
                     var weights = v
                         .Headers.Select((h, i) => new { header = h, index = i })
-                        .Where(el => el.header.ToLower().Contains("weight"))
+                        .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
                         .Select(el => v.Values[el.index]);
 
                     // weights are expected to either in one column or the other, never both at the same time
@@ -107,9 +107,9 @@ public class ScaffoldingAttributeParser
                             continue; // Ignore it
 
                         // ignore description and weight, they are added as an aggregate of several columns
-                        if (v.Headers[col].ToLower().Contains("description"))
+                        if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
                             continue;
-                        if (v.Headers[col].ToLower().Contains("weight"))
+                        if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
                             continue;
 
                         var key = v.Headers[col].Trim();
@@ -144,7 +144,9 @@ public class ScaffoldingAttributeParser
                     }
                     catch
                     {
-                        throw new Exception("Total weight line in the attribute file has an unknown format.");
+                        const string errorMsg = "Total weight line in the attribute file has an unknown format.";
+                        Console.WriteLine("Error reading attribute file: " + errorMsg);
+                        throw new Exception(errorMsg);
                     }
                 });
             var totalWeight = weights.Sum(v => v);
