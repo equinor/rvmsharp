@@ -1,12 +1,14 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
+using System.Globalization;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
+using System.Windows.Markup;
 using Csv;
 
 public class ScaffoldingAttributeParser
 {
     private static readonly string AttributeKey = "Item code";
-    private static readonly int TotalWeightIndex = 1;
     private static readonly string HeaderTotalWeight = "Grand total";
     private static readonly int AttributeTableColCount = 23;
 
@@ -70,15 +72,58 @@ public class ScaffoldingAttributeParser
                 v =>
                 {
                     var kvp = new Dictionary<string, string>();
+
+                    // in some cases, description and weight can appear in several columns (different manufacturers of item parts)
+                    // these columns need to be merged into one
+
+                    var description = v
+                        .Headers.Select((h, i) => new { header = h, index = i })
+                        .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
+                        .Select(el =>
+                        {
+                            var manufacturerName = el
+                                .header.ToLower()
+                                .Replace("description", String.Empty)
+                                .ToUpper()
+                                .Trim();
+                            var spacer = (manufacturerName.Length > 0) ? " " : "";
+                            var partDescription = v.Values[el.index];
+                            if (partDescription.Length > 0)
+                                return manufacturerName + spacer + partDescription;
+
+                            return String.Empty;
+                        })
+                        .ToList();
+
+                    kvp["Description"] = String.Join(String.Empty, description);
+
+                    var weights = v
+                        .Headers.Select((h, i) => new { header = h, index = i })
+                        .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
+                        .Select(el => v.Values[el.index]);
+
+                    // weights are expected to either in one column or the other, never both at the same time
+                    // there merging them is done via joining the strings
+                    kvp["Weight kg"] = String.Join(String.Empty, weights);
+
                     for (int col = 0; col < v.ColumnCount; col++)
                     {
                         if (itemCodeIdColumn == col)
                             continue; // Ignore it
+
+                        // ignore description and weight, they are added as an aggregate of several columns
+                        if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
+                            continue;
+                        if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
+                            continue;
+
                         var key = v.Headers[col].Trim();
                         var value = v.Values[col].Trim();
+
                         entireScaffoldingMetadata.TryAddValue(key, value);
                         kvp[key] = value;
                     }
+
                     if (!ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(kvp))
                     {
                         Console.WriteLine("Invalid attribute line: " + v[itemCodeIdColumn].ToString());
@@ -88,9 +133,32 @@ public class ScaffoldingAttributeParser
                 }
             );
 
+        // finds all partial total weights in the line (partial: per item producer)
+        // and sums them up to the overall total weight
         if (lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
-            entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, lastAttributeLine[TotalWeightIndex].Trim());
+            var weights = lastAttributeLine
+                .Values.Where(v => v.Contains("kg"))
+                .Select(v =>
+                {
+                    // strip the kg at the end of the number if it is there
+                    var w = v.Replace(" kg", String.Empty);
+                    try
+                    {
+                        return float.Parse(w, CultureInfo.InvariantCulture);
+                    }
+                    catch
+                    {
+                        const string errorMsg = "Total weight line in the attribute file has an unknown format.";
+                        Console.WriteLine("Error reading attribute file: " + errorMsg);
+                        throw new Exception(errorMsg);
+                    }
+                });
+            var totalWeight = weights.Sum(v => v);
+            entireScaffoldingMetadata.TryAddValue(
+                HeaderTotalWeight,
+                totalWeight.ToString(CultureInfo.InvariantCulture)
+            );
         }
         else
         {
