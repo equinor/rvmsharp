@@ -86,9 +86,10 @@ public class ScaffoldingAttributeParser
                                 .Replace("description", String.Empty)
                                 .ToUpper()
                                 .Trim();
+                            var spacer = (manufacturerName.Length > 0) ? " " : "";
                             var partDescription = v.Values[el.index];
                             if (partDescription.Length > 0)
-                                return manufacturerName + " " + partDescription;
+                                return manufacturerName + spacer + partDescription;
 
                             return String.Empty;
                         })
