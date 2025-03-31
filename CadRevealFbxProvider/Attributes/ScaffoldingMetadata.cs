@@ -10,12 +10,14 @@ public class ScaffoldingMetadata
     public string? DismantleOperationNumber { get; set; }
     public string? TotalVolume { get; set; }
     public string? TotalWeight { get; set; }
+    public string? TotalWeightCalculated { get; set; }
 
     private const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
     private const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
     private const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
     private const string TotalVolumeFieldName = "Scaffolding_TotalVolume";
     private const string TotalWeightFieldName = "Scaffolding_TotalWeight";
+    private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
 
     public static readonly string[] ModelAttributesPerPart =
     {
@@ -32,7 +34,8 @@ public class ScaffoldingMetadata
         BuildOperationId,
         DismantleOperationId,
         TotalVolume,
-        TotalWeight
+        TotalWeight,
+        TotalWeightCalculated
     }
 
     private static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<
@@ -44,7 +47,8 @@ public class ScaffoldingMetadata
         { "Scaff build Operation number", AttributeEnum.BuildOperationId },
         { "Dismantle Operation number", AttributeEnum.DismantleOperationId },
         { "Size (m\u00b3)", AttributeEnum.TotalVolume },
-        { "Grand total", AttributeEnum.TotalWeight }
+        { "Grand total", AttributeEnum.TotalWeight },
+        { "Grand total calcul", AttributeEnum.TotalWeightCalculated }
     };
 
     private static void GuardForInvalidValues(string newValue, string? existingValue)
@@ -108,6 +112,10 @@ public class ScaffoldingMetadata
                     GuardForInvalidValues(value, TotalWeight);
                     TotalWeight = value;
                     break;
+                case AttributeEnum.TotalWeightCalculated:
+                    GuardForInvalidValues(value, TotalWeightCalculated);
+                    TotalWeightCalculated = value;
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -160,5 +168,6 @@ public class ScaffoldingMetadata
         targetDict.Add(DismantleOpFieldName, DismantleOperationNumber!);
         targetDict.Add(TotalVolumeFieldName, TotalVolume!);
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
+        targetDict.Add(TotalWeightCalculatedFieldName, TotalWeightCalculated!);
     }
 }

@@ -26,7 +26,7 @@ public class ScaffoldingAttributeParser
     {
         if (fileLines.Length == 0)
             throw new ArgumentException(nameof(fileLines));
-        Console.WriteLine("Reading attribute file.");
+        Console.WriteLine("Reading and processing attribute file.");
 
         // The below will remove the first row in the CSV file, if it is not the header.
         // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
@@ -133,6 +133,21 @@ public class ScaffoldingAttributeParser
                 }
             );
 
+        var totalWeightCalculated = attributesDictionary
+            .Where(a => a.Value != null)
+            .Select(av =>
+            {
+                var w = av.Value!["Weight kg"];
+                if (w.Length == 0)
+                    return 0; // sometime weight can be missing
+                return float.Parse(w.Replace(" kg", String.Empty), CultureInfo.InvariantCulture);
+            })
+            .Sum();
+
+        // calculate total weight from the table
+        // will be used as a sanity check against the total weight explicitly written in the table
+        //attributesDictionary
+
         // finds all partial total weights in the line (partial: per item producer)
         // and sums them up to the overall total weight
         if (lastAttributeLine[0].Contains(HeaderTotalWeight))
@@ -159,9 +174,20 @@ public class ScaffoldingAttributeParser
                 HeaderTotalWeight,
                 totalWeight.ToString(CultureInfo.InvariantCulture)
             );
+
+            entireScaffoldingMetadata.TryAddValue(
+                "Total weight calc",
+                totalWeightCalculated.ToString(CultureInfo.InvariantCulture)
+            );
+
+            if (totalWeight != totalWeightCalculated)
+                Console.WriteLine(
+                    $"Check total weight. Explicitly defined: {totalWeight} and calculated: {totalWeightCalculated}. Difference: {totalWeight - totalWeightCalculated}"
+                );
         }
         else
         {
+            Console.WriteLine("Attribute file does not contain total weight");
             throw new Exception("Attribute file does not contain total weight");
         }
 
@@ -176,6 +202,7 @@ public class ScaffoldingAttributeParser
             entireScaffoldingMetadata.TotalVolume
         );
 
+        Console.WriteLine("Finished reading and processing attribute file.");
         return (attributesDictionary, entireScaffoldingMetadata);
     }
 }
