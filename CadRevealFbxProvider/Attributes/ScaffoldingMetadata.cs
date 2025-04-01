@@ -48,7 +48,7 @@ public class ScaffoldingMetadata
         { "Dismantle Operation number", AttributeEnum.DismantleOperationId },
         { "Size (m\u00b3)", AttributeEnum.TotalVolume },
         { "Grand total", AttributeEnum.TotalWeight },
-        { "Grand total calcul", AttributeEnum.TotalWeightCalculated }
+        { "Grand total calculated", AttributeEnum.TotalWeightCalculated }
     };
 
     private static void GuardForInvalidValues(string newValue, string? existingValue)
