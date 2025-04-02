@@ -4,6 +4,7 @@
 .idea/
 
 *.user
+.DS_Store
 
 # Build files
 **/bin/**

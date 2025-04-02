@@ -35,6 +35,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commons", "Commons\Commons.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Commons.Tests", "Commons.Tests\Commons.Tests.csproj", "{E928953C-E0A7-4EDF-9484-49CFF5E303C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealFbxProvider.Benchmarks", "CadRevealFbxProvider.Benchmarks\CadRevealFbxProvider.Benchmarks.csproj", "{60213E40-940B-49BF-8F24-CCEF1CFFEBEB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadRevealComposer.Benchmarks", "CadRevealComposer.Benchmarks\CadRevealComposer.Benchmarks.csproj", "{A7271138-DB41-4EE9-BA35-65FA880BAF93}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -105,6 +109,14 @@ Global
 		{E928953C-E0A7-4EDF-9484-49CFF5E303C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E928953C-E0A7-4EDF-9484-49CFF5E303C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E928953C-E0A7-4EDF-9484-49CFF5E303C5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60213E40-940B-49BF-8F24-CCEF1CFFEBEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60213E40-940B-49BF-8F24-CCEF1CFFEBEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60213E40-940B-49BF-8F24-CCEF1CFFEBEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60213E40-940B-49BF-8F24-CCEF1CFFEBEB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A7271138-DB41-4EE9-BA35-65FA880BAF93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A7271138-DB41-4EE9-BA35-65FA880BAF93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A7271138-DB41-4EE9-BA35-65FA880BAF93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A7271138-DB41-4EE9-BA35-65FA880BAF93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -56,7 +56,7 @@ public static class CadRevealComposerRunner
 
         var filtering = new NodeNameFiltering(composerParameters.NodeNameExcludeRegex);
 
-        ModelMetadata metadataFromAllFiles = new ModelMetadata(new Dictionary<string, string>());
+        ModelMetadata metadataFromAllFiles = new(new Dictionary<string, string>());
         foreach (IModelFormatProvider modelFormatProvider in modelFormatProviders)
         {
             var timer = Stopwatch.StartNew();
@@ -139,7 +139,7 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
-        ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
+        //ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
