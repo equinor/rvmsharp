@@ -7,7 +7,6 @@ using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Configuration;
 using Devtools;
 using IdProviders;
@@ -107,7 +106,7 @@ public static class CadRevealComposerRunner
 
         geometriesToProcess = Simplify.OptimizeVertexCountInMeshes(geometriesToProcess);
 
-        var exportHierarchyDatabaseTask = WriteHierarchyOnSideThread(outputDirectory, nodesToExport);
+        WriteHierarchy(outputDirectory, nodesToExport);
 
         var geometriesToProcessArray = geometriesToProcess.ToArray();
         if (composerParameters.DevPrimitiveCacheFolder != null)
@@ -124,10 +123,6 @@ public static class CadRevealComposerRunner
             composerParameters
         );
 
-        if (!exportHierarchyDatabaseTask.IsCompleted)
-            Console.WriteLine("Waiting for hierarchy export to complete...");
-        exportHierarchyDatabaseTask.Wait();
-
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
         ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
@@ -136,18 +131,15 @@ public static class CadRevealComposerRunner
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");
     }
 
-    private static Task WriteHierarchyOnSideThread(DirectoryInfo outputDirectory, IReadOnlyList<CadRevealNode> nodes)
+    private static void WriteHierarchy(DirectoryInfo outputDirectory, IReadOnlyList<CadRevealNode> nodes)
     {
         var hierarchyNodes = HierarchyComposerConverter.ConvertToHierarchyNodes(nodes);
-        return Task.Run(() =>
-        {
-            var hierarchyExportTimer = Stopwatch.StartNew();
-            var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-            SceneCreator.WriteToHierarchyDatabase(databasePath, hierarchyNodes);
-            Console.WriteLine(
-                $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
-            );
-        });
+        var hierarchyExportTimer = Stopwatch.StartNew();
+        var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
+        SceneCreator.WriteToHierarchyDatabase(databasePath, hierarchyNodes);
+        Console.WriteLine(
+            $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
+        );
     }
 
     public record SplitAndExportResults(List<TreeIndexSectorIdPair> TreeIndexToSectorIdDict);
