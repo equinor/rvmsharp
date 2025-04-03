@@ -139,7 +139,6 @@ public class DatabaseComposer
             CheckMemoryUsage($"Chunk {i} processed");
         }
 
-
         //
         // var nodes = inputNodes
         //     .Select(inputNode => new Node
