@@ -137,9 +137,7 @@ public static class CadRevealComposerRunner
         var hierarchyExportTimer = Stopwatch.StartNew();
         var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
         SceneCreator.WriteToHierarchyDatabase(databasePath, hierarchyNodes);
-        Console.WriteLine(
-            $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
-        );
+        Console.WriteLine($"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}");
     }
 
     public record SplitAndExportResults(List<TreeIndexSectorIdPair> TreeIndexToSectorIdDict);

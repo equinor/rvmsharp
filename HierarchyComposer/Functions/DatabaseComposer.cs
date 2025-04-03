@@ -108,12 +108,11 @@ public class DatabaseComposer
                 HasMesh = inputNode.HasMesh,
                 ParentId = inputNode.ParentId,
                 TopNodeId = inputNode.TopNodeId,
-                NodePDMSEntry = inputNode.PDMSData
-                    .Select(kvp => new NodePDMSEntry
-                    {
-                        NodeId = inputNode.NodeId,
-                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
-                    }),
+                NodePDMSEntry = inputNode.PDMSData.Select(kvp => new NodePDMSEntry
+                {
+                    NodeId = inputNode.NodeId,
+                    PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+                }),
                 AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
                 DiagnosticInfo = inputNode.OptionalDiagnosticInfo
             })
