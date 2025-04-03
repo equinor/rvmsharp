@@ -68,7 +68,7 @@ public class DatabaseComposer
         var jsonPdmsKeyValuePairs = MopTimer.RunAndMeasure(
             "Collecting PDMS data",
             _logger,
-            () => inputNodes.SelectMany(n => n.PDMSData).ToArray()
+            () => inputNodes.SelectMany(n => n.PDMSData)
         );
         var jsonAabbs = inputNodes.Where(jn => jn.AABB != null).Select(jn => jn.AABB!);
 
