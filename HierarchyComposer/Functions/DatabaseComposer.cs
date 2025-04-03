@@ -22,8 +22,26 @@ public class DatabaseComposer
     }
 
     // ReSharper disable once CognitiveComplexity
+
+    // Method to check and write current memory usage to the console
+    static void CheckMemoryUsage(string currentLine)
+    {
+        // Get the current process
+        Process currentProcess = Process.GetCurrentProcess();
+
+        // Get the physical memory usage (in bytes)
+        long totalBytesOfMemoryUsed = currentProcess.WorkingSet64;
+
+        // Convert to megabytes for easier reading
+        double megabytesUsed = totalBytesOfMemoryUsed / (1024.0 * 1024.0);
+
+        // Write the memory usage to the console
+        Console.WriteLine($"Memory usage (MB): {megabytesUsed:N2} at line {currentLine}");
+    }
+
     public void ComposeDatabase(IReadOnlyList<HierarchyNode> inputNodes, string outputDatabaseFullPath)
     {
+        CheckMemoryUsage("44");
         if (File.Exists(outputDatabaseFullPath))
             File.Delete(outputDatabaseFullPath);
 
@@ -57,6 +75,8 @@ public class DatabaseComposer
         _logger.LogInformation("Creating database model entries");
         long pdmsEntryIdCounter = 0;
 
+        CheckMemoryUsage("78");
+
         var pdmsEntries = jsonPdmsKeyValuePairs
             .GroupBy(kvp => kvp.GetGroupKey())
             .ToDictionary(
@@ -73,6 +93,8 @@ public class DatabaseComposer
         var aabbs = jsonAabbs
             .GroupBy(b => b.GetGroupKey())
             .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First().CopyWithNewId(++aabbIdCounter));
+
+        CheckMemoryUsage("97");
 
         var nodes = inputNodes
             .Select(inputNode => new Node
@@ -98,12 +120,16 @@ public class DatabaseComposer
             })
             .ToDictionary(n => n.Id, n => n);
 
+        CheckMemoryUsage("123");
+
         var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
 
         var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
+
+        CheckMemoryUsage("132");
 
         // ReSharper disable AccessToDisposedClosure
         MopTimer.RunAndMeasure(
@@ -120,6 +146,8 @@ public class DatabaseComposer
             }
         );
 
+        CheckMemoryUsage("149");
+
         MopTimer.RunAndMeasure(
             "Insert NodePDMSEntries",
             _logger,
@@ -133,6 +161,8 @@ public class DatabaseComposer
                 transaction.Commit();
             }
         );
+
+        CheckMemoryUsage("165");
 
         MopTimer.RunAndMeasure(
             "Insert AABBs",
@@ -154,6 +184,8 @@ public class DatabaseComposer
             }
         );
 
+        CheckMemoryUsage("187");
+
         MopTimer.RunAndMeasure(
             "Insert Nodes",
             _logger,
@@ -166,6 +198,8 @@ public class DatabaseComposer
                 transaction.Commit();
             }
         );
+
+        CheckMemoryUsage("202");
 
         MopTimer.RunAndMeasure(
             "Creating indexes",
@@ -188,6 +222,8 @@ public class DatabaseComposer
             }
         );
 
+        CheckMemoryUsage("225");
+
         MopTimer.RunAndMeasure(
             "Optimizing Database",
             _logger,
@@ -203,6 +239,8 @@ public class DatabaseComposer
                 cmd.ExecuteNonQuery();
             }
         );
+
+        CheckMemoryUsage("243");
 
         MopTimer.RunAndMeasure(
             "VACUUM Database",
@@ -243,6 +281,8 @@ public class DatabaseComposer
 #endif
             }
         );
+
+        CheckMemoryUsage("285");
 
         // ReSharper restore AccessToDisposedClosure
         sqliteComposeTimer.LogCompletion();
