@@ -133,13 +133,9 @@ public static class CadRevealComposerRunner
 
     private static void WriteHierarchy(DirectoryInfo outputDirectory, IReadOnlyList<CadRevealNode> nodes)
     {
-        Console.WriteLine("WriteHieararchy line 136");
         var hierarchyNodes = HierarchyComposerConverter.ConvertToHierarchyNodes(nodes);
-        Console.WriteLine("WriteHieararchy line 138");
         var hierarchyExportTimer = Stopwatch.StartNew();
-        Console.WriteLine("WriteHieararchy line 140");
         var databasePath = Path.GetFullPath(Path.Join(outputDirectory.FullName, "hierarchy.db"));
-        Console.WriteLine("WriteHieararchy line 142");
         SceneCreator.WriteToHierarchyDatabase(databasePath, hierarchyNodes);
         Console.WriteLine(
             $"Exported hierarchy database to path \"{databasePath}\" in {hierarchyExportTimer.Elapsed}"
