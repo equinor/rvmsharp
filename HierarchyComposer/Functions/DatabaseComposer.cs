@@ -96,29 +96,74 @@ public class DatabaseComposer
 
         CheckMemoryUsage("97");
 
-        var nodes = inputNodes
-            .Select(inputNode => new Node
-            {
-                Id = inputNode.NodeId,
-                EndId = inputNode.EndId,
-                RefNoPrefix = inputNode.RefNoPrefix,
-                RefNoDb = inputNode.RefNoDb,
-                RefNoSequence = inputNode.RefNoSequence,
-                Name = inputNode.Name,
-                HasMesh = inputNode.HasMesh,
-                ParentId = inputNode.ParentId,
-                TopNodeId = inputNode.TopNodeId,
-                NodePDMSEntry = inputNode.PDMSData.Select(kvp => new NodePDMSEntry
+        // Process nodes in smaller batches to reduce memory usage
+        var nodesBatchSize = 1000; // Adjust batch size as needed
+        var nodes = new Dictionary<uint, Node>();
+        var nodeBatches = inputNodes.Chunk(nodesBatchSize);
+        int i = 0;
+        foreach (var batch in nodeBatches)
+        {
+            var batchNodes = batch
+                .Select(inputNode => new Node
                 {
-                    NodeId = inputNode.NodeId,
-                    PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
-                }),
-                AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
-                DiagnosticInfo = inputNode.OptionalDiagnosticInfo
-            })
-            .ToDictionary(n => n.Id, n => n);
+                    Id = inputNode.NodeId,
+                    EndId = inputNode.EndId,
+                    RefNoPrefix = inputNode.RefNoPrefix,
+                    RefNoDb = inputNode.RefNoDb,
+                    RefNoSequence = inputNode.RefNoSequence,
+                    Name = inputNode.Name,
+                    HasMesh = inputNode.HasMesh,
+                    ParentId = inputNode.ParentId,
+                    TopNodeId = inputNode.TopNodeId,
+                    NodePDMSEntry = inputNode.PDMSData.Select(kvp => new NodePDMSEntry
+                    {
+                        NodeId = inputNode.NodeId,
+                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+                    }),
+                    AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+                    DiagnosticInfo = inputNode.OptionalDiagnosticInfo
+                })
+                .ToDictionary(n => n.Id, n => n);
+            try
+            {
+                foreach (var kvp in batchNodes)
+                {
+                    nodes[kvp.Key] = kvp.Value;
+                }
+            }
+            catch (Exception)
+            {
+                throw new ArgumentException("nodes key already exists "); // TODO: DELETE THIS, only for testing /kag
+            }
+            i += 1;
+            CheckMemoryUsage($"Chunk {i} processed");
+        }
 
-        CheckMemoryUsage("123");
+
+        //
+        // var nodes = inputNodes
+        //     .Select(inputNode => new Node
+        //     {
+        //         Id = inputNode.NodeId,
+        //         EndId = inputNode.EndId,
+        //         RefNoPrefix = inputNode.RefNoPrefix,
+        //         RefNoDb = inputNode.RefNoDb,
+        //         RefNoSequence = inputNode.RefNoSequence,
+        //         Name = inputNode.Name,
+        //         HasMesh = inputNode.HasMesh,
+        //         ParentId = inputNode.ParentId,
+        //         TopNodeId = inputNode.TopNodeId,
+        //         NodePDMSEntry = inputNode.PDMSData.Select(kvp => new NodePDMSEntry
+        //         {
+        //             NodeId = inputNode.NodeId,
+        //             PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
+        //         }),
+        //         AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+        //         DiagnosticInfo = inputNode.OptionalDiagnosticInfo
+        //     })
+        //     .ToDictionary(n => n.Id, n => n);
+
+        CheckMemoryUsage("166");
 
         var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
 
@@ -127,7 +172,7 @@ public class DatabaseComposer
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
 
-        CheckMemoryUsage("132");
+        CheckMemoryUsage("175");
 
         // ReSharper disable AccessToDisposedClosure
         MopTimer.RunAndMeasure(
@@ -144,7 +189,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("149");
+        CheckMemoryUsage("192");
 
         MopTimer.RunAndMeasure(
             "Insert NodePDMSEntries",
@@ -160,7 +205,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("165");
+        CheckMemoryUsage("208");
 
         MopTimer.RunAndMeasure(
             "Insert AABBs",
@@ -182,7 +227,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("187");
+        CheckMemoryUsage("230");
 
         MopTimer.RunAndMeasure(
             "Insert Nodes",
@@ -197,7 +242,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("202");
+        CheckMemoryUsage("245");
 
         MopTimer.RunAndMeasure(
             "Creating indexes",
@@ -220,7 +265,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("225");
+        CheckMemoryUsage("268");
 
         MopTimer.RunAndMeasure(
             "Optimizing Database",
@@ -238,7 +283,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("243");
+        CheckMemoryUsage("286");
 
         MopTimer.RunAndMeasure(
             "VACUUM Database",
@@ -280,7 +325,7 @@ public class DatabaseComposer
             }
         );
 
-        CheckMemoryUsage("285");
+        CheckMemoryUsage("Last line");
 
         // ReSharper restore AccessToDisposedClosure
         sqliteComposeTimer.LogCompletion();
