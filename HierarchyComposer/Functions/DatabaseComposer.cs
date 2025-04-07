@@ -157,6 +157,8 @@ public class DatabaseComposer
 
 // 'nodes' dictionary is now populated.
 
+        CheckMemoryUsage("'nodes' dictionary is now populated. Line 160");
+
 
 
 
