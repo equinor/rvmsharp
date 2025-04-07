@@ -96,48 +96,70 @@ public class DatabaseComposer
 
         CheckMemoryUsage("97");
 
-        // Process nodes in smaller batches to reduce memory usage
-        var nodesBatchSize = 1000; // Adjust batch size as needed
-        var nodes = new Dictionary<uint, Node>();
-        var nodeBatches = inputNodes.Chunk(nodesBatchSize);
-        int i = 0;
-        foreach (var batch in nodeBatches)
+
+
+// --- Optimized Iterative Construction ---
+
+// 1. Estimate capacity if possible to reduce dictionary reallocations
+        int initialCapacity = 0;
+        var nodes = new Dictionary<long, Node>(initialCapacity);
+// 2. Iterate through input nodes one by one
+        foreach (var inputNode in inputNodes)
         {
-            var batchNodes = batch
-                .Select(inputNode => new Node
+            // 3. Create the main Node object
+            var newNode = new Node
+            {
+                Id = inputNode.NodeId,
+                EndId = inputNode.EndId,
+                RefNoPrefix = inputNode.RefNoPrefix,
+                RefNoDb = inputNode.RefNoDb,
+                RefNoSequence = inputNode.RefNoSequence,
+                Name = inputNode.Name,
+                HasMesh = inputNode.HasMesh,
+                ParentId = inputNode.ParentId,
+                TopNodeId = inputNode.TopNodeId,
+                // Initialize list here, potentially with capacity
+                NodePDMSEntry = null, // Initialize as null or empty list
+                // AABB lookup (same logic as before)
+                AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+                DiagnosticInfo = inputNode.OptionalDiagnosticInfo
+            };
+
+            // 4. Process NodePDMSEntry efficiently
+            if (inputNode.PDMSData.Count > 0) // Check if there's data
+            {
+                // Create the list *once* per node, with capacity if available
+                var pdmsEntryList = new List<NodePDMSEntry>(inputNode.PDMSData.Count);
+
+                foreach (var kvp in inputNode.PDMSData)
                 {
-                    Id = inputNode.NodeId,
-                    EndId = inputNode.EndId,
-                    RefNoPrefix = inputNode.RefNoPrefix,
-                    RefNoDb = inputNode.RefNoDb,
-                    RefNoSequence = inputNode.RefNoSequence,
-                    Name = inputNode.Name,
-                    HasMesh = inputNode.HasMesh,
-                    ParentId = inputNode.ParentId,
-                    TopNodeId = inputNode.TopNodeId,
-                    NodePDMSEntry = inputNode.PDMSData.Select(kvp => new NodePDMSEntry
+                    // Perform lookup and create entry directly
+                    pdmsEntryList.Add(new NodePDMSEntry
                     {
-                        NodeId = inputNode.NodeId,
+                        NodeId = inputNode.NodeId, // Use the already accessed NodeId
                         PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id
-                    }),
-                    AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
-                    DiagnosticInfo = inputNode.OptionalDiagnosticInfo
-                })
-                .ToDictionary(n => n.Id, n => n);
-            try
-            {
-                foreach (var kvp in batchNodes)
-                {
-                    nodes[kvp.Key] = kvp.Value;
+                    });
                 }
+                newNode.NodePDMSEntry = pdmsEntryList; // Assign the populated list
             }
-            catch (Exception)
+            else
             {
-                throw new ArgumentException("nodes key already exists "); // TODO: DELETE THIS, only for testing /kag
+                // Ensure the list is initialized if null wasn't intended, e.g.:
+                newNode.NodePDMSEntry = new List<NodePDMSEntry>(); // Assign empty list if PDMSData is null/empty
             }
-            i += 1;
-            CheckMemoryUsage($"Chunk {i} processed");
+
+
+            // 5. Add the fully constructed node to the dictionary
+            // Use Add for potentially better performance if keys are guaranteed unique,
+            // or use the indexer nodes[newNode.Id] = newNode; if duplicates might need overwriting (though ToDictionary implies unique keys).
+            nodes.Add(newNode.Id, newNode);
         }
+
+// 'nodes' dictionary is now populated.
+
+
+
+
 
         //
         // var nodes = inputNodes
