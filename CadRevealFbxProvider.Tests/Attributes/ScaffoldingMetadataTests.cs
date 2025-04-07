@@ -95,8 +95,8 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(metadataEmpty.HasExpectedValues(), Is.False);
-            Assert.That(metadata.HasExpectedValues(), Is.True);
+            Assert.That(metadataEmpty.ModelMetadataHasExpectedValues(), Is.False);
+            Assert.That(metadata.ModelMetadataHasExpectedValues(), Is.True);
         });
     }
 
@@ -135,11 +135,11 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictComplete), Is.True);
-            Assert.That(ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictIncomplete), Is.False);
-            Assert.That(ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictBeyondComplete), Is.True);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictComplete), Is.True);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictIncomplete), Is.False);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictBeyondComplete), Is.True);
             Assert.That(
-                ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictCompleteButEmptyValue),
+                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictCompleteButEmptyValue),
                 Is.False
             );
         });

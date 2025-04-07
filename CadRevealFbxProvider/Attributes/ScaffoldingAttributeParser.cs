@@ -5,6 +5,8 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
 using System.Windows.Markup;
 using Csv;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json.Linq;
 
 public class ScaffoldingAttributeParser
 {
@@ -13,6 +15,12 @@ public class ScaffoldingAttributeParser
     private static readonly int AttributeTableColCount = 23;
 
     public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
+    public static readonly List<string> NumericHeadersSAP = new List<string>
+    {
+        "Work order",
+        "Scaff build Operation Number",
+        "Dismantle Operation number"
+    };
 
     private static string ConvertStringToEmptyIfNullOrWhiteSpace(string? s)
     {
@@ -22,7 +30,7 @@ public class ScaffoldingAttributeParser
     public (
         Dictionary<string, Dictionary<string, string>?> attributesDictionary,
         ScaffoldingMetadata scaffoldingMetadata
-    ) ParseAttributes(string[] fileLines)
+    ) ParseAttributes(string[] fileLines, bool tempFlag = false)
     {
         if (fileLines.Length == 0)
             throw new ArgumentException(nameof(fileLines));
@@ -120,15 +128,57 @@ public class ScaffoldingAttributeParser
                         var key = v.Headers[col].Trim();
                         var value = v.Values[col].Trim();
 
-                        entireScaffoldingMetadata.TryAddValue(key, value);
-                        kvp[key] = value;
+                        // check if numeric headers are actually numbers for non-temp scaffs
+                        // for temp scaffs, we don't care
+                        if (
+                            NumericHeadersSAP.Any(h =>
+                                string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase)
+                            )
+                        )
+                        {
+                            if (!tempFlag)
+                            {
+                                var NumFieldValueCandidate = value;
+                                try
+                                {
+                                    float.Parse(NumFieldValueCandidate, CultureInfo.InvariantCulture);
+                                }
+                                catch (Exception)
+                                {
+                                    var errMsg =
+                                        $"Error parsing attribute value. {NumFieldValueCandidate} is not a valid {v.Headers[col]}.";
+                                    Console.Error.WriteLine(errMsg);
+                                    throw new Exception(errMsg);
+                                }
+
+                                entireScaffoldingMetadata.TryAddValue(key, NumFieldValueCandidate);
+                                kvp[key] = NumFieldValueCandidate;
+                            }
+                            else
+                            {
+                                // temp scaff processing:
+                                // we want to keep these fields undefined
+                                // scaff architect might have written something in these fields, thus we are possibly overriding that
+                                // we do not insert kvp in this case!
+                                // leaving the commented-out code as a reminder not to but this back
+                                // entireScaffoldingMetadata.TryAddValue(key, null);
+                                // kvp[key] = null;
+                            }
+                        }
+                        else
+                        {
+                            // non-numeric temp or non-temp scaffolding headers
+                            entireScaffoldingMetadata.TryAddValue(key, value);
+                            kvp[key] = value;
+                        }
                     }
 
-                    if (!ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(kvp))
+                    if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
                     {
                         Console.WriteLine("Invalid attribute line: " + v[itemCodeIdColumn].ToString());
                         return null;
                     }
+
                     return kvp;
                 }
             );
@@ -138,7 +188,7 @@ public class ScaffoldingAttributeParser
             .Select(av =>
             {
                 var w = av.Value!["Weight kg"];
-                if (w.Length == 0)
+                if (w!.Length == 0)
                     return 0; // sometime weight can be missing
                 return float.Parse(w.Replace(" kg", String.Empty), CultureInfo.InvariantCulture);
             })
@@ -146,7 +196,7 @@ public class ScaffoldingAttributeParser
 
         // calculate total weight from the table
         // will be used as a sanity check against the total weight explicitly written in the table
-        //attributesDictionary
+        // attributesDictionary
 
         // finds all partial total weights in the line (partial: per item producer)
         // and sums them up to the overall total weight
@@ -165,7 +215,7 @@ public class ScaffoldingAttributeParser
                     catch
                     {
                         const string errorMsg = "Total weight line in the attribute file has an unknown format.";
-                        Console.WriteLine("Error reading attribute file: " + errorMsg);
+                        Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
                         throw new Exception(errorMsg);
                     }
                 });
@@ -187,20 +237,22 @@ public class ScaffoldingAttributeParser
         }
         else
         {
-            Console.WriteLine("Attribute file does not contain total weight");
+            Console.Error.WriteLine("Attribute file does not contain total weight");
             throw new Exception("Attribute file does not contain total weight");
         }
 
-        if (!entireScaffoldingMetadata.HasExpectedValues())
+        entireScaffoldingMetadata.TotalVolume = ConvertStringToEmptyIfNullOrWhiteSpace(
+            entireScaffoldingMetadata.TotalVolume
+        );
+
+        if (!entireScaffoldingMetadata.ModelMetadataHasExpectedValues(tempFlag))
         {
             Console.Error.WriteLine(
                 "Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata)
             );
         }
 
-        entireScaffoldingMetadata.TotalVolume = ConvertStringToEmptyIfNullOrWhiteSpace(
-            entireScaffoldingMetadata.TotalVolume
-        );
+        
 
         Console.WriteLine("Finished reading and processing attribute file.");
         return (attributesDictionary, entireScaffoldingMetadata);

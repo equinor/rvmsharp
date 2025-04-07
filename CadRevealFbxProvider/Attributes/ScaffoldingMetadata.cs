@@ -8,6 +8,7 @@ public class ScaffoldingMetadata
     public string? WorkOrder { get; set; }
     public string? BuildOperationNumber { get; set; }
     public string? DismantleOperationNumber { get; set; }
+    public string? ProjectNumber { get; set; }
     public string? TotalVolume { get; set; }
     public string? TotalWeight { get; set; }
     public string? TotalWeightCalculated { get; set; }
@@ -19,12 +20,16 @@ public class ScaffoldingMetadata
     private const string TotalWeightFieldName = "Scaffolding_TotalWeight";
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
 
-    public static readonly string[] ModelAttributesPerPart =
+    public static readonly string[] MandatoryModelAttributesFromParts_NonTempScaff =
     {
-        "Work order"
-        //        "Scaff build Operation number",
-        //        "Dismantle Operation number"
+        "Work order",
+        "Scaff build Operation number",
+        "Dismantle Operation number"
     };
+
+    public static readonly string[] MandatoryModelAttributesFromParts_TempScaff = { "Project number" };
+
+    public static readonly string[] MandatoryModelAttributes = { "Total weight" };
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
 
@@ -33,6 +38,7 @@ public class ScaffoldingMetadata
         WorkOrderId,
         BuildOperationId,
         DismantleOperationId,
+        ProjectNumber,
         TotalVolume,
         TotalWeight,
         TotalWeightCalculated
@@ -46,12 +52,13 @@ public class ScaffoldingMetadata
         { "Work order", AttributeEnum.WorkOrderId },
         { "Scaff build Operation number", AttributeEnum.BuildOperationId },
         { "Dismantle Operation number", AttributeEnum.DismantleOperationId },
+        { "Project number", AttributeEnum.ProjectNumber },
         { "Size (m\u00b3)", AttributeEnum.TotalVolume },
         { "Grand total", AttributeEnum.TotalWeight },
         { "Grand total calculated", AttributeEnum.TotalWeightCalculated }
     };
 
-    private static void GuardForInvalidValues(string newValue, string? existingValue)
+    private static void GuardForInvalidValues(string? newValue, string? existingValue)
     {
         if (newValue == existingValue)
             return;
@@ -76,7 +83,8 @@ public class ScaffoldingMetadata
         };
     }
 
-    private static string? MakeStringEmptyIfDuplicate(string newValue, string? existingValue)
+    // ASK ricol if this function should not be call MakeStringEmpty if NON Duplicate
+    private static string? MakeStringEmptyIfDuplicate(string? newValue, string? existingValue)
     {
         if (newValue == "")
             return existingValue;
@@ -85,7 +93,7 @@ public class ScaffoldingMetadata
         return (newValue != existingValue) ? "" : newValue;
     }
 
-    public bool TryAddValue(string key, string value)
+    public bool TryAddValue(string key, string? value)
     {
         if (!ColumnToAttributeMap.ContainsKey(key))
             return false;
@@ -104,6 +112,9 @@ public class ScaffoldingMetadata
                     break;
                 case AttributeEnum.DismantleOperationId:
                     DismantleOperationNumber = MakeStringEmptyIfDuplicate(value, DismantleOperationNumber);
+                    break;
+                case AttributeEnum.ProjectNumber:
+                    ProjectNumber = MakeStringEmptyIfDuplicate(value, ProjectNumber);
                     break;
                 case AttributeEnum.TotalVolume:
                     TotalVolume = MakeStringEmptyIfDuplicate(value, TotalVolume);
@@ -126,13 +137,19 @@ public class ScaffoldingMetadata
         return false; // Did not add any value
     }
 
-    public bool HasExpectedValues()
+    public bool ModelMetadataHasExpectedValues(bool tempScaffFlag = false)
     {
-        if (
+        if (tempScaffFlag)
+        {
+            if(string.IsNullOrEmpty(ProjectNumber))
+                return false;
+        }
+        // non-temp scaffs
+        else if (
             // Do not include PlannedBuildDate, CompletionDate, and DismantleDate here, since these may be allowed empty
             string.IsNullOrEmpty(WorkOrder)
-            //            || string.IsNullOrEmpty(BuildOperationNumber)
-            //            || string.IsNullOrEmpty(DismantleOperationNumber)
+            || string.IsNullOrEmpty(BuildOperationNumber)
+            || string.IsNullOrEmpty(DismantleOperationNumber)
             || string.IsNullOrEmpty(TotalWeight)
         )
         {
@@ -142,9 +159,14 @@ public class ScaffoldingMetadata
         return true;
     }
 
-    public static bool HasExpectedValuesFromAttributesPerPart(Dictionary<string, string> targetDict)
+    public static bool PartMetadataHasExpectedValues(Dictionary<string, string> targetDict, bool tempScaffFlag = false)
     {
-        foreach (var modelAttribute in ModelAttributesPerPart)
+        var obligatoryAttributes =
+            (tempScaffFlag)
+                ? MandatoryModelAttributesFromParts_TempScaff
+                : MandatoryModelAttributesFromParts_NonTempScaff;
+
+        foreach (var modelAttribute in obligatoryAttributes)
         {
             if (!targetDict.ContainsKey(modelAttribute))
                 return false;
@@ -159,7 +181,7 @@ public class ScaffoldingMetadata
 
     public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-        if (!HasExpectedValues())
+        if (!ModelMetadataHasExpectedValues())
             throw new Exception("Cannot write metadata: invalid content");
 
         // The if above ensures that the fields are not null
