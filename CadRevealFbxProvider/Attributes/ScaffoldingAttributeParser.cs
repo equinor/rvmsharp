@@ -252,7 +252,7 @@ public class ScaffoldingAttributeParser
             );
         }
 
-        
+        entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;
 
         Console.WriteLine("Finished reading and processing attribute file.");
         return (attributesDictionary, entireScaffoldingMetadata);

@@ -12,6 +12,7 @@ public class ScaffoldingMetadata
     public string? TotalVolume { get; set; }
     public string? TotalWeight { get; set; }
     public string? TotalWeightCalculated { get; set; }
+    public bool TempScaffoldingFlag { get; set; }
 
     private const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
     private const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
@@ -19,6 +20,7 @@ public class ScaffoldingMetadata
     private const string TotalVolumeFieldName = "Scaffolding_TotalVolume";
     private const string TotalWeightFieldName = "Scaffolding_TotalWeight";
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
+    private const string TempFlagCalculatedFieldName = "Scaffolding_IsTemporary";
 
     public static readonly string[] MandatoryModelAttributesFromParts_NonTempScaff =
     {
@@ -191,5 +193,6 @@ public class ScaffoldingMetadata
         targetDict.Add(TotalVolumeFieldName, TotalVolume!);
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
         targetDict.Add(TotalWeightCalculatedFieldName, TotalWeightCalculated!);
+        targetDict.Add(TempFlagCalculatedFieldName, TempScaffoldingFlag.ToString());
     }
 }
