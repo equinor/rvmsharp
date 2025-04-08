@@ -94,6 +94,9 @@ public class DatabaseComposer
 
         CheckMemoryUsage("After collecting AABB data");
 
+        // Write// Write the length of PDMS, AABB, and inputNodes data to the console
+        Console.WriteLine($"Input Nodes Count: {inputNodes.Count}, PDMS Data Count: {jsonPdmsKeyValuePairs.Count}, AABB Data Count: {jsonAabbs.Count}");
+
         _logger.LogInformation("Deduplicating PDMS entries and AABBs...");
         int pdmsEntryIdCounter = 0;
         int aabbIdCounter = 0;
