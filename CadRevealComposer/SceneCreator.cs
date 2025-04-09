@@ -47,7 +47,11 @@ public static class SceneCreator
 
     public static void WriteToHierarchyDatabase(string databasePath, IReadOnlyList<HierarchyNode> allNodes)
     {
-        ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
+        ILogger<DatabaseComposer> databaseLogger = LoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Debug); // Set the desired log level
+        }).CreateLogger<DatabaseComposer>();
+        //Logger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
         var exporter = new DatabaseComposer(databaseLogger);
         exporter.ComposeDatabase(allNodes, Path.GetFullPath(databasePath));
     }
