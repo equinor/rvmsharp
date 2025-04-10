@@ -10,16 +10,40 @@ using Newtonsoft.Json.Linq;
 
 public class ScaffoldingAttributeParser
 {
-    private static readonly string AttributeKey = "Item code";
-    private static readonly string HeaderTotalWeight = "Grand total";
     private static readonly int AttributeTableColCount = 23;
-
     public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
+
+    private static readonly string HeaderTotalWeight = "Grand total";
+    private static readonly string AttributeKey = "Item code";
+
     public static readonly List<string> NumericHeadersSAP = new List<string>
     {
         "Work order",
         "Scaff build Operation Number",
         "Dismantle Operation number"
+    };
+
+    public static readonly List<string> OtherManufacturerIndependentAttributesPerPart = new List<string>
+    {
+        "Count",
+        "Scaff tag number",
+        "Job pack",
+        "Project number",
+        "Planned build date",
+        "Completion date",
+        "Dismantle date",
+        "Area",
+        "Discipline",
+        "Purpose",
+        "Scaff type",
+        "Load class",
+        "Size (m\u00b3)",
+        "Length(m)",
+        "Width(m)",
+        "Height(m)",
+        "Covering (Y or N)",
+        "Covering material",
+        "Last Updated"
     };
 
     private static string ConvertStringToEmptyIfNullOrWhiteSpace(string? s)
@@ -57,9 +81,9 @@ public class ScaffoldingAttributeParser
             )
             .ToArray();
 
-        var itemCodeIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
+        var keyIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
 
-        if (itemCodeIdColumn < 0)
+        if (keyIdColumn < 0)
             throw new Exception("Key header \"" + AttributeKey + "\" is missing in the attribute file.");
 
         if (attributeRawData.First().ColumnCount == AttributeTableColCount)
@@ -72,11 +96,26 @@ public class ScaffoldingAttributeParser
 
         // total weight (model metadata, not per-part attribute) is stored in the last line of the attribute table
         var lastAttributeLine = attributeRawData.Last();
-        // last line is skipped here, since it is not a per-part attribute
-        var attributesDictionary = attributeRawData
-            .SkipLast(1)
+        // last line is skipped here, since it is not a per-part attribute (total weight)
+        attributeRawData = attributeRawData.SkipLast(1).ToArray();
+
+        // validate raw data wrt missing "Item Code"
+        var validatedAttributeData = attributeRawData.Where(item => !string.IsNullOrWhiteSpace(item.Values[keyIdColumn]));
+        if (!validatedAttributeData.Any()) {
+            throw new Exception($"{AttributeKey} cannot be missing for all items.");
+        }
+
+        Console.WriteLine($"After attributes key validation, {validatedAttributeData.Count()}/{attributeRawData.Length} items remain.");
+        
+        var attributesDictionary = validatedAttributeData
             .ToDictionary(
-                x => x.Values[itemCodeIdColumn],
+                x =>
+                {
+                    var key = x.Values[keyIdColumn];
+                    if (string.IsNullOrEmpty(key))
+                        throw new Exception($"{AttributeKey} cannot have missing values.");
+                    return key;
+                },
                 v =>
                 {
                     var kvp = new Dictionary<string, string>();
@@ -116,7 +155,7 @@ public class ScaffoldingAttributeParser
 
                     for (int col = 0; col < v.ColumnCount; col++)
                     {
-                        if (itemCodeIdColumn == col)
+                        if (keyIdColumn == col)
                             continue; // Ignore it
 
                         // ignore description and weight, they are added as an aggregate of several columns
@@ -148,7 +187,6 @@ public class ScaffoldingAttributeParser
                                     var errMsg =
                                         $"Error parsing attribute value. {NumFieldValueCandidate} is not a valid {v.Headers[col]}.";
                                     Console.Error.WriteLine(errMsg);
-                                    throw new Exception(errMsg);
                                 }
 
                                 entireScaffoldingMetadata.TryAddValue(key, NumFieldValueCandidate);
@@ -167,6 +205,17 @@ public class ScaffoldingAttributeParser
                         }
                         else
                         {
+                            if (
+                                !OtherManufacturerIndependentAttributesPerPart.Any(h =>
+                                    string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase)
+                                )
+                            )
+                            {
+                                var errMsg = $"Error parsing attribute file: Unknown column header {v.Headers[col]}.";
+                                Console.Error.WriteLine(errMsg);
+                                //throw new Exception(errMsg);
+                            }
+
                             // non-numeric temp or non-temp scaffolding headers
                             entireScaffoldingMetadata.TryAddValue(key, value);
                             kvp[key] = value;
@@ -175,7 +224,7 @@ public class ScaffoldingAttributeParser
 
                     if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
                     {
-                        Console.WriteLine("Invalid attribute line: " + v[itemCodeIdColumn].ToString());
+                        Console.WriteLine("Invalid attribute line: " + v[keyIdColumn].ToString());
                         return null;
                     }
 

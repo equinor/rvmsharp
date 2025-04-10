@@ -101,21 +101,24 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void GivenADictionary_WhenPopulatedWithMinimumEntries_ThenHasExpectedValuesFromAttributesPerPartMethodReturnsTrueElseFalse()
+    public void PartMetadataHasExpectedValues_WhenPopulatedWithMinimumEntries_ThenHasExpectedValuesFromAttributesPerPart()
     {
         // Arrange
         var targetDictComplete = new Dictionary<string, string>()
         {
-            { "Work order", "1234" }
-            //            { "Scaff build Operation number", "5678" },
-            //            { "Dismantle Operation number", "91011" }
+            { "Work order", "1234" },
+            { "Scaff build Operation number", "5678" },
+            { "Dismantle Operation number", "91011" }
         };
 
         var targetDictIncomplete = new Dictionary<string, string>()
         {
             //            { "Work order", "1234" },
+            { "Scaff build Operation number", "5678" }
             //            { "Dismantle Operation number", "91011" }
         };
+
+        var targetDictEmpty = new Dictionary<string, string>() { };
 
         var targetDictBeyondComplete = new Dictionary<string, string>()
         {
@@ -136,12 +139,10 @@ public class ScaffoldingMetadataTests
         Assert.Multiple(() =>
         {
             Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictComplete), Is.True);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictEmpty), Is.False);
             Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictIncomplete), Is.False);
             Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictBeyondComplete), Is.True);
-            Assert.That(
-                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictCompleteButEmptyValue),
-                Is.False
-            );
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictCompleteButEmptyValue), Is.False);
         });
     }
 
