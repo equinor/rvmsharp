@@ -100,137 +100,139 @@ public class ScaffoldingAttributeParser
         attributeRawData = attributeRawData.SkipLast(1).ToArray();
 
         // validate raw data wrt missing "Item Code"
-        var validatedAttributeData = attributeRawData.Where(item => !string.IsNullOrWhiteSpace(item.Values[keyIdColumn]));
-        if (!validatedAttributeData.Any()) {
+        var validatedAttributeData = attributeRawData.Where(item =>
+            !string.IsNullOrWhiteSpace(item.Values[keyIdColumn])
+        );
+        if (!validatedAttributeData.Any())
+        {
             throw new Exception($"{AttributeKey} cannot be missing for all items.");
         }
 
-        Console.WriteLine($"After attributes key validation, {validatedAttributeData.Count()}/{attributeRawData.Length} items remain.");
-        
-        var attributesDictionary = validatedAttributeData
-            .ToDictionary(
-                x =>
-                {
-                    var key = x.Values[keyIdColumn];
-                    if (string.IsNullOrEmpty(key))
-                        throw new Exception($"{AttributeKey} cannot have missing values.");
-                    return key;
-                },
-                v =>
-                {
-                    var kvp = new Dictionary<string, string>();
+        Console.WriteLine(
+            $"After attributes key validation, {validatedAttributeData.Count()}/{attributeRawData.Length} items remain."
+        );
 
-                    // in some cases, description and weight can appear in several columns (different manufacturers of item parts)
-                    // these columns need to be merged into one
+        var attributesDictionary = validatedAttributeData.ToDictionary(
+            x =>
+            {
+                var key = x.Values[keyIdColumn];
+                if (string.IsNullOrEmpty(key))
+                    throw new Exception($"{AttributeKey} cannot have missing values.");
+                return key;
+            },
+            v =>
+            {
+                var kvp = new Dictionary<string, string>();
 
-                    var description = v
-                        .Headers.Select((h, i) => new { header = h, index = i })
-                        .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
-                        .Select(el =>
-                        {
-                            var manufacturerName = el
-                                .header.ToLower()
-                                .Replace("description", String.Empty)
-                                .ToUpper()
-                                .Trim();
-                            var spacer = (manufacturerName.Length > 0) ? " " : "";
-                            var partDescription = v.Values[el.index];
-                            if (partDescription.Length > 0)
-                                return manufacturerName + spacer + partDescription;
+                // in some cases, description and weight can appear in several columns (different manufacturers of item parts)
+                // these columns need to be merged into one
 
-                            return String.Empty;
-                        })
-                        .ToList();
-
-                    kvp["Description"] = String.Join(String.Empty, description);
-
-                    var weights = v
-                        .Headers.Select((h, i) => new { header = h, index = i })
-                        .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
-                        .Select(el => v.Values[el.index]);
-
-                    // weights are expected to either in one column or the other, never both at the same time
-                    // there merging them is done via joining the strings
-                    kvp["Weight kg"] = String.Join(String.Empty, weights);
-
-                    for (int col = 0; col < v.ColumnCount; col++)
+                var description = v
+                    .Headers.Select((h, i) => new { header = h, index = i })
+                    .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
+                    .Select(el =>
                     {
-                        if (keyIdColumn == col)
-                            continue; // Ignore it
+                        var manufacturerName = el
+                            .header.ToLower()
+                            .Replace("description", String.Empty)
+                            .ToUpper()
+                            .Trim();
+                        var spacer = (manufacturerName.Length > 0) ? " " : "";
+                        var partDescription = v.Values[el.index];
+                        if (partDescription.Length > 0)
+                            return manufacturerName + spacer + partDescription;
 
-                        // ignore description and weight, they are added as an aggregate of several columns
-                        if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
-                            continue;
-                        if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
-                            continue;
+                        return String.Empty;
+                    })
+                    .ToList();
 
-                        var key = v.Headers[col].Trim();
-                        var value = v.Values[col].Trim();
+                kvp["Description"] = String.Join(String.Empty, description);
 
-                        // check if numeric headers are actually numbers for non-temp scaffs
-                        // for temp scaffs, we don't care
+                var weights = v
+                    .Headers.Select((h, i) => new { header = h, index = i })
+                    .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
+                    .Select(el => v.Values[el.index]);
+
+                // weights are expected to either in one column or the other, never both at the same time
+                // there merging them is done via joining the strings
+                kvp["Weight kg"] = String.Join(String.Empty, weights);
+
+                for (int col = 0; col < v.ColumnCount; col++)
+                {
+                    if (keyIdColumn == col)
+                        continue; // Ignore it
+
+                    // ignore description and weight, they are added as an aggregate of several columns
+                    if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var key = v.Headers[col].Trim();
+                    var value = v.Values[col].Trim();
+
+                    // check if numeric headers are actually numbers for non-temp scaffs
+                    // for temp scaffs, we don't care
+                    if (
+                        NumericHeadersSAP.Any(h => string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase))
+                    )
+                    {
+                        if (!tempFlag)
+                        {
+                            var NumFieldValueCandidate = value;
+                            try
+                            {
+                                float.Parse(NumFieldValueCandidate, CultureInfo.InvariantCulture);
+                            }
+                            catch (Exception)
+                            {
+                                var errMsg =
+                                    $"Error parsing attribute value. {NumFieldValueCandidate} is not a valid {v.Headers[col]}.";
+                                Console.Error.WriteLine(errMsg);
+                            }
+
+                            entireScaffoldingMetadata.TryAddValue(key, NumFieldValueCandidate);
+                            kvp[key] = NumFieldValueCandidate;
+                        }
+                        else
+                        {
+                            // temp scaff processing:
+                            // we want to keep these fields undefined
+                            // scaff architect might have written something in these fields, thus we are possibly overriding that
+                            // we do not insert kvp in this case!
+                            // leaving the commented-out code as a reminder not to but this back
+                            // entireScaffoldingMetadata.TryAddValue(key, null);
+                            // kvp[key] = null;
+                        }
+                    }
+                    else
+                    {
                         if (
-                            NumericHeadersSAP.Any(h =>
+                            !OtherManufacturerIndependentAttributesPerPart.Any(h =>
                                 string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase)
                             )
                         )
                         {
-                            if (!tempFlag)
-                            {
-                                var NumFieldValueCandidate = value;
-                                try
-                                {
-                                    float.Parse(NumFieldValueCandidate, CultureInfo.InvariantCulture);
-                                }
-                                catch (Exception)
-                                {
-                                    var errMsg =
-                                        $"Error parsing attribute value. {NumFieldValueCandidate} is not a valid {v.Headers[col]}.";
-                                    Console.Error.WriteLine(errMsg);
-                                }
-
-                                entireScaffoldingMetadata.TryAddValue(key, NumFieldValueCandidate);
-                                kvp[key] = NumFieldValueCandidate;
-                            }
-                            else
-                            {
-                                // temp scaff processing:
-                                // we want to keep these fields undefined
-                                // scaff architect might have written something in these fields, thus we are possibly overriding that
-                                // we do not insert kvp in this case!
-                                // leaving the commented-out code as a reminder not to but this back
-                                // entireScaffoldingMetadata.TryAddValue(key, null);
-                                // kvp[key] = null;
-                            }
+                            var errMsg = $"Error parsing attribute file: Unknown column header {v.Headers[col]}.";
+                            Console.Error.WriteLine(errMsg);
+                            //throw new Exception(errMsg);
                         }
-                        else
-                        {
-                            if (
-                                !OtherManufacturerIndependentAttributesPerPart.Any(h =>
-                                    string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase)
-                                )
-                            )
-                            {
-                                var errMsg = $"Error parsing attribute file: Unknown column header {v.Headers[col]}.";
-                                Console.Error.WriteLine(errMsg);
-                                //throw new Exception(errMsg);
-                            }
 
-                            // non-numeric temp or non-temp scaffolding headers
-                            entireScaffoldingMetadata.TryAddValue(key, value);
-                            kvp[key] = value;
-                        }
+                        // non-numeric temp or non-temp scaffolding headers
+                        entireScaffoldingMetadata.TryAddValue(key, value);
+                        kvp[key] = value;
                     }
-
-                    if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
-                    {
-                        Console.WriteLine("Invalid attribute line: " + v[keyIdColumn].ToString());
-                        return null;
-                    }
-
-                    return kvp;
                 }
-            );
+
+                if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
+                {
+                    Console.WriteLine("Invalid attribute line: " + v[keyIdColumn].ToString());
+                    return null;
+                }
+
+                return kvp;
+            }
+        );
 
         var totalWeightCalculated = attributesDictionary
             .Where(a => a.Value != null)

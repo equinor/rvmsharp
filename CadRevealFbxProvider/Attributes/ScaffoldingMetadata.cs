@@ -85,13 +85,6 @@ public class ScaffoldingMetadata
         };
     }
 
-    private static string? MakeStringEmptyIfNonDuplicate(string? newValue, string? existingValue)
-    {
-        if (existingValue == null)
-            return newValue;
-        return (newValue != existingValue) ? "" : newValue;
-    }
-
     private static string? MakeStringEmptyIfNonDuplicateButSkipEmpty(string? newValue, string? existingValue)
     {
         if (newValue == "")
@@ -119,7 +112,10 @@ public class ScaffoldingMetadata
                     BuildOperationNumber = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, BuildOperationNumber);
                     break;
                 case AttributeEnum.DismantleOperationId:
-                    DismantleOperationNumber = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, DismantleOperationNumber);
+                    DismantleOperationNumber = MakeStringEmptyIfNonDuplicateButSkipEmpty(
+                        value,
+                        DismantleOperationNumber
+                    );
                     break;
                 case AttributeEnum.ProjectNumber:
                     ProjectNumber = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, ProjectNumber);
@@ -170,7 +166,9 @@ public class ScaffoldingMetadata
     public static bool PartMetadataHasExpectedValues(Dictionary<string, string> targetDict, bool tempScaffFlag = false)
     {
         var obligatoryAttributes =
-            (tempScaffFlag) ? MandatoryModelAttributesFromParts_TempScaff : MandatoryModelAttributesFromParts_NonTempScaff;
+            (tempScaffFlag)
+                ? MandatoryModelAttributesFromParts_TempScaff
+                : MandatoryModelAttributesFromParts_NonTempScaff;
 
         foreach (var modelAttribute in obligatoryAttributes)
         {
