@@ -32,13 +32,13 @@ public class FbxProviderTests
     private static readonly List<IModelFormatProvider> Providers = [new FbxProvider()];
 
     [Test]
-    public void FbxImporterSdkInitTest()
+    public void FbxImporter_Init_CanInitialize()
     {
         using var test = new FbxImporter();
     }
 
     [Test]
-    public void FbxSdkVersionTest()
+    public void HasValidSdk_FbxImporter_CanValidateSdk()
     {
         using var testImporter = new FbxImporter();
         Assert.That(testImporter.HasValidSdk());
@@ -47,9 +47,15 @@ public class FbxProviderTests
     [Test]
     public void FbxImporterLoadFileTest()
     {
+        // arrange
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
-        Iterate(rootNode);
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
+            Iterate(rootNode);
+        });
     }
 
     [Test]
@@ -85,37 +91,24 @@ public class FbxProviderTests
         }
     }
 
-    private void Iterate(FbxNode root)
-    {
-        Console.WriteLine(root.GetNodeName());
-        var childCount = root.GetChildCount();
-        Matrix4x4 t = root.GetLocalTransform();
-        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
-        IntPtr meshGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(root);
-        if (meshGeometryPtr != IntPtr.Zero)
-        {
-            FbxMeshWrapper.GetGeometricData(meshGeometryPtr);
-        }
-        for (var i = 0; i < childCount; i++)
-        {
-            var child = root.GetChild(i);
-            Iterate(child);
-        }
-    }
-
     [Test]
-    public void Fbx_Importer_GetUniqueMeshesInFileCount()
+    public void GetAllGeomPointersWithXOrMoreUses_FbxModel_CorrectUniqueMeshesInFileCount()
     {
+        // arrange
         using var test = new FbxImporter();
         var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
 
+        // act
         var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(rootNode);
+
+        //assert
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
     [TestCase("TestSamples/mismatch")]
     public void Process_ModelAndAttributeFileMismatch_ThrowsError(string strDir)
     {
+        // arrange
         DirectoryInfo outputDirectoryMismatch = new(strDir);
         DirectoryInfo inputDirectoryMismatch = new(strDir);
 
@@ -324,4 +317,22 @@ public class FbxProviderTests
             ComposerParameters,
             Providers
         );
+
+    private void Iterate(FbxNode root)
+    {
+        Console.WriteLine(root.GetNodeName());
+        var childCount = root.GetChildCount();
+        Matrix4x4 t = root.GetLocalTransform();
+        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
+        IntPtr meshGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(root);
+        if (meshGeometryPtr != IntPtr.Zero)
+        {
+            FbxMeshWrapper.GetGeometricData(meshGeometryPtr);
+        }
+        for (var i = 0; i < childCount; i++)
+        {
+            var child = root.GetChild(i);
+            Iterate(child);
+        }
+    }
 }
