@@ -18,10 +18,10 @@ public class FbxProviderTests
     private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
     private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
-    private static readonly DirectoryInfo InputDirectoryMissingAttr = new("TestSamples/missingattributes");
+    private static readonly DirectoryInfo InputDirectoryMissingAttr = new("TestSamples/missingAttributes");
 
-    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingkey");
-    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingkey");
+    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
+    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
 
     private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
     private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
@@ -249,6 +249,72 @@ public class FbxProviderTests
         {
             Assert.That(node.Name, !Is.EqualTo("Ladder"));
         }
+    }
+
+    [TestCase("TestSamples/tempScaff")]
+    public void ParseFiles_TempScaffolding_ProcessingSucceedsMetadataHasPositiveTempFlag(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        Assert.That(metadata!.checkValue("Scaffolding_IsTemporary", "True"), Is.True);
+    }
+
+    [TestCase("TestSamples/correct")]
+    public void ParseFiles_WorkorderScaffolding_ProcessingSucceedsMetadataHasNegativeTempFlag(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        Assert.That(metadata!.checkValue("Scaffolding_IsTemporary", "False"), Is.True);
+    }
+
+    [TestCase("TestSamples/tempScaff_wrongNaming")]
+    public void ParseFiles_TempScaffoldingWithWrongName_ProcessingFails(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        // no act, assert that exception is thrown
+
+        // assert
+        Assert.Throws<Exception>(
+            () =>
+                modelFormatProviderFbx.ParseFiles(
+                    inputDirectoryTempScaff.EnumerateFiles(),
+                    treeIndexGenerator,
+                    instanceIndexGenerator,
+                    new NodeNameFiltering(new NodeNameExcludeRegex(null))
+                )
+        ); // this scaff is not a valid temp scaffolding
     }
 
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>

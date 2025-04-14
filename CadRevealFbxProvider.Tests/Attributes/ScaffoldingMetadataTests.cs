@@ -1,5 +1,8 @@
 namespace CadRevealFbxProvider.Tests.Attributes;
 
+using CadRevealComposer.Configuration;
+using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using CadRevealFbxProvider.Attributes;
 
 [TestFixture]

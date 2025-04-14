@@ -14,6 +14,7 @@ public class ScaffoldingAttributeParser
     public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
 
     private static readonly string HeaderTotalWeight = "Grand total";
+    private static readonly string HeadingTotalWeightCalculated = "Grand total calculated";
     private static readonly string AttributeKey = "Item code";
 
     public static readonly List<string> NumericHeadersSAP = new List<string>
@@ -182,13 +183,15 @@ public class ScaffoldingAttributeParser
                             var NumFieldValueCandidate = value;
                             try
                             {
-                                float.Parse(NumFieldValueCandidate, CultureInfo.InvariantCulture);
+                                if (!string.IsNullOrWhiteSpace(NumFieldValueCandidate))
+                                    float.Parse(NumFieldValueCandidate, CultureInfo.InvariantCulture);
                             }
                             catch (Exception)
                             {
                                 var errMsg =
                                     $"Error parsing attribute value. {NumFieldValueCandidate} is not a valid {v.Headers[col]}.";
                                 Console.Error.WriteLine(errMsg);
+                                throw new Exception(errMsg);
                             }
 
                             entireScaffoldingMetadata.TryAddValue(key, NumFieldValueCandidate);
@@ -213,9 +216,8 @@ public class ScaffoldingAttributeParser
                             )
                         )
                         {
-                            var errMsg = $"Error parsing attribute file: Unknown column header {v.Headers[col]}.";
+                            var errMsg = $"Warning parsing attribute file: Unknown column header {v.Headers[col]}.";
                             Console.Error.WriteLine(errMsg);
-                            //throw new Exception(errMsg);
                         }
 
                         // non-numeric temp or non-temp scaffolding headers
@@ -277,7 +279,7 @@ public class ScaffoldingAttributeParser
             );
 
             entireScaffoldingMetadata.TryAddValue(
-                "Total weight calc",
+                HeadingTotalWeightCalculated,
                 totalWeightCalculated.ToString(CultureInfo.InvariantCulture)
             );
 
@@ -298,9 +300,7 @@ public class ScaffoldingAttributeParser
 
         if (!entireScaffoldingMetadata.ModelMetadataHasExpectedValues(tempFlag))
         {
-            Console.Error.WriteLine(
-                "Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata)
-            );
+            Console.WriteLine("Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata));
         }
 
         entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;

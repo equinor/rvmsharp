@@ -91,6 +91,12 @@ public class ScaffoldingMetadata
             return existingValue;
         if (existingValue == null)
             return newValue;
+
+        if (newValue != existingValue)
+            Console.WriteLine(
+                $"Warning: variable attribute values found where it should not: ({existingValue},{newValue})"
+            );
+
         return (newValue != existingValue) ? "" : newValue;
     }
 
@@ -185,7 +191,7 @@ public class ScaffoldingMetadata
 
     public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-        if (!ModelMetadataHasExpectedValues())
+        if (!ModelMetadataHasExpectedValues(TempScaffoldingFlag))
             throw new Exception("Cannot write metadata: invalid content");
 
         // The if above ensures that the fields are not null

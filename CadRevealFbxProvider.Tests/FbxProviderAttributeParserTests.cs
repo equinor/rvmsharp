@@ -3,6 +3,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Sockets;
+using CadRevealComposer.Configuration;
+using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using CadRevealFbxProvider.Attributes;
 using NUnit.Framework;
 
@@ -115,6 +118,30 @@ public class FbxProviderAttributeParserTests
             attributes.All(attribute => attribute.Value == null || attribute.Value?.Count == attributeCount),
             Is.True
         );
+    }
+
+    [TestCase("/abc-123456789-woScaffMissingData.csv")]
+    public void ParseFiles_WorkOrderScaffoldingWithMissingData_ProcessingSucceeds(string csvFileName)
+    {
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+        float calcTotalWeight = 0;
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+
+            metadata!.ModelMetadataHasExpectedValues(false);
+
+            calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
+        });
+
+        // Processing has correctly excluded the lines with missing data and calculated correctly new total weight
+        Assert.That(() => calcTotalWeight, Is.EqualTo(156.68f));
     }
 
     [TestCase("/missing_total_weight.csv")]

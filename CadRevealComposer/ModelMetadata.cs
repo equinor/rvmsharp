@@ -26,4 +26,15 @@ public class ModelMetadata(Dictionary<string, string> metadata)
     {
         return JsonSerializer.Serialize(metadata._metadata, JsonSerializerOptions);
     }
+
+    public bool checkValue(string key, string value)
+    {
+        string? realValue;
+        _metadata.TryGetValue(key, out realValue);
+
+        if (realValue!.Equals(value, System.StringComparison.OrdinalIgnoreCase)) return true;
+
+        return false;
+
+    }
 }
