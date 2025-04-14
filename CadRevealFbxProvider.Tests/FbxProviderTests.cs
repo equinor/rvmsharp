@@ -18,6 +18,9 @@ public class FbxProviderTests
     private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
     private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
+    private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
+    private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
+
     private static readonly ModelParameters ModelParameters =
         new(
             new ProjectId(1),
@@ -105,15 +108,13 @@ public class FbxProviderTests
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
-    [TestCase("TestSamples/mismatch")]
-    public void Process_ModelAndAttributeFileMismatch_ThrowsError(string strDir)
+    [Test]
+    public void Process_ModelAndAttributeFileMismatch_ThrowsError()
     {
         // arrange
-        DirectoryInfo outputDirectoryMismatch = new(strDir);
-        DirectoryInfo inputDirectoryMismatch = new(strDir);
 
         Assert.Throws<Exception>(
-            () => Process(inputDirectoryMismatch, outputDirectoryMismatch),
+            () => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
             "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
     }
