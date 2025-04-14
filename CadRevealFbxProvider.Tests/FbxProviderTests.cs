@@ -18,14 +18,6 @@ public class FbxProviderTests
     private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
     private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
-    private static readonly DirectoryInfo InputDirectoryMissingAttr = new("TestSamples/missingAttributes");
-
-    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
-    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
-
-    private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
-    private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
-
     private static readonly ModelParameters ModelParameters =
         new(
             new ProjectId(1),
@@ -121,18 +113,23 @@ public class FbxProviderTests
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
-    [Test]
-    public void ModelAndAttributeFileMismatchGivesErrorMessage()
+    [TestCase("TestSamples/mismatch")]
+    public void Process_ModelAndAttributeFileMismatch_ThrowsError(string strDir)
     {
+        DirectoryInfo outputDirectoryMismatch = new(strDir);
+        DirectoryInfo inputDirectoryMismatch = new(strDir);
+
         Assert.Throws<Exception>(
-            () => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
+            () => Process(inputDirectoryMismatch, outputDirectoryMismatch),
             "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
     }
 
     [Test]
-    public void WrongAttributeFormatGivesErrorMessage()
+    public void Process_WrongAttributeFormat_ThrowsError()
     {
+        DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
+        DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
         Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
     }
 
@@ -229,15 +226,17 @@ public class FbxProviderTests
         Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());
     }
 
-    [Test]
-    public void NodeMissingAttributesTest()
+    [TestCase("TestSamples/missingAttributes")]
+    public void ParseFiles_ModelWithNodeMissingAttributes_NodeGetsRemoved(string inputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
+        DirectoryInfo inputDirectoryMissingAttr = new(inputDir);
+
         (IReadOnlyList<CadRevealNode> nodes, _) = modelFormatProviderFbx.ParseFiles(
-            InputDirectoryMissingAttr.EnumerateFiles(),
+            inputDirectoryMissingAttr.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null))
