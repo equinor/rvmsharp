@@ -3,6 +3,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Net.Sockets;
+using CadRevealComposer.Configuration;
+using CadRevealComposer.IdProviders;
+using CadRevealComposer.Operations;
 using CadRevealFbxProvider.Attributes;
 using NUnit.Framework;
 
@@ -10,16 +13,6 @@ using NUnit.Framework;
 public class FbxProviderAttributeParserTests
 {
     private readonly DirectoryInfo _attributeDirectory = new("TestSamples/attributes");
-    private readonly List<string> fileLinesOneManufacturer = new List<string>
-    {
-        "Schedules-Export;;;",
-        "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
-        ";;;;;;;;;;;;;;;;;;;;;;;;",
-        "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
-        "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
-        "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-        "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
-    };
 
     private readonly List<string> fileLinesTwoManufacturers = new List<string>
     {
@@ -32,11 +25,54 @@ public class FbxProviderAttributeParserTests
         "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
     };
 
+    [Test]
+    public void ParseAttributes_ItemCodeAllMissing_ThrowsError()
+    {
+        // arange
+        List<string> fileLinesNoItemCode = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
+            "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
+            "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
+        var targetDict = new Dictionary<string, string>();
+
+        // Act & assert
+        Assert.Throws<Exception>(() => new ScaffoldingAttributeParser().ParseAttributes(fileLinesNoItemCode.ToArray()));
+    }
+
+    [Test]
+    public void ParseAttributes_ItemCodeSomeMissing_DoesThrowsError()
+    {
+        // arange
+        List<string> fileLinesNoItemCode = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123456",
+            "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
+            "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123457",
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
+        var targetDict = new Dictionary<string, string>();
+
+        // Act & assert
+        Assert.DoesNotThrow(() => new ScaffoldingAttributeParser().ParseAttributes(fileLinesNoItemCode.ToArray()));
+    }
+
     [TestCase("/fbx_test_model.csv")]
     [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
-    public void ParseAttributes_ValidCsv_ExtractsCorrectAttributes(string csvFileNmae)
+    public void ParseAttributes_ValidWorkOrderCsv_ExtractsCorrectAttributes(string csvFileName)
     {
-        string infoTextFilename = _attributeDirectory.FullName + csvFileNmae;
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+
+        // act
         var lines = File.ReadAllLines(infoTextFilename);
         (var attributes, var metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
         int countNodesWithMissingAttrib = 0;
@@ -51,53 +87,165 @@ public class FbxProviderAttributeParserTests
                 countNodesWithMissingAttrib++;
             }
         }
-        Assert.Multiple(() =>
-        {
-            // expects three lines with missing attributes
-            Assert.That(countNodesWithMissingAttrib, Is.EqualTo(3));
-            Assert.That(metadata.HasExpectedValues());
-            Assert.That(
-                ScaffoldingMetadata.ModelAttributesPerPart.Length + 5,
-                Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes)
-            );
-        });
+
+        // test data contains three lines with missing attributes
+        // check if they were caught
+        Assert.That(countNodesWithMissingAttrib, Is.EqualTo(3));
+
+        Assert.That(metadata.ModelMetadataHasExpectedValues());
+
+        // checks code correctness and consistency
+        Assert.That(
+            ScaffoldingMetadata.MandatoryModelAttributesFromParts_NonTempScaff.Length,
+            Is.EqualTo(ScaffoldingAttributeParser.NumericHeadersSAP.Count)
+        );
+
+        // check if we missed some attributes from the template
+        Assert.That(
+            ScaffoldingAttributeParser.NumericHeadersSAP.Count()
+                + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
+                + 1 /* key or Item Code */
+            ,
+            Is.EqualTo(attributes.First().Value?.Count)
+        );
+
+        var attributeCount =
+            ScaffoldingAttributeParser.NumericHeadersSAP.Count()
+            + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
+            + 1 /* key or Item Code */
+        ;
+        Assert.That(
+            attributes.All(attribute => attribute.Value == null || attribute.Value?.Count == attributeCount),
+            Is.True
+        );
     }
 
-    [Test]
-    public void ParseAttributes_TotalWeightMissingInCsv_ThrowsError()
+    [TestCase("/abc-123456789-woScaffMissingData.csv")]
+    public void ParseFiles_WorkOrderScaffoldingWithMissingData_ProcessingSucceeds(string csvFileName)
     {
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+        float calcTotalWeight = 0;
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+
+            metadata!.ModelMetadataHasExpectedValues(false);
+
+            calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
+        });
+
+        // Processing has correctly excluded the lines with missing data and calculated correctly new total weight
+        Assert.That(() => calcTotalWeight, Is.EqualTo(156.68f));
+    }
+
+    [TestCase("/abc-temp-correct.csv")]
+    public void ParseFiles_TempScaffolding_ProcessingSucceeds(string csvFileName)
+    {
+        // arrange
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = true;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+        float calcTotalWeight = 0;
+        bool metadataValid = false;
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, tempFlag);
+            metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
+            calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
+        });
+
+        Assert.That(metadataValid, Is.EqualTo(true));
+
+        // Processing has correctly excluded the lines with missing data and calculated correctly new total weight
+        Assert.That(() => calcTotalWeight, Is.EqualTo(183.54f));
+    }
+
+    [TestCase("/abc-temp-correct.csv")]
+    public void ParseFiles_TempScaffTaggedAsWorkorderScaff_ProcessingFails(string csvFileName)
+    {
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = false;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+        bool metadataValid = false;
+
+        // assert
+        Assert.Throws<Exception>(() =>
+        {
+            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, tempFlag);
+            metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
+        });
+
+        Assert.That(metadataValid, Is.EqualTo(false));
+    }
+
+    [TestCase("/missing_total_weight.csv")]
+    public void ParseAttributes_WorkOrderCsvMissingTotalWeight_ThrowsError(string csvFileName)
+    {
+        // arrange
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        var lines = File.ReadAllLines(infoTextFilename);
+
         Assert.Throws<Exception>(
             () =>
             {
-                string infoTextFilename = _attributeDirectory.FullName + "/missing_total_weight.csv";
-                var lines = File.ReadAllLines(infoTextFilename);
                 new ScaffoldingAttributeParser().ParseAttributes(lines);
             },
             "Was expecting an exception saying that the key total weight is missing, but got none"
         );
     }
 
-    [Test]
-    public void ParseAttributes_KeyAttributeMissingInCsv_ThrowsError()
+    [TestCase("/wrong_name_key_attribute.csv")]
+    public void ParseAttributes_ItemCodeColumnMissingInCsv_ThrowsError(string csvFileName)
     {
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        var lines = File.ReadAllLines(infoTextFilename);
+
         Assert.Throws<Exception>(
             () =>
             {
-                string infoTextFilename = _attributeDirectory.FullName + "/missing_key_attribute.csv";
-                var lines = File.ReadAllLines(infoTextFilename);
                 new ScaffoldingAttributeParser().ParseAttributes(lines);
             },
             "Was expecting an exception saying that the key attribute is missing, but got none"
         );
     }
 
-    [Test]
-    public void ParseAttributes_WrongAttributeCountInCsv_ThrowsError()
+    [TestCase("/missing_data_key_attribute.csv")]
+    public void ParseAttributes_ItemCodeDataMissingInCsv_ThrowsError(string csvFileName)
     {
         Assert.Throws<Exception>(
             () =>
             {
-                string infoTextFilename = _attributeDirectory.FullName + "/wrong_attribute_count.csv";
+                string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+                var lines = File.ReadAllLines(infoTextFilename);
+                new ScaffoldingAttributeParser().ParseAttributes(lines);
+            },
+            "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
+        );
+    }
+
+    [TestCase("/wrong_count_attributes.csv")]
+    public void ParseAttributes_WrongAttributeCountInCsv_ThrowsError(string csvFileName)
+    {
+        Assert.Throws<Exception>(
+            () =>
+            {
+                string infoTextFilename = _attributeDirectory.FullName + csvFileName;
                 var lines = File.ReadAllLines(infoTextFilename);
                 new ScaffoldingAttributeParser().ParseAttributes(lines);
             },
@@ -123,6 +271,16 @@ public class FbxProviderAttributeParserTests
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
+        List<string> fileLinesOneManufacturer = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
 
         // Act
         var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
@@ -130,7 +288,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(result.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.EqualTo("8.3"));
@@ -149,7 +307,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(result.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
             Assert.DoesNotThrow(
@@ -165,6 +323,16 @@ public class FbxProviderAttributeParserTests
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
+        List<string> fileLinesOneManufacturer = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
 
         // Act
         var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
@@ -187,6 +355,16 @@ public class FbxProviderAttributeParserTests
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
+        List<string> fileLinesOneManufacturer = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
 
         // Act
         var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
@@ -203,7 +381,7 @@ public class FbxProviderAttributeParserTests
 
             var line = result.attributesDictionary.Values.ElementAt(lineIndex);
 
-            var actualWeight = line!["Weight kg"].Replace(" kg", String.Empty);
+            var actualWeight = line!["Weight kg"]!.Replace(" kg", String.Empty);
 
             // Checks if all weights can be cast to floats
             Assert.DoesNotThrow(() =>
@@ -225,25 +403,33 @@ public class FbxProviderAttributeParserTests
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
+        List<string> fileLinesOneManufacturer = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size(m³); Length(m); Widht(m); Height(m); Covering(Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
 
         // Act
         var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
 
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.attributesDictionary.Values.Count > 0);
 
-            Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+        Assert.That(result.attributesDictionary.Values.Count > 0);
 
-            // check if all lines are not null
-            Assert.That(result.attributesDictionary.Values.All(v => v != null));
+        Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
 
-            var line = result.attributesDictionary.Values.ElementAt(lineIndex);
+        // check if all lines are not null
+        Assert.That(result.attributesDictionary.Values.All(v => v != null));
 
-            // checks if all lines have a description with something in it
-            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
-        });
+        var line = result.attributesDictionary.Values.ElementAt(lineIndex);
+
+        // checks if all lines have a description with something in it
+        Assert.That(result.attributesDictionary.Values.All(line => line!["Description"]!.Length > 0));
     }
 
     [Test]
@@ -264,7 +450,7 @@ public class FbxProviderAttributeParserTests
         Assert.Multiple(() =>
         {
             // checks if all lines have a description with something in it
-            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"].Length > 0));
+            Assert.That(result.attributesDictionary.Values.All(line => line!["Description"]!.Length > 0));
 
             Assert.That(line!["Description"], Is.EqualTo(enhancedDescr));
         });
@@ -293,7 +479,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
         });
@@ -322,7 +508,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
@@ -351,7 +537,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
@@ -380,7 +566,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
         });
@@ -410,7 +596,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
         });
@@ -440,7 +626,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
@@ -469,7 +655,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.EqualTo("0100"));
         });
@@ -498,14 +684,14 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.EqualTo("0100"));
         });
     }
 
     [Test]
-    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctBuildOperationNumbersInList_ThenWeHaveExpectedValuesOnReturnedMetadataAndNoThrowOnWritingToDictAndBuildOperationNumberIsEmpty()
+    public void ParseAttributes_WhenThereAreMultipleDistinctBuildOperationNumbers_ThenMetadataNotAsExpectedAndBuildOperationNumberIsEmpty()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -527,14 +713,13 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
-            Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.False);
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.Empty);
         });
     }
 
     [Test]
-    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctBuildOperationNumbersAndEmptyVolumeEntryInList_ThenWeHaveExpectedValuesOnReturnedMetadataAndNoThrowOnWritingToDictAndBuildOperationNumberIsEmpty()
+    public void ParseAttributes_WhenMissingSingleBuildOperationNumber_ThenMetadataNotAsExpectedAndBuildOperationNumberIsEmpty()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -557,8 +742,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
-            Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.False);
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.Empty);
         });
     }
@@ -587,7 +771,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.EqualTo("0100"));
         });
@@ -616,7 +800,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
         });
@@ -645,14 +829,14 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
         });
     }
 
     [Test]
-    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctDismantleOperationNumbersInList_ThenWeHaveExpectedValuesOnReturnedMetadataAndNoThrowOnWritingToDictAndDismantleOperationNumberIsEmpty()
+    public void ParseAttributes_DistinctDismantleOperationNumbers_MetadataAsExpectedAndDismantleOperationNumberIsEmpty()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -674,14 +858,13 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
-            Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.False);
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.Empty);
         });
     }
 
     [Test]
-    public void GivenLinesFromCSVFileAsStrings_WhenThereAreMultipleDistinctDismantleOperationNumbersAndEmptyVolumeEntryInList_ThenWeHaveExpectedValuesOnReturnedMetadataAndNoThrowOnWritingToDictAndDismantleOperationNumberIsEmpty()
+    public void ParseAttributes_WhenDifferentDismantleOperationNumbersPlusOneMissing_ThenMetadataNotAsExpectedAndDismantleOperationNumberIsNotEmpty()
     {
         // Arrange
         var targetDict = new Dictionary<string, string>();
@@ -704,8 +887,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
-            Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.False);
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.Empty);
         });
     }
@@ -734,7 +916,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.HasExpectedValues(), Is.True);
+            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
         });
