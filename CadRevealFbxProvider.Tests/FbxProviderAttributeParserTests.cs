@@ -130,6 +130,7 @@ public class FbxProviderAttributeParserTests
         var lines = File.ReadAllLines(infoTextFilename);
         ScaffoldingMetadata metadata;
         float calcTotalWeight = 0;
+
         // assert
         Assert.DoesNotThrow(() =>
         {
@@ -142,6 +143,55 @@ public class FbxProviderAttributeParserTests
 
         // Processing has correctly excluded the lines with missing data and calculated correctly new total weight
         Assert.That(() => calcTotalWeight, Is.EqualTo(156.68f));
+    }
+
+    [TestCase("/abc-temp-correct.csv")]
+    public void ParseFiles_TempScaffolding_ProcessingSucceeds(string csvFileName)
+    {
+        // arrange
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = true;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+        float calcTotalWeight = 0;
+        bool metadataValid = false;
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, tempFlag);
+            metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
+            calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
+        });
+
+        Assert.That(metadataValid, Is.EqualTo(true));
+
+        // Processing has correctly excluded the lines with missing data and calculated correctly new total weight
+        Assert.That(() => calcTotalWeight, Is.EqualTo(183.54f));
+    }
+
+    [TestCase("/abc-temp-correct.csv")]
+    public void ParseFiles_TempScaffTaggedAsWorkorderScaff_ProcessingFails(string csvFileName)
+    {
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = false;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+        bool metadataValid = false;
+
+        // assert
+        Assert.Throws<Exception>(() =>
+        {
+            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, tempFlag);
+            metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
+        });
+
+        Assert.That(metadataValid, Is.EqualTo(false));
     }
 
     [TestCase("/missing_total_weight.csv")]
