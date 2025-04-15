@@ -262,7 +262,7 @@ public class FbxProviderTests
         );
 
         // assert
-        Assert.That(metadata!.checkValue("Scaffolding_IsTemporary", "True"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "True"), Is.True);
     }
 
     [TestCase("TestSamples/correct")]
@@ -283,7 +283,7 @@ public class FbxProviderTests
         );
 
         // assert
-        Assert.That(metadata!.checkValue("Scaffolding_IsTemporary", "False"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "False"), Is.True);
     }
 
     [TestCase("TestSamples/tempScaff_wrongNaming")]
