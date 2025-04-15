@@ -40,8 +40,10 @@ public class ModelMetadata(Dictionary<string, string> metadata)
             else
                 return false;
         }
-        
-        Console.Error.WriteLine($"ModelMetadata::CheckValue : Trying to retrieve a metadata attribute {key} that does not exist.");
+
+        Console.Error.WriteLine(
+            $"ModelMetadata::CheckValue : Trying to retrieve a metadata attribute {key} that does not exist."
+        );
         return false;
     }
 }
