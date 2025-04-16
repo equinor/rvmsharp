@@ -40,6 +40,7 @@ public static class PartReplacementUtils
 
     public static (EccentricCone? cylinder, Circle? startCap, Circle? endCap) ToCylinderPrimitive(
         this Mesh mesh,
+        Color color,
         uint treeIndex
     )
     {
@@ -78,17 +79,18 @@ public static class PartReplacementUtils
                 ) / 2.0f
         };
         var r = (sortedBoundingBoxExtent.ValueOfSmallest + sortedBoundingBoxExtent.ValueOfMiddle) / 4.0f;
-        return CreateCylinderPrimitive(a, b, r, treeIndex);
+        return CreateCylinderPrimitive(a, b, r, color, treeIndex);
     }
 
     public static (TriangleMesh? cylinder, TriangleMesh? startCap, TriangleMesh? endCap) ToTessellatedCylinderPrimitive(
         this Mesh mesh,
         uint treeIndex,
+        Color color,
         bool createCaps = false
     )
     {
         // Create primitive eccentric cones
-        var primitiveCylinder = mesh.ToCylinderPrimitive(treeIndex);
+        var primitiveCylinder = mesh.ToCylinderPrimitive(color, treeIndex);
 
         // Tessellate the eccentric cones
         var cylinderMesh =
@@ -115,6 +117,7 @@ public static class PartReplacementUtils
         Vector3 surfaceDirGuide,
         float thickness,
         float height,
+        Color color,
         uint treeIndex
     )
     {
@@ -182,7 +185,7 @@ public static class PartReplacementUtils
 
         // Tessellate box, where the box is a unit box, scaled, rotated, and translated
         TriangleMesh? mesh = BoxTessellator.Tessellate(
-            new Box(instanceMatrix, treeIndex, Color.Black, new BoundingBox(startPoint, endPoint))
+            new Box(instanceMatrix, treeIndex, color, new BoundingBox(startPoint, endPoint))
         );
 
         return mesh;
@@ -192,6 +195,7 @@ public static class PartReplacementUtils
         Vector3 startPoint,
         Vector3 endPoint,
         float radius,
+        Color color,
         uint treeIndex
     )
     {
@@ -221,7 +225,7 @@ public static class PartReplacementUtils
             radius,
             radius,
             treeIndex,
-            Color.Brown,
+            color,
             estimatedCylinderAxisAlignedBoundingBox
         );
 
@@ -231,14 +235,14 @@ public static class PartReplacementUtils
             scale * Matrix4x4.CreateTranslation(startPoint),
             -unitNormal,
             treeIndex,
-            Color.Brown,
+            color,
             estimatedCylinderAxisAlignedBoundingBox
         );
         var endCap = new Circle(
             scale * Matrix4x4.CreateTranslation(endPoint),
             unitNormal,
             treeIndex,
-            Color.Brown,
+            color,
             estimatedCylinderAxisAlignedBoundingBox
         );
 
@@ -253,12 +257,13 @@ public static class PartReplacementUtils
         Vector3 startPoint,
         Vector3 endPoint,
         float radius,
+        Color color,
         uint treeIndex,
         bool createCaps = false
     )
     {
         // Create primitive eccentric cones
-        var primitiveCylinder = CreateCylinderPrimitive(startPoint, endPoint, radius, treeIndex);
+        var primitiveCylinder = CreateCylinderPrimitive(startPoint, endPoint, radius, color, treeIndex);
 
         // Tessellate the eccentric cones
         var cylinderMesh =

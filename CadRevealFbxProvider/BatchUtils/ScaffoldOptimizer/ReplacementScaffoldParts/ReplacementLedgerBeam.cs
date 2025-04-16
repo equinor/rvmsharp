@@ -6,6 +6,8 @@ using CadRevealComposer.Utils.MeshOptimization;
 
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
+using System.Drawing;
+
 public static class ReplacementLedgerBeam
 {
     private enum Placement
@@ -176,6 +178,7 @@ public static class ReplacementLedgerBeam
                         new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
                         thickness,
                         height,
+                        Color.White,
                         treeIndex
                     )
                     ?.Mesh
@@ -210,6 +213,7 @@ public static class ReplacementLedgerBeam
                 new Vector3 { [ledgerExtent.AxisIndexOfSmallest] = 1.0f },
                 thickness,
                 height,
+                Color.White,
                 treeIndex
             )
             ?.Mesh;
@@ -238,7 +242,7 @@ public static class ReplacementLedgerBeam
         );
 
         TriangleMesh? mesh = PartReplacementUtils
-            .CreateTessellatedCylinderPrimitive(centerMin, centerMax, radius, treeIndex)
+            .CreateTessellatedCylinderPrimitive(centerMin, centerMax, radius, Color.White, treeIndex)
             .cylinder;
 
         return mesh;
@@ -267,6 +271,7 @@ public static class ReplacementLedgerBeam
             tubeDirVec,
             0.6f * radius,
             2.0f * radius,
+            Color.White,
             treeIndex
         );
         centerMax -= 0.015f * tubeDirVec;
@@ -276,6 +281,7 @@ public static class ReplacementLedgerBeam
             tubeDirVec,
             0.6f * radius,
             2.0f * radius,
+            Color.White,
             treeIndex
         );
 
@@ -309,6 +315,7 @@ public static class ReplacementLedgerBeam
             new Vector3 { [ledgerBeamExtents.AxisIndexOfSmallest] = 1.0f },
             thickness,
             height,
+            Color.White,
             treeIndex
         );
     }

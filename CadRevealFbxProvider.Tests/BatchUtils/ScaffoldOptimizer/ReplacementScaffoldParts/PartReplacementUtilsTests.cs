@@ -30,6 +30,52 @@ public class PartReplacementUtilsTests
         }
     }
 
+    private static (Mesh m, Vector3 u, Vector3 v, Vector3 w) GenCylinderMesh(
+        Vector3 rA,
+        Vector3 rB,
+        float len,
+        float radius
+    )
+    {
+        // Generate points within a cylinder, which central axis is along rA to rB, but stretches L meters from (xA, yA, zA), with a radius R
+        var vertices = new List<Vector3>();
+        var indices = new List<uint>();
+        var a = new Vector3(rA.X, rA.Y, rA.Z);
+        var b = new Vector3(rB.X, rB.Y, rB.Z);
+        var u = Vector3.Normalize(b - a);
+        var v = Vector3.Normalize(Vector3.Cross(FindNonParallelVector(u), u));
+        var w = Vector3.Normalize(Vector3.Cross(u, v));
+        uint index = 0;
+        const int N = 5;
+        for (int i = 0; i < N; i++)
+        {
+            float cylPos = (float)i * len / (float)(N - 1);
+            for (float angle = 0.0f; angle < 2.0 * Math.PI; angle += 0.3f)
+            {
+                var r =
+                    a + (u * cylPos) + (v * radius * (float)Math.Cos(angle)) + (w * radius * (float)Math.Sin(angle));
+                vertices.Add(r);
+                indices.Add(index++);
+            }
+        }
+
+        return (new Mesh(vertices.ToArray(), indices.ToArray(), 1.0E-6f), u, v, w);
+        Vector3 FindNonParallelVector(Vector3 vec)
+        {
+            var ux = new Vector3(1.0f, 0.0f, 0.0f);
+            var uy = new Vector3(0.0f, 1.0f, 0.0f);
+            var uz = new Vector3(0.0f, 0.0f, 1.0f);
+
+            if (Math.Abs(Vector3.Dot(vec, ux) + 1.0) > 1.0E-3 && Math.Abs(1.0f - Vector3.Dot(vec, ux)) > 1.0E-3)
+                return ux;
+            if (Math.Abs(Vector3.Dot(vec, uy) + 1.0) > 1.0E-3 && Math.Abs(1.0f - Vector3.Dot(vec, uy)) > 1.0E-3)
+                return uy;
+            if (Math.Abs(Vector3.Dot(vec, uz) + 1.0) > 1.0E-3 && Math.Abs(1.0f - Vector3.Dot(vec, uz)) > 1.0E-3)
+                return uz;
+            return ux;
+        }
+    }
+
     [Test]
     public void CreateTessellatedCylinderPrimitive_WithAValidCylinderSpecified_ThenReturnANonNullMesh()
     {
@@ -39,6 +85,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(1.0f, 0.0f, 0.0f),
             1.0f,
+            Color.Brown,
             0,
             true
         );
@@ -61,6 +108,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(1.0f, 0.0f, 0.0f),
             2.5f,
+            Color.Brown,
             0
         );
 
@@ -91,6 +139,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 1.0f, 0.0f),
             2.5f,
+            Color.Brown,
             0
         );
 
@@ -121,6 +170,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 0.0f, 1.0f),
             2.5f,
+            Color.Brown,
             0
         );
 
@@ -151,6 +201,7 @@ public class PartReplacementUtilsTests
             new Vector3(1.0f, 2.0f, 3.0f),
             new Vector3(3.0f, 5.0f, 7.0f),
             2.5f,
+            Color.Brown,
             0
         );
 
@@ -167,7 +218,14 @@ public class PartReplacementUtilsTests
         var startPoint = new Vector3(1.0f, 2.0f, 3.0f);
         var endPoint = new Vector3(3.0f, 5.0f, 7.0f);
         const float radius = 2.5f;
-        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(startPoint, endPoint, radius, 0, true);
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
+            startPoint,
+            endPoint,
+            radius,
+            Color.Brown,
+            0,
+            true
+        );
 
         // Assert
         Assert.Multiple(() =>
@@ -256,6 +314,7 @@ public class PartReplacementUtilsTests
             new Vector3(1.0f, 2.0f, 3.0f),
             new Vector3(3.0f, 5.0f, 7.0f),
             2.5f,
+            Color.Brown,
             0
         );
 
@@ -281,31 +340,12 @@ public class PartReplacementUtilsTests
     )
     {
         // Arrange
-        // Generate points within a cylinder, which central axis is along (xA, yA, zA) to (xB, yB, zB), but stretches L meters from (xA, yA, zA), with a radius R
-        var vertices = new List<Vector3>();
-        var indices = new List<uint>();
         var a = new Vector3(xA, yA, zA);
         var b = new Vector3(xB, yB, zB);
-        var u = Vector3.Normalize(b - a);
-        var v = Vector3.Normalize(Vector3.Cross(FindNonParallelVector(u), u));
-        var w = Vector3.Normalize(Vector3.Cross(u, v));
-        uint index = 0;
-        const int N = 5;
-        for (int i = 0; i < N; i++)
-        {
-            float cylPos = (float)i * L / (float)(N - 1);
-            for (float angle = 0.0f; angle < 2.0 * Math.PI; angle += 0.3f)
-            {
-                var r = a + (u * cylPos) + (v * R * (float)Math.Cos(angle)) + (w * R * (float)Math.Sin(angle));
-                vertices.Add(r);
-                indices.Add(index++);
-            }
-        }
-
-        var cylinderMesh = new Mesh(vertices.ToArray(), indices.ToArray(), 1.0E-6f);
+        var cylinderMesh = GenCylinderMesh(a, b, L, R);
 
         // Act
-        EccentricCone? mesh = cylinderMesh.ToCylinderPrimitive(0).cylinder;
+        EccentricCone? mesh = cylinderMesh.m.ToCylinderPrimitive(Color.Brown, 0).cylinder;
 
         // Assert
         Assert.That(mesh, Is.Not.Null);
@@ -324,31 +364,18 @@ public class PartReplacementUtilsTests
             Assert.That(cA.Y, Is.EqualTo(a.Y).Within(1.0E-2f));
             Assert.That(cA.Z, Is.EqualTo(a.Z).Within(1.0E-2f));
 
-            Assert.That(cB.X, Is.EqualTo((a + u * L).X).Within(1.0E-2f));
-            Assert.That(cB.Y, Is.EqualTo((a + u * L).Y).Within(1.0E-2f));
-            Assert.That(cB.Z, Is.EqualTo((a + u * L).Z).Within(1.0E-2f));
+            Assert.That(cB.X, Is.EqualTo((a + cylinderMesh.u * L).X).Within(1.0E-2f));
+            Assert.That(cB.Y, Is.EqualTo((a + cylinderMesh.u * L).Y).Within(1.0E-2f));
+            Assert.That(cB.Z, Is.EqualTo((a + cylinderMesh.u * L).Z).Within(1.0E-2f));
         });
 
         var U = Vector3.Normalize(cB - cA);
-        Assert.That(U.X, Is.EqualTo(u.X).Within(1.0E-3f));
-        Assert.That(U.Y, Is.EqualTo(u.Y).Within(1.0E-3f));
-        Assert.That(U.Z, Is.EqualTo(u.Z).Within(1.0E-3f));
-
-        return;
-        Vector3 FindNonParallelVector(Vector3 vec)
+        Assert.Multiple(() =>
         {
-            var ux = new Vector3(1.0f, 0.0f, 0.0f);
-            var uy = new Vector3(0.0f, 1.0f, 0.0f);
-            var uz = new Vector3(0.0f, 0.0f, 1.0f);
-
-            if (Math.Abs(Vector3.Dot(vec, ux) + 1.0) > 1.0E-3 && Math.Abs(1.0f - Vector3.Dot(vec, ux)) > 1.0E-3)
-                return ux;
-            if (Math.Abs(Vector3.Dot(vec, uy) + 1.0) > 1.0E-3 && Math.Abs(1.0f - Vector3.Dot(vec, uy)) > 1.0E-3)
-                return uy;
-            if (Math.Abs(Vector3.Dot(vec, uz) + 1.0) > 1.0E-3 && Math.Abs(1.0f - Vector3.Dot(vec, uz)) > 1.0E-3)
-                return uz;
-            return ux;
-        }
+            Assert.That(U.X, Is.EqualTo(cylinderMesh.u.X).Within(1.0E-3f));
+            Assert.That(U.Y, Is.EqualTo(cylinderMesh.u.Y).Within(1.0E-3f));
+            Assert.That(U.Z, Is.EqualTo(cylinderMesh.u.Z).Within(1.0E-3f));
+        });
     }
 
     [Test]
@@ -362,6 +389,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 1, 0),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -381,6 +409,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -409,6 +438,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -437,6 +467,7 @@ public class PartReplacementUtilsTests
             new Vector3(1, 0, 0),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -465,6 +496,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             0.02f,
             0.08f,
+            Color.Brown,
             0
         );
 
@@ -493,6 +525,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -521,6 +554,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -549,6 +583,7 @@ public class PartReplacementUtilsTests
             new Vector3(0, 0, 1),
             0.05f,
             0.1f,
+            Color.Brown,
             0
         );
 
@@ -583,6 +618,7 @@ public class PartReplacementUtilsTests
             surfaceDirGuide,
             thickness,
             height,
+            Color.Brown,
             0
         );
 
@@ -662,6 +698,7 @@ public class PartReplacementUtilsTests
             surfaceDirGuide,
             thickness,
             height,
+            Color.Brown,
             0
         );
 
@@ -710,19 +747,49 @@ public class PartReplacementUtilsTests
     {
         // Arrange
         var meshXs = PartReplacementUtils
-            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.0f, 0.0f, 0.0f), 1.0f, 0)
+            .CreateTessellatedCylinderPrimitive(
+                new Vector3(0.0f, 0.0f, 0.0f),
+                new Vector3(1.0f, 0.0f, 0.0f),
+                1.0f,
+                Color.Brown,
+                0
+            )
             .cylinder;
         var meshS = PartReplacementUtils
-            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.0f, 0)
+            .CreateTessellatedCylinderPrimitive(
+                new Vector3(0.0f, 0.0f, 0.0f),
+                new Vector3(1.1f, 0.0f, 0.0f),
+                1.0f,
+                Color.Brown,
+                0
+            )
             .cylinder;
         var meshM = PartReplacementUtils
-            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.1f, 0.0f, 0.0f), 1.1f, 0)
+            .CreateTessellatedCylinderPrimitive(
+                new Vector3(0.0f, 0.0f, 0.0f),
+                new Vector3(1.1f, 0.0f, 0.0f),
+                1.1f,
+                Color.Brown,
+                0
+            )
             .cylinder;
         var meshL = PartReplacementUtils
-            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.1f, 0)
+            .CreateTessellatedCylinderPrimitive(
+                new Vector3(0.0f, 0.0f, 0.0f),
+                new Vector3(1.2f, 0.0f, 0.0f),
+                1.1f,
+                Color.Brown,
+                0
+            )
             .cylinder;
         var meshXl = PartReplacementUtils
-            .CreateTessellatedCylinderPrimitive(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(1.2f, 0.0f, 0.0f), 1.2f, 0)
+            .CreateTessellatedCylinderPrimitive(
+                new Vector3(0.0f, 0.0f, 0.0f),
+                new Vector3(1.2f, 0.0f, 0.0f),
+                1.2f,
+                Color.Brown,
+                0
+            )
             .cylinder;
         var meshList1 = new List<Mesh?> { meshXs?.Mesh, meshS?.Mesh, meshM?.Mesh, meshL?.Mesh, meshXl?.Mesh };
         var meshList2 = new List<Mesh?> { meshXs?.Mesh, meshS?.Mesh, meshXl?.Mesh, meshM?.Mesh, meshL?.Mesh };
@@ -1074,5 +1141,112 @@ public class PartReplacementUtilsTests
                 Assert.That(box.InstanceMatrix[i, j], Is.EqualTo(transform[i, j]).Within(1.0E-6));
             }
         }
+    }
+
+    [Test]
+    public void ToCylinderPrimitive_GivenAColor_ThenReturnSameColor()
+    {
+        // Arrange
+        var cylinderMesh = GenCylinderMesh(new Vector3(0, 0, 0), new Vector3(1, 0, 0), 2.0f, 0.5f);
+
+        // Act
+        var p = cylinderMesh.m.ToCylinderPrimitive(Color.Chocolate, 0);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(p.cylinder!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(p.startCap!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(p.endCap!.Color, Is.EqualTo(Color.Chocolate));
+        });
+    }
+
+    [Test]
+    public void ToTessellatedCylinderPrimitive_GivenAColor_ThenReturnSameColor()
+    {
+        // Arrange
+        var cylinderMesh = GenCylinderMesh(new Vector3(0, 0, 0), new Vector3(1, 0, 0), 2.0f, 0.5f);
+
+        // Act
+        var p = cylinderMesh.m.ToTessellatedCylinderPrimitive(0, Color.Chocolate, true);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(p.cylinder!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(p.startCap!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(p.endCap!.Color, Is.EqualTo(Color.Chocolate));
+        });
+    }
+
+    [Test]
+    public void CreateTessellatedBoxPrimitive_GivenAColor_ThenReturnSameColor()
+    {
+        // Arrange
+        var startPoint = new Vector3(0.0f, 0.0f, 0.0f);
+        var endPoint = new Vector3(10.0f, 0.0f, 0.0f);
+        var surfaceDirGuide = new Vector3(0.0f, 0.0f, 1.0f);
+        const float height = 0.1f;
+        const float thickness = 0.05f;
+
+        // Act
+        var mesh = PartReplacementUtils.CreateTessellatedBoxPrimitive(
+            // Asymmetric around X=0, startPoint = max, axis aligned, half the length of 1
+            startPoint,
+            endPoint,
+            surfaceDirGuide,
+            thickness,
+            height,
+            Color.Chocolate,
+            0
+        );
+
+        // Assert
+        Assert.That(mesh!.Color, Is.EqualTo(Color.Chocolate));
+    }
+
+    [Test]
+    public void CreateCylinderPrimitive_GivenAColor_ThenReturnSameColor()
+    {
+        // Arrange
+        // Act
+        var primitive = PartReplacementUtils.CreateCylinderPrimitive(
+            new Vector3(1.0f, 2.0f, 3.0f),
+            new Vector3(3.0f, 5.0f, 7.0f),
+            2.5f,
+            Color.Chocolate,
+            0
+        );
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(primitive.cylinder!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(primitive.startCap!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(primitive.endCap!.Color, Is.EqualTo(Color.Chocolate));
+        });
+    }
+
+    [Test]
+    public void CreateTessellatedCylinderPrimitive_GivenAColor_ThenReturnSameColor()
+    {
+        // Arrange
+        // Act
+        var mesh = PartReplacementUtils.CreateTessellatedCylinderPrimitive(
+            new Vector3(0.0f, 0.0f, 0.0f),
+            new Vector3(1.0f, 0.0f, 0.0f),
+            1.0f,
+            Color.Chocolate,
+            0,
+            true
+        );
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(mesh.cylinder!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(mesh.startCap!.Color, Is.EqualTo(Color.Chocolate));
+            Assert.That(mesh.endCap!.Color, Is.EqualTo(Color.Chocolate));
+        });
     }
 }

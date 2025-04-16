@@ -1,4 +1,4 @@
-namespace CadRevealFbxProvider.Tests.BatchUtils;
+namespace CadRevealFbxProvider.Tests.BatchUtils.ScaffoldOptimizer;
 
 using System.Drawing;
 using System.Numerics;
@@ -18,7 +18,7 @@ public class GeometryOptimizerTests
         };
     }
 
-    private void AssertMeshReferences(APrimitive a, APrimitive b, bool equal)
+    private static void AssertMeshReferences(APrimitive a, APrimitive b, bool equal)
     {
         switch (a)
         {
@@ -39,7 +39,7 @@ public class GeometryOptimizerTests
         }
     }
 
-    private void CheckThatInstancedMeshesAreDifferentInPattern1(CadRevealNode node)
+    private static void CheckThatInstancedMeshesAreDifferentInPattern1(CadRevealNode node)
     {
         // Verify that the instanced objects with same instance ID do not share the same meshes
         for (var i = 3; i <= 4; i++)
@@ -49,7 +49,7 @@ public class GeometryOptimizerTests
         AssertMeshReferences(node.Geometries[3], node.Geometries[4], false);
     }
 
-    private APrimitive[] PrepareNodePattern1(CadRevealNode node, ulong[] instanceIds)
+    private static APrimitive[] PrepareNodePattern1(CadRevealNode node, ulong[] instanceIds)
     {
         var dummyVertices = new List<Vector3>();
         dummyVertices.Add(new Vector3());
@@ -131,7 +131,7 @@ public class GeometryOptimizerTests
         return new APrimitive[] { primitives[2] }; // Primitives to be instanced
     }
 
-    private APrimitive[] PrepareNodePattern2(CadRevealNode node, ulong[] instanceIds)
+    private static APrimitive[] PrepareNodePattern2(CadRevealNode node, ulong[] instanceIds)
     {
         var dummyVertices = new List<Vector3>();
         dummyVertices.Add(new Vector3());
@@ -240,7 +240,7 @@ public class GeometryOptimizerTests
         return new APrimitive[] { primitives[3], primitives[7] }; // Primitives to be instanced
     }
 
-    private void CheckNodePattern1(CadRevealNode node)
+    private static void CheckNodePattern1(CadRevealNode node)
     {
         // Check that the non-instanced objects are still all distinct
         foreach (var j in new[] { 0, 1, 5, 6 })
@@ -260,7 +260,7 @@ public class GeometryOptimizerTests
         }
     }
 
-    private void CheckNodePattern2(CadRevealNode node)
+    private static void CheckNodePattern2(CadRevealNode node)
     {
         // Check that the non-instanced objects are still all distinct
         foreach (int j in new[] { 0, 1, 2, 5, 6 })
@@ -284,7 +284,7 @@ public class GeometryOptimizerTests
         AssertMeshReferences(node.Geometries[3], node.Geometries[7], false);
     }
 
-    private void CrossCheckBetweenNodesPattern1ToPattern1(
+    private static void CrossCheckBetweenNodesPattern1ToPattern1(
         CadRevealNode node1WithPattern1,
         CadRevealNode node2WithPattern1,
         bool checkThatInstancesAreUnequal = false
@@ -321,7 +321,7 @@ public class GeometryOptimizerTests
         }
     }
 
-    private void CrossCheckBetweenNodesPattern2ToPattern2(
+    private static void CrossCheckBetweenNodesPattern2ToPattern2(
         CadRevealNode node1WithPattern2,
         CadRevealNode node2WithPattern2
     )
@@ -363,7 +363,7 @@ public class GeometryOptimizerTests
         }
     }
 
-    private void CrossCheckBetweenNodesPattern1ToPattern2(
+    private static void CrossCheckBetweenNodesPattern1ToPattern2(
         CadRevealNode nodeWithPattern1,
         CadRevealNode nodeWithPattern2
     )
@@ -401,7 +401,7 @@ public class GeometryOptimizerTests
         }
     }
 
-    private void CheckCorrectInstancingSingleNode_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade(
+    private static void CheckCorrectInstancingSingleNode_GivenNodesWithUnconnectedInstancedMeshes_VerifyConnectionsMade(
         Func<CadRevealNode, ulong[], APrimitive[]> prepareNodePattern,
         Action<CadRevealNode> checkNodePattern,
         ulong[] instanceIDs

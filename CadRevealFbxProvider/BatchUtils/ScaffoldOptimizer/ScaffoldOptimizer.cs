@@ -186,42 +186,21 @@ public class ScaffoldOptimizer : ScaffoldOptimizerBase
                     if (ReferenceEquals(disjointMesh, meshWithLargestBoundingBoxVol))
                     {
                         // The largest piece of a spear is a cylinder
-                        var cylinderWithCaps = disjointMesh.ToTessellatedCylinderPrimitive(
-                            nodeGeometries[i].TreeIndex,
-                            true
-                        ); // :TODO: At some point, do not tessellate here, but rather return an EccentricCone directly. This does not yet work.
+                        var cylinderWithCaps = disjointMesh.ToCylinderPrimitive(
+                            nodeGeometries[i].Color,
+                            nodeGeometries[i].TreeIndex
+                        );
                         if (cylinderWithCaps.cylinder != null)
                         {
-                            results.Add(
-                                new ScaffoldOptimizerResult(
-                                    nodeGeometries[i],
-                                    cylinderWithCaps.cylinder.Mesh,
-                                    childMeshIndex++,
-                                    requestChildMeshInstanceId
-                                )
-                            );
+                            results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], cylinderWithCaps.cylinder));
                         }
                         if (cylinderWithCaps.startCap != null)
                         {
-                            results.Add(
-                                new ScaffoldOptimizerResult(
-                                    nodeGeometries[i],
-                                    cylinderWithCaps.startCap.Mesh,
-                                    childMeshIndex++,
-                                    requestChildMeshInstanceId
-                                )
-                            );
+                            results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], cylinderWithCaps.startCap));
                         }
                         if (cylinderWithCaps.endCap != null)
                         {
-                            results.Add(
-                                new ScaffoldOptimizerResult(
-                                    nodeGeometries[i],
-                                    cylinderWithCaps.endCap.Mesh,
-                                    childMeshIndex++,
-                                    requestChildMeshInstanceId
-                                )
-                            );
+                            results.Add(new ScaffoldOptimizerResult(nodeGeometries[i], cylinderWithCaps.endCap));
                         }
                     }
                     else

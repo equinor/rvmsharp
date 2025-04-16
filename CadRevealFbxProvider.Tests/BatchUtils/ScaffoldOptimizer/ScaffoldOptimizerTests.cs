@@ -1,4 +1,4 @@
-namespace CadRevealFbxProvider.Tests.BatchUtils;
+namespace CadRevealFbxProvider.Tests.BatchUtils.ScaffoldOptimizer;
 
 using System.Drawing;
 using System.Numerics;
