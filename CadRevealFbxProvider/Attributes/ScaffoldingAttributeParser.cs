@@ -10,12 +10,12 @@ using Newtonsoft.Json.Linq;
 
 public class ScaffoldingAttributeParser
 {
-    private static readonly int AttributeTableColCount = 23;
-    public static readonly int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
+    private const int AttributeTableColCount = 23;
+    public const int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
 
-    private static readonly string HeaderTotalWeight = "Grand total";
-    private static readonly string HeadingTotalWeightCalculated = "Grand total calculated";
-    private static readonly string AttributeKey = "Item code";
+    private const string HeaderTotalWeight = "Grand total";
+    private const string HeadingTotalWeightCalculated = "Grand total calculated";
+    private const string KeyAttribute = "Item code";
 
     public static readonly List<string> NumericHeadersSAP = new List<string>
     {
@@ -47,28 +47,155 @@ public class ScaffoldingAttributeParser
         "Last Updated"
     };
 
+    public static (
+        Dictionary<string, Dictionary<string, string>?> attributesDictionary,
+        ScaffoldingMetadata scaffoldingMetadata
+    ) ParseAttributes(string[] fileLines, bool tempFlag = false)
+    {
+        ThrowExceptionIfEmptyCsv(fileLines);
+        fileLines = RemoveCsvNonDescriptionHeaderInfo(fileLines);
+        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines);
+        int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
+        ThrowExceptionIfColumnCountIsXxxxxxxx(attributeRawData);
+        ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
+        attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
+        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute);
+
+        var entireScaffoldingMetadata = new ScaffoldingMetadata();
+
+        var attributesDictionary = validatedAttributeData.ToDictionary(
+            x => ExtractKeyFromCsvRow(x, columnIndexKeyAttribute),
+            v =>
+            {
+                var kvp = new Dictionary<string, string>();
+
+                // In some cases, description and weight can appear in several columns (different manufacturers of item parts)
+                // these columns need to be merged into one with manufacturer as prefix
+                kvp["Description"] = GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(v);
+
+                // Weights are expected to either be in one column or the other, never both at the same time.
+                // Merging is done by selecting the only non-empty string and throwing an exception if more than one non-empty.
+                kvp["Weight kg"] = ExtractSingleWeightRelatedValueFromCsvRow(v);
+
+                // Map all columns that are not aggregate columns from different manufacturers, such as description and weight
+                for (int col = 0; col < v.ColumnCount; col++)
+                {
+                    // Ignore the key attribute
+                    if (columnIndexKeyAttribute == col)
+                        continue;
+
+                    // Ignore description and weight, they are added as an aggregate of several columns
+                    if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var key = v.Headers[col].Trim();
+                    var value = v.Values[col].Trim();
+
+                    // Check if numeric headers are actually numbers for non-temp scaffolds.
+                    // For temporary scaffolds, we don't care.
+                    if (IsNumericSapColumn(v, col))
+                    {
+                        if (!tempFlag)
+                        {
+                            ThrowExceptionIfNotValidNumber(value, v.Headers[col]);
+                            entireScaffoldingMetadata.TryAddValue(key, value);
+                            kvp[key] = value;
+                        }
+                        else
+                        {
+                            // Temporary scaffold processing:
+                            // We want to keep these fields undefined.
+                            // Scaffold architect might have written something in these fields, thus we are possibly overriding that.
+                            // We do not insert kvp in this case!
+                            // Leaving the commented-out code as a reminder not to put this back.
+                            // entireScaffoldingMetadata.TryAddValue(key, null);
+                            // kvp[key] = null;
+                        }
+                    }
+                    else
+                    {
+                        // non-numeric temp or non-temp scaffolding headers
+                        WarnIfUnknownManufacturerIndependentAttribute(v.Headers[col]);
+                        entireScaffoldingMetadata.TryAddValue(key, value);
+                        kvp[key] = value;
+                    }
+                }
+
+                if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
+                {
+                    Console.WriteLine("Invalid attribute line: " + v[columnIndexKeyAttribute].ToString());
+                    return null;
+                }
+
+                return kvp;
+            }
+        );
+
+        float totalWeightCalculated = CalculateTotalWeightFromCsvPartEntries(attributesDictionary);
+        entireScaffoldingMetadata.TryAddValue(
+            HeadingTotalWeightCalculated,
+            totalWeightCalculated.ToString(CultureInfo.InvariantCulture)
+        );
+
+        float totalWeight = RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(lastAttributeLine);
+        entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, totalWeight.ToString(CultureInfo.InvariantCulture));
+
+        WarnIfSumOfPartWeightsDifferFromGiven(totalWeight, totalWeightCalculated);
+
+        entireScaffoldingMetadata.TotalVolume = ConvertStringToEmptyIfNullOrWhiteSpace(
+            entireScaffoldingMetadata.TotalVolume
+        );
+
+        WarnIfModelMetadataDoesNotHaveExpectedValues(entireScaffoldingMetadata, tempFlag);
+        entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;
+
+        Console.WriteLine("Finished reading and processing attribute file.");
+        return (attributesDictionary, entireScaffoldingMetadata);
+    }
+
+    static void WarnIfModelMetadataDoesNotHaveExpectedValues(
+        ScaffoldingMetadata entireScaffoldingMetadata,
+        bool tempFlag
+    )
+    {
+        if (!entireScaffoldingMetadata.ModelMetadataHasExpectedValues(tempFlag))
+        {
+            Console.WriteLine("Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata));
+        }
+    }
+
+    static void WarnIfSumOfPartWeightsDifferFromGiven(float givenTotalWeight, float summedTotalWeight)
+    {
+        if (Math.Abs(givenTotalWeight - summedTotalWeight) > 1.0E-3f)
+            Console.WriteLine(
+                $"Check total weight. Explicitly defined: {givenTotalWeight} and calculated: {summedTotalWeight}. Difference: {givenTotalWeight - summedTotalWeight}"
+            );
+    }
+
     private static string ConvertStringToEmptyIfNullOrWhiteSpace(string? s)
     {
         return string.IsNullOrWhiteSpace(s) ? "" : s;
     }
 
-    public (
-        Dictionary<string, Dictionary<string, string>?> attributesDictionary,
-        ScaffoldingMetadata scaffoldingMetadata
-    ) ParseAttributes(string[] fileLines, bool tempFlag = false)
+    private static void ThrowExceptionIfEmptyCsv(string[] fileLines)
     {
         if (fileLines.Length == 0)
-            throw new ArgumentException(nameof(fileLines));
+            throw new ArgumentException(null, nameof(fileLines));
         Console.WriteLine("Reading and processing attribute file.");
+    }
 
+    private static string[] RemoveCsvNonDescriptionHeaderInfo(string[] fileLines)
+    {
         // The below will remove the first row in the CSV file, if it is not the header.
         // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
-        if (!fileLines.First().Contains("Description"))
-        {
-            fileLines = fileLines.Skip(1).ToArray();
-        }
+        return fileLines.First().Contains("Description") ? fileLines : fileLines.Skip(1).ToArray();
+    }
 
-        var attributeRawData = CsvReader
+    private static ICsvLine[] ConvertToCsvLines(string[] fileLines)
+    {
+        return CsvReader
             .ReadFromText(
                 String.Join(Environment.NewLine, fileLines),
                 new CsvOptions()
@@ -81,162 +208,70 @@ public class ScaffoldingAttributeParser
                 }
             )
             .ToArray();
+    }
 
-        var keyIdColumn = Array.IndexOf(attributeRawData.First().Headers, AttributeKey);
+    private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
+    {
+        var columnIndexKeyAttribute = Array.IndexOf(attributeRawData.First().Headers, KeyAttribute);
 
-        if (keyIdColumn < 0)
-            throw new Exception("Key header \"" + AttributeKey + "\" is missing in the attribute file.");
+        if (columnIndexKeyAttribute < 0)
+            throw new Exception($"Key header {KeyAttribute} is missing in the attribute file.");
 
-        if (attributeRawData.First().ColumnCount == AttributeTableColCount)
+        return columnIndexKeyAttribute;
+    }
+
+    private static void ThrowExceptionIfColumnCountIsXxxxxxxx(ICsvLine[] attributeRawData)
+    {
+        if (attributeRawData.First().ColumnCount == AttributeTableColCount) // :TODO: This seems like it should be inverted, but in that case, can we not have CSV files now that contain different number of columns?
         {
             var colCount = attributeRawData.First().ColumnCount;
-            throw new Exception($"Attribute file contains {colCount}, expected a {AttributeTableColCount} attributes.");
+            throw new Exception($"Attribute file contains {colCount}, expected {AttributeTableColCount} attributes.");
         }
+    }
 
-        var entireScaffoldingMetadata = new ScaffoldingMetadata();
+    private static ICsvLine RetrieveLastCsvRowContainingWeight(ICsvLine[] attributeRawData)
+    {
+        // Total weight (model metadata, not per-part attribute) is stored in the last line of the attribute table
+        return attributeRawData.Last();
+    }
 
-        // total weight (model metadata, not per-part attribute) is stored in the last line of the attribute table
-        var lastAttributeLine = attributeRawData.Last();
-        // last line is skipped here, since it is not a per-part attribute (total weight)
-        attributeRawData = attributeRawData.SkipLast(1).ToArray();
+    private static ICsvLine[] RemoveLastCsvRowContainingWeigth(ICsvLine[] attributeRawData)
+    {
+        // Last line is skipped here, since it is not a per-part attribute (total weight)
+        return attributeRawData.SkipLast(1).ToArray();
+    }
 
-        // validate raw data wrt missing "Item Code"
+    private static IEnumerable<ICsvLine> RemoveCsvRowsWithoutKeyAttribute(
+        ICsvLine[] attributeRawData,
+        int columnIndexKeyAttribute
+    )
+    {
+        // Validate raw data wrt missing "Item Code"
         var validatedAttributeData = attributeRawData.Where(item =>
-            !string.IsNullOrWhiteSpace(item.Values[keyIdColumn])
+            !string.IsNullOrWhiteSpace(item.Values[columnIndexKeyAttribute])
         );
-        if (!validatedAttributeData.Any())
+        IEnumerable<ICsvLine> removeCsvRowsWithoutKeyAttribute =
+            validatedAttributeData as ICsvLine[] ?? validatedAttributeData.ToArray();
+        if (!removeCsvRowsWithoutKeyAttribute.Any())
         {
-            throw new Exception($"{AttributeKey} cannot be missing for all items.");
+            throw new Exception($"{KeyAttribute} cannot be missing for all items.");
         }
 
         Console.WriteLine(
-            $"After attributes key validation, {validatedAttributeData.Count()}/{attributeRawData.Length} items remain."
+            $"After attributes key validation, {removeCsvRowsWithoutKeyAttribute.Count()}/{attributeRawData.Length} items remain."
         );
 
-        var attributesDictionary = validatedAttributeData.ToDictionary(
-            x =>
-            {
-                var key = x.Values[keyIdColumn];
-                if (string.IsNullOrEmpty(key))
-                    throw new Exception($"{AttributeKey} cannot have missing values.");
-                return key;
-            },
-            v =>
-            {
-                var kvp = new Dictionary<string, string>();
+        return removeCsvRowsWithoutKeyAttribute;
+    }
 
-                // in some cases, description and weight can appear in several columns (different manufacturers of item parts)
-                // these columns need to be merged into one
-
-                var description = v
-                    .Headers.Select((h, i) => new { header = h, index = i })
-                    .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
-                    .Select(el =>
-                    {
-                        var manufacturerName = el
-                            .header.ToLower()
-                            .Replace("description", String.Empty)
-                            .ToUpper()
-                            .Trim();
-                        var spacer = (manufacturerName.Length > 0) ? " " : "";
-                        var partDescription = v.Values[el.index];
-                        if (partDescription.Length > 0)
-                            return manufacturerName + spacer + partDescription;
-
-                        return String.Empty;
-                    })
-                    .ToList();
-
-                kvp["Description"] = String.Join(String.Empty, description);
-
-                var weights = v
-                    .Headers.Select((h, i) => new { header = h, index = i })
-                    .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
-                    .Select(el => v.Values[el.index]);
-
-                // weights are expected to either in one column or the other, never both at the same time
-                // there merging them is done via joining the strings
-                kvp["Weight kg"] = String.Join(String.Empty, weights);
-
-                for (int col = 0; col < v.ColumnCount; col++)
-                {
-                    if (keyIdColumn == col)
-                        continue; // Ignore it
-
-                    // ignore description and weight, they are added as an aggregate of several columns
-                    if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
-                        continue;
-                    if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
-                        continue;
-
-                    var key = v.Headers[col].Trim();
-                    var value = v.Values[col].Trim();
-
-                    // check if numeric headers are actually numbers for non-temp scaffs
-                    // for temp scaffs, we don't care
-                    if (
-                        NumericHeadersSAP.Any(h => string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase))
-                    )
-                    {
-                        if (!tempFlag)
-                        {
-                            var NumFieldValueCandidate = value;
-                            try
-                            {
-                                if (!string.IsNullOrWhiteSpace(NumFieldValueCandidate))
-                                    float.Parse(NumFieldValueCandidate, CultureInfo.InvariantCulture);
-                            }
-                            catch (Exception)
-                            {
-                                var errMsg =
-                                    $"Error parsing attribute value. {NumFieldValueCandidate} is not a valid {v.Headers[col]}.";
-                                Console.Error.WriteLine(errMsg);
-                                throw new Exception(errMsg);
-                            }
-
-                            entireScaffoldingMetadata.TryAddValue(key, NumFieldValueCandidate);
-                            kvp[key] = NumFieldValueCandidate;
-                        }
-                        else
-                        {
-                            // temp scaff processing:
-                            // we want to keep these fields undefined
-                            // scaff architect might have written something in these fields, thus we are possibly overriding that
-                            // we do not insert kvp in this case!
-                            // leaving the commented-out code as a reminder not to but this back
-                            // entireScaffoldingMetadata.TryAddValue(key, null);
-                            // kvp[key] = null;
-                        }
-                    }
-                    else
-                    {
-                        if (
-                            !OtherManufacturerIndependentAttributesPerPart.Any(h =>
-                                string.Equals(h, v.Headers[col], StringComparison.OrdinalIgnoreCase)
-                            )
-                        )
-                        {
-                            var errMsg = $"Warning parsing attribute file: Unknown column header {v.Headers[col]}.";
-                            Console.Error.WriteLine(errMsg);
-                        }
-
-                        // non-numeric temp or non-temp scaffolding headers
-                        entireScaffoldingMetadata.TryAddValue(key, value);
-                        kvp[key] = value;
-                    }
-                }
-
-                if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
-                {
-                    Console.WriteLine("Invalid attribute line: " + v[keyIdColumn].ToString());
-                    return null;
-                }
-
-                return kvp;
-            }
-        );
-
-        var totalWeightCalculated = attributesDictionary
+    static float CalculateTotalWeightFromCsvPartEntries(
+        Dictionary<string, Dictionary<string, string>?> attributesDictionary
+    )
+    {
+        // Calculate total weight from the table.
+        // It will be used as a sanity check against the total weight explicitly written in the table
+        // attributesDictionary
+        return attributesDictionary
             .Where(a => a.Value != null)
             .Select(av =>
             {
@@ -246,10 +281,11 @@ public class ScaffoldingAttributeParser
                 return float.Parse(w.Replace(" kg", String.Empty), CultureInfo.InvariantCulture);
             })
             .Sum();
+    }
 
-        // calculate total weight from the table
-        // will be used as a sanity check against the total weight explicitly written in the table
-        // attributesDictionary
+    static float RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(ICsvLine lastAttributeLine)
+    {
+        float totalWeight = 0.0f;
 
         // finds all partial total weights in the line (partial: per item producer)
         // and sums them up to the overall total weight
@@ -272,21 +308,7 @@ public class ScaffoldingAttributeParser
                         throw new Exception(errorMsg);
                     }
                 });
-            var totalWeight = weights.Sum(v => v);
-            entireScaffoldingMetadata.TryAddValue(
-                HeaderTotalWeight,
-                totalWeight.ToString(CultureInfo.InvariantCulture)
-            );
-
-            entireScaffoldingMetadata.TryAddValue(
-                HeadingTotalWeightCalculated,
-                totalWeightCalculated.ToString(CultureInfo.InvariantCulture)
-            );
-
-            if (totalWeight != totalWeightCalculated)
-                Console.WriteLine(
-                    $"Check total weight. Explicitly defined: {totalWeight} and calculated: {totalWeightCalculated}. Difference: {totalWeight - totalWeightCalculated}"
-                );
+            totalWeight = weights.Sum(v => v);
         }
         else
         {
@@ -294,18 +316,78 @@ public class ScaffoldingAttributeParser
             throw new Exception("Attribute file does not contain total weight");
         }
 
-        entireScaffoldingMetadata.TotalVolume = ConvertStringToEmptyIfNullOrWhiteSpace(
-            entireScaffoldingMetadata.TotalVolume
-        );
+        return totalWeight;
+    }
 
-        if (!entireScaffoldingMetadata.ModelMetadataHasExpectedValues(tempFlag))
+    static void WarnIfUnknownManufacturerIndependentAttribute(string attribute)
+    {
+        if (
+            OtherManufacturerIndependentAttributesPerPart.Any(h =>
+                string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)
+            )
+        )
         {
-            Console.WriteLine("Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata));
+            return;
         }
 
-        entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;
+        var errMsg = $"Warning parsing attribute file: Unknown column header {attribute}.";
+        Console.Error.WriteLine(errMsg);
+    }
 
-        Console.WriteLine("Finished reading and processing attribute file.");
-        return (attributesDictionary, entireScaffoldingMetadata);
+    static void ThrowExceptionIfNotValidNumber(string value, string columnName)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                // Parse will throw an assertion if it fails. Hence, we do not need the return value.
+                float.Parse(value, CultureInfo.InvariantCulture);
+            }
+        }
+        catch (Exception)
+        {
+            var errMsg = $"Error parsing attribute value. {value} is not a valid {columnName}.";
+            Console.Error.WriteLine(errMsg);
+            throw new Exception(errMsg);
+        }
+    }
+
+    static bool IsNumericSapColumn(ICsvLine row, int columnIndex)
+    {
+        return NumericHeadersSAP.Any(h =>
+            string.Equals(h, row.Headers[columnIndex], StringComparison.OrdinalIgnoreCase)
+        );
+    }
+
+    static string ExtractSingleWeightRelatedValueFromCsvRow(ICsvLine row)
+    {
+        return row
+            .Headers.Select((h, i) => new { header = h, index = i })
+            .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
+            .Select(el => row.Values[el.index])
+            .Single(x => !String.IsNullOrWhiteSpace(x));
+    }
+
+    static string GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(ICsvLine row)
+    {
+        return row
+            .Headers.Select((h, i) => new { header = h, index = i })
+            .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
+            .Select(el =>
+            {
+                var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", String.Empty).Trim();
+                var spacer = (manufacturerName.Length > 0) ? " " : "";
+                var partDescription = row.Values[el.index];
+                return partDescription.Length > 0 ? $"{manufacturerName}{spacer}{partDescription}" : String.Empty;
+            })
+            .Single(x => !String.IsNullOrWhiteSpace(x));
+    }
+
+    static string ExtractKeyFromCsvRow(ICsvLine row, int columnIndexKey)
+    {
+        var key = row.Values[columnIndexKey];
+        if (string.IsNullOrEmpty(key))
+            throw new Exception($"{KeyAttribute} cannot have missing values.");
+        return key;
     }
 }

@@ -111,7 +111,7 @@ public static class FbxWorkload
                 var lines = File.ReadAllLines(infoTextFilename);
                 var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
                 var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
-                (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, isTemp);
+                (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
                 // TODO: Should we crash if we dont have expected values?
                 if (scaffoldingMetadata.ModelMetadataHasExpectedValues(isTemp))
                 {

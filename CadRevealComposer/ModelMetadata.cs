@@ -35,10 +35,7 @@ public class ModelMetadata(Dictionary<string, string> metadata)
         string? realValue;
         if (_metadata.TryGetValue(key, out realValue))
         {
-            if (realValue!.Equals(value, System.StringComparison.OrdinalIgnoreCase))
-                return true;
-            else
-                return false;
+            return realValue!.Equals(value, System.StringComparison.OrdinalIgnoreCase);
         }
 
         Console.Error.WriteLine(

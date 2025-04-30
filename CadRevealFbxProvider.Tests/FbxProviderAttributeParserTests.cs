@@ -2,10 +2,6 @@
 
 using System.Collections.Generic;
 using System.Globalization;
-using System.Net.Sockets;
-using CadRevealComposer.Configuration;
-using CadRevealComposer.IdProviders;
-using CadRevealComposer.Operations;
 using CadRevealFbxProvider.Attributes;
 using NUnit.Framework;
 
@@ -42,7 +38,7 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        Assert.Throws<Exception>(() => new ScaffoldingAttributeParser().ParseAttributes(fileLinesNoItemCode.ToArray()));
+        Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
     }
 
     [Test]
@@ -62,7 +58,7 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        Assert.DoesNotThrow(() => new ScaffoldingAttributeParser().ParseAttributes(fileLinesNoItemCode.ToArray()));
+        Assert.DoesNotThrow(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
     }
 
     [TestCase("/fbx_test_model.csv")]
@@ -74,7 +70,7 @@ public class FbxProviderAttributeParserTests
 
         // act
         var lines = File.ReadAllLines(infoTextFilename);
-        (var attributes, var metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+        (var attributes, var metadata) = ScaffoldingAttributeParser.ParseAttributes(lines);
         int countNodesWithMissingAttrib = 0;
         foreach (var attribute in attributes)
         {
@@ -96,7 +92,7 @@ public class FbxProviderAttributeParserTests
 
         // checks code correctness and consistency
         Assert.That(
-            ScaffoldingMetadata.MandatoryModelAttributesFromParts_NonTempScaff.Length,
+            ScaffoldingMetadata.MandatoryModelAttributesFromPartsNonTempScaff.Length,
             Is.EqualTo(ScaffoldingAttributeParser.NumericHeadersSAP.Count)
         );
 
@@ -134,7 +130,7 @@ public class FbxProviderAttributeParserTests
         // assert
         Assert.DoesNotThrow(() =>
         {
-            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+            (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines);
 
             metadata!.ModelMetadataHasExpectedValues(false);
 
@@ -161,7 +157,7 @@ public class FbxProviderAttributeParserTests
         // assert
         Assert.DoesNotThrow(() =>
         {
-            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, tempFlag);
+            (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
             metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
             calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
         });
@@ -187,7 +183,7 @@ public class FbxProviderAttributeParserTests
         // assert
         Assert.Throws<Exception>(() =>
         {
-            (var attributes, metadata) = new ScaffoldingAttributeParser().ParseAttributes(lines, tempFlag);
+            (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
             metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
         });
 
@@ -204,7 +200,7 @@ public class FbxProviderAttributeParserTests
         Assert.Throws<Exception>(
             () =>
             {
-                new ScaffoldingAttributeParser().ParseAttributes(lines);
+                ScaffoldingAttributeParser.ParseAttributes(lines);
             },
             "Was expecting an exception saying that the key total weight is missing, but got none"
         );
@@ -219,7 +215,7 @@ public class FbxProviderAttributeParserTests
         Assert.Throws<Exception>(
             () =>
             {
-                new ScaffoldingAttributeParser().ParseAttributes(lines);
+                ScaffoldingAttributeParser.ParseAttributes(lines);
             },
             "Was expecting an exception saying that the key attribute is missing, but got none"
         );
@@ -233,7 +229,7 @@ public class FbxProviderAttributeParserTests
             {
                 string infoTextFilename = _attributeDirectory.FullName + csvFileName;
                 var lines = File.ReadAllLines(infoTextFilename);
-                new ScaffoldingAttributeParser().ParseAttributes(lines);
+                ScaffoldingAttributeParser.ParseAttributes(lines);
             },
             "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
         );
@@ -247,7 +243,7 @@ public class FbxProviderAttributeParserTests
             {
                 string infoTextFilename = _attributeDirectory.FullName + csvFileName;
                 var lines = File.ReadAllLines(infoTextFilename);
-                new ScaffoldingAttributeParser().ParseAttributes(lines);
+                ScaffoldingAttributeParser.ParseAttributes(lines);
             },
             "Was expecting an exception saying that the attribute count is off, but got none"
         );
@@ -283,7 +279,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesOneManufacturer.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -302,7 +298,7 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act
-        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesTwoManufacturers.ToArray());
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesTwoManufacturers.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -335,7 +331,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesOneManufacturer.ToArray());
 
         // Assert
         Assert.That(result.attributesDictionary.Values.Count > 0);
@@ -367,7 +363,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesOneManufacturer.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -415,7 +411,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesOneManufacturer.ToArray());
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesOneManufacturer.ToArray());
 
         // Assert
 
@@ -443,7 +439,7 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act
-        var result = new ScaffoldingAttributeParser().ParseAttributes(fileLinesTwoManufacturers.ToArray());
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesTwoManufacturers.ToArray());
         var line = result.attributesDictionary.Values.ElementAt(lineIndex);
 
         // Assert
@@ -474,7 +470,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -503,7 +499,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -532,7 +528,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -561,7 +557,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -591,7 +587,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -621,7 +617,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -650,7 +646,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -679,7 +675,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -708,7 +704,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -737,7 +733,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -766,7 +762,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -795,7 +791,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -824,7 +820,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -853,7 +849,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -882,7 +878,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>
@@ -911,7 +907,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act
-        var ret = new ScaffoldingAttributeParser().ParseAttributes(fileLines.ToArray());
+        var ret = ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray());
 
         // Assert
         Assert.Multiple(() =>

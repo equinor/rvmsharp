@@ -22,16 +22,15 @@ public class ScaffoldingMetadata
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
     private const string TempFlagCalculatedFieldName = "Scaffolding_IsTemporary";
 
-    public static readonly string[] MandatoryModelAttributesFromParts_NonTempScaff =
-    {
+    public static readonly string[] MandatoryModelAttributesFromPartsNonTempScaff =
+    [
         "Work order",
         "Scaff build Operation number",
         "Dismantle Operation number"
-    };
+    ];
 
-    public static readonly string[] MandatoryModelAttributesFromParts_TempScaff = { "Project number" };
-
-    public static readonly string[] MandatoryModelAttributes = { "Total weight" };
+    // :TODO: Make private or not? Only used publicly in test!
+    private static readonly string[] MandatoryModelAttributesFromPartsTempScaff = ["Project number"];
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
 
@@ -173,8 +172,8 @@ public class ScaffoldingMetadata
     {
         var obligatoryAttributes =
             (tempScaffFlag)
-                ? MandatoryModelAttributesFromParts_TempScaff
-                : MandatoryModelAttributesFromParts_NonTempScaff;
+                ? MandatoryModelAttributesFromPartsTempScaff
+                : MandatoryModelAttributesFromPartsNonTempScaff;
 
         foreach (var modelAttribute in obligatoryAttributes)
         {
