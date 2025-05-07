@@ -1,4 +1,4 @@
-Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m³);Length(m);Widht(m);Height(m);Covering (Y or N);Covering material
+Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m³);Length(m);Width(m);Height(m);Covering (Y or N);Covering material
 ;;;;;;;;;;;;;;;;;;;;;;
 Pole;9.20 kg;1;1235678;67;9;175856;1100;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex
 Pole;9.20 kg;1;1235678;67;9;175856;1100;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex

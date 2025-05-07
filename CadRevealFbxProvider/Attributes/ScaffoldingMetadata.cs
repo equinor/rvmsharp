@@ -1,7 +1,6 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Collections.Generic;
-using System.Numerics;
 
 public class ScaffoldingMetadata
 {
@@ -22,17 +21,18 @@ public class ScaffoldingMetadata
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
     private const string TempFlagCalculatedFieldName = "Scaffolding_IsTemporary";
 
-    public static readonly string[] MandatoryModelAttributesFromPartsNonTempScaff =
+    private static readonly string[] MandatoryModelAttributesFromPartsNonTempScaff =
     [
         "Work order",
         "Scaff build Operation number",
         "Dismantle Operation number"
     ];
 
-    // :TODO: Make private or not? Only used publicly in test!
     private static readonly string[] MandatoryModelAttributesFromPartsTempScaff = ["Project number"];
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
+    public static readonly int NumberOfMandatoryModelAttributesFromPartsNonTempScaff =
+        MandatoryModelAttributesFromPartsNonTempScaff.Length;
 
     private enum AttributeEnum
     {

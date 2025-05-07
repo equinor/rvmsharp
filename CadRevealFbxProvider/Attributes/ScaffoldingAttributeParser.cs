@@ -1,12 +1,8 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Globalization;
-using System.Reflection.Metadata.Ecma335;
 using System.Text.Json;
-using System.Windows.Markup;
 using Csv;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Newtonsoft.Json.Linq;
 
 public class ScaffoldingAttributeParser
 {
@@ -264,7 +260,7 @@ public class ScaffoldingAttributeParser
         return removeCsvRowsWithoutKeyAttribute;
     }
 
-    static float CalculateTotalWeightFromCsvPartEntries(
+    private static float CalculateTotalWeightFromCsvPartEntries(
         Dictionary<string, Dictionary<string, string>?> attributesDictionary
     )
     {
@@ -283,7 +279,7 @@ public class ScaffoldingAttributeParser
             .Sum();
     }
 
-    static float RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(ICsvLine lastAttributeLine)
+    private static float RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(ICsvLine lastAttributeLine)
     {
         float totalWeight = 0.0f;
 
@@ -319,7 +315,7 @@ public class ScaffoldingAttributeParser
         return totalWeight;
     }
 
-    static void WarnIfUnknownManufacturerIndependentAttribute(string attribute)
+    private static void WarnIfUnknownManufacturerIndependentAttribute(string attribute)
     {
         if (
             OtherManufacturerIndependentAttributesPerPart.Any(h =>
@@ -334,7 +330,7 @@ public class ScaffoldingAttributeParser
         Console.Error.WriteLine(errMsg);
     }
 
-    static void ThrowExceptionIfNotValidNumber(string value, string columnName)
+    private static void ThrowExceptionIfNotValidNumber(string value, string columnName)
     {
         try
         {
@@ -352,14 +348,14 @@ public class ScaffoldingAttributeParser
         }
     }
 
-    static bool IsNumericSapColumn(ICsvLine row, int columnIndex)
+    private static bool IsNumericSapColumn(ICsvLine row, int columnIndex)
     {
         return NumericHeadersSAP.Any(h =>
             string.Equals(h, row.Headers[columnIndex], StringComparison.OrdinalIgnoreCase)
         );
     }
 
-    static string ExtractSingleWeightRelatedValueFromCsvRow(ICsvLine row)
+    private static string ExtractSingleWeightRelatedValueFromCsvRow(ICsvLine row)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
@@ -368,7 +364,7 @@ public class ScaffoldingAttributeParser
             .Single(x => !String.IsNullOrWhiteSpace(x));
     }
 
-    static string GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(ICsvLine row)
+    private static string GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(ICsvLine row)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
@@ -383,7 +379,7 @@ public class ScaffoldingAttributeParser
             .Single(x => !String.IsNullOrWhiteSpace(x));
     }
 
-    static string ExtractKeyFromCsvRow(ICsvLine row, int columnIndexKey)
+    private static string ExtractKeyFromCsvRow(ICsvLine row, int columnIndexKey)
     {
         var key = row.Values[columnIndexKey];
         if (string.IsNullOrEmpty(key))
