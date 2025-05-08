@@ -6,7 +6,6 @@ using Csv;
 
 public class ScaffoldingAttributeParser
 {
-    private const int AttributeTableColCount = 23;
     public const int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
 
     private const string HeaderTotalWeight = "Grand total";
@@ -52,7 +51,6 @@ public class ScaffoldingAttributeParser
         fileLines = RemoveCsvNonDescriptionHeaderInfo(fileLines);
         ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines);
         int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
-        ThrowExceptionIfColumnCountIsXxxxxxxx(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
         var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute);
@@ -214,15 +212,6 @@ public class ScaffoldingAttributeParser
             throw new Exception($"Key header {KeyAttribute} is missing in the attribute file.");
 
         return columnIndexKeyAttribute;
-    }
-
-    private static void ThrowExceptionIfColumnCountIsXxxxxxxx(ICsvLine[] attributeRawData)
-    {
-        if (attributeRawData.First().ColumnCount == AttributeTableColCount) // :TODO: This seems like it should be inverted, but in that case, can we not have CSV files now that contain different number of columns?
-        {
-            var colCount = attributeRawData.First().ColumnCount;
-            throw new Exception($"Attribute file contains {colCount}, expected {AttributeTableColCount} attributes.");
-        }
     }
 
     private static ICsvLine RetrieveLastCsvRowContainingWeight(ICsvLine[] attributeRawData)

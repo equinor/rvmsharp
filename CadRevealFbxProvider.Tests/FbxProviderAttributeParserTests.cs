@@ -235,20 +235,6 @@ public class FbxProviderAttributeParserTests
         );
     }
 
-    [TestCase("/wrong_count_attributes.csv")]
-    public void ParseAttributes_WrongAttributeCountInCsv_ThrowsError(string csvFileName)
-    {
-        Assert.Throws<Exception>(
-            () =>
-            {
-                string infoTextFilename = _attributeDirectory.FullName + csvFileName;
-                var lines = File.ReadAllLines(infoTextFilename);
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the attribute count is off, but got none"
-        );
-    }
-
     // Testing matrix
 
     // COLUMNS
