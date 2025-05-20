@@ -12,15 +12,15 @@ public class ScaffoldingAttributeParser
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
     private const string KeyAttribute = "Item code";
 
-    public static readonly List<string> NumericHeadersSAP = new List<string>
-    {
+    public static readonly List<string> NumericHeadersSap =
+    [
         "Work order",
         "Scaff build Operation Number",
         "Dismantle Operation number"
-    };
+    ];
 
-    public static readonly List<string> OtherManufacturerIndependentAttributesPerPart = new List<string>
-    {
+    public static readonly List<string> OtherManufacturerIndependentAttributesPerPart =
+    [
         "Count",
         "Scaff tag number",
         "Job pack",
@@ -40,7 +40,7 @@ public class ScaffoldingAttributeParser
         "Covering (Y or N)",
         "Covering material",
         "Last Updated"
-    };
+    ];
 
     public static (
         Dictionary<string, Dictionary<string, string>?> attributesDictionary,
@@ -64,12 +64,13 @@ public class ScaffoldingAttributeParser
                 var kvp = new Dictionary<string, string>();
 
                 // In some cases, description and weight can appear in several columns (different manufacturers of item parts)
-                // these columns need to be merged into one with manufacturer as prefix
+                // these columns need to be merged into one with manufacturer as prefix. Only a single manufacturer is allowed per
+                // part. An exception will be thrown if more or less than one manufacturer is found per part.
                 kvp["Description"] = GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(v);
 
                 // Weights are expected to either be in one column or the other, never both at the same time.
                 // Merging is done by selecting the only non-empty string and throwing an exception if more than one non-empty.
-                kvp["Weight kg"] = ExtractSingleWeightRelatedValueFromCsvRow(v);
+                kvp["Weight kg"] = ExtractSingleWeightRelatedValueFromCsvRow(v) ?? "";
 
                 // Map all columns that are not aggregate columns from different manufacturers, such as description and weight
                 for (int col = 0; col < v.ColumnCount; col++)
@@ -261,7 +262,7 @@ public class ScaffoldingAttributeParser
             .Select(av =>
             {
                 var w = av.Value!["Weight kg"];
-                if (w!.Length == 0)
+                if (string.IsNullOrEmpty(w))
                     return 0; // sometime weight can be missing
                 return float.Parse(w.Replace(" kg", String.Empty), CultureInfo.InvariantCulture);
             })
@@ -339,18 +340,18 @@ public class ScaffoldingAttributeParser
 
     private static bool IsNumericSapColumn(ICsvLine row, int columnIndex)
     {
-        return NumericHeadersSAP.Any(h =>
+        return NumericHeadersSap.Any(h =>
             string.Equals(h, row.Headers[columnIndex], StringComparison.OrdinalIgnoreCase)
         );
     }
 
-    private static string ExtractSingleWeightRelatedValueFromCsvRow(ICsvLine row)
+    private static string? ExtractSingleWeightRelatedValueFromCsvRow(ICsvLine row)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
             .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
             .Select(el => row.Values[el.index])
-            .Single(x => !String.IsNullOrWhiteSpace(x));
+            .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
     }
 
     private static string GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(ICsvLine row)

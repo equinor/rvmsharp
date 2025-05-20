@@ -93,12 +93,12 @@ public class FbxProviderAttributeParserTests
         // checks code correctness and consistency
         Assert.That(
             ScaffoldingMetadata.NumberOfMandatoryModelAttributesFromPartsNonTempScaff,
-            Is.EqualTo(ScaffoldingAttributeParser.NumericHeadersSAP.Count)
+            Is.EqualTo(ScaffoldingAttributeParser.NumericHeadersSap.Count)
         );
 
         // check if we missed some attributes from the template
         Assert.That(
-            ScaffoldingAttributeParser.NumericHeadersSAP.Count()
+            ScaffoldingAttributeParser.NumericHeadersSap.Count()
                 + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
                 + 1 /* key or Item Code */
             ,
@@ -106,7 +106,7 @@ public class FbxProviderAttributeParserTests
         );
 
         var attributeCount =
-            ScaffoldingAttributeParser.NumericHeadersSAP.Count()
+            ScaffoldingAttributeParser.NumericHeadersSap.Count()
             + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
             + 1 /* key or Item Code */
         ;
@@ -422,8 +422,6 @@ public class FbxProviderAttributeParserTests
     public void ParseAttributes_TwoManufacturers_ExtractsEnhancedDescription(int lineIndex, string enhancedDescr)
     {
         // Arrange
-        var targetDict = new Dictionary<string, string>();
-
         // Act
         var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesTwoManufacturers.ToArray());
         var line = result.attributesDictionary.Values.ElementAt(lineIndex);
@@ -676,7 +674,6 @@ public class FbxProviderAttributeParserTests
     public void ParseAttributes_WhenThereAreMultipleDistinctBuildOperationNumbers_ThenMetadataNotAsExpectedAndBuildOperationNumberIsEmpty()
     {
         // Arrange
-        var targetDict = new Dictionary<string, string>();
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
@@ -704,7 +701,6 @@ public class FbxProviderAttributeParserTests
     public void ParseAttributes_WhenMissingSingleBuildOperationNumber_ThenMetadataNotAsExpectedAndBuildOperationNumberIsEmpty()
     {
         // Arrange
-        var targetDict = new Dictionary<string, string>();
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
@@ -821,7 +817,6 @@ public class FbxProviderAttributeParserTests
     public void ParseAttributes_DistinctDismantleOperationNumbers_MetadataAsExpectedAndDismantleOperationNumberIsEmpty()
     {
         // Arrange
-        var targetDict = new Dictionary<string, string>();
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
@@ -849,7 +844,6 @@ public class FbxProviderAttributeParserTests
     public void ParseAttributes_WhenDifferentDismantleOperationNumbersPlusOneMissing_ThenMetadataNotAsExpectedAndDismantleOperationNumberIsNotEmpty()
     {
         // Arrange
-        var targetDict = new Dictionary<string, string>();
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
@@ -901,6 +895,82 @@ public class FbxProviderAttributeParserTests
             Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
+        });
+    }
+
+    [Test]
+    public void ParseAttributes_WhenHavingTwoManufacturersWithPartDescription_ThenTrowException()
+    {
+        // Arrange
+        var fileLines = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;Base Element;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
+                "Error: should throw exception since we cannot have description for two or more manufacturers on the same part"
+            );
+        });
+    }
+
+    [Test]
+    public void ParseAttributes_WhenHavingTwoManufacturersWithPartWeight_ThenTrowException()
+    {
+        // Arrange
+        var fileLines = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;;3.45 kg;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<InvalidOperationException>(
+                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
+                "Error: should throw exception since we cannot have weight for two or more manufacturers on the same part"
+            );
+        });
+    }
+
+    [Test]
+    public void ParseAttributes_WhenHavingOneManufacturersWithEmptyWeight_ThenDoNotTrowException()
+    {
+        // Arrange
+        var targetDict = new Dictionary<string, string>();
+        var fileLines = new List<string>
+        {
+            "Schedules-Export;;;",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            ";;;;;;;;;;;;;;;;;;;;;;;;",
+            "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
+            "Base Element BS 600 X 34 Hollow;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
+            "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        };
+
+        // Act
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.DoesNotThrow(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
         });
     }
 }

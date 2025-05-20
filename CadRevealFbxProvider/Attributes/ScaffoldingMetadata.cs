@@ -170,12 +170,12 @@ public class ScaffoldingMetadata
 
     public static bool PartMetadataHasExpectedValues(Dictionary<string, string> targetDict, bool tempScaffFlag = false)
     {
-        var obligatoryAttributes =
+        var mandatoryAttributes =
             (tempScaffFlag)
                 ? MandatoryModelAttributesFromPartsTempScaff
                 : MandatoryModelAttributesFromPartsNonTempScaff;
 
-        foreach (var modelAttribute in obligatoryAttributes)
+        foreach (var modelAttribute in mandatoryAttributes)
         {
             if (!targetDict.ContainsKey(modelAttribute))
                 return false;
