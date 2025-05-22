@@ -88,6 +88,7 @@ public static class FbxWorkload
 
         Dictionary<string, string> metadata = new();
 
+        // the local function LoadFbxFile modifies model's metadata as well
         var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
 
         if (stringInternPool != null)
@@ -108,9 +109,11 @@ public static class FbxWorkload
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
+                var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
+                (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
                 // TODO: Should we crash if we dont have expected values?
-                if (scaffoldingMetadata.HasExpectedValues())
+                if (scaffoldingMetadata.ModelMetadataHasExpectedValues(isTemp))
                 {
                     scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
