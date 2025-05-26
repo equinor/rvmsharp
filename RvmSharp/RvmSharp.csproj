@@ -2,15 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>net8.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net9.0;netstandard2.1</TargetFrameworks>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable;</WarningsAsErrors>
     <LangVersion>latest</LangVersion>
-    
+
     <IsPackable>true</IsPackable>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-    
+
     <!-- Disable message from Teronis.MSBuild.Packaging.ProjectBuildInPackage -->
     <NoProjectBuildInPackageWelcome>true</NoProjectBuildInPackageWelcome>
 
@@ -28,7 +28,7 @@
     <DebugSymbols>true</DebugSymbols>
     <Description>RvmSharp is a fast AVEVA Rvm parser and converter, it can read .RVM files and attribute files and convert these files to meshes.</Description>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <!-- Include readme in nuget package -->
     <None Include="README.md" Pack="true" PackagePath="\"/>
