@@ -27,7 +27,7 @@ public class Node
 
     public uint TopNodeId { get; init; }
 
-    public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
+    public virtual IEnumerable<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
 
     public uint? AABBId { get; init; }
 
