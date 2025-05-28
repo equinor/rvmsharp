@@ -8,17 +8,31 @@ public class SequentialIdGenerator(uint firstIdReturned = 0)
 
     private uint _internalIdCounter = firstIdReturned;
 
+    private object IdLock { get; } = new object();
+
     public uint GetNextId()
     {
-        var idToReturn = _internalIdCounter;
-        _internalIdCounter++;
-        if (idToReturn > MaxSafeIdForReveal)
-            throw new Exception("Id overflow. Ids are not safe for reveal anymore. " + "Max is " + MaxSafeIdForReveal);
-        return idToReturn;
+        lock (IdLock)
+        {
+            var idToReturn = _internalIdCounter;
+            _internalIdCounter++;
+            if (idToReturn > MaxSafeIdForReveal)
+                throw new Exception($"Id overflow. Ids are not safe for reveal anymore. Max is {MaxSafeIdForReveal}");
+            return idToReturn;
+        }
     }
 
     /// <summary>
     /// Look at the next id that will be generated
     /// </summary>
-    public uint PeekNextId => _internalIdCounter;
+    public uint PeekNextId
+    {
+        get
+        {
+            lock (IdLock)
+            {
+                return _internalIdCounter;
+            }
+        }
+    }
 }
