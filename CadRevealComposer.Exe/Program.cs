@@ -10,6 +10,7 @@ using CadRevealRvmProvider;
 using CommandLine;
 using Configuration;
 using ModelFormatProvider;
+using Utils;
 
 public static class Program
 {
@@ -21,6 +22,8 @@ public static class Program
         Environment.SetEnvironmentVariable("DOTNET_ReadyToRun", "0");
         Environment.SetEnvironmentVariable("DOTNET_TC_QuickJitForLoops", "1");
         Environment.SetEnvironmentVariable("DOTNET_TieredPGO", "1");
+
+        Console.WriteLine("Cad Reveal Composer Started With Args: " + string.Join(" ", args));
 
         var result = Parser
             .Default.ParseArguments<CommandLineOptions>(args)
@@ -73,6 +76,14 @@ public static class Program
         }
 
         var providers = new List<IModelFormatProvider>() { new ObjProvider(), new RvmProvider(), new FbxProvider() };
+
+        using (new TeamCityLogBlock("Parameters"))
+        {
+            var parametersString = parameters.ToString();
+            Console.WriteLine($"Model Parameters: {parametersString}");
+            var toolsParametersString = toolsParameters.ToString();
+            Console.WriteLine($"Tools Parameters: {toolsParametersString}");
+        }
 
         CadRevealComposerRunner.Process(
             options.InputDirectory,
