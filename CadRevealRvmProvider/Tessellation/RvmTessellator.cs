@@ -21,7 +21,7 @@ public class RvmTessellator
 
     public static APrimitive[] TessellateAndOutputInstanceMeshes(
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult,
-        RvmPyramidInstancer.Result[] pyramidInstancingResult,
+        List<RvmPyramidInstancer.Result> pyramidInstancingResult,
         InstanceIdGenerator instanceIdGenerator,
         float simplifierThreshold
     )
@@ -54,27 +54,23 @@ public class RvmTessellator
         var facetGroupsNotInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.NotInstancedResult>()
             .Select(result => ((RvmFacetGroupWithProtoMesh)result.FacetGroup).ProtoMesh)
-            .Cast<ProtoMesh>()
-            .ToArray();
+            .Cast<ProtoMesh>();
 
         var pyramidsNotInstanced = pyramidInstancingResult
             .OfType<RvmPyramidInstancer.NotInstancedResult>()
             .Select(result => result.Pyramid)
-            .Cast<ProtoMesh>()
-            .ToArray();
+            .Cast<ProtoMesh>();
 
         var facetGroupInstanced = facetGroupInstancingResult
             .OfType<RvmFacetGroupMatcher.InstancedResult>()
             .GroupBy(
                 result => (RvmPrimitive)result.Template,
                 x => (ProtoMesh: (ProtoMesh)((RvmFacetGroupWithProtoMesh)x.FacetGroup).ProtoMesh, x.Transform)
-            )
-            .ToArray();
+            );
 
         var pyramidsInstanced = pyramidInstancingResult
             .OfType<RvmPyramidInstancer.InstancedResult>()
-            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)x.Pyramid, x.Transform))
-            .ToArray();
+            .GroupBy(result => (RvmPrimitive)result.Template, x => (ProtoMesh: (ProtoMesh)x.Pyramid, x.Transform));
 
         // tessellate instanced geometries
         var stopwatch = Stopwatch.StartNew();
@@ -114,18 +110,16 @@ public class RvmTessellator
             $"Tessellated {meshes.Length:N0} meshes for {totalCount:N0} instanced meshes in {stopwatch.Elapsed}"
         );
 
-        var instancedMeshes = meshes
-            .SelectMany(group =>
-                group.InstanceGroup.Select(item => new InstancedMesh(
-                    InstanceId: group.InstanceId,
-                    group.Mesh,
-                    item.Transform,
-                    item.ProtoMesh.TreeIndex,
-                    item.ProtoMesh.Color,
-                    group.Mesh.CalculateAxisAlignedBoundingBox(item.Transform) // Recalculating AABB, since some instances of the transformed (item.ProtoMesh.AxisAlignedBoundingBox) AABB were incorrect
-                ))
-            )
-            .ToArray();
+        var instancedMeshes = meshes.SelectMany(group =>
+            group.InstanceGroup.Select(item => new InstancedMesh(
+                InstanceId: group.InstanceId,
+                group.Mesh,
+                item.Transform,
+                item.ProtoMesh.TreeIndex,
+                item.ProtoMesh.Color,
+                group.Mesh.CalculateAxisAlignedBoundingBox(item.Transform) // Recalculating AABB, since some instances of the transformed (item.ProtoMesh.AxisAlignedBoundingBox) AABB were incorrect
+            ))
+        );
 
         // tessellate and create TriangleMesh objects
         stopwatch.Restart();
@@ -143,11 +137,10 @@ public class RvmTessellator
                     meshTessellationLogObject
                 )
             )
-            .Where(t => t.Mesh.Indices.Length > 0) // ignore empty meshes
-            .ToArray();
+            .Where(t => t.Mesh.Indices.Length > 0);
 
         meshTessellationLogObject.LogFailedTessellations();
-        Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
+        //Console.WriteLine($"Tessellated {triangleMeshes.Length:N0} triangle meshes in {stopwatch.Elapsed}.");
 
         SimplificationLogObject.LogSimplifications(meshSimplificationLogObject, instanceSimplificationLogObject);
 

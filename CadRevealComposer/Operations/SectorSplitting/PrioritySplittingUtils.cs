@@ -15,14 +15,18 @@ public static class PrioritySplittingUtils
 
     public static void SetPriorityForPrioritySplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
-        var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes);
-        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(disciplineFilteredNodes);
-        SetPriorityOnNodesAndChildren(tagAndDisciplineFilteredNodes);
+        var nodesWithTag = FilterByIfTagExists(nodes);
+        var nodesWithCorrectDiscipline = FilterByIsPrioritizedDiscipline(nodesWithTag);
+        SetDisciplineAndPriorityOnChildren(nodesWithCorrectDiscipline);
     }
 
-    private static IEnumerable<CadRevealNode> FilterByDisciplineAndAddDisciplineMetadata(
-        IEnumerable<CadRevealNode> nodes
-    )
+    private static IEnumerable<CadRevealNode> FilterByIfTagExists(IEnumerable<CadRevealNode> nodes) =>
+        nodes.Where(node => node.Attributes.ContainsKey("Tag"));
+
+    private static IEnumerable<CadRevealNode> FilterByIsPrioritizedDiscipline(IEnumerable<CadRevealNode> nodes) =>
+        nodes.Where(node => PrioritizedDisciplines.Contains(node.Attributes.GetValueOrNull("Discipline")));
+
+    private static void SetDisciplineAndPriorityOnChildren(IEnumerable<CadRevealNode> nodes)
     {
         foreach (var node in nodes)
         {
@@ -34,24 +38,9 @@ public static class PrioritySplittingUtils
             var children = CadRevealNode.GetAllNodesFlat(node);
             foreach (var child in children)
             {
-                child.Geometries = child.Geometries.Select(g => g with { Discipline = discipline }).ToArray();
-            }
-
-            yield return node;
-        }
-    }
-
-    private static IEnumerable<CadRevealNode> FilterByIfTagExists(IEnumerable<CadRevealNode> nodes) =>
-        nodes.Where(node => node.Attributes.ContainsKey("Tag"));
-
-    private static void SetPriorityOnNodesAndChildren(IEnumerable<CadRevealNode> nodes)
-    {
-        foreach (var node in nodes)
-        {
-            var allChildren = CadRevealNode.GetAllNodesFlat(node);
-            foreach (var child in allChildren)
-            {
-                child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+                child.Geometries = child
+                    .Geometries.Select(g => g with { Discipline = discipline, Priority = 1 })
+                    .ToArray();
             }
         }
     }

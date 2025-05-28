@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
+using System.Linq;
 using Tessellation;
 using Utils;
 
@@ -99,12 +100,9 @@ public class CadRevealNode
             yield break;
         }
 
-        foreach (CadRevealNode cadRevealNode in root.Children)
+        foreach (CadRevealNode revealNode in root.Children.SelectMany(GetAllNodesFlat))
         {
-            foreach (CadRevealNode revealNode in GetAllNodesFlat(cadRevealNode))
-            {
-                yield return revealNode;
-            }
+            yield return revealNode;
         }
     }
 }

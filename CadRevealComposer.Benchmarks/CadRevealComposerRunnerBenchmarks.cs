@@ -4,21 +4,23 @@ using CadRevealComposer.ModelFormatProvider;
 using CadRevealFbxProvider;
 using CadRevealObjProvider;
 using CadRevealRvmProvider;
+using BenchmarkDotNet.Engines;
 
 namespace CadRevealComposer.Benchmarks;
 
-using BenchmarkDotNet.Engines;
-using Devtools;
-
+[SimpleJob(RunStrategy.ColdStart, iterationCount: 3)]
 [MemoryDiagnoser]
 public class CadRevealComposerRunnerBenchmarks
 {
     private const long ProjectId = 1;
     private const long ModelId = 1;
     private const long RevisionId = 1;
-    private static readonly DirectoryInfo InputDirectory = new("/Users/SSOB/git/Echo/models/raw/HDA/20250331_022910/Huldra AsBuilt/ASB");
+    private static readonly DirectoryInfo InputDirectory = new("/Users/SSOB/git/Echo/models/raw/HDA/20250331_022910/HuldraBenchmark/ASB");
     private static readonly DirectoryInfo OutputDirectory = new("/Users/SSOB/git/Echo/models/temp/");
     private static readonly DirectoryInfo DevPrimitiveCacheFolder = new("/Users/SSOB/git/Echo/models/cache/");
+
+    private ComposerParameters _toolsParameters;
+    private List<IModelFormatProvider> _providers;
 
     private static readonly ModelParameters Parameters = new(
         new ProjectId(ProjectId),
@@ -28,8 +30,8 @@ public class CadRevealComposerRunnerBenchmarks
         new TemplateCountLimit(100)
     );
 
-    [Benchmark]
-    public void Process()
+    [GlobalSetup]
+    public void GlobalSetup()
     {
         const bool noInstancing = false;
         const bool singleSector = false;
@@ -37,7 +39,7 @@ public class CadRevealComposerRunnerBenchmarks
         var nodeNameExcludeRegex = new NodeNameExcludeRegex(null);
         const float simplificationThreshold = 0.0f;
 
-        var toolsParameters = new ComposerParameters(
+        _toolsParameters = new ComposerParameters(
             noInstancing,
             singleSector,
             splitIntoZones,
@@ -46,21 +48,49 @@ public class CadRevealComposerRunnerBenchmarks
             null
         );
 
-        List<IModelFormatProvider> providers = [
+        _providers = [
             new ObjProvider(),
             new RvmProvider(),
             new FbxProvider()
         ];
+    }
 
+    [Benchmark]
+    public void ProcessRvm()
+    {
         CadRevealComposerRunner.Process(
             InputDirectory,
             OutputDirectory,
             Parameters,
-            toolsParameters,
-            providers
+            _toolsParameters,
+            [new RvmProvider()]
+        );
+    }
+/*
+    [Benchmark]
+    public void ProcessFbx()
+    {
+        CadRevealComposerRunner.Process(
+            InputDirectory,
+            OutputDirectory,
+            Parameters,
+            _toolsParameters,
+            [new FbxProvider()]
         );
     }
 
+    [Benchmark]
+    public void Process()
+    {
+        CadRevealComposerRunner.Process(
+            InputDirectory,
+            OutputDirectory,
+            Parameters,
+            _toolsParameters,
+            _providers
+        );
+    }
+*/
     [IterationCleanup]
     public void IterationCleanup()
     {

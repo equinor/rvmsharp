@@ -72,12 +72,14 @@ public class RvmProvider : IModelFormatProvider
             Console.WriteLine($"Truncating empty nodes due to very high node count {rvmNodeCount}");
         }
 
-        var nodes = RvmStoreToCadRevealNodesConverter.RvmStoreToCadRevealNodes(
-            rvmStore,
-            treeIndexGenerator,
-            nodeNameFiltering,
-            truncateNodesWithoutMetadata: truncateEmptyNodes
-        );
+        var nodes = RvmStoreToCadRevealNodesConverter
+            .RvmStoreToCadRevealNodes(
+                rvmStore,
+                treeIndexGenerator,
+                nodeNameFiltering,
+                truncateNodesWithoutMetadata: truncateEmptyNodes
+            )
+            .ToArray();
         Console.WriteLine(
             "CadRevealNodeCount: " + nodes.Length + ". TreeIndex count is " + treeIndexGenerator.PeekNextId
         );
@@ -105,8 +107,7 @@ public class RvmProvider : IModelFormatProvider
                 p.FacetGroup.BoundingBoxLocal,
                 p.FacetGroup.Polygons
             ))
-            .Cast<RvmFacetGroup>()
-            .ToArray();
+            .Cast<RvmFacetGroup>();
 
         RvmFacetGroupMatcher.Result[] facetGroupInstancingResult;
         if (composerParameters.NoInstancing)
@@ -120,7 +121,7 @@ public class RvmProvider : IModelFormatProvider
         else
         {
             facetGroupInstancingResult = RvmFacetGroupMatcher.MatchAll(
-                facetGroupsWithEmbeddedProtoMeshes,
+                facetGroupsWithEmbeddedProtoMeshes.ToArray(),
                 facetGroups => facetGroups.Length >= modelParameters.InstancingThreshold.Value,
                 modelParameters.TemplateCountLimit.Value
             );
@@ -138,13 +139,13 @@ public class RvmProvider : IModelFormatProvider
                 $"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc)."
             );
         }
-        RvmPyramidInstancer.Result[] pyramidInstancingResult;
+        List<RvmPyramidInstancer.Result> pyramidInstancingResult;
         if (composerParameters.NoInstancing)
         {
             pyramidInstancingResult = uniqueProtoMeshesFromPyramid
                 .Select(x => new RvmPyramidInstancer.NotInstancedResult(x))
                 .OfType<RvmPyramidInstancer.Result>()
-                .ToArray();
+                .ToList();
             Console.WriteLine("Pyramid instancing disabled.");
         }
         else

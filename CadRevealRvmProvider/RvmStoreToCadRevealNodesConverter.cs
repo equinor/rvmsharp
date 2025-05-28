@@ -22,7 +22,7 @@ internal static class RvmStoreToCadRevealNodesConverter
         }
     }
 
-    public static CadRevealNode[] RvmStoreToCadRevealNodes(
+    public static IEnumerable<CadRevealNode> RvmStoreToCadRevealNodes(
         RvmStore rvmStore,
         TreeIndexGenerator treeIndexGenerator,
         NodeNameFiltering nodeNameFiltering,
@@ -50,15 +50,9 @@ internal static class RvmStoreToCadRevealNodesConverter
 
         variousStatsLogObject.LogStats();
 
-        var subBoundingBox = cadRevealRootNodes
-            .Select(x => x.BoundingBoxAxisAligned)
-            .WhereNotNull()
-            .ToArray()
-            .Aggregate((a, b) => a.Encapsulate(b));
+        Trace.Assert(cadRevealRootNodes.Any(x => x.BoundingBoxAxisAligned != null), "Root node has no bounding box. Are there any meshes in the input?");
 
-        Trace.Assert(subBoundingBox != null, "Root node has no bounding box. Are there any meshes in the input?");
-
-        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat).ToArray();
+        var allNodes = cadRevealRootNodes.SelectMany(CadRevealNode.GetAllNodesFlat);
 
         return allNodes;
     }

@@ -174,27 +174,25 @@ public static class RvmConnect
 
                     var h = 0.5f * pyramid.Height;
 
-                    var M = prim.Matrix;
-
                     Vector3[] n =
-                    {
-                        new Vector3(0.0f, -h, (-t.Y + o.Y) - (-b.Y - o.Y)),
-                        new Vector3(h, 0.0f, -((t.X + o.X) - (b.X - o.X))),
-                        new Vector3(0.0f, h, -((t.Y + o.Y) - (b.Y - o.Y))),
-                        new Vector3(-h, 0.0f, (-t.X + o.X) - (-b.X - o.X)),
-                        new Vector3(0.0f, 0.0f, -1.0f),
-                        new Vector3(0.0f, 0.0f, 1.0f)
-                    };
+                    [
+                        new(0.0f, -h, (-t.Y + o.Y) - (-b.Y - o.Y)),
+                        new(h, 0.0f, -((t.X + o.X) - (b.X - o.X))),
+                        new(0.0f, h, -((t.Y + o.Y) - (b.Y - o.Y))),
+                        new(-h, 0.0f, (-t.X + o.X) - (-b.X - o.X)),
+                        new(0.0f, 0.0f, -1.0f),
+                        new(0.0f, 0.0f, 1.0f)
+                    ];
 
                     Vector3[] p =
-                    {
-                        new Vector3(0.0f, -m.Y, 0.0f),
-                        new Vector3(m.X, 0.0f, 0.0f),
-                        new Vector3(0.0f, m.Y, 0.0f),
-                        new Vector3(-m.X, 0.0f, 0.0f),
-                        new Vector3(-o.X, -o.Y, -h),
-                        new Vector3(o.X, o.Y, h)
-                    };
+                    [
+                        new(0.0f, -m.Y, 0.0f),
+                        new(m.X, 0.0f, 0.0f),
+                        new(0.0f, m.Y, 0.0f),
+                        new(-m.X, 0.0f, 0.0f),
+                        new(-o.X, -o.Y, -h),
+                        new(o.X, o.Y, h)
+                    ];
 
                     for (uint i = 0; i < 6; i++)
                     {
@@ -206,14 +204,14 @@ public static class RvmConnect
                 case RvmBox box:
                 {
                     Vector3[] n =
-                    {
-                        new Vector3(-1, 0, 0),
-                        new Vector3(1, 0, 0),
-                        new Vector3(0, -1, 0),
-                        new Vector3(0, 1, 0),
-                        new Vector3(0, 0, -1),
-                        new Vector3(0, 0, 1)
-                    };
+                    [
+                        new(-1, 0, 0),
+                        new(1, 0, 0),
+                        new(0, -1, 0),
+                        new(0, 1, 0),
+                        new(0, 0, -1),
+                        new(0, 0, 1)
+                    ];
                     var xp = 0.5f * box.LengthX;
                     var xm = -xp;
                     var yp = 0.5f * box.LengthY;
@@ -221,14 +219,14 @@ public static class RvmConnect
                     var zp = 0.5f * box.LengthZ;
                     var zm = -zp;
                     Vector3[] p =
-                    {
-                        new Vector3(xm, 0.0f, 0.0f),
-                        new Vector3(xp, 0.0f, 0.0f),
-                        new Vector3(0.0f, ym, 0.0f),
-                        new Vector3(0.0f, yp, 0.0f),
-                        new Vector3(0.0f, 0.0f, zm),
-                        new Vector3(0.0f, 0.0f, zp)
-                    };
+                    [
+                        new(xm, 0.0f, 0.0f),
+                        new(xp, 0.0f, 0.0f),
+                        new(0.0f, ym, 0.0f),
+                        new(0.0f, yp, 0.0f),
+                        new(0.0f, 0.0f, zm),
+                        new(0.0f, 0.0f, zp)
+                    ];
                     for (uint i = 0; i < 6; i++)
                         AddAnchor(context, box, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
                     break;
@@ -238,8 +236,8 @@ public static class RvmConnect
                     var c = (float)Math.Cos(rt.Angle);
                     var s = (float)Math.Sin(rt.Angle);
                     var m = 0.5f * (rt.RadiusInner + rt.RadiusOuter);
-                    Vector3[] n = { new Vector3(0, -1, 0.0f), new Vector3(-s, c, 0.0f) };
-                    Vector3[] p = { new Vector3(rt.RadiusInner, 0, 0.0f), new Vector3(m * c, m * s, 0.0f) };
+                    Vector3[] n = [new(0, -1, 0.0f), new(-s, c, 0.0f)];
+                    Vector3[] p = [new(rt.RadiusInner, 0, 0.0f), new(m * c, m * s, 0.0f)];
                     for (uint i = 0; i < 2; i++)
                         AddAnchor(context, rt, p[i], n[i], i, RvmConnection.ConnectionType.HasRectangularSide);
                     break;
@@ -249,8 +247,8 @@ public static class RvmConnect
                 {
                     var c = (float)Math.Cos(ct.Angle);
                     var s = (float)Math.Sin(ct.Angle);
-                    Vector3[] n = { new Vector3(0, -1, 0.0f), new Vector3(-s, c, 0.0f) };
-                    Vector3[] p = { new Vector3(ct.Offset, 0, 0.0f), new Vector3(ct.Offset * c, ct.Offset * s, 0.0f) };
+                    Vector3[] n = [new(0, -1, 0.0f), new(-s, c, 0.0f)];
+                    Vector3[] p = [new(ct.Offset, 0, 0.0f), new(ct.Offset * c, ct.Offset * s, 0.0f)];
                     for (uint i = 0; i < 2; i++)
                         AddAnchor(context, ct, p[i], n[i], i, RvmConnection.ConnectionType.HasCircularSide);
                     break;
@@ -273,23 +271,23 @@ public static class RvmConnect
                 case RvmSnout sn:
                 {
                     Vector3[] n =
-                    {
-                        new Vector3(
+                    [
+                        new(
                             (float)Math.Sin(sn.BottomShearX) * (float)Math.Cos(sn.BottomShearY),
                             (float)Math.Sin(sn.BottomShearY),
                             -(float)Math.Cos(sn.BottomShearX) * (float)Math.Cos(sn.BottomShearY)
                         ),
-                        new Vector3(
+                        new(
                             -(float)Math.Sin(sn.TopShearX) * (float)Math.Cos(sn.TopShearY),
                             -(float)Math.Sin(sn.TopShearY),
                             (float)Math.Cos(sn.TopShearX) * (float)Math.Cos(sn.TopShearY)
                         )
-                    };
+                    ];
                     Vector3[] p =
-                    {
-                        new Vector3(-0.5f * sn.OffsetX, -0.5f * sn.OffsetY, -0.5f * sn.Height),
-                        new Vector3(0.5f * sn.OffsetX, 0.5f * sn.OffsetY, 0.5f * sn.Height)
-                    };
+                    [
+                        new(-0.5f * sn.OffsetX, -0.5f * sn.OffsetY, -0.5f * sn.Height),
+                        new(0.5f * sn.OffsetX, 0.5f * sn.OffsetY, 0.5f * sn.Height)
+                    ];
                     for (uint i = 0; i < 2; i++)
                         AddAnchor(context, sn, p[i], n[i], i, RvmConnection.ConnectionType.HasCircularSide);
                     break;
@@ -297,12 +295,8 @@ public static class RvmConnect
 
                 case RvmCylinder cylinder:
                 {
-                    Vector3[] d = { new Vector3(0, 0, -1.0f), new Vector3(0, 0, 1.0f) };
-                    Vector3[] p =
-                    {
-                        new Vector3(0, 0, -0.5f * cylinder.Height),
-                        new Vector3(0, 0, 0.5f * cylinder.Height)
-                    };
+                    Vector3[] d = [new(0, 0, -1.0f), new(0, 0, 1.0f)];
+                    Vector3[] p = [new(0, 0, -0.5f * cylinder.Height), new(0, 0, 0.5f * cylinder.Height)];
                     for (uint i = 0; i < 2; i++)
                         AddAnchor(context, cylinder, p[i], d[i], i, RvmConnection.ConnectionType.HasCircularSide);
                     break;
