@@ -143,14 +143,16 @@ public class ScaffoldingAttributeParser
             entireScaffoldingMetadata.TotalVolume
         );
 
-        WarnIfModelMetadataDoesNotHaveExpectedValues(entireScaffoldingMetadata, tempFlag);
+        // The building job should fail if mandatory metadata field(s) is/are missing
+        // Otherwise the failury will happen later and the error message will be very cryptic
+        ThrowIfModelMetadataDoesNotHaveExpectedValues(entireScaffoldingMetadata, tempFlag);
         entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;
 
         Console.WriteLine("Finished reading and processing attribute file.");
         return (attributesDictionary, entireScaffoldingMetadata);
     }
 
-    static void WarnIfModelMetadataDoesNotHaveExpectedValues(
+    static void ThrowIfModelMetadataDoesNotHaveExpectedValues(
         ScaffoldingMetadata entireScaffoldingMetadata,
         bool tempFlag
     )

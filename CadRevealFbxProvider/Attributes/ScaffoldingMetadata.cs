@@ -28,7 +28,9 @@ public class ScaffoldingMetadata
         "Dismantle Operation number"
     ];
 
-    private static readonly string[] MandatoryModelAttributesFromPartsTempScaff = ["Project number"];
+    // TODO: requires revisiting
+    // it seemed that "Project number" was mandatory for temp scaffs, but maybe it is not.
+    private static readonly string[] MandatoryModelAttributesFromPartsTempScaff = [];
 
     public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
     public static readonly int NumberOfMandatoryModelAttributesFromPartsNonTempScaff =
@@ -150,8 +152,11 @@ public class ScaffoldingMetadata
     {
         if (tempScaffFlag)
         {
-            if (string.IsNullOrEmpty(ProjectNumber))
-                return false;
+            // TODO: requires revisiting
+            // commenting out this temporarity (?) until it is clear if we should have a mandatory field in temp scaff attributes
+            //if (string.IsNullOrEmpty(ProjectNumber))
+            //    return false;
+            return true;
         }
         // work-order scaffs
         else if (

@@ -180,7 +180,7 @@ public static class FbxWorkload
 
                 if (totalMismatch)
                     throw new Exception(
-                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch."
+                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
                     );
             }
 
