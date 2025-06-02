@@ -28,7 +28,7 @@ public class ScaffoldingMetadata
         "Dismantle Operation number"
     ];
 
-    // TODO: requires revisiting
+    // TODO: requires revisiting (AB#295585)
     // it seemed that "Project number" was mandatory for temp scaffs, but maybe it is not.
     private static readonly string[] MandatoryModelAttributesFromPartsTempScaff = [];
 
@@ -153,7 +153,7 @@ public class ScaffoldingMetadata
         if (tempScaffFlag)
         {
             // TODO: requires revisiting
-            // commenting out this temporarity (?) until it is clear if we should have a mandatory field in temp scaff attributes
+            // commenting out this temporarily (?) until it is clear if we should have a mandatory field in temp scaff attributes
             //if (string.IsNullOrEmpty(ProjectNumber))
             //    return false;
             return true;

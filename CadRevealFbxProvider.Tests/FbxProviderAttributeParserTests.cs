@@ -164,9 +164,9 @@ public class FbxProviderAttributeParserTests
 
         Assert.That(metadataValid, Is.EqualTo(true));
 
-        // Right now, we don't know which column should be used as a pivor to discern between trash items and valid items
-        // One of the items, ladder (with weight 18.9 kg) should be removed as thrash, but it cannot
-        // If we find a way to remove trash from the mode, this test line should come back in
+        // Right now, we don't know which column should be used as a pivot to discern between trash items and valid items
+        // One of the items, ladder (with weight 18.9 kg) should be removed as trash, but it cannot
+        // If we find a way to remove trash from the model (AB#295585), this test line should come back in
         // Assert.That(() => calcTotalWeight, Is.EqualTo(183.54f));
         Assert.That(() => calcTotalWeight, Is.EqualTo(202.44f));
     }

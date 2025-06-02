@@ -144,7 +144,7 @@ public class ScaffoldingAttributeParser
         );
 
         // The building job should fail if mandatory metadata field(s) is/are missing
-        // Otherwise the failury will happen later and the error message will be very cryptic
+        // Otherwise the failure will happen later and the error message will be very cryptic
         ThrowIfModelMetadataDoesNotHaveExpectedValues(entireScaffoldingMetadata, tempFlag);
         entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;
 
