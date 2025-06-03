@@ -19,7 +19,7 @@ public class ScaffoldingMetadata
     private const string TotalVolumeFieldName = "Scaffolding_TotalVolume";
     private const string TotalWeightFieldName = "Scaffolding_TotalWeight";
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
-    private const string TempFlagCalculatedFieldName = "Scaffolding_IsTemporary";
+    private const string TempFlagFieldName = "Scaffolding_IsTemporary";
 
     private static readonly string[] MandatoryModelAttributesFromPartsNonTempScaff =
     [
@@ -205,6 +205,6 @@ public class ScaffoldingMetadata
         targetDict.Add(TotalVolumeFieldName, TotalVolume!);
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
         targetDict.Add(TotalWeightCalculatedFieldName, TotalWeightCalculated!);
-        targetDict.Add(TempFlagCalculatedFieldName, TempScaffoldingFlag.ToString());
+        targetDict.Add(TempFlagFieldName, TempScaffoldingFlag ? "true" : "false");
     }
 }
