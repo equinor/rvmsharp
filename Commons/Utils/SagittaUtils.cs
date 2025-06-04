@@ -29,8 +29,7 @@ public static class SagittaUtils
     /// </example>
     public static int SagittaBasedSegmentCount(double arc, float radius, float scale, float tolerance)
     {
-        var maximumSagitta = tolerance;
-        var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - maximumSagitta / (scale * radius)));
+        var samples = arc / Math.Acos(Math.Max(-1.0f, 1.0f - tolerance / (scale * radius)));
         if (double.IsNaN(samples))
         {
             throw new Exception(

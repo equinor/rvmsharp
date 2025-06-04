@@ -11,9 +11,9 @@ public static class TessNet
 {
     public class TessellateResult
     {
-        public Vector3[] VertexData = Array.Empty<Vector3>();
-        public Vector3[] NormalData = Array.Empty<Vector3>();
-        public readonly List<int> Indices = new List<int>();
+        public Vector3[] VertexData = [];
+        public Vector3[] NormalData = [];
+        public readonly List<int> Indices = [];
     }
 
     public static TessellateResult Tessellate(RvmContour[] contours)
@@ -32,7 +32,7 @@ public static class TessNet
 
             var cv = contour
                 .Vertices.Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal))
-                .ToArray();
+                .ToList();
             tess.AddContour(cv);
             var n = contour.Vertices[0].Normal;
             normal = new Vec3(n.X, n.Y, n.Z);

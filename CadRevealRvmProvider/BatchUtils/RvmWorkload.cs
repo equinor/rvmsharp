@@ -69,6 +69,24 @@ public static class RvmWorkload
         var progress = 0;
         var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
 
+        var rvmFiles = workload.AsParallel().AsOrdered().Select(ParseRvmFile);
+
+        if (stringInternPool != null)
+        {
+            Console.WriteLine(
+                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
+            );
+        }
+
+        var rvmStore = new RvmStore();
+        rvmStore.RvmFiles.AddRange(rvmFiles);
+        progressReport?.Report(("Connecting geometry", 0, 2));
+        RvmConnect.Connect(rvmStore);
+        progressReport?.Report(("Aligning geometry", 1, 2));
+        RvmAlign.Align(rvmStore);
+        progressReport?.Report(("Import finished", 2, 2));
+        return rvmStore;
+
         RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
         {
             try
@@ -78,7 +96,7 @@ public static class RvmWorkload
                 var rvmFile = RvmParser.ReadRvm(stream);
                 if (!string.IsNullOrEmpty(txtFilename))
                 {
-                    rvmFile.AttachAttributes(txtFilename!, redundantPdmsAttributesToExclude, stringInternPool);
+                    rvmFile.AttachAttributes(txtFilename, redundantPdmsAttributesToExclude, stringInternPool);
                 }
 
                 progressReport?.Report((Path.GetFileNameWithoutExtension(rvmFilename), ++progress, workload.Count));
@@ -96,23 +114,5 @@ public static class RvmWorkload
                 throw;
             }
         }
-
-        var rvmFiles = workload.AsParallel().AsOrdered().Select(ParseRvmFile).ToArray();
-
-        if (stringInternPool != null)
-        {
-            Console.WriteLine(
-                $"{stringInternPool.Considered:N0} PDMS strings were deduped into {stringInternPool.Added:N0} string objects. Reduced string allocation by {(float)stringInternPool.Deduped / stringInternPool.Considered:P1}."
-            );
-        }
-
-        var rvmStore = new RvmStore();
-        rvmStore.RvmFiles.AddRange(rvmFiles);
-        progressReport?.Report(("Connecting geometry", 0, 2));
-        RvmConnect.Connect(rvmStore);
-        progressReport?.Report(("Aligning geometry", 1, 2));
-        RvmAlign.Align(rvmStore);
-        progressReport?.Report(("Import finished", 2, 2));
-        return rvmStore;
     }
 }

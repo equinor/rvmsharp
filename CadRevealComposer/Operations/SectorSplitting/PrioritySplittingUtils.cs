@@ -15,46 +15,27 @@ public static class PrioritySplittingUtils
 
     public static void SetPriorityForPrioritySplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
-        var disciplineFilteredNodes = FilterByDisciplineAndAddDisciplineMetadata(nodes);
-        var tagAndDisciplineFilteredNodes = FilterByIfTagExists(disciplineFilteredNodes);
-        SetPriorityOnNodesAndChildren(tagAndDisciplineFilteredNodes);
-    }
-
-    private static IEnumerable<CadRevealNode> FilterByDisciplineAndAddDisciplineMetadata(
-        IEnumerable<CadRevealNode> nodes
-    )
-    {
         foreach (var node in nodes)
         {
             var discipline = node.Attributes.GetValueOrNull("Discipline");
+            var hasTag = TagExists(node);
 
-            if (!PrioritizedDisciplines.Contains(discipline))
+            if (!HasPrioritizedDiscipline(node, discipline))
                 continue;
 
-            var children = CadRevealNode.GetAllNodesFlat(node);
-            foreach (var child in children)
+            foreach (var child in CadRevealNode.GetAllNodesFlat(node))
             {
-                child.Geometries = child.Geometries.Select(g => g with { Discipline = discipline }).ToArray();
-            }
-
-            yield return node;
-        }
-    }
-
-    private static IEnumerable<CadRevealNode> FilterByIfTagExists(IEnumerable<CadRevealNode> nodes) =>
-        nodes.Where(node => node.Attributes.ContainsKey("Tag"));
-
-    private static void SetPriorityOnNodesAndChildren(IEnumerable<CadRevealNode> nodes)
-    {
-        foreach (var node in nodes)
-        {
-            var allChildren = CadRevealNode.GetAllNodesFlat(node);
-            foreach (var child in allChildren)
-            {
-                child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+                child.Geometries = child
+                    .Geometries.Select(g => g with { Discipline = discipline, Priority = hasTag ? 1 : g.Priority })
+                    .ToArray();
             }
         }
     }
+
+    private static bool TagExists(CadRevealNode node) => node.Attributes.ContainsKey("Tag");
+
+    private static bool HasPrioritizedDiscipline(CadRevealNode node, string? discipline) =>
+        PrioritizedDisciplines.Contains(discipline);
 
     public static Node[] ConvertPrimitiveGroupsToNodes(IEnumerable<IGrouping<uint, APrimitive>> geometryGroups)
     {
