@@ -23,14 +23,13 @@
     </PackageVersion>
     <PackageVersion Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="SharpGLTF.Core" Version="1.0.3" />
+    <PackageVersion Include="SharpGLTF.Core" Version="1.0.4" />
     <PackageVersion Include="ShellProgressBar" Version="5.2.0" />
-    <PackageVersion Include="System.Drawing.Common" Version="9.0.0" />
     <PackageVersion Include="System.Text.Encodings.Web" Version="9.0.0" />
     <PackageVersion Include="System.Text.Json" Version="9.0.0" />
     <PackageVersion Include="Tenekon.MSBuild.Packaging.ProjectBuildInPackage" Version="2.0.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.2" />
     <PackageVersion Include="geometry3Sharp" Version="1.0.324" />
-    <PackageVersion Include="protobuf-net" Version="3.2.45" />
+    <PackageVersion Include="protobuf-net" Version="3.2.52" />
   </ItemGroup>
 </Project>

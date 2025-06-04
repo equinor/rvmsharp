@@ -17,7 +17,6 @@
         <PackageReference Include="Newtonsoft.Json" />
         <PackageReference Include="protobuf-net" />
         <PackageReference Include="SharpGLTF.Core" />
-        <PackageReference Include="System.Drawing.Common" />
     </ItemGroup>
 
 </Project>
