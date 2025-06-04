@@ -628,35 +628,27 @@ public static class TessellatorBridge
         var zp = 0.5f * box.LengthZ;
         var zm = -zp;
 
-        Vector3[,] v = new Vector3[,]
+        var v = new Vector3[,]
         {
-            { new Vector3(xm, ym, zp), new Vector3(xm, yp, zp), new Vector3(xm, yp, zm), new Vector3(xm, ym, zm) },
-            { new Vector3(xp, ym, zm), new Vector3(xp, yp, zm), new Vector3(xp, yp, zp), new Vector3(xp, ym, zp) },
-            { new Vector3(xp, ym, zm), new Vector3(xp, ym, zp), new Vector3(xm, ym, zp), new Vector3(xm, ym, zm) },
-            { new Vector3(xm, yp, zm), new Vector3(xm, yp, zp), new Vector3(xp, yp, zp), new Vector3(xp, yp, zm) },
-            { new Vector3(xm, yp, zm), new Vector3(xp, yp, zm), new Vector3(xp, ym, zm), new Vector3(xm, ym, zm) },
-            { new Vector3(xm, ym, zp), new Vector3(xp, ym, zp), new Vector3(xp, yp, zp), new Vector3(xm, yp, zp) }
+            { new(xm, ym, zp), new(xm, yp, zp), new(xm, yp, zm), new(xm, ym, zm) },
+            { new(xp, ym, zm), new(xp, yp, zm), new(xp, yp, zp), new(xp, ym, zp) },
+            { new(xp, ym, zm), new(xp, ym, zp), new(xm, ym, zp), new(xm, ym, zm) },
+            { new(xm, yp, zm), new(xm, yp, zp), new(xp, yp, zp), new(xp, yp, zm) },
+            { new(xm, yp, zm), new(xp, yp, zm), new(xp, ym, zm), new(xm, ym, zm) },
+            { new(xm, ym, zp), new(xp, ym, zp), new(xp, yp, zp), new(xm, yp, zp) }
         };
 
-        Vector3[] n =
-        {
-            new Vector3(-1, 0, 0),
-            new Vector3(1, 0, 0),
-            new Vector3(0, -1, 0),
-            new Vector3(0, 1, 0),
-            new Vector3(0, 0, -1),
-            new Vector3(0, 0, 1)
-        };
+        Vector3[] n = [new(-1, 0, 0), new(1, 0, 0), new(0, -1, 0), new(0, 1, 0), new(0, 0, -1), new(0, 0, 1)];
 
         bool[] faces =
-        {
+        [
             1e-5 <= box.LengthX,
             1e-5 <= box.LengthX,
             1e-5 <= box.LengthY,
             1e-5 <= box.LengthY,
             1e-5 <= box.LengthZ,
-            1e-5 <= box.LengthZ,
-        };
+            1e-5 <= box.LengthZ
+        ];
 
         for (var i = 0; i < 6; i++)
         {
@@ -684,7 +676,7 @@ public static class TessellatorBridge
 
         if (faces_n <= 0)
         {
-            return new RvmMesh(new float[0], new float[0], new int[0], 0);
+            return RvmMesh.Empty;
         }
 
         {
@@ -730,11 +722,10 @@ public static class TessellatorBridge
         var normals = new List<Vector3>();
         var indices = new List<int>();
 
-        for (var p = 0; p < facetGroup.Polygons.Length; p++)
+        foreach (var poly in facetGroup.Polygons)
         {
-            var poly = facetGroup.Polygons[p];
-
-            var (bMin, bMax) = (new Vector3(float.MaxValue), new Vector3(float.MinValue));
+            var bMin = new Vector3(float.MaxValue);
+            var bMax = new Vector3(float.MinValue);
             foreach (var cont in poly.Contours)
             {
                 foreach (var vn in cont.Vertices)

@@ -26,7 +26,7 @@ public static class RvmPyramidInstancer
         }
     };
 
-    public static Result[] Process(
+    public static List<Result> Process(
         ProtoMeshFromRvmPyramid[] protoPyramids,
         Func<ProtoMeshFromRvmPyramid[], bool> shouldInstance
     )
@@ -101,6 +101,6 @@ public static class RvmPyramidInstancer
             $"Pyramids found {templateCount:N0} unique representing {instancedCount:N0} instances from a total of {protoPyramids.Length:N0} ({fraction:P1})."
         );
 
-        return result.ToArray();
+        return result;
     }
 }

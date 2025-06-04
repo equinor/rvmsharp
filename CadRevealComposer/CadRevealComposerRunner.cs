@@ -139,7 +139,7 @@ public static class CadRevealComposerRunner
 
         WriteParametersToParamsFile(modelParameters, composerParameters, outputDirectory);
 
-        //ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
+        ModifyHierarchyPostProcess(outputDirectory, splitExportResults);
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirectory.FullName)}\"");
         Console.WriteLine($"Convert completed in {totalTimeElapsed.Elapsed}");

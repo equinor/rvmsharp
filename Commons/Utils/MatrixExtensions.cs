@@ -1,7 +1,7 @@
 ﻿namespace Commons.Utils;
 
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 
 public static class MatrixExtensions
@@ -13,7 +13,7 @@ public static class MatrixExtensions
     /// </summary>
     public static bool IsDecomposable(this Matrix4x4 m)
     {
-        return m.AsEnumerableRowMajor().All(float.IsFinite) && Matrix4x4.Decompose(m, out _, out _, out _);
+        return m.All(float.IsFinite) && Matrix4x4.Decompose(m, out _, out _, out _);
     }
 
     /// <summary>
@@ -37,5 +37,28 @@ public static class MatrixExtensions
         yield return m.M42;
         yield return m.M43;
         yield return m.M44;
+    }
+
+    /// <summary>
+    /// Returns true if all elements in matrix satisfy the predicate.
+    /// </summary>
+    private static bool All(this Matrix4x4 m, Func<float, bool> predicate)
+    {
+        return predicate(m.M11)
+            && predicate(m.M12)
+            && predicate(m.M13)
+            && predicate(m.M14)
+            && predicate(m.M21)
+            && predicate(m.M22)
+            && predicate(m.M23)
+            && predicate(m.M24)
+            && predicate(m.M31)
+            && predicate(m.M32)
+            && predicate(m.M33)
+            && predicate(m.M34)
+            && predicate(m.M41)
+            && predicate(m.M42)
+            && predicate(m.M43)
+            && predicate(m.M44);
     }
 }
