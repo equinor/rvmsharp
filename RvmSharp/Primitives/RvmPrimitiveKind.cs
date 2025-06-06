@@ -12,5 +12,5 @@ public enum RvmPrimitiveKind
     Cylinder = 8,
     Sphere = 9,
     Line = 10,
-    FacetGroup = 11
+    FacetGroup = 11,
 }

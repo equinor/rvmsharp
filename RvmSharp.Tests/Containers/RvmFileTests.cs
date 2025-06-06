@@ -18,9 +18,9 @@ public class RvmFileTests
                 Children =
                 {
                     new RvmNode(2, "Duplicate", Vector3.Zero, 0),
-                    new RvmNode(2, "Duplicate", Vector3.Zero, 0)
-                }
-            }
+                    new RvmNode(2, "Duplicate", Vector3.Zero, 0),
+                },
+            },
         };
         var root = new PdmsTextParser.PdmsNode(
             "Root",
@@ -53,8 +53,8 @@ public class RvmFileTests
         {
             new RvmNode(2, "Root", Vector3.Zero, 0)
             {
-                Children = { new RvmNode(2, "One", Vector3.Zero, 0), new RvmNode(2, "Two", Vector3.Zero, 0) }
-            }
+                Children = { new RvmNode(2, "One", Vector3.Zero, 0), new RvmNode(2, "Two", Vector3.Zero, 0) },
+            },
         };
         var root = new PdmsTextParser.PdmsNode(
             "Root",

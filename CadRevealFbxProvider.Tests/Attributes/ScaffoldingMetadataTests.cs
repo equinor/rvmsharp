@@ -111,13 +111,13 @@ public class ScaffoldingMetadataTests
         {
             { "Work order", "1234" },
             { "Scaff build Operation number", "5678" },
-            { "Dismantle Operation number", "91011" }
+            { "Dismantle Operation number", "91011" },
         };
 
         var targetDictIncomplete = new Dictionary<string, string>()
         {
             //            { "Work order", "1234" },
-            { "Scaff build Operation number", "5678" }
+            { "Scaff build Operation number", "5678" },
             //            { "Dismantle Operation number", "91011" }
         };
 
@@ -128,12 +128,12 @@ public class ScaffoldingMetadataTests
             { "Work order", "1234" },
             { "Scaff build Operation number", "5678" },
             { "Dismantle Operation number", "91011" },
-            { "Test entry", "4321" }
+            { "Test entry", "4321" },
         };
 
         var targetDictCompleteButEmptyValue = new Dictionary<string, string>()
         {
-            { "Work order", "" }
+            { "Work order", "" },
             //            { "Scaff build Operation number", "" },
             //            { "Dismantle Operation number", "91011" }
         };

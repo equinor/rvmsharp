@@ -25,7 +25,7 @@ public class ScaffoldingMetadata
     [
         "Work order",
         "Scaff build Operation number",
-        "Dismantle Operation number"
+        "Dismantle Operation number",
     ];
 
     // TODO: requires revisiting (AB#295585)
@@ -44,7 +44,7 @@ public class ScaffoldingMetadata
         ProjectNumber,
         TotalVolume,
         TotalWeight,
-        TotalWeightCalculated
+        TotalWeightCalculated,
     }
 
     private static readonly Dictionary<string, AttributeEnum> ColumnToAttributeMap = new Dictionary<
@@ -58,7 +58,7 @@ public class ScaffoldingMetadata
         { "Project number", AttributeEnum.ProjectNumber },
         { "Size (m\u00b3)", AttributeEnum.TotalVolume },
         { "Grand total", AttributeEnum.TotalWeight },
-        { "Grand total calculated", AttributeEnum.TotalWeightCalculated }
+        { "Grand total calculated", AttributeEnum.TotalWeightCalculated },
     };
 
     private static void GuardForInvalidValues(string? newValue, string? existingValue)
@@ -82,7 +82,7 @@ public class ScaffoldingMetadata
             AttributeEnum.TotalVolume => true,
             AttributeEnum.BuildOperationId => true,
             AttributeEnum.DismantleOperationId => true,
-            _ => false
+            _ => false,
         };
     }
 

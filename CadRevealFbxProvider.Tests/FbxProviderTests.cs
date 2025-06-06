@@ -21,16 +21,21 @@ public class FbxProviderTests
     private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
     private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
 
-    private static readonly ModelParameters ModelParameters =
-        new(
-            new ProjectId(1),
-            new ModelId(1),
-            new RevisionId(1),
-            new InstancingThreshold(1),
-            new TemplateCountLimit(100)
-        );
-    private static readonly ComposerParameters ComposerParameters =
-        new(false, true, false, new NodeNameExcludeRegex(null), 0f, null);
+    private static readonly ModelParameters ModelParameters = new(
+        new ProjectId(1),
+        new ModelId(1),
+        new RevisionId(1),
+        new InstancingThreshold(1),
+        new TemplateCountLimit(100)
+    );
+    private static readonly ComposerParameters ComposerParameters = new(
+        false,
+        true,
+        false,
+        new NodeNameExcludeRegex(null),
+        0f,
+        null
+    );
 
     private static readonly List<IModelFormatProvider> Providers = [new FbxProvider()];
 
@@ -299,14 +304,13 @@ public class FbxProviderTests
         // no act, assert that exception is thrown
 
         // assert
-        Assert.Throws<Exception>(
-            () =>
-                modelFormatProviderFbx.ParseFiles(
-                    inputDirectoryTempScaff.EnumerateFiles(),
-                    treeIndexGenerator,
-                    instanceIndexGenerator,
-                    new NodeNameFiltering(new NodeNameExcludeRegex(null))
-                )
+        Assert.Throws<Exception>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
         ); // this scaff is not a valid temp scaffolding
     }
 

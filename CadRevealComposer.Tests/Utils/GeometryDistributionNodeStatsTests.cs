@@ -241,7 +241,7 @@ public class GeometryDistributionNodeStatsTests
                     TreeIndex = 0,
                     Name = "Test",
                     Parent = null,
-                    Geometries = geometries.ToArray()
+                    Geometries = geometries.ToArray(),
                 }
             );
         }

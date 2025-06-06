@@ -17,7 +17,7 @@ public static class RvmPyramidMatcher
         RotatedX180,
         RotatedX180Z90,
         RotatedX180Z180,
-        RotatedX180Z270
+        RotatedX180Z270,
     }
 
     public static bool Match(RvmPyramid pyramidA, RvmPyramid pyramidB, out Matrix4x4 transform)
@@ -111,7 +111,7 @@ public static class RvmPyramidMatcher
             TopY = pyramid.TopY * scale.Y,
             OffsetX = pyramid.OffsetX * scale.X,
             OffsetY = pyramid.OffsetY * scale.Y,
-            Height = pyramid.Height * scale.Z
+            Height = pyramid.Height * scale.Z,
         };
     }
 
@@ -132,7 +132,7 @@ public static class RvmPyramidMatcher
                     OffsetY = pyramid.OffsetX,
                 };
             case PyramidVariation.RotatedZ180:
-                return pyramid with { OffsetX = -pyramid.OffsetX, OffsetY = -pyramid.OffsetY, };
+                return pyramid with { OffsetX = -pyramid.OffsetX, OffsetY = -pyramid.OffsetY };
             case PyramidVariation.RotatedZ270:
                 return pyramid with
                 {

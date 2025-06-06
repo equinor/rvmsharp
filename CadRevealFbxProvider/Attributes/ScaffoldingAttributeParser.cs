@@ -16,7 +16,7 @@ public class ScaffoldingAttributeParser
     [
         "Work order",
         "Scaff build Operation Number",
-        "Dismantle Operation number"
+        "Dismantle Operation number",
     ];
 
     public static readonly List<string> OtherManufacturerIndependentAttributesPerPart =
@@ -39,7 +39,7 @@ public class ScaffoldingAttributeParser
         "Height(m)",
         "Covering (Y or N)",
         "Covering material",
-        "Last Updated"
+        "Last Updated",
     ];
 
     public static (
@@ -201,7 +201,7 @@ public class ScaffoldingAttributeParser
                     RowsToSkip = 0,
                     SkipRow = (ReadOnlyMemory<char> row, int idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
                     TrimData = true,
-                    Separator = ';'
+                    Separator = ';',
                 }
             )
             .ToArray();

@@ -75,7 +75,7 @@ public static class SnoutSnoutComparer
                 { cosTheta, sinTheta, 0.0, 0.0 },
                 { sinTheta, cosTheta, 0.0, 0.0 },
                 { 0.0, 0.0, 1.0, 0.0 },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 

@@ -76,7 +76,7 @@ public class Node
                 parentIdParameter,
                 topNodeIdParameter,
                 aabbIdParameter,
-                diagnosticInfoParameter
+                diagnosticInfoParameter,
             }
         );
 

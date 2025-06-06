@@ -18,7 +18,7 @@ public static class DrawCallEstimator
         SphericalSegment,
         TorusSegment,
         Nut,
-        SlopedCylinder
+        SlopedCylinder,
     }
 
     private static int GetTriangleCount(this RenderPrimitive primitive)
@@ -61,7 +61,7 @@ public static class DrawCallEstimator
             Quad => new[] { RenderPrimitive.Rectangle },
             TorusSegment => new[] { RenderPrimitive.TorusSegment },
             Trapezium => new[] { RenderPrimitive.Rectangle },
-            _ => Array.Empty<RenderPrimitive>()
+            _ => Array.Empty<RenderPrimitive>(),
         };
     }
 
@@ -114,7 +114,7 @@ public static class DrawCallEstimator
             Trapezium => 4 * sizeof(ulong),
             InstancedMesh => 20 * sizeof(ulong),
             TriangleMesh triangleMesh => CalculateTriangleMeshByteSize(triangleMesh),
-            _ => throw new NotImplementedException()
+            _ => throw new NotImplementedException(),
         };
     }
 

@@ -85,7 +85,7 @@ namespace Mop.Hierarchy.Migrations
                 columns: table => new
                 {
                     NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
-                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
+                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false),
                 },
                 constraints: table =>
                 {
@@ -183,7 +183,7 @@ namespace Mop.Hierarchy.Migrations
                 columns: table => new
                 {
                     NodeId = table.Column<uint>(type: "INTEGER", nullable: false),
-                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false)
+                    PDMSEntryId = table.Column<long>(type: "INTEGER", nullable: false),
                 },
                 constraints: table =>
                 {

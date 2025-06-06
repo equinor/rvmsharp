@@ -18,7 +18,7 @@ public class FbxProviderAttributeParserTests
         ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
         "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
         "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-        "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+        "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;",
     };
 
     [Test]
@@ -33,7 +33,7 @@ public class FbxProviderAttributeParserTests
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
-            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
         var targetDict = new Dictionary<string, string>();
 
@@ -53,7 +53,7 @@ public class FbxProviderAttributeParserTests
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123456",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123457",
-            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
         var targetDict = new Dictionary<string, string>();
 
@@ -264,7 +264,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -295,8 +295,8 @@ public class FbxProviderAttributeParserTests
             Assert.That(result.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
-            Assert.DoesNotThrow(
-                () => float.Parse(result.scaffoldingMetadata.TotalWeight!, CultureInfo.InvariantCulture)
+            Assert.DoesNotThrow(() =>
+                float.Parse(result.scaffoldingMetadata.TotalWeight!, CultureInfo.InvariantCulture)
             );
             var tw = float.Parse(result.scaffoldingMetadata.TotalWeight!, CultureInfo.InvariantCulture);
             Assert.That(tw, Is.EqualTo(16.7).Within(0.000001f));
@@ -316,7 +316,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -348,7 +348,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -396,7 +396,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -453,7 +453,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -482,7 +482,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -511,7 +511,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123453", // Line with missing volume
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -540,7 +540,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;3.98 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -570,7 +570,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;3.98 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -600,7 +600,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -629,7 +629,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -658,7 +658,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453", // Line with missing build operation number
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -686,7 +686,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0123;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -714,7 +714,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0123;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -743,7 +743,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -772,7 +772,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -801,7 +801,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453", // Line with missing dismantle operation number
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -829,7 +829,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;12345;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -857,7 +857,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;12345;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -886,7 +886,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Solid;5.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123453",
             "Clips KF Aluhak KF 49x49;1.10 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123454",
-            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -913,7 +913,7 @@ public class FbxProviderAttributeParserTests
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;Base Element;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -939,7 +939,7 @@ public class FbxProviderAttributeParserTests
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;;3.45 kg;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;;9.9 kg;6.8 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act
@@ -966,7 +966,7 @@ public class FbxProviderAttributeParserTests
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123453",
-            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;"
+            "Grand total: 3;8.3 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
         // Act

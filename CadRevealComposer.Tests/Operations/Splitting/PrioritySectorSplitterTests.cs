@@ -78,7 +78,7 @@ public class PrioritySectorSplitterTests
             new BoundingBox(position, position + Vector3.One)
         )
         {
-            Discipline = discipline
+            Discipline = discipline,
         };
     }
 }

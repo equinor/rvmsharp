@@ -128,8 +128,8 @@ public static class SceneCreator
                 DownloadSize = sector.DownloadSize,
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
-                    GeometryDistributions = new GeometryDistributionStats(sector.Geometries)
-                }
+                    GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
+                },
             };
         }
 
@@ -142,7 +142,7 @@ public static class SceneCreator
             SubRevisionId = -1,
             MaxTreeIndex = maxTreeIndex,
             Unit = "Meters",
-            Sectors = sectors.Select(FromSector).ToArray()
+            Sectors = sectors.Select(FromSector).ToArray(),
         };
 
         var cameraPath = Path.Join(outputDirectory.FullName, "initialCamera.json");
@@ -216,7 +216,7 @@ public static class SceneCreator
                 var filepath = Path.Combine(outputDirectory.FullName, sector.Filename);
                 yield return sector with
                 {
-                    DownloadSize = new FileInfo(filepath).Length
+                    DownloadSize = new FileInfo(filepath).Length,
                 };
             }
         }

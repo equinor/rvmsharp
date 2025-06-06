@@ -10,7 +10,7 @@ internal class ConnectionInterface
     {
         Undefined,
         Square,
-        Circular
+        Circular,
     }
 
     public Type InterfaceType = Type.Undefined;
@@ -50,13 +50,13 @@ internal class ConnectionInterface
                         new Vector3(-bx - ox, -by - oy, -h2),
                         new Vector3(bx - ox, -by - oy, -h2),
                         new Vector3(bx - ox, by - oy, -h2),
-                        new Vector3(-bx - ox, by - oy, -h2)
+                        new Vector3(-bx - ox, by - oy, -h2),
                     },
                     {
                         new Vector3(-tx + ox, -ty + oy, h2),
                         new Vector3(tx + ox, -ty + oy, h2),
                         new Vector3(tx + ox, ty + oy, h2),
-                        new Vector3(-tx + ox, ty + oy, h2)
+                        new Vector3(-tx + ox, ty + oy, h2),
                     },
                 };
 
@@ -93,38 +93,38 @@ internal class ConnectionInterface
                         new Vector3(xm, ym, zp),
                         new Vector3(xm, yp, zp),
                         new Vector3(xm, yp, zm),
-                        new Vector3(xm, ym, zm)
+                        new Vector3(xm, ym, zm),
                     },
                     {
                         new Vector3(xp, ym, zm),
                         new Vector3(xp, yp, zm),
                         new Vector3(xp, yp, zp),
-                        new Vector3(xp, ym, zp)
+                        new Vector3(xp, ym, zp),
                     },
                     {
                         new Vector3(xp, ym, zm),
                         new Vector3(xp, ym, zp),
                         new Vector3(xm, ym, zp),
-                        new Vector3(xm, ym, zm)
+                        new Vector3(xm, ym, zm),
                     },
                     {
                         new Vector3(xm, yp, zm),
                         new Vector3(xm, yp, zp),
                         new Vector3(xp, yp, zp),
-                        new Vector3(xp, yp, zm)
+                        new Vector3(xp, yp, zm),
                     },
                     {
                         new Vector3(xm, yp, zm),
                         new Vector3(xp, yp, zm),
                         new Vector3(xp, ym, zm),
-                        new Vector3(xm, ym, zm)
+                        new Vector3(xm, ym, zm),
                     },
                     {
                         new Vector3(xm, ym, zp),
                         new Vector3(xp, ym, zp),
                         new Vector3(xp, yp, zp),
-                        new Vector3(xm, yp, zp)
-                    }
+                        new Vector3(xm, yp, zp),
+                    },
                 };
 
                 for (var k = 0; k < 4; k++)

@@ -734,7 +734,7 @@ public class PartReplacementUtilsTests
             meshS?.Mesh,
             meshXl?.Mesh,
             meshM?.Mesh,
-            meshL?.Mesh
+            meshL?.Mesh,
         };
 
         // Act
@@ -764,7 +764,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, -1.5f, 0.0f),
             new Vector3(0.0f, 1.5f, 0.0f),
             new Vector3(0.0f, 0.0f, -2.0f),
-            new Vector3(0.0f, 0.0f, 2.0f)
+            new Vector3(0.0f, 0.0f, 2.0f),
         };
         var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
         var mesh = new Mesh(vertices, indices, 0.0f);
@@ -810,7 +810,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, 0.0f, 0.0f),
             new Vector3(0.0f, 3.0f, 0.0f),
             new Vector3(0.0f, 0.0f, 0.0f),
-            new Vector3(0.0f, 0.0f, 4.0f)
+            new Vector3(0.0f, 0.0f, 4.0f),
         };
         var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
         var mesh = new Mesh(vertices, indices, 0.0f);
@@ -872,7 +872,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, -1.5f, 0.0f),
             new Vector3(0.0f, 1.5f, 0.0f),
             new Vector3(0.0f, 0.0f, -2.0f),
-            new Vector3(0.0f, 0.0f, 2.0f)
+            new Vector3(0.0f, 0.0f, 2.0f),
         };
         var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
         var mesh = new Mesh(vertices, indices, 0.0f);
@@ -934,7 +934,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, -1.5f, 0.0f),
             new Vector3(0.0f, 1.5f, 0.0f),
             new Vector3(0.0f, 0.0f, -2.0f),
-            new Vector3(0.0f, 0.0f, 2.0f)
+            new Vector3(0.0f, 0.0f, 2.0f),
         };
         var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
         var mesh = new Mesh(vertices, indices, 0.0f);
@@ -989,7 +989,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, -0.5f, 0.0f),
             new Vector3(0.0f, 0.5f, 0.0f),
             new Vector3(0.0f, 0.0f, -0.5f),
-            new Vector3(0.0f, 0.0f, 0.5f)
+            new Vector3(0.0f, 0.0f, 0.5f),
         };
         var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
         var mesh = new Mesh(vertices, indices, 0.0f);
@@ -1050,7 +1050,7 @@ public class PartReplacementUtilsTests
             new Vector3(0.0f, -0.5f, 0.0f),
             new Vector3(0.0f, 0.5f, 0.0f),
             new Vector3(0.0f, 0.0f, -0.5f),
-            new Vector3(0.0f, 0.0f, 0.5f)
+            new Vector3(0.0f, 0.0f, 0.5f),
         };
         var indices = new uint[] { 0, 1, 2, 3, 4, 5 };
         var mesh = new Mesh(vertices, indices, 0.0f);

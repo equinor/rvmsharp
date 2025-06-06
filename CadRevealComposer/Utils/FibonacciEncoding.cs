@@ -81,7 +81,7 @@ public static class FibonacciEncoding
         27777890035288,
         44945570212853,
         72723460248141,
-        117669030460994
+        117669030460994,
     };
 
     public static byte[] EncodeArray(ulong[] input)

@@ -14,7 +14,7 @@ public class GeometryOptimizerTests
         return primitive switch
         {
             InstancedMesh instancedMesh => instancedMesh.InstanceId,
-            _ => null
+            _ => null,
         };
     }
 
@@ -414,7 +414,7 @@ public class GeometryOptimizerTests
             {
                 TreeIndex = 0,
                 Name = "First",
-                Parent = null
+                Parent = null,
             }
         );
 
@@ -457,7 +457,7 @@ public class GeometryOptimizerTests
             {
                 TreeIndex = 0,
                 Name = "First",
-                Parent = null
+                Parent = null,
             }
         );
         nodes.Add(
@@ -465,7 +465,7 @@ public class GeometryOptimizerTests
             {
                 TreeIndex = 0,
                 Name = "Second",
-                Parent = null
+                Parent = null,
             }
         );
         nodes.Add(
@@ -473,7 +473,7 @@ public class GeometryOptimizerTests
             {
                 TreeIndex = 0,
                 Name = "Third",
-                Parent = null
+                Parent = null,
             }
         );
         nodes.Add(
@@ -481,7 +481,7 @@ public class GeometryOptimizerTests
             {
                 TreeIndex = 0,
                 Name = "Fourth",
-                Parent = null
+                Parent = null,
             }
         );
         nodes.Add(
@@ -489,7 +489,7 @@ public class GeometryOptimizerTests
             {
                 TreeIndex = 0,
                 Name = "Fifth",
-                Parent = null
+                Parent = null,
             }
         );
 
