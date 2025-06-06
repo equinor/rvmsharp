@@ -210,12 +210,12 @@ public class PartReplacementUtilsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(startCapNormal.X, Is.EqualTo(normal.X).Within(0.1).Or.EqualTo(-normal.X).Within(0.1));
-            Assert.That(startCapNormal.Y, Is.EqualTo(normal.Y).Within(0.1).Or.EqualTo(-normal.Y).Within(0.1));
-            Assert.That(startCapNormal.Z, Is.EqualTo(normal.Z).Within(0.1).Or.EqualTo(-normal.Z).Within(0.1));
-            Assert.That(endCapNormal.X, Is.EqualTo(normal.X).Within(0.1).Or.EqualTo(-normal.X).Within(0.1));
-            Assert.That(endCapNormal.Y, Is.EqualTo(normal.Y).Within(0.1).Or.EqualTo(-normal.Y).Within(0.1));
-            Assert.That(endCapNormal.Z, Is.EqualTo(normal.Z).Within(0.1).Or.EqualTo(-normal.Z).Within(0.1));
+            Assert.That(startCapNormal.X, Is.EqualTo(-normal.X).Within(0.1));
+            Assert.That(startCapNormal.Y, Is.EqualTo(-normal.Y).Within(0.1));
+            Assert.That(startCapNormal.Z, Is.EqualTo(-normal.Z).Within(0.1));
+            Assert.That(endCapNormal.X, Is.EqualTo(normal.X).Within(0.1));
+            Assert.That(endCapNormal.Y, Is.EqualTo(normal.Y).Within(0.1));
+            Assert.That(endCapNormal.Z, Is.EqualTo(normal.Z).Within(0.1));
         });
 
         return;
