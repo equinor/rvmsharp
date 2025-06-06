@@ -463,7 +463,6 @@ public static class RvmFacetGroupMatcher
         {
             // Console.WriteLine("Gave up on " + templatesToGiveUpOn.Count);
 
-
             result.AddRange(templatesToGiveUpOn.Select(x => new NotInstancedResult(x.Original)));
             templateCandidates.RemoveAll(x => templatesToGiveUpOn.Contains(x));
         }
