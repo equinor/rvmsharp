@@ -43,11 +43,11 @@ insert_final_newline = true
 
 #### .NET Coding Conventions ####
 
-# Organize usings
-dotnet_separate_import_directive_groups = false
-dotnet_sort_system_directives_first = false
+# Organize usings (Csharpier)
+dotnet_separate_import_directive_groups = true
+dotnet_sort_system_directives_first = true
 #file_header_template = unset
-csharp_style_namespace_declarations = file_scoped
+resharper_csharp_namespace_body = file_scoped
 
 # this. and Me. preferences
 dotnet_style_qualification_for_event = false:silent
@@ -190,7 +190,7 @@ csharp_space_between_square_brackets = false
 csharp_preserve_single_line_blocks = true
 csharp_preserve_single_line_statements = true
 
-# Trailing commas
+# Trailing commas (Csharpier recommended)
 resharper_csharp_trailing_comma_in_multiline_lists = true
 
 #### Naming styles ####
