@@ -2,6 +2,8 @@ namespace CadRevealComposer.Tests;
 
 using System.Drawing;
 using System.Numerics;
+using Primitives;
+using Tessellation;
 
 public class BoundingBoxTests
 {

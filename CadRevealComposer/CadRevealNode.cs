@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
+using Tessellation;
 using Utils;
 
 [ProtoContract(SkipConstructor = true)]

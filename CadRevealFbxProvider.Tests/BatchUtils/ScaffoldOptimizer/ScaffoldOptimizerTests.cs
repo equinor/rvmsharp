@@ -3,6 +3,7 @@ namespace CadRevealFbxProvider.Tests.BatchUtils;
 using System.Drawing;
 using System.Numerics;
 using CadRevealComposer;
+using CadRevealComposer.Operations.Tessellating;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
@@ -30,6 +31,66 @@ static class MeshCreator
             [i1, i2, i3],
             0.0f
         );
+    }
+
+    public static Mesh Create(int coordinateCount)
+    {
+        var randomizer = new Random();
+        var coordinates = new List<Vector3>();
+        var indices = new List<uint>();
+        const int maxRandInt = 512;
+        const float maxRandFloat = 10.0f;
+
+        for (int i = 0; i < coordinateCount; i++)
+        {
+            float rndX = maxRandFloat * (float)randomizer.Next(maxRandInt) / maxRandInt;
+            float rndY = maxRandFloat * (float)randomizer.Next(maxRandInt) / maxRandInt;
+            float rndZ = maxRandFloat * (float)randomizer.Next(maxRandInt) / maxRandInt;
+            coordinates.Add(new Vector3(rndX, rndY, rndZ));
+            indices.Add((uint)i);
+        }
+
+        return new Mesh(coordinates.ToArray(), indices.ToArray(), 0.01f);
+    }
+
+    public static Mesh? CreateCone()
+    {
+        var cone = new Cone(
+            (float)(2.0 * Math.PI),
+            (float)(2.0 * Math.PI),
+            new Vector3(0, 0, 0),
+            new Vector3(0, 0, 15.0f),
+            new Vector3(0, 0, 1.0f),
+            4.0f,
+            2.5f,
+            0,
+            Color.Black,
+            new BoundingBox(new Vector3(-4.0f, -4.0f, 0.0f), new Vector3(4.0f, 4.0f, 15.0f))
+        );
+        return ConeTessellator.Tessellate(cone)?.Mesh;
+    }
+
+    public static Mesh CreateValidAxisAlignedPlank()
+    {
+        var coordinates = new List<Vector3>();
+        var indices = new List<uint>();
+
+        coordinates.Add(new Vector3(0.0f, 0.0f, 0.0f));
+        coordinates.Add(new Vector3(6.2f, 0.0f, 0.0f));
+        coordinates.Add(new Vector3(0.0f, 0.7f, 0.0f));
+        coordinates.Add(new Vector3(6.2f, 0.7f, 0.0f));
+
+        coordinates.Add(new Vector3(0.0f, 0.0f, 0.3f));
+        coordinates.Add(new Vector3(6.2f, 0.0f, 0.3f));
+        coordinates.Add(new Vector3(0.0f, 0.7f, 0.3f));
+        coordinates.Add(new Vector3(6.2f, 0.7f, 0.3f));
+
+        for (int i = 0; i < coordinates.Count; i++)
+        {
+            indices.Add((uint)i);
+        }
+
+        return new Mesh(coordinates.ToArray(), indices.ToArray(), 0.01f);
     }
 
     public static void ValidateMesh(
@@ -82,10 +143,10 @@ static class MeshCreator
 class ScaffoldOptimizerOverride(
     List<Mesh?> trueNodeMeshes,
     string trueName,
-    ScaffoldOptimizerOverride.EOptimizationRoutine optimizationRoutine
+    ScaffoldOptimizerOverride.OptimizationRoutine optimizationRoutine
 ) : ScaffoldOptimizerBase
 {
-    public enum EOptimizationRoutine
+    public enum OptimizationRoutine
     {
         CheckInputOptimizeToNull = 0,
         NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy,
@@ -99,7 +160,7 @@ class ScaffoldOptimizerOverride(
         Func<ulong, int, ulong> requestChildMeshInstanceId
     )
     {
-        if (optimizationRoutine == EOptimizationRoutine.CheckInputOptimizeToNull)
+        if (optimizationRoutine == OptimizationRoutine.CheckInputOptimizeToNull)
         {
             Assert.Multiple(() =>
             {
@@ -138,16 +199,16 @@ class ScaffoldOptimizerOverride(
 
         switch (optimizationRoutine)
         {
-            case EOptimizationRoutine.CheckInputOptimizeToNull:
+            case OptimizationRoutine.CheckInputOptimizeToNull:
                 return null;
-            case EOptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy:
+            case OptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy:
                 results.Add(new ScaffoldOptimizerResult(nodeGeometries[0], mesh1, 0, requestChildMeshInstanceId));
                 results.Add(new ScaffoldOptimizerResult(nodeGeometries[1], mesh2, 0, requestChildMeshInstanceId));
                 results.Add(new ScaffoldOptimizerResult(prim1));
                 results.Add(new ScaffoldOptimizerResult(nodeGeometries[3], mesh3, 0, requestChildMeshInstanceId));
                 results.Add(new ScaffoldOptimizerResult(nodeGeometries[4]));
                 return results;
-            case EOptimizationRoutine.NoInputCheckOptimizeToSplitMeshes:
+            case OptimizationRoutine.NoInputCheckOptimizeToSplitMeshes:
                 // Split mesh 1 with Instance ID = 1 into three parts, remembering to assign an index for each new mesh in the split and use the correct base for the split
                 results.Add(new ScaffoldOptimizerResult(nodeGeometries[0], mesh1, 0, requestChildMeshInstanceId));
                 results.Add(new ScaffoldOptimizerResult(nodeGeometries[0], mesh2, 1, requestChildMeshInstanceId));
@@ -191,11 +252,14 @@ class ScaffoldOptimizerOverride(
 
 public class ScaffoldOptimizerTests
 {
-    private enum ETestPurpose
+    public enum TestPurpose
     {
         TestGeometryAssignment = 0,
         TestWithOnlyNonMeshPrimitives,
         TestInstancing,
+        TestOptimizationSteps,
+        TestOptimizationOnTessellatedObject,
+        TestPlankOptimization,
     }
 
     private static (
@@ -203,7 +267,7 @@ public class ScaffoldOptimizerTests
         List<Mesh?> nodeMeshes,
         List<BoundingBox> boundingBoxes,
         List<(int i1, int i2)> instancePairs
-    ) CreateCadRevealNode(string partName, ETestPurpose testPurpose)
+    ) CreateCadRevealNode(string partName, TestPurpose testPurpose)
     {
         var mesh1 = MeshCreator.Create(5, 5, 5, 7, 7, 7, 3, 3, 3, 0, 1, 2);
         var mesh2 = MeshCreator.Create(1, 2, 3, 6, 7, 8, 9, 10, 11, 0, 1, 2);
@@ -212,9 +276,16 @@ public class ScaffoldOptimizerTests
         var bbox1 = new BoundingBox(new Vector3(0, 0, 0), new Vector3(1, 1, 1));
         var bbox2 = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6));
 
+        var mesh4 = MeshCreator.Create(1000);
+        var mesh5 = MeshCreator.CreateCone();
+
+        var mesh6 = MeshCreator.CreateValidAxisAlignedPlank();
+        var bbox6 = mesh6.CalculateAxisAlignedBoundingBox();
+        Assert.That(mesh5, Is.Not.Null);
+
         switch (testPurpose)
         {
-            case ETestPurpose.TestGeometryAssignment:
+            case TestPurpose.TestGeometryAssignment:
                 var node1 = new CadRevealNode
                 {
                     TreeIndex = 0,
@@ -230,7 +301,7 @@ public class ScaffoldOptimizerTests
                     ],
                 };
                 return (node1, [mesh1, mesh2, mesh3, mesh1, null], [bbox1, bbox1, bbox1, bbox1, bbox2], []);
-            case ETestPurpose.TestWithOnlyNonMeshPrimitives:
+            case TestPurpose.TestWithOnlyNonMeshPrimitives:
                 var node3 = new CadRevealNode
                 {
                     TreeIndex = 0,
@@ -245,7 +316,7 @@ public class ScaffoldOptimizerTests
                     ],
                 };
                 return (node3, [null, null, null, null], [bbox1, bbox1, bbox1, bbox1], []);
-            case ETestPurpose.TestInstancing:
+            case TestPurpose.TestInstancing:
                 var node2 = new CadRevealNode
                 {
                     TreeIndex = 0,
@@ -268,6 +339,57 @@ public class ScaffoldOptimizerTests
                     [bbox1, bbox1, bbox1, bbox1, bbox1, bbox1, bbox2],
                     [(0, 1), (2, 3), (2, 4)]
                 );
+            case TestPurpose.TestOptimizationSteps:
+                var node4 = new CadRevealNode
+                {
+                    TreeIndex = 0,
+                    Name = partName,
+                    Parent = null,
+                    Geometries =
+                    [
+                        new InstancedMesh(
+                            1,
+                            mesh4,
+                            Matrix4x4.Identity,
+                            1,
+                            Color.Black,
+                            mesh4.CalculateAxisAlignedBoundingBox()
+                        ),
+                    ],
+                };
+                return (node4, [mesh4], [mesh4.CalculateAxisAlignedBoundingBox()], []);
+            case TestPurpose.TestOptimizationOnTessellatedObject:
+                var node5 = new CadRevealNode
+                {
+                    TreeIndex = 0,
+                    Name = partName,
+                    Parent = null,
+                    Geometries =
+                    [
+                        new InstancedMesh(
+                            1,
+                            mesh5,
+                            Matrix4x4.Identity,
+                            1,
+                            Color.Black,
+                            mesh4.CalculateAxisAlignedBoundingBox()
+                        ),
+                    ],
+                };
+                return (node5, [mesh5], [mesh5.CalculateAxisAlignedBoundingBox()], []);
+            case TestPurpose.TestPlankOptimization:
+                var node6 = new CadRevealNode
+                {
+                    TreeIndex = 0,
+                    Name = partName,
+                    Parent = null,
+                    Geometries =
+                    [
+                        new InstancedMesh(1, mesh6, Matrix4x4.Identity, 1, Color.Black, bbox6),
+                        new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, bbox1),
+                    ],
+                };
+                return (node6, [mesh6, mesh2], [bbox6, bbox1], []);
             default:
                 throw new ArgumentOutOfRangeException(nameof(testPurpose), testPurpose, null);
         }
@@ -285,12 +407,12 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshExtraction_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyExtracted()
+    public void OptimizeNode_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyExtracted()
     {
         ulong currentInstanceId = 0;
 
         // Prepare data
-        var nodeData = CreateCadRevealNode("Test A", ETestPurpose.TestGeometryAssignment);
+        var nodeData = CreateCadRevealNode("Test A", TestPurpose.TestGeometryAssignment);
 
         // Make copy of the node while keeping the node contents and references in its tables the same
         CadRevealNode nodeCpy = CloneCadRevealNode(nodeData.node);
@@ -299,7 +421,7 @@ public class ScaffoldOptimizerTests
         var optimizer = new ScaffoldOptimizerOverride(
             nodeData.nodeMeshes,
             "Test A",
-            ScaffoldOptimizerOverride.EOptimizationRoutine.CheckInputOptimizeToNull
+            ScaffoldOptimizerOverride.OptimizationRoutine.CheckInputOptimizeToNull
         );
         optimizer.OptimizeNode(nodeData.node, OnRequestNewInstanceId);
 
@@ -319,12 +441,12 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshOutput_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyOutput()
+    public void OptimizeNode_GivenMixedNodeContent_CheckThatMeshesAreCorrectlyOutput()
     {
         ulong currentInstanceId = 0;
 
         // Prepare data
-        var nodeData = CreateCadRevealNode("Test B", ETestPurpose.TestGeometryAssignment);
+        var nodeData = CreateCadRevealNode("Test B", TestPurpose.TestGeometryAssignment);
 
         // Make copy of the node while keeping the node contents and references in its tables the same
         CadRevealNode nodeCpy = CloneCadRevealNode(nodeData.node);
@@ -333,7 +455,7 @@ public class ScaffoldOptimizerTests
         var optimizer = new ScaffoldOptimizerOverride(
             nodeData.nodeMeshes,
             "Test B",
-            ScaffoldOptimizerOverride.EOptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy
+            ScaffoldOptimizerOverride.OptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy
         );
         optimizer.OptimizeNode(nodeData.node, OnRequestNewInstanceId);
 
@@ -353,12 +475,12 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestMeshOutput_GivenOnlyNonMeshPrimitiveNodeContent_CheckThatMeshesAreCorrectlyOutput()
+    public void OptimizeNode_GivenOnlyNonMeshPrimitiveNodeContent_CheckThatMeshesAreCorrectlyOutput()
     {
         ulong currentInstanceId = 0;
 
         // Prepare data
-        var nodeData = CreateCadRevealNode("Test C", ETestPurpose.TestWithOnlyNonMeshPrimitives);
+        var nodeData = CreateCadRevealNode("Test C", TestPurpose.TestWithOnlyNonMeshPrimitives);
 
         // Make copy of the node while keeping the node contents and references in its tables the same
         CadRevealNode nodeCpy = CloneCadRevealNode(nodeData.node);
@@ -367,7 +489,7 @@ public class ScaffoldOptimizerTests
         var optimizer = new ScaffoldOptimizerOverride(
             nodeData.nodeMeshes,
             "Test C",
-            ScaffoldOptimizerOverride.EOptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy
+            ScaffoldOptimizerOverride.OptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy
         );
         optimizer.OptimizeNode(nodeData.node, OnRequestNewInstanceId);
 
@@ -386,13 +508,13 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestInstanceIDAssignmentWithoutMeshSplit_GivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
+    public void OptimizeNodes_WithoutMeshSplitGivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
     {
         ulong currentInstanceId = 0;
 
         // Prepare data
-        var nodeData1 = CreateCadRevealNode("Test D", ETestPurpose.TestGeometryAssignment);
-        var nodeData2 = CreateCadRevealNode("Test D", ETestPurpose.TestGeometryAssignment);
+        var nodeData1 = CreateCadRevealNode("Test D", TestPurpose.TestGeometryAssignment);
+        var nodeData2 = CreateCadRevealNode("Test D", TestPurpose.TestGeometryAssignment);
         CadRevealNode[] nodeData = [nodeData1.node, nodeData2.node];
 
         // Make copy of the nodes while keeping the node contents and references in its tables the same
@@ -403,7 +525,7 @@ public class ScaffoldOptimizerTests
         var optimizer = new ScaffoldOptimizerOverride(
             nodeData1.nodeMeshes,
             "Test D",
-            ScaffoldOptimizerOverride.EOptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy
+            ScaffoldOptimizerOverride.OptimizationRoutine.NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy
         );
         optimizer.OptimizeNodes(nodeData.ToList(), OnRequestNewInstanceId);
 
@@ -435,13 +557,13 @@ public class ScaffoldOptimizerTests
     }
 
     [Test]
-    public void TestInstanceIDAssignmentAfterMeshSplit_GivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
+    public void OptimizeNodes_AfterMeshSplitGivenMeshesWithInstanceIDsAndANonMesh_CheckThatInstanceIDsAreCorrectlyAssigned()
     {
         ulong currentInstanceId = 0;
 
         // Prepare data
-        var nodeData1 = CreateCadRevealNode("Test E", ETestPurpose.TestInstancing);
-        var nodeData2 = CreateCadRevealNode("Test E", ETestPurpose.TestInstancing);
+        var nodeData1 = CreateCadRevealNode("Test E", TestPurpose.TestInstancing);
+        var nodeData2 = CreateCadRevealNode("Test E", TestPurpose.TestInstancing);
         CadRevealNode[] nodeData = [nodeData1.node, nodeData2.node];
 
         // Make copy of the nodes while keeping the node contents and references in its tables the same
@@ -452,7 +574,7 @@ public class ScaffoldOptimizerTests
         var optimizer = new ScaffoldOptimizerOverride(
             nodeData1.nodeMeshes,
             "Test E",
-            ScaffoldOptimizerOverride.EOptimizationRoutine.NoInputCheckOptimizeToSplitMeshes
+            ScaffoldOptimizerOverride.OptimizationRoutine.NoInputCheckOptimizeToSplitMeshes
         );
         optimizer.OptimizeNodes(nodeData.ToList(), OnRequestNewInstanceId);
 
@@ -504,5 +626,100 @@ public class ScaffoldOptimizerTests
         return;
         ulong OnRequestNewInstanceId() => currentInstanceId++;
         ulong? ToId(CadRevealNode node, int index) => (node.Geometries[index] as InstancedMesh)?.InstanceId;
+    }
+
+    [Test]
+    public void OptimizeNode_GivenAPartNameNotAssignedForOptimization_CheckThatTheOptimizationWasNotDone()
+    {
+        ulong currentInstanceId = 0;
+
+        // Prepare
+        var nodeDataNoAssignedForOptimization = CreateCadRevealNode(
+            "___NonExistentRandomPartName___",
+            TestPurpose.TestGeometryAssignment
+        );
+
+        // Act
+        var optimizer = new CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ScaffoldOptimizer();
+        optimizer.OptimizeNode(nodeDataNoAssignedForOptimization.node, OnRequestNewInstanceId);
+        CadRevealNode nodeDataNoAssignedForOptimizationClone = CloneCadRevealNode(
+            nodeDataNoAssignedForOptimization.node
+        );
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodeDataNoAssignedForOptimization.node.Geometries[0], Is.InstanceOf<InstancedMesh>());
+            Assert.That(
+                nodeDataNoAssignedForOptimization.nodeMeshes[0]?.TriangleCount,
+                Is.EqualTo(
+                    (nodeDataNoAssignedForOptimizationClone.Geometries[0] as InstancedMesh)?.TemplateMesh.TriangleCount
+                )
+            );
+        });
+
+        return;
+        ulong OnRequestNewInstanceId() => currentInstanceId++;
+    }
+
+    [Test]
+    [TestCase("some plank")]
+    public void OptimizeNode_GivenAPartForAxisAlignedBoundingBoxOptimization_CheckThatTheOptimizationWasDone(
+        string partName
+    )
+    {
+        ulong currentInstanceId = 0;
+
+        // Prepare
+        var nodeData = CreateCadRevealNode(partName, TestPurpose.TestPlankOptimization);
+        CadRevealNode nodeOptimized = CloneCadRevealNode(nodeData.node);
+
+        // Act
+        var optimizer = new CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ScaffoldOptimizer();
+        optimizer.OptimizeNode(nodeOptimized, OnRequestNewInstanceId);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodeOptimized.Geometries, Has.Length.GreaterThan(0));
+            Assert.That(nodeData.node.Geometries[0], Is.InstanceOf<InstancedMesh>());
+            Assert.That(nodeOptimized.Geometries[0], Is.InstanceOf<Box>());
+        });
+
+        return;
+        ulong OnRequestNewInstanceId() => currentInstanceId++;
+    }
+
+    [Test]
+    [TestCase("some kick board", TestPurpose.TestOptimizationSteps)]
+    [TestCase("StairwayGuard", TestPurpose.TestOptimizationOnTessellatedObject)]
+    public void OptimizeNode_GivenAPartForConvexHullOrDecimationOptimization_CheckThatTheOptimizationWasDone(
+        string partName,
+        TestPurpose testPurpose
+    )
+    {
+        ulong currentInstanceId = 0;
+
+        // Prepare
+        var nodeData = CreateCadRevealNode(partName, testPurpose);
+        CadRevealNode nodeOptimized = CloneCadRevealNode(nodeData.node);
+
+        // Act
+        var optimizer = new CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ScaffoldOptimizer();
+        optimizer.OptimizeNode(nodeOptimized, OnRequestNewInstanceId);
+
+        // Assert
+        Assert.Multiple(() =>
+        {
+            Assert.That(nodeOptimized.Geometries, Has.Length.GreaterThan(0));
+            Assert.That(nodeOptimized.Geometries[0], Is.InstanceOf<InstancedMesh>());
+            Assert.That(
+                nodeData.nodeMeshes[0]?.TriangleCount,
+                Is.Not.EqualTo((nodeOptimized.Geometries[0] as InstancedMesh)?.TemplateMesh.TriangleCount)
+            );
+        });
+
+        return;
+        ulong OnRequestNewInstanceId() => currentInstanceId++;
     }
 }

@@ -18,11 +18,6 @@ public class FbxProviderTests
     private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
     private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
 
-    private static readonly DirectoryInfo InputDirectoryMissingAttr = new("TestSamples/missingattributes");
-
-    private static readonly DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingkey");
-    private static readonly DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingkey");
-
     private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
     private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
 
@@ -45,13 +40,13 @@ public class FbxProviderTests
     private static readonly List<IModelFormatProvider> Providers = [new FbxProvider()];
 
     [Test]
-    public void FbxImporterSdkInitTest()
+    public void FbxImporter_Init_CanInitialize()
     {
         using var test = new FbxImporter();
     }
 
     [Test]
-    public void FbxSdkVersionTest()
+    public void HasValidSdk_FbxImporter_CanValidateSdk()
     {
         using var testImporter = new FbxImporter();
         Assert.That(testImporter.HasValidSdk());
@@ -60,16 +55,22 @@ public class FbxProviderTests
     [Test]
     public void FbxImporterLoadFileTest()
     {
+        // arrange
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
-        Iterate(rootNode);
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
+            Iterate(rootNode);
+        });
     }
 
     [Test]
     public void GreenAndRedCube_LoadFile_VerifyCorrectColors()
     {
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(TestSamplesDirectory + "\\green_and_red_cubes.fbx");
+        var rootNode = test.LoadFile(TestSamplesDirectory + "/green_and_red_cubes.fbx");
 
         var revealNode = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -98,37 +99,25 @@ public class FbxProviderTests
         }
     }
 
-    private void Iterate(FbxNode root)
-    {
-        Console.WriteLine(root.GetNodeName());
-        var childCount = root.GetChildCount();
-        Matrix4x4 t = root.GetLocalTransform();
-        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
-        IntPtr meshGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(root);
-        if (meshGeometryPtr != IntPtr.Zero)
-        {
-            FbxMeshWrapper.GetGeometricData(meshGeometryPtr);
-        }
-        for (var i = 0; i < childCount; i++)
-        {
-            var child = root.GetChild(i);
-            Iterate(child);
-        }
-    }
-
     [Test]
-    public void Fbx_Importer_GetUniqueMeshesInFileCount()
+    public void GetAllGeomPointersWithXOrMoreUses_FbxModel_CorrectUniqueMeshesInFileCount()
     {
+        // arrange
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
 
+        // act
         var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(rootNode);
+
+        //assert
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
     [Test]
-    public void ModelAndAttributeFileMismatchGivesErrorMessage()
+    public void Process_ModelAndAttributeFileMismatch_ThrowsError()
     {
+        // arrange
+
         Assert.Throws<Exception>(
             () => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
             "An exception was expected, saying that the model and attribute file do not match, but got none."
@@ -136,8 +125,10 @@ public class FbxProviderTests
     }
 
     [Test]
-    public void WrongAttributeFormatGivesErrorMessage()
+    public void Process_WrongAttributeFormat_ThrowsError()
     {
+        DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
+        DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
         Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
     }
 
@@ -178,7 +169,7 @@ public class FbxProviderTests
         var instanceIndexGenerator = new InstanceIdGenerator();
 
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -218,7 +209,7 @@ public class FbxProviderTests
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "\\fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
@@ -234,15 +225,17 @@ public class FbxProviderTests
         Assert.That(geometriesToProcess, Has.Exactly(25).TypeOf<InstancedMesh>());
     }
 
-    [Test]
-    public void NodeMissingAttributesTest()
+    [TestCase("TestSamples/missingAttributes")]
+    public void ParseFiles_ModelWithNodeMissingAttributes_NodeGetsRemoved(string inputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
+        DirectoryInfo inputDirectoryMissingAttr = new(inputDir);
+
         (IReadOnlyList<CadRevealNode> nodes, _) = modelFormatProviderFbx.ParseFiles(
-            InputDirectoryMissingAttr.EnumerateFiles(),
+            inputDirectoryMissingAttr.EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null))
@@ -256,6 +249,71 @@ public class FbxProviderTests
         }
     }
 
+    [TestCase("TestSamples/tempScaff")]
+    public void ParseFiles_TempScaffolding_ProcessingSucceedsMetadataHasPositiveTempFlag(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
+    }
+
+    [TestCase("TestSamples/correct")]
+    public void ParseFiles_WorkorderScaffolding_ProcessingSucceedsMetadataHasNegativeTempFlag(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+    }
+
+    [TestCase("TestSamples/tempScaff_wrongNaming")]
+    public void ParseFiles_TempScaffoldingWithWrongName_ProcessingFails(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        // no act, assert that exception is thrown
+
+        // assert
+        Assert.Throws<Exception>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        ); // this scaff is not a valid temp scaffolding
+    }
+
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>
         CadRevealComposerRunner.Process(
             inputDirectory,
@@ -264,4 +322,22 @@ public class FbxProviderTests
             ComposerParameters,
             Providers
         );
+
+    private void Iterate(FbxNode root)
+    {
+        Console.WriteLine(root.GetNodeName());
+        var childCount = root.GetChildCount();
+        Matrix4x4 t = root.GetLocalTransform();
+        Console.WriteLine($"Pos: {t.Translation.X}, {t.Translation.Y}, {t.Translation.Z}");
+        IntPtr meshGeometryPtr = FbxMeshWrapper.GetMeshGeometryPtr(root);
+        if (meshGeometryPtr != IntPtr.Zero)
+        {
+            FbxMeshWrapper.GetGeometricData(meshGeometryPtr);
+        }
+        for (var i = 0; i < childCount; i++)
+        {
+            var child = root.GetChild(i);
+            Iterate(child);
+        }
+    }
 }

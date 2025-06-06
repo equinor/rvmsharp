@@ -5,6 +5,7 @@ using Attributes;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
+using CadRevealComposer.Utils;
 using Commons;
 
 public static class FbxWorkload
@@ -87,6 +88,7 @@ public static class FbxWorkload
 
         Dictionary<string, string> metadata = new();
 
+        // the local function LoadFbxFile modifies model's metadata as well
         var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
 
         if (stringInternPool != null)
@@ -107,9 +109,11 @@ public static class FbxWorkload
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
+                var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
+                var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
+                (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
                 // TODO: Should we crash if we dont have expected values?
-                if (scaffoldingMetadata.HasExpectedValues())
+                if (scaffoldingMetadata.ModelMetadataHasExpectedValues(isTemp))
                 {
                     scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
@@ -132,6 +136,16 @@ public static class FbxWorkload
             // attach attribute info to the nodes if there is any
             if (attributes != null)
             {
+                var requestNewInstanceId = new Func<ulong>(() => instanceIdGenerator.GetNextId());
+                var optimizer = new ScaffoldOptimizer.ScaffoldOptimizer();
+                var statisticsBefore = new GeometryDistributionNodeStats(flatNodes.ToList());
+                optimizer.OptimizeNodes(flatNodes.ToList(), requestNewInstanceId);
+                var statisticsAfter = new GeometryDistributionNodeStats(flatNodes.ToList());
+                var diffStatistics = new GeometryDistributionNodeStatsDiff(statisticsBefore, statisticsAfter);
+                statisticsBefore.PrintStatistics("scaffolds before optimization");
+                statisticsAfter.PrintStatistics("scaffolds after optimization");
+                diffStatistics.PrintStatistics("improvement of scaffolds geometry");
+
                 bool totalMismatch = true;
                 var fbxNameIdRegex = new Regex(@"\[(\d+)\]");
                 foreach (CadRevealNode cadRevealNode in flatNodes)
@@ -166,7 +180,7 @@ public static class FbxWorkload
 
                 if (totalMismatch)
                     throw new Exception(
-                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch."
+                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
                     );
             }
 

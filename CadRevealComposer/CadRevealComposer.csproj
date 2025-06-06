@@ -1,23 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
-        <Nullable>enable</Nullable>
-    </PropertyGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Commons\Commons.csproj" />
-        <ProjectReference Include="..\HierarchyComposer\HierarchyComposer.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="Ben.StringIntern" />
-        <PackageReference Include="geometry3Sharp" />
-        <PackageReference Include="MIConvexHull" />
-        <PackageReference Include="Newtonsoft.Json" />
-        <PackageReference Include="protobuf-net" />
-        <PackageReference Include="SharpGLTF.Core" />
-        <PackageReference Include="System.Drawing.Common" />
-    </ItemGroup>
-
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Commons\Commons.csproj" />
+    <ProjectReference Include="..\HierarchyComposer\HierarchyComposer.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Ben.StringIntern" />
+    <PackageReference Include="geometry3Sharp" />
+    <PackageReference Include="MIConvexHull" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="protobuf-net" />
+    <PackageReference Include="SharpGLTF.Core" />
+  </ItemGroup>
 </Project>

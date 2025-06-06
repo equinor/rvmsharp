@@ -83,7 +83,6 @@ public class RvmTessellator
 
         var meshes = facetGroupInstanced
             .Concat(pyramidsInstanced)
-            .AsParallel()
             .Select(g =>
             {
                 var allTransforms = g.Select(x => x.Transform).ToArray();
@@ -102,6 +101,12 @@ public class RvmTessellator
             })
             .Where(g => g.Mesh.TriangleCount > 0) // ignore empty meshes
             .ToArray();
+
+        Trace.Assert(
+            meshes.DistinctBy(x => x.InstanceId).Count() == meshes.Length,
+            "InstanceId must be unique for each group of instances. This is a bug in the instancing code."
+        );
+
         var totalCount = meshes.Sum(m => m.InstanceGroup.Count());
         instanceTessellationLogObject.LogFailedTessellations();
 

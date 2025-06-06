@@ -1,15 +1,9 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer;
 
-using System.Drawing;
 using System.Linq;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-
-static class ScaffoldOptimizerExtensions
-{
-    public static bool ContainsAny(this string str, string[] keywordList) => keywordList.Any(str.Contains);
-}
 
 public class ScaffoldOptimizerBase
 {
