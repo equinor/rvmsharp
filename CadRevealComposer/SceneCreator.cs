@@ -9,6 +9,7 @@ using System.Linq;
 using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
+using HierarchyComposer.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
@@ -44,13 +45,15 @@ public static class SceneCreator
         File.WriteAllText(metadataPath, metadataString);
     }
 
-    public static void ExportHierarchyDatabase(string databasePath, IReadOnlyList<CadRevealNode> allNodes)
+    public static void WriteToHierarchyDatabase(string databasePath, IReadOnlyList<HierarchyNode> allNodes)
     {
-        var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
-
-        ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
+        ILogger<DatabaseComposer> databaseLogger = LoggerFactory.Create(builder =>
+        {
+            builder.SetMinimumLevel(LogLevel.Debug); // Set the desired log level
+        }).CreateLogger<DatabaseComposer>();
+        //Logger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
         var exporter = new DatabaseComposer(databaseLogger);
-        exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
+        exporter.ComposeDatabase(allNodes, Path.GetFullPath(databasePath));
     }
 
     public static void AddPrioritizedSectorsToDatabase(
