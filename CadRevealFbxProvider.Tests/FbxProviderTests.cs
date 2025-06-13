@@ -14,12 +14,8 @@ using CadRevealFbxProvider.BatchUtils;
 [TestFixture]
 public class FbxProviderTests
 {
-    private static readonly DirectoryInfo TestSamplesDirectory = new("TestSamples");
-    private static readonly DirectoryInfo OutputDirectoryCorrect = new("TestSamples/correct");
-    private static readonly DirectoryInfo InputDirectoryCorrect = new("TestSamples/correct");
-
-    private static readonly DirectoryInfo OutputDirectoryMismatch = new("TestSamples/mismatch");
-    private static readonly DirectoryInfo InputDirectoryMismatch = new("TestSamples/mismatch");
+    private const string InputDirectoryCorrect = "TestSamples/correct";
+    private const string OutputDirectoryCorrect = "TestSamples/correct";
 
     private static readonly ModelParameters ModelParameters = new(
         new ProjectId(1),
@@ -52,8 +48,8 @@ public class FbxProviderTests
         Assert.That(testImporter.HasValidSdk());
     }
 
-    [Test]
-    public void FbxImporterLoadFileTest()
+    [TestCase(InputDirectoryCorrect)]
+    public void FbxImporterLoadFileTest(string inputDir)
     {
         // arrange
         using var test = new FbxImporter();
@@ -61,7 +57,7 @@ public class FbxProviderTests
         // assert
         Assert.DoesNotThrow(() =>
         {
-            var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
+            var rootNode = test.LoadFile(inputDir + "/TEST-1235678.fbx");
             Iterate(rootNode);
         });
     }
@@ -70,7 +66,7 @@ public class FbxProviderTests
     public void GreenAndRedCube_LoadFile_VerifyCorrectColors()
     {
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(TestSamplesDirectory + "/green_and_red_cubes.fbx");
+        var rootNode = test.LoadFile("TestSamples/green_and_red_cubes.fbx");
 
         var revealNode = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -99,12 +95,12 @@ public class FbxProviderTests
         }
     }
 
-    [Test]
-    public void GetAllGeomPointersWithXOrMoreUses_FbxModel_CorrectUniqueMeshesInFileCount()
+    [TestCase(InputDirectoryCorrect)]
+    public void GetAllGeomPointersWithXOrMoreUses_FbxModel_CorrectUniqueMeshesInFileCount(string inputDir)
     {
         // arrange
         using var test = new FbxImporter();
-        var rootNode = test.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
+        var rootNode = test.LoadFile(inputDir + "/TEST-1235678.fbx");
 
         // act
         var data = FbxGeometryUtils.GetAllGeomPointersWithXOrMoreUses(rootNode);
@@ -113,15 +109,31 @@ public class FbxProviderTests
         Assert.That(data, Has.Exactly(3).Items); // Expecting 3 unique meshes in the source model
     }
 
-    [Test]
-    public void Process_ModelAndAttributeFileMismatch_ThrowsError()
+    [TestCase("TestSamples/mismatch")]
+    public void Process_ModelAndAttributeFileMismatch_ThrowsError(string dir)
     {
         // arrange
-
-        Assert.Throws<Exception>(
-            () => Process(InputDirectoryMismatch, OutputDirectoryMismatch),
+        DirectoryInfo directoryInfo = new(dir);
+        var err = Assert.Throws<Exception>(
+            () => Process(directoryInfo, directoryInfo),
             "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
+        Assert.That(
+            err.Message.Contains("completely mismatch or all attributes in the attribute file have an issue"),
+            Is.True
+        );
+    }
+
+    [TestCase("TestSamples/mismatchWorkOrders")]
+    public void Process_WorkOrderFromFileAndCSvMismatch_ThrowsError(string dir)
+    {
+        // arrange
+        DirectoryInfo directoryInfo = new(dir);
+        var err = Assert.Throws<Exception>(
+            () => Process(directoryInfo, directoryInfo),
+            "An exception was expected, saying that the model and attribute file do not match, but got none."
+        );
+        Assert.That(err.Message.Contains("does not match the work order from filename"), Is.True);
     }
 
     [Test]
@@ -132,21 +144,21 @@ public class FbxProviderTests
         Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
     }
 
-    [Test]
-    public void SampleModel_SmokeTest()
+    [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
+    public void SampleModel_SmokeTest(string inputDir, string outputDir)
     {
-        Process(InputDirectoryCorrect, OutputDirectoryCorrect);
+        Process(new DirectoryInfo(inputDir), new DirectoryInfo(outputDir));
     }
 
-    [Test]
-    public void SampleModel_AttributeTest()
+    [TestCase(InputDirectoryCorrect)]
+    public void SampleModel_AttributeTest(string inputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         var modelFormatProviderFbx = new FbxProvider();
 
         (var nodes, var metadata) = modelFormatProviderFbx.ParseFiles(
-            InputDirectoryCorrect.EnumerateFiles(),
+            new DirectoryInfo(inputDir).EnumerateFiles(),
             treeIndexGenerator,
             instanceIndexGenerator,
             new NodeNameFiltering(new NodeNameExcludeRegex(null))
@@ -162,14 +174,14 @@ public class FbxProviderTests
         Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes));
     }
 
-    [Test]
-    public void SampleModel_Load()
+    [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
+    public void SampleModel_Load(string inputDir, string outputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
 
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(inputDir + "/TEST-1235678.fbx");
 
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
@@ -191,25 +203,25 @@ public class FbxProviderTests
         var geometriesToProcess = flatNodes.SelectMany(x => x.Geometries).ToArray();
         Assert.That(geometriesToProcess, Has.None.TypeOf<TriangleMesh>()); // All meshes in the input data are used more than once
         Assert.That(geometriesToProcess, Has.All.TypeOf<InstancedMesh>()); // Because the geometriesThatShouldBeInstanced list is empty
+
+        DirectoryInfo outputDirInfo = new DirectoryInfo(outputDir);
         CadRevealComposerRunner.SplitAndExportSectors(
             geometriesToProcess.ToArray(),
-            OutputDirectoryCorrect,
+            outputDirInfo,
             ModelParameters,
             ComposerParameters
         );
 
-        Console.WriteLine(
-            $"Export Finished. Wrote output files to \"{Path.GetFullPath(OutputDirectoryCorrect.FullName)}\""
-        );
+        Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirInfo.FullName)}\"");
     }
 
-    [Test]
-    public void SampleModel_Load_WithInstanceThresholdHigh()
+    [TestCase(InputDirectoryCorrect)]
+    public void SampleModel_Load_WithInstanceThresholdHigh(string inputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
         using var testLoader = new FbxImporter();
-        var rootNode = testLoader.LoadFile(InputDirectoryCorrect + "/fbx_test_model.fbx");
+        var rootNode = testLoader.LoadFile(inputDir + "/TEST-1235678.fbx");
         var rootNodeConverted = FbxNodeToCadRevealNodeConverter.ConvertRecursive(
             rootNode,
             treeIndexGenerator,
@@ -270,7 +282,7 @@ public class FbxProviderTests
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
-    [TestCase("TestSamples/correct")]
+    [TestCase(InputDirectoryCorrect)]
     public void ParseFiles_WorkorderScaffolding_ProcessingSucceedsMetadataHasNegativeTempFlag(string inputDir)
     {
         // arrange

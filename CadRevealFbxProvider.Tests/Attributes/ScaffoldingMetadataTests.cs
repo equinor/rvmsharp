@@ -1,8 +1,5 @@
 namespace CadRevealFbxProvider.Tests.Attributes;
 
-using CadRevealComposer.Configuration;
-using CadRevealComposer.IdProviders;
-using CadRevealComposer.Operations;
 using CadRevealFbxProvider.Attributes;
 
 [TestFixture]
@@ -98,8 +95,9 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(metadataEmpty.ModelMetadataHasExpectedValues(), Is.False);
             Assert.That(metadata.ModelMetadataHasExpectedValues(), Is.True);
+
+            Assert.Throws<Exception>(() => metadataEmpty.ModelMetadataHasExpectedValues());
         });
     }
 
