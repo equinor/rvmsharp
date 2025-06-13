@@ -1,6 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public class ScaffoldingMetadata
 {
@@ -148,6 +149,33 @@ public class ScaffoldingMetadata
         return false; // Did not add any value
     }
 
+    public void ModelMetadataMatchesWorkOrderFromFilename(string filename)
+    {
+        var match = Regex.Match(filename, @"-(\d+)(?:-|$)");
+        if (match.Success)
+        {
+            string workOrderFromFilename = match.Groups[1].Value;
+            Console.WriteLine(
+                $"Processed work order scaffolding CSV file: {filename} with work order number: {workOrderFromFilename}"
+            );
+
+            // this is also handling of work order scaffs only
+            // the filename MUST contain a work order number, and it MUST match the one in the metadata
+            if (string.IsNullOrEmpty(workOrderFromFilename) || workOrderFromFilename != WorkOrder)
+            {
+                throw new Exception(
+                    $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                );
+            }
+        }
+        else
+        {
+            throw new Exception(
+                $"Scaffolding CSV file {filename} does not contain a work order number in the filename."
+            );
+        }
+    }
+
     public bool ModelMetadataHasExpectedValues(bool tempScaffFlag = false)
     {
         if (tempScaffFlag)
@@ -167,7 +195,7 @@ public class ScaffoldingMetadata
             || string.IsNullOrEmpty(TotalWeight)
         )
         {
-            return false;
+            throw new Exception("Scaffolding metadata is missing a mandatory field");
         }
 
         return true;
