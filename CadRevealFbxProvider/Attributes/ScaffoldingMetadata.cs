@@ -70,7 +70,7 @@ public class ScaffoldingMetadata
         { "Project number", "ProjectNumber" },
         { "Size (m\u00b3)", "TotalVolume" },
         { "Grand total", "TotalWeight" },
-        { "Grand total calculated", "TotalWeightCalculated" }
+        { "Grand total calculated", "TotalWeightCalculated" },
     };
 
     private static void GuardForInvalidValues(string? newValue, string? existingValue)
