@@ -207,7 +207,7 @@ public class ScaffoldingMetadata
             //    return false;
 
             if (!success)
-                throw new Exception(
+                throw new ScaffoldingMetadataMissingFieldException(
                     $"Temp scaffolding metadata is missing a mandatory field: {missingFields.TrimEnd(',', ' ')}."
                 );
             return true;
@@ -229,7 +229,7 @@ public class ScaffoldingMetadata
             }
 
             if (!success)
-                throw new Exception(
+                throw new ScaffoldingMetadataMissingFieldException(
                     $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
                 );
         }

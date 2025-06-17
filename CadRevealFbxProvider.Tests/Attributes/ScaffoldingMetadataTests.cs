@@ -97,7 +97,9 @@ public class ScaffoldingMetadataTests
         {
             Assert.That(metadata.ModelMetadataHasExpectedValues(), Is.True);
 
-            Assert.Throws<Exception>(() => metadataEmpty.ModelMetadataHasExpectedValues());
+            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+                metadataEmpty.ModelMetadataHasExpectedValues()
+            );
         });
     }
 
@@ -155,7 +157,9 @@ public class ScaffoldingMetadataTests
         var targetDict = new Dictionary<string, string>();
 
         // Assert
-        Assert.Throws<Exception>(() => metadataEmpty.TryWriteToGenericMetadataDict(targetDict));
+        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+            metadataEmpty.TryWriteToGenericMetadataDict(targetDict)
+        );
     }
 
     [Test]

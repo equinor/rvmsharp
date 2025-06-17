@@ -689,13 +689,8 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        var err = Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-        Assert.That(err, Is.Not.Null);
-        Assert.That(
-            err!.Message.StartsWith(
-                "Scaffolding metadata is missing a mandatory field(s): \"Scaff build Operation number\""
-            ),
-            Is.True
+        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
 
@@ -716,13 +711,8 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        var err = Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-        Assert.That(err, Is.Not.Null);
-        Assert.That(
-            err!.Message.StartsWith(
-                "Scaffolding metadata is missing a mandatory field(s): \"Scaff build Operation number\""
-            ),
-            Is.True
+        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
 
@@ -833,15 +823,8 @@ public class FbxProviderAttributeParserTests
         // Act & Assert
         Assert.Multiple(() =>
         {
-            var err = Assert.Throws<System.Exception>(() =>
+            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
                 ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
-            );
-            Assert.That(err, Is.Not.Null);
-            Assert.That(
-                err!.Message.StartsWith(
-                    "Scaffolding metadata is missing a mandatory field(s): \"Dismantle Operation number\""
-                ),
-                Is.True
             );
         });
     }
@@ -866,13 +849,8 @@ public class FbxProviderAttributeParserTests
         // Act & Assert
         Assert.Multiple(() =>
         {
-            var err = Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-            Assert.That(err, Is.Not.Null);
-            Assert.That(
-                err!.Message.StartsWith(
-                    "Scaffolding metadata is missing a mandatory field(s): \"Dismantle Operation number\""
-                ),
-                Is.True
+            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+                ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
             );
         });
     }
