@@ -162,6 +162,15 @@ public class ScaffoldingMetadata
 
     public void ThrowIfWorkOrderFromFilenameInvalid(string filename)
     {
+        // this function is only called for work order scaffolding files
+        // so calling this for temp scaffs must be by mistake, -> throw an exception
+        if (TempScaffoldingFlag)
+        {
+            throw new Exception(
+                "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+            );
+        }
+
         var match = Regex.Match(filename, @"-(\d+)(?:-|$)");
         if (match.Success)
         {

@@ -212,4 +212,60 @@ public class ScaffoldingMetadataTests
             Assert.That(metadataVolume1.TotalVolume, Is.EqualTo("567.8 m\u00b3"));
         });
     }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMatches_ThenDoesNotThrow()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+
+        // tested function expects filename without extension
+        var fileName = "BCA-12345678";
+
+        // Act & Assert
+        Assert.DoesNotThrow(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName));
+    }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMismatches_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = false;
+
+        // tested function expects filename without extension
+        var fileName1 = "BCA-1234567";
+        var fileName2 = "BCA_12345678";
+        var fileName3 = "BCA_";
+
+        // Act & Assert
+        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3));
+    }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenCallingOnTempScaff_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = true;
+
+        // tested function expects filename without extension
+        var fileName1 = "BCA-TEMP-1234567";
+        var fileName2 = "BCA-TEMP-12345678";
+
+        // Act & Assert
+        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+    }
 }
