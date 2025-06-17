@@ -95,11 +95,9 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(metadata.ModelMetadataHasExpectedValues(), Is.True);
+            Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
-                metadataEmpty.ModelMetadataHasExpectedValues()
-            );
+            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() => metadataEmpty.ThrowIfModelMetadataInvalid());
         });
     }
 

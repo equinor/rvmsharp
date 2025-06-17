@@ -119,15 +119,11 @@ public static class FbxWorkload
                     // check if the WO from filename actually matches the metadata
                     // for non-temp scaffs only
                     // crashes if there is a mismatch
-                    scaffoldingMetadata.ModelMetadataMatchesWorkOrderFromFilename(fileNameonly);
+                    scaffoldingMetadata.ThrowIfWorkOrderFromFilenameInvalid(fileNameonly);
                 }
 
                 // We crash if we dont have expected values
-                if (scaffoldingMetadata.ModelMetadataHasExpectedValues(isTemp))
-                {
-                    // there is a double guard (maybe a single guard is enough?)
-                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
-                }
+                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);

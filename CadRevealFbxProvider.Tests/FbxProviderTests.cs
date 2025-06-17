@@ -129,11 +129,12 @@ public class FbxProviderTests
     {
         // arrange
         DirectoryInfo directoryInfo = new(dir);
-        var err = Assert.Throws<Exception>(
+
+        // act & assert
+        Assert.Throws<ScaffoldingFilenameException>(
             () => Process(directoryInfo, directoryInfo),
             "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
-        Assert.That(err.Message.Contains("does not match the work order from filename"), Is.True);
     }
 
     [Test]
@@ -316,7 +317,7 @@ public class FbxProviderTests
         // no act, assert that exception is thrown
 
         // assert
-        Assert.Throws<Exception>(() =>
+        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
             modelFormatProviderFbx.ParseFiles(
                 inputDirectoryTempScaff.EnumerateFiles(),
                 treeIndexGenerator,

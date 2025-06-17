@@ -160,7 +160,7 @@ public class ScaffoldingMetadata
         return false; // Did not add any value
     }
 
-    public void ModelMetadataMatchesWorkOrderFromFilename(string filename)
+    public void ThrowIfWorkOrderFromFilenameInvalid(string filename)
     {
         var match = Regex.Match(filename, @"-(\d+)(?:-|$)");
         if (match.Success)
@@ -174,20 +174,20 @@ public class ScaffoldingMetadata
             // the filename MUST contain a work order number, and it MUST match the one in the metadata
             if (string.IsNullOrEmpty(workOrderFromFilename) || workOrderFromFilename != WorkOrder)
             {
-                throw new Exception(
+                throw new ScaffoldingFilenameException(
                     $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
                 );
             }
         }
         else
         {
-            throw new Exception(
-                $"Scaffolding CSV file {filename} does not contain a work order number in the filename."
+            throw new ScaffoldingFilenameException(
+                $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename."
             );
         }
     }
 
-    public bool ModelMetadataHasExpectedValues(bool tempScaffFlag = false)
+    public void ThrowIfModelMetadataInvalid(bool tempScaffFlag = false)
     {
         string missingFields = string.Empty;
         bool success = true;
@@ -210,7 +210,6 @@ public class ScaffoldingMetadata
                 throw new ScaffoldingMetadataMissingFieldException(
                     $"Temp scaffolding metadata is missing a mandatory field: {missingFields.TrimEnd(',', ' ')}."
                 );
-            return true;
         }
         // work-order scaffs
         else
@@ -233,8 +232,6 @@ public class ScaffoldingMetadata
                     $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
                 );
         }
-
-        return true;
     }
 
     public static bool PartMetadataHasExpectedValues(Dictionary<string, string> targetDict, bool tempScaffFlag = false)
@@ -259,8 +256,7 @@ public class ScaffoldingMetadata
 
     public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-        if (!ModelMetadataHasExpectedValues(TempScaffoldingFlag))
-            throw new Exception("Cannot write metadata: invalid content");
+        ThrowIfModelMetadataInvalid(TempScaffoldingFlag);
 
         // The if above ensures that the fields are not null
         targetDict.Add(WorkOrderFieldName, WorkOrder!);

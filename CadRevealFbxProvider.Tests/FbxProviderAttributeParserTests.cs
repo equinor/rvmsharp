@@ -88,7 +88,7 @@ public class FbxProviderAttributeParserTests
         // check if they were caught
         Assert.That(countNodesWithMissingAttrib, Is.EqualTo(3));
 
-        Assert.That(metadata.ModelMetadataHasExpectedValues());
+        Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
         // checks code correctness and consistency
         Assert.That(
@@ -132,7 +132,7 @@ public class FbxProviderAttributeParserTests
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines);
 
-            metadata!.ModelMetadataHasExpectedValues(false);
+            metadata!.ThrowIfModelMetadataInvalid(false);
 
             calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
         });
@@ -152,17 +152,14 @@ public class FbxProviderAttributeParserTests
         var lines = File.ReadAllLines(infoTextFilename);
         ScaffoldingMetadata metadata;
         float calcTotalWeight = 0;
-        bool metadataValid = false;
 
         // assert
         Assert.DoesNotThrow(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
-            metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
+            metadata!.ThrowIfModelMetadataInvalid(tempFlag);
             calcTotalWeight = float.Parse(metadata.TotalWeightCalculated!, CultureInfo.InvariantCulture);
         });
-
-        Assert.That(metadataValid, Is.EqualTo(true));
 
         // Right now, we don't know which column should be used as a pivot to discern between trash items and valid items
         // One of the items, ladder (with weight 18.9 kg) should be removed as trash, but it cannot
@@ -181,16 +178,12 @@ public class FbxProviderAttributeParserTests
         // act
         var lines = File.ReadAllLines(infoTextFilename);
         ScaffoldingMetadata metadata;
-        bool metadataValid = false;
 
         // assert
-        Assert.Throws<Exception>(() =>
+        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
-            metadataValid = metadata!.ModelMetadataHasExpectedValues(tempFlag);
         });
-
-        Assert.That(metadataValid, Is.EqualTo(false));
     }
 
     [TestCase("/missing_total_weight.csv")]
@@ -200,7 +193,7 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<Exception>(
+        Assert.Throws<ScaffoldingAttributeParsingException>(
             () =>
             {
                 ScaffoldingAttributeParser.ParseAttributes(lines);
@@ -273,7 +266,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.EqualTo("8.3"));
@@ -292,7 +284,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(result.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => result.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(result.scaffoldingMetadata.TotalWeight, Is.Not.Empty);
             Assert.DoesNotThrow(() =>
@@ -462,7 +453,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
         });
@@ -491,7 +481,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
@@ -520,7 +509,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
@@ -549,7 +537,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
         });
@@ -579,7 +566,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.Empty);
         });
@@ -609,7 +595,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.TotalVolume, Is.EqualTo("9.76 m\u00b3"));
         });
@@ -638,7 +623,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.EqualTo("0100"));
         });
@@ -667,7 +651,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.EqualTo("0100"));
         });
@@ -740,7 +723,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.BuildOperationNumber, Is.EqualTo("0100"));
         });
@@ -769,7 +751,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
         });
@@ -798,7 +779,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
         });
@@ -879,7 +859,6 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ret.scaffoldingMetadata.ModelMetadataHasExpectedValues(), Is.True);
             Assert.DoesNotThrow(() => ret.scaffoldingMetadata.TryWriteToGenericMetadataDict(targetDict));
             Assert.That(ret.scaffoldingMetadata.DismantleOperationNumber, Is.EqualTo("9000"));
         });
