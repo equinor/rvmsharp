@@ -111,12 +111,19 @@ public static class FbxWorkload
                 var lines = File.ReadAllLines(infoTextFilename);
                 var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
                 var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
+
                 (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
-                // TODO: Should we crash if we dont have expected values?
-                if (scaffoldingMetadata.ModelMetadataHasExpectedValues(isTemp))
+
+                if (!isTemp)
                 {
-                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
+                    // check if the WO from filename actually matches the metadata
+                    // for non-temp scaffs only
+                    // crashes if there is a mismatch
+                    scaffoldingMetadata.ThrowIfWorkOrderFromFilenameInvalid(fileNameonly);
                 }
+
+                // We crash if we dont have expected values
+                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
