@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="Csv" />
+    <PackageReference Include="MathNet.Numerics" />
   </ItemGroup>
 
 </Project>
