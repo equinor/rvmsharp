@@ -51,7 +51,7 @@ public class PcaResult3
     private readonly float _lambda3;
 }
 
-public static class PrincipleComponentAnalyzer
+public static class PrincipalComponentAnalyzer
 {
     public static PcaResult3 Invoke(List<Vector3> dataList)
     {

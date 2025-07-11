@@ -4,7 +4,7 @@ using System.Numerics;
 using CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
 [TestFixture]
-public class PrincipleComponentAnalyzerTests
+public class PrincipalComponentAnalyzerTests
 {
     [Test]
     public void PcaResult3_WhenEnteringValues_ThenSameValuesAreReturnedButSortedByEigenValue()
@@ -43,14 +43,14 @@ public class PrincipleComponentAnalyzerTests
     }
 
     [Test]
-    public void Invoke_WhenOnlyTwoPoints_ThenPointsAreAlongFirstPrincipleComponent()
+    public void Invoke_WhenOnlyTwoPoints_ThenPointsAreAlongFirstPrincipalComponent()
     {
         // Arrange
         var X = new List<Vector3> { new Vector3(0.3f, 8.3f, 3.4f), new Vector3(4.3f, 2.3f, 10.4f) };
         var dirVec = X[1] - X[0];
 
         // Act
-        PcaResult3 pca = PrincipleComponentAnalyzer.Invoke(X);
+        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X);
 
         // Assert
         Assert.That(Vector3.Cross(pca.V(0), dirVec).Length(), Is.EqualTo(0).Within(1.0E-3f));
@@ -94,7 +94,7 @@ public class PrincipleComponentAnalyzerTests
         }
 
         // Act
-        PcaResult3 pca = PrincipleComponentAnalyzer.Invoke(X);
+        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X);
 
         // Assert
         Assert.Multiple(() =>
@@ -110,7 +110,7 @@ public class PrincipleComponentAnalyzerTests
     }
 
     [Test]
-    public void Invoke_WhenCylinderWallPointCloud_ThenPrincipleComponentIsAlongCylinderAxisAndOthersPerpendicularToThat()
+    public void Invoke_WhenCylinderWallPointCloud_ThenPrincipalComponentIsAlongCylinderAxisAndOthersPerpendicularToThat()
     {
         // Arrange
         var u1 = new Vector3(1.2f, 3.4f, 8.2f);
@@ -137,7 +137,7 @@ public class PrincipleComponentAnalyzerTests
         }
 
         // Act
-        PcaResult3 pca = PrincipleComponentAnalyzer.Invoke(X);
+        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X);
 
         // Assert
         Assert.Multiple(() =>
