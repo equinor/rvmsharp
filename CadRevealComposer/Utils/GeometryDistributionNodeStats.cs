@@ -120,7 +120,7 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
         Console.WriteLine($" Box                  {CountBox, 24:N0}{TriangleCountInBoxes, 24:N0}");
         Console.WriteLine($" Eccentric cone       {CountEccentricCone, 24:N0}{TriangleCountInEccentricCones, 24:N0}");
         Console.WriteLine("---------------------------------------------------------------------+");
-        Console.WriteLine($" SUM                  {SumPrimitiveCount, 24:N0}{SumTriangleCount, 24}");
+        Console.WriteLine($" SUM                  {SumPrimitiveCount, 24:N0}{SumTriangleCount, 24:N0}");
         Console.WriteLine("+====================================================================+");
         // csharpier-ignore-end
     }
