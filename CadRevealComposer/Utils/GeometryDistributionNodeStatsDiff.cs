@@ -12,140 +12,110 @@ public class GeometryDistributionNodeStatsDiff(
 {
     public void PrintStatistics(string haeding = "")
     {
-        double CastToZeroIfInvalid(double number) => (double.IsNaN(number) || double.IsInfinity(number)) ? 0.0 : number;
-
-        double percentIncrCountInstancedMesh = CastToZeroIfInvalid(
+        double percentIncrCountInstancedMesh = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountInstancedMesh, statsBefore.CountInstancedMesh)
         );
-        double percentIncrCountTriangleMesh = CastToZeroIfInvalid(
+        double percentIncrCountTriangleMesh = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountTriangleMesh, statsBefore.CountTriangleMesh)
         );
-        double percentIncrCountTrapezium = CastToZeroIfInvalid(
+        double percentIncrCountTrapezium = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountTrapezium, statsBefore.CountTrapezium)
         );
-        double percentIncrCountTorusSegment = CastToZeroIfInvalid(
+        double percentIncrCountTorusSegment = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountTorusSegment, statsBefore.CountTorusSegment)
         );
-        double percentIncrCountQuad = CastToZeroIfInvalid(CalcIncreaseInPercent(DiffCountQuad, statsBefore.CountQuad));
-        double percentIncrCountNut = CastToZeroIfInvalid(CalcIncreaseInPercent(DiffCountNut, statsBefore.CountNut));
-        double percentIncrCountGeneralRing = CastToZeroIfInvalid(
+        double percentIncrCountQuad = ZeroIfNotFinite(CalcIncreaseInPercent(DiffCountQuad, statsBefore.CountQuad));
+        double percentIncrCountNut = ZeroIfNotFinite(CalcIncreaseInPercent(DiffCountNut, statsBefore.CountNut));
+        double percentIncrCountGeneralRing = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountGeneralRing, statsBefore.CountGeneralRing)
         );
-        double percentIncrCountEllipsoidSegment = CastToZeroIfInvalid(
+        double percentIncrCountEllipsoidSegment = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountEllipsoidSegment, statsBefore.CountEllipsoidSegment)
         );
-        double percentIncrCountCone = CastToZeroIfInvalid(CalcIncreaseInPercent(DiffCountCone, statsBefore.CountCone));
-        double percentIncrCountCircle = CastToZeroIfInvalid(
+        double percentIncrCountCone = ZeroIfNotFinite(CalcIncreaseInPercent(DiffCountCone, statsBefore.CountCone));
+        double percentIncrCountCircle = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountCircle, statsBefore.CountCircle)
         );
-        double percentIncrCountBox = CastToZeroIfInvalid(CalcIncreaseInPercent(DiffCountBox, statsBefore.CountBox));
-        double percentIncrCountEccentricCone = CastToZeroIfInvalid(
+        double percentIncrCountBox = ZeroIfNotFinite(CalcIncreaseInPercent(DiffCountBox, statsBefore.CountBox));
+        double percentIncrCountEccentricCone = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffCountEccentricCone, statsBefore.CountEccentricCone)
         );
-        double percentIncrSumPrimitiveCount = CastToZeroIfInvalid(
+        double percentIncrSumPrimitiveCount = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffSumPrimitiveCount, statsBefore.SumPrimitiveCount)
         );
 
-        double percentIncrTriangleCountInInstancedMeshes = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInInstancedMeshes = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInInstancedMeshes, statsBefore.TriangleCountInInstancedMeshes)
         );
-        double percentIncrTriangleCountInTriangleMeshes = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInTriangleMeshes = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInTriangleMeshes, statsBefore.TriangleCountInTriangleMeshes)
         );
-        double percentIncrTriangleCountInTrapeziums = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInTrapeziums = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInTrapeziums, statsBefore.TriangleCountInTrapeziums)
         );
-        double percentIncrTriangleCountInTorusSegments = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInTorusSegments = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInTorusSegments, statsBefore.TriangleCountInTorusSegments)
         );
-        double percentIncrTriangleCountInQuads = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInQuads = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInQuads, statsBefore.TriangleCountInQuads)
         );
-        double percentIncrTriangleCountInNuts = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInNuts = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInNuts, statsBefore.TriangleCountInNuts)
         );
-        double percentIncrTriangleCountInGeneralRing = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInGeneralRing = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInGeneralRing, statsBefore.TriangleCountInGeneralRings)
         );
-        double percentIncrTriangleCountInEllipsoidSegment = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInEllipsoidSegment = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInEllipsoidSegment, statsBefore.TriangleCountInEllipsoidSegments)
         );
-        double percentIncrTriangleCountInCone = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInCone = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInCone, statsBefore.TriangleCountInCones)
         );
-        double percentIncrTriangleCountInCircle = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInCircle = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInCircle, statsBefore.TriangleCountInCircles)
         );
-        double percentIncrTriangleCountInBox = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInBox = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInBox, statsBefore.TriangleCountInBoxes)
         );
-        double percentIncrTriangleCountInEccentricCone = CastToZeroIfInvalid(
+        double percentIncrTriangleCountInEccentricCone = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffTriangleCountInEccentricCone, statsBefore.TriangleCountInEccentricCones)
         );
-        double percentIncrSumTriangleCount = CastToZeroIfInvalid(
+        double percentIncrSumTriangleCount = ZeroIfNotFinite(
             CalcIncreaseInPercent(DiffSumTriangleCount, statsBefore.SumTriangleCount)
         );
-
+        // csharpier-ignore-start -- Easier to read the table formatting
         Console.WriteLine($"Geometry statistics: {haeding}");
-        Console.WriteLine(
-            "+====================+=======================+=======================+=======================+=======================+"
-        );
-        Console.WriteLine(
-            "| Primitive          | Primitive count diff. | Increase. in percent  | Triangle count diff.  | Increase. in percent  +"
-        );
-        Console.WriteLine(
-            "+--------------------+-----------------------+-----------------------+-----------------------+-----------------------+"
-        );
-        Console.WriteLine(
-            $" Instanced mesh       {DiffCountInstancedMesh, -24}{percentIncrCountInstancedMesh, -24:0.000}{DiffTriangleCountInInstancedMeshes, -24}{percentIncrTriangleCountInInstancedMeshes, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Triangle mesh        {DiffCountTriangleMesh, -24}{percentIncrCountTriangleMesh, -24:0.000}{DiffTriangleCountInTriangleMeshes, -24}{percentIncrTriangleCountInTriangleMeshes, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Trapezium            {DiffCountTrapezium, -24}{percentIncrCountTrapezium, -24:0.000}{DiffTriangleCountInTrapeziums, -24}{percentIncrTriangleCountInTrapeziums, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Torus segment        {DiffCountTorusSegment, -24}{percentIncrCountTorusSegment, -24:0.000}{DiffTriangleCountInTorusSegments, -24}{percentIncrTriangleCountInTorusSegments, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Quad                 {DiffCountQuad, -24}{percentIncrCountQuad, -24:0.000}{DiffTriangleCountInQuads, -24}{percentIncrTriangleCountInQuads, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Nut                  {DiffCountNut, -24}{percentIncrCountNut, -24:0.000}{DiffTriangleCountInNuts, -24}{percentIncrTriangleCountInNuts, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" General ring         {DiffCountGeneralRing, -24}{percentIncrCountGeneralRing, -24:0.000}{DiffTriangleCountInGeneralRing, -24}{percentIncrTriangleCountInGeneralRing, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Ellipsoid segment    {DiffCountEllipsoidSegment, -24}{percentIncrCountEllipsoidSegment, -24:0.000}{DiffTriangleCountInEllipsoidSegment, -24}{percentIncrTriangleCountInEllipsoidSegment, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Cone                 {DiffCountCone, -24}{percentIncrCountCone, -24:0.000}{DiffTriangleCountInCone, -24}{percentIncrTriangleCountInCone, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Circle               {DiffCountCircle, -24}{percentIncrCountCircle, -24:0.000}{DiffTriangleCountInCircle, -24}{percentIncrTriangleCountInCircle, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Box                  {DiffCountBox, -24}{percentIncrCountBox, -24:0.000}{DiffTriangleCountInBox, -24}{percentIncrTriangleCountInBox, -24:0.000}"
-        );
-        Console.WriteLine(
-            $" Eccentric cone       {DiffCountEccentricCone, -24}{percentIncrCountEccentricCone, -24:0.000}{DiffTriangleCountInEccentricCone, -24}{percentIncrTriangleCountInEccentricCone, -24:0.000}"
-        );
-        Console.WriteLine(
-            "+--------------------------------------------------------------------------------------------------------------------+"
-        );
-        Console.WriteLine(
-            $" SUM                  {DiffSumPrimitiveCount, -24}{percentIncrSumPrimitiveCount, -24:0.000}{DiffSumTriangleCount, -24}{percentIncrSumTriangleCount, -24:0.000}"
-        );
-        Console.WriteLine(
-            "+====================================================================================================================+"
-        );
+        Console.WriteLine("+====================+=======================+=======================+=======================+=======================+");
+        Console.WriteLine("| Primitive          | Primitive count diff. | Increase. in percent  | Triangle count diff.  | Increase. in percent  +");
+        Console.WriteLine("+--------------------+-----------------------+-----------------------+-----------------------+-----------------------+");
+        Console.WriteLine($" Instanced mesh       {DiffCountInstancedMesh, 24}{percentIncrCountInstancedMesh, 24:P1}{DiffTriangleCountInInstancedMeshes, 24:N0}{percentIncrTriangleCountInInstancedMeshes, 24:P1}");
+        Console.WriteLine($" Triangle mesh        {DiffCountTriangleMesh, 24}{percentIncrCountTriangleMesh, 24:P1}{DiffTriangleCountInTriangleMeshes, 24:N0}{percentIncrTriangleCountInTriangleMeshes, 24:P1}");
+        Console.WriteLine($" Trapezium            {DiffCountTrapezium, 24}{percentIncrCountTrapezium, 24:P1}{DiffTriangleCountInTrapeziums, 24:N0}{percentIncrTriangleCountInTrapeziums, 24:P1}");
+        Console.WriteLine($" Torus segment        {DiffCountTorusSegment, 24}{percentIncrCountTorusSegment, 24:P1}{DiffTriangleCountInTorusSegments, 24:N0}{percentIncrTriangleCountInTorusSegments, 24:P1}");
+        Console.WriteLine($" Quad                 {DiffCountQuad, 24}{percentIncrCountQuad, 24:P1}{DiffTriangleCountInQuads, 24:N0}{percentIncrTriangleCountInQuads, 24:P1}");
+        Console.WriteLine($" Nut                  {DiffCountNut, 24}{percentIncrCountNut, 24:P1}{DiffTriangleCountInNuts, 24:N0}{percentIncrTriangleCountInNuts, 24:P1}");
+        Console.WriteLine($" General ring         {DiffCountGeneralRing, 24}{percentIncrCountGeneralRing, 24:P1}{DiffTriangleCountInGeneralRing, 24:N0}{percentIncrTriangleCountInGeneralRing, 24:P1}");
+        Console.WriteLine($" Ellipsoid segment    {DiffCountEllipsoidSegment, 24}{percentIncrCountEllipsoidSegment, 24:P1}{DiffTriangleCountInEllipsoidSegment, 24:N0}{percentIncrTriangleCountInEllipsoidSegment, 24:P1}");
+        Console.WriteLine($" Cone                 {DiffCountCone, 24}{percentIncrCountCone, 24:P1}{DiffTriangleCountInCone, 24:N0}{percentIncrTriangleCountInCone, 24:P1}");
+        Console.WriteLine($" Circle               {DiffCountCircle, 24}{percentIncrCountCircle, 24:P1}{DiffTriangleCountInCircle, 24:N0}{percentIncrTriangleCountInCircle, 24:P1}");
+        Console.WriteLine($" Box                  {DiffCountBox, 24}{percentIncrCountBox, 24:P1}{DiffTriangleCountInBox, 24:N0}{percentIncrTriangleCountInBox, 24:P1}");
+        Console.WriteLine($" Eccentric cone       {DiffCountEccentricCone, 24}{percentIncrCountEccentricCone, 24:P1}{DiffTriangleCountInEccentricCone, 24:N0}{percentIncrTriangleCountInEccentricCone, 24:P1}");
+        Console.WriteLine("+--------------------------------------------------------------------------------------------------------------------+");
+        Console.WriteLine($" SUM                  {DiffSumPrimitiveCount, 24}{percentIncrSumPrimitiveCount, 24:P1}{DiffSumTriangleCount, 24:N0}{percentIncrSumTriangleCount, 24:P1}");
+        Console.WriteLine("+====================================================================================================================+");
+        return;
+        // csharpier-ignore-end
+
+        double ZeroIfNotFinite(double number) => (double.IsFinite(number) ? number : 0);
     }
 
+    /// <summary>
+    /// Calculates the increase in percent (0.1 = 10% increase).
+    /// </summary>
+    /// <returns>The increase/decrease where 100% increase returns 1.0</returns>
     public static double CalcIncreaseInPercent(int diff, int valueBefore)
     {
-        return diff * 100.0 / valueBefore;
+        return diff / (double)valueBefore;
     }
 
     public int DiffTriangleCountInInstancedMeshes { get; } =

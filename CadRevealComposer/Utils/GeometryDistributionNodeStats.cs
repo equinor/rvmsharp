@@ -102,25 +102,27 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
 
     public void PrintStatistics(string heading = "")
     {
+        // csharpier-ignore-start -- We allow longer lines here for better readability
         Console.WriteLine($"Geometry statistics: {heading}");
         Console.WriteLine("+====================+=======================+=======================+");
         Console.WriteLine("| Primitive          | Primitive count       | Triangle count        |");
         Console.WriteLine("+--------------------+-----------------------+-----------------------+");
-        Console.WriteLine($" Instanced mesh       {CountInstancedMesh, -24}{TriangleCountInInstancedMeshes, -24}");
-        Console.WriteLine($" Triangle mesh        {CountTriangleMesh, -24}{TriangleCountInTriangleMeshes, -24}");
-        Console.WriteLine($" Trapezium            {CountTrapezium, -24}{TriangleCountInTrapeziums, -24}");
-        Console.WriteLine($" Torus segment        {CountTorusSegment, -24}{TriangleCountInTorusSegments, -24}");
-        Console.WriteLine($" Quad                 {CountQuad, -24}{TriangleCountInQuads, -24}");
-        Console.WriteLine($" Nut                  {CountNut, -24}{TriangleCountInNuts, -24}");
-        Console.WriteLine($" General ring         {CountGeneralRing, -24}{TriangleCountInGeneralRings, -24}");
-        Console.WriteLine($" Ellipsoid segment    {CountEllipsoidSegment, -24}{TriangleCountInEllipsoidSegments, -24}");
-        Console.WriteLine($" Cone                 {CountCone, -24}{TriangleCountInCones, -24}");
-        Console.WriteLine($" Circle               {CountCircle, -24}{TriangleCountInCircles, -24}");
-        Console.WriteLine($" Box                  {CountBox, -24}{TriangleCountInBoxes, -24}");
-        Console.WriteLine($" Eccentric cone       {CountEccentricCone, -24}{TriangleCountInEccentricCones, -24}");
+        Console.WriteLine($" Instanced mesh       {CountInstancedMesh, 24:N0}{TriangleCountInInstancedMeshes, 24:N0}");
+        Console.WriteLine($" Triangle mesh        {CountTriangleMesh, 24:N0}{TriangleCountInTriangleMeshes, 24:N0}");
+        Console.WriteLine($" Trapezium            {CountTrapezium, 24:N0}{TriangleCountInTrapeziums, 24:N0}");
+        Console.WriteLine($" Torus segment        {CountTorusSegment, 24:N0}{TriangleCountInTorusSegments, 24:N0}");
+        Console.WriteLine($" Quad                 {CountQuad, 24:N0}{TriangleCountInQuads, 24:N0}");
+        Console.WriteLine($" Nut                  {CountNut, 24:N0}{TriangleCountInNuts, 24:N0}");
+        Console.WriteLine($" General ring         {CountGeneralRing, 24:N0}{TriangleCountInGeneralRings, 24:N0}");
+        Console.WriteLine($" Ellipsoid segment    {CountEllipsoidSegment, 24:N0}{TriangleCountInEllipsoidSegments, 24:N0}");
+        Console.WriteLine($" Cone                 {CountCone, 24:N0}{TriangleCountInCones, 24:N0}");
+        Console.WriteLine($" Circle               {CountCircle, 24:N0}{TriangleCountInCircles, 24:N0}");
+        Console.WriteLine($" Box                  {CountBox, 24:N0}{TriangleCountInBoxes, 24:N0}");
+        Console.WriteLine($" Eccentric cone       {CountEccentricCone, 24:N0}{TriangleCountInEccentricCones, 24:N0}");
         Console.WriteLine("---------------------------------------------------------------------+");
-        Console.WriteLine($" SUM                  {SumPrimitiveCount, -24}{SumTriangleCount, -24}");
+        Console.WriteLine($" SUM                  {SumPrimitiveCount, 24:N0}{SumTriangleCount, 24}");
         Console.WriteLine("+====================================================================+");
+        // csharpier-ignore-end
     }
 
     public int TriangleCountInInstancedMeshes { get; }
