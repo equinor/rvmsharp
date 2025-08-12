@@ -32,11 +32,6 @@ public class PrimitiveGeometryDetector
         List<Vector3> vertices = mesh.Vertices.ToList();
         PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(vertices);
         DoPrimitiveGeometryDetection(vertices, pca);
-
-        // :TODO: Make the below into a function with principal components as input
-        // :TODO: In the 3D analysis section, do recursive call to this function in the corner cases
-        // :TODO: First task: Modify principal components if geometry is an elongated box with one quadratic face
-
     }
 
     private void DoPrimitiveGeometryDetection(List<Vector3> vertices, PcaResult3 pca, bool recursiveCall = false)
@@ -65,26 +60,6 @@ public class PrimitiveGeometryDetector
             var projections = local
                 .Select(x => (a: Vector3.Dot(x, pca.V(u[k].a)), b: Vector3.Dot(x, pca.V(u[k].b))))
                 .ToList();
-
-            // :TODO: Remove the below code after debugging START
-            File.WriteAllText("C:\\Users\\RICOL\\Documents\\Temp\\data0.dat", String.Join('\n', vertices.Select(x => $"{x.X};{x.Y};{x.Z}")));
-            File.WriteAllText("C:\\Users\\RICOL\\Documents\\Temp\\data1.dat", String.Join('\n', local.Select(x => $"{x.X};{x.Y};{x.Z}")));
-            File.WriteAllText("C:\\Users\\RICOL\\Documents\\Temp\\data2.dat", String.Join('\n', projections.Select(x => $"{x.a};{x.b};{0}")));
-            var pos = vertices.Aggregate(Vector3.Zero, (acc, x) => acc + x) / vertices.Count;
-            for (int l = 0; l < 3; l++)
-            {
-                var component = new List<Vector3>();
-                for (float d = -10.0f; d <= 10.0f; d += 0.5f)
-                {
-                    var p = pos + pca.V(l) * d;
-                    component.Add(p);
-                }
-                File.WriteAllText(
-                    $"C:\\Users\\RICOL\\Documents\\Temp\\data{3+l}.dat",
-                    String.Join('\n', component.Select(x => $"{x.X};{x.Y};{x.Z}"))
-                );
-            }
-            // :TODO: Remove the below code after debugging END
 
             // Check if the points in the plane form an ellipse
             ellipseDetectedInPlane[k] = IsEllipse(local, pca, projections, u[k].a, u[k].b);
@@ -129,7 +104,8 @@ public class PrimitiveGeometryDetector
         }
         else if (!recursiveCall && ArePrincipalComponentsSymmetricInExactlyTwoAxis(pca)) // May be cuboid with one quadratic face
         {
-            pca = RedoPcaAssumingCuboidWithOneQuadraticFace(pca, vertices);
+            (int equal1, int equal2, int different) = DetermineEqualAndDifferentPrincipalComponents(pca);
+            pca = RedoPcaAssumingCuboidWithOneQuadraticFace(pca, vertices, different, equal1, equal2);
             DoPrimitiveGeometryDetection(vertices, pca, true);
         }
         else if (!recursiveCall && ArePrincipalComponentsSymmetricInAllAxis(pca)) // May be a cube (i.e., all quadratic faces)
@@ -248,35 +224,54 @@ public class PrimitiveGeometryDetector
         return (reqList.All(x => x), horizontalMin, horizontalMax, verticalMin, verticalMax);
     }
 
-    private static PcaResult3 RedoPcaAssumingCuboidWithOneQuadraticFace(PcaResult3 pca, List<Vector3> vertices)
+    private static PcaResult3 RedoPcaAssumingCuboidWithOneQuadraticFace(
+        PcaResult3 pca,
+        List<Vector3> vertices,
+        int principleComp,
+        int equalComp1,
+        int equalComp2
+    )
     {
-        (int equal1, int equal2, int different) = DetermineEqualAndDifferentPrincipalComponents(pca);
-
         // Calculate the local coordinates of the vertices in the plane formed by the two equal principal components
-        List<Vector3> local = ProjectToLocal3DCoordinates(vertices, pca, equal1, equal2);
+        List<Vector3> local = ProjectToLocal3DCoordinates(vertices, pca, equalComp1, equalComp2);
 
         // Find the largest radial component. This will correspond to the corners of the square face.
         float maxR2 = local.Select(x => x.LengthSquared()).Max();
 
         // Making an assumption the vertices form a cuboid with one quadratic face, we attempt finding its corner vertices
-        var cornerVertices = local.Select((x, i) => new { x, i }).Where(x => Math.Abs(x.x.LengthSquared() - maxR2) < 0.01f).ToList();
+        var cornerVertices = local
+            .Select((x, i) => new { x, i })
+            .Where(x => Math.Abs(x.x.LengthSquared() - maxR2) < 0.01f)
+            .ToList();
 
         // Find two linearly independent corner radial vectors
         Vector3 v1 = (cornerVertices.Count > 0) ? cornerVertices[0].x : new Vector3();
-        Vector3 v2 = cornerVertices.FirstOrDefault(x => Vector3.Cross(x.x, v1).LengthSquared() > 0.01f)?.x ?? new Vector3();
+        Vector3 v2 =
+            cornerVertices.FirstOrDefault(x => Vector3.Cross(x.x, v1).LengthSquared() > 0.01f)?.x ?? new Vector3();
 
         // Add and subtract the corner vectors to find the vectors pointing normal to the quadratic faces
         Vector3 u1 = Vector3.Normalize(v1 + v2);
         Vector3 u2 = Vector3.Normalize(v1 - v2);
 
         // Update the principal components to reflect the assumption of a cuboid with one quadratic face
-        return new PcaResult3(pca.V(different), u1, u2, pca.Lambda(different), pca.Lambda(equal1), pca.Lambda(equal2));
+        return new PcaResult3(
+            pca.V(principleComp),
+            u1,
+            u2,
+            pca.Lambda(principleComp),
+            pca.Lambda(equalComp1),
+            pca.Lambda(equalComp2)
+        );
     }
 
-    private static (Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4) ExtractFourLinearlyIndependentCornerVectors(List<Vector3> vectors)
+    private static (Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4) ExtractFourLinearlyIndependentCornerVectors(
+        List<Vector3> vectors
+    )
     {
         if (vectors.Count < 4)
-            throw new ArgumentException("At least four vectors are required to extract enough linearly independent vectors.");
+            throw new ArgumentException(
+                "At least four vectors are required to extract enough linearly independent vectors."
+            );
 
         var uniqueVectors = new List<Vector3>();
         foreach (var vector in vectors)
@@ -284,7 +279,8 @@ public class PrimitiveGeometryDetector
             // Continue if the vector is collinear with any of the already added unique vectors
             foreach (Vector3 uniqueVector in uniqueVectors)
             {
-                if (Math.Abs(Vector3.Cross(vector, uniqueVector).LengthSquared()) < 0.01f) continue;
+                if (Math.Abs(Vector3.Cross(vector, uniqueVector).LengthSquared()) < 0.01f)
+                    continue;
             }
 
             // Add the vector to the unique list if it is not collinear with any of the existing unique vectors
@@ -330,7 +326,7 @@ public class PrimitiveGeometryDetector
 
         // We now have three orthogonal vectors, where only one is aligned with the cube geometry, which allows us to invoke the algorithm for a cuboid with one quadratic face
         var pcaIntermediate = new PcaResult3(u1, u2, u3, pca.Lambda(0), pca.Lambda(1), pca.Lambda(2));
-        return RedoPcaAssumingCuboidWithOneQuadraticFace(pcaIntermediate, vertices);
+        return RedoPcaAssumingCuboidWithOneQuadraticFace(pcaIntermediate, vertices, 0, 1, 2);
     }
 
     private static bool ArePrincipalComponentsSymmetricInExactlyTwoAxis(PcaResult3 pca)
@@ -360,12 +356,18 @@ public class PrimitiveGeometryDetector
         return (-1, -1, -1); // No two components are equal
     }
 
-    private static List<Vector3> ProjectToLocal3DCoordinates(List<Vector3> vertices, PcaResult3 pca, int pcaProjAxisA, int pcaProjAxisB)
+    private static List<Vector3> ProjectToLocal3DCoordinates(
+        List<Vector3> vertices,
+        PcaResult3 pca,
+        int pcaProjAxisA,
+        int pcaProjAxisB
+    )
     {
         // Project all points onto the planes formed by the principal components
         var plane = vertices
             .Select(p =>
-                Vector3.Dot(p, pca.V(pcaProjAxisA)) * pca.V(pcaProjAxisA) + Vector3.Dot(p, pca.V(pcaProjAxisB)) * pca.V(pcaProjAxisB)
+                Vector3.Dot(p, pca.V(pcaProjAxisA)) * pca.V(pcaProjAxisA)
+                + Vector3.Dot(p, pca.V(pcaProjAxisB)) * pca.V(pcaProjAxisB)
             )
             .ToList();
 

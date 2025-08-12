@@ -97,7 +97,11 @@ public class PrimitiveGeometryDetectorTests
     [Test]
     [TestCase(1.0f, 4.3f, 20.0f)]
     [TestCase(5.0f, 5.0f, 20.0f)]
-    public void Invoke_WhenFlattenedCylindricalPointCloud_ThenDetectAsCylinderWithCorrectRadiusAndHeight(float rMinor, float rMajor, float height)
+    public void Invoke_WhenFlattenedCylindricalPointCloud_ThenDetectAsCylinderWithCorrectRadiusAndHeight(
+        float rMinor,
+        float rMajor,
+        float height
+    )
     {
         // Arrange
         var pos = new Vector3(2.3f, 9.5f, 1.4f);
@@ -136,7 +140,12 @@ public class PrimitiveGeometryDetectorTests
     [TestCase(4.3f, 4.3f, 4.3f, false)]
     [TestCase(4.3f, 4.3f, 7.8f, true)]
     [TestCase(2.3f, 4.3f, 7.8f, true)]
-    public void Invoke_WhenEllipsoidPointCloud_ThenDetectAsEllipsoidWithCorrectRadii(float rMinor, float rSemiMajor, float rMajor, bool requireMajorAxesAlignment)
+    public void Invoke_WhenEllipsoidPointCloud_ThenDetectAsEllipsoidWithCorrectRadii(
+        float rMinor,
+        float rSemiMajor,
+        float rMajor,
+        bool requireMajorAxesAlignment
+    )
     {
         // Arrange
         var pos = new Vector3(2.3f, 9.5f, 1.4f);
@@ -176,15 +185,31 @@ public class PrimitiveGeometryDetectorTests
     }
 
     [Test]
-//    [TestCase(8.7f, 5.7f, 4.7f)]
-//    [TestCase(8.7f, 4.7f, 4.7f)]
-    [TestCase(4.7f, 4.7f, 4.7f)]
-    public void Invoke_WhenCuboidPointCloud_ThenDetectAsCuboidWithCorrectSize(float length, float depth, float height)
+    [TestCase(8.7f, 5.7f, 4.7f, 0)]
+    [TestCase(8.7f, 4.7f, 4.7f, 0)]
+    [TestCase(4.7f, 4.7f, 4.7f, 0)]
+    [TestCase(8.7f, 5.7f, 4.7f, 1)]
+    [TestCase(8.7f, 4.7f, 4.7f, 1)]
+    [TestCase(4.7f, 4.7f, 4.7f, 1)]
+    [TestCase(8.7f, 5.7f, 4.7f, 2)]
+    [TestCase(8.7f, 4.7f, 4.7f, 2)]
+    [TestCase(4.7f, 4.7f, 4.7f, 2)]
+    public void Invoke_WhenCuboidPointCloud_ThenDetectAsCuboidWithCorrectSize(
+        float length,
+        float depth,
+        float height,
+        int lengthEdgeIndex
+    )
     {
         // Arrange
         var pos = new Vector3(2.3f, 9.5f, 1.4f);
         var centralAxis = new Vector3(1.2f, 3.4f, 8.2f);
-        Mesh mesh = GenCuboid(pos, centralAxis, length, depth, height);
+        Mesh mesh =
+            (lengthEdgeIndex == 0)
+                ? GenCuboid(pos, centralAxis, length, depth, height)
+                : (lengthEdgeIndex == 1)
+                    ? GenCuboid(pos, centralAxis, depth, length, height)
+                    : GenCuboid(pos, centralAxis, depth, height, length);
         Vector3 centerPosition = mesh.Vertices.Aggregate(Vector3.Zero, (acc, x) => x + acc) / mesh.Vertices.Length;
 
         // Act
@@ -198,8 +223,14 @@ public class PrimitiveGeometryDetectorTests
                 Is.EqualTo(PrimitiveGeometryDetector.PrimitiveGeometry.Cuboid)
             );
             Assert.That(geometryDetector.CuboidLongestEdgeLength, Is.EqualTo(length).Within(0.1f));
-            Assert.That(geometryDetector.CuboidIntermediateEdgeLength, Is.EqualTo(depth).Within(0.1f).Or.EqualTo(height).Within(0.1f));
-            Assert.That(geometryDetector.CuboidShortestEdgeLength, Is.EqualTo(depth).Within(0.1f).Or.EqualTo(height).Within(0.1f));
+            Assert.That(
+                geometryDetector.CuboidIntermediateEdgeLength,
+                Is.EqualTo(depth).Within(0.1f).Or.EqualTo(height).Within(0.1f)
+            );
+            Assert.That(
+                geometryDetector.CuboidShortestEdgeLength,
+                Is.EqualTo(depth).Within(0.1f).Or.EqualTo(height).Within(0.1f)
+            );
             Assert.That(geometryDetector.CenterPosition.X, Is.EqualTo(centerPosition.X).Within(0.1f));
             Assert.That(geometryDetector.CenterPosition.Y, Is.EqualTo(centerPosition.Y).Within(0.1f));
             Assert.That(geometryDetector.CenterPosition.Z, Is.EqualTo(centerPosition.Z).Within(0.1f));
