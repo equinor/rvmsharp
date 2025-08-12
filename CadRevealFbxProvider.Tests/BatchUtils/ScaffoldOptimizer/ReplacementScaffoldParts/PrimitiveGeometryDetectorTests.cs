@@ -236,4 +236,66 @@ public class PrimitiveGeometryDetectorTests
             Assert.That(geometryDetector.CenterPosition.Z, Is.EqualTo(centerPosition.Z).Within(0.1f));
         });
     }
+
+    [Test]
+    public void Invoke_WhenPerturbedCuboidPointCloud_ThenDoNotDetectAsPrimitiveGeometry()
+    {
+        // Arrange
+        var pos = new Vector3(2.3f, 9.5f, 1.4f);
+        var centralAxis = new Vector3(1.2f, 3.4f, 8.2f);
+        Mesh mesh = GenCuboid(pos, centralAxis, 8.7f, 5.7f, 4.7f);
+        mesh.Vertices[0] += new Vector3(0.1f, 0.1f, 0.1f); // Slightly perturb the first vertex
+
+        // Act
+        var geometryDetector = new PrimitiveGeometryDetector(mesh);
+
+        // Assert
+        Assert.That(geometryDetector.DetectedGeometry, Is.EqualTo(PrimitiveGeometryDetector.PrimitiveGeometry.Unknown));
+    }
+
+    [Test]
+    [TestCase(4.3f, 4.3f, 4.3f, false)]
+    [TestCase(4.3f, 4.3f, 7.8f, true)]
+    [TestCase(2.3f, 4.3f, 7.8f, true)]
+    public void Invoke_WhenPerturbedEllipsoidPointCloud_ThenDoNotDetectAsPrimitiveGeometry(
+        float rMinor,
+        float rSemiMajor,
+        float rMajor,
+        bool requireMajorAxesAlignment
+    )
+    {
+        // Arrange
+        var pos = new Vector3(2.3f, 9.5f, 1.4f);
+        var centralAxis = new Vector3(1.2f, 3.4f, 8.2f);
+        Mesh mesh = GenEllipsoid(pos, centralAxis, rMinor, rSemiMajor, rMajor);
+        mesh.Vertices[0] += new Vector3(0.2f, 0.2f, 0.2f); // Slightly perturb the first vertex
+
+        // Act
+        var geometryDetector = new PrimitiveGeometryDetector(mesh);
+
+        // Assert
+        Assert.That(geometryDetector.DetectedGeometry, Is.EqualTo(PrimitiveGeometryDetector.PrimitiveGeometry.Unknown));
+    }
+
+    [Test]
+    [TestCase(1.0f, 4.3f, 20.0f)]
+    [TestCase(5.0f, 5.0f, 20.0f)]
+    public void Invoke_WhenPerturbedFlattenedCylindricalPointCloud_ThenDoNotDetectAsPrimitiveGeometry(
+        float rMinor,
+        float rMajor,
+        float height
+    )
+    {
+        // Arrange
+        var pos = new Vector3(2.3f, 9.5f, 1.4f);
+        var centralAxis = new Vector3(1.2f, 3.4f, 8.2f);
+        Mesh mesh = GenCylinder(pos, centralAxis, rMinor, rMajor, height);
+        mesh.Vertices[0] += new Vector3(0.6f, 0.6f, 0.6f); // Slightly perturb the first vertex
+
+        // Act
+        var geometryDetector = new PrimitiveGeometryDetector(mesh);
+
+        // Assert
+        Assert.That(geometryDetector.DetectedGeometry, Is.EqualTo(PrimitiveGeometryDetector.PrimitiveGeometry.Unknown));
+    }
 }
