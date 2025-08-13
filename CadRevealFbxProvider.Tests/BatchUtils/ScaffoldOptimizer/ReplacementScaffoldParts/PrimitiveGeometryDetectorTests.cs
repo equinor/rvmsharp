@@ -205,11 +205,9 @@ public class PrimitiveGeometryDetectorTests
         var pos = new Vector3(2.3f, 9.5f, 1.4f);
         var centralAxis = new Vector3(1.2f, 3.4f, 8.2f);
         Mesh mesh =
-            (lengthEdgeIndex == 0)
-                ? GenCuboid(pos, centralAxis, length, depth, height)
-                : (lengthEdgeIndex == 1)
-                    ? GenCuboid(pos, centralAxis, depth, length, height)
-                    : GenCuboid(pos, centralAxis, depth, height, length);
+            (lengthEdgeIndex == 0) ? GenCuboid(pos, centralAxis, length, depth, height)
+            : (lengthEdgeIndex == 1) ? GenCuboid(pos, centralAxis, depth, length, height)
+            : GenCuboid(pos, centralAxis, depth, height, length);
         Vector3 centerPosition = mesh.Vertices.Aggregate(Vector3.Zero, (acc, x) => x + acc) / mesh.Vertices.Length;
 
         // Act

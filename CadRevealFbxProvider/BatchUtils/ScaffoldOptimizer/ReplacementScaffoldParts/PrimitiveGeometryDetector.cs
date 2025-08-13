@@ -10,7 +10,7 @@ public class PrimitiveGeometryDetector
         Cylinder,
         Cuboid,
         Ellipsoid,
-        Unknown
+        Unknown,
     }
 
     public PrimitiveGeometry DetectedGeometry { get; private set; }
@@ -41,13 +41,13 @@ public class PrimitiveGeometryDetector
         {
             (false, 0, 0),
             (false, 0, 0),
-            (false, 0, 0)
+            (false, 0, 0),
         };
         var rectangleDetectedInPlane = new List<(bool y, float hMin, float hMax, float vMin, float vMax)>
         {
             (false, 0, 0, 0, 0),
             (false, 0, 0, 0, 0),
-            (false, 0, 0, 0, 0)
+            (false, 0, 0, 0, 0),
         };
 
         // Check the shape of the projected points in the planes formed by the principal components

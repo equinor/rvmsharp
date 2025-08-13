@@ -28,7 +28,7 @@ public class PcaResult3
             0 => _v1,
             1 => _v2,
             2 => _v3,
-            _ => new Vector3(0, 0, 0)
+            _ => new Vector3(0, 0, 0),
         };
     }
 
@@ -39,7 +39,7 @@ public class PcaResult3
             0 => _lambda1,
             1 => _lambda2,
             2 => _lambda3,
-            _ => 0.0f
+            _ => 0.0f,
         };
     }
 
@@ -71,7 +71,7 @@ public static class PrincipalComponentAnalyzer
         {
             X = dataList.Sum(x => x.X) / (float)N,
             Y = dataList.Sum(x => x.Y) / (float)N,
-            Z = dataList.Sum(x => x.Z) / (float)N
+            Z = dataList.Sum(x => x.Z) / (float)N,
         };
 
         // Find covariances and store in covariance matrix, S
