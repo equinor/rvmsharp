@@ -61,7 +61,7 @@ public static class PartReplacementUtils
                 (
                     boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfSmallest]
                     + boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfSmallest]
-                ) / 2.0f
+                ) / 2.0f,
         };
         var b = new Vector3
         {
@@ -75,7 +75,7 @@ public static class PartReplacementUtils
                 (
                     boundingBox.Max[sortedBoundingBoxExtent.AxisIndexOfSmallest]
                     + boundingBox.Min[sortedBoundingBoxExtent.AxisIndexOfSmallest]
-                ) / 2.0f
+                ) / 2.0f,
         };
         var r = (sortedBoundingBoxExtent.ValueOfSmallest + sortedBoundingBoxExtent.ValueOfMiddle) / 4.0f;
         return CreateCylinderPrimitive(a, b, r, treeIndex);

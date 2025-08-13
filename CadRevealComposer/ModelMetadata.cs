@@ -1,5 +1,6 @@
 ﻿namespace CadRevealComposer;
 
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 
@@ -25,5 +26,20 @@ public class ModelMetadata(Dictionary<string, string> metadata)
     public static string Serialize(ModelMetadata metadata)
     {
         return JsonSerializer.Serialize(metadata._metadata, JsonSerializerOptions);
+    }
+
+    // returns true if and only if the value in metadata equals the value passed in the arg
+    // returns false otherwise
+    public bool CheckValue(string key, string value)
+    {
+        if (_metadata.TryGetValue(key, out var realValue))
+        {
+            return realValue!.Equals(value, System.StringComparison.OrdinalIgnoreCase);
+        }
+
+        Console.Error.WriteLine(
+            $"ModelMetadata::CheckValue : Trying to retrieve a metadata attribute {key} that does not exist."
+        );
+        return false;
     }
 }

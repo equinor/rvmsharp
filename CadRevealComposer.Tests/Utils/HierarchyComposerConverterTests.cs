@@ -21,7 +21,7 @@ public class HierarchyComposerConverterTests
             Attributes = { { "RefNo", "=123/322" }, { "Tag", "VG23-0001" } },
             Parent = null,
             Geometries = Array.Empty<APrimitive>(),
-            OptionalDiagnosticInfo = arrangedJson
+            OptionalDiagnosticInfo = arrangedJson,
         };
 
         var node1 = new CadRevealNode()
@@ -33,7 +33,7 @@ public class HierarchyComposerConverterTests
             Attributes = { { "RefNo", "=123/321" }, { "Tag", "23L0001" } },
             Parent = null,
             Geometries = Array.Empty<APrimitive>(),
-            OptionalDiagnosticInfo = arrangedJson
+            OptionalDiagnosticInfo = arrangedJson,
         };
 
         node2.Parent = node1;

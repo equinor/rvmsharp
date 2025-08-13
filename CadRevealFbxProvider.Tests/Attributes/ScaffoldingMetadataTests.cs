@@ -95,39 +95,43 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(metadataEmpty.HasExpectedValues(), Is.False);
-            Assert.That(metadata.HasExpectedValues(), Is.True);
+            Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
+
+            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() => metadataEmpty.ThrowIfModelMetadataInvalid());
         });
     }
 
     [Test]
-    public void GivenADictionary_WhenPopulatedWithMinimumEntries_ThenHasExpectedValuesFromAttributesPerPartMethodReturnsTrueElseFalse()
+    public void PartMetadataHasExpectedValues_WhenPopulatedWithMinimumEntries_ThenHasExpectedValuesFromAttributesPerPart()
     {
         // Arrange
         var targetDictComplete = new Dictionary<string, string>()
         {
-            { "Work order", "1234" }
-            //            { "Scaff build Operation number", "5678" },
-            //            { "Dismantle Operation number", "91011" }
+            { "Work order", "1234" },
+            { "Scaff build Operation number", "5678" },
+            { "Dismantle Operation number", "91011" },
         };
 
         var targetDictIncomplete = new Dictionary<string, string>()
         {
             //            { "Work order", "1234" },
+            { "Scaff build Operation number", "5678" },
             //            { "Dismantle Operation number", "91011" }
         };
+
+        var targetDictEmpty = new Dictionary<string, string>() { };
 
         var targetDictBeyondComplete = new Dictionary<string, string>()
         {
             { "Work order", "1234" },
             { "Scaff build Operation number", "5678" },
             { "Dismantle Operation number", "91011" },
-            { "Test entry", "4321" }
+            { "Test entry", "4321" },
         };
 
         var targetDictCompleteButEmptyValue = new Dictionary<string, string>()
         {
-            { "Work order", "" }
+            { "Work order", "" },
             //            { "Scaff build Operation number", "" },
             //            { "Dismantle Operation number", "91011" }
         };
@@ -135,13 +139,11 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictComplete), Is.True);
-            Assert.That(ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictIncomplete), Is.False);
-            Assert.That(ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictBeyondComplete), Is.True);
-            Assert.That(
-                ScaffoldingMetadata.HasExpectedValuesFromAttributesPerPart(targetDictCompleteButEmptyValue),
-                Is.False
-            );
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictComplete), Is.True);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictEmpty), Is.False);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictIncomplete), Is.False);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictBeyondComplete), Is.True);
+            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictCompleteButEmptyValue), Is.False);
         });
     }
 
@@ -153,7 +155,9 @@ public class ScaffoldingMetadataTests
         var targetDict = new Dictionary<string, string>();
 
         // Assert
-        Assert.Throws<Exception>(() => metadataEmpty.TryWriteToGenericMetadataDict(targetDict));
+        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+            metadataEmpty.TryWriteToGenericMetadataDict(targetDict)
+        );
     }
 
     [Test]
@@ -207,5 +211,61 @@ public class ScaffoldingMetadataTests
             Assert.That(retVolume1, Is.True);
             Assert.That(metadataVolume1.TotalVolume, Is.EqualTo("567.8 m\u00b3"));
         });
+    }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMatches_ThenDoesNotThrow()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+
+        // tested function expects filename without extension
+        var fileName = "BCA-12345678";
+
+        // Act & Assert
+        Assert.DoesNotThrow(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName));
+    }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMismatches_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = false;
+
+        // tested function expects filename without extension
+        var fileName1 = "BCA-1234567";
+        var fileName2 = "BCA_12345678";
+        var fileName3 = "BCA_";
+
+        // Act & Assert
+        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3));
+    }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenCallingOnTempScaff_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = true;
+
+        // tested function expects filename without extension
+        var fileName1 = "BCA-TEMP-1234567";
+        var fileName2 = "BCA-TEMP-12345678";
+
+        // Act & Assert
+        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
     }
 }

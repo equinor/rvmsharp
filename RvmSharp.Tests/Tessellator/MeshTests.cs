@@ -53,7 +53,6 @@ public class MeshTests
         // This tests that the normals are scaled (and rotated) according to the mesh, when its scaled non-uniform.
         // See https://web.archive.org/web/20210628111622/https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
 
-
         var unitPyramid = new RvmPyramid(2, Matrix4x4.Identity, BoundingBoxUnused, 1, 1, 0, 0, 0, 0, 1);
 
         var widePyramidWidth = 10;
@@ -65,7 +64,7 @@ public class MeshTests
 
         var scaledUnitPyramid = unitPyramid with
         {
-            Matrix = Matrix4x4.Multiply(unitPyramid.Matrix, Matrix4x4.CreateScale(widePyramidWidth, 1, 1))
+            Matrix = Matrix4x4.Multiply(unitPyramid.Matrix, Matrix4x4.CreateScale(widePyramidWidth, 1, 1)),
         };
         var scaledUnitPyramidMesh = TessellatorBridge.Tessellate(scaledUnitPyramid, unusedTolerance);
 

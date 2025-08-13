@@ -23,7 +23,7 @@ public class FacetGroupMatcherLogObject
                 TemplateCount = templateCount,
                 VertexCount = vertexCount,
                 Iterations = iterations,
-                TimeElapsed = timeElapsed
+                TimeElapsed = timeElapsed,
             }
         );
     }

@@ -16,7 +16,6 @@ public static class VertexCacheOptimizer
     //
     //     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
     // This is a port of the vcacheoptimizer.cpp file from https://github.com/zeux/meshoptimizer/:
     // https://github.com/zeux/meshoptimizer/blob/b4afc3af005dfeffdbde60bf677106fac41c1f9f/src/vcacheoptimizer.cpp
     // Most of the comments, all magic numbers etc is from that implementation.
@@ -94,7 +93,7 @@ public static class VertexCacheOptimizer
             0.490f,
             0.112f,
             0.050f,
-            0.131f
+            0.131f,
         },
         Live = new[] { 0, 0.956f, 0.786f, 0.577f, 0.558f, 0.618f, 0.549f, 0.499f, 0.489f },
     };

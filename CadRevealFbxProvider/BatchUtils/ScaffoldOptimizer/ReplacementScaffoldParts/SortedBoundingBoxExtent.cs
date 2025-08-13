@@ -8,7 +8,7 @@ public class SortedBoundingBoxExtent
     public enum DisplacementOrigin
     {
         BeamTop = 0,
-        BeamBottom
+        BeamBottom,
     }
 
     public float ValueOfLargest { get; }

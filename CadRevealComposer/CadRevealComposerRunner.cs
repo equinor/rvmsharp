@@ -270,7 +270,7 @@ public static class CadRevealComposerRunner
             note = "This file is not considered stable api. It is meant for humans to read, not computers. See 'scene.json' for a more stable file.",
             modelParameters,
             composerParameters,
-            timestampUtc = DateTimeOffset.UtcNow
+            timestampUtc = DateTimeOffset.UtcNow,
         };
 
         File.WriteAllText(

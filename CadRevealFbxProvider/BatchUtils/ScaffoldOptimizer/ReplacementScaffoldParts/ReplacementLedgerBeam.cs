@@ -11,13 +11,13 @@ public static class ReplacementLedgerBeam
     private enum Placement
     {
         Top = 0,
-        Bottom = 1
+        Bottom = 1,
     }
 
     private enum EdgeLocation
     {
         Left = 0,
-        Right = 1
+        Right = 1,
     }
 
     public static List<Mesh?> ToReplacementLedgerBeam(this Mesh ledgerBeam, uint treeIndex)
@@ -120,7 +120,7 @@ public static class ReplacementLedgerBeam
             endCapsUpper.left?.Mesh,
             endCapsUpper.right?.Mesh,
             endCapsLower.left?.Mesh,
-            endCapsLower.right?.Mesh
+            endCapsLower.right?.Mesh,
         ];
         combinedMeshes.AddRange(couplers);
 
@@ -200,7 +200,7 @@ public static class ReplacementLedgerBeam
 
         var endDisplacement = new Vector3
         {
-            [ledgerExtent.AxisIndexOfLargest] = (edgeLocation == EdgeLocation.Left) ? width : -width
+            [ledgerExtent.AxisIndexOfLargest] = (edgeLocation == EdgeLocation.Left) ? width : -width,
         };
 
         return PartReplacementUtils
@@ -293,7 +293,7 @@ public static class ReplacementLedgerBeam
     {
         Vector3 displacement = new Vector3
         {
-            [ledgerBeamExtents.AxisIndexOfMiddle] = ledgerBeamTubeRadius + height / 2.0f - 0.01f // Subtract 0.01 m to ensure overlap
+            [ledgerBeamExtents.AxisIndexOfMiddle] = ledgerBeamTubeRadius + height / 2.0f - 0.01f, // Subtract 0.01 m to ensure overlap
         };
 
         (Vector3 centerMin, Vector3 centerMax) = ledgerBeamExtents.CalcPointsAtEndOfABeamShapedBox(

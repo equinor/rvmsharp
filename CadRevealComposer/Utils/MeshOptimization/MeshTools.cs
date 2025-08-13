@@ -93,7 +93,6 @@ public static class MeshTools
     /// <inheritdoc cref="OptimizeInPlace{T}" type="/summary"/>
     /// Returns a new mesh.
     /// </summary>
-
     [Pure]
     public static Mesh OptimizeMesh(Mesh m)
     {

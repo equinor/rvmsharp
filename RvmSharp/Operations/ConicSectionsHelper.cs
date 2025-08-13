@@ -36,7 +36,7 @@ public static class VectorAlgebraHelper
                 { mat.M11, mat.M12, mat.M13, mat.M14 },
                 { mat.M21, mat.M22, mat.M23, mat.M24 },
                 { mat.M31, mat.M32, mat.M33, mat.M34 },
-                { mat.M41, mat.M42, mat.M43, mat.M44 }
+                { mat.M41, mat.M42, mat.M43, mat.M44 },
             }
         );
     }
@@ -65,7 +65,7 @@ public static class VectorAlgebraHelper
                 { s, 0, 0, 0 },
                 { 0, s, 0, 0 },
                 { 0, 0, s, 0 },
-                { 0, 0, 0, 1 }
+                { 0, 0, 0, 1 },
             }
         );
     }
@@ -312,9 +312,8 @@ public static class ConicSectionsHelper
                 ?
                 //var theta = (Math.Abs(B) > 1.0e-12) ?
                 Math.Atan((C - A - Math.Sqrt((A - C) * (A - C) + B * B) / B))
-                : (diffAC <= 0.0)
-                    ? 0.0
-                    : Math.PI / 2.0;
+            : (diffAC <= 0.0) ? 0.0
+            : Math.PI / 2.0;
         B = (Math.Abs(B) < 0.00001) ? 0.0 : theta;
 
         var x0 = (2 * C * D - A * E) / (B * B - 4.0 * A * C);
@@ -419,7 +418,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, upVec.X, viewVec.X, originOfPlane.X },
                 { rightVec.Y, upVec.Y, viewVec.Y, originOfPlane.Y },
                 { rightVec.Z, upVec.Z, viewVec.Z, originOfPlane.Z },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -429,7 +428,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originOfPlane) },
                 { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originOfPlane) },
                 { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originOfPlane) },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -441,7 +440,7 @@ public static class ConicSectionsHelper
                     { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(cone.apex, rightVec) },
                     { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(cone.apex, upVec) },
                     { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(cone.apex, viewVec) },
-                    { 0.0, 0.0, 0.0, 1.0 }
+                    { 0.0, 0.0, 0.0, 1.0 },
                 }
             );
             var proj_mat = DenseMatrix.OfArray(
@@ -450,7 +449,7 @@ public static class ConicSectionsHelper
                     { zn, 0.0, 0.0, 0.0 },
                     { 0.0, zn, 0.0, 0.0 },
                     { 0.0, 0.0, 0.0, 0.0 },
-                    { 0.0, 0.0, -1.0, 0.0 }
+                    { 0.0, 0.0, -1.0, 0.0 },
                 }
             );
             var PV_mat = proj_mat * view_mat;
@@ -478,7 +477,7 @@ public static class ConicSectionsHelper
                 { 1.0, 0.0, 0.0, -eye.X },
                 { 0.0, 1.0, 0.0, -eye.Y },
                 { 0.0, 0.0, 1.0, -eye.Z },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -488,7 +487,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, rightVec.Y, rightVec.Z, 0.0 },
                 { upVec.X, upVec.Y, upVec.Z, 0.0 },
                 { viewVec.X, viewVec.Y, viewVec.Z, 0.0 },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -499,7 +498,7 @@ public static class ConicSectionsHelper
                 { 1.0, 0.0, 0.0, 0.0 },
                 { 0.0, 1.0, 0.0, 0.0 },
                 { -xPlane.Normal.X / xPlane.Normal.Z, -xPlane.Normal.Y / xPlane.Normal.Z, 0.0, 0.0 },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -509,7 +508,7 @@ public static class ConicSectionsHelper
                 { 1.0, 0.0, 0.0, 0.0 },
                 { 0.0, 1.0, 0.0, 0.0 },
                 { 0.0, 0.0, 0.0, 0.0 },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -523,7 +522,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, upVec.X, viewVec.X, eye.X },
                 { rightVec.Y, upVec.Y, viewVec.Y, eye.Y },
                 { rightVec.Z, upVec.Z, viewVec.Z, eye.Z },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -533,7 +532,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, eye) },
                 { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, eye) },
                 { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, eye) },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -549,7 +548,7 @@ public static class ConicSectionsHelper
                 { -1.0, 0.0, 0.0, origin.X },
                 { 0.0, 1.0, 0.0, origin.Y },
                 { 0.0, 0.0, -1.0, origin.Z },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
         var transformModelToPlaneCoord = DenseMatrix.OfArray(
@@ -558,7 +557,7 @@ public static class ConicSectionsHelper
                 { -1.0, 0.0, 0.0, origin.X },
                 { 0.0, 1.0, 0.0, -origin.Y },
                 { 0.0, 0.0, -1.0, origin.Z },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -586,7 +585,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, upVec.X, viewVec.X, originModelCoord.X },
                 { rightVec.Y, upVec.Y, viewVec.Y, originModelCoord.Y },
                 { rightVec.Z, upVec.Z, viewVec.Z, originModelCoord.Z },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 
@@ -596,7 +595,7 @@ public static class ConicSectionsHelper
                 { rightVec.X, rightVec.Y, rightVec.Z, -Vector3.Dot(rightVec, originModelCoord) },
                 { upVec.X, upVec.Y, upVec.Z, -Vector3.Dot(upVec, originModelCoord) },
                 { viewVec.X, viewVec.Y, viewVec.Z, -Vector3.Dot(viewVec, originModelCoord) },
-                { 0.0, 0.0, 0.0, 1.0 }
+                { 0.0, 0.0, 0.0, 1.0 },
             }
         );
 

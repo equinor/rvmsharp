@@ -88,6 +88,7 @@ public static class FbxWorkload
 
         Dictionary<string, string> metadata = new();
 
+        // the local function LoadFbxFile modifies model's metadata as well
         var fbxNodesFlat = workload.SelectMany(LoadFbxFile).ToArray();
 
         if (stringInternPool != null)
@@ -108,12 +109,21 @@ public static class FbxWorkload
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                (attributes, var scaffoldingMetadata) = new ScaffoldingAttributeParser().ParseAttributes(lines);
-                // TODO: Should we crash if we dont have expected values?
-                if (scaffoldingMetadata.HasExpectedValues())
+                var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
+                var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
+
+                (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
+
+                if (!isTemp)
                 {
-                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
+                    // check if the WO from filename actually matches the metadata
+                    // for non-temp scaffs only
+                    // crashes if there is a mismatch
+                    scaffoldingMetadata.ThrowIfWorkOrderFromFilenameInvalid(fileNameonly);
                 }
+
+                // We crash if we dont have expected values
+                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
@@ -177,7 +187,7 @@ public static class FbxWorkload
 
                 if (totalMismatch)
                     throw new Exception(
-                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch."
+                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
                     );
             }
 

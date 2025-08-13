@@ -1,16 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
     <ProjectReference Include="..\Commons\Commons.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include=".\lib\cfbx.dll">
       <Link>cfbx.dll</Link>
@@ -26,10 +23,8 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Csv" />
     <PackageReference Include="MathNet.Numerics" />
   </ItemGroup>
-
 </Project>

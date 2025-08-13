@@ -114,7 +114,7 @@ static class MeshCreator
         [
             new Vector3(x1Truth, y1Truth, z1Truth),
             new Vector3(x2Truth, y2Truth, z2Truth),
-            new Vector3(x3Truth, y3Truth, z3Truth)
+            new Vector3(x3Truth, y3Truth, z3Truth),
         ];
         List<uint> truthIndices = [i1Truth, i2Truth, i3Truth];
         Assert.Multiple(() =>
@@ -150,7 +150,7 @@ class ScaffoldOptimizerOverride(
     {
         CheckInputOptimizeToNull = 0,
         NoInputCheckOptimizeToMeshesAndPrimitiveAndCopy,
-        NoInputCheckOptimizeToSplitMeshes
+        NoInputCheckOptimizeToSplitMeshes,
     }
 
     protected override List<ScaffoldOptimizerResult>? OptimizeNode(
@@ -259,7 +259,7 @@ public class ScaffoldOptimizerTests
         TestInstancing,
         TestOptimizationSteps,
         TestOptimizationOnTessellatedObject,
-        TestPlankOptimization
+        TestPlankOptimization,
     }
 
     private static (
@@ -297,8 +297,8 @@ public class ScaffoldOptimizerTests
                         new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, bbox1),
                         new TriangleMesh(mesh3, 3, Color.Black, bbox1),
                         new TriangleMesh(mesh1, 4, Color.Black, bbox1),
-                        new Circle(Matrix4x4.Identity, new Vector3(1.0f, 8.0f, 2.0f), 5, Color.Black, bbox2)
-                    ]
+                        new Circle(Matrix4x4.Identity, new Vector3(1.0f, 8.0f, 2.0f), 5, Color.Black, bbox2),
+                    ],
                 };
                 return (node1, [mesh1, mesh2, mesh3, mesh1, null], [bbox1, bbox1, bbox1, bbox1, bbox2], []);
             case TestPurpose.TestWithOnlyNonMeshPrimitives:
@@ -312,8 +312,8 @@ public class ScaffoldOptimizerTests
                         new Circle(Matrix4x4.Identity, new Vector3(1.0f, 8.0f, 2.0f), 5, Color.Black, bbox2),
                         new Circle(Matrix4x4.Identity, new Vector3(1.2f, 8.2f, 2.2f), 5, Color.Black, bbox2),
                         new Circle(Matrix4x4.Identity, new Vector3(1.4f, 8.4f, 2.4f), 5, Color.Black, bbox2),
-                        new Circle(Matrix4x4.Identity, new Vector3(1.6f, 8.6f, 2.6f), 5, Color.Black, bbox2)
-                    ]
+                        new Circle(Matrix4x4.Identity, new Vector3(1.6f, 8.6f, 2.6f), 5, Color.Black, bbox2),
+                    ],
                 };
                 return (node3, [null, null, null, null], [bbox1, bbox1, bbox1, bbox1], []);
             case TestPurpose.TestInstancing:
@@ -330,8 +330,8 @@ public class ScaffoldOptimizerTests
                         new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, bbox1),
                         new InstancedMesh(2, mesh2, Matrix4x4.Identity, 1, Color.Black, bbox1),
                         new InstancedMesh(3, mesh3, Matrix4x4.Identity, 2, Color.Black, bbox1),
-                        new Circle(Matrix4x4.Identity, new Vector3(1.0f, 8.0f, 2.0f), 5, Color.Black, bbox2)
-                    ]
+                        new Circle(Matrix4x4.Identity, new Vector3(1.0f, 8.0f, 2.0f), 5, Color.Black, bbox2),
+                    ],
                 };
                 return (
                     node2,
@@ -354,8 +354,8 @@ public class ScaffoldOptimizerTests
                             1,
                             Color.Black,
                             mesh4.CalculateAxisAlignedBoundingBox()
-                        )
-                    ]
+                        ),
+                    ],
                 };
                 return (node4, [mesh4], [mesh4.CalculateAxisAlignedBoundingBox()], []);
             case TestPurpose.TestOptimizationOnTessellatedObject:
@@ -373,8 +373,8 @@ public class ScaffoldOptimizerTests
                             1,
                             Color.Black,
                             mesh4.CalculateAxisAlignedBoundingBox()
-                        )
-                    ]
+                        ),
+                    ],
                 };
                 return (node5, [mesh5], [mesh5.CalculateAxisAlignedBoundingBox()], []);
             case TestPurpose.TestPlankOptimization:
@@ -387,7 +387,7 @@ public class ScaffoldOptimizerTests
                     [
                         new InstancedMesh(1, mesh6, Matrix4x4.Identity, 1, Color.Black, bbox6),
                         new InstancedMesh(2, mesh2, Matrix4x4.Identity, 2, Color.Black, bbox1),
-                    ]
+                    ],
                 };
                 return (node6, [mesh6, mesh2], [bbox6, bbox1], []);
             default:
@@ -402,7 +402,7 @@ public class ScaffoldOptimizerTests
             TreeIndex = node.TreeIndex,
             Name = node.Name,
             Parent = node.Parent,
-            Geometries = node.Geometries
+            Geometries = node.Geometries,
         };
     }
 

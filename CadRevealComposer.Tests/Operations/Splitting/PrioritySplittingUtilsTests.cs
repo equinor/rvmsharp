@@ -82,7 +82,7 @@ public class PrioritySplittingUtilsTests
     {
         return new Box(Matrix4x4.Identity, treeIndex, Color.Black, new BoundingBox(Vector3.Zero, size * Vector3.One))
         {
-            Discipline = discipline
+            Discipline = discipline,
         };
     }
 
@@ -98,7 +98,7 @@ public class PrioritySplittingUtilsTests
             Geometries = [CreatePrimitive(1.0f, treeIndex)],
             TreeIndex = treeIndex,
             Name = dummyName,
-            Parent = null
+            Parent = null,
         };
     }
 }

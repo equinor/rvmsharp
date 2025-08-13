@@ -116,7 +116,7 @@ public static class ProtobufStateSerializer
                     c.M42,
                     c.M43,
                     c.M44,
-                }
+                },
             };
         }
     }
