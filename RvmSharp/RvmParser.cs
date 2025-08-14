@@ -12,7 +12,6 @@ using Operations;
 using Primitives;
 #if DOTNET7_0_OR_GREATER
 #else
-using Utils;
 #endif
 
 public static class RvmParser
@@ -470,10 +469,7 @@ public static class RvmParser
     {
         switch (version)
         {
-            case 1
-            or 2
-            or 3
-            or 4:
+            case 1 or 2 or 3 or 4:
                 return;
             default:
                 throw new Exception(
