@@ -1,6 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 public class ScaffoldingMetadata
 {
@@ -59,6 +60,17 @@ public class ScaffoldingMetadata
         { "Size (m\u00b3)", AttributeEnum.TotalVolume },
         { "Grand total", AttributeEnum.TotalWeight },
         { "Grand total calculated", AttributeEnum.TotalWeightCalculated },
+    };
+
+    private static readonly Dictionary<string, string> ColumnToClassPropertyMap = new Dictionary<string, string>
+    {
+        { "Work order", "WorkOrder" },
+        { "Scaff build Operation number", "BuildOperationNumber" },
+        { "Dismantle Operation number", "DismantleOperationNumber" },
+        { "Project number", "ProjectNumber" },
+        { "Size (m\u00b3)", "TotalVolume" },
+        { "Grand total", "TotalWeight" },
+        { "Grand total calculated", "TotalWeightCalculated" },
     };
 
     private static void GuardForInvalidValues(string? newValue, string? existingValue)
@@ -148,29 +160,87 @@ public class ScaffoldingMetadata
         return false; // Did not add any value
     }
 
-    public bool ModelMetadataHasExpectedValues(bool tempScaffFlag = false)
+    public void ThrowIfWorkOrderFromFilenameInvalid(string filename)
     {
+        // this function is only called for work order scaffolding files
+        // so calling this for temp scaffs must be by mistake, -> throw an exception
+        if (TempScaffoldingFlag)
+        {
+            throw new Exception(
+                "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+            );
+        }
+
+        var match = Regex.Match(filename, @"-(\d+)(?:-|$)");
+        if (match.Success)
+        {
+            string workOrderFromFilename = match.Groups[1].Value;
+            Console.WriteLine(
+                $"Processed work order scaffolding CSV file: {filename} with work order number: {workOrderFromFilename}"
+            );
+
+            // this is also handling of work order scaffs only
+            // the filename MUST contain a work order number, and it MUST match the one in the metadata
+            if (string.IsNullOrEmpty(workOrderFromFilename) || workOrderFromFilename != WorkOrder)
+            {
+                throw new ScaffoldingFilenameException(
+                    $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                );
+            }
+        }
+        else
+        {
+            throw new ScaffoldingFilenameException(
+                $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename."
+            );
+        }
+    }
+
+    public void ThrowIfModelMetadataInvalid(bool tempScaffFlag = false)
+    {
+        string missingFields = string.Empty;
+        bool success = true;
+
+        // total weight is mandatory for both temp and work order scaffs
+        if (string.IsNullOrEmpty(TotalWeight))
+        {
+            missingFields += "\"Grand total\", ";
+            success = false;
+        }
+
         if (tempScaffFlag)
         {
             // TODO: requires revisiting
             // commenting out this temporarily (?) until it is clear if we should have a mandatory field in temp scaff attributes
             //if (string.IsNullOrEmpty(ProjectNumber))
             //    return false;
-            return true;
+
+            if (!success)
+                throw new ScaffoldingMetadataMissingFieldException(
+                    $"Temp scaffolding metadata is missing a mandatory field: {missingFields.TrimEnd(',', ' ')}."
+                );
         }
         // work-order scaffs
-        else if (
-            // Do not include PlannedBuildDate, CompletionDate, and DismantleDate here, since these may be allowed empty
-            string.IsNullOrEmpty(WorkOrder)
-            || string.IsNullOrEmpty(BuildOperationNumber)
-            || string.IsNullOrEmpty(DismantleOperationNumber)
-            || string.IsNullOrEmpty(TotalWeight)
-        )
+        else
         {
-            return false;
-        }
+            foreach (var attr in MandatoryModelAttributesFromPartsNonTempScaff)
+            {
+                var propertyName = ColumnToClassPropertyMap[attr];
+                var prop = typeof(ScaffoldingMetadata).GetProperty(propertyName);
+                var valueOfProperty = prop?.GetValue(this)?.ToString();
 
-        return true;
+                if (string.IsNullOrEmpty(valueOfProperty))
+                {
+                    missingFields += $"\"{attr}\", ";
+                    success = false;
+                }
+            }
+
+            if (!success)
+                throw new ScaffoldingMetadataMissingFieldException(
+                    $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                );
+        }
     }
 
     public static bool PartMetadataHasExpectedValues(Dictionary<string, string> targetDict, bool tempScaffFlag = false)
@@ -195,8 +265,7 @@ public class ScaffoldingMetadata
 
     public void TryWriteToGenericMetadataDict(Dictionary<string, string> targetDict)
     {
-        if (!ModelMetadataHasExpectedValues(TempScaffoldingFlag))
-            throw new Exception("Cannot write metadata: invalid content");
+        ThrowIfModelMetadataInvalid(TempScaffoldingFlag);
 
         // The if above ensures that the fields are not null
         targetDict.Add(WorkOrderFieldName, WorkOrder!);

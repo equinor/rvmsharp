@@ -1,0 +1,15 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: rvmsharp
+  annotations:
+    github.com/project-slug: equinor/rvmsharp
+  tags:
+    - pipeline
+    - c#
+    - sql
+spec:
+  type: service
+  lifecycle: production
+  owner: team-holo-developers
+  system: Echo

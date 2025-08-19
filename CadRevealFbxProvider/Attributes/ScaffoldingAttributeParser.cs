@@ -145,22 +145,11 @@ public class ScaffoldingAttributeParser
 
         // The building job should fail if mandatory metadata field(s) is/are missing
         // Otherwise the failure will happen later and the error message will be very cryptic
-        ThrowIfModelMetadataDoesNotHaveExpectedValues(entireScaffoldingMetadata, tempFlag);
         entireScaffoldingMetadata.TempScaffoldingFlag = tempFlag;
+        entireScaffoldingMetadata.ThrowIfModelMetadataInvalid(tempFlag);
 
         Console.WriteLine("Finished reading and processing attribute file.");
         return (attributesDictionary, entireScaffoldingMetadata);
-    }
-
-    static void ThrowIfModelMetadataDoesNotHaveExpectedValues(
-        ScaffoldingMetadata entireScaffoldingMetadata,
-        bool tempFlag
-    )
-    {
-        if (!entireScaffoldingMetadata.ModelMetadataHasExpectedValues(tempFlag))
-        {
-            Console.WriteLine("Missing expected metadata: " + JsonSerializer.Serialize(entireScaffoldingMetadata));
-        }
     }
 
     static void WarnIfSumOfPartWeightsDifferFromGiven(float givenTotalWeight, float summedTotalWeight)
@@ -319,7 +308,7 @@ public class ScaffoldingAttributeParser
                     {
                         const string errorMsg = "Total weight line in the attribute file has an unknown format.";
                         Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-                        throw new Exception(errorMsg);
+                        throw new ScaffoldingAttributeParsingException(errorMsg);
                     }
                 });
             totalWeight = weights.Sum(v => v);
@@ -327,7 +316,7 @@ public class ScaffoldingAttributeParser
         else
         {
             Console.Error.WriteLine("Attribute file does not contain total weight");
-            throw new Exception("Attribute file does not contain total weight");
+            throw new ScaffoldingAttributeParsingException("Attribute file does not contain total weight");
         }
 
         return totalWeight;
@@ -362,7 +351,7 @@ public class ScaffoldingAttributeParser
         {
             var errMsg = $"Error parsing attribute value. {value} is not a valid {columnName}.";
             Console.Error.WriteLine(errMsg);
-            throw new Exception(errMsg);
+            throw new ScaffoldingAttributeParsingException(errMsg);
         }
     }
 
@@ -401,7 +390,7 @@ public class ScaffoldingAttributeParser
     {
         var key = row.Values[columnIndexKey];
         if (string.IsNullOrEmpty(key))
-            throw new Exception($"{KeyAttribute} cannot have missing values.");
+            throw new ScaffoldingAttributeParsingException($"Key attribute {KeyAttribute} cannot have missing values.");
         return key;
     }
 }
