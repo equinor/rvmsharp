@@ -1,14 +1,14 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Globalization;
-using System.Text.Json;
 using Csv;
+using UserFriendlyLogger;
 
 public class ScaffoldingAttributeParser
 {
     private const string HeaderTotalWeight = "Grand total";
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
-    private const string KeyAttribute = "Item code";
+    private const string ItemCodeColumnKey = "Item code";
 
     public static readonly List<string> AggregateAttributesPerModel_NumericHeadersSap =
     [
@@ -54,9 +54,20 @@ public class ScaffoldingAttributeParser
         int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
-        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute);
+        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute)
+            .ToArray();
 
         var entireScaffoldingMetadata = new ScaffoldingMetadata();
+
+        var allKeysAreValidAndUnique =
+            validatedAttributeData.Select(x => x[columnIndexKeyAttribute]).Distinct().Count()
+            == validatedAttributeData.Length;
+        if (!allKeysAreValidAndUnique)
+        {
+            throw new UserFriendlyLogException(
+                $"Column: \"{ItemCodeColumnKey}\" contains multiple rows with the same value. This indicates an export error. Please check that the export is correct."
+            );
+        }
 
         var attributesDictionary = validatedAttributeData.ToDictionary(
             x => ExtractKeyFromCsvRow(x, columnIndexKeyAttribute),
@@ -217,10 +228,13 @@ public class ScaffoldingAttributeParser
 
     private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
     {
-        var columnIndexKeyAttribute = Array.IndexOf(attributeRawData.First().Headers, KeyAttribute);
+        var columnIndexKeyAttribute = Array.IndexOf(attributeRawData.First().Headers, ItemCodeColumnKey);
 
         if (columnIndexKeyAttribute < 0)
-            throw new Exception($"Key header {KeyAttribute} is missing in the attribute file.");
+            throw new UserFriendlyLogException(
+                "Missing column \"" + ItemCodeColumnKey + "\" in the csv file",
+                new Exception($"Key header {ItemCodeColumnKey} is missing in the attribute file.")
+            );
 
         return columnIndexKeyAttribute;
     }
@@ -250,7 +264,9 @@ public class ScaffoldingAttributeParser
             validatedAttributeData as ICsvLine[] ?? validatedAttributeData.ToArray();
         if (!removeCsvRowsWithoutKeyAttribute.Any())
         {
-            throw new Exception($"{KeyAttribute} cannot be missing for all items.");
+            throw new UserFriendlyLogException(
+                $"Column: \"{ItemCodeColumnKey}\" has no rows with an item code. Please check that the export is correct."
+            );
         }
 
         Console.WriteLine(
@@ -347,15 +363,7 @@ public class ScaffoldingAttributeParser
 
     private static void ThrowExceptionIfNotValidNumber(string value, string columnName)
     {
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                // Parse will throw an assertion if it fails. Hence, we do not need the return value.
-                float.Parse(value, CultureInfo.InvariantCulture);
-            }
-        }
-        catch (Exception)
+        if (!string.IsNullOrWhiteSpace(value) && !float.TryParse(value, CultureInfo.InvariantCulture, out _))
         {
             var errMsg = $"Error parsing attribute value. {value} is not a valid {columnName}.";
             Console.Error.WriteLine(errMsg);
@@ -425,7 +433,9 @@ public class ScaffoldingAttributeParser
     {
         var key = row.Values[columnIndexKey];
         if (string.IsNullOrEmpty(key))
-            throw new ScaffoldingAttributeParsingException($"Key attribute {KeyAttribute} cannot have missing values.");
+            throw new ScaffoldingAttributeParsingException(
+                $"Key attribute {ItemCodeColumnKey} cannot have missing values."
+            );
         return key;
     }
 }
