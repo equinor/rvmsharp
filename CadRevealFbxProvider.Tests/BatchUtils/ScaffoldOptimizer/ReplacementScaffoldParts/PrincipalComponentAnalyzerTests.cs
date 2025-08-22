@@ -1,5 +1,6 @@
 namespace CadRevealFbxProvider.Tests.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
+using System.Collections.Immutable;
 using System.Numerics;
 using CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
@@ -50,7 +51,7 @@ public class PrincipalComponentAnalyzerTests
         var dirVec = X[1] - X[0];
 
         // Act
-        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X);
+        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X.ToImmutableList());
 
         // Assert
         Assert.That(Vector3.Cross(pca.V(0), dirVec).Length(), Is.EqualTo(0).Within(1.0E-3f));
@@ -94,7 +95,7 @@ public class PrincipalComponentAnalyzerTests
         }
 
         // Act
-        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X);
+        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X.ToImmutableList());
 
         // Assert
         Assert.Multiple(() =>
@@ -137,7 +138,7 @@ public class PrincipalComponentAnalyzerTests
         }
 
         // Act
-        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X);
+        PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(X.ToImmutableList());
 
         // Assert
         Assert.Multiple(() =>

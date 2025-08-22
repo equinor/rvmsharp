@@ -1,5 +1,6 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
+using System.Collections.Immutable;
 using System.Numerics;
 using CadRevealComposer.Tessellation;
 
@@ -29,12 +30,16 @@ public class PrimitiveGeometryDetector
 
     public PrimitiveGeometryDetector(Mesh mesh)
     {
-        List<Vector3> vertices = mesh.Vertices.ToList();
+        ImmutableList<Vector3> vertices = mesh.Vertices.ToImmutableList();
         PcaResult3 pca = PrincipalComponentAnalyzer.Invoke(vertices);
         DoPrimitiveGeometryDetection(vertices, pca);
     }
 
-    private void DoPrimitiveGeometryDetection(List<Vector3> vertices, PcaResult3 pca, bool recursiveCall = false)
+    private void DoPrimitiveGeometryDetection(
+        ImmutableList<Vector3> vertices,
+        PcaResult3 pca,
+        bool recursiveCall = false
+    )
     {
         var u = new List<(int a, int b)> { (0, 1), (0, 2), (1, 2) };
         var ellipseDetectedInPlane = new List<(bool y, float rMinor, float rMajor)>
@@ -54,12 +59,12 @@ public class PrimitiveGeometryDetector
         for (int k = 0; k < 3; k++)
         {
             // Calculate the projections onto the plane
-            List<Vector3> local = ProjectToLocal3DCoordinates(vertices, pca, u[k].a, u[k].b);
+            ImmutableList<Vector3> local = ProjectToLocal3DCoordinates(vertices, pca, u[k].a, u[k].b);
 
             // Calculate the projections along axis in each plane, in the plane 2D coordinate system
             var projections = local
                 .Select(x => (a: Vector3.Dot(x, pca.V(u[k].a)), b: Vector3.Dot(x, pca.V(u[k].b))))
-                .ToList();
+                .ToImmutableList();
 
             // Check if the points in the plane form an ellipse
             ellipseDetectedInPlane[k] = IsEllipse(local, pca, projections, u[k].a, u[k].b);
@@ -123,9 +128,9 @@ public class PrimitiveGeometryDetector
     }
 
     private static (bool y, float hMin, float hMax, float vMin, float vMax) IsRectangle(
-        List<Vector3> local,
+        ImmutableList<Vector3> local,
         PcaResult3 pca,
-        List<(float a, float b)> projections,
+        ImmutableList<(float a, float b)> projections,
         int ua,
         int ub
     )
@@ -226,14 +231,14 @@ public class PrimitiveGeometryDetector
 
     private static PcaResult3 RedoPcaAssumingCuboidWithOneQuadraticFace(
         PcaResult3 pca,
-        List<Vector3> vertices,
+        ImmutableList<Vector3> vertices,
         int principleComp,
         int equalComp1,
         int equalComp2
     )
     {
         // Calculate the local coordinates of the vertices in the plane formed by the two equal principal components
-        List<Vector3> local = ProjectToLocal3DCoordinates(vertices, pca, equalComp1, equalComp2);
+        ImmutableList<Vector3> local = ProjectToLocal3DCoordinates(vertices, pca, equalComp1, equalComp2);
 
         // Find the largest radial component. This will correspond to the corners of the square face.
         float maxR2 = local.Select(x => x.LengthSquared()).Max();
@@ -265,7 +270,7 @@ public class PrimitiveGeometryDetector
     }
 
     private static (Vector3 v1, Vector3 v2, Vector3 v3, Vector3 v4) ExtractFourLinearlyIndependentCornerVectors(
-        List<Vector3> vectors
+        ImmutableList<Vector3> vectors
     )
     {
         if (vectors.Count < 4)
@@ -276,15 +281,20 @@ public class PrimitiveGeometryDetector
         var uniqueVectors = new List<Vector3>();
         foreach (var vector in vectors)
         {
-            // Continue if the vector is collinear with any of the already added unique vectors
+            // Do not add vector to list if the vector is collinear with any of the already added unique vectors
+            bool isCollinear = false;
             foreach (Vector3 uniqueVector in uniqueVectors)
             {
                 if (Math.Abs(Vector3.Cross(vector, uniqueVector).LengthSquared()) < 0.01f)
-                    continue;
+                {
+                    isCollinear = true;
+                    break;
+                }
             }
 
             // Add the vector to the unique list if it is not collinear with any of the existing unique vectors
-            uniqueVectors.Add(vector);
+            if (!isCollinear)
+                uniqueVectors.Add(vector);
         }
 
         if (uniqueVectors.Count < 4)
@@ -293,19 +303,19 @@ public class PrimitiveGeometryDetector
         return (uniqueVectors[0], uniqueVectors[1], uniqueVectors[2], uniqueVectors[3]);
     }
 
-    private static PcaResult3 RedoPcaAssumingACube(PcaResult3 pca, List<Vector3> vertices)
+    private static PcaResult3 RedoPcaAssumingACube(PcaResult3 pca, ImmutableList<Vector3> vertices)
     {
         // Find center of the three dimensional point cloud (i.e., not of the projected points)
         Vector3 center = vertices.Aggregate(Vector3.Zero, (acc, x) => acc + x) / vertices.Count;
 
         // Find the local vertices, relative to the center
-        List<Vector3> local3 = vertices.Select(x => x - center).ToList();
+        ImmutableList<Vector3> local3 = vertices.Select(x => x - center).ToImmutableList();
 
         // Calculate the radial maximum of the vertices, which corresponds to a cube corner if the shape is a cube
         float maxR2 = local3.Select(x => x.LengthSquared()).Max();
 
         // Find the corners of the three-dimensional cube (making the assumption that the points form a cube)
-        var cornerVertices = local3.Where(x => Math.Abs(x.LengthSquared() - maxR2) < 0.01f).ToList();
+        var cornerVertices = local3.Where(x => Math.Abs(x.LengthSquared() - maxR2) < 0.01f).ToImmutableList();
 
         // Find four linearly independent corner radial vectors
         var (a, b, c, d) = ExtractFourLinearlyIndependentCornerVectors(cornerVertices);
@@ -356,8 +366,8 @@ public class PrimitiveGeometryDetector
         return (-1, -1, -1); // No two components are equal
     }
 
-    private static List<Vector3> ProjectToLocal3DCoordinates(
-        List<Vector3> vertices,
+    private static ImmutableList<Vector3> ProjectToLocal3DCoordinates(
+        ImmutableList<Vector3> vertices,
         PcaResult3 pca,
         int pcaProjAxisA,
         int pcaProjAxisB
@@ -375,13 +385,13 @@ public class PrimitiveGeometryDetector
         var center = plane.Aggregate(Vector3.Zero, (acc, x) => acc + x) / plane.Count;
 
         // Calculate the local coordinates of the points in each plane
-        return plane.Select(p => p - center).ToList();
+        return plane.Select(p => p - center).ToImmutableList();
     }
 
     private static (bool y, float rMinor, float rMajor) IsEllipse(
-        List<Vector3> local,
+        ImmutableList<Vector3> local,
         PcaResult3 pca,
-        List<(float a, float b)> projections,
+        ImmutableList<(float a, float b)> projections,
         int ua,
         int ub
     )
@@ -453,6 +463,9 @@ public class PrimitiveGeometryDetector
 
         Vector3 CalcIdealEllipsePoint(float projU1, float projU2, float r, float R, Vector3 u1, Vector3 u2)
         {
+            if (Math.Abs(projU1) < 0.0001f || Math.Abs(projU2) < 0.0001f || r < 0.0001f || R < 0.0001f)
+                return Vector3.Zero;
+
             float q = (R * projU2) / (r * projU1);
             float qInv = 1.0f / q;
             float sinT = Math.Sign(projU2) * float.Sqrt(1.0f / (1.0f + qInv * qInv));

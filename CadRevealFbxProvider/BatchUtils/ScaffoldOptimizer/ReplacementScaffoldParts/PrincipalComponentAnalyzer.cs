@@ -1,5 +1,6 @@
 namespace CadRevealFbxProvider.BatchUtils.ScaffoldOptimizer.ReplacementScaffoldParts;
 
+using System.Collections.Immutable;
 using System.Numerics;
 using MathNet.Numerics.LinearAlgebra.Single;
 using MathNetVector = MathNet.Numerics.LinearAlgebra.Vector<float>;
@@ -10,7 +11,7 @@ public class PcaResult3
     {
         var sortedEigenvectors = new List<(float lambda, Vector3 v)> { (lambda1, v1), (lambda2, v2), (lambda3, v3) };
 
-        sortedEigenvectors.Sort((x1, x2) => x1.lambda <= x2.lambda ? 1 : 0);
+        sortedEigenvectors.Sort((x1, x2) => x1.lambda >= x2.lambda ? -1 : 1);
 
         _v1 = sortedEigenvectors[0].v;
         _v2 = sortedEigenvectors[1].v;
@@ -53,7 +54,7 @@ public class PcaResult3
 
 public static class PrincipalComponentAnalyzer
 {
-    public static PcaResult3 Invoke(List<Vector3> dataList)
+    public static PcaResult3 Invoke(ImmutableList<Vector3> dataList)
     {
         int N = dataList.Count;
 
