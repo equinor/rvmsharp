@@ -4,7 +4,6 @@ using System.Diagnostics;
 using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
-using CadRevealComposer.Operations.SectorSplitting;
 using CadRevealComposer.Utils;
 using RvmSharp.Containers;
 using RvmSharp.Primitives;
@@ -175,9 +174,15 @@ internal static class RvmStoreToCadRevealNodesConverter
             .Select(x => x.CalculateAxisAlignedBoundingBox()?.ToCadRevealBoundingBox())
             .WhereNotNull()
             .ToArray();
+
+        var thisNodesGeometryBoundingBoxes = newNode.Geometries.Select(g => g.AxisAlignedBoundingBox).WhereNotNull();
+
         var childrenBounds = newNode.Children.Select(x => x.BoundingBoxAxisAligned).WhereNotNull();
 
-        var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes.Concat(childrenBounds).ToArray();
+        var primitiveAndChildrenBoundingBoxes = primitiveBoundingBoxes
+            .Concat(childrenBounds)
+            .Concat(thisNodesGeometryBoundingBoxes)
+            .ToArray();
         newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
             ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
             : null;
