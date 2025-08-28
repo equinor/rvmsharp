@@ -97,7 +97,9 @@ public class ScaffoldingMetadataTests
         {
             Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() => metadataEmpty.ThrowIfModelMetadataInvalid());
+            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+                metadataEmpty.ThrowIfModelMetadataInvalid()
+            );
         });
     }
 
@@ -139,11 +141,26 @@ public class ScaffoldingMetadataTests
         // Assert
         Assert.Multiple(() =>
         {
-            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictComplete), Is.True);
-            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictEmpty), Is.False);
-            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictIncomplete), Is.False);
-            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictBeyondComplete), Is.True);
-            Assert.That(ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictCompleteButEmptyValue), Is.False);
+            Assert.That(
+                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictComplete),
+                Is.True
+            );
+            Assert.That(
+                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictEmpty),
+                Is.False
+            );
+            Assert.That(
+                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictIncomplete),
+                Is.False
+            );
+            Assert.That(
+                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictBeyondComplete),
+                Is.True
+            );
+            Assert.That(
+                ScaffoldingMetadata.PartMetadataHasExpectedValues(targetDictCompleteButEmptyValue),
+                Is.False
+            );
         });
     }
 
@@ -179,8 +196,14 @@ public class ScaffoldingMetadataTests
         Assert.Multiple(() =>
         {
             Assert.That(targetDict["Scaffolding_WorkOrder_WorkOrderNumber"], Is.EqualTo("1234"));
-            Assert.That(targetDict["Scaffolding_WorkOrder_BuildOperationNumber"], Is.EqualTo("5678"));
-            Assert.That(targetDict["Scaffolding_WorkOrder_DismantleOperationNumber"], Is.EqualTo("9123"));
+            Assert.That(
+                targetDict["Scaffolding_WorkOrder_BuildOperationNumber"],
+                Is.EqualTo("5678")
+            );
+            Assert.That(
+                targetDict["Scaffolding_WorkOrder_DismantleOperationNumber"],
+                Is.EqualTo("9123")
+            );
             Assert.That(targetDict["Scaffolding_TotalVolume"], Is.EqualTo("1423"));
             Assert.That(targetDict["Scaffolding_TotalWeight"], Is.EqualTo("4321"));
         });
@@ -240,14 +263,33 @@ public class ScaffoldingMetadataTests
         metadata.TempScaffoldingFlag = false;
 
         // tested function expects filename without extension
-        var fileName1 = "BCA-1234567";
-        var fileName2 = "BCA_12345678";
-        var fileName3 = "BCA_";
+        var fileName1 = "BCA-1234567"; // mismatch between filename and metadata
+        var fileName2 = "BCA_12345678"; // underscore in filename
+        var fileName3 = "BCA_"; // missing work order in filename
 
         // Act & Assert
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3));
+        var ex1 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        var ex2 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+        var ex3 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3));
+
+        Assert.That(
+            ex1,
+            Is.InstanceOf<ScaffoldingFilenameException>()
+                .Or.InnerException.InstanceOf<ScaffoldingFilenameException>(),
+            "Neither the exception nor its inner exception is of type ScaffoldingFilenameException"
+        );
+        Assert.That(
+            ex2,
+            Is.InstanceOf<ScaffoldingFilenameException>()
+                .Or.InnerException.InstanceOf<ScaffoldingFilenameException>(),
+            "Neither the exception nor its inner exception is of type ScaffoldingFilenameException"
+        );
+        Assert.That(
+            ex3,
+            Is.InstanceOf<ScaffoldingFilenameException>()
+                .Or.InnerException.InstanceOf<ScaffoldingFilenameException>(),
+            "Neither the exception nor its inner exception is of type ScaffoldingFilenameException"
+        );
     }
 
     [Test]
@@ -275,7 +317,10 @@ public class ScaffoldingMetadataTests
     [TestCase("/abc-123456789-", "")]
     [TestCase("/abc-123456789-suffix.with.dots", "suffix.with.dots")]
     [TestCase("/abc-123456789--suffix--with-dashes", "-suffix--with-dashes")]
-    public void GetSuffixFromFilename_ExtractsCorrectSuffix(string fileNameWoExtension, string expectedResult)
+    public void GetSuffixFromFilename_ExtractsCorrectSuffix(
+        string fileNameWoExtension,
+        string expectedResult
+    )
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -283,5 +328,24 @@ public class ScaffoldingMetadataTests
         metadata.GetSuffixFromFilename(fileNameWoExtension);
 
         Assert.That(metadata.NameSuffix, Is.EqualTo(expectedResult));
+    }
+
+    [Test]
+    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderNotPreceededByCode_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = false;
+
+        // tested function expects filename without extension
+        var fileName1 = "-12345678";
+
+        // Act & Assert
+        Assert.Throws<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1)
+        );
     }
 }

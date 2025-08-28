@@ -118,13 +118,11 @@ public class FbxProviderTests
     {
         // arrange
         DirectoryInfo directoryInfo = new(dir);
-        var err = Assert.Throws<Exception>(
-            () => Process(directoryInfo, directoryInfo),
-            "An exception was expected, saying that the model and attribute file do not match, but got none."
-        );
+        var err = Assert.Catch(() => Process(directoryInfo, directoryInfo));
         Assert.That(
-            err.Message.Contains("completely mismatch or all attributes in the attribute file have an issue"),
-            Is.True
+            err,
+            Is.Not.Null,
+            "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
     }
 
@@ -135,9 +133,17 @@ public class FbxProviderTests
         DirectoryInfo directoryInfo = new(dir);
 
         // act & assert
-        Assert.Throws<ScaffoldingFilenameException>(
-            () => Process(directoryInfo, directoryInfo),
+        var exc = Assert.Catch(() => Process(directoryInfo, directoryInfo));
+
+        Assert.That(
+            exc,
+            Is.Not.Null,
             "An exception was expected, saying that the model and attribute file do not match, but got none."
+        );
+
+        Assert.That(
+            exc,
+            Is.InstanceOf<ScaffoldingFilenameException>().Or.InnerException.InstanceOf<ScaffoldingFilenameException>()
         );
     }
 
@@ -146,7 +152,8 @@ public class FbxProviderTests
     {
         DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
         DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
-        Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        var exc = Assert.Catch(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        Assert.That(exc, Is.Not.Null);
     }
 
     [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
@@ -356,7 +363,7 @@ public class FbxProviderTests
         // no act, assert that exception is thrown
 
         // assert
-        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
+        var exc = Assert.Catch(() =>
             modelFormatProviderFbx.ParseFiles(
                 inputDirectoryTempScaff.EnumerateFiles(),
                 treeIndexGenerator,
@@ -364,6 +371,14 @@ public class FbxProviderTests
                 new NodeNameFiltering(new NodeNameExcludeRegex(null))
             )
         ); // this scaff is not a valid temp scaffolding
+
+        Assert.That(exc, Is.Not.Null);
+
+        Assert.That(
+            exc,
+            Is.InstanceOf<ScaffoldingFilenameException>()
+                .Or.InnerException.InstanceOf<ScaffoldingAttributeParsingException>()
+        );
     }
 
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>

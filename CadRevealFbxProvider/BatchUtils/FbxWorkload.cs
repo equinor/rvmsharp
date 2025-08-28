@@ -6,6 +6,7 @@ using CadRevealComposer;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Utils;
+using CadRevealFbxProvider.UserFriendlyLogger;
 using Commons;
 
 public static class FbxWorkload
@@ -186,8 +187,11 @@ public static class FbxWorkload
                 }
 
                 if (totalMismatch)
-                    throw new Exception(
-                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
+                    throw new UserFriendlyLogException(
+                        $"No item in the attribute file {infoTextFilename} can be matched with its geometry in the FBX model {fbxFilename} based on the Item Code. Either the CSV and FBX do not belong together, or all rows in the CSV are invalid. Check if your CSV matches the CSV-template and if you the required metadata are actually exported.",
+                        new Exception(
+                            $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
+                        )
                     );
             }
 

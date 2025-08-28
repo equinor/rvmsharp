@@ -7,6 +7,7 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
+using CadRevealComposer.Utils;
 using Commons.Utils;
 
 public static class FbxNodeToCadRevealNodeConverter
@@ -188,7 +189,8 @@ public static class FbxNodeToCadRevealNodeConverter
 
         // Apply the nodes WorldSpace transform to the mesh data, as we don't have transforms for mesh data in reveal.
         mesh.Apply(meshTransform);
-        var triangleMesh = new TriangleMesh(mesh, treeIndex, color, mesh.CalculateAxisAlignedBoundingBox());
+        var optimizedMesh = Simplify.SimplifyMeshLossy(mesh, new SimplificationLogObject(), 0.01f);
+        var triangleMesh = new TriangleMesh(optimizedMesh, treeIndex, color, mesh.CalculateAxisAlignedBoundingBox());
 
         return triangleMesh;
     }

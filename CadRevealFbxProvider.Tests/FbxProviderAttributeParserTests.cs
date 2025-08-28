@@ -38,7 +38,12 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
+        var exc = Assert.Catch(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
+        Assert.That(
+            exc,
+            Is.InstanceOf<Exception>().Or.InnerException.InstanceOf<Exception>(),
+            "Neither the exception nor its inner exception is of type Exception"
+        );
     }
 
     [Test]
@@ -173,10 +178,19 @@ public class FbxProviderAttributeParserTests
         ScaffoldingMetadata metadata;
 
         // assert
-        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
+        var exc = Assert.Catch(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
         });
+
+        Assert.That(exc, Is.Not.Null);
+
+        Assert.That(
+            exc,
+            Is.InstanceOf<ScaffoldingAttributeParsingException>()
+                .Or.InnerException.InstanceOf<ScaffoldingAttributeParsingException>(),
+            "Neither the exception nor its inner exception is of type ScaffoldingAttributeParsingException"
+        );
     }
 
     [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
@@ -216,12 +230,24 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<ScaffoldingAttributeParsingException>(
+        var exc = Assert.Catch(
             () =>
             {
                 ScaffoldingAttributeParser.ParseAttributes(lines);
             },
             "Was expecting an exception saying that the key total weight is missing, but got none"
+        );
+        Assert.That(
+            exc,
+            Is.Not.Null,
+            "Was expecting an exception saying that the key total weight is missing, but got none"
+        );
+
+        Assert.That(
+            exc,
+            Is.InstanceOf<ScaffoldingAttributeParsingException>()
+                .Or.InnerException.InstanceOf<ScaffoldingAttributeParsingException>(),
+            "Neither the exception nor its inner exception is of type ScaffoldingAttributeParsingException"
         );
     }
 
@@ -231,25 +257,40 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<Exception>(
-            () =>
-            {
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
+        var exc = Assert.Catch(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
+
+        Assert.That(
+            exc,
+            Is.Not.Null,
             "Was expecting an exception saying that the key attribute is missing, but got none"
+        );
+
+        Assert.That(
+            exc,
+            Is.InstanceOf<Exception>().Or.InnerException.InstanceOf<Exception>(),
+            "Neither the exception nor its inner exception is of type Exception"
         );
     }
 
     [TestCase("/missing_data_key_attribute.csv")]
     public void ParseAttributes_ItemCodeDataMissingInCsv_ThrowsError(string csvFileName)
     {
-        Assert.Throws<Exception>(
+        var exc = Assert.Catch(
             () =>
             {
                 string infoTextFilename = _attributeDirectory.FullName + csvFileName;
                 var lines = File.ReadAllLines(infoTextFilename);
                 ScaffoldingAttributeParser.ParseAttributes(lines);
             },
+            "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
+        );
+
+        Assert.That(
+            exc,
+            Is.Not.Null,
             "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
         );
     }

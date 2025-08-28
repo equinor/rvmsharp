@@ -198,7 +198,10 @@ public class ScaffoldingAttributeParser
     private static void ThrowExceptionIfEmptyCsv(string[] fileLines)
     {
         if (fileLines.Length == 0)
-            throw new ArgumentException(null, nameof(fileLines));
+            throw new UserFriendlyLogException(
+                "The CSV file is either empty or does not contain any valid lines. Please check the CSV-template guide.",
+                new ArgumentException(null, nameof(fileLines))
+            );
         Console.WriteLine("Reading and processing attribute file.");
     }
 
@@ -336,7 +339,10 @@ public class ScaffoldingAttributeParser
                     {
                         const string errorMsg = "Total weight line in the attribute file has an unknown format.";
                         Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-                        throw new ScaffoldingAttributeParsingException(errorMsg);
+                        throw new UserFriendlyLogException(
+                            "Total weight could not be extracted from the CSV file. Please check the CSV-template guide.",
+                            new ScaffoldingAttributeParsingException(errorMsg)
+                        );
                     }
                 });
             totalWeight = weights.Sum(v => v);
@@ -344,7 +350,10 @@ public class ScaffoldingAttributeParser
         else
         {
             Console.Error.WriteLine("Attribute file does not contain total weight");
-            throw new ScaffoldingAttributeParsingException("Attribute file does not contain total weight");
+            throw new UserFriendlyLogException(
+                "Total weight could not be extracted from the CSV file, because it is missing. Please check the CSV-template guide.",
+                new ScaffoldingAttributeParsingException("Attribute file does not contain total weight")
+            );
         }
 
         return totalWeight;
@@ -367,7 +376,10 @@ public class ScaffoldingAttributeParser
         {
             var errMsg = $"Error parsing attribute value. {value} is not a valid {columnName}.";
             Console.Error.WriteLine(errMsg);
-            throw new ScaffoldingAttributeParsingException(errMsg);
+            throw new UserFriendlyLogException(
+                $"{columnName} is expected to contain only numeric values, but exported CSV contains a non-numeric value {value}. Check the exported CSV.",
+                new ScaffoldingAttributeParsingException(errMsg)
+            );
         }
     }
 
@@ -433,8 +445,11 @@ public class ScaffoldingAttributeParser
     {
         var key = row.Values[columnIndexKey];
         if (string.IsNullOrEmpty(key))
-            throw new ScaffoldingAttributeParsingException(
-                $"Key attribute {ItemCodeColumnKey} cannot have missing values."
+            throw new UserFriendlyLogException(
+                $"CSV contains rows where {ItemCodeColumnKey} is missing. All rows (items) must have a unique {ItemCodeColumnKey}.",
+                new ScaffoldingAttributeParsingException(
+                    $"Key attribute {ItemCodeColumnKey} cannot have missing values."
+                )
             );
         return key;
     }

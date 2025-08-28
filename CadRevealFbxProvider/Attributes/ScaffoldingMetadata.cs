@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using CadRevealFbxProvider.UserFriendlyLogger;
 
 public class ScaffoldingMetadata
 {
@@ -79,17 +80,28 @@ public class ScaffoldingMetadata
         { "Grand total calculated", "TotalWeightCalculated" },
     };
 
-    private static void GuardForInvalidValues(string? newValue, string? existingValue)
+    private static void GuardForInvalidValues(string whichKey, string? newValue, string? existingValue)
     {
         if (newValue == existingValue)
             return;
 
         if (!string.IsNullOrWhiteSpace(existingValue))
-            throw new Exception(
-                "We already had a value for the key, but got a different one now. This is unexpected. Values was: "
-                    + newValue
-                    + " and "
+            throw new UserFriendlyLogException(
+                "Dataset contains multiple values of "
+                    + whichKey
+                    + ": "
                     + existingValue
+                    + " and "
+                    + newValue
+                    + ", but only one value is supported.",
+                new Exception(
+                    "We already had a value for the key "
+                        + whichKey
+                        + ", but got a different one now. This is unexpected. Values was: "
+                        + newValue
+                        + " and "
+                        + existingValue
+                )
             );
     }
 
@@ -130,7 +142,7 @@ public class ScaffoldingMetadata
             switch (mappedKey)
             {
                 case AttributeEnum.WorkOrderId:
-                    GuardForInvalidValues(value, WorkOrder);
+                    GuardForInvalidValues("Work order", value, WorkOrder);
                     WorkOrder = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, WorkOrder);
                     break;
                 case AttributeEnum.BuildOperationId:
@@ -149,11 +161,11 @@ public class ScaffoldingMetadata
                     TotalVolume = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, TotalVolume);
                     break;
                 case AttributeEnum.TotalWeight:
-                    GuardForInvalidValues(value, TotalWeight);
+                    GuardForInvalidValues("Total weight", value, TotalWeight);
                     TotalWeight = value;
                     break;
                 case AttributeEnum.TotalWeightCalculated:
-                    GuardForInvalidValues(value, TotalWeightCalculated);
+                    GuardForInvalidValues("Total weight calculated", value, TotalWeightCalculated);
                     TotalWeightCalculated = value;
                     break;
                 default:
@@ -193,7 +205,7 @@ public class ScaffoldingMetadata
             );
         }
 
-        var match = Regex.Match(filename, @"-(\d+)(?:-|$)");
+        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:-|$)");
         if (match.Success)
         {
             string workOrderFromFilename = match.Groups[1].Value;
@@ -205,8 +217,11 @@ public class ScaffoldingMetadata
             // the filename MUST contain a work order number, and it MUST match the one in the metadata
             if (string.IsNullOrEmpty(workOrderFromFilename) || workOrderFromFilename != WorkOrder)
             {
-                throw new ScaffoldingFilenameException(
-                    $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                throw new UserFriendlyLogException(
+                    $"Scaffolding work order {WorkOrder} extracted from the CSV file does not match the work order from filename {workOrderFromFilename}. Check if you stored the files under the correct name.",
+                    new ScaffoldingFilenameException(
+                        $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                    )
                 );
             }
         }
