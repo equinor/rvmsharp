@@ -61,8 +61,8 @@ public class FbxProviderAttributeParserTests
         Assert.DoesNotThrow(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
     }
 
-    [TestCase("/fbx_test_model.csv")]
-    [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
+    [TestCase("/legacy_test_model.csv")]
+    [TestCase("/legacy_test_model_with_header_on_row_two.csv")]
     public void ParseAttributes_ValidWorkOrderCsv_ExtractsCorrectAttributes(string csvFileName)
     {
         // setup
