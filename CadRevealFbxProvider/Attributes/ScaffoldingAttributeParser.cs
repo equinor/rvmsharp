@@ -6,22 +6,19 @@ using Csv;
 
 public class ScaffoldingAttributeParser
 {
-    public const int NumberOfAttributesPerPart = 23; // all attributes including 3 out of 4 model attributes
-
     private const string HeaderTotalWeight = "Grand total";
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
     private const string KeyAttribute = "Item code";
 
-    public static readonly List<string> NumericHeadersSap =
+    public static readonly List<string> AggregateAttributesPerModel_NumericHeadersSap =
     [
         "Work order",
         "Scaff build Operation Number",
         "Dismantle Operation number",
     ];
 
-    public static readonly List<string> OtherManufacturerIndependentAttributesPerPart =
+    public static readonly List<string> OtherAggregateAttributesPerModel =
     [
-        "Count",
         "Scaff tag number",
         "Job pack",
         "Project number",
@@ -34,13 +31,17 @@ public class ScaffoldingAttributeParser
         "Scaff type",
         "Load class",
         "Size (m\u00b3)",
-        "Length(m)",
-        "Width(m)",
-        "Height(m)",
+        "Length (m)",
+        "Width (m)",
+        "Height (m)",
         "Covering (Y or N)",
         "Covering material",
         "Last Updated",
     ];
+
+    public static readonly List<string> DescriptionAttributesPerItem = ["Description", "HAKI Description"];
+    public static readonly List<string> WeightAttributesPerItem = ["Weight kg", "HAKI Weight", "Layher Weight", "Vekt"];
+    public static readonly List<string> OtherAttributesPerItem = ["Count", "Manufacturer", "IfcGUID"];
 
     public static (
         Dictionary<string, Dictionary<string, string>?> attributesDictionary,
@@ -63,14 +64,27 @@ public class ScaffoldingAttributeParser
             {
                 var kvp = new Dictionary<string, string>();
 
+                var manufacturerColumnPresent = v.Headers.Any(h =>
+                    h.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase)
+                );
+                var ifcGuidColumnPresent = v.Headers.Any(h => h.Equals("IfcGUID", StringComparison.OrdinalIgnoreCase));
+
                 // In some cases, description and weight can appear in several columns (different manufacturers of item parts)
                 // these columns need to be merged into one with manufacturer as prefix. Only a single manufacturer is allowed per
                 // part. An exception will be thrown if more or less than one manufacturer is found per part.
-                kvp["Description"] = GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(v);
+                kvp["Description"] = GenPartDescriptionFromHeadings(v, manufacturerColumnPresent);
 
                 // Weights are expected to either be in one column or the other, never both at the same time.
                 // Merging is done by selecting the only non-empty string and throwing an exception if more than one non-empty.
-                kvp["Weight kg"] = ExtractSingleWeightRelatedValueFromCsvRow(v) ?? "";
+                kvp["Weight kg"] = ExtractSingleWeightFromCsvRow(v) ?? "";
+
+                // legacy, models using the old template will just have the fields empty
+                kvp["Manufacturer"] = (manufacturerColumnPresent) ? ExtractManufacturerFromCsvRow(v) : "";
+                kvp["IfcGUID"] = (ifcGuidColumnPresent) ? ExtractIfcGUIDFromCsvRow(v) : "";
+
+                // not extracting this one yet, because not sure if useful
+                kvp["Last Updated"] = "";
+                kvp["Count"] = "";
 
                 // Map all columns that are not aggregate columns from different manufacturers, such as description and weight
                 for (int col = 0; col < v.ColumnCount; col++)
@@ -79,10 +93,8 @@ public class ScaffoldingAttributeParser
                     if (columnIndexKeyAttribute == col)
                         continue;
 
-                    // Ignore description and weight, they are added as an aggregate of several columns
-                    if (v.Headers[col].Contains("description", StringComparison.OrdinalIgnoreCase))
-                        continue;
-                    if (v.Headers[col].Contains("weight", StringComparison.OrdinalIgnoreCase))
+                    // if it is not an aggregate attribute, skip it here
+                    if (IsPurelyItemAttribute(v.Headers[col]))
                         continue;
 
                     var key = v.Headers[col].Trim();
@@ -112,7 +124,7 @@ public class ScaffoldingAttributeParser
                     else
                     {
                         // non-numeric temp or non-temp scaffolding headers
-                        WarnIfUnknownManufacturerIndependentAttribute(v.Headers[col]);
+                        WarnIfUnknownAggregateAttribute(v.Headers[col]);
                         entireScaffoldingMetadata.TryAddValue(key, value);
                         kvp[key] = value;
                     }
@@ -150,6 +162,13 @@ public class ScaffoldingAttributeParser
 
         Console.WriteLine("Finished reading and processing attribute file.");
         return (attributesDictionary, entireScaffoldingMetadata);
+    }
+
+    private static bool IsPurelyItemAttribute(string attribute)
+    {
+        return DescriptionAttributesPerItem.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase))
+            || WeightAttributesPerItem.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase))
+            || OtherAttributesPerItem.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase));
     }
 
     static void WarnIfSumOfPartWeightsDifferFromGiven(float givenTotalWeight, float summedTotalWeight)
@@ -245,6 +264,15 @@ public class ScaffoldingAttributeParser
         Dictionary<string, Dictionary<string, string>?> attributesDictionary
     )
     {
+        var test = attributesDictionary
+            .Where(a => a.Value != null)
+            .Select(av =>
+            {
+                var w = av.Value!["Weight kg"];
+                if (string.IsNullOrEmpty(w))
+                    return 0; // sometime weight can be missing
+                return float.Parse(w.Replace(" kg", String.Empty), CultureInfo.InvariantCulture);
+            });
         // Calculate total weight from the table.
         // It will be used as a sanity check against the total weight explicitly written in the table
         // attributesDictionary
@@ -296,13 +324,9 @@ public class ScaffoldingAttributeParser
         return totalWeight;
     }
 
-    private static void WarnIfUnknownManufacturerIndependentAttribute(string attribute)
+    private static void WarnIfUnknownAggregateAttribute(string attribute)
     {
-        if (
-            OtherManufacturerIndependentAttributesPerPart.Any(h =>
-                string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)
-            )
-        )
+        if (OtherAggregateAttributesPerModel.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
@@ -331,31 +355,56 @@ public class ScaffoldingAttributeParser
 
     private static bool IsNumericSapColumn(ICsvLine row, int columnIndex)
     {
-        return NumericHeadersSap.Any(h =>
+        return AggregateAttributesPerModel_NumericHeadersSap.Any(h =>
             string.Equals(h, row.Headers[columnIndex], StringComparison.OrdinalIgnoreCase)
         );
     }
 
-    private static string? ExtractSingleWeightRelatedValueFromCsvRow(ICsvLine row)
+    private static string ExtractManufacturerFromCsvRow(ICsvLine row)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Contains("weight", StringComparison.OrdinalIgnoreCase))
+            .Where(el => el.header.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase))
+            .Select(el => row.Values[el.index])
+            .Single(x => !String.IsNullOrWhiteSpace(x));
+    }
+
+    private static string ExtractIfcGUIDFromCsvRow(ICsvLine row)
+    {
+        return row
+            .Headers.Select((h, i) => new { header = h, index = i })
+            .Where(el => el.header.Equals("IfcGUID", StringComparison.OrdinalIgnoreCase))
+            .Select(el => row.Values[el.index])
+            .Single(x => !String.IsNullOrWhiteSpace(x));
+    }
+
+    private static string? ExtractSingleWeightFromCsvRow(ICsvLine row)
+    {
+        return row
+            .Headers.Select((h, i) => new { header = h, index = i })
+            .Where(el =>
+                el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
+                || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
+            )
             .Select(el => row.Values[el.index])
             .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
     }
 
-    private static string GenPartDescriptionWithSingleManufacturerPrefixFromHeadings(ICsvLine row)
+    private static string GenPartDescriptionFromHeadings(ICsvLine row, bool manufacturerColumnPresent)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
             .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
             .Select(el =>
             {
-                var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", String.Empty).Trim();
-                var spacer = (manufacturerName.Length > 0) ? " " : "";
                 var partDescription = row.Values[el.index];
-                return partDescription.Length > 0 ? $"{manufacturerName}{spacer}{partDescription}" : String.Empty;
+                if (!manufacturerColumnPresent)
+                {
+                    var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", String.Empty).Trim();
+                    var spacer = (manufacturerName.Length > 0) ? " " : "";
+                    return partDescription.Length > 0 ? $"{manufacturerName}{spacer}{partDescription}" : String.Empty;
+                }
+                return partDescription.Length > 0 ? $"{partDescription}" : String.Empty;
             })
             .Single(x => !String.IsNullOrWhiteSpace(x));
     }
