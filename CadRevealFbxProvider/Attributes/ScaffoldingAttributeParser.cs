@@ -72,15 +72,15 @@ public class ScaffoldingAttributeParser
                 // In some cases, description and weight can appear in several columns (different manufacturers of item parts)
                 // these columns need to be merged into one with manufacturer as prefix. Only a single manufacturer is allowed per
                 // part. An exception will be thrown if more or less than one manufacturer is found per part.
-                kvp["Description"] = GenPartDescriptionFromHeadings(v, manufacturerColumnPresent);
+                kvp["Description"] = ExtractSingleDescriptionFromCsvRow(v, manufacturerColumnPresent);
 
                 // Weights are expected to either be in one column or the other, never both at the same time.
                 // Merging is done by selecting the only non-empty string and throwing an exception if more than one non-empty.
                 kvp["Weight kg"] = ExtractSingleWeightFromCsvRow(v) ?? "";
 
                 // legacy, models using the old template will just have the fields empty
-                kvp["Manufacturer"] = (manufacturerColumnPresent) ? ExtractManufacturerFromCsvRow(v) : "";
-                kvp["IfcGUID"] = (ifcGuidColumnPresent) ? ExtractIfcGUIDFromCsvRow(v) : "";
+                kvp["Manufacturer"] = (manufacturerColumnPresent) ? ExtractColumnValueFromRow("Manufacturer", v) : "";
+                kvp["IfcGUID"] = (ifcGuidColumnPresent) ? ExtractColumnValueFromRow("IfcGUID", v) : "";
 
                 // not extracting this one yet, because not sure if useful
                 kvp["Last Updated"] = "";
@@ -360,24 +360,21 @@ public class ScaffoldingAttributeParser
         );
     }
 
-    private static string ExtractManufacturerFromCsvRow(ICsvLine row)
+    // Method extract the value of given column (with the given header) from the row
+    // Expect the column to exist and be non-empty
+    // Throws error if column does not exist or is empty
+    private static string ExtractColumnValueFromRow(string columnHeader, ICsvLine row)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase))
+            .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
             .Select(el => row.Values[el.index])
             .Single(x => !String.IsNullOrWhiteSpace(x));
     }
 
-    private static string ExtractIfcGUIDFromCsvRow(ICsvLine row)
-    {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Equals("IfcGUID", StringComparison.OrdinalIgnoreCase))
-            .Select(el => row.Values[el.index])
-            .Single(x => !String.IsNullOrWhiteSpace(x));
-    }
-
+    // Method looks at several columns refering to item weight and expects exactly one of them to be non-empty
+    // Returns the value of the non-empty item-weight column
+    // Throws error if none or more than one description columns are non-empty
     private static string? ExtractSingleWeightFromCsvRow(ICsvLine row)
     {
         return row
@@ -390,7 +387,10 @@ public class ScaffoldingAttributeParser
             .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
     }
 
-    private static string GenPartDescriptionFromHeadings(ICsvLine row, bool manufacturerColumnPresent)
+    // Method looks at several description columns and expects exactly one of them to be non-empty
+    // Returns the value of the non-empty description column (legacy: eventually prefixed with the manufacturer name)
+    // Throws error if none or more than one description columns are non-empty
+    private static string ExtractSingleDescriptionFromCsvRow(ICsvLine row, bool manufacturerColumnPresent)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
@@ -398,6 +398,8 @@ public class ScaffoldingAttributeParser
             .Select(el =>
             {
                 var partDescription = row.Values[el.index];
+
+                // this is a legacy fallback for old templates without manufacturer column
                 if (!manufacturerColumnPresent)
                 {
                     var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", String.Empty).Trim();
