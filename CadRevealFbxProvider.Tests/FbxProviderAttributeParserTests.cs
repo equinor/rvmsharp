@@ -61,8 +61,8 @@ public class FbxProviderAttributeParserTests
         Assert.DoesNotThrow(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
     }
 
-    [TestCase("/fbx_test_model.csv")]
-    [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
+    [TestCase("/legacy_test_model.csv")]
+    [TestCase("/legacy_test_model_with_header_on_row_two.csv")]
     public void ParseAttributes_ValidWorkOrderCsv_ExtractsCorrectAttributes(string csvFileName)
     {
         // setup
@@ -74,11 +74,7 @@ public class FbxProviderAttributeParserTests
         int countNodesWithMissingAttrib = 0;
         foreach (var attribute in attributes)
         {
-            if (attribute.Value != null)
-            {
-                Assert.That(attribute.Value, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
-            }
-            else
+            if (attribute.Value == null)
             {
                 countNodesWithMissingAttrib++;
             }
@@ -93,27 +89,24 @@ public class FbxProviderAttributeParserTests
         // checks code correctness and consistency
         Assert.That(
             ScaffoldingMetadata.NumberOfMandatoryModelAttributesFromPartsNonTempScaff,
-            Is.EqualTo(ScaffoldingAttributeParser.NumericHeadersSap.Count)
+            Is.EqualTo(ScaffoldingAttributeParser.AggregateAttributesPerModel_NumericHeadersSap.Count)
         );
+
+        void AssertContainsAllKeysIgnoreCase(List<string> attributeList)
+        {
+            foreach (var key in attributeList)
+            {
+                var att = attributes.First().Value;
+                if (att != null)
+                    if (!att.Any(el => el.Key.Equals(key, StringComparison.OrdinalIgnoreCase)))
+                        Assert.Fail($"Attribute '{key}' is missing in the parsed attributes!");
+            }
+        }
 
         // check if we missed some attributes from the template
-        Assert.That(
-            ScaffoldingAttributeParser.NumericHeadersSap.Count()
-                + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
-                + 1 /* key or Item Code */
-            ,
-            Is.EqualTo(attributes.First().Value?.Count)
-        );
-
-        var attributeCount =
-            ScaffoldingAttributeParser.NumericHeadersSap.Count()
-            + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
-            + 1 /* key or Item Code */
-        ;
-        Assert.That(
-            attributes.All(attribute => attribute.Value == null || attribute.Value?.Count == attributeCount),
-            Is.True
-        );
+        AssertContainsAllKeysIgnoreCase(ScaffoldingAttributeParser.AggregateAttributesPerModel_NumericHeadersSap);
+        AssertContainsAllKeysIgnoreCase(ScaffoldingAttributeParser.OtherAggregateAttributesPerModel);
+        AssertContainsAllKeysIgnoreCase(ScaffoldingAttributeParser.OtherAttributesPerItem);
     }
 
     [TestCase("/abc-123456789-woScaffMissingData.csv")]
@@ -183,6 +176,34 @@ public class FbxProviderAttributeParserTests
         Assert.Throws<ScaffoldingAttributeParsingException>(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
+        });
+    }
+
+    [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
+    public void ParseFiles_NewTemplate_Works(string csvFileName)
+    {
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = true;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
+            Assert.That(metadata.TotalWeight, Is.EqualTo("194.5"));
+            Assert.That(metadata.TotalWeightCalculated, Is.EqualTo("194.5"));
+
+            // assert that no item has 'Vekt' attributes, but 'Weight kg'
+            Assert.That(
+                attributes.All(a =>
+                    a.Value != null && !a.Value.ContainsKey("Vekt") && a.Value.ContainsKey("Weight kg")
+                ),
+                Is.True
+            );
         });
     }
 
