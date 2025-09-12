@@ -121,7 +121,7 @@ public static class FbxWorkload
                     // crashes if there is a mismatch
                     scaffoldingMetadata.ThrowIfWorkOrderFromFilenameInvalid(fileNameonly);
                 }
-
+                scaffoldingMetadata.GetSuffixFromFilename(fileNameonly);
                 // We crash if we dont have expected values
                 scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
