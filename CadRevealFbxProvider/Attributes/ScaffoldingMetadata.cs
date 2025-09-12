@@ -14,6 +14,8 @@ public class ScaffoldingMetadata
     public string? TotalWeightCalculated { get; set; }
     public bool TempScaffoldingFlag { get; set; }
 
+    public string? NameSuffix { get; set; }
+
     private const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
     private const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
     private const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
@@ -21,6 +23,7 @@ public class ScaffoldingMetadata
     private const string TotalWeightFieldName = "Scaffolding_TotalWeight";
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
     private const string TempFlagFieldName = "Scaffolding_IsTemporary";
+    private const string SuffixFieldName = "Scaffolding_NameSuffix";
 
     private static readonly string[] MandatoryModelAttributesFromPartsNonTempScaff =
     [
@@ -33,7 +36,10 @@ public class ScaffoldingMetadata
     // it seemed that "Project number" was mandatory for temp scaffs, but maybe it is not.
     private static readonly string[] MandatoryModelAttributesFromPartsTempScaff = [];
 
-    public static readonly int NumberOfModelAttributes = Enum.GetNames(typeof(AttributeEnum)).Length;
+    public static readonly int NumberOfModelAttributes =
+        Enum.GetNames(typeof(AttributeEnum)).Length
+        + 1 /*file suffix*/
+    ;
     public static readonly int NumberOfMandatoryModelAttributesFromPartsNonTempScaff =
         MandatoryModelAttributesFromPartsNonTempScaff.Length;
 
@@ -160,6 +166,22 @@ public class ScaffoldingMetadata
         return false; // Did not add any value
     }
 
+    public void GetSuffixFromFilename(string filename)
+    {
+        NameSuffix = "";
+
+        var match = Regex.Match(filename, @"-\d+-(.+)$");
+        if (match.Success)
+        {
+            NameSuffix = match.Groups[1].Value;
+            Console.WriteLine($"Processed work order scaffolding CSV file: {filename} with suffix: {NameSuffix}");
+        }
+        else
+        {
+            Console.WriteLine($"Processed work order scaffolding CSV file: {filename} with no suffix.");
+        }
+    }
+
     public void ThrowIfWorkOrderFromFilenameInvalid(string filename)
     {
         // this function is only called for work order scaffolding files
@@ -275,5 +297,6 @@ public class ScaffoldingMetadata
         targetDict.Add(TotalWeightFieldName, TotalWeight!);
         targetDict.Add(TotalWeightCalculatedFieldName, TotalWeightCalculated!);
         targetDict.Add(TempFlagFieldName, TempScaffoldingFlag ? "true" : "false");
+        targetDict.Add(SuffixFieldName, NameSuffix ?? "");
     }
 }
