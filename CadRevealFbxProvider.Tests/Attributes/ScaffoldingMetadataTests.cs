@@ -269,11 +269,13 @@ public class ScaffoldingMetadataTests
         Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
     }
 
+    [Test]
     [TestCase("/abc-123456789-woScaffCorrect", "woScaffCorrect")]
     [TestCase("/abc-123456789", "")]
+    [TestCase("/abc-123456789-", "")]
     [TestCase("/abc-123456789-suffix.with.dots", "suffix.with.dots")]
     [TestCase("/abc-123456789--suffix--with-dashes", "-suffix--with-dashes")]
-    public void GetSuffixFromFilename_ExtractsCorrestSuffix(string fileNameWoExtension, string expectedResult)
+    public void GetSuffixFromFilename_ExtractsCorrectSuffix(string fileNameWoExtension, string expectedResult)
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
