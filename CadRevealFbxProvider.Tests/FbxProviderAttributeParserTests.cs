@@ -207,7 +207,9 @@ public class FbxProviderAttributeParserTests
         });
     }
 
-    [TestCase("/missing_total_weight.csv")]
+    [Test]
+    [TestCase("/missing_total_weight_line.csv")]
+    [TestCase("/missing_total_weight_entries.csv")]
     public void ParseAttributes_WorkOrderCsvMissingTotalWeight_ThrowsError(string csvFileName)
     {
         // arrange

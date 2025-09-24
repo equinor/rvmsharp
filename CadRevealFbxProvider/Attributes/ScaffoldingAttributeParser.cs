@@ -296,6 +296,16 @@ public class ScaffoldingAttributeParser
         // and sums them up to the overall total weight
         if (lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
+            // check if there is at least one weight entry in the total weight line
+            var hasValidTotalWeight = lastAttributeLine.Values.Any(v => v.Contains("kg"));
+            if (!hasValidTotalWeight)
+            {
+                const string errorMsg =
+                    "Grand total line in the attribute file does not contain any total weights. Maybe the correct export template was not used.";
+                Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
+                throw new ScaffoldingAttributeParsingException(errorMsg);
+            }
+
             var weights = lastAttributeLine
                 .Values.Where(v => v.Contains("kg"))
                 .Select(v =>
