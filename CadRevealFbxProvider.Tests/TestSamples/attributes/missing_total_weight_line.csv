@@ -1,30 +1,7 @@
 Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m³);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Item code
 ;;;;;;;;;;;;;;;;;;;;;;;
 Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;1
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;2
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;3
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;4
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;5
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;6
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;7
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;8
-Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;9
 Pole;9.20 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;10
 Ladder;18.90 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;11
-Ladder;18.90 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;12
 Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;13
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;14
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;15
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;16
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;17
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;18
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;19
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;20
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;21
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;22
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;23
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;24
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;25
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;26
-Plank;4.54 kg;1;1235678;67;9;175856;;1110;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;27
 Plank;4.54 kg;1;1235678;67;9;175856;;1220;29.02.2020;;;A11;D64LUR-D64ISU;Vedlikehold;Lion Cage;3;1011.00 m³;21;8;8;Yes;Solar Plex;28
