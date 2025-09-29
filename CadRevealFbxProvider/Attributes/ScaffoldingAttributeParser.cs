@@ -322,7 +322,7 @@ public class ScaffoldingAttributeParser
                 const string errorMsg =
                     "Grand total line in the attribute file does not contain any total weights. Maybe the correct export template was not used.";
                 Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-                throw new ScaffoldingAttributeParsingException(errorMsg);
+                throw new UserFriendlyLogException(errorMsg, new ScaffoldingAttributeParsingException(errorMsg));
             }
 
             var weights = lastAttributeLine

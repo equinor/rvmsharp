@@ -169,7 +169,10 @@ public class ScaffoldingMetadata
                     TotalWeightCalculated = value;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new UserFriendlyLogException(
+                        "Unexpected attribute. This is probably a bug. Notify the developing team.",
+                        new ArgumentOutOfRangeException()
+                    );
             }
 
             return true;
@@ -200,8 +203,11 @@ public class ScaffoldingMetadata
         // so calling this for temp scaffs must be by mistake, -> throw an exception
         if (TempScaffoldingFlag)
         {
-            throw new Exception(
-                "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+            throw new UserFriendlyLogException(
+                "Work order scaffolding processing called for temporary scaffolds. This must be a bug. Please, notify the developing team.",
+                new Exception(
+                    "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+                )
             );
         }
 
@@ -227,8 +233,11 @@ public class ScaffoldingMetadata
         }
         else
         {
-            throw new ScaffoldingFilenameException(
-                $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename."
+            throw new UserFriendlyLogException(
+                "",
+                new ScaffoldingFilenameException(
+                    $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename."
+                )
             );
         }
     }
@@ -253,8 +262,11 @@ public class ScaffoldingMetadata
             //    return false;
 
             if (!success)
-                throw new ScaffoldingMetadataMissingFieldException(
-                    $"Temp scaffolding metadata is missing a mandatory field: {missingFields.TrimEnd(',', ' ')}."
+                throw new UserFriendlyLogException(
+                    $"Metadata is missing a mandatory attribute(s): {missingFields.TrimEnd(',', ' ')}",
+                    new ScaffoldingMetadataMissingFieldException(
+                        $"Temp scaffolding metadata is a missing mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                    )
                 );
         }
         // work-order scaffs
@@ -274,8 +286,11 @@ public class ScaffoldingMetadata
             }
 
             if (!success)
-                throw new ScaffoldingMetadataMissingFieldException(
-                    $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                throw new UserFriendlyLogException(
+                    $"Metadata is missing a mandatory attribute(s): {missingFields.TrimEnd(',', ' ')}",
+                    new ScaffoldingMetadataMissingFieldException(
+                        $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                    )
                 );
         }
     }

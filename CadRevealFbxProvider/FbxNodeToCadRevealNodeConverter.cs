@@ -8,6 +8,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
 using CadRevealComposer.Utils;
+using CadRevealFbxProvider.UserFriendlyLogger;
 using Commons.Utils;
 
 public static class FbxNodeToCadRevealNodeConverter
@@ -163,7 +164,10 @@ public static class FbxNodeToCadRevealNodeConverter
         var mesh = FbxMeshWrapper.GetGeometricData(nodeGeometryPtr);
         if (mesh == null)
         {
-            throw new Exception("IntPtr" + nodeGeometryPtr + " was expected to have a mesh, but we found none.");
+            throw new UserFriendlyLogException(
+                "Import of the FBX file failed. Did the FBX export report any issues?",
+                new Exception("IntPtr" + nodeGeometryPtr + " was expected to have a mesh, but we found none.")
+            );
         }
 
         if (geometriesThatShouldBeInstanced.Contains(nodeGeometryPtr))

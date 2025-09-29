@@ -84,7 +84,10 @@ public static class FbxWorkload
         if (!fbxImporter.HasValidSdk())
         {
             Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
-            throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
+            throw new UserFriendlyLogException(
+                "FBX import failed due to an invalid import library, please notify the developing team.",
+                new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.")
+            );
         }
 
         Dictionary<string, string> metadata = new();
@@ -188,7 +191,7 @@ public static class FbxWorkload
 
                 if (totalMismatch)
                     throw new UserFriendlyLogException(
-                        $"No item in the attribute file {infoTextFilename} can be matched with its geometry in the FBX model {fbxFilename} based on the Item Code. Either the CSV and FBX do not belong together, or all rows in the CSV are invalid. Check if your CSV matches the CSV-template and if you the required metadata are actually exported.",
+                        $"No item in the attribute file {infoTextFilename} can be matched with its geometry in the FBX model {fbxFilename} based on the Item Code. Either the CSV and FBX do not belong together, or all rows in the CSV are invalid. Check if your CSV matches the CSV-template and if the required metadata are actually exported.",
                         new Exception(
                             $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
                         )
