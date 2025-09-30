@@ -15,16 +15,16 @@ using Newtonsoft.Json;
 public static class StidTagMapper
 {
     [Test]
-    public static void CompareProsessedPdmsNodesWithStidTags()
+    public static void CompareProcessedPdmsNodesWithStidTags()
     {
-        string pdmsNodesPath = @"/Users/KAG/Documents/Repos/rvmsharp/Uncommited data/troll_b_echo_tags.json";
-        string stidTagsPath = @"/Users/KAG/Documents/Repos/rvmsharp/Uncommited data/troll_b_stid_tags.csv";
+        string pdmsNodesPath = @"/Users/KAG/Documents/Repos/rvmsharp/TestData/troll_b_echo_tags.json";
+        string stidTagsPath = @"/Users/KAG/Documents/Repos/rvmsharp/TestData/troll_b_stid_tags.csv";
 
         var pdmsNodes = ParseFromJson(pdmsNodesPath);
         var stidTags = ParseFromCsv(stidTagsPath);
 
         var nodes = FilterPdmsNodesByStidTags(pdmsNodes, stidTags);
-        Console.WriteLine(nodes.Length);
+        Console.WriteLine("Number of matched tags: " + nodes.Length + ", out of: " + stidTags.Length + " that exists in STID");
     }
 
     private static PdmsNode[] ParseFromJson(string path)
@@ -77,39 +77,42 @@ public static class StidTagMapper
                 continue;
             }
 
-        //     if (pdmsNode.Attributes.TryGetValue("Type", out var type) && type == "PIPE")
-        //     {
-        //         var baseLineTag = pdmsNode.Name.Split("_")[0].TrimStart('/').Trim();
-        //         var matchingLineTags = lineStidTags
-        //             .Where(x => x.TagNo.Contains(baseLineTag, StringComparison.OrdinalIgnoreCase))
-        //             .ToArray();
-        //
-        //         if (pdmsTag != null)
-        //         {
-        //             var pdmsTagWithoutStars = pdmsTag!.Trim('*');
-        //             var pdmsTagMatchingLineTags = lineStidTags
-        //                 .Where(x => x.TagNo.Contains(pdmsTagWithoutStars, StringComparison.OrdinalIgnoreCase))
-        //                 .ToArray();
-        //             if (pdmsTagMatchingLineTags.Any())
-        //             {
-        //                 if (pdmsTagMatchingLineTags.Length == 1)
-        //                 {
-        //                     resultNodes.Add(pdmsNode);
-        //                     continue;
-        //                 }
-        //                 else
-        //                 {
-        //                     resultNodes.Add(pdmsNode);
-        //                     continue;
-        //                 }
-        //             }
-        //         }
-        //         if (matchingLineTags.Any())
-        //         {
-        //             resultNodes.Add(pdmsNode);
-        //             continue;
-        //         }
-        //     }
+            if (pdmsNode.Type != null && pdmsNode.Type.Contains("PIPE", StringComparison.OrdinalIgnoreCase))
+            {
+                // var baseLineTag = pdmsNode.NodeName.Split("_")[0].TrimStart('/').Trim();
+                // var matchingLineTags = lineStidTags
+                //     .Where(x => x.TAG_NO.Contains(baseLineTag, StringComparison.OrdinalIgnoreCase))
+                //     .ToArray();
+
+                if (pdmsNode.PdmsTag != null)
+                {
+                    var pdmsTagWithoutStars = pdmsNode.PdmsTag.Trim('*');
+                    var pdmsTagMatchingLineTags = lineStidTags
+                        .Where(x => x.TAG_NO.Contains(pdmsTagWithoutStars, StringComparison.OrdinalIgnoreCase))
+                        .ToArray();
+                    if (pdmsTagMatchingLineTags.Any())
+                    {
+                        if (pdmsTagMatchingLineTags.Length == 1)
+                        {
+                            resultNodes.Add(new ResultNode()
+                            {
+                                PdmsNode = pdmsNode, StidTag = pdmsTagMatchingLineTags.First(), MatchType = "PdmsTag"
+                            });
+                            continue;
+                        }
+                        // else
+                        // {
+                        //     resultNodes.Add(pdmsNode);
+                        //     continue;
+                        // }
+                    }
+                }
+                // if (matchingLineTags.Any())
+                // {
+                //     resultNodes.Add(pdmsNode);
+                //     continue;
+                // }
+            }
         }
 
         return resultNodes.ToArray();
