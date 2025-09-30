@@ -9,7 +9,19 @@ public record RvmFacetGroup(
     RvmFacetGroup.RvmPolygon[] Polygons
 ) : RvmPrimitive(Version, RvmPrimitiveKind.FacetGroup, Matrix, BoundingBoxLocal)
 {
-    public record RvmContour((Vector3 Vertex, Vector3 Normal)[] Vertices);
+    public struct RvmVertex(Vector3 position, Vector3 normal)
+    {
+        public Vector3 Vertex = position;
+        public Vector3 Normal = normal;
+    };
 
-    public record RvmPolygon(RvmContour[] Contours);
+    public struct RvmContour(RvmVertex[] vertices)
+    {
+        public RvmVertex[] Vertices = vertices;
+    };
+
+    public struct RvmPolygon(RvmContour[] contours)
+    {
+        public RvmContour[] Contours = contours;
+    }
 }

@@ -82,22 +82,16 @@ public static class RvmFacetGroupMatcher
         var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
 
         var polygons = facetGroup
-            .Polygons.Select(p =>
-                p with
-                {
-                    Contours = p
-                        .Contours.Select(c => new RvmFacetGroup.RvmContour(
-                            c.Vertices.Select(vn =>
-                                    (
-                                        Vector3.Transform(vn.Vertex, finalMatrix),
-                                        Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed)
-                                    )
-                                )
-                                .ToArray()
-                        ))
-                        .ToArray(),
-                }
-            )
+            .Polygons.Select(p => new RvmFacetGroup.RvmPolygon(
+                contours: p.Contours.Select(c => new RvmFacetGroup.RvmContour(
+                        c.Vertices.Select(vn => new RvmFacetGroup.RvmVertex(
+                                Vector3.Transform(vn.Vertex, finalMatrix),
+                                Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed)
+                            ))
+                            .ToArray()
+                    ))
+                    .ToArray()
+            ))
             .ToArray();
 
         return facetGroup with

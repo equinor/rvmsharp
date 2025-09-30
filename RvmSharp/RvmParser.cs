@@ -63,7 +63,7 @@ public static class RvmParser
     private static float ReadFloat(Stream stream)
     {
         Span<byte> bytes = stackalloc byte[4];
-        if (stream.Read(bytes) != bytes.Length)
+        if (stream.Read(bytes) != 4)
             throw new IOException("Unexpected end of stream");
         if (BitConverter.IsLittleEndian)
             bytes.Reverse();
@@ -275,13 +275,11 @@ public static class RvmParser
                     for (var k = 0; k < contourCount; k++)
                     {
                         var vertexCount = ReadUint(stream);
-                        var vertices = new (Vector3 Vertex, Vector3 Normal)[vertexCount];
-
+                        var vertices = new RvmFacetGroup.RvmVertex[vertexCount];
                         for (var n = 0; n < vertexCount; n++)
                         {
-                            var vertex = ReadVector3(stream);
-                            var normal = ReadVector3(stream);
-                            vertices[n] = (vertex, normal);
+                            vertices[n].Vertex = ReadVector3(stream);
+                            vertices[n].Normal = ReadVector3(stream);
                         }
 
                         contours[k] = new RvmFacetGroup.RvmContour(vertices);

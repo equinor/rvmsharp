@@ -21,7 +21,7 @@ public static class RvmPrimitiveExtensions
                 {
                     Contours = a.Contours.Select(c => c with
                     {
-                        Vertices = c.Vertices.Select(v => (
+                        Vertices = c.Vertices.Select(v => new RvmFacetGroup.RvmVertex(
                             Vector3.Transform(v.Vertex, matrix),
                             Vector3.Normalize(Vector3.TransformNormal(v.Normal, matrixInvertedTransposed)))).ToArray()
                     }).ToArray()
