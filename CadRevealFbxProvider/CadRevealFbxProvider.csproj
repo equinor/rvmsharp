@@ -5,10 +5,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="UserFriendlyLogException.cs" />
-    <Compile Remove="UserFriendlyLoggerExceptionHandler.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
     <ProjectReference Include="..\Commons\Commons.csproj" />
   </ItemGroup>
