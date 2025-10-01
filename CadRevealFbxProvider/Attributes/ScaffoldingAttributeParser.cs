@@ -395,11 +395,23 @@ public class ScaffoldingAttributeParser
     // Throws error if column does not exist or is empty
     private static string ExtractColumnValueFromRow(string columnHeader, ICsvLine row)
     {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
-            .Select(el => row.Values[el.index])
-            .Single(x => !String.IsNullOrWhiteSpace(x));
+        try
+        {
+            return row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
+                .Select(el => row.Values[el.index])
+                .Single(x => !String.IsNullOrWhiteSpace(x));
+        }
+        catch (InvalidOperationException)
+        {
+            throw new UserFriendlyLogException(
+                $"CSV contains a row {row} where {columnHeader} is missing or is missing a value.",
+                new ScaffoldingAttributeParsingException(
+                    $"Attribute {columnHeader} must exist and cannot have missing values."
+                )
+            );
+        }
     }
 
     // Method looks at several columns refering to item weight and expects exactly one of them to be non-empty
@@ -407,14 +419,26 @@ public class ScaffoldingAttributeParser
     // Throws error if none or more than one description columns are non-empty
     private static string? ExtractSingleWeightFromCsvRow(ICsvLine row)
     {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el =>
-                el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
-                || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
-            )
-            .Select(el => row.Values[el.index])
-            .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
+        try
+        {
+            return row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el =>
+                    el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
+                    || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
+                )
+                .Select(el => row.Values[el.index])
+                .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
+        }
+        catch (InvalidOperationException)
+        {
+            throw new UserFriendlyLogException(
+                $"CSV contains a row {row} where none or more than one weight attribute is filled in. Only one weight (exactly one) attribute per item is allowed.",
+                new ScaffoldingAttributeParsingException(
+                    $"Weight attributes cannot have multiple values. Only one weight attribute per item is allowed."
+                )
+            );
+        }
     }
 
     // Method looks at several description columns and expects exactly one of them to be non-empty
