@@ -21,6 +21,8 @@ jobs:
             Write-Host ""
             Write-Host "Tip: Install csharpier using 'dotnet tool restore', and run it using `dotnet csharpier format .` to autofix formatting."
           }
+permissions:
+  contents: read
 
   build:
     name: Build and test
