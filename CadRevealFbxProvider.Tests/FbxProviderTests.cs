@@ -351,7 +351,7 @@ public class FbxProviderTests
     }
 
     [TestCase("TestSamples/tempScaff_wrongNaming")]
-    public void ParseFiles_TempScaffoldingWithWrongName_ProcessingFails(string inputDir)
+    public void ParseFiles_TempScaffoldingWithoutTempInName_ProcessingFails(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
@@ -372,13 +372,7 @@ public class FbxProviderTests
             )
         ); // this scaff is not a valid temp scaffolding
 
-        Assert.That(exc, Is.Not.Null);
-
-        Assert.That(
-            exc,
-            Is.InstanceOf<ScaffoldingFilenameException>()
-                .Or.InnerException.InstanceOf<ScaffoldingAttributeParsingException>()
-        );
+        HelperFunctions.AssertInnerExceptionType<ScaffoldingAttributeParsingException>(exc);
     }
 
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>

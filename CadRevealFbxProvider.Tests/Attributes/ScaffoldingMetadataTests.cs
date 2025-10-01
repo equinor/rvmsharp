@@ -97,7 +97,8 @@ public class ScaffoldingMetadataTests
         {
             Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() => metadataEmpty.ThrowIfModelMetadataInvalid());
+            var exc = Assert.Catch(() => metadataEmpty.ThrowIfModelMetadataInvalid());
+            HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
         });
     }
 
@@ -155,9 +156,9 @@ public class ScaffoldingMetadataTests
         var targetDict = new Dictionary<string, string>();
 
         // Assert
-        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
-            metadataEmpty.TryWriteToGenericMetadataDict(targetDict)
-        );
+        var exc = Assert.Catch(() => metadataEmpty.TryWriteToGenericMetadataDict(targetDict));
+
+        HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
     }
 
     [Test]
@@ -281,8 +282,10 @@ public class ScaffoldingMetadataTests
         var fileName2 = "BCA-TEMP-12345678";
 
         // Act & Assert
-        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+        var exc1 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        HelperFunctions.AssertInnerExceptionType<Exception>(exc1);
+        var exc2 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+        HelperFunctions.AssertInnerExceptionType<Exception>(exc2);
     }
 
     [Test]
@@ -315,6 +318,7 @@ public class ScaffoldingMetadataTests
         var fileName1 = "-12345678";
 
         // Act & Assert
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        var exc = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
+        HelperFunctions.AssertInnerExceptionType<ScaffoldingFilenameException>(exc);
     }
 }
