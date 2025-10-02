@@ -406,7 +406,7 @@ public class ScaffoldingAttributeParser
         catch (InvalidOperationException)
         {
             throw new UserFriendlyLogException(
-                $"CSV contains a row {row} where {columnHeader} is missing or is missing a value.",
+                $"CSV contains is either missing a header {columnHeader} or has multiple headers with the same name. Or, there is a problematic row {row} where column {columnHeader} has no value.",
                 new ScaffoldingAttributeParsingException(
                     $"Attribute {columnHeader} must exist and cannot have missing values."
                 )

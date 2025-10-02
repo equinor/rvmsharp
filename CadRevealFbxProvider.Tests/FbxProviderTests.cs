@@ -362,7 +362,7 @@ public class FbxProviderTests
         // act & assert
         // this scaff is not a valid temp scaffolding
 
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
             modelFormatProviderFbx.ParseFiles(
                 inputDirectoryTempScaff.EnumerateFiles(),
                 treeIndexGenerator,

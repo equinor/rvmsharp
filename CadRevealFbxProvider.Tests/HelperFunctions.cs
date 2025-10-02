@@ -4,7 +4,7 @@
 
     public static class HelperFunctions
     {
-        public static void ThrowsCustomScaffoldingException<T>(Delegate fn)
+        public static void AssertThrowsCustomScaffoldingException<T>(Delegate fn)
         {
             var exc = Assert.Catch(() => fn.DynamicInvoke());
 

@@ -178,7 +178,7 @@ public class FbxProviderAttributeParserTests
         ScaffoldingMetadata metadata;
 
         // assert
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
         });
@@ -727,7 +727,7 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -750,7 +750,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -857,7 +857,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -880,7 +880,7 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -959,7 +959,7 @@ public class FbxProviderAttributeParserTests
         // Assert
 
         // exception type was changed in this case from InvalidOperationException to ScaffoldingAttributeParsingException
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }

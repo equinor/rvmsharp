@@ -97,7 +97,7 @@ public class ScaffoldingMetadataTests
         {
             Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
-            HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
                 metadataEmpty.ThrowIfModelMetadataInvalid()
             );
         });
@@ -157,7 +157,7 @@ public class ScaffoldingMetadataTests
         var targetDict = new Dictionary<string, string>();
 
         // Assert
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             metadataEmpty.TryWriteToGenericMetadataDict(targetDict)
         );
     }
@@ -283,10 +283,10 @@ public class ScaffoldingMetadataTests
         var fileName2 = "BCA-TEMP-12345678";
 
         // Act & Assert
-        HelperFunctions.ThrowsCustomScaffoldingException<Exception>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
             metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1)
         );
-        HelperFunctions.ThrowsCustomScaffoldingException<Exception>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
             metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2)
         );
     }
@@ -321,7 +321,7 @@ public class ScaffoldingMetadataTests
         var fileName1 = "-12345678";
 
         // Act & Assert
-        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
             metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1)
         );
     }
