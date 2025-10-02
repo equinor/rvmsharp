@@ -97,8 +97,9 @@ public class ScaffoldingMetadataTests
         {
             Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
-            var exc = Assert.Catch(() => metadataEmpty.ThrowIfModelMetadataInvalid());
-            HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
+            HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+                metadataEmpty.ThrowIfModelMetadataInvalid()
+            );
         });
     }
 
@@ -156,9 +157,9 @@ public class ScaffoldingMetadataTests
         var targetDict = new Dictionary<string, string>();
 
         // Assert
-        var exc = Assert.Catch(() => metadataEmpty.TryWriteToGenericMetadataDict(targetDict));
-
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            metadataEmpty.TryWriteToGenericMetadataDict(targetDict)
+        );
     }
 
     [Test]
@@ -282,10 +283,12 @@ public class ScaffoldingMetadataTests
         var fileName2 = "BCA-TEMP-12345678";
 
         // Act & Assert
-        var exc1 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        HelperFunctions.AssertInnerExceptionType<Exception>(exc1);
-        var exc2 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
-        HelperFunctions.AssertInnerExceptionType<Exception>(exc2);
+        HelperFunctions.ThrowsCustomScaffoldingException<Exception>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1)
+        );
+        HelperFunctions.ThrowsCustomScaffoldingException<Exception>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2)
+        );
     }
 
     [Test]
@@ -318,7 +321,8 @@ public class ScaffoldingMetadataTests
         var fileName1 = "-12345678";
 
         // Act & Assert
-        var exc = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingFilenameException>(exc);
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1)
+        );
     }
 }

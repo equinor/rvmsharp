@@ -359,20 +359,17 @@ public class FbxProviderTests
         var modelFormatProviderFbx = new FbxProvider();
         DirectoryInfo inputDirectoryTempScaff = new(inputDir);
 
-        // act
-        // no act, assert that exception is thrown
+        // act & assert
+        // this scaff is not a valid temp scaffolding
 
-        // assert
-        var exc = Assert.Catch(() =>
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
             modelFormatProviderFbx.ParseFiles(
                 inputDirectoryTempScaff.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIndexGenerator,
                 new NodeNameFiltering(new NodeNameExcludeRegex(null))
             )
-        ); // this scaff is not a valid temp scaffolding
-
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingAttributeParsingException>(exc);
+        );
     }
 
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>

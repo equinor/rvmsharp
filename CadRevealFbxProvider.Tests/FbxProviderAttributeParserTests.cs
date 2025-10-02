@@ -178,12 +178,10 @@ public class FbxProviderAttributeParserTests
         ScaffoldingMetadata metadata;
 
         // assert
-        var exc = Assert.Catch(() =>
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
         });
-
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingAttributeParsingException>(exc);
     }
 
     [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
@@ -729,9 +727,9 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        var exc = Assert.Catch(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -751,9 +749,10 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        var exc = Assert.Catch(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
+        // Act & Assert
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -858,9 +857,9 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        var exc = Assert.Catch(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -881,8 +880,9 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        var exc = Assert.Catch(() => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()));
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingMetadataMissingFieldException>(exc);
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -957,12 +957,11 @@ public class FbxProviderAttributeParserTests
 
         // Act
         // Assert
-        var exc = Assert.Catch(
-            () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
-            "Error: should throw exception since we cannot have weight for two or more manufacturers on the same part"
-        );
+
         // exception type was changed in this case from InvalidOperationException to ScaffoldingAttributeParsingException
-        HelperFunctions.AssertInnerExceptionType<ScaffoldingAttributeParsingException>(exc);
+        HelperFunctions.ThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
