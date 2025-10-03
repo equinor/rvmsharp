@@ -10,6 +10,8 @@ public class ScaffoldingAttributeParser
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
     private const string ItemCodeColumnKey = "Item code";
 
+    private const string RowIndexColumnKey = "Row index";
+
     public static readonly List<string> AggregateAttributesPerModel_NumericHeadersSap =
     [
         "Work order",
@@ -49,8 +51,9 @@ public class ScaffoldingAttributeParser
     ) ParseAttributes(string[] fileLines, bool tempFlag = false)
     {
         ThrowExceptionIfEmptyCsv(fileLines);
-        fileLines = RemoveCsvNonDescriptionHeaderInfo(fileLines);
-        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines);
+        (fileLines, var lineOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
+        fileLines = PrependRowNumberToCsvLines(fileLines, lineOffset);
+        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, lineOffset);
         int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
@@ -195,6 +198,27 @@ public class ScaffoldingAttributeParser
         return string.IsNullOrWhiteSpace(s) ? "" : s;
     }
 
+    // prepends the rown number to each row starting from 1, not from 0
+    // if the Table needs to be debu
+    private static string[] PrependRowNumberToCsvLines(string[] fileLines, int offset)
+    {
+        return fileLines
+            .Select(
+                (line, index) =>
+                {
+                    if (index == 0)
+                        return $"\"{RowIndexColumnKey}\";{line}";
+                    ; // do not prepend row number to header line
+                    if (line.Length == 0)
+                        return line; // do not prepend row number to empty lines
+                    if (line.StartsWith("Grand total"))
+                        return line; // do not prepend row number to the last line with total weight
+                    return $"\"{index + offset}\";{line}";
+                }
+            )
+            .ToArray();
+    }
+
     private static void ThrowExceptionIfEmptyCsv(string[] fileLines)
     {
         if (fileLines.Length == 0)
@@ -205,14 +229,14 @@ public class ScaffoldingAttributeParser
         Console.WriteLine("Reading and processing attribute file.");
     }
 
-    private static string[] RemoveCsvNonDescriptionHeaderInfo(string[] fileLines)
+    private static (string[], int) RemoveCsvNonDescriptionHeaderInfo(string[] fileLines)
     {
         // The below will remove the first row in the CSV file, if it is not the header.
         // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
-        return fileLines.First().Contains("Description") ? fileLines : fileLines.Skip(1).ToArray();
+        return fileLines.First().Contains("Description") ? (fileLines, 2) : (fileLines.Skip(1).ToArray(), 3);
     }
 
-    private static ICsvLine[] ConvertToCsvLines(string[] fileLines)
+    private static ICsvLine[] ConvertToCsvLines(string[] fileLines, int lineOffset)
     {
         return CsvReader
             .ReadFromText(
@@ -405,8 +429,14 @@ public class ScaffoldingAttributeParser
         }
         catch (InvalidOperationException)
         {
+            var rowIndex = row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Equals(RowIndexColumnKey, StringComparison.OrdinalIgnoreCase))
+                .Select(el => row.Values[el.index])
+                .Single(x => !String.IsNullOrWhiteSpace(x));
+
             throw new UserFriendlyLogException(
-                $"CSV file has one or more of the following issues: -- missing the header \"{columnHeader}\" -- has multiple headers with the name \"{columnHeader}\" -- has a problematic row: {row} where the column \"{columnHeader}\" has no value",
+                $"CSV file has one or more of the following issues: -- missing the header \"{columnHeader}\" -- has multiple headers with the name \"{columnHeader}\" -- column \"{columnHeader}\" has a missing value on row {rowIndex}",
                 new ScaffoldingAttributeParsingException(
                     $"Attribute {columnHeader} must exist and cannot have missing values."
                 )
