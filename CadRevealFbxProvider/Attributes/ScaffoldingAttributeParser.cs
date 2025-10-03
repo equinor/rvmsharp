@@ -233,7 +233,7 @@ public class ScaffoldingAttributeParser
     {
         // The below will remove the first row in the CSV file, if it is not the header.
         // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
-        return fileLines.First().Contains("Description") ? (fileLines, 2) : (fileLines.Skip(1).ToArray(), 3);
+        return fileLines.First().Contains("Description") ? (fileLines, 0) : (fileLines.Skip(1).ToArray(), 1);
     }
 
     private static ICsvLine[] ConvertToCsvLines(string[] fileLines, int lineOffset)
