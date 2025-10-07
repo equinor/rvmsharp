@@ -1,7 +1,6 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Globalization;
-using System.Text.Json;
 using Csv;
 
 public class ScaffoldingAttributeParser
@@ -383,6 +382,7 @@ public class ScaffoldingAttributeParser
     }
 
     // Method looks at several columns refering to item weight and expects exactly one of them to be non-empty
+    // If there are multiple weight columns and all have the same non-empty value, that is also accepted.
     // Returns the value of the non-empty item-weight column
     // Throws error if none or more than one description columns are non-empty
     private static string? ExtractSingleWeightFromCsvRow(ICsvLine row)
@@ -394,10 +394,12 @@ public class ScaffoldingAttributeParser
                 || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
             )
             .Select(el => row.Values[el.index])
+            .Distinct()
             .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
     }
 
     // Method looks at several description columns and expects exactly one of them to be non-empty
+    // If there are multiple description columns and all have the same non-empty value, that is also accepted.
     // Returns the value of the non-empty description column (legacy: eventually prefixed with the manufacturer name)
     // Throws error if none or more than one description columns are non-empty
     private static string ExtractSingleDescriptionFromCsvRow(ICsvLine row, bool manufacturerColumnPresent)
@@ -418,6 +420,7 @@ public class ScaffoldingAttributeParser
                 }
                 return partDescription.Length > 0 ? $"{partDescription}" : String.Empty;
             })
+            .Distinct()
             .Single(x => !String.IsNullOrWhiteSpace(x));
     }
 
