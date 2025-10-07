@@ -200,19 +200,45 @@ public class ScaffoldingAttributeParser
 
     private static ICsvLine[] ConvertToCsvLines(string[] fileLines)
     {
-        return CsvReader
-            .ReadFromText(
-                String.Join(Environment.NewLine, fileLines),
-                new CsvOptions()
-                {
-                    HeaderMode = HeaderMode.HeaderPresent,
-                    RowsToSkip = 0,
-                    SkipRow = (ReadOnlyMemory<char> row, int idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
-                    TrimData = true,
-                    Separator = ';',
-                }
-            )
-            .ToArray();
+        const char expectedSeparator = ';';
+        try
+        {
+            return CsvReader
+                .ReadFromText(
+                    String.Join(Environment.NewLine, fileLines),
+                    new CsvOptions()
+                    {
+                        HeaderMode = HeaderMode.HeaderPresent,
+                        RowsToSkip = 0,
+                        SkipRow = (ReadOnlyMemory<char> row, int idx) =>
+                            row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
+                        TrimData = true,
+                        Separator = expectedSeparator,
+                    }
+                )
+                .ToArray();
+        }
+        catch (Exception e)
+        {
+            if (e.Message.Contains("Duplicate headers detected in HeaderPresent mode."))
+            {
+                var headerRow = fileLines.First();
+                Console.WriteLine(
+                    "The first row of the CSV file is expected to contain unique headers. Current headers: \n "
+                        + headerRow
+                );
+
+                var duplicateHeaders = headerRow
+                    .Split(expectedSeparator)
+                    .GroupBy(h => h.Trim())
+                    .Where(g => g.Count() > 1)
+                    .Select(g => g.Key)
+                    .ToList();
+                Console.WriteLine("Duplicate headers found: " + string.Join(", ", duplicateHeaders));
+                Console.WriteLine("This should not happen, the scaffolding file is invalid.");
+            }
+            throw;
+        }
     }
 
     private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
