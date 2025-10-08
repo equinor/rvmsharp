@@ -58,7 +58,7 @@ public class ScaffoldingAttributeParser
         var entireScaffoldingMetadata = new ScaffoldingMetadata();
 
         var attributesDictionary = validatedAttributeData.ToDictionary(
-            x => ExtractKeyFromCsvRow(x, columnIndexKeyAttribute),
+            x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, columnIndexKeyAttribute, KeyAttribute),
             v =>
             {
                 var kvp = new Dictionary<string, string>();
@@ -71,15 +71,22 @@ public class ScaffoldingAttributeParser
                 // In some cases, description and weight can appear in several columns (different manufacturers of item parts)
                 // these columns need to be merged into one with manufacturer as prefix. Only a single manufacturer is allowed per
                 // part. An exception will be thrown if more or less than one manufacturer is found per part.
-                kvp["Description"] = ExtractSingleDescriptionFromCsvRow(v, manufacturerColumnPresent);
+                kvp["Description"] = ScaffoldingCsvLineParser.ExtractSingleDescriptionFromCsvRow(
+                    v,
+                    manufacturerColumnPresent
+                );
 
                 // Weights are expected to either be in one column or the other, never both at the same time.
                 // Merging is done by selecting the only non-empty string and throwing an exception if more than one non-empty.
-                kvp["Weight kg"] = ExtractSingleWeightFromCsvRow(v) ?? "";
+                kvp["Weight kg"] = ScaffoldingCsvLineParser.ExtractSingleWeightFromCsvRow(v) ?? "";
 
                 // legacy, models using the old template will just have the fields empty
-                kvp["Manufacturer"] = (manufacturerColumnPresent) ? ExtractColumnValueFromRow("Manufacturer", v) : "";
-                kvp["IfcGUID"] = (ifcGuidColumnPresent) ? ExtractColumnValueFromRow("IfcGUID", v) : "";
+                kvp["Manufacturer"] =
+                    (manufacturerColumnPresent)
+                        ? ScaffoldingCsvLineParser.ExtractColumnValueFromRow("Manufacturer", v)
+                        : "";
+                kvp["IfcGUID"] =
+                    (ifcGuidColumnPresent) ? ScaffoldingCsvLineParser.ExtractColumnValueFromRow("IfcGUID", v) : "";
 
                 // not extracting this one yet, because not sure if useful
                 kvp["Last Updated"] = "";
@@ -101,7 +108,13 @@ public class ScaffoldingAttributeParser
 
                     // Check if numeric headers are actually numbers for non-temp scaffolds.
                     // For temporary scaffolds, we don't care.
-                    if (IsNumericSapColumn(v, col))
+                    if (
+                        ScaffoldingCsvLineParser.IsNumericSapColumn(
+                            v,
+                            col,
+                            AggregateAttributesPerModel_NumericHeadersSap
+                        )
+                    )
                     {
                         if (!tempFlag)
                         {
@@ -186,7 +199,7 @@ public class ScaffoldingAttributeParser
     private static void ThrowExceptionIfEmptyCsv(string[] fileLines)
     {
         if (fileLines.Length == 0)
-            throw new ArgumentException(null, nameof(fileLines));
+            throw new ArgumentException("CSV file has no lines.", nameof(fileLines));
         Console.WriteLine("Reading and processing attribute file.");
     }
 
@@ -206,7 +219,7 @@ public class ScaffoldingAttributeParser
                 {
                     HeaderMode = HeaderMode.HeaderPresent,
                     RowsToSkip = 0,
-                    SkipRow = (ReadOnlyMemory<char> row, int idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
+                    SkipRow = (row, idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
                     TrimData = true,
                     Separator = ';',
                 }
@@ -263,15 +276,6 @@ public class ScaffoldingAttributeParser
         Dictionary<string, Dictionary<string, string>?> attributesDictionary
     )
     {
-        var test = attributesDictionary
-            .Where(a => a.Value != null)
-            .Select(av =>
-            {
-                var w = av.Value!["Weight kg"];
-                if (string.IsNullOrEmpty(w))
-                    return 0; // sometime weight can be missing
-                return float.Parse(w.Replace(" kg", String.Empty), CultureInfo.InvariantCulture);
-            });
         // Calculate total weight from the table.
         // It will be used as a sanity check against the total weight explicitly written in the table
         // attributesDictionary
@@ -289,48 +293,42 @@ public class ScaffoldingAttributeParser
 
     private static float RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(ICsvLine lastAttributeLine)
     {
-        float totalWeight = 0.0f;
-
-        // finds all partial total weights in the line (partial: per item producer)
-        // and sums them up to the overall total weight
-        if (lastAttributeLine[0].Contains(HeaderTotalWeight))
-        {
-            // check if there is at least one weight entry in the total weight line
-            var hasValidTotalWeight = lastAttributeLine.Values.Any(v => v.Contains("kg"));
-            if (!hasValidTotalWeight)
-            {
-                const string errorMsg =
-                    "Grand total line in the attribute file does not contain any total weights. Maybe the correct export template was not used.";
-                Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-                throw new ScaffoldingAttributeParsingException(errorMsg);
-            }
-
-            var weights = lastAttributeLine
-                .Values.Where(v => v.Contains("kg"))
-                .Select(v =>
-                {
-                    // strip the kg at the end of the number if it is there
-                    var w = v.Replace(" kg", String.Empty);
-                    try
-                    {
-                        return float.Parse(w, CultureInfo.InvariantCulture);
-                    }
-                    catch
-                    {
-                        const string errorMsg = "Total weight line in the attribute file has an unknown format.";
-                        Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-                        throw new ScaffoldingAttributeParsingException(errorMsg);
-                    }
-                });
-            totalWeight = weights.Sum(v => v);
-        }
-        else
+        if (!lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
             Console.Error.WriteLine("Attribute file does not contain total weight");
             throw new ScaffoldingAttributeParsingException("Attribute file does not contain total weight");
         }
 
-        return totalWeight;
+        // check if there is at least one weight entry in the total weight line
+        var hasValidTotalWeight = lastAttributeLine.Values.Any(v => v.Contains("kg"));
+        if (!hasValidTotalWeight)
+        {
+            const string errorMsg =
+                "Grand total line in the attribute file does not contain any total weights. Maybe the correct export template was not used.";
+            Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
+            throw new ScaffoldingAttributeParsingException(errorMsg);
+        }
+
+        // finds all partial total weights in the line (partial: per item producer)
+        // and sums them up to the overall total weight
+        var weights = lastAttributeLine
+            .Values.Where(v => v.Contains("kg"))
+            .Select(v =>
+            {
+                // strip the kg at the end of the number if it is there
+                var w = v.Replace(" kg", String.Empty);
+                try
+                {
+                    return float.Parse(w, CultureInfo.InvariantCulture);
+                }
+                catch
+                {
+                    const string errorMsg = "Total weight line in the attribute file has an unknown format.";
+                    Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
+                    throw new ScaffoldingAttributeParsingException(errorMsg);
+                }
+            });
+        return weights.Sum(v => v);
     }
 
     private static void WarnIfUnknownAggregateAttribute(string attribute)
@@ -346,89 +344,14 @@ public class ScaffoldingAttributeParser
 
     private static void ThrowExceptionIfNotValidNumber(string value, string columnName)
     {
-        try
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                // Parse will throw an assertion if it fails. Hence, we do not need the return value.
-                float.Parse(value, CultureInfo.InvariantCulture);
-            }
-        }
-        catch (Exception)
-        {
-            var errMsg = $"Error parsing attribute value. {value} is not a valid {columnName}.";
-            Console.Error.WriteLine(errMsg);
-            throw new ScaffoldingAttributeParsingException(errMsg);
-        }
-    }
+        if (string.IsNullOrWhiteSpace(value))
+            return;
 
-    private static bool IsNumericSapColumn(ICsvLine row, int columnIndex)
-    {
-        return AggregateAttributesPerModel_NumericHeadersSap.Any(h =>
-            string.Equals(h, row.Headers[columnIndex], StringComparison.OrdinalIgnoreCase)
-        );
-    }
+        if (float.TryParse(value, CultureInfo.InvariantCulture, out _))
+            return;
 
-    // Method extract the value of given column (with the given header) from the row
-    // Expect the column to exist and be non-empty
-    // Throws error if column does not exist or is empty
-    private static string ExtractColumnValueFromRow(string columnHeader, ICsvLine row)
-    {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
-            .Select(el => row.Values[el.index])
-            .Single(x => !String.IsNullOrWhiteSpace(x));
-    }
-
-    // Method looks at several columns refering to item weight and expects exactly one of them to be non-empty
-    // If there are multiple weight columns and all have the same non-empty value, that is also accepted.
-    // Returns the value of the non-empty item-weight column
-    // Throws error if none or more than one description columns are non-empty
-    private static string? ExtractSingleWeightFromCsvRow(ICsvLine row)
-    {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el =>
-                el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
-                || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
-            )
-            .Select(el => row.Values[el.index])
-            .Distinct()
-            .SingleOrDefault(x => !String.IsNullOrWhiteSpace(x));
-    }
-
-    // Method looks at several description columns and expects exactly one of them to be non-empty
-    // If there are multiple description columns and all have the same non-empty value, that is also accepted.
-    // Returns the value of the non-empty description column (legacy: eventually prefixed with the manufacturer name)
-    // Throws error if none or more than one description columns are non-empty
-    private static string ExtractSingleDescriptionFromCsvRow(ICsvLine row, bool manufacturerColumnPresent)
-    {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
-            .Select(el =>
-            {
-                var partDescription = row.Values[el.index];
-
-                // this is a legacy fallback for old templates without manufacturer column
-                if (!manufacturerColumnPresent)
-                {
-                    var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", String.Empty).Trim();
-                    var spacer = (manufacturerName.Length > 0) ? " " : "";
-                    return partDescription.Length > 0 ? $"{manufacturerName}{spacer}{partDescription}" : String.Empty;
-                }
-                return partDescription.Length > 0 ? $"{partDescription}" : String.Empty;
-            })
-            .Distinct()
-            .Single(x => !String.IsNullOrWhiteSpace(x));
-    }
-
-    private static string ExtractKeyFromCsvRow(ICsvLine row, int columnIndexKey)
-    {
-        var key = row.Values[columnIndexKey];
-        if (string.IsNullOrEmpty(key))
-            throw new ScaffoldingAttributeParsingException($"Key attribute {KeyAttribute} cannot have missing values.");
-        return key;
+        var errMsg = $"Error parsing attribute value. \"{value}\" is not a valid number in column: {columnName}.";
+        Console.Error.WriteLine(errMsg);
+        throw new ScaffoldingAttributeParsingException(errMsg);
     }
 }
