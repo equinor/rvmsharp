@@ -11,8 +11,6 @@ public class ScaffoldingAttributeParser
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
     private const string ItemCodeColumnKey = "Item code";
 
-    private const string RowIndexColumnKey = "Row index";
-
     public static readonly List<string> AggregateAttributesPerModel_NumericHeadersSap =
     [
         "Work order",
@@ -42,24 +40,9 @@ public class ScaffoldingAttributeParser
         "Last Updated",
     ];
 
-    public static readonly List<string> DescriptionAttributesPerItem =
-    [
-        "Description",
-        "HAKI Description",
-    ];
-    public static readonly List<string> WeightAttributesPerItem =
-    [
-        "Weight kg",
-        "HAKI Weight",
-        "Layher Weight",
-        "Vekt",
-    ];
-    public static readonly List<string> OtherAttributesPerItem =
-    [
-        "Count",
-        "Manufacturer",
-        "IfcGUID",
-    ];
+    public static readonly List<string> DescriptionAttributesPerItem = ["Description", "HAKI Description"];
+    public static readonly List<string> WeightAttributesPerItem = ["Weight kg", "HAKI Weight", "Layher Weight", "Vekt"];
+    public static readonly List<string> OtherAttributesPerItem = ["Count", "Manufacturer", "IfcGUID"];
 
     public static (
         Dictionary<string, Dictionary<string, string>?> attributesDictionary,
@@ -68,15 +51,12 @@ public class ScaffoldingAttributeParser
     {
         ThrowExceptionIfEmptyCsv(fileLines);
         (fileLines, var lineOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
-        fileLines = PrependRowNumberToCsvLines(fileLines, lineOffset);
+        fileLines = ScaffoldingCsvLineParser.PrependRowNumberToCsvLines(fileLines, lineOffset);
         ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, lineOffset);
         int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
-        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(
-                attributeRawData,
-                columnIndexKeyAttribute
-            )
+        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute)
             .ToArray();
 
         var entireScaffoldingMetadata = new ScaffoldingMetadata();
@@ -92,12 +72,7 @@ public class ScaffoldingAttributeParser
         }
 
         var attributesDictionary = validatedAttributeData.ToDictionary(
-            x =>
-                ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(
-                    x,
-                    columnIndexKeyAttribute,
-                    KeyAttribute
-                ),
+            x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, columnIndexKeyAttribute, ItemCodeColumnKey),
             v =>
             {
                 var kvp = new Dictionary<string, string>();
@@ -105,9 +80,7 @@ public class ScaffoldingAttributeParser
                 var manufacturerColumnPresent = v.Headers.Any(h =>
                     h.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase)
                 );
-                var ifcGuidColumnPresent = v.Headers.Any(h =>
-                    h.Equals("IfcGUID", StringComparison.OrdinalIgnoreCase)
-                );
+                var ifcGuidColumnPresent = v.Headers.Any(h => h.Equals("IfcGUID", StringComparison.OrdinalIgnoreCase));
 
                 // In some cases, description and weight can appear in several columns (different manufacturers of item parts)
                 // these columns need to be merged into one with manufacturer as prefix. Only a single manufacturer is allowed per
@@ -127,9 +100,7 @@ public class ScaffoldingAttributeParser
                         ? ScaffoldingCsvLineParser.ExtractColumnValueFromRow("Manufacturer", v)
                         : "";
                 kvp["IfcGUID"] =
-                    (ifcGuidColumnPresent)
-                        ? ScaffoldingCsvLineParser.ExtractColumnValueFromRow("IfcGUID", v)
-                        : "";
+                    (ifcGuidColumnPresent) ? ScaffoldingCsvLineParser.ExtractColumnValueFromRow("IfcGUID", v) : "";
 
                 // not extracting this one yet, because not sure if useful
                 kvp["Last Updated"] = "";
@@ -187,9 +158,7 @@ public class ScaffoldingAttributeParser
 
                 if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
                 {
-                    Console.WriteLine(
-                        "Invalid attribute line: " + v[columnIndexKeyAttribute].ToString()
-                    );
+                    Console.WriteLine("Invalid attribute line: " + v[columnIndexKeyAttribute].ToString());
                     return null;
                 }
 
@@ -204,10 +173,7 @@ public class ScaffoldingAttributeParser
         );
 
         float totalWeight = RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(lastAttributeLine);
-        entireScaffoldingMetadata.TryAddValue(
-            HeaderTotalWeight,
-            totalWeight.ToString(CultureInfo.InvariantCulture)
-        );
+        entireScaffoldingMetadata.TryAddValue(HeaderTotalWeight, totalWeight.ToString(CultureInfo.InvariantCulture));
 
         WarnIfSumOfPartWeightsDifferFromGiven(totalWeight, totalWeightCalculated);
 
@@ -226,21 +192,12 @@ public class ScaffoldingAttributeParser
 
     private static bool IsPurelyItemAttribute(string attribute)
     {
-        return DescriptionAttributesPerItem.Any(h =>
-                string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)
-            )
-            || WeightAttributesPerItem.Any(h =>
-                string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)
-            )
-            || OtherAttributesPerItem.Any(h =>
-                string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)
-            );
+        return DescriptionAttributesPerItem.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase))
+            || WeightAttributesPerItem.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase))
+            || OtherAttributesPerItem.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase));
     }
 
-    static void WarnIfSumOfPartWeightsDifferFromGiven(
-        float givenTotalWeight,
-        float summedTotalWeight
-    )
+    static void WarnIfSumOfPartWeightsDifferFromGiven(float givenTotalWeight, float summedTotalWeight)
     {
         if (Math.Abs(givenTotalWeight - summedTotalWeight) > 1.0E-3f)
             Console.WriteLine(
@@ -251,27 +208,6 @@ public class ScaffoldingAttributeParser
     private static string ConvertStringToEmptyIfNullOrWhiteSpace(string? s)
     {
         return string.IsNullOrWhiteSpace(s) ? "" : s;
-    }
-
-    // prepends the rown number to each row starting from 1, not from 0
-    // if the Table needs to be debu
-    private static string[] PrependRowNumberToCsvLines(string[] fileLines, int offset)
-    {
-        return fileLines
-            .Select(
-                (line, index) =>
-                {
-                    if (index == 0)
-                        return $"\"{RowIndexColumnKey}\";{line}";
-                    ; // do not prepend row number to header line
-                    if (line.Length == 0)
-                        return line; // do not prepend row number to empty lines
-                    if (line.StartsWith("Grand total"))
-                        return line; // do not prepend row number to the last line with total weight
-                    return $"\"{index + offset}\";{line}";
-                }
-            )
-            .ToArray();
     }
 
     private static void ThrowExceptionIfEmptyCsv(string[] fileLines)
@@ -288,9 +224,7 @@ public class ScaffoldingAttributeParser
     {
         // The below will remove the first row in the CSV file, if it is not the header.
         // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
-        return fileLines.First().Contains("Description")
-            ? (fileLines, 0)
-            : (fileLines.Skip(1).ToArray(), 1);
+        return fileLines.First().Contains("Description") ? (fileLines, 0) : (fileLines.Skip(1).ToArray(), 1);
     }
 
     private static ICsvLine[] ConvertToCsvLines(string[] fileLines, int lineOffset)
@@ -312,10 +246,7 @@ public class ScaffoldingAttributeParser
 
     private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
     {
-        var columnIndexKeyAttribute = Array.IndexOf(
-            attributeRawData.First().Headers,
-            ItemCodeColumnKey
-        );
+        var columnIndexKeyAttribute = Array.IndexOf(attributeRawData.First().Headers, ItemCodeColumnKey);
 
         if (columnIndexKeyAttribute < 0)
             throw new UserFriendlyLogException(
@@ -382,18 +313,14 @@ public class ScaffoldingAttributeParser
             .Sum();
     }
 
-    private static float RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(
-        ICsvLine lastAttributeLine
-    )
+    private static float RetrieveTotalWeightFromCsvAndThrowExceptionIfFail(ICsvLine lastAttributeLine)
     {
         if (!lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
             Console.Error.WriteLine("Attribute file does not contain total weight");
             throw new UserFriendlyLogException(
                 "Total weight could not be extracted from the CSV file, because it is missing. Please check the CSV-template guide.",
-                new ScaffoldingAttributeParsingException(
-                    "Attribute file does not contain total weight"
-                )
+                new ScaffoldingAttributeParsingException("Attribute file does not contain total weight")
             );
         }
 
@@ -404,10 +331,7 @@ public class ScaffoldingAttributeParser
             const string errorMsg =
                 "Grand total line in the attribute file does not contain any total weights. Maybe the correct export template was not used.";
             Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-            throw new UserFriendlyLogException(
-                errorMsg,
-                new ScaffoldingAttributeParsingException(errorMsg)
-            );
+            throw new UserFriendlyLogException(errorMsg, new ScaffoldingAttributeParsingException(errorMsg));
         }
 
         // finds all partial total weights in the line (partial: per item producer)
@@ -424,8 +348,7 @@ public class ScaffoldingAttributeParser
                 }
                 catch
                 {
-                    const string errorMsg =
-                        "Total weight line in the attribute file has an unknown format.";
+                    const string errorMsg = "Total weight line in the attribute file has an unknown format.";
                     Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
                     throw new UserFriendlyLogException(
                         "Total weight could not be extracted from the CSV file. Please check the CSV-template guide.",
@@ -438,11 +361,7 @@ public class ScaffoldingAttributeParser
 
     private static void WarnIfUnknownAggregateAttribute(string attribute)
     {
-        if (
-            OtherAggregateAttributesPerModel.Any(h =>
-                string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)
-            )
-        )
+        if (OtherAggregateAttributesPerModel.Any(h => string.Equals(h, attribute, StringComparison.OrdinalIgnoreCase)))
         {
             return;
         }
@@ -509,10 +428,7 @@ public class ScaffoldingAttributeParser
     // Method looks at several description columns and expects exactly one of them to be non-empty
     // Returns the value of the non-empty description column (legacy: eventually prefixed with the manufacturer name)
     // Throws error if none or more than one description columns are non-empty
-    private static string ExtractSingleDescriptionFromCsvRow(
-        ICsvLine row,
-        bool manufacturerColumnPresent
-    )
+    private static string ExtractSingleDescriptionFromCsvRow(ICsvLine row, bool manufacturerColumnPresent)
     {
         return row
             .Headers.Select((h, i) => new { header = h, index = i })
@@ -524,14 +440,9 @@ public class ScaffoldingAttributeParser
                 // this is a legacy fallback for old templates without manufacturer column
                 if (!manufacturerColumnPresent)
                 {
-                    var manufacturerName = el
-                        .header.ToUpper()
-                        .Replace("DESCRIPTION", String.Empty)
-                        .Trim();
+                    var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", String.Empty).Trim();
                     var spacer = (manufacturerName.Length > 0) ? " " : "";
-                    return partDescription.Length > 0
-                        ? $"{manufacturerName}{spacer}{partDescription}"
-                        : String.Empty;
+                    return partDescription.Length > 0 ? $"{manufacturerName}{spacer}{partDescription}" : String.Empty;
                 }
                 return partDescription.Length > 0 ? $"{partDescription}" : String.Empty;
             })

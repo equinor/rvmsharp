@@ -1,20 +1,41 @@
 namespace CadRevealFbxProvider.Attributes;
 
+using CadRevealFbxProvider.UserFriendlyLogger;
 using Csv;
 
 public static class ScaffoldingCsvLineParser
 {
+    private const string RowIndexColumnKey = "Row index";
+
     /// <summary>
     /// Extracts the value for a given column header from a CSV row, ignoring case.
     /// Throws if there is not exactly one non-empty value for the header.
     /// </summary>
     public static string ExtractColumnValueFromRow(string columnHeader, ICsvLine row)
     {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
-            .Select(el => row[el.header])
-            .Single(x => !string.IsNullOrWhiteSpace(x));
+        try
+        {
+            return row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
+                .Select(el => row.Values[el.index])
+                .Single(x => !String.IsNullOrWhiteSpace(x));
+        }
+        catch (InvalidOperationException)
+        {
+            var rowIndex = row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Equals(RowIndexColumnKey, StringComparison.OrdinalIgnoreCase))
+                .Select(el => row.Values[el.index])
+                .Single(x => !String.IsNullOrWhiteSpace(x));
+
+            throw new UserFriendlyLogException(
+                $"CSV file has one or more of the following issues: -- missing the header \"{columnHeader}\" -- has multiple headers with the name \"{columnHeader}\" -- column \"{columnHeader}\" has a missing value on row {rowIndex}",
+                new ScaffoldingAttributeParsingException(
+                    $"Attribute {columnHeader} must exist and cannot have missing values."
+                )
+            );
+        }
     }
 
     /// <summary>
@@ -25,15 +46,27 @@ public static class ScaffoldingCsvLineParser
     /// </summary>
     public static string? ExtractSingleWeightFromCsvRow(ICsvLine row)
     {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el =>
-                el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
-                || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
-            )
-            .Select(el => row.Values[el.index])
-            .Distinct()
-            .SingleOrDefault(x => !string.IsNullOrWhiteSpace(x));
+        try
+        {
+            return row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el =>
+                    el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
+                    || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
+                )
+                .Select(el => row.Values[el.index])
+                .Distinct()
+                .SingleOrDefault(x => !string.IsNullOrWhiteSpace(x));
+        }
+        catch (InvalidOperationException)
+        {
+            throw new UserFriendlyLogException(
+                $"CSV contains a row {row} where none or more than one weight attribute is filled in. Only one weight (exactly one) attribute per item is allowed.",
+                new ScaffoldingAttributeParsingException(
+                    $"Weight attributes cannot have multiple values. Only one weight attribute per item is allowed."
+                )
+            );
+        }
     }
 
     /// <summary>
@@ -59,6 +92,29 @@ public static class ScaffoldingCsvLineParser
             })
             .Distinct()
             .Single(x => !string.IsNullOrWhiteSpace(x));
+    }
+
+    /// <summary>
+    /// prepends the rown number to each row starting from 1, not from 0
+    /// if the Table needs to be debugged, this helps to identify the row in the original CSV file
+    /// </summary>
+    public static string[] PrependRowNumberToCsvLines(string[] fileLines, int offset)
+    {
+        return fileLines
+            .Select(
+                (line, index) =>
+                {
+                    if (index == 0)
+                        return $"\"{RowIndexColumnKey}\";{line}";
+                    ; // do not prepend row number to header line
+                    if (line.Length == 0)
+                        return line; // do not prepend row number to empty lines
+                    if (line.StartsWith("Grand total"))
+                        return line; // do not prepend row number to the last line with total weight
+                    return $"\"{index + offset}\";{line}";
+                }
+            )
+            .ToArray();
     }
 
     /// <summary>
