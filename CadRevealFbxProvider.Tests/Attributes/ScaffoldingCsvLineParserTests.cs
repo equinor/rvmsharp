@@ -27,7 +27,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractColumnValueFromRow_WithValidHeader_ReturnsExpectedValue()
+    public void ExtractColumnValueFromRow_ValidHeader_ReturnsExpectedValue()
     {
         var row = new TestCsvLine { Headers = new[] { "A", "B", "C" }, Values = new[] { "1", "2", "3" } };
         var result = ScaffoldingCsvLineParser.ExtractColumnValueFromRow("B", row);
@@ -35,7 +35,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleWeightFromCsvRow_WithValidWeightHeader_ReturnsWeight()
+    public void ExtractSingleWeightFromCsvRow_ValidWeightHeader_ReturnsWeight()
     {
         var row = new TestCsvLine { Headers = new[] { "Weight kg", "Other" }, Values = new[] { "42", "foo" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleWeightFromCsvRow(row);
@@ -43,7 +43,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleWeightFromCsvRow_WithEmptyWeightHeader_ReturnsNull()
+    public void ExtractSingleWeightFromCsvRow_EmptyWeightHeader_ReturnsNull()
     {
         var row = new TestCsvLine { Headers = new[] { "Weight kg", "Other" }, Values = new[] { "", "foo" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleWeightFromCsvRow(row);
@@ -51,7 +51,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleDescriptionFromCsvRow_WithManufacturerFalse_ReturnsDescriptionWithManufacturer()
+    public void ExtractSingleDescriptionFromCsvRow_ManufacturerFalse_ReturnsDescriptionManufacturer()
     {
         var row = new TestCsvLine { Headers = new[] { "HAKI Description", "Other" }, Values = new[] { "desc", "foo" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleDescriptionFromCsvRow(row, false);
@@ -59,7 +59,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractKeyFromCsvRow_WithValidKeyHeader_ReturnsKey()
+    public void ExtractKeyFromCsvRow_ValidKeyHeader_ReturnsKey()
     {
         var row = new TestCsvLine { Headers = new[] { "Item code", "Other" }, Values = new[] { "KEY123", "foo" } };
         var result = ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(row, 0, "Item code");
@@ -67,7 +67,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractKeyFromCsvRow_WithMissingKeyHeader_ThrowsException()
+    public void ExtractKeyFromCsvRow_MissingKeyHeader_ThrowsException()
     {
         var row = new TestCsvLine { Headers = new[] { "Item code", "Other" }, Values = new[] { "", "foo" } };
         Assert.That(
@@ -77,7 +77,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void IsNumericSapColumn_WithNumericHeader_ReturnsTrue()
+    public void IsNumericSapColumn_NumericHeader_ReturnsTrue()
     {
         var row = new TestCsvLine { Headers = new[] { "Work order", "Other" }, Values = new[] { "123", "foo" } };
         var numericHeaders = new List<string> { "Work order" };
@@ -86,7 +86,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void IsNumericSapColumn_WithNonNumericHeader_ReturnsFalse()
+    public void IsNumericSapColumn_NonNumericHeader_ReturnsFalse()
     {
         var row = new TestCsvLine { Headers = new[] { "NotNumeric", "Other" }, Values = new[] { "123", "foo" } };
         var numericHeaders = new List<string> { "Work order" };
@@ -95,21 +95,21 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractColumnValueFromRow_WithMultipleNonEmptyValues_ThrowsException()
+    public void ExtractColumnValueFromRow_MultipleNonEmptyValues_ThrowsException()
     {
         var row = new TestCsvLine { Headers = new[] { "B", "B" }, Values = new[] { "2", "3" } };
         Assert.That(() => ScaffoldingCsvLineParser.ExtractColumnValueFromRow("B", row), Throws.Exception);
     }
 
     [Test]
-    public void ExtractColumnValueFromRow_WithAllValuesEmpty_ThrowsException()
+    public void ExtractColumnValueFromRow_AllValuesEmpty_ThrowsException()
     {
         var row = new TestCsvLine { Headers = new[] { "B", "B" }, Values = new[] { "", "" } };
         Assert.That(() => ScaffoldingCsvLineParser.ExtractColumnValueFromRow("B", row), Throws.Exception);
     }
 
     [Test]
-    public void ExtractColumnValueFromRow_WithCaseInsensitiveHeaderMatch_ReturnsExpectedValue()
+    public void ExtractColumnValueFromRow_CaseInsensitiveHeaderMatch_ReturnsExpectedValue()
     {
         var row = new TestCsvLine { Headers = new[] { "b" }, Values = new[] { "2" } };
         var result = ScaffoldingCsvLineParser.ExtractColumnValueFromRow("B", row);
@@ -117,14 +117,14 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleWeightFromCsvRow_WithMultipleNonEmptyWeights_ThrowsException()
+    public void ExtractSingleWeightFromCsvRow_MultipleNonEmptyWeights_ThrowsException()
     {
         var row = new TestCsvLine { Headers = new[] { "Weight kg", "Vekt" }, Values = new[] { "42", "43" } };
         Assert.That(() => ScaffoldingCsvLineParser.ExtractSingleWeightFromCsvRow(row), Throws.Exception);
     }
 
     [Test]
-    public void ExtractSingleWeightFromCsvRow_WithVektColumn_ReturnsWeight()
+    public void ExtractSingleWeightFromCsvRow_VektColumn_ReturnsWeight()
     {
         var row = new TestCsvLine { Headers = new[] { "Vekt" }, Values = new[] { "99" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleWeightFromCsvRow(row);
@@ -132,7 +132,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleWeightFromCsvRow_WithCaseInsensitiveHeaderMatch_ReturnsWeight()
+    public void ExtractSingleWeightFromCsvRow_CaseInsensitiveHeaderMatch_ReturnsWeight()
     {
         var row = new TestCsvLine { Headers = new[] { "weight KG" }, Values = new[] { "55" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleWeightFromCsvRow(row);
@@ -140,7 +140,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleDescriptionFromCsvRow_WithMultipleNonEmptyDescriptions_ThrowsException()
+    public void ExtractSingleDescriptionFromCsvRow_MultipleNonEmptyDescriptions_ThrowsException()
     {
         var row = new TestCsvLine
         {
@@ -151,14 +151,14 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleDescriptionFromCsvRow_WithAllDescriptionsEmpty_ThrowsException()
+    public void ExtractSingleDescriptionFromCsvRow_AllDescriptionsEmpty_ThrowsException()
     {
         var row = new TestCsvLine { Headers = new[] { "Description", "Description" }, Values = new[] { "", "" } };
         Assert.That(() => ScaffoldingCsvLineParser.ExtractSingleDescriptionFromCsvRow(row, true), Throws.Exception);
     }
 
     [Test]
-    public void ExtractSingleDescriptionFromCsvRow_WithLayherManufacturerPrefix_ReturnsPrefixedDescription()
+    public void ExtractSingleDescriptionFromCsvRow_LayherManufacturerPrefix_ReturnsPrefixedDescription()
     {
         var row = new TestCsvLine { Headers = new[] { "Layher Description" }, Values = new[] { "desc" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleDescriptionFromCsvRow(row, false);
@@ -166,7 +166,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void ExtractSingleDescriptionFromCsvRow_WithCaseInsensitiveHeaderMatch_ReturnsDescription()
+    public void ExtractSingleDescriptionFromCsvRow_CaseInsensitiveHeaderMatch_ReturnsDescription()
     {
         var row = new TestCsvLine { Headers = new[] { "description" }, Values = new[] { "desc" } };
         var result = ScaffoldingCsvLineParser.ExtractSingleDescriptionFromCsvRow(row, true);
@@ -174,7 +174,7 @@ public class ScaffoldingCsvLineParserTests
     }
 
     [Test]
-    public void IsNumericSapColumn_WithCaseInsensitiveHeaderMatch_ReturnsTrue()
+    public void IsNumericSapColumn_CaseInsensitiveHeaderMatch_ReturnsTrue()
     {
         var row = new TestCsvLine { Headers = new[] { "work ORDER" }, Values = new[] { "123" } };
         var numericHeaders = new List<string> { "Work order" };
