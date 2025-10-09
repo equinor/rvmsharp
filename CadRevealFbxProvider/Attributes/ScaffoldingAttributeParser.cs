@@ -9,7 +9,6 @@ public class ScaffoldingAttributeParser
 {
     private const string HeaderTotalWeight = "Grand total";
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
-    private const string ItemCodeColumnKey = "Item code";
 
     public static readonly List<string> AggregateAttributesPerModel_NumericHeadersSap =
     [
@@ -50,9 +49,9 @@ public class ScaffoldingAttributeParser
     ) ParseAttributes(string[] fileLines, bool tempFlag = false)
     {
         ThrowExceptionIfEmptyCsv(fileLines);
-        (fileLines, var lineOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
-        fileLines = ScaffoldingCsvLineParser.PrependRowNumberToCsvLines(fileLines, lineOffset);
-        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, lineOffset);
+        (fileLines, var tableContentOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
+        fileLines = ScaffoldingCsvLineParser.PrependRowNumberToCsvLines(fileLines, tableContentOffset);
+        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, tableContentOffset);
         int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
@@ -67,12 +66,17 @@ public class ScaffoldingAttributeParser
         if (!allKeysAreValidAndUnique)
         {
             throw new UserFriendlyLogException(
-                $"Column: \"{ItemCodeColumnKey}\" contains multiple rows with the same value. This indicates an export error. Please check that the export is correct."
+                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" contains multiple rows with the same value. This indicates an export error. Please check that the export is correct."
             );
         }
 
         var attributesDictionary = validatedAttributeData.ToDictionary(
-            x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, columnIndexKeyAttribute, ItemCodeColumnKey),
+            x =>
+                ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(
+                    x,
+                    columnIndexKeyAttribute,
+                    ScaffoldingCsvLineParser.ItemCodeColumnKey
+                ),
             v =>
             {
                 var kvp = new Dictionary<string, string>();
@@ -220,6 +224,7 @@ public class ScaffoldingAttributeParser
         Console.WriteLine("Reading and processing attribute file.");
     }
 
+    // returns the table with header, with everything else before header line removed, and the number of lines removed
     private static (string[], int) RemoveCsvNonDescriptionHeaderInfo(string[] fileLines)
     {
         // The below will remove the first row in the CSV file, if it is not the header.
@@ -246,12 +251,17 @@ public class ScaffoldingAttributeParser
 
     private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
     {
-        var columnIndexKeyAttribute = Array.IndexOf(attributeRawData.First().Headers, ItemCodeColumnKey);
+        var columnIndexKeyAttribute = Array.IndexOf(
+            attributeRawData.First().Headers,
+            ScaffoldingCsvLineParser.ItemCodeColumnKey
+        );
 
         if (columnIndexKeyAttribute < 0)
             throw new UserFriendlyLogException(
-                "Missing column \"" + ItemCodeColumnKey + "\" in the csv file",
-                new Exception($"Key header {ItemCodeColumnKey} is missing in the attribute file.")
+                "Missing column \"" + ScaffoldingCsvLineParser.ItemCodeColumnKey + "\" in the csv file",
+                new Exception(
+                    $"Key header {ScaffoldingCsvLineParser.ItemCodeColumnKey} is missing in the attribute file."
+                )
             );
 
         return columnIndexKeyAttribute;
@@ -283,7 +293,7 @@ public class ScaffoldingAttributeParser
         if (!removeCsvRowsWithoutKeyAttribute.Any())
         {
             throw new UserFriendlyLogException(
-                $"Column: \"{ItemCodeColumnKey}\" has no rows with an item code. Please check that the export is correct."
+                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" has no rows with an item code. Please check that the export is correct."
             );
         }
 
@@ -454,9 +464,9 @@ public class ScaffoldingAttributeParser
         var key = row.Values[columnIndexKey];
         if (string.IsNullOrEmpty(key))
             throw new UserFriendlyLogException(
-                $"CSV contains rows where {ItemCodeColumnKey} is missing. All rows (items) must have a unique {ItemCodeColumnKey}.",
+                $"CSV contains rows where {ScaffoldingCsvLineParser.ItemCodeColumnKey} is missing. All rows (items) must have a unique {ScaffoldingCsvLineParser.ItemCodeColumnKey}.",
                 new ScaffoldingAttributeParsingException(
-                    $"Key attribute {ItemCodeColumnKey} cannot have missing values."
+                    $"Key attribute {ScaffoldingCsvLineParser.ItemCodeColumnKey} cannot have missing values."
                 )
             );
         return key;

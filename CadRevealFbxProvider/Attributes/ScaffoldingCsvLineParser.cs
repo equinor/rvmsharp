@@ -5,7 +5,55 @@ using Csv;
 
 public static class ScaffoldingCsvLineParser
 {
-    private const string RowIndexColumnKey = "Row index";
+    public const string RowIndexColumnKey = "Row index";
+
+    public const string ItemCodeColumnKey = "Item code";
+
+    /// <summary>
+    /// Extracts the value for a given row number from a CSV row
+    /// The row number is calculated and inserted into the row during preprocessing, thus it should not be missing.
+    /// </summary>
+    public static string ExtractRowNumberFromRow(ICsvLine row)
+    {
+        return row
+            .Headers.Select((h, i) => new { header = h, index = i })
+            .Where(el => el.header.Equals(RowIndexColumnKey, StringComparison.OrdinalIgnoreCase))
+            .Select(el => row.Values[el.index])
+            .Single(x => !String.IsNullOrWhiteSpace(x));
+    }
+
+    /// <summary>
+    /// Extracts the value for a given item code from a CSV row
+    /// The presence of item code is mandatory and there should be guards for its presence before executing this method.
+    /// However, to make this fail-proof, this method will catch the exception and return an "UNDEFINED" if the item code is missing or ill-defined.
+    /// </summary>
+    public static string ExtractItemCodeFromRow(ICsvLine row)
+    {
+        try
+        {
+            return row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Equals(ItemCodeColumnKey, StringComparison.OrdinalIgnoreCase))
+                .Select(el => row.Values[el.index])
+                .Single(x => !String.IsNullOrWhiteSpace(x));
+        }
+        catch
+        {
+            return "UNDEFINED";
+        }
+    }
+
+    /// <summary>
+    /// Extracts the key value from a CSV row at the specified column index.
+    /// Throws ScaffoldingAttributeParsingException if the key is missing or empty.
+    /// </summary>
+    public static string ExtractKeyFromCsvRow(ICsvLine row, int columnIndexKey, string keyAttribute)
+    {
+        var key = row.Values[columnIndexKey];
+        if (string.IsNullOrEmpty(key))
+            throw new ScaffoldingAttributeParsingException($"Key attribute {keyAttribute} cannot have missing values.");
+        return key;
+    }
 
     /// <summary>
     /// Extracts the value for a given column header from a CSV row, ignoring case.
@@ -23,14 +71,11 @@ public static class ScaffoldingCsvLineParser
         }
         catch (InvalidOperationException)
         {
-            var rowIndex = row
-                .Headers.Select((h, i) => new { header = h, index = i })
-                .Where(el => el.header.Equals(RowIndexColumnKey, StringComparison.OrdinalIgnoreCase))
-                .Select(el => row.Values[el.index])
-                .Single(x => !String.IsNullOrWhiteSpace(x));
+            var rowIndex = ExtractRowNumberFromRow(row);
+            var itemCode = ExtractItemCodeFromRow(row);
 
             throw new UserFriendlyLogException(
-                $"CSV file has one or more of the following issues: -- missing the header \"{columnHeader}\" -- has multiple headers with the name \"{columnHeader}\" -- column \"{columnHeader}\" has a missing value on row {rowIndex}",
+                $"CSV file has one or more of the following issues with the column \"{columnHeader}\": -- it is missing entirely  -- occurs multiple times with distinct values -- it has a missing value on row {rowIndex} (Item code = {itemCode}",
                 new ScaffoldingAttributeParsingException(
                     $"Attribute {columnHeader} must exist and cannot have missing values."
                 )
@@ -60,8 +105,18 @@ public static class ScaffoldingCsvLineParser
         }
         catch (InvalidOperationException)
         {
+            // this should not throw, as this is a column that is created programatically during processing
+            var rowIndex = ExtractRowNumberFromRow(row);
+
+            var itemCode = row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Equals(ItemCodeColumnKey, StringComparison.OrdinalIgnoreCase))
+                .Select(el => row.Values[el.index])
+                .Distinct()
+                .Single(x => !String.IsNullOrWhiteSpace(x));
+
             throw new UserFriendlyLogException(
-                $"CSV contains a row {row} where none or more than one weight attribute is filled in. Only one weight (exactly one) attribute per item is allowed.",
+                $"CSV on row {rowIndex} (Item Code = {itemCode}) has one of the following problems. -- Missing item weight -- More than one distinct item weights.",
                 new ScaffoldingAttributeParsingException(
                     $"Weight attributes cannot have multiple values. Only one weight attribute per item is allowed."
                 )
@@ -99,8 +154,11 @@ public static class ScaffoldingCsvLineParser
         }
         catch (InvalidOperationException)
         {
+            var rowIndex = ExtractRowNumberFromRow(row);
+            var itemCode = ExtractItemCodeFromRow(row);
+
             throw new UserFriendlyLogException(
-                $"CSV contains a row {row} where none or more than one description attribute is filled in. Only one description (exactly one) attribute per item is allowed.",
+                $"Only one description attribute per item is allowed. CSV on row {rowIndex} (Item Code = {itemCode}) has one of the following problems: -- description is missing -- more than one distinct descriptions are filled in.",
                 new ScaffoldingAttributeParsingException(
                     $"Description attributes cannot have multiple values. Only one weight attribute per item is allowed."
                 )
@@ -112,7 +170,7 @@ public static class ScaffoldingCsvLineParser
     /// prepends the rown number to each row starting from 1, not from 0
     /// if the Table needs to be debugged, this helps to identify the row in the original CSV file
     /// </summary>
-    public static string[] PrependRowNumberToCsvLines(string[] fileLines, int offset)
+    public static string[] PrependRowNumberToCsvLines(string[] fileLines, int tableOffset)
     {
         return fileLines
             .Select(
@@ -120,27 +178,16 @@ public static class ScaffoldingCsvLineParser
                 {
                     if (index == 0)
                         return $"\"{RowIndexColumnKey}\";{line}";
-                    ; // do not prepend row number to header line
+                    ; // do not prepend row number to header line, but a header for the row number column
                     if (line.Length == 0)
                         return line; // do not prepend row number to empty lines
                     if (line.StartsWith("Grand total"))
                         return line; // do not prepend row number to the last line with total weight
-                    return $"\"{index + offset}\";{line}";
+                    return $"\"{index + tableOffset + 1}\";{line}";
+                    // +1, because row number start with 1, not 0
                 }
             )
             .ToArray();
-    }
-
-    /// <summary>
-    /// Extracts the key value from a CSV row at the specified column index.
-    /// Throws ScaffoldingAttributeParsingException if the key is missing or empty.
-    /// </summary>
-    public static string ExtractKeyFromCsvRow(ICsvLine row, int columnIndexKey, string keyAttribute)
-    {
-        var key = row.Values[columnIndexKey];
-        if (string.IsNullOrEmpty(key))
-            throw new ScaffoldingAttributeParsingException($"Key attribute {keyAttribute} cannot have missing values.");
-        return key;
     }
 
     /// <summary>
