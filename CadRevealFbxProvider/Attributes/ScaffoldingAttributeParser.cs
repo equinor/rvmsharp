@@ -239,6 +239,7 @@ public class ScaffoldingAttributeParser
                 {
                     HeaderMode = HeaderMode.HeaderPresent,
                     RowsToSkip = 0,
+                    Comparer = StringComparer.OrdinalIgnoreCase,
                     SkipRow = (row, idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
                     TrimData = true,
                     Separator = ';',

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "RvmSharp": {
+      "commandName": "Project",
+      "commandLineArgs": "-i \"C:\\Users\\ves\\OneDrive - Equinor\\Documents\\Echo Models\\Huldra Rvm\" -o \"C:\\Users\\ves\\source\\repos\\reveal\\examples\\public\\huldra\""
+    }
+  }
+}
