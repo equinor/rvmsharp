@@ -19,7 +19,7 @@ public static class ScaffoldingCsvLineParser
             return row
                 .Headers.Select((h, i) => new { header = h, index = i })
                 .Where(el => el.header.Equals(ItemCodeColumnKey, StringComparison.OrdinalIgnoreCase))
-                .Select(el => row.Values[el.index])
+                .Select(el => row[el.index])
                 .Single(x => !String.IsNullOrWhiteSpace(x));
         }
         catch
@@ -55,7 +55,7 @@ public static class ScaffoldingCsvLineParser
             return row
                 .Headers.Select((h, i) => new { header = h, index = i })
                 .Where(el => el.header.Equals(columnHeader, StringComparison.OrdinalIgnoreCase))
-                .Select(el => row.Values[el.index])
+                .Select(el => row[el.index])
                 .Single(x => !String.IsNullOrWhiteSpace(x));
         }
         catch (InvalidOperationException)
@@ -88,7 +88,7 @@ public static class ScaffoldingCsvLineParser
                     el.header.Contains("weight", StringComparison.OrdinalIgnoreCase)
                     || el.header.Contains("vekt", StringComparison.OrdinalIgnoreCase)
                 )
-                .Select(el => row.Values[el.index])
+                .Select(el => row[el.index])
                 .Distinct()
                 .SingleOrDefault(x => !string.IsNullOrWhiteSpace(x));
         }
@@ -100,7 +100,7 @@ public static class ScaffoldingCsvLineParser
             var itemCode = row
                 .Headers.Select((h, i) => new { header = h, index = i })
                 .Where(el => el.header.Equals(ItemCodeColumnKey, StringComparison.OrdinalIgnoreCase))
-                .Select(el => row.Values[el.index])
+                .Select(el => row[el.index])
                 .Distinct()
                 .Single(x => !String.IsNullOrWhiteSpace(x));
 
@@ -127,7 +127,7 @@ public static class ScaffoldingCsvLineParser
                 .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
                 .Select(el =>
                 {
-                    var partDescription = row.Values[el.index];
+                    var partDescription = row[el.index];
                     if (!manufacturerColumnPresent)
                     {
                         var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", string.Empty).Trim();
