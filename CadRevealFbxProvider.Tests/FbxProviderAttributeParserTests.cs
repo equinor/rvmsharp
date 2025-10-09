@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using CadRevealFbxProvider.Attributes;
+using CadRevealFbxProvider.UserFriendlyLogger;
 using NUnit.Framework;
 
 [TestFixture]
@@ -931,13 +932,9 @@ public class FbxProviderAttributeParserTests
 
         // Act
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
-                "Error: should throw exception since we cannot have description for two or more manufacturers on the same part"
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]

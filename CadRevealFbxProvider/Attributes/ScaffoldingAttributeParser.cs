@@ -50,18 +50,19 @@ public class ScaffoldingAttributeParser
     {
         ThrowExceptionIfEmptyCsv(fileLines);
         (fileLines, var tableContentOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
-        fileLines = ScaffoldingCsvLineParser.PrependRowNumberToCsvLines(fileLines, tableContentOffset);
         ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, tableContentOffset);
-        int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
-        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute)
+        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(
+                attributeRawData,
+                ScaffoldingCsvLineParser.ItemCodeColumnKey
+            )
             .ToArray();
 
         var entireScaffoldingMetadata = new ScaffoldingMetadata();
 
         var allKeysAreValidAndUnique =
-            validatedAttributeData.Select(x => x[columnIndexKeyAttribute]).Distinct().Count()
+            validatedAttributeData.Select(x => x[ScaffoldingCsvLineParser.ItemCodeColumnKey]).Distinct().Count()
             == validatedAttributeData.Length;
         if (!allKeysAreValidAndUnique)
         {
@@ -71,12 +72,7 @@ public class ScaffoldingAttributeParser
         }
 
         var attributesDictionary = validatedAttributeData.ToDictionary(
-            x =>
-                ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(
-                    x,
-                    columnIndexKeyAttribute,
-                    ScaffoldingCsvLineParser.ItemCodeColumnKey
-                ),
+            x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, ScaffoldingCsvLineParser.ItemCodeColumnKey),
             v =>
             {
                 var kvp = new Dictionary<string, string>();
@@ -114,7 +110,7 @@ public class ScaffoldingAttributeParser
                 for (int col = 0; col < v.ColumnCount; col++)
                 {
                     // Ignore the key attribute
-                    if (columnIndexKeyAttribute == col)
+                    if (v.Headers[col] == ScaffoldingCsvLineParser.ItemCodeColumnKey)
                         continue;
 
                     // if it is not an aggregate attribute, skip it here
@@ -122,7 +118,7 @@ public class ScaffoldingAttributeParser
                         continue;
 
                     var key = v.Headers[col].Trim();
-                    var value = v.Values[col].Trim();
+                    var value = v[col].Trim();
 
                     // Check if numeric headers are actually numbers for non-temp scaffolds.
                     // For temporary scaffolds, we don't care.
@@ -162,7 +158,9 @@ public class ScaffoldingAttributeParser
 
                 if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
                 {
-                    Console.WriteLine("Invalid attribute line: " + v[columnIndexKeyAttribute].ToString());
+                    Console.WriteLine(
+                        "Invalid attribute line: " + v[ScaffoldingCsvLineParser.ItemCodeColumnKey].ToString()
+                    );
                     return null;
                 }
 
@@ -249,7 +247,7 @@ public class ScaffoldingAttributeParser
             .ToArray();
     }
 
-    private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
+    private static int ValidateKeyAttribute(ICsvLine[] attributeRawData)
     {
         var columnIndexKeyAttribute = Array.IndexOf(
             attributeRawData.First().Headers,
@@ -281,12 +279,12 @@ public class ScaffoldingAttributeParser
 
     private static IEnumerable<ICsvLine> RemoveCsvRowsWithoutKeyAttribute(
         ICsvLine[] attributeRawData,
-        int columnIndexKeyAttribute
+        string columnNameKeyAttribute
     )
     {
         // Validate raw data wrt missing "Item Code"
         var validatedAttributeData = attributeRawData.Where(item =>
-            !string.IsNullOrWhiteSpace(item.Values[columnIndexKeyAttribute])
+            !string.IsNullOrWhiteSpace(item[columnNameKeyAttribute])
         );
         IEnumerable<ICsvLine> removeCsvRowsWithoutKeyAttribute =
             validatedAttributeData as ICsvLine[] ?? validatedAttributeData.ToArray();
