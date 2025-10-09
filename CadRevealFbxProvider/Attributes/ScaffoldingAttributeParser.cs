@@ -346,13 +346,13 @@ public class ScaffoldingAttributeParser
                 {
                     return float.Parse(w, CultureInfo.InvariantCulture);
                 }
-                catch
+                catch (Exception exc)
                 {
                     const string errorMsg = "Total weight line in the attribute file has an unknown format.";
                     Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
                     throw new UserFriendlyLogException(
                         "Total weight could not be extracted from the CSV file. Please check the CSV-template guide.",
-                        new ScaffoldingAttributeParsingException(errorMsg)
+                        exc
                     );
                 }
             });

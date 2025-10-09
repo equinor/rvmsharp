@@ -76,22 +76,36 @@ public static class ScaffoldingCsvLineParser
     /// </summary>
     public static string ExtractSingleDescriptionFromCsvRow(ICsvLine row, bool manufacturerColumnPresent)
     {
-        return row
-            .Headers.Select((h, i) => new { header = h, index = i })
-            .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
-            .Select(el =>
-            {
-                var partDescription = row.Values[el.index];
-                if (!manufacturerColumnPresent)
+        try
+        {
+            return row
+                .Headers.Select((h, i) => new { header = h, index = i })
+                .Where(el => el.header.Contains("description", StringComparison.OrdinalIgnoreCase))
+                .Select(el =>
                 {
-                    var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", string.Empty).Trim();
-                    var spacer = (manufacturerName.Length > 0) ? " " : "";
-                    return partDescription.Length > 0 ? $"{manufacturerName}{spacer}{partDescription}" : string.Empty;
-                }
-                return partDescription.Length > 0 ? $"{partDescription}" : string.Empty;
-            })
-            .Distinct()
-            .Single(x => !string.IsNullOrWhiteSpace(x));
+                    var partDescription = row.Values[el.index];
+                    if (!manufacturerColumnPresent)
+                    {
+                        var manufacturerName = el.header.ToUpper().Replace("DESCRIPTION", string.Empty).Trim();
+                        var spacer = (manufacturerName.Length > 0) ? " " : "";
+                        return partDescription.Length > 0
+                            ? $"{manufacturerName}{spacer}{partDescription}"
+                            : string.Empty;
+                    }
+                    return partDescription.Length > 0 ? $"{partDescription}" : string.Empty;
+                })
+                .Distinct()
+                .Single(x => !string.IsNullOrWhiteSpace(x));
+        }
+        catch (InvalidOperationException)
+        {
+            throw new UserFriendlyLogException(
+                $"CSV contains a row {row} where none or more than one description attribute is filled in. Only one description (exactly one) attribute per item is allowed.",
+                new ScaffoldingAttributeParsingException(
+                    $"Description attributes cannot have multiple values. Only one weight attribute per item is allowed."
+                )
+            );
+        }
     }
 
     /// <summary>
