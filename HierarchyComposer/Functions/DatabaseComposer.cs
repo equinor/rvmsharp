@@ -7,7 +7,6 @@ using System.IO;
 using System.Linq;
 using Extensions;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Model;
@@ -36,10 +35,6 @@ public class DatabaseComposer
         };
         var connectionString = connectionStringBuilder.ToString();
 
-        var optionsBuilder = new DbContextOptionsBuilder<HierarchyContext>();
-        optionsBuilder.UseSqlite(connectionString);
-        CreateEmptyDatabase(optionsBuilder.Options);
-
         var jsonNodesWithoutPdms = inputNodes.Where(n => !n.PDMSData.Any()).ToArray();
         foreach (var jsonNode in jsonNodesWithoutPdms)
         {
@@ -55,21 +50,22 @@ public class DatabaseComposer
         var jsonAabbs = inputNodes.Where(jn => jn.AABB != null).Select(jn => jn.AABB!);
 
         _logger.LogInformation("Creating database model entries");
-        long pdmsEntryIdCounter = 0;
+        int pdmsEntryIdCounter = 0;
 
         var pdmsEntries = jsonPdmsKeyValuePairs
-            .GroupBy(kvp => kvp.GetGroupKey())
+            .GroupBy(kvp => new { kvp.Key, kvp.Value })
             .ToDictionary(
-                keySelector: g => g.Key,
-                elementSelector: g => new PDMSEntry()
+                keySelector: g => (g.Key.Key, g.Key.Value),
+                elementSelector: g => new PdmsEntry
                 {
                     Id = ++pdmsEntryIdCounter,
-                    Key = g.First().Key,
-                    Value = g.First().Value,
+                    Key = g.Key.Key,
+                    Value = g.Key.Value,
                 }
             );
 
         var aabbIdCounter = 0;
+
         var aabbs = jsonAabbs
             .GroupBy(b => b.GetGroupKey())
             .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First().CopyWithNewId(++aabbIdCounter));
@@ -86,53 +82,95 @@ public class DatabaseComposer
                 HasMesh = inputNode.HasMesh,
                 ParentId = inputNode.ParentId,
                 TopNodeId = inputNode.TopNodeId,
-                NodePDMSEntry = inputNode
-                    .PDMSData.Select(kvp => new NodePDMSEntry
-                    {
-                        NodeId = inputNode.NodeId,
-                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id,
-                    })
-                    .ToList(),
-                AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+                AABBId = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()].Id,
                 DiagnosticInfo = inputNode.OptionalDiagnosticInfo,
             })
             .ToDictionary(n => n.Id, n => n);
 
-        var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
+        var nodePdmsEntries = inputNodes
+            .SelectMany(x =>
+                x.PDMSData.Select(
+                    (
+                        y =>
+                        {
+                            return new NodePdmsEntryKey()
+                            {
+                                NodeId = x.NodeId,
+                                PDMSEntryId = pdmsEntries[(y.Key, y.Value)].Id,
+                            };
+                        }
+                    )
+                )
+            )
+            .ToArray();
 
         var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
+        Console.WriteLine("Sqlite Version: " + connection.ServerVersion);
 
-        // ReSharper disable AccessToDisposedClosure
+        // Optimize SQLite for write speed before inserting anything
+        using (var pragmaCmd = connection.CreateCommand())
+        {
+            pragmaCmd.CommandText = "PRAGMA synchronous = OFF;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA journal_mode = MEMORY;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA temp_store = MEMORY;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA locking_mode = EXCLUSIVE;";
+            pragmaCmd.ExecuteNonQuery();
+        }
+
+        MopTimer.RunAndMeasure(
+            "Insert Nodes",
+            _logger,
+            () =>
+            {
+                using var cmd = connection.CreateCommand();
+                Node.CreateTable(cmd);
+                using var transaction = connection.BeginTransaction();
+                using var batchCmd = connection.CreateCommand();
+                Node.RawInsertBatch(batchCmd, nodes.Values);
+
+                transaction.Commit();
+            }
+        );
+        nodes.Clear();
+        GC.Collect();
+
         MopTimer.RunAndMeasure(
             "Insert PDMSEntries",
             _logger,
             () =>
             {
+                using var tableCmd = connection.CreateCommand();
+                PDMSEntryTable.CreateTable(tableCmd);
+
                 using var transaction = connection.BeginTransaction();
 
                 using var cmd = connection.CreateCommand();
-                PDMSEntry.RawInsertBatch(cmd, pdmsEntries.Values);
+                PDMSEntryTable.RawInsertBatch(cmd, pdmsEntries.Values);
 
                 transaction.Commit();
             }
         );
+        pdmsEntries.Clear();
 
         MopTimer.RunAndMeasure(
             "Insert NodePDMSEntries",
             _logger,
             () =>
             {
-                using var transaction = connection.BeginTransaction();
+                using var tableCmd = connection.CreateCommand();
+                NodePDMSEntry.CreateTable(tableCmd);
 
-                using var cmd = connection.CreateCommand();
-                NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
-
-                transaction.Commit();
+                NodePDMSEntry.RawInsertBatch(connection, nodePdmsEntries);
             }
         );
+        nodePdmsEntries = [];
+        GC.Collect();
 
         MopTimer.RunAndMeasure(
             "Insert AABBs",
@@ -144,24 +182,9 @@ public class DatabaseComposer
 
                 // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
                 // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
-                cmd.CommandText =
-                    "CREATE VIRTUAL TABLE AABBs USING rtree(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
-                cmd.ExecuteNonQuery();
+                AABB.CreateTable(cmd);
 
                 AABB.RawInsertBatch(cmd, aabbs.Values);
-
-                transaction.Commit();
-            }
-        );
-
-        MopTimer.RunAndMeasure(
-            "Insert Nodes",
-            _logger,
-            () =>
-            {
-                using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
-                Node.RawInsertBatch(cmd, nodes.Values);
 
                 transaction.Commit();
             }
@@ -183,6 +206,8 @@ public class DatabaseComposer
                 cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoPrefix, RefNoDb, RefNoSequence)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX NodePDMSEntries_ReverseIdMap ON NodeToPdmsEntry (PDMSEntryId, NodeId)";
                 cmd.ExecuteNonQuery();
                 transaction.Commit();
             }
@@ -286,12 +311,5 @@ public class DatabaseComposer
 
             transaction.Commit();
         }
-    }
-
-    private static void CreateEmptyDatabase(DbContextOptions options)
-    {
-        using var context = new HierarchyContext(options);
-        if (!context.Database.EnsureCreated())
-            throw new Exception($"Could not create database");
     }
 }

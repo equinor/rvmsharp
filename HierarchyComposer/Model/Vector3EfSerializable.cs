@@ -2,13 +2,11 @@
 
 using System;
 using System.Numerics;
-using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// Vector3EfSerializable is ONLY used for serializing to Entity Framework, as EF does not (As of EFCore 6.0) support serializing Vector3
 /// See https://github.com/dotnet/efcore/issues/9906 for any updates.
 /// </summary>
-[Owned]
 public class Vector3EfSerializable : IEquatable<Vector3EfSerializable>
 {
     public float x { get; init; }

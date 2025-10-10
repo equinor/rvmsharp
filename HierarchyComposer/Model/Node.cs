@@ -4,13 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 
-[
-    Index(nameof(ParentId), IsUnique = false),
-    Index(nameof(TopNodeId), IsUnique = false),
-    Index(nameof(AABBId), IsUnique = false)
-]
 public class Node
 {
     [DatabaseGenerated(DatabaseGeneratedOption.None)]
@@ -27,14 +21,30 @@ public class Node
 
     public uint TopNodeId { get; init; }
 
-    public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
-
-    public uint? AABBId { get; init; }
-
-    [NotMapped]
-    public AABB? AABB { get; init; }
+    public int? AABBId { get; init; }
 
     public string? DiagnosticInfo { get; init; }
+
+    public static void CreateTable(SqliteCommand command)
+    {
+        command.CommandText =
+            @"CREATE TABLE Nodes (
+                Id INTEGER PRIMARY KEY NOT NULL,
+                EndId INTEGER NOT NULL,
+                RefNoPrefix TEXT NULL,
+                RefNoDb INTEGER NULL,
+                RefNoSequence INTEGER NULL,
+                Name TEXT NULL,
+                HasMesh BOOLEAN NOT NULL,
+                ParentId INTEGER NULL,
+                TopNodeId INTEGER NOT NULL,
+                AABBId INTEGER NULL,
+                DiagnosticInfo TEXT NULL,
+                FOREIGN KEY (ParentId) REFERENCES Nodes(Id),
+                FOREIGN KEY (AABBId) REFERENCES AABBs(Id)
+            );";
+        command.ExecuteNonQuery();
+    }
 
     public static void RawInsertBatch(SqliteCommand command, IEnumerable<Node> nodes)
     {
@@ -91,7 +101,7 @@ public class Node
             hasMeshParameter.Value = node.HasMesh;
             parentIdParameter.Value = node.ParentId ?? (object)DBNull.Value;
             topNodeIdParameter.Value = node.TopNodeId;
-            aabbIdParameter.Value = node.AABB?.Id ?? (object)DBNull.Value;
+            aabbIdParameter.Value = node.AABBId ?? (object)DBNull.Value;
             diagnosticInfoParameter.Value = node.DiagnosticInfo ?? (object)DBNull.Value;
 
             command.ExecuteNonQuery();
