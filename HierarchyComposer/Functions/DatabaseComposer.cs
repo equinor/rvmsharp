@@ -117,8 +117,6 @@ public class DatabaseComposer
             pragmaCmd.ExecuteNonQuery();
             pragmaCmd.CommandText = "PRAGMA journal_mode = MEMORY;";
             pragmaCmd.ExecuteNonQuery();
-            pragmaCmd.CommandText = "PRAGMA temp_store = MEMORY;";
-            pragmaCmd.ExecuteNonQuery();
             pragmaCmd.CommandText = "PRAGMA locking_mode = EXCLUSIVE;";
             pragmaCmd.ExecuteNonQuery();
         }
