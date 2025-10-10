@@ -21,6 +21,13 @@ public class AABB : IEquatable<AABB>
         };
     }
 
+    public static void CreateTable(SqliteCommand command)
+    {
+        command.CommandText =
+            "CREATE VIRTUAL TABLE AABBs USING rtree_i32(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
+        command.ExecuteNonQuery();
+    }
+
     public static void RawInsertBatch(SqliteCommand command, IEnumerable<AABB> aabbs)
     {
         command.CommandText =

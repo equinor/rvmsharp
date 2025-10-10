@@ -10,7 +10,6 @@ using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
@@ -48,9 +47,11 @@ public static class SceneCreator
     {
         var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 
-        ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
+        ILogger<DatabaseComposer> databaseLogger = LoggerFactory
+            .Create(builder => builder.AddConsole())
+            .CreateLogger<DatabaseComposer>();
         var exporter = new DatabaseComposer(databaseLogger);
-        exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
+        exporter.ComposeDatabase(nodes, Path.GetFullPath(databasePath));
     }
 
     public static void AddPrioritizedSectorsToDatabase(
