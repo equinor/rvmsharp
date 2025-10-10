@@ -207,6 +207,12 @@ public class DatabaseComposer
                 cmd.ExecuteNonQuery();
                 cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoPrefix, RefNoDb, RefNoSequence)";
                 cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX Nodes_TopNodeId_index ON Nodes (TopNodeId)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX Nodes_ParentId_index ON Nodes (ParentId)";
+                cmd.ExecuteNonQuery();
+                cmd.CommandText = "CREATE INDEX Nodes_AABBId_index ON Nodes (AABBId)";
+                cmd.ExecuteNonQuery();
                 cmd.CommandText = "CREATE INDEX NodePDMSEntries_ReverseIdMap ON NodeToPdmsEntry (PDMSEntryId, NodeId)";
                 cmd.ExecuteNonQuery();
                 transaction.Commit();
