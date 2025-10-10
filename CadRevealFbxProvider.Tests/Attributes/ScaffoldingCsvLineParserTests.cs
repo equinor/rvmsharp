@@ -62,7 +62,7 @@ public class ScaffoldingCsvLineParserTests
     public void ExtractKeyFromCsvRow_ValidKeyHeader_ReturnsKey()
     {
         var row = new TestCsvLine { Headers = new[] { "Item code", "Other" }, Values = new[] { "KEY123", "foo" } };
-        var result = ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(row, 0, "Item code");
+        var result = ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(row, "Item code");
         Assert.That(result, Is.EqualTo("KEY123"));
     }
 
@@ -70,9 +70,8 @@ public class ScaffoldingCsvLineParserTests
     public void ExtractKeyFromCsvRow_MissingKeyHeader_ThrowsException()
     {
         var row = new TestCsvLine { Headers = new[] { "Item code", "Other" }, Values = new[] { "", "foo" } };
-        Assert.That(
-            () => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(row, 0, "Item code"),
-            Throws.TypeOf<ScaffoldingAttributeParsingException>()
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(row, "Item code")
         );
     }
 

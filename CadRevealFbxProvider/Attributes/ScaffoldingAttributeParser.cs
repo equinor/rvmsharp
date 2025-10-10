@@ -1,13 +1,14 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
+using System;
 using System.Globalization;
 using Csv;
+using UserFriendlyLogger;
 
 public class ScaffoldingAttributeParser
 {
     private const string HeaderTotalWeight = "Grand total";
     private const string HeadingTotalWeightCalculated = "Grand total calculated";
-    private const string KeyAttribute = "Item code";
 
     public static readonly List<string> AggregateAttributesPerModel_NumericHeadersSap =
     [
@@ -48,17 +49,30 @@ public class ScaffoldingAttributeParser
     ) ParseAttributes(string[] fileLines, bool tempFlag = false)
     {
         ThrowExceptionIfEmptyCsv(fileLines);
-        fileLines = RemoveCsvNonDescriptionHeaderInfo(fileLines);
-        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines);
-        int columnIndexKeyAttribute = RetrieveKeyAttributeColumnIndex(attributeRawData);
+        (fileLines, var tableContentOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
+        ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, tableContentOffset);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
-        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(attributeRawData, columnIndexKeyAttribute);
+        var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(
+                attributeRawData,
+                ScaffoldingCsvLineParser.ItemCodeColumnKey
+            )
+            .ToArray();
 
         var entireScaffoldingMetadata = new ScaffoldingMetadata();
 
+        var allKeysAreValidAndUnique =
+            validatedAttributeData.Select(x => x[ScaffoldingCsvLineParser.ItemCodeColumnKey]).Distinct().Count()
+            == validatedAttributeData.Length;
+        if (!allKeysAreValidAndUnique)
+        {
+            throw new UserFriendlyLogException(
+                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" contains multiple rows with the same value. This indicates an export error. Please check that the export is correct."
+            );
+        }
+
         var attributesDictionary = validatedAttributeData.ToDictionary(
-            x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, columnIndexKeyAttribute, KeyAttribute),
+            x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, ScaffoldingCsvLineParser.ItemCodeColumnKey),
             v =>
             {
                 var kvp = new Dictionary<string, string>();
@@ -96,7 +110,7 @@ public class ScaffoldingAttributeParser
                 for (int col = 0; col < v.ColumnCount; col++)
                 {
                     // Ignore the key attribute
-                    if (columnIndexKeyAttribute == col)
+                    if (v.Headers[col] == ScaffoldingCsvLineParser.ItemCodeColumnKey)
                         continue;
 
                     // if it is not an aggregate attribute, skip it here
@@ -104,7 +118,7 @@ public class ScaffoldingAttributeParser
                         continue;
 
                     var key = v.Headers[col].Trim();
-                    var value = v.Values[col].Trim();
+                    var value = v[col].Trim();
 
                     // Check if numeric headers are actually numbers for non-temp scaffolds.
                     // For temporary scaffolds, we don't care.
@@ -144,7 +158,9 @@ public class ScaffoldingAttributeParser
 
                 if (!ScaffoldingMetadata.PartMetadataHasExpectedValues(kvp, tempFlag))
                 {
-                    Console.WriteLine("Invalid attribute line: " + v[columnIndexKeyAttribute].ToString());
+                    Console.WriteLine(
+                        "Invalid attribute line: " + v[ScaffoldingCsvLineParser.ItemCodeColumnKey].ToString()
+                    );
                     return null;
                 }
 
@@ -199,18 +215,22 @@ public class ScaffoldingAttributeParser
     private static void ThrowExceptionIfEmptyCsv(string[] fileLines)
     {
         if (fileLines.Length == 0)
-            throw new ArgumentException("CSV file has no lines.", nameof(fileLines));
+            throw new UserFriendlyLogException(
+                "The CSV file is either empty or does not contain any valid lines. Please check the CSV-template guide.",
+                new ArgumentException("CSV file has no lines.", nameof(fileLines))
+            );
         Console.WriteLine("Reading and processing attribute file.");
     }
 
-    private static string[] RemoveCsvNonDescriptionHeaderInfo(string[] fileLines)
+    // returns the table with header, with everything else before header line removed, and the number of lines removed
+    private static (string[], int) RemoveCsvNonDescriptionHeaderInfo(string[] fileLines)
     {
         // The below will remove the first row in the CSV file, if it is not the header.
         // We tried using CsvReader SkipRow, as well as similar options, but they did not work for header rows.
-        return fileLines.First().Contains("Description") ? fileLines : fileLines.Skip(1).ToArray();
+        return fileLines.First().Contains("Description") ? (fileLines, 0) : (fileLines.Skip(1).ToArray(), 1);
     }
 
-    private static ICsvLine[] ConvertToCsvLines(string[] fileLines)
+    private static ICsvLine[] ConvertToCsvLines(string[] fileLines, int lineOffset)
     {
         return CsvReader
             .ReadFromText(
@@ -219,6 +239,7 @@ public class ScaffoldingAttributeParser
                 {
                     HeaderMode = HeaderMode.HeaderPresent,
                     RowsToSkip = 0,
+                    Comparer = StringComparer.OrdinalIgnoreCase,
                     SkipRow = (row, idx) => row.Span.IsEmpty || row.Span[0] == '#' || idx == 2,
                     TrimData = true,
                     Separator = ';',
@@ -227,12 +248,20 @@ public class ScaffoldingAttributeParser
             .ToArray();
     }
 
-    private static int RetrieveKeyAttributeColumnIndex(ICsvLine[] attributeRawData)
+    private static int ValidateKeyAttribute(ICsvLine[] attributeRawData)
     {
-        var columnIndexKeyAttribute = Array.IndexOf(attributeRawData.First().Headers, KeyAttribute);
+        var columnIndexKeyAttribute = Array.IndexOf(
+            attributeRawData.First().Headers,
+            ScaffoldingCsvLineParser.ItemCodeColumnKey
+        );
 
         if (columnIndexKeyAttribute < 0)
-            throw new Exception($"Key header {KeyAttribute} is missing in the attribute file.");
+            throw new UserFriendlyLogException(
+                "Missing column \"" + ScaffoldingCsvLineParser.ItemCodeColumnKey + "\" in the csv file",
+                new Exception(
+                    $"Key header {ScaffoldingCsvLineParser.ItemCodeColumnKey} is missing in the attribute file."
+                )
+            );
 
         return columnIndexKeyAttribute;
     }
@@ -251,18 +280,20 @@ public class ScaffoldingAttributeParser
 
     private static IEnumerable<ICsvLine> RemoveCsvRowsWithoutKeyAttribute(
         ICsvLine[] attributeRawData,
-        int columnIndexKeyAttribute
+        string columnNameKeyAttribute
     )
     {
         // Validate raw data wrt missing "Item Code"
         var validatedAttributeData = attributeRawData.Where(item =>
-            !string.IsNullOrWhiteSpace(item.Values[columnIndexKeyAttribute])
+            !string.IsNullOrWhiteSpace(item[columnNameKeyAttribute])
         );
         IEnumerable<ICsvLine> removeCsvRowsWithoutKeyAttribute =
             validatedAttributeData as ICsvLine[] ?? validatedAttributeData.ToArray();
         if (!removeCsvRowsWithoutKeyAttribute.Any())
         {
-            throw new Exception($"{KeyAttribute} cannot be missing for all items.");
+            throw new UserFriendlyLogException(
+                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" has no rows with an item code. Please check that the export is correct."
+            );
         }
 
         Console.WriteLine(
@@ -296,7 +327,10 @@ public class ScaffoldingAttributeParser
         if (!lastAttributeLine[0].Contains(HeaderTotalWeight))
         {
             Console.Error.WriteLine("Attribute file does not contain total weight");
-            throw new ScaffoldingAttributeParsingException("Attribute file does not contain total weight");
+            throw new UserFriendlyLogException(
+                "Total weight could not be extracted from the CSV file, because it is missing. Please check the CSV-template guide.",
+                new ScaffoldingAttributeParsingException("Attribute file does not contain total weight")
+            );
         }
 
         // check if there is at least one weight entry in the total weight line
@@ -306,7 +340,7 @@ public class ScaffoldingAttributeParser
             const string errorMsg =
                 "Grand total line in the attribute file does not contain any total weights. Maybe the correct export template was not used.";
             Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-            throw new ScaffoldingAttributeParsingException(errorMsg);
+            throw new UserFriendlyLogException(errorMsg, new ScaffoldingAttributeParsingException(errorMsg));
         }
 
         // finds all partial total weights in the line (partial: per item producer)
@@ -321,11 +355,14 @@ public class ScaffoldingAttributeParser
                 {
                     return float.Parse(w, CultureInfo.InvariantCulture);
                 }
-                catch
+                catch (Exception exc)
                 {
                     const string errorMsg = "Total weight line in the attribute file has an unknown format.";
                     Console.Error.WriteLine("Error reading attribute file: " + errorMsg);
-                    throw new ScaffoldingAttributeParsingException(errorMsg);
+                    throw new UserFriendlyLogException(
+                        "Total weight could not be extracted from the CSV file. Please check the CSV-template guide.",
+                        exc
+                    );
                 }
             });
         return weights.Sum(v => v);
@@ -344,14 +381,22 @@ public class ScaffoldingAttributeParser
 
     private static void ThrowExceptionIfNotValidNumber(string value, string columnName)
     {
-        if (string.IsNullOrWhiteSpace(value))
-            return;
-
-        if (float.TryParse(value, CultureInfo.InvariantCulture, out _))
-            return;
-
-        var errMsg = $"Error parsing attribute value. \"{value}\" is not a valid number in column: {columnName}.";
-        Console.Error.WriteLine(errMsg);
-        throw new ScaffoldingAttributeParsingException(errMsg);
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                // Parse will throw an assertion if it fails. Hence, we do not need the return value.
+                float.Parse(value, CultureInfo.InvariantCulture);
+            }
+        }
+        catch (Exception)
+        {
+            var errMsg = $"Error parsing attribute value. {value} is not a valid {columnName}.";
+            Console.Error.WriteLine(errMsg);
+            throw new UserFriendlyLogException(
+                $"{columnName} is expected to contain only numeric values, but exported CSV contains a non-numeric value {value}. Check the exported CSV.",
+                new ScaffoldingAttributeParsingException(errMsg)
+            );
+        }
     }
 }
