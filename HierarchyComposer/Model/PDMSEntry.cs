@@ -13,12 +13,15 @@ public struct PdmsEntry
 
 public class PDMSEntryTable
 {
-    const string TableName = "PDMSEntries";
+    const string ViewName = "PDMSEntries";
+    private const string TableNameKeys = "PDMSEntries_Keys";
+
+    private const string TableNameValues = "PDMSEntries_Values";
 
     public static void CreateTable(SqliteCommand command)
     {
         command.CommandText = $"""
-            CREATE TABLE {TableName}_Keys (
+            CREATE TABLE {TableNameKeys} (
                 Id INTEGER PRIMARY KEY,
                 Key TEXT NOT NULL UNIQUE
             ) STRICT, WITHOUT ROWID;
@@ -26,7 +29,7 @@ public class PDMSEntryTable
         command.ExecuteNonQuery();
 
         command.CommandText = $"""
-                        CREATE TABLE IF NOT EXISTS {TableName}_Values (
+                        CREATE TABLE IF NOT EXISTS {TableNameValues} (
                             Id INTEGER PRIMARY KEY,
                             Key INTEGER NOT NULL,
                             Value TEXT NOT NULL COLLATE NOCASE
@@ -36,10 +39,10 @@ public class PDMSEntryTable
 
         // Create a view table for Key Value text instead of having to use joins for the PdmsKeys table
         command.CommandText = $"""
-            CREATE VIEW IF NOT EXISTS {TableName} AS
+            CREATE VIEW IF NOT EXISTS {ViewName} AS
             SELECT e.Id, k.Key, e.Value
-            FROM {TableName}_Values e
-            JOIN PdmsKeys k ON e.Key = k.Id;
+            FROM {TableNameValues} e
+            JOIN {TableNameKeys} k ON e.Key = k.Id;
             """;
         command.ExecuteNonQuery();
     }
@@ -48,11 +51,11 @@ public class PDMSEntryTable
     {
         // Index on Key/Value for fast lookup of PDMS entries by key/value pair
         // This index also covers queries that filter only by Key, as Key is the first column in the index
-        command.CommandText = $"CREATE INDEX IX_{TableName}_Values_KeyValue ON {TableName}_Values (Key,Value);";
+        command.CommandText = $"CREATE INDEX IX_{TableNameValues}_KeyValue ON {TableNameValues} (Key,Value);";
         command.ExecuteNonQuery();
 
         // Index on Key name
-        command.CommandText = $"CREATE INDEX IX_{TableName}_Keys_Key ON {TableName}_Keys (Key);";
+        command.CommandText = $"CREATE INDEX IX_{TableNameKeys}_Key ON {TableNameKeys} (Key);";
         command.ExecuteNonQuery();
     }
 
@@ -60,7 +63,7 @@ public class PDMSEntryTable
     {
         var keys = pdmsEntries.Select(x => x.Key).Distinct();
         var keyToId = new Dictionary<string, int>();
-        command.CommandText = $"INSERT INTO {TableName}_Keys (Id, Key) VALUES ($Id, $Key);";
+        command.CommandText = $"INSERT INTO {TableNameKeys} (Id, Key) VALUES ($Id, $Key);";
         var keyParameter = command.CreateParameter();
         keyParameter.ParameterName = "$Key";
         command.Parameters.Add(keyParameter);
@@ -79,7 +82,7 @@ public class PDMSEntryTable
         }
         command.Parameters.Clear();
 
-        command.CommandText = $"INSERT INTO {TableName}_Values (Id, Key, Value) VALUES ($Id, $Key, $Value);";
+        command.CommandText = $"INSERT INTO {TableNameValues} (Id, Key, Value) VALUES ($Id, $Key, $Value);";
 
         var idParameter = command.CreateParameter();
         idParameter.ParameterName = "$Id";
