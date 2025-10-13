@@ -97,7 +97,7 @@ public class DatabaseComposer
 
         var aabbs = jsonAabbs
             .GroupBy(b => b.GetGroupKey())
-            .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First().CopyWithNewId(++aabbIdCounter));
+            .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First() with { Id = ++aabbIdCounter });
 
         var nodes = inputNodes
             .Select(inputNode => new Node
@@ -123,7 +123,7 @@ public class DatabaseComposer
                         pdmsKvp => new NodePdmsEntryMapItem()
                         {
                             NodeId = node.NodeId,
-                            PDMSEntryId = pdmsEntries[
+                            PdmsEntryId = pdmsEntries[
                                 new PdmsKeyValuePairCaseInsensitiveValue(pdmsKvp.Key, pdmsKvp.Value)
                             ].Id,
                         }
@@ -136,7 +136,7 @@ public class DatabaseComposer
 
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
-        Console.WriteLine("Sqlite Version: " + connection.ServerVersion);
+        _logger.LogInformation("Opened database. Sqlite Version: {Version}", connection.ServerVersion);
 
         // Optimize SQLite for write speed before inserting anything
         using (var pragmaCmd = connection.CreateCommand())
@@ -146,6 +146,10 @@ public class DatabaseComposer
             pragmaCmd.CommandText = "PRAGMA journal_mode = MEMORY;";
             pragmaCmd.ExecuteNonQuery();
             pragmaCmd.CommandText = "PRAGMA locking_mode = EXCLUSIVE;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA temp_store = MEMORY;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA cache_size = -100000;"; // 100 MB cache
             pragmaCmd.ExecuteNonQuery();
         }
 
@@ -192,9 +196,9 @@ public class DatabaseComposer
             () =>
             {
                 using var tableCmd = connection.CreateCommand();
-                NodePDMSEntry.CreateTable(tableCmd);
+                NodePdmsEntryTable.CreateTable(tableCmd);
 
-                NodePDMSEntry.RawInsertBatch(connection, nodePdmsEntries);
+                NodePdmsEntryTable.RawInsertBatch(connection, nodePdmsEntries);
             }
         );
         nodePdmsEntries = [];
@@ -210,9 +214,9 @@ public class DatabaseComposer
 
                 // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
                 // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
-                AABB.CreateTable(cmd);
+                AabbTable.CreateTable(cmd);
 
-                AABB.RawInsertBatch(cmd, aabbs.Values);
+                AabbTable.RawInsertBatch(cmd, aabbs.Values);
 
                 transaction.Commit();
             }
@@ -227,7 +231,7 @@ public class DatabaseComposer
                 using var cmd = connection.CreateCommand();
                 PDMSEntryTable.CreateIndexes(cmd);
                 NodeTable.CreateIndexes(cmd);
-                NodePDMSEntry.CreateIndexes(cmd);
+                NodePdmsEntryTable.CreateIndexes(cmd);
                 transaction.Commit();
             }
         );

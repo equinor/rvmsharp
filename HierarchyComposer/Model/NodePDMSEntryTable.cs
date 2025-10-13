@@ -8,17 +8,18 @@ using Microsoft.Data.Sqlite;
 
 public struct NodePdmsEntryMapItem
 {
-    public uint NodeId;
-
-    public int PDMSEntryId;
+    public required uint NodeId;
+    public required int PdmsEntryId;
 }
 
-public static class NodePDMSEntry
+public static class NodePdmsEntryTable
 {
+    private const string NodeToPdmsEntryTable = "NodeToPdmsEntry";
+
     public static void CreateTable(SqliteCommand command)
     {
-        command.CommandText = """
-                        CREATE TABLE NodeToPdmsEntry (
+        command.CommandText = $"""
+                        CREATE TABLE {NodeToPdmsEntryTable} (
                             NodeId INTEGER NOT NULL,
                             PDMSEntryId INTEGER NOT NULL,
                             PRIMARY KEY (NodeId, PDMSEntryId)) WITHOUT ROWID
@@ -31,7 +32,7 @@ public static class NodePDMSEntry
     {
         const int chunkSize = 1_000_000;
 
-        foreach (var chunk in nodePdmsEntries.OrderBy(x => x.NodeId).ThenBy(x => x.PDMSEntryId).Chunk(chunkSize))
+        foreach (var chunk in nodePdmsEntries.OrderBy(x => x.NodeId).ThenBy(x => x.PdmsEntryId).Chunk(chunkSize))
         {
             var stopwatch = Stopwatch.StartNew();
             InsertChunk(connection, chunk);
@@ -45,7 +46,8 @@ public static class NodePDMSEntry
         using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
 
-        command.CommandText = "INSERT INTO NodeToPDMSEntry (NodeId, PDMSEntryId) VALUES ($NodeId, $PDMSEntryId);";
+        command.CommandText =
+            $"INSERT INTO {NodeToPdmsEntryTable} (NodeId, PDMSEntryId) VALUES ($NodeId, $PDMSEntryId);";
 
         var nodeIdParameter = command.CreateParameter();
         nodeIdParameter.ParameterName = "$NodeId";
@@ -57,7 +59,7 @@ public static class NodePDMSEntry
         foreach (var pdmsEntry in chunk)
         {
             nodeIdParameter.Value = pdmsEntry.NodeId;
-            pdmsEntryIdParameter.Value = pdmsEntry.PDMSEntryId;
+            pdmsEntryIdParameter.Value = pdmsEntry.PdmsEntryId;
             command.ExecuteNonQuery();
         }
 
@@ -70,7 +72,7 @@ public static class NodePDMSEntry
         // The primary key (NodeId, PDMSEntryId) already covers queries for all PDMSEntryIds of a given NodeId.
         // To efficiently query all NodeIds for a given PDMSEntryId, a reverse index on (PDMSEntryId, NodeId) is created.
         cmd.CommandText =
-            "CREATE INDEX IX_NodePDMSEntries_PdmsEntryIdToNodeId ON NodeToPdmsEntry (PDMSEntryId, NodeId)";
+            $"CREATE INDEX IX_{NodeToPdmsEntryTable}_PdmsEntryIdToNodeId ON {NodeToPdmsEntryTable} (PDMSEntryId, NodeId)";
         cmd.ExecuteNonQuery();
     }
 }

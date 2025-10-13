@@ -6,12 +6,12 @@ using Microsoft.Data.Sqlite;
 
 public static class NodeTable
 {
-    public const string TableName = "Nodes";
+    public const string NodesTable = "Nodes";
 
     public static void CreateTable(SqliteCommand command)
     {
         command.CommandText = $"""
-            CREATE TABLE {TableName} (
+            CREATE TABLE {NodesTable} (
                             Id INTEGER PRIMARY KEY NOT NULL,
                             EndId INTEGER NOT NULL,
                             RefNoPrefix TEXT NULL COLLATE NOCASE,
@@ -33,22 +33,22 @@ public static class NodeTable
     public static void CreateIndexes(SqliteCommand cmd)
     {
         // We create indexes AFTER inserting all data, as it allows for faster inserts.
-        cmd.CommandText = $"CREATE INDEX IX_{TableName}_Name ON {TableName} (Name)";
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_Name ON {NodesTable} (Name)";
         cmd.ExecuteNonQuery();
-        cmd.CommandText = $"CREATE INDEX IX_{TableName}_RefNo ON {TableName} (RefNoPrefix, RefNoDb, RefNoSequence)";
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_RefNo ON {NodesTable} (RefNoPrefix, RefNoDb, RefNoSequence)";
         cmd.ExecuteNonQuery();
-        cmd.CommandText = $"CREATE INDEX IX_{TableName}_TopNodeId ON {TableName} (TopNodeId)";
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_TopNodeId ON {NodesTable} (TopNodeId)";
         cmd.ExecuteNonQuery();
-        cmd.CommandText = $"CREATE INDEX IX_{TableName}_ParentId ON {TableName} (ParentId)";
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_ParentId ON {NodesTable} (ParentId)";
         cmd.ExecuteNonQuery();
-        cmd.CommandText = $"CREATE INDEX IX_{TableName}_AABBId ON {TableName} (AABBId)";
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_AABBId ON {NodesTable} (AABBId)";
         cmd.ExecuteNonQuery();
     }
 
     public static void RawInsertBatch(SqliteCommand command, IEnumerable<Node> nodes)
     {
         command.CommandText =
-            $"INSERT INTO {TableName} (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
+            $"INSERT INTO {NodesTable} (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
         var nodeIdParameter = command.CreateParameter();
         nodeIdParameter.ParameterName = "$Id";
         var nodeEndIdParameter = command.CreateParameter();

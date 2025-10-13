@@ -15,6 +15,6 @@ public class HierarchyNode
     public uint? ParentId { get; set; }
     public Dictionary<string, string> PDMSData { get; init; } = new Dictionary<string, string>();
     public bool HasMesh { get; set; }
-    public AABB? AABB { get; set; }
+    public AabbItem? AABB { get; set; }
     public string? OptionalDiagnosticInfo { get; set; } = null;
 }
