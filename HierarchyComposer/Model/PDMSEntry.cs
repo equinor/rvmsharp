@@ -34,11 +34,11 @@ public class PDMSEntryTable
         command.ExecuteNonQuery();
 
         command.CommandText = $"""
-                        CREATE TABLE IF NOT EXISTS {TableNameValues} (
-                            Id INTEGER PRIMARY KEY,
-                            KeyId INTEGER NOT NULL,
-                            Value TEXT NOT NULL COLLATE NOCASE
-                        ) STRICT, WITHOUT ROWID;
+            CREATE TABLE IF NOT EXISTS {TableNameValues} (
+                Id INTEGER PRIMARY KEY,
+                KeyId INTEGER NOT NULL,
+                Value TEXT NOT NULL COLLATE NOCASE
+            ) STRICT, WITHOUT ROWID;
             """;
         command.ExecuteNonQuery();
 
