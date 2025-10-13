@@ -48,7 +48,11 @@ public class PDMSEntryTable
     {
         // Index on Key/Value for fast lookup of PDMS entries by key/value pair
         // This index also covers queries that filter only by Key, as Key is the first column in the index
-        command.CommandText = $"CREATE INDEX IX_{TableName}_KeyValue ON PDMSEntries_Values (Key,Value COlLATE NOCASE);";
+        command.CommandText = $"CREATE INDEX IX_{TableName}_Values_KeyValue ON {TableName}_Values (Key,Value);";
+        command.ExecuteNonQuery();
+
+        // Index on Key name
+        command.CommandText = $"CREATE INDEX IX_{TableName}_Keys_Key ON {TableName}_Keys (Key);";
         command.ExecuteNonQuery();
     }
 
@@ -73,6 +77,7 @@ public class PDMSEntryTable
             command.ExecuteNonQuery();
             keyToId[key] = id;
         }
+        command.Parameters.Clear();
 
         command.CommandText = $"INSERT INTO {TableName}_Values (Id, Key, Value) VALUES ($Id, $Key, $Value);";
 
