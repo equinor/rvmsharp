@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Linq;
 using Microsoft.Data.Sqlite;
 
-public struct NodePdmsEntryKey
+public struct NodePdmsEntryMapItem
 {
     public uint NodeId;
 
@@ -27,7 +27,7 @@ public static class NodePDMSEntry
         command.ExecuteNonQuery();
     }
 
-    public static void RawInsertBatch(SqliteConnection connection, IEnumerable<NodePdmsEntryKey> nodePdmsEntries)
+    public static void RawInsertBatch(SqliteConnection connection, IEnumerable<NodePdmsEntryMapItem> nodePdmsEntries)
     {
         const int chunkSize = 1_000_000;
 
@@ -40,7 +40,7 @@ public static class NodePDMSEntry
         }
     }
 
-    private static void InsertChunk(SqliteConnection connection, IEnumerable<NodePdmsEntryKey> chunk)
+    private static void InsertChunk(SqliteConnection connection, IEnumerable<NodePdmsEntryMapItem> chunk)
     {
         using var transaction = connection.BeginTransaction();
         using var command = connection.CreateCommand();
@@ -62,5 +62,15 @@ public static class NodePDMSEntry
         }
 
         transaction.Commit();
+    }
+
+    public static void CreateIndexes(SqliteCommand cmd)
+    {
+        // Indexes are most efficient when the most selective columns come first.
+        // The primary key (NodeId, PDMSEntryId) already covers queries for all PDMSEntryIds of a given NodeId.
+        // To efficiently query all NodeIds for a given PDMSEntryId, a reverse index on (PDMSEntryId, NodeId) is created.
+        cmd.CommandText =
+            "CREATE INDEX IX_NodePDMSEntries_PdmsEntryIdToNodeId ON NodeToPdmsEntry (PDMSEntryId, NodeId)";
+        cmd.ExecuteNonQuery();
     }
 }

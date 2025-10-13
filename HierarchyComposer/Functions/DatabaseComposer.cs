@@ -11,6 +11,32 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Model;
 
+public class PdmsKeyValuePairCaseInsensitiveValue(string key, string value)
+    : IEquatable<PdmsKeyValuePairCaseInsensitiveValue>
+{
+    // ReSharper disable MemberCanBePrivate.Global // Used in Dictionary key comparison
+    public readonly string Key = key;
+    public readonly string Value = value;
+
+    // ReSharper restore MemberCanBePrivate.Global
+    public bool Equals(PdmsKeyValuePairCaseInsensitiveValue? other)
+    {
+        if (other == null)
+            return false;
+        return Key == other.Key && string.Equals(Value, other.Value, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Key, Value.ToLowerInvariant());
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as PdmsKeyValuePairCaseInsensitiveValue);
+    }
+}
+
 public class DatabaseComposer
 {
     private readonly ILogger _logger;
@@ -53,14 +79,17 @@ public class DatabaseComposer
         int pdmsEntryIdCounter = 0;
 
         var pdmsEntries = jsonPdmsKeyValuePairs
-            .GroupBy(kvp => new { kvp.Key, kvp.Value })
+            .Select(x => new PdmsKeyValuePairCaseInsensitiveValue(x.Key, x.Value))
+            .Distinct()
+            .OrderBy(x => x.Key)
+            .ThenBy(x => x.Value)
             .ToDictionary(
-                keySelector: g => (g.Key.Key, g.Key.Value),
+                keySelector: g => new PdmsKeyValuePairCaseInsensitiveValue(g.Key, g.Value),
                 elementSelector: g => new PdmsEntry
                 {
                     Id = ++pdmsEntryIdCounter,
-                    Key = g.Key.Key,
-                    Value = g.Key.Value,
+                    Key = g.Key,
+                    Value = g.Value,
                 }
             );
 
@@ -88,16 +117,15 @@ public class DatabaseComposer
             .ToDictionary(n => n.Id, n => n);
 
         var nodePdmsEntries = inputNodes
-            .SelectMany(x =>
-                x.PDMSData.Select(
+            .SelectMany(node =>
+                node.PDMSData.Select(
                     (
-                        y =>
+                        pdmsKvp => new NodePdmsEntryMapItem()
                         {
-                            return new NodePdmsEntryKey()
-                            {
-                                NodeId = x.NodeId,
-                                PDMSEntryId = pdmsEntries[(y.Key, y.Value)].Id,
-                            };
+                            NodeId = node.NodeId,
+                            PDMSEntryId = pdmsEntries[
+                                new PdmsKeyValuePairCaseInsensitiveValue(pdmsKvp.Key, pdmsKvp.Value)
+                            ].Id,
                         }
                     )
                 )
@@ -126,17 +154,18 @@ public class DatabaseComposer
             _logger,
             () =>
             {
-                using var cmd = connection.CreateCommand();
-                Node.CreateTable(cmd);
+                using var tableCmd = connection.CreateCommand();
+                NodeTable.CreateTable(tableCmd);
                 using var transaction = connection.BeginTransaction();
                 using var batchCmd = connection.CreateCommand();
-                Node.RawInsertBatch(batchCmd, nodes.Values);
-
+                NodeTable.RawInsertBatch(batchCmd, nodes.Values);
                 transaction.Commit();
+
+                // We want to free up memory as soon as possible. Not profiled.
+                nodes.Clear();
+                GC.Collect();
             }
         );
-        nodes.Clear();
-        GC.Collect();
 
         MopTimer.RunAndMeasure(
             "Insert PDMSEntries",
@@ -149,13 +178,14 @@ public class DatabaseComposer
                 using var transaction = connection.BeginTransaction();
 
                 using var cmd = connection.CreateCommand();
-                PDMSEntryTable.RawInsertBatch(cmd, pdmsEntries.Values);
+                PDMSEntryTable.RawInsertBatch(cmd, pdmsEntries.Values.ToArray());
 
                 transaction.Commit();
+
+                // We want to free up memory as soon as possible. Not profiled.
+                pdmsEntries.Clear();
             }
         );
-        pdmsEntries.Clear();
-
         MopTimer.RunAndMeasure(
             "Insert NodePDMSEntries",
             _logger,
@@ -189,30 +219,15 @@ public class DatabaseComposer
         );
 
         MopTimer.RunAndMeasure(
-            "Creating indexes",
+            "Creating additional indexes",
             _logger,
             () =>
             {
                 using var transaction = connection.BeginTransaction();
                 using var cmd = connection.CreateCommand();
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoPrefix, RefNoDb, RefNoSequence)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_TopNodeId_index ON Nodes (TopNodeId)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_ParentId_index ON Nodes (ParentId)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_AABBId_index ON Nodes (AABBId)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX NodePDMSEntries_ReverseIdMap ON NodeToPdmsEntry (PDMSEntryId, NodeId)";
-                cmd.ExecuteNonQuery();
+                PDMSEntryTable.CreateIndexes(cmd);
+                NodeTable.CreateIndexes(cmd);
+                NodePDMSEntry.CreateIndexes(cmd);
                 transaction.Commit();
             }
         );
