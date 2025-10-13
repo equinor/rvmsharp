@@ -45,9 +45,9 @@ public class PDMSEntryTable
         // Create a view table for Key Value text instead of having to use joins for the PdmsKeys table
         command.CommandText = $"""
             CREATE VIEW {ViewName} AS
-            SELECT values.Id, keys.Key, values.Value
-            FROM {TableNameValues} values
-            JOIN {TableNameKeys} keys ON values.KeyId = keys.Id;
+            SELECT {TableNameValues}.Id, {TableNameKeys}.Key, {TableNameValues}.Value
+            FROM {TableNameValues}
+            JOIN {TableNameKeys} ON {TableNameValues}.KeyId = {TableNameKeys}.Id;
             """;
         command.ExecuteNonQuery();
     }
@@ -56,7 +56,7 @@ public class PDMSEntryTable
     {
         // Index on Key/Value for fast lookup of PDMS entries by key/value pair
         // This index also covers queries that filter only by Key, as Key is the first column in the index
-        command.CommandText = $"CREATE INDEX IX_{TableNameValues}_KeyValue ON {TableNameValues} (Key,Value);";
+        command.CommandText = $"CREATE INDEX IX_{TableNameValues}_KeyValue ON {TableNameValues} (KeyId, Value);";
         command.ExecuteNonQuery();
     }
 
