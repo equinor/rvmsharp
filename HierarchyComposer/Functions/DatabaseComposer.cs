@@ -212,8 +212,6 @@ public class DatabaseComposer
                 using var transaction = connection.BeginTransaction();
                 using var cmd = connection.CreateCommand();
 
-                // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
-                // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
                 AabbTable.CreateTable(cmd);
 
                 AabbTable.RawInsertBatch(cmd, aabbs.Values);

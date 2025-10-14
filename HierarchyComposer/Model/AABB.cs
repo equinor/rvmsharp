@@ -10,8 +10,9 @@ public static class AabbTable
 {
     public static void CreateTable(SqliteCommand command)
     {
-        command.CommandText =
-            "CREATE VIRTUAL TABLE AABBs USING rtree_i32(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
+        // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
+        // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
+        command.CommandText = "CREATE VIRTUAL TABLE AABBs USING rtree(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
         command.ExecuteNonQuery();
     }
 
