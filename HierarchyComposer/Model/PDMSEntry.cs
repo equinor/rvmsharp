@@ -72,7 +72,7 @@ public class PDMSEntryTable
         var idParameter = command.CreateParameter();
         idParameter.ParameterName = "$Id";
         var keyIdParameter = command.CreateParameter();
-        keyIdParameter.ParameterName = "KeyId";
+        keyIdParameter.ParameterName = "$KeyId";
         var valueParameter = command.CreateParameter();
         valueParameter.ParameterName = "$Value";
 

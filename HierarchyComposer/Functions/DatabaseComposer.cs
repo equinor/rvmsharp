@@ -201,7 +201,7 @@ public class DatabaseComposer
                 NodePdmsEntryTable.RawInsertBatch(connection, nodePdmsEntries);
             }
         );
-        nodePdmsEntries = [];
+        nodePdmsEntries = null;
         GC.Collect();
 
         MopTimer.RunAndMeasure(
