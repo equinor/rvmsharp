@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using CadRevealFbxProvider.Attributes;
+using CadRevealFbxProvider.UserFriendlyLogger;
 using NUnit.Framework;
 
 [TestFixture]
@@ -38,7 +39,9 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray())
+        );
     }
 
     [Test]
@@ -173,7 +176,7 @@ public class FbxProviderAttributeParserTests
         ScaffoldingMetadata metadata;
 
         // assert
-        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
         });
@@ -216,13 +219,10 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<ScaffoldingAttributeParsingException>(
-            () =>
-            {
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the key total weight is missing, but got none"
-        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
     }
 
     [TestCase("/wrong_name_key_attribute.csv")]
@@ -231,25 +231,28 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<Exception>(
-            () =>
-            {
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the key attribute is missing, but got none"
-        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
     }
 
     [TestCase("/missing_data_key_attribute.csv")]
     public void ParseAttributes_ItemCodeDataMissingInCsv_ThrowsError(string csvFileName)
     {
-        Assert.Throws<Exception>(
+        var exc = Assert.Catch(
             () =>
             {
                 string infoTextFilename = _attributeDirectory.FullName + csvFileName;
                 var lines = File.ReadAllLines(infoTextFilename);
                 ScaffoldingAttributeParser.ParseAttributes(lines);
             },
+            "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
+        );
+
+        Assert.That(
+            exc,
+            Is.Not.Null,
             "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
         );
     }
@@ -695,7 +698,7 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -717,7 +720,8 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+        // Act & Assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -824,12 +828,9 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
-                ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -850,12 +851,9 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
-                ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -904,13 +902,9 @@ public class FbxProviderAttributeParserTests
 
         // Act
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
-                "Error: should throw exception since we cannot have description for two or more manufacturers on the same part"
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -930,13 +924,11 @@ public class FbxProviderAttributeParserTests
 
         // Act
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
-                "Error: should throw exception since we cannot have weight for two or more manufacturers on the same part"
-            );
-        });
+
+        // exception type was changed in this case from InvalidOperationException to ScaffoldingAttributeParsingException
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]

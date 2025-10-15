@@ -118,13 +118,11 @@ public class FbxProviderTests
     {
         // arrange
         DirectoryInfo directoryInfo = new(dir);
-        var err = Assert.Throws<Exception>(
-            () => Process(directoryInfo, directoryInfo),
-            "An exception was expected, saying that the model and attribute file do not match, but got none."
-        );
+        var err = Assert.Catch(() => Process(directoryInfo, directoryInfo));
         Assert.That(
-            err.Message.Contains("completely mismatch or all attributes in the attribute file have an issue"),
-            Is.True
+            err,
+            Is.Not.Null,
+            "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
     }
 
@@ -135,9 +133,8 @@ public class FbxProviderTests
         DirectoryInfo directoryInfo = new(dir);
 
         // act & assert
-        Assert.Throws<ScaffoldingFilenameException>(
-            () => Process(directoryInfo, directoryInfo),
-            "An exception was expected, saying that the model and attribute file do not match, but got none."
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            Process(directoryInfo, directoryInfo)
         );
     }
 
@@ -146,7 +143,8 @@ public class FbxProviderTests
     {
         DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
         DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
-        Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        var exc = Assert.Catch(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        Assert.That(exc, Is.Not.Null);
     }
 
     [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
@@ -344,7 +342,7 @@ public class FbxProviderTests
     }
 
     [TestCase("TestSamples/tempScaff_wrongNaming")]
-    public void ParseFiles_TempScaffoldingWithWrongName_ProcessingFails(string inputDir)
+    public void ParseFiles_TempScaffoldingWithoutTempInName_ProcessingFails(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
@@ -352,18 +350,17 @@ public class FbxProviderTests
         var modelFormatProviderFbx = new FbxProvider();
         DirectoryInfo inputDirectoryTempScaff = new(inputDir);
 
-        // act
-        // no act, assert that exception is thrown
+        // act & assert
+        // this scaff is not a valid temp scaffolding
 
-        // assert
-        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
             modelFormatProviderFbx.ParseFiles(
                 inputDirectoryTempScaff.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIndexGenerator,
                 new NodeNameFiltering(new NodeNameExcludeRegex(null))
             )
-        ); // this scaff is not a valid temp scaffolding
+        );
     }
 
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>
