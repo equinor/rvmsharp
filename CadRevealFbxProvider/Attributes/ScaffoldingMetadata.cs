@@ -170,7 +170,7 @@ public class ScaffoldingMetadata
                     break;
                 default:
                     throw new UserFriendlyLogException(
-                        "Unexpected attribute. This is probably a bug. Notify the developing team.",
+                        "Unexpected attribute was encoutered during processing. This is probably a bug. Please, notify the Echo developing team.",
                         new ArgumentOutOfRangeException()
                     );
             }
@@ -204,7 +204,7 @@ public class ScaffoldingMetadata
         if (TempScaffoldingFlag)
         {
             throw new UserFriendlyLogException(
-                "Work order scaffolding processing called for temporary scaffolds. This must be a bug. Please, notify the developing team.",
+                "Work order scaffolding processing called for temporary scaffolds. This must be a bug. Please, notify the Echo developing team.",
                 new Exception(
                     "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
                 )
@@ -236,7 +236,7 @@ public class ScaffoldingMetadata
             throw new UserFriendlyLogException(
                 "",
                 new ScaffoldingFilenameException(
-                    $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename."
+                    $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename. Please check the naming guide."
                 )
             );
         }

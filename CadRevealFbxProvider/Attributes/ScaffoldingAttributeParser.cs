@@ -51,6 +51,7 @@ public class ScaffoldingAttributeParser
         ThrowExceptionIfEmptyCsv(fileLines);
         (fileLines, var tableContentOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
         ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, tableContentOffset);
+        ValidateKeyAttribute(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
         var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(
@@ -66,8 +67,18 @@ public class ScaffoldingAttributeParser
             == validatedAttributeData.Length;
         if (!allKeysAreValidAndUnique)
         {
+            var duplicatedKeys = validatedAttributeData
+                .Select(x => x[ScaffoldingCsvLineParser.ItemCodeColumnKey])
+                .GroupBy(v => v)
+                .Where(g => g.Count() > 1)
+                .ToList();
+
+            // format the list of duplicated keys for the error message as
+            // -- key1 (count1), -- key2 (count2), ...
+            var duplicatedKeysMsg = string.Join(", ", duplicatedKeys.Select(g => $"-- {g.Key} ({g.Count()}-times)"));
+
             throw new UserFriendlyLogException(
-                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" contains multiple rows with the same value. This indicates an export error. Please check that the export is correct."
+                $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row, but contains multiple rows with the same value. This indicates an export error, or maybe some items very inserted using copy-paste and the ID was not regenerated? The following values are duplicated: {duplicatedKeysMsg}. "
             );
         }
 
@@ -328,7 +339,7 @@ public class ScaffoldingAttributeParser
         {
             Console.Error.WriteLine("Attribute file does not contain total weight");
             throw new UserFriendlyLogException(
-                "Total weight could not be extracted from the CSV file, because it is missing. Please check the CSV-template guide.",
+                "Total weight could not be extracted from the CSV file because it is missing. Please check the CSV-template guide.",
                 new ScaffoldingAttributeParsingException("Attribute file does not contain total weight")
             );
         }

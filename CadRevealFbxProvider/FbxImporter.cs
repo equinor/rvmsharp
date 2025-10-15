@@ -16,7 +16,7 @@ public class FbxImporter : IDisposable
         if (!File.Exists(filename))
         {
             throw new UserFriendlyLogException(
-                $"Cannot process file {filename}, as it is no longer found. The reason might be some server issues. Please notify the developing team.",
+                $"Cannot process file {filename}, as it is no longer found. The reason might be some server issues. Please notify the Echo developing team.",
                 new FileNotFoundException(filename + " was not found")
             );
         }
