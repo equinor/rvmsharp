@@ -143,11 +143,13 @@ public static class ScaffoldingCsvLineParser
         }
         catch (InvalidOperationException)
         {
-            var rowIndex = row.Index + 1;
+            // We show index + 1 to the user, as the usual CSV table viewers start with index 1, while row.Index is 0-based
+            var rowIndexOneBased = row.Index + 1;
+
             var itemCode = ExtractItemCodeFromRowAssumingItsValid(row);
 
             throw new UserFriendlyLogException(
-                $"Only one description attribute per item is allowed. CSV on row {rowIndex} (Item Code = {itemCode}) has one of the following problems: -- description is missing -- more than one distinct descriptions are filled in.",
+                $"Only one description attribute per item is allowed. CSV on row {rowIndexOneBased} (Item Code = {itemCode}) has one of the following problems: -- description is missing -- more than one distinct descriptions are filled in.",
                 new ScaffoldingAttributeParsingException(
                     $"Description attributes cannot have multiple values. Only one weight attribute per item is allowed."
                 )
