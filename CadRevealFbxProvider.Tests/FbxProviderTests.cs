@@ -133,17 +133,8 @@ public class FbxProviderTests
         DirectoryInfo directoryInfo = new(dir);
 
         // act & assert
-        var exc = Assert.Catch(() => Process(directoryInfo, directoryInfo));
-
-        Assert.That(
-            exc,
-            Is.Not.Null,
-            "An exception was expected, saying that the model and attribute file do not match, but got none."
-        );
-
-        Assert.That(
-            exc,
-            Is.InstanceOf<ScaffoldingFilenameException>().Or.InnerException.InstanceOf<ScaffoldingFilenameException>()
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            Process(directoryInfo, directoryInfo)
         );
     }
 

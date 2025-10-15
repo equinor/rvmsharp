@@ -39,11 +39,8 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        var exc = Assert.Catch(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
-        Assert.That(
-            exc,
-            Is.InstanceOf<Exception>().Or.InnerException.InstanceOf<Exception>(),
-            "Neither the exception nor its inner exception is of type Exception"
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray())
         );
     }
 
@@ -222,25 +219,10 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        var exc = Assert.Catch(
-            () =>
-            {
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the key total weight is missing, but got none"
-        );
-        Assert.That(
-            exc,
-            Is.Not.Null,
-            "Was expecting an exception saying that the key total weight is missing, but got none"
-        );
-
-        Assert.That(
-            exc,
-            Is.InstanceOf<ScaffoldingAttributeParsingException>()
-                .Or.InnerException.InstanceOf<ScaffoldingAttributeParsingException>(),
-            "Neither the exception nor its inner exception is of type ScaffoldingAttributeParsingException"
-        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
     }
 
     [TestCase("/wrong_name_key_attribute.csv")]
@@ -249,22 +231,10 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        var exc = Assert.Catch(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
         {
             ScaffoldingAttributeParser.ParseAttributes(lines);
         });
-
-        Assert.That(
-            exc,
-            Is.Not.Null,
-            "Was expecting an exception saying that the key attribute is missing, but got none"
-        );
-
-        Assert.That(
-            exc,
-            Is.InstanceOf<Exception>().Or.InnerException.InstanceOf<Exception>(),
-            "Neither the exception nor its inner exception is of type Exception"
-        );
     }
 
     [TestCase("/missing_data_key_attribute.csv")]
