@@ -247,24 +247,14 @@ public class ScaffoldingMetadataTests
         var fileName3 = "BCA_"; // missing work order in filename
 
         // Act & Assert
-        var ex1 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        var ex2 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
-        var ex3 = Assert.Catch(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3));
-
-        Assert.That(
-            ex1,
-            Is.InstanceOf<ScaffoldingFilenameException>().Or.InnerException.InstanceOf<ScaffoldingFilenameException>(),
-            "Neither the exception nor its inner exception is of type ScaffoldingFilenameException"
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1)
         );
-        Assert.That(
-            ex2,
-            Is.InstanceOf<ScaffoldingFilenameException>().Or.InnerException.InstanceOf<ScaffoldingFilenameException>(),
-            "Neither the exception nor its inner exception is of type ScaffoldingFilenameException"
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2)
         );
-        Assert.That(
-            ex3,
-            Is.InstanceOf<ScaffoldingFilenameException>().Or.InnerException.InstanceOf<ScaffoldingFilenameException>(),
-            "Neither the exception nor its inner exception is of type ScaffoldingFilenameException"
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3)
         );
     }
 
