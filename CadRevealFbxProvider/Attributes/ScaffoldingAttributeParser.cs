@@ -325,6 +325,8 @@ public class ScaffoldingAttributeParser
             .Where(a => a.Value != null)
             .Select(av =>
             {
+                // weight is extracted from one of the weight columns, see ExtractSingleWeightFromCsvRow for details
+                // and stored in "Weight kg"
                 var w = av.Value!["Weight kg"];
                 if (string.IsNullOrEmpty(w))
                     return 0; // sometime weight can be missing
