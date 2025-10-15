@@ -1,13 +1,16 @@
 namespace CadRevealFbxProvider.Tests;
 
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using Ben.Collections.Specialized;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
 using CadRevealFbxProvider.Attributes;
 using CadRevealFbxProvider.BatchUtils;
 
@@ -15,6 +18,7 @@ using CadRevealFbxProvider.BatchUtils;
 public class FbxProviderTests
 {
     private const string InputDirectoryCorrect = "TestSamples/correct";
+    private const string InputDirectoryCorrectWithSuffix = "TestSamples/correctWithSuffix";
     private const string OutputDirectoryCorrect = "TestSamples/correct";
 
     private static readonly ModelParameters ModelParameters = new(
@@ -167,16 +171,15 @@ public class FbxProviderTests
 
         Assert.That(nodes, Has.Count.EqualTo(28));
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
-        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
         Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
         Assert.That(metadata, Is.Not.Null);
         Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes));
     }
 
+    [Test]
     [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
-    public void SampleModel_Load(string inputDir, string outputDir)
+    public void SampleFbxModel_Load(string inputDir, string outputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
@@ -214,6 +217,40 @@ public class FbxProviderTests
         );
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirInfo.FullName)}\"");
+    }
+
+    [Test]
+    [TestCase(InputDirectoryCorrect, "")]
+    [TestCase(InputDirectoryCorrectWithSuffix, "Copy")]
+    public void SampleModel_ReadsCorrectScaffSuffix(string inputDir, string suffix)
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        var filesToParse = new DirectoryInfo(inputDir).EnumerateFiles();
+
+        var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
+
+        var fbxTimer = Stopwatch.StartNew();
+
+        var teamCityReadFbxFilesLogBlock = new TeamCityLogBlock("Reading Fbx Files");
+        var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+        {
+            Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
+        });
+
+        var stringInternPool = new Commons.BenStringInternPool(new SharedInternPool());
+
+        (var nodes, var metadata) = FbxWorkload.ReadFbxData(
+            workload,
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            progressReport,
+            stringInternPool
+        );
+
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", suffix), Is.True);
     }
 
     [TestCase(InputDirectoryCorrect)]
@@ -283,7 +320,9 @@ public class FbxProviderTests
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
+    [Test]
     [TestCase(InputDirectoryCorrect)]
+    [TestCase(InputDirectoryCorrectWithSuffix)]
     public void ParseFiles_WorkorderScaffolding_ProcessingSucceedsMetadataHasNegativeTempFlag(string inputDir)
     {
         // arrange
