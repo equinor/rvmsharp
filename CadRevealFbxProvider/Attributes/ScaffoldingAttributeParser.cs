@@ -51,7 +51,7 @@ public class ScaffoldingAttributeParser
         ThrowExceptionIfEmptyCsv(fileLines);
         (fileLines, var tableContentOffset) = RemoveCsvNonDescriptionHeaderInfo(fileLines);
         ICsvLine[] attributeRawData = ConvertToCsvLines(fileLines, tableContentOffset);
-        ValidateKeyAttribute(attributeRawData);
+        ValidateDataAndKeyAttribute(attributeRawData);
         ICsvLine lastAttributeLine = RetrieveLastCsvRowContainingWeight(attributeRawData);
         attributeRawData = RemoveLastCsvRowContainingWeigth(attributeRawData);
         var validatedAttributeData = RemoveCsvRowsWithoutKeyAttribute(
@@ -259,8 +259,14 @@ public class ScaffoldingAttributeParser
             .ToArray();
     }
 
-    private static int ValidateKeyAttribute(ICsvLine[] attributeRawData)
+    private static int ValidateDataAndKeyAttribute(ICsvLine[] attributeRawData)
     {
+        if (attributeRawData.Length == 0)
+            throw new UserFriendlyLogException(
+                "The CSV table contains no data rows. Please check the exported attribute file.",
+                new Exception("attributeRawData data is empty")
+            );
+
         var columnIndexKeyAttribute = Array.IndexOf(
             attributeRawData.First().Headers,
             ScaffoldingCsvLineParser.ItemCodeColumnKey
