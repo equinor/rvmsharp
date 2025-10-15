@@ -78,7 +78,10 @@ public class ScaffoldingAttributeParser
             var duplicatedKeysMsg = string.Join(", ", duplicatedKeys.Select(g => $"-- {g.Key} ({g.Count()}-times)"));
 
             throw new UserFriendlyLogException(
-                $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row, but contains multiple rows with the same value. This indicates an export error, or maybe some items very inserted using copy-paste and the ID was not regenerated? The following values are duplicated: {duplicatedKeysMsg}. "
+                $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row, but contains multiple rows with the same value. This indicates an export error, or maybe some items very inserted using copy-paste and the ID was not regenerated? The following values are duplicated: {duplicatedKeysMsg}. ",
+                new ScaffoldingAttributeParsingException(
+                    $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row"
+                )
             );
         }
 
@@ -309,7 +312,10 @@ public class ScaffoldingAttributeParser
         if (!removeCsvRowsWithoutKeyAttribute.Any())
         {
             throw new UserFriendlyLogException(
-                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" has no rows with an item code. Please check that the export is correct."
+                $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" has no rows with an item code. Please check that the export is correct.",
+                new ScaffoldingAttributeParsingException(
+                    $"Column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" has no rows with an item code"
+                )
             );
         }
 

@@ -39,7 +39,7 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray())
         );
     }
