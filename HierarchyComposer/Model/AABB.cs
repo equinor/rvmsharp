@@ -1,27 +1,22 @@
 ﻿namespace HierarchyComposer.Model;
 
-using System;
 using System.Collections.Generic;
 using System.Numerics;
 using Microsoft.Data.Sqlite;
 
-public class AABB : IEquatable<AABB>
-{
-    public int Id { get; init; }
-    public Vector3EfSerializable min { get; init; } = new Vector3EfSerializable(Vector3.Zero);
-    public Vector3EfSerializable max { get; init; } = new Vector3EfSerializable(Vector3.Zero);
+public record AabbItem(Vector3 Min, Vector3 Max, int Id = 0);
 
-    public AABB CopyWithNewId(int id)
+public static class AabbTable
+{
+    public static void CreateTable(SqliteCommand command)
     {
-        return new AABB()
-        {
-            Id = id,
-            min = this.min,
-            max = this.max,
-        };
+        // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
+        // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
+        command.CommandText = "CREATE VIRTUAL TABLE AABBs USING rtree(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
+        command.ExecuteNonQuery();
     }
 
-    public static void RawInsertBatch(SqliteCommand command, IEnumerable<AABB> aabbs)
+    public static void RawInsertBatch(SqliteCommand command, IEnumerable<AabbItem> aabbs)
     {
         command.CommandText =
             "INSERT INTO AABBs (Id, min_x, min_y, min_z, max_x, max_y, max_z) VALUES ($Id, $min_x, $min_y, $min_z, $max_x, $max_y, $max_z)";
@@ -57,53 +52,13 @@ public class AABB : IEquatable<AABB>
         foreach (var aabb in aabbs)
         {
             aabbIdParameter.Value = aabb.Id;
-            minXParameter.Value = aabb.min.x;
-            minYParameter.Value = aabb.min.y;
-            minZParameter.Value = aabb.min.z;
-            maxXParameter.Value = aabb.max.x;
-            maxYParameter.Value = aabb.max.y;
-            maxZParameter.Value = aabb.max.z;
+            minXParameter.Value = aabb.Min.X;
+            minYParameter.Value = aabb.Min.Y;
+            minZParameter.Value = aabb.Min.Z;
+            maxXParameter.Value = aabb.Max.X;
+            maxYParameter.Value = aabb.Max.Y;
+            maxZParameter.Value = aabb.Max.Z;
             command.ExecuteNonQuery();
         }
-    }
-
-    public bool Equals(AABB? other)
-    {
-        if (ReferenceEquals(null, other))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
-
-        return Equals(min, other.min) && Equals(max, other.max);
-    }
-
-    public override bool Equals(object? obj)
-    {
-        if (ReferenceEquals(null, obj))
-        {
-            return false;
-        }
-
-        if (ReferenceEquals(this, obj))
-        {
-            return true;
-        }
-
-        if (obj.GetType() != this.GetType())
-        {
-            return false;
-        }
-
-        return Equals((AABB)obj);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(min, max);
     }
 }

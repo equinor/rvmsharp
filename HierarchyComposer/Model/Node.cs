@@ -2,44 +2,53 @@
 
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 
-[
-    Index(nameof(ParentId), IsUnique = false),
-    Index(nameof(TopNodeId), IsUnique = false),
-    Index(nameof(AABBId), IsUnique = false)
-]
-public class Node
+public static class NodeTable
 {
-    [DatabaseGenerated(DatabaseGeneratedOption.None)]
-    public uint Id { get; init; }
-    public uint EndId { get; init; }
-    public string? RefNoPrefix { get; init; }
-    public int? RefNoDb { get; init; }
-    public int? RefNoSequence { get; init; }
+    public const string NodesTable = "Nodes";
 
-    public string? Name { get; init; }
-    public bool HasMesh { get; init; }
+    public static void CreateTable(SqliteCommand command)
+    {
+        command.CommandText = $"""
+            CREATE TABLE {NodesTable} (
+                            Id INTEGER PRIMARY KEY NOT NULL,
+                            EndId INTEGER NOT NULL,
+                            RefNoPrefix TEXT NULL COLLATE NOCASE,
+                            RefNoDb INTEGER NULL,
+                            RefNoSequence INTEGER NULL,
+                            Name TEXT NULL COLLATE NOCASE,
+                            HasMesh INTEGER NOT NULL,
+                            ParentId INTEGER NULL,
+                            TopNodeId INTEGER NOT NULL,
+                            AABBId INTEGER NULL,
+                            DiagnosticInfo TEXT NULL,
+                            FOREIGN KEY (ParentId) REFERENCES Nodes(Id),
+                            FOREIGN KEY (AABBId) REFERENCES AABBs(Id)
+                        ) STRICT, WITHOUT ROWID;
+            """;
+        command.ExecuteNonQuery();
+    }
 
-    public uint? ParentId { get; init; }
-
-    public uint TopNodeId { get; init; }
-
-    public virtual ICollection<NodePDMSEntry>? NodePDMSEntry { get; init; } = null!;
-
-    public uint? AABBId { get; init; }
-
-    [NotMapped]
-    public AABB? AABB { get; init; }
-
-    public string? DiagnosticInfo { get; init; }
+    public static void CreateIndexes(SqliteCommand cmd)
+    {
+        // We create indexes AFTER inserting all data, as it allows for faster inserts.
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_Name ON {NodesTable} (Name)";
+        cmd.ExecuteNonQuery();
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_RefNo ON {NodesTable} (RefNoPrefix, RefNoDb, RefNoSequence)";
+        cmd.ExecuteNonQuery();
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_TopNodeId ON {NodesTable} (TopNodeId)";
+        cmd.ExecuteNonQuery();
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_ParentId ON {NodesTable} (ParentId)";
+        cmd.ExecuteNonQuery();
+        cmd.CommandText = $"CREATE INDEX IX_{NodesTable}_AABBId ON {NodesTable} (AABBId)";
+        cmd.ExecuteNonQuery();
+    }
 
     public static void RawInsertBatch(SqliteCommand command, IEnumerable<Node> nodes)
     {
         command.CommandText =
-            "INSERT INTO Nodes (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
+            $"INSERT INTO {NodesTable} (Id, EndId, RefNoPrefix, RefNoDb, RefNoSequence, Name, HasMesh, ParentId, TopNodeId, AABBId, DiagnosticInfo) VALUES ($Id, $EndId, $RefNoPrefix, $RefNoDb, $RefNoSequence, $Name, $HasMesh, $ParentId, $TopNodeId, $AABBId, $DiagnosticInfo)";
         var nodeIdParameter = command.CreateParameter();
         nodeIdParameter.ParameterName = "$Id";
         var nodeEndIdParameter = command.CreateParameter();
@@ -91,10 +100,30 @@ public class Node
             hasMeshParameter.Value = node.HasMesh;
             parentIdParameter.Value = node.ParentId ?? (object)DBNull.Value;
             topNodeIdParameter.Value = node.TopNodeId;
-            aabbIdParameter.Value = node.AABB?.Id ?? (object)DBNull.Value;
+            aabbIdParameter.Value = node.AABBId ?? (object)DBNull.Value;
             diagnosticInfoParameter.Value = node.DiagnosticInfo ?? (object)DBNull.Value;
 
             command.ExecuteNonQuery();
         }
     }
+}
+
+public class Node
+{
+    public uint Id { get; init; }
+    public uint EndId { get; init; }
+    public string? RefNoPrefix { get; init; }
+    public int? RefNoDb { get; init; }
+    public int? RefNoSequence { get; init; }
+
+    public string? Name { get; init; }
+    public bool HasMesh { get; init; }
+
+    public uint? ParentId { get; init; }
+
+    public uint TopNodeId { get; init; }
+
+    public int? AABBId { get; init; }
+
+    public string? DiagnosticInfo { get; init; }
 }

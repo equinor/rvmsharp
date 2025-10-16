@@ -49,11 +49,7 @@ public class DatabaseComposerTests
                 RefNoSequence = 3,
                 TopNodeId = 1,
                 PDMSData = new Dictionary<string, string>() { { "Tag", "23L0001" } },
-                AABB = new AABB
-                {
-                    min = new Vector3EfSerializable(-Vector3.One),
-                    max = new Vector3EfSerializable(Vector3.One),
-                },
+                AABB = new AabbItem(-Vector3.One, Vector3.One),
             },
         };
 
