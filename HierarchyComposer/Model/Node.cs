@@ -12,7 +12,7 @@ public static class NodeTable
     {
         command.CommandText = $"""
             CREATE TABLE {NodesTable} (
-                            Id INTEGER PRIMARY KEY NOT NULL,
+                            Id INTEGER PRIMARY KEY,
                             EndId INTEGER NOT NULL,
                             RefNoPrefix TEXT NULL COLLATE NOCASE,
                             RefNoDb INTEGER NULL,
@@ -25,7 +25,7 @@ public static class NodeTable
                             DiagnosticInfo TEXT NULL,
                             FOREIGN KEY (ParentId) REFERENCES Nodes(Id),
                             FOREIGN KEY (AABBId) REFERENCES AABBs(Id)
-                        ) STRICT, WITHOUT ROWID;
+                        ) STRICT; -- REMARK: We do not use WITHOUT ROWID here. See https://stackoverflow.com/a/79376535 for explanation. Keeping rowid was 100% faster in some queries.
             """;
         command.ExecuteNonQuery();
     }

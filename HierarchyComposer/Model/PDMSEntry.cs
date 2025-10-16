@@ -38,7 +38,7 @@ public class PDMSEntryTable
                 Id INTEGER PRIMARY KEY,
                 KeyId INTEGER NOT NULL,
                 Value TEXT NOT NULL COLLATE NOCASE
-            ) STRICT, WITHOUT ROWID;
+            ) STRICT; -- WITHOUT ROWID is intentionally not used here. See https://stackoverflow.com/a/79376535 for explanation
             """;
         command.ExecuteNonQuery();
 
