@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using CadRevealFbxProvider.UserFriendlyLogger;
 
 public class ScaffoldingMetadata
 {
@@ -79,17 +80,28 @@ public class ScaffoldingMetadata
         { "Grand total calculated", "TotalWeightCalculated" },
     };
 
-    private static void GuardForInvalidValues(string? newValue, string? existingValue)
+    private static void GuardForInvalidValues(string whichKey, string? newValue, string? existingValue)
     {
         if (newValue == existingValue)
             return;
 
         if (!string.IsNullOrWhiteSpace(existingValue))
-            throw new Exception(
-                "We already had a value for the key, but got a different one now. This is unexpected. Values was: "
-                    + newValue
-                    + " and "
+            throw new UserFriendlyLogException(
+                "Dataset contains multiple values of "
+                    + whichKey
+                    + ": "
                     + existingValue
+                    + " and "
+                    + newValue
+                    + ", but only one value is supported.",
+                new Exception(
+                    "We already had a value for the key "
+                        + whichKey
+                        + ", but got a different one now. This is unexpected. Values was: "
+                        + newValue
+                        + " and "
+                        + existingValue
+                )
             );
     }
 
@@ -130,7 +142,7 @@ public class ScaffoldingMetadata
             switch (mappedKey)
             {
                 case AttributeEnum.WorkOrderId:
-                    GuardForInvalidValues(value, WorkOrder);
+                    GuardForInvalidValues("Work order", value, WorkOrder);
                     WorkOrder = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, WorkOrder);
                     break;
                 case AttributeEnum.BuildOperationId:
@@ -149,15 +161,18 @@ public class ScaffoldingMetadata
                     TotalVolume = MakeStringEmptyIfNonDuplicateButSkipEmpty(value, TotalVolume);
                     break;
                 case AttributeEnum.TotalWeight:
-                    GuardForInvalidValues(value, TotalWeight);
+                    GuardForInvalidValues("Total weight", value, TotalWeight);
                     TotalWeight = value;
                     break;
                 case AttributeEnum.TotalWeightCalculated:
-                    GuardForInvalidValues(value, TotalWeightCalculated);
+                    GuardForInvalidValues("Total weight calculated", value, TotalWeightCalculated);
                     TotalWeightCalculated = value;
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new UserFriendlyLogException(
+                        "Unexpected attribute was encoutered during processing. This is probably a bug. Please, notify the Echo developing team.",
+                        new ArgumentOutOfRangeException()
+                    );
             }
 
             return true;
@@ -188,12 +203,15 @@ public class ScaffoldingMetadata
         // so calling this for temp scaffs must be by mistake, -> throw an exception
         if (TempScaffoldingFlag)
         {
-            throw new Exception(
-                "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+            throw new UserFriendlyLogException(
+                "Work order scaffolding processing called for temporary scaffolds. This must be a bug. Please, notify the Echo developing team.",
+                new Exception(
+                    "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+                )
             );
         }
 
-        var match = Regex.Match(filename, @"-(\d+)(?:-|$)");
+        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:-|$)");
         if (match.Success)
         {
             string workOrderFromFilename = match.Groups[1].Value;
@@ -205,15 +223,21 @@ public class ScaffoldingMetadata
             // the filename MUST contain a work order number, and it MUST match the one in the metadata
             if (string.IsNullOrEmpty(workOrderFromFilename) || workOrderFromFilename != WorkOrder)
             {
-                throw new ScaffoldingFilenameException(
-                    $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                throw new UserFriendlyLogException(
+                    $"Scaffolding work order {WorkOrder} extracted from the CSV file does not match the work order from filename {workOrderFromFilename}. Check if you stored the files under the correct name.",
+                    new ScaffoldingFilenameException(
+                        $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                    )
                 );
             }
         }
         else
         {
-            throw new ScaffoldingFilenameException(
-                $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename."
+            throw new UserFriendlyLogException(
+                "",
+                new ScaffoldingFilenameException(
+                    $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename. Please check the naming guide."
+                )
             );
         }
     }
@@ -238,8 +262,11 @@ public class ScaffoldingMetadata
             //    return false;
 
             if (!success)
-                throw new ScaffoldingMetadataMissingFieldException(
-                    $"Temp scaffolding metadata is missing a mandatory field: {missingFields.TrimEnd(',', ' ')}."
+                throw new UserFriendlyLogException(
+                    $"Metadata is missing a mandatory attribute(s): {missingFields.TrimEnd(',', ' ')}",
+                    new ScaffoldingMetadataMissingFieldException(
+                        $"Temp scaffolding metadata is a missing mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                    )
                 );
         }
         // work-order scaffs
@@ -259,8 +286,11 @@ public class ScaffoldingMetadata
             }
 
             if (!success)
-                throw new ScaffoldingMetadataMissingFieldException(
-                    $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                throw new UserFriendlyLogException(
+                    $"Metadata is missing a mandatory attribute(s): {missingFields.TrimEnd(',', ' ')}",
+                    new ScaffoldingMetadataMissingFieldException(
+                        $"Scaffolding metadata is missing a mandatory field(s): {missingFields.TrimEnd(',', ' ')}."
+                    )
                 );
         }
     }
