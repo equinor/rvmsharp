@@ -7,6 +7,7 @@
     <PackageVersion Include="CjClutter.ObjLoader.Unofficial" Version="1.1.0" />
     <PackageVersion Include="CommandLineParser" Version="2.9.1" />
     <PackageVersion Include="Csv" Version="2.0.170" />
+    <PackageVersion Include="CsvHelper" Version="33.1.0" />
     <PackageVersion Include="JetBrains.DotMemoryUnit" Version="3.2.20220510" />
     <PackageVersion Include="LibTessDotNet" Version="1.1.15" />
     <PackageVersion Include="MathNet.Numerics" Version="5.0.0" />
