@@ -64,7 +64,7 @@ public static class ScaffoldingCsvLineParser
             var itemCode = ExtractItemCodeFromRowAssumingItsValid(row);
 
             throw new UserFriendlyLogException(
-                $"CSV file has one or more of the following issues with the column \"{columnHeader}\": -- it is missing entirely  -- occurs multiple times with distinct values -- it has a missing value on row {rowIndex} (Item code = {itemCode}",
+                $"CSV file has one or more of the following issues with the column \"{columnHeader}\": -- it is missing entirely  -- occurs multiple times with distinct values -- it has a missing value on row {rowIndex} (Item code = {itemCode})",
                 new ScaffoldingAttributeParsingException(
                     $"Attribute {columnHeader} must exist and cannot have missing values."
                 )
