@@ -45,9 +45,13 @@ public class PDMSEntryTable
         // Create a view table for Key Value text instead of having to use joins for the PdmsKeys table
         command.CommandText = $"""
             CREATE VIEW {ViewName} AS
-            SELECT {TableNameValues}.Id, {TableNameKeys}.Key, {TableNameValues}.Value
-            FROM {TableNameValues}
-            JOIN {TableNameKeys} ON {TableNameValues}.KeyId = {TableNameKeys}.Id;
+                SELECT
+                    v.Id,
+                    k.Key,
+                    v.Value
+                FROM
+                    {TableNameValues} v
+                    JOIN {TableNameKeys} k ON v.KeyId = k.Id;
             """;
         command.ExecuteNonQuery();
     }
