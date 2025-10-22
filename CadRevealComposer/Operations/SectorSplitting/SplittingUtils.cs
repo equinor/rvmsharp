@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Operations.SectorSplitting;
+﻿﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using System;
 using System.Collections.Generic;
@@ -208,7 +208,22 @@ public static class SplittingUtils
 
     public static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
-        return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
+        return new InternalSector(
+            sectorId,
+            null,
+            0,
+            path,
+            0,
+            0,
+            Array.Empty<APrimitive>(),
+            subtreeBoundingBox,
+            null,
+            false,
+            SplitReason.Root,
+            0,  // PrimitiveCount
+            0,  // MeshCount
+            0   // InstanceMeshCount
+        );
     }
 
     public static InternalSector CreateSector(
@@ -223,6 +238,10 @@ public static class SplittingUtils
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
+        var primitiveCount = geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+        var meshCount = geometries.Count(x => x is TriangleMesh);
+        var instanceMeshCount = geometries.Count(x => x is InstancedMesh);
+
         var path = parent.Path + "/" + sectorId;
 
         return new InternalSector(
@@ -234,7 +253,12 @@ public static class SplittingUtils
             maxDiagonal,
             geometries,
             subtreeBoundingBox,
-            geometryBoundingBox
+            geometryBoundingBox,
+            false,
+            SplitReason.None,
+            primitiveCount,
+            meshCount,
+            instanceMeshCount
         );
     }
 
@@ -244,7 +268,8 @@ public static class SplittingUtils
         uint? parentSectorId,
         string parentPath,
         int depth,
-        BoundingBox subtreeBoundingBox
+        BoundingBox subtreeBoundingBox,
+        SplitReason splitReason = SplitReason.None
     )
     {
         var path = $"{parentPath}/{sectorId}";
@@ -255,6 +280,11 @@ public static class SplittingUtils
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
         var geometriesCount = geometries.Length;
+
+        // Calculate counts before transformations
+        var primitiveCount = geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+        var meshCount = geometries.Count(x => x is TriangleMesh);
+        var instanceMeshCount = geometries.Count(x => x is InstancedMesh);
 
         // NOTE: This increases triangle count
         geometries = TooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
@@ -283,7 +313,12 @@ public static class SplittingUtils
             maxDiagonal,
             geometries,
             subtreeBoundingBox,
-            geometryBoundingBox
+            geometryBoundingBox,
+            false,
+            splitReason,
+            primitiveCount,
+            meshCount,
+            instanceMeshCount
         );
     }
 }

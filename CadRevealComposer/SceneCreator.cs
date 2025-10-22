@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer;
+﻿﻿namespace CadRevealComposer;
 
 using System;
 using System.Collections.Generic;
@@ -30,7 +30,11 @@ public static class SceneCreator
         float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
-        BoundingBox? GeometryBoundingBox
+        BoundingBox? GeometryBoundingBox,
+        SplitReason SplitReason,
+        int PrimitiveCount,
+        int MeshCount,
+        int InstanceMeshCount
     )
     {
         public long DownloadSize { get; init; }
@@ -130,6 +134,10 @@ public static class SceneCreator
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
                     GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
+                    SplitReason = sector.SplitReason.ToString(),
+                    PrimitiveCount = sector.PrimitiveCount,
+                    MeshCount = sector.MeshCount,
+                    InstanceMeshCount = sector.InstanceMeshCount,
                 },
             };
         }
@@ -182,7 +190,11 @@ public static class SceneCreator
             MaxNodeDiagonal: sector.MaxNodeDiagonal,
             Geometries: sector.Geometries,
             SubtreeBoundingBox: sector.SubtreeBoundingBox,
-            GeometryBoundingBox: sector.GeometryBoundingBox
+            GeometryBoundingBox: sector.GeometryBoundingBox,
+            SplitReason: sector.SplitReason,
+            PrimitiveCount: sector.PrimitiveCount,
+            MeshCount: sector.MeshCount,
+            InstanceMeshCount: sector.InstanceMeshCount
         );
 
         if (sectorFilename != null)

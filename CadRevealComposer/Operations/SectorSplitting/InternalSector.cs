@@ -12,5 +12,10 @@ public record InternalSector(
     APrimitive[] Geometries,
     BoundingBox SubtreeBoundingBox,
     BoundingBox? GeometryBoundingBox,
-    bool IsPrioritizedSector = false
+    bool IsPrioritizedSector = false,
+    SplitReason SplitReason = SplitReason.None,
+    int PrimitiveCount = 0,
+    int MeshCount = 0,
+    int InstanceMeshCount = 0
 );
+

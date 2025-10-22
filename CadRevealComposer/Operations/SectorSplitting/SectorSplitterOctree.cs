@@ -139,6 +139,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var mainVoxelNodes = Array.Empty<Node>();
         Node[] subVoxelNodes;
+        var budgetWasExceeded = false;
 
         if (recursiveDepth < depthToStartSplittingGeometry)
         {
@@ -147,19 +148,20 @@ public class SectorSplitterOctree : ISectorSplitter
         else
         {
             // fill main voxel according to budget
-            var additionalMainVoxelNodesByBudget = GetNodesByBudget(
-                    nodes.ToArray(),
-                    SectorEstimatedByteSizeBudget,
-                    actualDepth
-                )
-                .ToList();
+            var (additionalMainVoxelNodesByBudget, exceeded) = GetNodesByBudget(
+                nodes.ToArray(),
+                SectorEstimatedByteSizeBudget,
+                actualDepth
+            );
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
+            budgetWasExceeded = exceeded;
         }
 
         if (!subVoxelNodes.Any())
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
+            var splitReason = budgetWasExceeded ? SplitReason.Budget : SplitReason.None;
 
             yield return SplittingUtils.CreateSectorWithPrimitiveHandling(
                 mainVoxelNodes,
@@ -167,7 +169,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 parentSectorId,
                 parentPath,
                 actualDepth,
-                subtreeBoundingBox
+                subtreeBoundingBox,
+                splitReason
             );
         }
         else
@@ -182,6 +185,7 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
+                var splitReason = budgetWasExceeded ? SplitReason.Budget : SplitReason.None;
 
                 yield return SplittingUtils.CreateSectorWithPrimitiveHandling(
                     mainVoxelNodes,
@@ -189,7 +193,8 @@ public class SectorSplitterOctree : ISectorSplitter
                     parentSectorId,
                     parentPath,
                     actualDepth,
-                    subtreeBoundingBox
+                    subtreeBoundingBox,
+                    splitReason
                 );
 
                 parentPathForChildren = path;
@@ -276,7 +281,11 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static IEnumerable<Node> GetNodesByBudget(IReadOnlyList<Node> nodes, long byteSizeBudget, int actualDepth)
+    private static (IEnumerable<Node> nodes, bool budgetExceeded) GetNodesByBudget(
+        IReadOnlyList<Node> nodes,
+        long byteSizeBudget,
+        int actualDepth
+    )
     {
         var selectedNodes = actualDepth switch
         {
@@ -292,6 +301,9 @@ public class SectorSplitterOctree : ISectorSplitter
         var byteSizeBudgetLeft = byteSizeBudget;
         var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
         var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
+        var resultNodes = new List<Node>();
+        var budgetExceeded = false;
+
         for (int i = 0; i < nodeArray.Length; i++)
         {
             if (
@@ -299,7 +311,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 && nodeArray.Length - i > 10
             )
             {
-                yield break;
+                budgetExceeded = true;
+                break;
             }
 
             var node = nodeArray[i];
@@ -307,7 +320,9 @@ public class SectorSplitterOctree : ISectorSplitter
             primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
             trianglesBudgetLeft -= node.EstimatedTriangleCount;
 
-            yield return node;
+            resultNodes.Add(node);
         }
+
+        return (resultNodes, budgetExceeded);
     }
 }

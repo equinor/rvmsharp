@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer;
+﻿﻿namespace CadRevealComposer;
 
 using System;
 using System.Numerics;
@@ -100,7 +100,21 @@ public class Sector
 
 public class SectorEchoDevMetadata
 {
+    [JsonPropertyName("geometryDistributions")]
     public GeometryDistributionStats? GeometryDistributions { get; set; } = null;
+
+    [JsonPropertyName("splitReason")]
+    public string? SplitReason { get; set; } = null;
+
+
+    [JsonPropertyName("primitiveCount")]
+    public int PrimitiveCount { get; set; }
+
+    [JsonPropertyName("meshCount")]
+    public int MeshCount { get; set; }
+
+    [JsonPropertyName("instanceMeshCount")]
+    public int InstanceMeshCount { get; set; }
 }
 
 public record SerializableBoundingBox(

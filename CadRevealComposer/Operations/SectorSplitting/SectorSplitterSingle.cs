@@ -24,16 +24,27 @@ public class SectorSplitterSingle : ISectorSplitter
         {
             throw new Exception("The bounding box of the root sector should never be null");
         }
+
+        var primitiveCount = geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+        var meshCount = geometries.Count(x => x is TriangleMesh);
+        var instanceMeshCount = geometries.Count(x => x is InstancedMesh);
+
         return new InternalSector(
             sectorId,
             ParentSectorId: null,
-            0,
-            $"{sectorId}",
-            geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal),
-            geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
-            geometries,
-            bb,
-            null
+            Depth: 0,
+            Path: $"{sectorId}",
+            MinNodeDiagonal: geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal),
+            MaxNodeDiagonal: geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
+            Geometries: geometries,
+            SubtreeBoundingBox: bb,
+            GeometryBoundingBox: null,
+            IsPrioritizedSector: false,
+            SplitReason: SplitReason.Root,
+            PrimitiveCount: primitiveCount,
+            MeshCount: meshCount,
+            InstanceMeshCount: instanceMeshCount
         );
     }
 }
+
