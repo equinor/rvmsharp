@@ -105,10 +105,13 @@ public class SectorSplitterOctree : ISectorSplitter
 
                 foreach (var sector in outlierSectors)
                 {
+                    // Mark this sector as an outlier sector
+                    var outlierSector = sector with { SplitReason = SplitReason.Outlier };
+
                     Console.WriteLine(
-                        $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
+                        $"Outlier-sector with id {outlierSector.SectorId}, path {outlierSector.Path}, {outlierSector.Geometries.Length} geometries added at depth {outlierSector.Depth}."
                     );
-                    yield return sector;
+                    yield return outlierSector;
                 }
             }
         }
@@ -209,6 +212,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 || sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget
             )
             {
+                var isSizeThreshold = subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter;
+
                 var sectors = SplitIntoSectorsRecursive(
                     subVoxelNodes,
                     recursiveDepth + 1,
@@ -217,9 +222,18 @@ public class SectorSplitterOctree : ISectorSplitter
                     sectorIdGenerator,
                     depthToStartSplittingGeometry
                 );
+
                 foreach (var sector in sectors)
                 {
-                    yield return sector;
+                    // Mark sectors that were created because size threshold was hit
+                    if (isSizeThreshold && sector.SplitReason == SplitReason.None)
+                    {
+                        yield return sector with { SplitReason = SplitReason.SizeThreshold };
+                    }
+                    else
+                    {
+                        yield return sector;
+                    }
                 }
 
                 yield break;
