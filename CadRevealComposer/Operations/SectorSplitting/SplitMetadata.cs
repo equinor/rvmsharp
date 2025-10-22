@@ -28,7 +28,12 @@ public enum SplitReason
     /// <summary>
     /// This sector contains outlier nodes that are spatially distant from the main geometry.
     /// </summary>
-    Outlier
+    Outlier,
+
+    /// <summary>
+    /// This is a priority sector, organized by discipline and tree index for efficient highlighting.
+    /// </summary>
+    Priority
 }
 
 

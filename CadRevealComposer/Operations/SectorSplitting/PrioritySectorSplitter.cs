@@ -1,4 +1,4 @@
-﻿namespace CadRevealComposer.Operations.SectorSplitting;
+﻿﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using System;
 using System.Collections.Generic;
@@ -45,6 +45,7 @@ public class PrioritySectorSplitter : ISectorSplitter
             yield return sector with
             {
                 IsPrioritizedSector = true,
+                SplitReason = SplitReason.Priority,
             };
         }
     }
