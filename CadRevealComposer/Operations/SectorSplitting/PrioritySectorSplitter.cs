@@ -1,4 +1,4 @@
-﻿﻿namespace CadRevealComposer.Operations.SectorSplitting;
+﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using System;
 using System.Collections.Generic;

@@ -106,7 +106,10 @@ public class SectorSplitterOctree : ISectorSplitter
                 foreach (var sector in outlierSectors)
                 {
                     // Mark this sector as an outlier sector
-                    var outlierSector = sector with { SplitReason = SplitReason.Outlier };
+                    var outlierSector = sector with
+                    {
+                        SplitReason = SplitReason.Outlier,
+                    };
 
                     Console.WriteLine(
                         $"Outlier-sector with id {outlierSector.SectorId}, path {outlierSector.Path}, {outlierSector.Geometries.Length} geometries added at depth {outlierSector.Depth}."
@@ -228,7 +231,10 @@ public class SectorSplitterOctree : ISectorSplitter
                     // Mark sectors that were created because size threshold was hit
                     if (isSizeThreshold && sector.SplitReason == SplitReason.None)
                     {
-                        yield return sector with { SplitReason = SplitReason.SizeThreshold };
+                        yield return sector with
+                        {
+                            SplitReason = SplitReason.SizeThreshold,
+                        };
                     }
                     else
                     {

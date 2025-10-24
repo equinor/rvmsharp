@@ -1,4 +1,4 @@
-﻿﻿namespace CadRevealComposer;
+﻿namespace CadRevealComposer;
 
 using System;
 using System.Numerics;
@@ -105,7 +105,6 @@ public class SectorEchoDevMetadata
 
     [JsonPropertyName("splitReason")]
     public string? SplitReason { get; set; } = null;
-
 
     [JsonPropertyName("primitiveCount")]
     public int PrimitiveCount { get; set; }

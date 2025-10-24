@@ -33,8 +33,5 @@ public enum SplitReason
     /// <summary>
     /// This is a priority sector, organized by discipline and tree index for efficient highlighting.
     /// </summary>
-    Priority
+    Priority,
 }
-
-
-

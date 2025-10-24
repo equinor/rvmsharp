@@ -1,4 +1,4 @@
-﻿﻿namespace CadRevealComposer;
+﻿namespace CadRevealComposer;
 
 using System;
 using System.Collections.Generic;

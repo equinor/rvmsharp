@@ -18,4 +18,3 @@ public record InternalSector(
     int MeshCount = 0,
     int InstanceMeshCount = 0
 );
-

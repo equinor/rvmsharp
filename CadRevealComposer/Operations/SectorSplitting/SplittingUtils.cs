@@ -1,4 +1,4 @@
-﻿﻿namespace CadRevealComposer.Operations.SectorSplitting;
+﻿namespace CadRevealComposer.Operations.SectorSplitting;
 
 using System;
 using System.Collections.Generic;
@@ -220,9 +220,9 @@ public static class SplittingUtils
             null,
             false,
             SplitReason.Root,
-            0,  // PrimitiveCount
-            0,  // MeshCount
-            0   // InstanceMeshCount
+            0, // PrimitiveCount
+            0, // MeshCount
+            0 // InstanceMeshCount
         );
     }
 
