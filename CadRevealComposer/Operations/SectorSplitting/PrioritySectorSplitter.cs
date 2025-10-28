@@ -42,10 +42,11 @@ public class PrioritySectorSplitter : ISectorSplitter
 
         foreach (var sector in sectors)
         {
+            var currentDiagnostics = sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
             yield return sector with
             {
                 IsPrioritizedSector = true,
-                SplitReason = SplitReason.Priority,
+                Diagnostics = currentDiagnostics with { SplitReason = SplitReason.Priority },
             };
         }
     }

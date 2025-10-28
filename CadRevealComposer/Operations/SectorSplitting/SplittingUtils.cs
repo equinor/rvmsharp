@@ -219,10 +219,7 @@ public static class SplittingUtils
             subtreeBoundingBox,
             null,
             false,
-            SplitReason.Root,
-            0, // PrimitiveCount
-            0, // MeshCount
-            0 // InstanceMeshCount
+            new SectorDiagnostics(SplitReason.Root, 0, 0, 0)
         );
     }
 
@@ -255,10 +252,7 @@ public static class SplittingUtils
             subtreeBoundingBox,
             geometryBoundingBox,
             false,
-            SplitReason.None,
-            primitiveCount,
-            meshCount,
-            instanceMeshCount
+            new SectorDiagnostics(SplitReason.None, primitiveCount, meshCount, instanceMeshCount)
         );
     }
 
@@ -269,7 +263,8 @@ public static class SplittingUtils
         string parentPath,
         int depth,
         BoundingBox subtreeBoundingBox,
-        SplitReason splitReason = SplitReason.None
+        SplitReason splitReason = SplitReason.None,
+        BudgetInfo? budgetInfo = null
     )
     {
         var path = $"{parentPath}/{sectorId}";
@@ -315,10 +310,7 @@ public static class SplittingUtils
             subtreeBoundingBox,
             geometryBoundingBox,
             false,
-            splitReason,
-            primitiveCount,
-            meshCount,
-            instanceMeshCount
+            new SectorDiagnostics(splitReason, primitiveCount, meshCount, instanceMeshCount, budgetInfo)
         );
     }
 }

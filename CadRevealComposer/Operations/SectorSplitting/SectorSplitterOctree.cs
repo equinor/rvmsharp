@@ -106,9 +106,10 @@ public class SectorSplitterOctree : ISectorSplitter
                 foreach (var sector in outlierSectors)
                 {
                     // Mark this sector as an outlier sector
+                    var currentDiagnostics = sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
                     var outlierSector = sector with
                     {
-                        SplitReason = SplitReason.Outlier,
+                        Diagnostics = currentDiagnostics with { SplitReason = SplitReason.Outlier },
                     };
 
                     Console.WriteLine(
@@ -145,7 +146,8 @@ public class SectorSplitterOctree : ISectorSplitter
 
         var mainVoxelNodes = Array.Empty<Node>();
         Node[] subVoxelNodes;
-        var budgetWasExceeded = false;
+        SplitReason splitReason = SplitReason.None;
+        BudgetInfo? budgetInfo = null;
 
         if (recursiveDepth < depthToStartSplittingGeometry)
         {
@@ -154,20 +156,20 @@ public class SectorSplitterOctree : ISectorSplitter
         else
         {
             // fill main voxel according to budget
-            var (additionalMainVoxelNodesByBudget, exceeded) = GetNodesByBudget(
+            var (additionalMainVoxelNodesByBudget, budgetSplitReason, budgetInfoResult) = GetNodesByBudget(
                 nodes.ToArray(),
                 SectorEstimatedByteSizeBudget,
                 actualDepth
             );
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
-            budgetWasExceeded = exceeded;
+            splitReason = budgetSplitReason;
+            budgetInfo = budgetInfoResult;
         }
 
         if (!subVoxelNodes.Any())
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
-            var splitReason = budgetWasExceeded ? SplitReason.Budget : SplitReason.None;
 
             yield return SplittingUtils.CreateSectorWithPrimitiveHandling(
                 mainVoxelNodes,
@@ -176,7 +178,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 parentPath,
                 actualDepth,
                 subtreeBoundingBox,
-                splitReason
+                splitReason,
+                budgetInfo
             );
         }
         else
@@ -191,7 +194,6 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
                 var path = $"{parentPath}/{sectorId}";
-                var splitReason = budgetWasExceeded ? SplitReason.Budget : SplitReason.None;
 
                 yield return SplittingUtils.CreateSectorWithPrimitiveHandling(
                     mainVoxelNodes,
@@ -200,7 +202,8 @@ public class SectorSplitterOctree : ISectorSplitter
                     parentPath,
                     actualDepth,
                     subtreeBoundingBox,
-                    splitReason
+                    splitReason,
+                    budgetInfo
                 );
 
                 parentPathForChildren = path;
@@ -228,12 +231,12 @@ public class SectorSplitterOctree : ISectorSplitter
 
                 foreach (var sector in sectors)
                 {
-                    // Mark sectors that were created because size threshold was hit
-                    if (isSizeThreshold && sector.SplitReason == SplitReason.None)
+                    var currentDiagnostics = sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
+                    if (isSizeThreshold && currentDiagnostics.SplitReason == SplitReason.None)
                     {
                         yield return sector with
                         {
-                            SplitReason = SplitReason.SizeThreshold,
+                            Diagnostics = currentDiagnostics with { SplitReason = SplitReason.SizeThreshold },
                         };
                     }
                     else
@@ -301,7 +304,7 @@ public class SectorSplitterOctree : ISectorSplitter
         return depth;
     }
 
-    private static (IEnumerable<Node> nodes, bool budgetExceeded) GetNodesByBudget(
+    private static (IEnumerable<Node> nodes, SplitReason splitReason, BudgetInfo? budgetInfo) GetNodesByBudget(
         IReadOnlyList<Node> nodes,
         long byteSizeBudget,
         int actualDepth
@@ -322,7 +325,8 @@ public class SectorSplitterOctree : ISectorSplitter
         var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
         var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
         var resultNodes = new List<Node>();
-        var budgetExceeded = false;
+        var splitReason = SplitReason.None;
+        BudgetInfo? budgetInfo = null;
 
         for (int i = 0; i < nodeArray.Length; i++)
         {
@@ -331,7 +335,38 @@ public class SectorSplitterOctree : ISectorSplitter
                 && nodeArray.Length - i > 10
             )
             {
-                budgetExceeded = true;
+                // Determine which budget(s) were exceeded
+                var byteSizeExceeded = byteSizeBudgetLeft < 0;
+                var primitiveExceeded = primitiveBudgetLeft <= 0;
+                var trianglesExceeded = trianglesBudgetLeft <= 0;
+
+                var exceededCount =
+                    (byteSizeExceeded ? 1 : 0) + (primitiveExceeded ? 1 : 0) + (trianglesExceeded ? 1 : 0);
+
+                splitReason = exceededCount switch
+                {
+                    > 1 => SplitReason.BudgetMultiple,
+                    1 when byteSizeExceeded => SplitReason.BudgetByteSize,
+                    1 when primitiveExceeded => SplitReason.BudgetPrimitiveCount,
+                    1 when trianglesExceeded => SplitReason.BudgetTriangleCount,
+                    _ => SplitReason.None,
+                };
+
+                // Calculate actual used values
+                var byteSizeUsed = byteSizeBudget - byteSizeBudgetLeft;
+                var primitiveCountUsed = SectorEstimatedPrimitiveBudget - primitiveBudgetLeft;
+                var triangleCountUsed = SectorEstimatesTrianglesBudget - trianglesBudgetLeft;
+
+                // Create budget info with only the exceeded budgets populated
+                budgetInfo = new BudgetInfo(
+                    ByteSizeBudget: byteSizeExceeded ? byteSizeBudget : null,
+                    ByteSizeUsed: byteSizeExceeded ? byteSizeUsed : null,
+                    PrimitiveCountBudget: primitiveExceeded ? SectorEstimatedPrimitiveBudget : null,
+                    PrimitiveCountUsed: primitiveExceeded ? primitiveCountUsed : null,
+                    TriangleCountBudget: trianglesExceeded ? SectorEstimatesTrianglesBudget : null,
+                    TriangleCountUsed: trianglesExceeded ? triangleCountUsed : null
+                );
+
                 break;
             }
 
@@ -343,6 +378,6 @@ public class SectorSplitterOctree : ISectorSplitter
             resultNodes.Add(node);
         }
 
-        return (resultNodes, budgetExceeded);
+        return (resultNodes, splitReason, budgetInfo);
     }
 }

@@ -31,10 +31,7 @@ public static class SceneCreator
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
         BoundingBox? GeometryBoundingBox,
-        SplitReason SplitReason,
-        int PrimitiveCount,
-        int MeshCount,
-        int InstanceMeshCount
+        Operations.SectorSplitting.SectorDiagnostics Diagnostics
     )
     {
         public long DownloadSize { get; init; }
@@ -134,10 +131,22 @@ public static class SceneCreator
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
                     GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
-                    SplitReason = sector.SplitReason.ToString(),
-                    PrimitiveCount = sector.PrimitiveCount,
-                    MeshCount = sector.MeshCount,
-                    InstanceMeshCount = sector.InstanceMeshCount,
+                    SplitReason = sector.Diagnostics.SplitReason.ToString(),
+                    PrimitiveCount = sector.Diagnostics.PrimitiveCount,
+                    MeshCount = sector.Diagnostics.MeshCount,
+                    InstanceMeshCount = sector.Diagnostics.InstanceMeshCount,
+                    BudgetInfo =
+                        sector.Diagnostics.BudgetInfo != null
+                            ? new SerializableBudgetInfo
+                            {
+                                ByteSizeBudget = sector.Diagnostics.BudgetInfo.ByteSizeBudget,
+                                ByteSizeUsed = sector.Diagnostics.BudgetInfo.ByteSizeUsed,
+                                PrimitiveCountBudget = sector.Diagnostics.BudgetInfo.PrimitiveCountBudget,
+                                PrimitiveCountUsed = sector.Diagnostics.BudgetInfo.PrimitiveCountUsed,
+                                TriangleCountBudget = sector.Diagnostics.BudgetInfo.TriangleCountBudget,
+                                TriangleCountUsed = sector.Diagnostics.BudgetInfo.TriangleCountUsed,
+                            }
+                            : null,
                 },
             };
         }
@@ -191,10 +200,13 @@ public static class SceneCreator
             Geometries: sector.Geometries,
             SubtreeBoundingBox: sector.SubtreeBoundingBox,
             GeometryBoundingBox: sector.GeometryBoundingBox,
-            SplitReason: sector.SplitReason,
-            PrimitiveCount: sector.PrimitiveCount,
-            MeshCount: sector.MeshCount,
-            InstanceMeshCount: sector.InstanceMeshCount
+            Diagnostics: sector.Diagnostics
+                ?? new Operations.SectorSplitting.SectorDiagnostics(
+                    Operations.SectorSplitting.SplitReason.None,
+                    0,
+                    0,
+                    0
+                )
         );
 
         if (sectorFilename != null)

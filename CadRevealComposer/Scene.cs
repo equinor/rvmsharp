@@ -4,6 +4,7 @@ using System;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Configuration;
+using Operations.SectorSplitting;
 using Utils;
 
 public class Scene
@@ -114,6 +115,30 @@ public class SectorEchoDevMetadata
 
     [JsonPropertyName("instanceMeshCount")]
     public int InstanceMeshCount { get; set; }
+
+    [JsonPropertyName("budgetInfo")]
+    public SerializableBudgetInfo? BudgetInfo { get; set; } = null;
+}
+
+public class SerializableBudgetInfo
+{
+    [JsonPropertyName("byteSizeBudget")]
+    public long? ByteSizeBudget { get; set; }
+
+    [JsonPropertyName("byteSizeUsed")]
+    public long? ByteSizeUsed { get; set; }
+
+    [JsonPropertyName("primitiveCountBudget")]
+    public long? PrimitiveCountBudget { get; set; }
+
+    [JsonPropertyName("primitiveCountUsed")]
+    public long? PrimitiveCountUsed { get; set; }
+
+    [JsonPropertyName("triangleCountBudget")]
+    public long? TriangleCountBudget { get; set; }
+
+    [JsonPropertyName("triangleCountUsed")]
+    public long? TriangleCountUsed { get; set; }
 }
 
 public record SerializableBoundingBox(

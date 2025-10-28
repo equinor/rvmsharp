@@ -40,10 +40,7 @@ public class SectorSplitterSingle : ISectorSplitter
             SubtreeBoundingBox: bb,
             GeometryBoundingBox: null,
             IsPrioritizedSector: false,
-            SplitReason: SplitReason.Root,
-            PrimitiveCount: primitiveCount,
-            MeshCount: meshCount,
-            InstanceMeshCount: instanceMeshCount
+            Diagnostics: new SectorDiagnostics(SplitReason.Root, primitiveCount, meshCount, instanceMeshCount)
         );
     }
 }

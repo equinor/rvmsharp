@@ -13,8 +13,13 @@ public record InternalSector(
     BoundingBox SubtreeBoundingBox,
     BoundingBox? GeometryBoundingBox,
     bool IsPrioritizedSector = false,
-    SplitReason SplitReason = SplitReason.None,
-    int PrimitiveCount = 0,
-    int MeshCount = 0,
-    int InstanceMeshCount = 0
+    SectorDiagnostics? Diagnostics = null
 );
+
+public static class InternalSectorExtensions
+{
+    public static SectorDiagnostics GetDiagnostics(this InternalSector sector)
+    {
+        return sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
+    }
+}
