@@ -109,10 +109,17 @@ public class SectorSplitterOctree : ISectorSplitter
                     Console.WriteLine(
                         $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
                     );
-                    yield return sector with
+                    if (sector.SplittingStats.SplitReason == SplitReason.None)
                     {
-                        SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.Outlier },
-                    };
+                        yield return sector with
+                        {
+                            SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.Outlier },
+                        };
+                    }
+                    else
+                    {
+                        yield return sector;
+                    }
                 }
             }
         }
