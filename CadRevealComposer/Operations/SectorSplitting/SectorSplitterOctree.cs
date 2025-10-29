@@ -210,16 +210,14 @@ public class SectorSplitterOctree : ISectorSplitter
                 parentSectorIdForChildren = sectorId;
             }
 
-            var sizeOfSubVoxelNodes = subVoxelNodes.Sum(x => x.EstimatedByteSize);
             var subVoxelDiagonal = subVoxelNodes.CalculateBoundingBox().Diagonal;
+            var diagonalSmallerThanSplitThreshold = subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter;
 
-            if (
-                subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter
-                || sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget
-            )
+            var sizeOfSubVoxelNodes = subVoxelNodes.Sum(x => x.EstimatedByteSize);
+            var byteSizeBelowBudget = sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget;
+
+            if (diagonalSmallerThanSplitThreshold || byteSizeBelowBudget)
             {
-                var isSizeThreshold = subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter;
-
                 var sectors = SplitIntoSectorsRecursive(
                     subVoxelNodes,
                     recursiveDepth + 1,
@@ -232,7 +230,7 @@ public class SectorSplitterOctree : ISectorSplitter
                 foreach (var sector in sectors)
                 {
                     var currentDiagnostics = sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
-                    if (isSizeThreshold && currentDiagnostics.SplitReason == SplitReason.None)
+                    if (diagonalSmallerThanSplitThreshold && currentDiagnostics.SplitReason == SplitReason.None)
                     {
                         yield return sector with
                         {
