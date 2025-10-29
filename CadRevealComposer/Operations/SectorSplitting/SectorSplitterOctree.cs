@@ -106,16 +106,13 @@ public class SectorSplitterOctree : ISectorSplitter
                 foreach (var sector in outlierSectors)
                 {
                     // Mark this sector as an outlier sector
-                    var currentDiagnostics = sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
-                    var outlierSector = sector with
-                    {
-                        Diagnostics = currentDiagnostics with { SplitReason = SplitReason.Outlier },
-                    };
-
                     Console.WriteLine(
-                        $"Outlier-sector with id {outlierSector.SectorId}, path {outlierSector.Path}, {outlierSector.Geometries.Length} geometries added at depth {outlierSector.Depth}."
+                        $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
                     );
-                    yield return outlierSector;
+                    yield return sector with
+                    {
+                        Diagnostics = sector.Diagnostics with { SplitReason = SplitReason.Outlier },
+                    };
                 }
             }
         }
