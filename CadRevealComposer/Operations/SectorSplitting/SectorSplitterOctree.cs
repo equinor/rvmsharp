@@ -20,6 +20,7 @@ public class SectorSplitterOctree : ISectorSplitter
 
     private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
     private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
+    private const int MinRemainingNodesToEnforceBudget = 10; // Prevent creating tiny sectors with very few nodes by allowing budget overrun if fewer nodes remain
 
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
@@ -331,54 +332,86 @@ public class SectorSplitterOctree : ISectorSplitter
 
         for (int i = 0; i < nodeArray.Length; i++)
         {
+            var node = nodeArray[i];
+
+            // Calculate what the budgets would be after adding this node
+            var byteSizeBudgetAfterAddingNode = byteSizeBudgetLeft - node.EstimatedByteSize;
+            var primitiveBudgetAfterAddingNode =
+                primitiveBudgetLeft - node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            var trianglesBudgetAfterAddingNode = trianglesBudgetLeft - node.EstimatedTriangleCount;
+
+            // Check if adding this node would exceed budget
+            // Only enforce budget if there are more than MinRemainingNodesToEnforceBudget nodes remaining (to avoid tiny sectors)
             if (
-                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
-                && nodeArray.Length - i > 10
+                (
+                    byteSizeBudgetAfterAddingNode <= 0
+                    || primitiveBudgetAfterAddingNode <= 0
+                    || trianglesBudgetAfterAddingNode <= 0
+                )
+                && nodeArray.Length - i > MinRemainingNodesToEnforceBudget
             )
             {
-                // Determine which budget(s) were exceeded
-                var byteSizeExceeded = byteSizeBudgetLeft < 0;
-                var primitiveExceeded = primitiveBudgetLeft <= 0;
-                var trianglesExceeded = trianglesBudgetLeft <= 0;
-
-                var exceededCount =
-                    (byteSizeExceeded ? 1 : 0) + (primitiveExceeded ? 1 : 0) + (trianglesExceeded ? 1 : 0);
-
-                splitReason = exceededCount switch
-                {
-                    > 1 => SplitReason.BudgetMultiple,
-                    1 when byteSizeExceeded => SplitReason.BudgetByteSize,
-                    1 when primitiveExceeded => SplitReason.BudgetPrimitiveCount,
-                    1 when trianglesExceeded => SplitReason.BudgetTriangleCount,
-                    _ => SplitReason.None,
-                };
-
-                // Calculate actual used values
-                var byteSizeUsed = byteSizeBudget - byteSizeBudgetLeft;
-                var primitiveCountUsed = SectorEstimatedPrimitiveBudget - primitiveBudgetLeft;
-                var triangleCountUsed = SectorEstimatesTrianglesBudget - trianglesBudgetLeft;
-
-                // Create budget info with only the exceeded budgets populated
-                budgetInfo = new BudgetInfo(
-                    ByteSizeBudget: byteSizeExceeded ? byteSizeBudget : null,
-                    ByteSizeUsed: byteSizeExceeded ? byteSizeUsed : null,
-                    PrimitiveCountBudget: primitiveExceeded ? SectorEstimatedPrimitiveBudget : null,
-                    PrimitiveCountUsed: primitiveExceeded ? primitiveCountUsed : null,
-                    TriangleCountBudget: trianglesExceeded ? SectorEstimatesTrianglesBudget : null,
-                    TriangleCountUsed: trianglesExceeded ? triangleCountUsed : null
+                (splitReason, budgetInfo) = DetermineBudgetExceededInfo(
+                    byteSizeBudget,
+                    byteSizeBudgetAfterAddingNode,
+                    primitiveBudgetAfterAddingNode,
+                    trianglesBudgetAfterAddingNode
                 );
 
                 break;
             }
 
-            var node = nodeArray[i];
-            byteSizeBudgetLeft -= node.EstimatedByteSize;
-            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
-            trianglesBudgetLeft -= node.EstimatedTriangleCount;
-
+            // Budget check passed, add the node
+            byteSizeBudgetLeft = byteSizeBudgetAfterAddingNode;
+            primitiveBudgetLeft = primitiveBudgetAfterAddingNode;
+            trianglesBudgetLeft = trianglesBudgetAfterAddingNode;
             resultNodes.Add(node);
         }
 
         return (resultNodes, splitReason, budgetInfo);
+    }
+
+    /// <summary>
+    /// Determines which budget(s) were exceeded and creates diagnostic information.
+    /// </summary>
+    /// <returns>A tuple containing the split reason and budget info with only exceeded budgets populated.</returns>
+    private static (SplitReason splitReason, BudgetInfo budgetInfo) DetermineBudgetExceededInfo(
+        long byteSizeBudget,
+        long byteSizeBudgetLeft,
+        long primitiveBudgetLeft,
+        long trianglesBudgetLeft
+    )
+    {
+        // Determine which budget(s) were exceeded
+        var byteSizeExceeded = byteSizeBudgetLeft <= 0;
+        var primitiveExceeded = primitiveBudgetLeft <= 0;
+        var trianglesExceeded = trianglesBudgetLeft <= 0;
+
+        var exceededCount = (byteSizeExceeded ? 1 : 0) + (primitiveExceeded ? 1 : 0) + (trianglesExceeded ? 1 : 0);
+
+        var splitReason = exceededCount switch
+        {
+            > 1 => SplitReason.BudgetMultiple,
+            1 when byteSizeExceeded => SplitReason.BudgetByteSize,
+            1 when primitiveExceeded => SplitReason.BudgetPrimitiveCount,
+            _ => SplitReason.BudgetTriangleCount, // Must be trianglesExceeded if exceededCount == 1
+        };
+
+        // Calculate actual used values
+        var byteSizeUsed = byteSizeBudget - byteSizeBudgetLeft;
+        var primitiveCountUsed = SectorEstimatedPrimitiveBudget - primitiveBudgetLeft;
+        var triangleCountUsed = SectorEstimatesTrianglesBudget - trianglesBudgetLeft;
+
+        // Create budget info with only the exceeded budgets populated
+        var budgetInfo = new BudgetInfo(
+            ByteSizeBudget: byteSizeExceeded ? byteSizeBudget : null,
+            ByteSizeUsed: byteSizeExceeded ? byteSizeUsed : null,
+            PrimitiveCountBudget: primitiveExceeded ? SectorEstimatedPrimitiveBudget : null,
+            PrimitiveCountUsed: primitiveExceeded ? primitiveCountUsed : null,
+            TriangleCountBudget: trianglesExceeded ? SectorEstimatesTrianglesBudget : null,
+            TriangleCountUsed: trianglesExceeded ? triangleCountUsed : null
+        );
+
+        return (splitReason, budgetInfo);
     }
 }
