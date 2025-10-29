@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 /// <summary>
 /// Indicates the reason why a sector was created or split.
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum SplitReason
 {
     /// <summary>
@@ -58,9 +59,7 @@ public enum SplitReason
 /// This record groups related splitting metrics to reduce parameter bloat.
 /// </summary>
 public record SplittingStats(
-    [property: JsonPropertyName("splitReason")]
-    [property: JsonConverter(typeof(JsonStringEnumConverter))]
-        SplitReason SplitReason,
+    [property: JsonPropertyName("splitReason")] SplitReason SplitReason,
     [property: JsonPropertyName("primitiveCount")] int PrimitiveCount,
     [property: JsonPropertyName("meshCount")] int MeshCount,
     [property: JsonPropertyName("instanceMeshCount")] int InstanceMeshCount,
