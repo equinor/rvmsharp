@@ -104,6 +104,12 @@ public class SectorEchoDevMetadata
     [JsonPropertyName("geometryDistributions")]
     public GeometryDistributionStats? GeometryDistributions { get; set; } = null;
 
+    [JsonPropertyName("splittingStats")]
+    public SplittingStats? SplittingStats { get; set; } = null;
+}
+
+public class SplittingStats
+{
     [JsonPropertyName("splitReason")]
     public string? SplitReason { get; set; } = null;
 

@@ -131,22 +131,25 @@ public static class SceneCreator
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
                     GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
-                    SplitReason = sector.Diagnostics.SplitReason.ToString(),
-                    PrimitiveCount = sector.Diagnostics.PrimitiveCount,
-                    MeshCount = sector.Diagnostics.MeshCount,
-                    InstanceMeshCount = sector.Diagnostics.InstanceMeshCount,
-                    BudgetInfo =
-                        sector.Diagnostics.BudgetInfo != null
-                            ? new SerializableBudgetInfo
-                            {
-                                ByteSizeBudget = sector.Diagnostics.BudgetInfo.ByteSizeBudget,
-                                ByteSizeUsed = sector.Diagnostics.BudgetInfo.ByteSizeUsed,
-                                PrimitiveCountBudget = sector.Diagnostics.BudgetInfo.PrimitiveCountBudget,
-                                PrimitiveCountUsed = sector.Diagnostics.BudgetInfo.PrimitiveCountUsed,
-                                TriangleCountBudget = sector.Diagnostics.BudgetInfo.TriangleCountBudget,
-                                TriangleCountUsed = sector.Diagnostics.BudgetInfo.TriangleCountUsed,
-                            }
-                            : null,
+                    SplittingStats = new SplittingStats
+                    {
+                        SplitReason = sector.Diagnostics.SplitReason.ToString(),
+                        PrimitiveCount = sector.Diagnostics.PrimitiveCount,
+                        MeshCount = sector.Diagnostics.MeshCount,
+                        InstanceMeshCount = sector.Diagnostics.InstanceMeshCount,
+                        BudgetInfo =
+                            sector.Diagnostics.BudgetInfo != null
+                                ? new SerializableBudgetInfo
+                                {
+                                    ByteSizeBudget = sector.Diagnostics.BudgetInfo.ByteSizeBudget,
+                                    ByteSizeUsed = sector.Diagnostics.BudgetInfo.ByteSizeUsed,
+                                    PrimitiveCountBudget = sector.Diagnostics.BudgetInfo.PrimitiveCountBudget,
+                                    PrimitiveCountUsed = sector.Diagnostics.BudgetInfo.PrimitiveCountUsed,
+                                    TriangleCountBudget = sector.Diagnostics.BudgetInfo.TriangleCountBudget,
+                                    TriangleCountUsed = sector.Diagnostics.BudgetInfo.TriangleCountUsed,
+                                }
+                                : null,
+                    },
                 },
             };
         }
