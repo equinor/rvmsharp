@@ -226,7 +226,7 @@ public class SectorSplitterOctree : ISectorSplitter
                 foreach (var sector in sectors)
                 {
                     // Mark sectors that were created because size threshold was hit
-                    if (diagonalSmallerThanSplitThreshold && sector.SplittingStats.SplitReason == SplitReason.None)
+                    if (sector.SplittingStats.SplitReason == SplitReason.None)
                     {
                         yield return sector with
                         {
