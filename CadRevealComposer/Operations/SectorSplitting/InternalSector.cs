@@ -12,14 +12,6 @@ public record InternalSector(
     APrimitive[] Geometries,
     BoundingBox SubtreeBoundingBox,
     BoundingBox? GeometryBoundingBox,
-    bool IsPrioritizedSector = false,
-    SectorDiagnostics? Diagnostics = null
+    bool IsPrioritizedSector,
+    SectorDiagnostics Diagnostics
 );
-
-public static class InternalSectorExtensions
-{
-    public static SectorDiagnostics GetDiagnostics(this InternalSector sector)
-    {
-        return sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
-    }
-}

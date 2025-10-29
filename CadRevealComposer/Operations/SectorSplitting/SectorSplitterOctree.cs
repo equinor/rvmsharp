@@ -226,15 +226,14 @@ public class SectorSplitterOctree : ISectorSplitter
                     sectorIdGenerator,
                     depthToStartSplittingGeometry
                 );
-
                 foreach (var sector in sectors)
                 {
-                    var currentDiagnostics = sector.Diagnostics ?? new SectorDiagnostics(SplitReason.None, 0, 0, 0);
-                    if (diagonalSmallerThanSplitThreshold && currentDiagnostics.SplitReason == SplitReason.None)
+                    // Mark sectors that were created because size threshold was hit
+                    if (diagonalSmallerThanSplitThreshold && sector.Diagnostics.SplitReason == SplitReason.None)
                     {
                         yield return sector with
                         {
-                            Diagnostics = currentDiagnostics with { SplitReason = SplitReason.SizeThreshold },
+                            Diagnostics = sector.Diagnostics with { SplitReason = SplitReason.SizeThreshold },
                         };
                     }
                     else
