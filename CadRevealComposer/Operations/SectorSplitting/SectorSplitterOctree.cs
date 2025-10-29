@@ -157,6 +157,8 @@ public class SectorSplitterOctree : ISectorSplitter
         if (recursiveDepth < depthToStartSplittingGeometry)
         {
             subVoxelNodes = nodes;
+            // Mark sectors created at early depth before budget checking begins
+            splitReason = SplitReason.EarlyDepth;
         }
         else
         {
@@ -274,7 +276,18 @@ public class SectorSplitterOctree : ISectorSplitter
                 );
                 foreach (var sector in sectors)
                 {
-                    yield return sector;
+                    // Mark sectors created through spatial subdivision if they don't have a more specific reason
+                    if (sector.SplittingStats.SplitReason == SplitReason.None)
+                    {
+                        yield return sector with
+                        {
+                            SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.Spatial },
+                        };
+                    }
+                    else
+                    {
+                        yield return sector;
+                    }
                 }
             }
         }
@@ -332,9 +345,9 @@ public class SectorSplitterOctree : ISectorSplitter
 
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            // Check budget before processing this node.
+            // Check budget before processing this node (using consistent <= 0 for all budgets)
             if (
-                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
+                (byteSizeBudgetLeft <= 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
                 && nodeArray.Length - i > MinRemainingNodesToEnforceBudget
             )
             {
@@ -354,6 +367,12 @@ public class SectorSplitterOctree : ISectorSplitter
             trianglesBudgetLeft -= node.EstimatedTriangleCount;
 
             resultNodes.Add(node);
+        }
+
+        // If splitReason is still None, it means all nodes fit within budget - this is a natural leaf
+        if (splitReason == SplitReason.None && resultNodes.Count > 0)
+        {
+            splitReason = SplitReason.Leaf;
         }
 
         return (resultNodes, splitReason, budgetInfo);

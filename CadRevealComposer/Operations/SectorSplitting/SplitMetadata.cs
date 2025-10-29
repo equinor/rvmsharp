@@ -52,6 +52,21 @@ public enum SplitReason
     /// This is a priority sector, organized by discipline and tree index for efficient highlighting.
     /// </summary>
     Priority,
+
+    /// <summary>
+    /// This is a leaf sector that contains all remaining geometry without hitting any constraints.
+    /// </summary>
+    Leaf,
+
+    /// <summary>
+    /// Split occurred due to spatial subdivision (octree voxel-based splitting).
+    /// </summary>
+    Spatial,
+
+    /// <summary>
+    /// Sector created at early recursion depth before budget checking begins.
+    /// </summary>
+    EarlyDepth,
 }
 
 /// <summary>
