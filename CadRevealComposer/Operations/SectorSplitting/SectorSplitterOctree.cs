@@ -332,39 +332,27 @@ public class SectorSplitterOctree : ISectorSplitter
 
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            var node = nodeArray[i];
-
-            // Calculate what the budgets would be after adding this node
-            var byteSizeBudgetAfterAddingNode = byteSizeBudgetLeft - node.EstimatedByteSize;
-            var primitiveBudgetAfterAddingNode =
-                primitiveBudgetLeft - node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
-            var trianglesBudgetAfterAddingNode = trianglesBudgetLeft - node.EstimatedTriangleCount;
-
-            // Check if adding this node would exceed budget
-            // Only enforce budget if there are more than MinRemainingNodesToEnforceBudget nodes remaining (to avoid tiny sectors)
+            // Check budget before processing this node.
             if (
-                (
-                    byteSizeBudgetAfterAddingNode <= 0
-                    || primitiveBudgetAfterAddingNode <= 0
-                    || trianglesBudgetAfterAddingNode <= 0
-                )
+                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
                 && nodeArray.Length - i > MinRemainingNodesToEnforceBudget
             )
             {
                 (splitReason, budgetInfo) = DetermineBudgetExceededInfo(
                     byteSizeBudget,
-                    byteSizeBudgetAfterAddingNode,
-                    primitiveBudgetAfterAddingNode,
-                    trianglesBudgetAfterAddingNode
+                    byteSizeBudgetLeft,
+                    primitiveBudgetLeft,
+                    trianglesBudgetLeft
                 );
 
                 break;
             }
 
-            // Budget check passed, add the node
-            byteSizeBudgetLeft = byteSizeBudgetAfterAddingNode;
-            primitiveBudgetLeft = primitiveBudgetAfterAddingNode;
-            trianglesBudgetLeft = trianglesBudgetAfterAddingNode;
+            var node = nodeArray[i];
+            byteSizeBudgetLeft -= node.EstimatedByteSize;
+            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            trianglesBudgetLeft -= node.EstimatedTriangleCount;
+
             resultNodes.Add(node);
         }
 
