@@ -219,7 +219,7 @@ public static class SplittingUtils
             subtreeBoundingBox,
             null,
             false,
-            new SectorDiagnostics(SplitReason.Root, 0, 0, 0)
+            new SplittingStats(SplitReason.Root, 0, 0, 0)
         );
     }
 
@@ -252,7 +252,7 @@ public static class SplittingUtils
             subtreeBoundingBox,
             geometryBoundingBox,
             false,
-            new SectorDiagnostics(SplitReason.None, primitiveCount, meshCount, instanceMeshCount)
+            new SplittingStats(SplitReason.None, primitiveCount, meshCount, instanceMeshCount)
         );
     }
 
@@ -310,7 +310,7 @@ public static class SplittingUtils
             subtreeBoundingBox,
             geometryBoundingBox,
             false,
-            new SectorDiagnostics(splitReason, primitiveCount, meshCount, instanceMeshCount, budgetInfo)
+            new SplittingStats(splitReason, primitiveCount, meshCount, instanceMeshCount, budgetInfo)
         );
     }
 }

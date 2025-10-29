@@ -13,5 +13,5 @@ public record InternalSector(
     BoundingBox SubtreeBoundingBox,
     BoundingBox? GeometryBoundingBox,
     bool IsPrioritizedSector,
-    SectorDiagnostics Diagnostics
+    SplittingStats SplittingStats
 );

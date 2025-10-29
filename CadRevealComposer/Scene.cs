@@ -108,45 +108,6 @@ public class SectorEchoDevMetadata
     public SplittingStats? SplittingStats { get; set; } = null;
 }
 
-public class SplittingStats
-{
-    [JsonPropertyName("splitReason")]
-    public string? SplitReason { get; set; } = null;
-
-    [JsonPropertyName("primitiveCount")]
-    public int PrimitiveCount { get; set; }
-
-    [JsonPropertyName("meshCount")]
-    public int MeshCount { get; set; }
-
-    [JsonPropertyName("instanceMeshCount")]
-    public int InstanceMeshCount { get; set; }
-
-    [JsonPropertyName("budgetInfo")]
-    public SerializableBudgetInfo? BudgetInfo { get; set; } = null;
-}
-
-public class SerializableBudgetInfo
-{
-    [JsonPropertyName("byteSizeBudget")]
-    public long? ByteSizeBudget { get; set; }
-
-    [JsonPropertyName("byteSizeUsed")]
-    public long? ByteSizeUsed { get; set; }
-
-    [JsonPropertyName("primitiveCountBudget")]
-    public long? PrimitiveCountBudget { get; set; }
-
-    [JsonPropertyName("primitiveCountUsed")]
-    public long? PrimitiveCountUsed { get; set; }
-
-    [JsonPropertyName("triangleCountBudget")]
-    public long? TriangleCountBudget { get; set; }
-
-    [JsonPropertyName("triangleCountUsed")]
-    public long? TriangleCountUsed { get; set; }
-}
-
 public record SerializableBoundingBox(
     [property: JsonPropertyName("min")] SerializableVector3 Min,
     [property: JsonPropertyName("max")] SerializableVector3 Max

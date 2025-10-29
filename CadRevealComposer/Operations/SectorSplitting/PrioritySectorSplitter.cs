@@ -45,7 +45,7 @@ public class PrioritySectorSplitter : ISectorSplitter
             yield return sector with
             {
                 IsPrioritizedSector = true,
-                Diagnostics = sector.Diagnostics with { SplitReason = SplitReason.Priority },
+                SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.Priority },
             };
         }
     }

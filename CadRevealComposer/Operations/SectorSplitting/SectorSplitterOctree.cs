@@ -111,7 +111,7 @@ public class SectorSplitterOctree : ISectorSplitter
                     );
                     yield return sector with
                     {
-                        Diagnostics = sector.Diagnostics with { SplitReason = SplitReason.Outlier },
+                        SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.Outlier },
                     };
                 }
             }
@@ -226,11 +226,11 @@ public class SectorSplitterOctree : ISectorSplitter
                 foreach (var sector in sectors)
                 {
                     // Mark sectors that were created because size threshold was hit
-                    if (diagonalSmallerThanSplitThreshold && sector.Diagnostics.SplitReason == SplitReason.None)
+                    if (diagonalSmallerThanSplitThreshold && sector.SplittingStats.SplitReason == SplitReason.None)
                     {
                         yield return sector with
                         {
-                            Diagnostics = sector.Diagnostics with { SplitReason = SplitReason.SizeThreshold },
+                            SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.SizeThreshold },
                         };
                     }
                     else

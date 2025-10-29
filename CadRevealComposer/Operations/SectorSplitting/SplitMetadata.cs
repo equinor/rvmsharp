@@ -1,5 +1,7 @@
 namespace CadRevealComposer.Operations.SectorSplitting;
 
+using System.Text.Json.Serialization;
+
 /// <summary>
 /// Indicates the reason why a sector was created or split.
 /// </summary>
@@ -55,22 +57,24 @@ public enum SplitReason
 /// Encapsulates diagnostic information for sector splitting analysis.
 /// This record groups related splitting metrics to reduce parameter bloat.
 /// </summary>
-public record SectorDiagnostics(
-    SplitReason SplitReason,
-    int PrimitiveCount,
-    int MeshCount,
-    int InstanceMeshCount,
-    BudgetInfo? BudgetInfo = null
+public record SplittingStats(
+    [property: JsonPropertyName("splitReason")]
+    [property: JsonConverter(typeof(JsonStringEnumConverter))]
+        SplitReason SplitReason,
+    [property: JsonPropertyName("primitiveCount")] int PrimitiveCount,
+    [property: JsonPropertyName("meshCount")] int MeshCount,
+    [property: JsonPropertyName("instanceMeshCount")] int InstanceMeshCount,
+    [property: JsonPropertyName("budgetInfo")] BudgetInfo? BudgetInfo = null
 );
 
 /// <summary>
 /// Contains detailed information about budget constraints when a sector split occurred due to budget exceeded.
 /// </summary>
 public record BudgetInfo(
-    long? ByteSizeBudget = null,
-    long? ByteSizeUsed = null,
-    long? PrimitiveCountBudget = null,
-    long? PrimitiveCountUsed = null,
-    long? TriangleCountBudget = null,
-    long? TriangleCountUsed = null
+    [property: JsonPropertyName("byteSizeBudget")] long? ByteSizeBudget = null,
+    [property: JsonPropertyName("byteSizeUsed")] long? ByteSizeUsed = null,
+    [property: JsonPropertyName("primitiveCountBudget")] long? PrimitiveCountBudget = null,
+    [property: JsonPropertyName("primitiveCountUsed")] long? PrimitiveCountUsed = null,
+    [property: JsonPropertyName("triangleCountBudget")] long? TriangleCountBudget = null,
+    [property: JsonPropertyName("triangleCountUsed")] long? TriangleCountUsed = null
 );
