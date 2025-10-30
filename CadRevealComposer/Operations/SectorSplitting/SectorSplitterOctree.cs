@@ -382,7 +382,7 @@ public class SectorSplitterOctree : ISectorSplitter
     /// Determines which budget(s) were exceeded and creates diagnostic information.
     /// </summary>
     /// <returns>A tuple containing the split reason and budget info with only exceeded budgets populated.</returns>
-    private static (SplitReason splitReason, BudgetInfo budgetInfo) DetermineBudgetExceededInfo(
+    public static (SplitReason splitReason, BudgetInfo budgetInfo) DetermineBudgetExceededInfo(
         long byteSizeBudget,
         long byteSizeBudgetLeft,
         long primitiveBudgetLeft,
