@@ -409,14 +409,14 @@ public class SectorSplitterOctree : ISectorSplitter
         var primitiveCountUsed = SectorEstimatedPrimitiveBudget - primitiveBudgetLeft;
         var triangleCountUsed = SectorEstimatesTrianglesBudget - trianglesBudgetLeft;
 
-        // Create budget info with only the exceeded budgets populated
+        // Create budget info with all budget values populated (not just exceeded ones)
         var budgetInfo = new BudgetInfo(
-            ByteSizeBudget: byteSizeExceeded ? byteSizeBudget : null,
-            ByteSizeUsed: byteSizeExceeded ? byteSizeUsed : null,
-            PrimitiveCountBudget: primitiveExceeded ? SectorEstimatedPrimitiveBudget : null,
-            PrimitiveCountUsed: primitiveExceeded ? primitiveCountUsed : null,
-            TriangleCountBudget: trianglesExceeded ? SectorEstimatesTrianglesBudget : null,
-            TriangleCountUsed: trianglesExceeded ? triangleCountUsed : null
+            ByteSizeBudget: byteSizeBudget,
+            ByteSizeUsed: byteSizeUsed,
+            PrimitiveCountBudget: SectorEstimatedPrimitiveBudget,
+            PrimitiveCountUsed: primitiveCountUsed,
+            TriangleCountBudget: SectorEstimatesTrianglesBudget,
+            TriangleCountUsed: triangleCountUsed
         );
 
         return (splitReason, budgetInfo);

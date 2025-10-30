@@ -14,17 +14,18 @@ public class SectorSplitterBudgetInfoTests
         var (reason1, info1) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 100, 100);
         Assert.That(reason1, Is.EqualTo(SplitReason.BudgetByteSize));
         Assert.That(info1.ByteSizeBudget, Is.Not.Null);
-        Assert.That(info1.PrimitiveCountBudget, Is.Null);
+        Assert.That(info1.PrimitiveCountBudget, Is.Not.Null);
+        Assert.That(info1.TriangleCountBudget, Is.Not.Null);
 
         var (reason2, info2) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 0, 100);
         Assert.That(reason2, Is.EqualTo(SplitReason.BudgetPrimitiveCount));
         Assert.That(info2.PrimitiveCountBudget, Is.Not.Null);
-        Assert.That(info2.ByteSizeBudget, Is.Null);
+        Assert.That(info2.ByteSizeBudget, Is.Not.Null);
 
         var (reason3, info3) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 100, -100);
         Assert.That(reason3, Is.EqualTo(SplitReason.BudgetTriangleCount));
         Assert.That(info3.TriangleCountBudget, Is.Not.Null);
-        Assert.That(info3.ByteSizeBudget, Is.Null);
+        Assert.That(info3.ByteSizeBudget, Is.Not.Null);
     }
 
     [Test]
@@ -35,7 +36,7 @@ public class SectorSplitterBudgetInfoTests
         Assert.That(reason, Is.EqualTo(SplitReason.BudgetMultiple));
         Assert.That(info.ByteSizeBudget, Is.Not.Null);
         Assert.That(info.PrimitiveCountBudget, Is.Not.Null);
-        Assert.That(info.TriangleCountBudget, Is.Null);
+        Assert.That(info.TriangleCountBudget, Is.Not.Null); // All budgets now populated
     }
 
     [Test]
