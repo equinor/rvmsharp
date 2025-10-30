@@ -25,9 +25,7 @@ public class SectorSplitterSingle : ISectorSplitter
             throw new Exception("The bounding box of the root sector should never be null");
         }
 
-        var primitiveCount = geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
-        var meshCount = geometries.Count(x => x is TriangleMesh);
-        var instanceMeshCount = geometries.Count(x => x is InstancedMesh);
+        var (primitiveCount, meshCount, instanceMeshCount) = SplittingUtils.CalculateGeometryCounts(geometries);
 
         return new InternalSector(
             sectorId,
