@@ -22,7 +22,7 @@
     </PackageVersion>
     <PackageVersion Include="NUnit3TestAdapter" Version="5.0.0" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="SharpGLTF.Core" Version="1.0.4" />
+    <PackageVersion Include="SharpGLTF.Core" Version="1.0.5" />
     <PackageVersion Include="ShellProgressBar" Version="5.2.0" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
     <PackageVersion Include="System.Text.Encodings.Web" Version="9.0.5" />
