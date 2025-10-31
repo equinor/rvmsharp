@@ -7,44 +7,45 @@ using NUnit.Framework;
 public class SectorSplitterBudgetInfoTests
 {
     private const long ByteSizeBudget = 2_000_000;
+    private const long PrimitiveBudget = 5_000;
+    private const long TriangleBudget = 300_000;
 
     [Test]
-    public void DetermineBudgetExceededInfo_SingleBudgetExceeded_ReturnsCorrectReason()
+    public void DetermineBudgetExceededInfo_OnlyByteSizeExceeded_ReturnsCorrectReason()
     {
-        var (reason1, info1) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 100, 100);
-        Assert.That(reason1, Is.EqualTo(SplitReason.BudgetByteSize));
-        Assert.That(info1.ByteSizeBudget, Is.Not.Null);
-        Assert.That(info1.PrimitiveCountBudget, Is.Not.Null);
-        Assert.That(info1.TriangleCountBudget, Is.Not.Null);
+        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 100, 100);
 
-        var (reason2, info2) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 0, 100);
-        Assert.That(reason2, Is.EqualTo(SplitReason.BudgetPrimitiveCount));
-        Assert.That(info2.PrimitiveCountBudget, Is.Not.Null);
-        Assert.That(info2.ByteSizeBudget, Is.Not.Null);
+        Assert.That(reason, Is.EqualTo(SplitReason.BudgetByteSize));
+        Assert.That(info.ByteSizeBudget, Is.EqualTo(ByteSizeBudget));
+        Assert.That(info.ByteSizeUsed, Is.EqualTo(ByteSizeBudget + 100));
+    }
 
-        var (reason3, info3) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 100, -100);
-        Assert.That(reason3, Is.EqualTo(SplitReason.BudgetTriangleCount));
-        Assert.That(info3.TriangleCountBudget, Is.Not.Null);
-        Assert.That(info3.ByteSizeBudget, Is.Not.Null);
+    [Test]
+    public void DetermineBudgetExceededInfo_OnlyPrimitiveCountExceeded_ReturnsCorrectReason()
+    {
+        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 0, 100);
+
+        Assert.That(reason, Is.EqualTo(SplitReason.BudgetPrimitiveCount));
+        Assert.That(info.PrimitiveCountBudget, Is.EqualTo(PrimitiveBudget));
+        Assert.That(info.PrimitiveCountUsed, Is.EqualTo(PrimitiveBudget));
+    }
+
+    [Test]
+    public void DetermineBudgetExceededInfo_OnlyTriangleCountExceeded_ReturnsCorrectReason()
+    {
+        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 100, -100);
+
+        Assert.That(reason, Is.EqualTo(SplitReason.BudgetTriangleCount));
+        Assert.That(info.TriangleCountBudget, Is.EqualTo(TriangleBudget));
+        Assert.That(info.TriangleCountUsed, Is.EqualTo(TriangleBudget + 100));
     }
 
     [Test]
     public void DetermineBudgetExceededInfo_MultipleBudgetsExceeded_ReturnsBudgetMultiple()
     {
-        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 0, 100);
+        var (reason, _) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 0, 100);
 
         Assert.That(reason, Is.EqualTo(SplitReason.BudgetMultiple));
-        Assert.That(info.ByteSizeBudget, Is.Not.Null);
-        Assert.That(info.PrimitiveCountBudget, Is.Not.Null);
-        Assert.That(info.TriangleCountBudget, Is.Not.Null); // All budgets now populated
-    }
-
-    [Test]
-    public void DetermineBudgetExceededInfo_BudgetUsedCalculation_IsCorrect()
-    {
-        var (_, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -1000, 100, 100);
-
-        Assert.That(info.ByteSizeUsed, Is.EqualTo(ByteSizeBudget + 1000));
     }
 
     [TestCase(0L, true)]
