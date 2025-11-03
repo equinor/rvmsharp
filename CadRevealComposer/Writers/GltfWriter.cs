@@ -156,7 +156,7 @@ public static class GltfWriter
 
             var instanceBufferWrapper = new BufferViewAutoOffset(instanceBuffer, instanceCount);
             treeIndexAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Float);
-            colorAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Vec4UByte);
+            colorAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Vec4UByteNormalized);
             instanceMatrixAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Mat4x4Float);
 
             // create node
@@ -283,7 +283,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(vertexBufferView, boxCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
 
         // create node
@@ -320,7 +320,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, circleCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
         normalAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
 
@@ -369,7 +369,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, coneCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         angleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         arcAngleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         centerAAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
@@ -424,7 +424,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, eccentricConeCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         centerAAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
         centerBAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
         normalAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
@@ -475,7 +475,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, ellipsoidCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         horizontalRadiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         verticalRadiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         heightAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
@@ -532,7 +532,7 @@ public static class GltfWriter
 
         var vertexDataWrapper = new BufferViewAutoOffset(bufferView, generalCylinderCount);
         treeIndexAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec4UByteNormalized);
         centerAAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec3Float);
         centerBAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec3Float);
         radiusAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Float);
@@ -589,7 +589,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, generalRingCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         angleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         arcAngleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
@@ -632,7 +632,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, nutCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
 
         // create node
@@ -667,7 +667,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, quadCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
 
         // create node
@@ -708,7 +708,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, torusCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         arcAngleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
         instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
         radiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
@@ -755,7 +755,7 @@ public static class GltfWriter
 
         var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, trapeziumCount);
         treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
-        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByte);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
         vertex1Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
         vertex2Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
         vertex3Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
