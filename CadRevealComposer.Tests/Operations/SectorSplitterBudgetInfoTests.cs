@@ -13,7 +13,14 @@ public class SectorSplitterBudgetInfoTests
     [Test]
     public void DetermineBudgetExceededInfo_OnlyByteSizeExceeded_ReturnsCorrectReason()
     {
-        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 100, 100);
+        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(
+            ByteSizeBudget,
+            -100,
+            PrimitiveBudget,
+            100,
+            TriangleBudget,
+            100
+        );
 
         Assert.That(reason, Is.EqualTo(SplitReason.BudgetByteSize));
         Assert.That(info.ByteSizeBudget, Is.EqualTo(ByteSizeBudget));
@@ -23,7 +30,14 @@ public class SectorSplitterBudgetInfoTests
     [Test]
     public void DetermineBudgetExceededInfo_OnlyPrimitiveCountExceeded_ReturnsCorrectReason()
     {
-        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 0, 100);
+        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(
+            ByteSizeBudget,
+            100,
+            PrimitiveBudget,
+            0,
+            TriangleBudget,
+            100
+        );
 
         Assert.That(reason, Is.EqualTo(SplitReason.BudgetPrimitiveCount));
         Assert.That(info.PrimitiveCountBudget, Is.EqualTo(PrimitiveBudget));
@@ -33,7 +47,14 @@ public class SectorSplitterBudgetInfoTests
     [Test]
     public void DetermineBudgetExceededInfo_OnlyTriangleCountExceeded_ReturnsCorrectReason()
     {
-        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, 100, 100, -100);
+        var (reason, info) = SectorSplitterOctree.DetermineBudgetExceededInfo(
+            ByteSizeBudget,
+            100,
+            PrimitiveBudget,
+            100,
+            TriangleBudget,
+            -100
+        );
 
         Assert.That(reason, Is.EqualTo(SplitReason.BudgetTriangleCount));
         Assert.That(info.TriangleCountBudget, Is.EqualTo(TriangleBudget));
@@ -43,7 +64,14 @@ public class SectorSplitterBudgetInfoTests
     [Test]
     public void DetermineBudgetExceededInfo_MultipleBudgetsExceeded_ReturnsBudgetMultiple()
     {
-        var (reason, _) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, -100, 0, 100);
+        var (reason, _) = SectorSplitterOctree.DetermineBudgetExceededInfo(
+            ByteSizeBudget,
+            -100,
+            PrimitiveBudget,
+            0,
+            TriangleBudget,
+            100
+        );
 
         Assert.That(reason, Is.EqualTo(SplitReason.BudgetMultiple));
     }
@@ -53,7 +81,14 @@ public class SectorSplitterBudgetInfoTests
     [TestCase(1L, false)]
     public void DetermineBudgetExceededInfo_BoundaryConditions_Correct(long budgetLeft, bool isExceeded)
     {
-        var (reason, _) = SectorSplitterOctree.DetermineBudgetExceededInfo(ByteSizeBudget, budgetLeft, 100, 100);
+        var (reason, _) = SectorSplitterOctree.DetermineBudgetExceededInfo(
+            ByteSizeBudget,
+            budgetLeft,
+            PrimitiveBudget,
+            100,
+            TriangleBudget,
+            100
+        );
 
         Assert.That(reason == SplitReason.BudgetByteSize, Is.EqualTo(isExceeded));
     }

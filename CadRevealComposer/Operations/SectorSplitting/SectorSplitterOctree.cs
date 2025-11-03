@@ -362,7 +362,9 @@ public class SectorSplitterOctree : ISectorSplitter
                 (splitReason, budgetInfo) = DetermineBudgetExceededInfo(
                     byteSizeBudget,
                     byteSizeBudgetLeft,
+                    SectorEstimatedPrimitiveBudget,
                     primitiveBudgetLeft,
+                    SectorEstimatesTrianglesBudget,
                     trianglesBudgetLeft
                 );
 
@@ -386,7 +388,9 @@ public class SectorSplitterOctree : ISectorSplitter
     public static (SplitReason splitReason, BudgetInfo budgetInfo) DetermineBudgetExceededInfo(
         long byteSizeBudget,
         long byteSizeBudgetLeft,
+        long primitiveBudget,
         long primitiveBudgetLeft,
+        long trianglesBudget,
         long trianglesBudgetLeft
     )
     {
@@ -407,16 +411,16 @@ public class SectorSplitterOctree : ISectorSplitter
 
         // Calculate actual used values
         var byteSizeUsed = byteSizeBudget - byteSizeBudgetLeft;
-        var primitiveCountUsed = SectorEstimatedPrimitiveBudget - primitiveBudgetLeft;
-        var triangleCountUsed = SectorEstimatesTrianglesBudget - trianglesBudgetLeft;
+        var primitiveCountUsed = primitiveBudget - primitiveBudgetLeft;
+        var triangleCountUsed = trianglesBudget - trianglesBudgetLeft;
 
         // Create budget info with all budget values populated (not just exceeded ones)
         var budgetInfo = new BudgetInfo(
             ByteSizeBudget: byteSizeBudget,
             ByteSizeUsed: byteSizeUsed,
-            PrimitiveCountBudget: SectorEstimatedPrimitiveBudget,
+            PrimitiveCountBudget: primitiveBudget,
             PrimitiveCountUsed: primitiveCountUsed,
-            TriangleCountBudget: SectorEstimatesTrianglesBudget,
+            TriangleCountBudget: trianglesBudget,
             TriangleCountUsed: triangleCountUsed
         );
 
