@@ -11,48 +11,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using Commons.Utils;
+using GltfWriterUtils;
 using Primitives;
 using SharpGLTF.Memory;
 using SharpGLTF.Schema2;
-
-public class BufferViewAutoOffset(BufferView bufferView, int count)
-{
-    public BufferView BufferView { get; } = bufferView;
-    public int Count { get; } = count;
-
-    public int CurrentOffset { get; private set; }
-
-    /// <summary>
-    /// Adds the format byte size to <see cref="CurrentOffset"/>;
-    /// </summary>
-    public void AddOffset(AttributeFormat format)
-    {
-        CurrentOffset += format.ByteSize;
-    }
-}
-
-public static class AccessorExtensions
-{
-    /// <summary>
-    /// Uses the buffer view helper to set data at the current offset, and stores the new offset back in the helper.
-    /// Use this method to correctly assign interleaved data to an accessor.
-    ///
-    /// REMARK: It auto-increments the offset in the buffer view helper, so that sequential calls will write sequential data!
-    /// </summary>
-    /// <param name="accessor"></param>
-    /// <param name="bufferViewAutoOffset">"Keeps" the state of the current offset</param>
-    /// <param name="format">Format of the data</param>
-    public static void SetDataAutoOffset(
-        this Accessor accessor,
-        BufferViewAutoOffset bufferViewAutoOffset,
-        AttributeFormat format
-    )
-    {
-        var offset = bufferViewAutoOffset.CurrentOffset;
-        accessor.SetData(bufferViewAutoOffset.BufferView, offset, bufferViewAutoOffset.Count, format);
-        bufferViewAutoOffset.AddOffset(format);
-    }
-}
 
 /// <summary>
 /// Cognite Reveal format:
@@ -64,38 +26,6 @@ public static class AccessorExtensions
 /// </summary>
 public static class GltfWriter
 {
-    /// <summary>
-    /// Helper for common AttributeFormats
-    /// </summary>
-    private static class AttFormat
-    {
-        public static readonly AttributeFormat Vec4UByte = new AttributeFormat(
-            DimensionType.VEC4,
-            EncodingType.UNSIGNED_BYTE
-        );
-
-        public static readonly AttributeFormat Vec4UByteNormalized = new AttributeFormat(
-            DimensionType.VEC4,
-            EncodingType.UNSIGNED_BYTE,
-            true
-        );
-
-        public static readonly AttributeFormat Mat4x4Float = new AttributeFormat(
-            DimensionType.MAT4,
-            EncodingType.FLOAT
-        );
-
-        public static readonly AttributeFormat Vec4Float = new AttributeFormat(DimensionType.VEC4, EncodingType.FLOAT);
-        public static readonly AttributeFormat Vec3Float = new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT);
-        public static readonly AttributeFormat Vec2Float = new AttributeFormat(DimensionType.VEC2, EncodingType.FLOAT);
-        public static readonly AttributeFormat Float = new AttributeFormat(DimensionType.SCALAR, EncodingType.FLOAT);
-
-        public static readonly AttributeFormat Uint = new AttributeFormat(
-            DimensionType.SCALAR,
-            EncodingType.UNSIGNED_INT
-        );
-    }
-
     public static int WritePrimitives<T>(
         IReadOnlyList<APrimitive> primitives,
         Action<T[], ModelRoot, Scene> writeFunction,
@@ -936,5 +866,36 @@ public static class GltfWriter
                 $"value was {value}, and cannot be serialized to gltf json."
             );
         }
+    }
+
+    /// <summary>
+    /// Helper for common AttributeFormats
+    /// </summary>
+    private static class AttFormat
+    {
+        public static readonly AttributeFormat Vec4UByte = new AttributeFormat(
+            DimensionType.VEC4,
+            EncodingType.UNSIGNED_BYTE
+        );
+
+        public static readonly AttributeFormat Vec4UByteNormalized = new AttributeFormat(
+            DimensionType.VEC4,
+            EncodingType.UNSIGNED_BYTE,
+            true
+        );
+
+        public static readonly AttributeFormat Mat4x4Float = new AttributeFormat(
+            DimensionType.MAT4,
+            EncodingType.FLOAT
+        );
+
+        public static readonly AttributeFormat Vec4Float = new AttributeFormat(DimensionType.VEC4, EncodingType.FLOAT);
+        public static readonly AttributeFormat Vec3Float = new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT);
+        public static readonly AttributeFormat Float = new AttributeFormat(DimensionType.SCALAR, EncodingType.FLOAT);
+
+        public static readonly AttributeFormat Uint = new AttributeFormat(
+            DimensionType.SCALAR,
+            EncodingType.UNSIGNED_INT
+        );
     }
 }
