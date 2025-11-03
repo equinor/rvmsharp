@@ -345,10 +345,18 @@ public class SectorSplitterOctree : ISectorSplitter
 
         for (int i = 0; i < nodeArray.Length; i++)
         {
-            // Check budget before processing this node (using consistent <= 0 for all budgets)
+            var node = nodeArray[i];
+            byteSizeBudgetLeft -= node.EstimatedByteSize;
+            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
+            trianglesBudgetLeft -= node.EstimatedTriangleCount;
+
+            resultNodes.Add(node);
+
+            // Check budget after processing this node - did we exceed the budget?
+            // Using < 0 because we want to allow nodes that bring us to exactly 0
             if (
-                (byteSizeBudgetLeft <= 0 || primitiveBudgetLeft <= 0 || trianglesBudgetLeft <= 0)
-                && nodeArray.Length - i > MinRemainingNodesToEnforceBudget
+                (byteSizeBudgetLeft < 0 || primitiveBudgetLeft < 0 || trianglesBudgetLeft < 0)
+                && nodeArray.Length - i - 1 > MinRemainingNodesToEnforceBudget
             )
             {
                 (splitReason, budgetInfo) = DetermineBudgetExceededInfo(
@@ -360,13 +368,6 @@ public class SectorSplitterOctree : ISectorSplitter
 
                 break;
             }
-
-            var node = nodeArray[i];
-            byteSizeBudgetLeft -= node.EstimatedByteSize;
-            primitiveBudgetLeft -= node.Geometries.Count(x => x is not (InstancedMesh or TriangleMesh));
-            trianglesBudgetLeft -= node.EstimatedTriangleCount;
-
-            resultNodes.Add(node);
         }
 
         // If splitReason is still None, it means all nodes fit within budget - this is a natural leaf
