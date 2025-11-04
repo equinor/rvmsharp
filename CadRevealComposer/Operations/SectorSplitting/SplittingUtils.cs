@@ -127,6 +127,37 @@ public static class SplittingUtils
         }
     }
 
+    /// <summary>
+    /// Calculates counts of different geometry types (primitives, meshes, and instanced meshes).
+    /// </summary>
+    /// <returns>A tuple containing (primitiveCount, meshCount, instanceMeshCount)</returns>
+    public static (int primitiveCount, int meshCount, int instanceMeshCount) CalculateGeometryCounts(
+        IEnumerable<APrimitive> geometries
+    )
+    {
+        var primitiveCount = 0;
+        var meshCount = 0;
+        var instanceMeshCount = 0;
+
+        foreach (var geometry in geometries)
+        {
+            switch (geometry)
+            {
+                case TriangleMesh:
+                    meshCount++;
+                    break;
+                case InstancedMesh:
+                    instanceMeshCount++;
+                    break;
+                default:
+                    primitiveCount++;
+                    break;
+            }
+        }
+
+        return (primitiveCount, meshCount, instanceMeshCount);
+    }
+
     public static Node[] ConvertPrimitivesToNodes(IEnumerable<APrimitive> primitives)
     {
         return primitives
@@ -208,7 +239,19 @@ public static class SplittingUtils
 
     public static InternalSector CreateRootSector(uint sectorId, string path, BoundingBox subtreeBoundingBox)
     {
-        return new InternalSector(sectorId, null, 0, path, 0, 0, Array.Empty<APrimitive>(), subtreeBoundingBox, null);
+        return new InternalSector(
+            sectorId,
+            null,
+            0,
+            path,
+            0,
+            0,
+            Array.Empty<APrimitive>(),
+            subtreeBoundingBox,
+            null,
+            false,
+            new SplittingStats(SplitReason.Root, 0, 0, 0)
+        );
     }
 
     public static InternalSector CreateSector(
@@ -223,6 +266,8 @@ public static class SplittingUtils
         var geometries = nodes.SelectMany(n => n.Geometries).ToArray();
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
+        var (primitiveCount, meshCount, instanceMeshCount) = CalculateGeometryCounts(geometries);
+
         var path = parent.Path + "/" + sectorId;
 
         return new InternalSector(
@@ -234,7 +279,9 @@ public static class SplittingUtils
             maxDiagonal,
             geometries,
             subtreeBoundingBox,
-            geometryBoundingBox
+            geometryBoundingBox,
+            false,
+            new SplittingStats(SplitReason.None, primitiveCount, meshCount, instanceMeshCount)
         );
     }
 
@@ -244,7 +291,9 @@ public static class SplittingUtils
         uint? parentSectorId,
         string parentPath,
         int depth,
-        BoundingBox subtreeBoundingBox
+        BoundingBox subtreeBoundingBox,
+        SplitReason splitReason = SplitReason.None,
+        BudgetInfo? budgetInfo = null
     )
     {
         var path = $"{parentPath}/{sectorId}";
@@ -255,6 +304,9 @@ public static class SplittingUtils
         var geometryBoundingBox = geometries.CalculateBoundingBox();
 
         var geometriesCount = geometries.Length;
+
+        // Calculate counts before transformations
+        var (primitiveCount, meshCount, instanceMeshCount) = CalculateGeometryCounts(geometries);
 
         // NOTE: This increases triangle count
         geometries = TooFewInstancesHandler.ConvertInstancesWhenTooFew(geometries);
@@ -283,7 +335,9 @@ public static class SplittingUtils
             maxDiagonal,
             geometries,
             subtreeBoundingBox,
-            geometryBoundingBox
+            geometryBoundingBox,
+            false,
+            new SplittingStats(splitReason, primitiveCount, meshCount, instanceMeshCount, budgetInfo)
         );
     }
 }

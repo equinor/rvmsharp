@@ -4,6 +4,7 @@ using System;
 using System.Numerics;
 using System.Text.Json.Serialization;
 using Configuration;
+using Operations.SectorSplitting;
 using Utils;
 
 public class Scene
@@ -100,7 +101,11 @@ public class Sector
 
 public class SectorEchoDevMetadata
 {
+    [JsonPropertyName("geometryDistributions")]
     public GeometryDistributionStats? GeometryDistributions { get; set; } = null;
+
+    [JsonPropertyName("splittingStats")]
+    public SplittingStats? SplittingStats { get; set; } = null;
 }
 
 public record SerializableBoundingBox(
