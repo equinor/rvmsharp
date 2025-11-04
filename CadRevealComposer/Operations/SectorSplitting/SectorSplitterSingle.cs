@@ -24,16 +24,21 @@ public class SectorSplitterSingle : ISectorSplitter
         {
             throw new Exception("The bounding box of the root sector should never be null");
         }
+
+        var (primitiveCount, meshCount, instanceMeshCount) = SplittingUtils.CalculateGeometryCounts(geometries);
+
         return new InternalSector(
             sectorId,
             ParentSectorId: null,
-            0,
-            $"{sectorId}",
-            geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal),
-            geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
-            geometries,
-            bb,
-            null
+            Depth: 0,
+            Path: $"{sectorId}",
+            MinNodeDiagonal: geometries.Min(x => x.AxisAlignedBoundingBox.Diagonal),
+            MaxNodeDiagonal: geometries.Max(x => x.AxisAlignedBoundingBox.Diagonal),
+            Geometries: geometries,
+            SubtreeBoundingBox: bb,
+            GeometryBoundingBox: null,
+            IsPrioritizedSector: false,
+            SplittingStats: new SplittingStats(SplitReason.Root, primitiveCount, meshCount, instanceMeshCount)
         );
     }
 }

@@ -12,5 +12,6 @@ public record InternalSector(
     APrimitive[] Geometries,
     BoundingBox SubtreeBoundingBox,
     BoundingBox? GeometryBoundingBox,
-    bool IsPrioritizedSector = false
+    bool IsPrioritizedSector,
+    SplittingStats SplittingStats
 );

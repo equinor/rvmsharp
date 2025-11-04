@@ -30,7 +30,8 @@ public static class SceneCreator
         float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
-        BoundingBox? GeometryBoundingBox
+        BoundingBox? GeometryBoundingBox,
+        Operations.SectorSplitting.SplittingStats SplittingStats
     )
     {
         public long DownloadSize { get; init; }
@@ -130,6 +131,7 @@ public static class SceneCreator
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
                     GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
+                    SplittingStats = sector.SplittingStats,
                 },
             };
         }
@@ -182,7 +184,8 @@ public static class SceneCreator
             MaxNodeDiagonal: sector.MaxNodeDiagonal,
             Geometries: sector.Geometries,
             SubtreeBoundingBox: sector.SubtreeBoundingBox,
-            GeometryBoundingBox: sector.GeometryBoundingBox
+            GeometryBoundingBox: sector.GeometryBoundingBox,
+            SplittingStats: sector.SplittingStats
         );
 
         if (sectorFilename != null)
