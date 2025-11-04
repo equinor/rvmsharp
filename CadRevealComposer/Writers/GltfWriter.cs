@@ -873,6 +873,7 @@ public static class GltfWriter
     /// </summary>
     private static class AttFormat
     {
+        // ReSharper disable once UnusedMember.Local -- kept for possible future use
         public static readonly AttributeFormat Vec4UByte = new AttributeFormat(
             DimensionType.VEC4,
             EncodingType.UNSIGNED_BYTE
