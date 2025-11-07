@@ -122,6 +122,13 @@ public class CommandLineOptions
     )]
     public DirectoryInfo? DevPrimitiveCacheFolder { get; init; } = null;
 
+    [Option(
+        longName: "NoPrioritySectors",
+        Required = false,
+        HelpText = "Disable creating priority sectors for this model. Priority Sectors are not supported by reveal without Echo modifications."
+    )]
+    public bool NoPrioritySectors { get; set; }
+
     public static void AssertValidOptions(CommandLineOptions options)
     {
         // Validate DataAttributes

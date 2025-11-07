@@ -165,13 +165,17 @@ public static class CadRevealComposerRunner
         // First split into normal sectors for the entire model
         var normalSectors = PerformSectorSplitting(allPrimitives, composerParameters, sectorIdGenerator);
 
-        // Then split into prioritized sectors, these are loaded on demand based on metadata in the Hierarchy database
-        var prioritizedSectors = PerformPrioritizedSectorSplitting(allPrimitives, sectorIdGenerator, rootSectorId);
+        IReadOnlyCollection<InternalSector> prioritizedSectors = [];
+        if (!modelParameters.NoPrioritySectors)
+        {
+            // Then split into prioritized sectors, these are loaded on demand based on metadata in the Hierarchy database
+            prioritizedSectors = PerformPrioritizedSectorSplitting(allPrimitives, sectorIdGenerator, rootSectorId);
+        }
 
         var allSectors = normalSectors.Concat(prioritizedSectors).OrderBy(x => x.SectorId).ToArray();
 
         Console.WriteLine(
-            $"Split into {normalSectors.Length} sectors and {prioritizedSectors.Length} prioritized sectors in {stopwatch.Elapsed}"
+            $"Split into {normalSectors.Length} sectors and {prioritizedSectors.Count} prioritized sectors in {stopwatch.Elapsed}"
         );
 
         stopwatch.Restart();
@@ -241,7 +245,7 @@ public static class CadRevealComposerRunner
         return RemapPrioritizedSectorsRootSectorId(prioritizedSectors, rootSectorId);
     }
 
-    private static List<TreeIndexSectorIdPair> GetTreeIndexToSectorIdDict(InternalSector[] sectors)
+    private static List<TreeIndexSectorIdPair> GetTreeIndexToSectorIdDict(IReadOnlyCollection<InternalSector> sectors)
     {
         var sectorIdToTreeIndex = new HashSet<TreeIndexSectorIdPair>();
         foreach (var sector in sectors)
