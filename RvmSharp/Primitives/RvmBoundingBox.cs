@@ -70,6 +70,8 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
         return new RvmBoundingBox(Min: min, Max: max);
     }
 
+    // keep this for future testing
+    // no longer needed after the export of rvm models is properly fixed
     public static RvmBoundingBox CalculateAxisAlignedBoundingBoxCancelRotation(
         RvmBoundingBox localBoundingBox,
         Matrix4x4 matrix
