@@ -17,6 +17,7 @@ public record RvmFacetGroup(
     /// <summary>
     /// Calculates a (local) bounding box that encapsulates all vertex positions in this facet group.
     /// </summary>
+    /// <remarks> Will likely no longer be needed after RVM export is fixed to write correct bounding boxes. </remarks>
     /// <returns>An axis aligned bounding box in local space based on actual vertex coordinates</returns>
     public RvmBoundingBox CalculateBoundingBoxFromVertexPositions()
     {
