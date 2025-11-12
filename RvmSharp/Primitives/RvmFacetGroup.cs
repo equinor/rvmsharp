@@ -14,6 +14,10 @@ public record RvmFacetGroup(
 
     public record RvmPolygon(RvmContour[] Contours);
 
+    /// <summary>
+    /// Calculates a (local) bounding box that encapsulates all vertex positions in this facet group.
+    /// </summary>
+    /// <returns>An axis aligned bounding box in local space based on actual vertex coordinates</returns>
     public RvmBoundingBox CalculateBoundingBoxFromVertexPositions()
     {
         var max = Polygons
