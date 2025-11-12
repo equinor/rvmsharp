@@ -142,11 +142,6 @@ internal static class RvmStoreToCadRevealNodesConverter
             ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
             : null;
 
-        if (newNode.Name.Equals("/21MU001"))
-        {
-            Console.WriteLine("Hello");
-        }
-
         return newNode;
     }
 }
