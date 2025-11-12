@@ -121,7 +121,6 @@ internal static class RvmStoreToCadRevealNodesConverter
         }
 
         newNode.Geometries = rvmGeometries
-            .Where(pr => pr.BoundingBoxLocal.Diagonal > 0.1f)
             .SelectMany(primitive =>
                 RvmPrimitiveToAPrimitive.FromRvmPrimitive(
                     newNode.TreeIndex,

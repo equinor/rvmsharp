@@ -13,6 +13,8 @@ public static class RvmFacetGroupConverter
         FailedPrimitivesLogObject failedPrimitivesLogObject
     )
     {
+        // some variables are not used, but we keep them for future testing
+        // code can be cleaned after the export of rvm models is properly fixed
         var boundingBoxFromVertexCoords = rvmFacetGroup.CalculateBoundingBoxFromVertexPositions();
         var boundingBoxFromRvmFile = rvmFacetGroup.BoundingBoxLocal;
 
