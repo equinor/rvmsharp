@@ -73,6 +73,12 @@ public static class PrioritySplittingUtils
                         ? allGeometries
                         : allGeometries.Where(x => x.AxisAlignedBoundingBox.Diagonal > sizeCutoff).ToArray();
 
+                // if all geometries were removed, we return null to filter out this node
+                // otherwise the BB calc would throw an error
+                if (geometries.Length == 0)
+                {
+                    return null;
+                }
                 var boundingBox = geometries.CalculateBoundingBox();
                 if (boundingBox == null)
                 {
@@ -87,6 +93,7 @@ public static class PrioritySplittingUtils
                     boundingBox
                 );
             })
+            .WhereNotNull()
             .ToArray();
     }
 }

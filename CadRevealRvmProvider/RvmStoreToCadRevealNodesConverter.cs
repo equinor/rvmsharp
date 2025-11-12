@@ -121,6 +121,7 @@ internal static class RvmStoreToCadRevealNodesConverter
         }
 
         newNode.Geometries = rvmGeometries
+            .Where(pr => pr.BoundingBoxLocal.Diagonal > 0.1f)
             .SelectMany(primitive =>
                 RvmPrimitiveToAPrimitive.FromRvmPrimitive(
                     newNode.TreeIndex,
@@ -140,6 +141,11 @@ internal static class RvmStoreToCadRevealNodesConverter
         newNode.BoundingBoxAxisAligned = primitiveAndChildrenBoundingBoxes.Any()
             ? primitiveAndChildrenBoundingBoxes.Aggregate((a, b) => a.Encapsulate(b))
             : null;
+
+        if (newNode.Name.Equals("/21MU001"))
+        {
+            Console.WriteLine("Hello");
+        }
 
         return newNode;
     }

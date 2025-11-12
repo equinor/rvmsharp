@@ -69,4 +69,20 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
         var max = rotatedBox.Aggregate(Vector3.Max);
         return new RvmBoundingBox(Min: min, Max: max);
     }
+
+    public static RvmBoundingBox CalculateAxisAlignedBoundingBoxCancelRotation(
+        RvmBoundingBox localBoundingBox,
+        Matrix4x4 matrix
+    )
+    {
+        var box = localBoundingBox.GenerateBoxVertexes();
+        Matrix4x4.Decompose(matrix, out var scale, out var rotation, out var translation);
+        var reverseRotation = Matrix4x4.Transpose(Matrix4x4.CreateFromQuaternion(rotation));
+        var prerotatedBox = box.Select(vertex => Vector3.Transform(vertex, reverseRotation));
+        var rotatedBox = prerotatedBox.Select(vertex => Vector3.Transform(vertex, matrix)).ToArray();
+
+        var min = rotatedBox.Aggregate(Vector3.Min);
+        var max = rotatedBox.Aggregate(Vector3.Max);
+        return new RvmBoundingBox(Min: min, Max: max);
+    }
 };
