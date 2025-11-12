@@ -72,7 +72,15 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
 
     // keep this for future testing
     // no longer needed after the export of rvm models is properly fixed
-    // for mode info see AB#255079
+    // for mode info see AB#255079ATE
+    /// <summary>
+    /// Transforms a local axis aligned bounding box to a world space axis aligned bounding box
+    /// As the local bounding box from the RVM file might not be correct (pre-rotated?), we remove rotation from the matrix before applying it
+    /// When exporting RVM models is fixed, this method shall be used for testing and then can be removed again.
+    /// </summary>
+    /// <param name="localBoundingBox">An axis aligned bounding box in the primitive's local space</param>
+    /// <param name="matrix"></param>
+    /// <returns>An axis aligned bounding box in world space, with cancelled rotation</returns>
     public static RvmBoundingBox CalculateAxisAlignedBoundingBoxCancelRotation(
         RvmBoundingBox localBoundingBox,
         Matrix4x4 matrix

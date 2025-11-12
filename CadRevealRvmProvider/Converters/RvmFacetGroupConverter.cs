@@ -20,6 +20,12 @@ public static class RvmFacetGroupConverter
         var boundingBoxFromRvmFile = rvmFacetGroup.BoundingBoxLocal;
 
         var bbWorldFromRvmFile = rvmFacetGroup.CalculateAxisAlignedBoundingBox()!.ToCadRevealBoundingBox();
+
+        // When exporting RVM models is fixed, we should compare bbWorldFromRvmFileCancelRotation, bbWorldFromVertexPosition and bbWorldFromRvmFile
+        // Right now bbWorldFromVertexPosition ~~ bbWorldFromRvmFileCancelRotation, but it should be
+        // bbWorldFromVertexPosition ~~ bbWorldFromRvmFile instead
+        // bbWorldFromVertexPosition will then be removed and bbWorldFromRvmFile will be used in stead (for ProtoMeshFromFacetGroup)
+        // as bbWorldFromVertexPosition costs to compute and bbWorldFromRvmFile is for "free" (read from RVM file)
         var bbWorldFromRvmFileCancelRotation = RvmBoundingBox
             .CalculateAxisAlignedBoundingBoxCancelRotation(rvmFacetGroup.BoundingBoxLocal, rvmFacetGroup.Matrix)!
             .ToCadRevealBoundingBox();
