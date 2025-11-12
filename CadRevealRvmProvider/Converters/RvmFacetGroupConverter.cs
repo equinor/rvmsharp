@@ -15,6 +15,7 @@ public static class RvmFacetGroupConverter
     {
         // some variables are not used, but we keep them for future testing
         // code can be cleaned after the export of rvm models is properly fixed
+        // for mode info see AB#255079
         var boundingBoxFromVertexCoords = rvmFacetGroup.CalculateBoundingBoxFromVertexPositions();
         var boundingBoxFromRvmFile = rvmFacetGroup.BoundingBoxLocal;
 
