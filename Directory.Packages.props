@@ -26,7 +26,6 @@
     <PackageVersion Include="ShellProgressBar" Version="5.2.0" />
     <PackageVersion Include="SQLitePCLRaw.bundle_e_sqlite3" Version="3.0.2" />
     <PackageVersion Include="System.Text.Encodings.Web" Version="9.0.5" />
-    <PackageVersion Include="System.Text.Json" Version="9.0.5" />
     <PackageVersion Include="Tenekon.MSBuild.Packaging.ProjectBuildInPackage" Version="2.0.0" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
