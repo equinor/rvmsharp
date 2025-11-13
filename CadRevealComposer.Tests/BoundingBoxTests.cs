@@ -2,8 +2,6 @@ namespace CadRevealComposer.Tests;
 
 using System.Drawing;
 using System.Numerics;
-using Primitives;
-using Tessellation;
 
 public class BoundingBoxTests
 {
@@ -67,5 +65,13 @@ public class BoundingBoxTests
         var boundingBox = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 5, 6));
         var extents = new Vector3(3, 3, 3);
         Assert.That(boundingBox.Extents, Is.EqualTo(extents));
+    }
+
+    [Test]
+    public void Volume_CalculatesCorrectVolume()
+    {
+        var boundingBox = new BoundingBox(new Vector3(1, 2, 3), new Vector3(4, 6, 8));
+        const float expectedVolume = 3 * 4 * 5; // Extents.X * Extents.Y * Extents.Z
+        Assert.That(boundingBox.Volume, Is.EqualTo(expectedVolume));
     }
 }
