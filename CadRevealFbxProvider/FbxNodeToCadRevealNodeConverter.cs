@@ -7,7 +7,6 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Tessellation;
-using CadRevealComposer.Utils;
 using CadRevealFbxProvider.UserFriendlyLogger;
 using Commons.Utils;
 
