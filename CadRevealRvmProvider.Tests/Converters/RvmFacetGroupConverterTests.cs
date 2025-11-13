@@ -19,18 +19,16 @@ public class RvmFacetGroupConverterTests
             BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
             Polygons:
             [
-                new RvmFacetGroup.RvmPolygon(
-                    [
-                        new RvmFacetGroup.RvmContour(
-                            Vertices:
-                            [
-                                (-Vector3.One, new Vector3(0.0f, 0.0f, -1.0f)),
-                                (new Vector3(-1.0f, -1.0f, 1.0f), new Vector3(0.0f, 0.0f, -1.0f)),
-                                (Vector3.One, new Vector3(0.0f, 0.0f, -1.0f)),
-                            ]
-                        ),
-                    ]
-                ),
+                new RvmFacetGroup.RvmPolygon([
+                    new RvmFacetGroup.RvmContour(
+                        Vertices:
+                        [
+                            (-Vector3.One, new Vector3(0.0f, 0.0f, -1.0f)),
+                            (new Vector3(-1.0f, -1.0f, 1.0f), new Vector3(0.0f, 0.0f, -1.0f)),
+                            (Vector3.One, new Vector3(0.0f, 0.0f, -1.0f)),
+                        ]
+                    ),
+                ]),
             ]
         );
     }
