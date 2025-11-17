@@ -840,7 +840,7 @@ public class CapVisibilityTests
     [Test]
     [DefaultFloatingPointTolerance(0.01)]
     [Ignore(
-        "This test fails on dotnet 9 and 10, but succeeds on dotnet 8. A number is slightly off (e-5 vs e-6) in the calculations, needs investigation to why this happens."
+        "AB#373078 This test fails on dotnet 9 and 10, but succeeds on dotnet 8. A number is slightly off (e-5 vs e-6) in the calculations, needs investigation to why this happens."
     )]
     public void CalculateCapVisibility_TestSnoutCapMatch_TwoSnouts()
     {
