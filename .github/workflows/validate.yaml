@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     name: Check Formatting
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install tools
         run: |
           dotnet tool restore
@@ -30,7 +30,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet-version: [ '8.0.x' ]
+        dotnet-version: [ '10.0.x' ]
 
     steps:
       - uses: actions/checkout@v4
