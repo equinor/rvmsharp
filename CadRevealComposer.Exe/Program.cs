@@ -48,7 +48,8 @@ public static class Program
             new ModelId(options.ModelId),
             new RevisionId(options.RevisionId),
             new InstancingThreshold(options.InstancingThreshold),
-            new TemplateCountLimit(options.TemplateCountLimit)
+            new TemplateCountLimit(options.TemplateCountLimit),
+            options.NoPrioritySectors
         );
 
         if (options.NodeNameExcludeRegex != null)
