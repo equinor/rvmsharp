@@ -85,6 +85,9 @@ public class ScaffoldingAttributeParser
             );
         }
 
+        var allColumnsHaveManufacturerHeader = validatedAttributeData.All(attrLine => attrLine.Headers.Any(h =>
+                    h.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase)));
+
         var attributesDictionary = validatedAttributeData.ToDictionary(
             x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, ScaffoldingCsvLineParser.ItemCodeColumnKey),
             v =>
@@ -181,6 +184,16 @@ public class ScaffoldingAttributeParser
                 return kvp;
             }
         );
+
+        bool hasItemsFromMultipleManufacturers = (allColumnsHaveManufacturerHeader) ? HasItemsFromMultipleManufacturers(
+            attributesDictionary
+        ) : DetermineIfMultipleManufacturersFromDescription(attributesDictionary);
+
+        if(hasItemsFromMultipleManufacturers)
+        {
+            Console.WriteLine("Warning: Items from multiple manufacturers detected in the attribute file.");
+            Console.WriteLine($"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers!"}']");
+        }
 
         float totalWeightCalculated = CalculateTotalWeightFromCsvPartEntries(attributesDictionary);
         entireScaffoldingMetadata.TryAddValue(
@@ -324,6 +337,41 @@ public class ScaffoldingAttributeParser
         );
 
         return removeCsvRowsWithoutKeyAttribute;
+    }
+
+    // returns true if there are items from multiple manufacturers in the attributes dictionary
+    // works only if "Manufacturer" column exists in the file, not for older templates
+    private static bool HasItemsFromMultipleManufacturers(
+        Dictionary<string, Dictionary<string, string>?> attributesDictionary
+    )
+    {
+        var manufacturers = attributesDictionary
+            .Where(a => a.Value != null)
+            .Select(av => av.Value!["Manufacturer"])
+            .Where(m => !string.IsNullOrEmpty(m))
+            .Distinct()
+            .ToList();
+        return manufacturers.Count > 1;
+    }
+
+
+    // returns true if there are items multiple manufacturers in the models
+    // this method should be used when the column Manufacturers is not present
+    // it looks at the description columns and checks if descriptions indicate several manufactuers 
+    private static bool DetermineIfMultipleManufacturersFromDescription(Dictionary<string, Dictionary<string, string>?> attributesDictionary)
+    {
+        // prior to the template change, only Aluhak and HAKI were actually used in the models
+        bool hasHaki = attributesDictionary
+            .Where(a => a.Value != null)
+            .Select(av => av.Value!["Description"])
+            .Any(desc => desc.StartsWith("HAKI", StringComparison.OrdinalIgnoreCase));
+
+        bool hasOtherThanHaki = attributesDictionary
+            .Where(a => a.Value != null)
+            .Select(av => av.Value!["Description"])
+            .Any(desc => !desc.StartsWith("HAKI", StringComparison.OrdinalIgnoreCase));
+
+        return hasHaki && hasOtherThanHaki;
     }
 
     private static float CalculateTotalWeightFromCsvPartEntries(
