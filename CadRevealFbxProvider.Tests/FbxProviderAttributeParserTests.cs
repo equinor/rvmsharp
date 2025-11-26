@@ -3,10 +3,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
-
 using CadRevealFbxProvider.Attributes;
 using CadRevealFbxProvider.UserFriendlyLogger;
-
 using NUnit.Framework;
 
 [TestFixture]
@@ -449,7 +447,12 @@ public class FbxProviderAttributeParserTests
         var consoleLog = stringWriter.ToString();
 
         // Assert
-        Assert.That(consoleLog.Contains("##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers!']", StringComparison.InvariantCultureIgnoreCase));
+        Assert.That(
+            consoleLog.Contains(
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers!']",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+        );
     }
 
     [Test]
@@ -469,10 +472,13 @@ public class FbxProviderAttributeParserTests
         var consoleLog = stringWriter.ToString();
 
         // assert// Assert
-        Assert.That(consoleLog.Contains("##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers!']", StringComparison.InvariantCultureIgnoreCase));
-
+        Assert.That(
+            consoleLog.Contains(
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers!']",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+        );
     }
-
 
     [Test]
     // (line index)

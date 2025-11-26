@@ -85,8 +85,9 @@ public class ScaffoldingAttributeParser
             );
         }
 
-        var allColumnsHaveManufacturerHeader = validatedAttributeData.All(attrLine => attrLine.Headers.Any(h =>
-                    h.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase)));
+        var allColumnsHaveManufacturerHeader = validatedAttributeData.All(attrLine =>
+            attrLine.Headers.Any(h => h.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase))
+        );
 
         var attributesDictionary = validatedAttributeData.ToDictionary(
             x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, ScaffoldingCsvLineParser.ItemCodeColumnKey),
@@ -185,14 +186,17 @@ public class ScaffoldingAttributeParser
             }
         );
 
-        bool hasItemsFromMultipleManufacturers = (allColumnsHaveManufacturerHeader) ? HasItemsFromMultipleManufacturers(
-            attributesDictionary
-        ) : DetermineIfMultipleManufacturersFromDescription(attributesDictionary);
+        bool hasItemsFromMultipleManufacturers =
+            (allColumnsHaveManufacturerHeader)
+                ? HasItemsFromMultipleManufacturers(attributesDictionary)
+                : DetermineIfMultipleManufacturersFromDescription(attributesDictionary);
 
-        if(hasItemsFromMultipleManufacturers)
+        if (hasItemsFromMultipleManufacturers)
         {
             Console.WriteLine("Warning: Items from multiple manufacturers detected in the attribute file.");
-            Console.WriteLine($"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers!"}']");
+            Console.WriteLine(
+                $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers!"}']"
+            );
         }
 
         float totalWeightCalculated = CalculateTotalWeightFromCsvPartEntries(attributesDictionary);
@@ -354,11 +358,12 @@ public class ScaffoldingAttributeParser
         return manufacturers.Count > 1;
     }
 
-
     // returns true if there are items multiple manufacturers in the models
     // this method should be used when the column Manufacturers is not present
-    // it looks at the description columns and checks if descriptions indicate several manufactuers 
-    private static bool DetermineIfMultipleManufacturersFromDescription(Dictionary<string, Dictionary<string, string>?> attributesDictionary)
+    // it looks at the description columns and checks if descriptions indicate several manufactuers
+    private static bool DetermineIfMultipleManufacturersFromDescription(
+        Dictionary<string, Dictionary<string, string>?> attributesDictionary
+    )
     {
         // prior to the template change, only Aluhak and HAKI were actually used in the models
         bool hasHaki = attributesDictionary
