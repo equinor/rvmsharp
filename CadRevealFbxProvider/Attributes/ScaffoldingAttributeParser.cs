@@ -186,17 +186,13 @@ public class ScaffoldingAttributeParser
             }
         );
 
-        bool hasItemsFromMultipleManufacturers =
-            (allColumnsHaveManufacturerHeader)
-                ? HasItemsFromMultipleManufacturers(attributesDictionary)
-                : DetermineIfMultipleManufacturersFromDescription(attributesDictionary);
-
-        if (hasItemsFromMultipleManufacturers)
+        if (allColumnsHaveManufacturerHeader)
         {
-            Console.WriteLine("Warning: Items from multiple manufacturers detected in the attribute file.");
-            Console.WriteLine(
-                $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers!"}']"
-            );
+            CheckForMultipleManufacturers(attributesDictionary);
+        }
+        else
+        {
+            CheckForMultipleManufacturersOldFormat(attributesDictionary);
         }
 
         float totalWeightCalculated = CalculateTotalWeightFromCsvPartEntries(attributesDictionary);
@@ -345,7 +341,7 @@ public class ScaffoldingAttributeParser
 
     // returns true if there are items from multiple manufacturers in the attributes dictionary
     // works only if "Manufacturer" column exists in the file, not for older templates
-    private static bool HasItemsFromMultipleManufacturers(
+    private static void CheckForMultipleManufacturers(
         Dictionary<string, Dictionary<string, string>?> attributesDictionary
     )
     {
@@ -355,13 +351,24 @@ public class ScaffoldingAttributeParser
             .Where(m => !string.IsNullOrEmpty(m))
             .Distinct()
             .ToList();
-        return manufacturers.Count > 1;
+
+        var manufacturersString = string.Join(", ", manufacturers);
+
+        if (manufacturers.Count > 1)
+        {
+            Console.WriteLine(
+                $"Warning: Items from {manufacturers.Count} manufacturers detected in the attribute file: {manufacturersString}"
+            );
+            var msgTeamCity = $"Using items from multiple manufacturers: {manufacturersString}. ";
+            Console.WriteLine($"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{msgTeamCity}']");
+        }
     }
 
-    // returns true if there are items multiple manufacturers in the models
+    // issues warnings regarding combing if there are items multiple manufacturers in the models
+
     // this method should be used when the column Manufacturers is not present
     // it looks at the description columns and checks if descriptions indicate several manufactuers
-    private static bool DetermineIfMultipleManufacturersFromDescription(
+    private static void CheckForMultipleManufacturersOldFormat(
         Dictionary<string, Dictionary<string, string>?> attributesDictionary
     )
     {
@@ -376,7 +383,24 @@ public class ScaffoldingAttributeParser
             .Select(av => av.Value!["Description"])
             .Any(desc => !desc.StartsWith("HAKI", StringComparison.OrdinalIgnoreCase));
 
-        return hasHaki && hasOtherThanHaki;
+        if (hasHaki && hasOtherThanHaki)
+        {
+            Console.WriteLine(
+                "Warning: Scaffolding metadata has the old format and likely contains items from multiple manufacturers (Haki and Aluhak)."
+            );
+            Console.WriteLine(
+                $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers (Haki and Aluhak). Furthermore, model was exported using the old template."}']"
+            );
+        }
+        else
+        {
+            Console.WriteLine(
+                "Warning: Scaffolding metadata has the old format. We cannot confirm that it contains items from a single manufacturer."
+            );
+            Console.WriteLine(
+                $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Scaffolding is exported using the old template. Single manufacturer of parts cannot therefore be confirmed!"}']"
+            );
+        }
     }
 
     private static float CalculateTotalWeightFromCsvPartEntries(

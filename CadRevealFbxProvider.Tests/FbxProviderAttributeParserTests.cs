@@ -449,7 +449,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.That(
             consoleLog.Contains(
-                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers!']",
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers",
                 StringComparison.InvariantCultureIgnoreCase
             )
         );
@@ -474,7 +474,7 @@ public class FbxProviderAttributeParserTests
         // assert// Assert
         Assert.That(
             consoleLog.Contains(
-                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers!']",
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers",
                 StringComparison.InvariantCultureIgnoreCase
             )
         );
