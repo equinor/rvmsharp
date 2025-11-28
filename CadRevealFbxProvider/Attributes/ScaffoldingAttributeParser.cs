@@ -192,7 +192,7 @@ public class ScaffoldingAttributeParser
         }
         else
         {
-            CheckForMultipleManufacturersOldFormat(attributesDictionary);
+            IssueWarningForOldFormat(attributesDictionary);
         }
 
         float totalWeightCalculated = CalculateTotalWeightFromCsvPartEntries(attributesDictionary);
@@ -339,8 +339,13 @@ public class ScaffoldingAttributeParser
         return removeCsvRowsWithoutKeyAttribute;
     }
 
-    // returns true if there are items from multiple manufacturers in the attributes dictionary
-    // works only if "Manufacturer" column exists in the file, not for older templates
+    /// <summary>
+    /// Issues warnings if there are items from multiple manufacturers in the attributes dictionary
+    /// Assumes that "Manufacturer" column exists in the file,
+    /// For the old templates, use method IssueWarningForOldFormat instead
+    /// </summary>
+    /// <param name="attributesDictionary">Processed attributes as a dictionary with item code as key</param>
+    /// <returns></returns>
     private static void CheckForMultipleManufacturers(
         Dictionary<string, Dictionary<string, string>?> attributesDictionary
     )
@@ -364,43 +369,19 @@ public class ScaffoldingAttributeParser
         }
     }
 
-    // issues warnings regarding combing if there are items multiple manufacturers in the models
-
-    // this method should be used when the column Manufacturers is not present
-    // it looks at the description columns and checks if descriptions indicate several manufactuers
-    private static void CheckForMultipleManufacturersOldFormat(
-        Dictionary<string, Dictionary<string, string>?> attributesDictionary
-    )
+    /// <summary>
+    /// Issues warnings regardless of manufacturers found, because the old template is deprecated
+    /// This method should be used when the column Manufacturers is not present
+    /// For the up-to-date template, use method CheckForMultipleManufacturers instead
+    /// </summary>
+    /// <param name="attributesDictionary">Processed attributes as a dictionary with item code as key</param>
+    /// <returns></returns>
+    private static void IssueWarningForOldFormat(Dictionary<string, Dictionary<string, string>?> attributesDictionary)
     {
-        // prior to the template change, only Aluhak and HAKI were actually used in the models
-        bool hasHaki = attributesDictionary
-            .Where(a => a.Value != null)
-            .Select(av => av.Value!["Description"])
-            .Any(desc => desc.StartsWith("HAKI", StringComparison.OrdinalIgnoreCase));
-
-        bool hasOtherThanHaki = attributesDictionary
-            .Where(a => a.Value != null)
-            .Select(av => av.Value!["Description"])
-            .Any(desc => !desc.StartsWith("HAKI", StringComparison.OrdinalIgnoreCase));
-
-        if (hasHaki && hasOtherThanHaki)
-        {
-            Console.WriteLine(
-                "Warning: Scaffolding metadata has the old format and likely contains items from multiple manufacturers (Haki and Aluhak)."
-            );
-            Console.WriteLine(
-                $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers (Haki and Aluhak). Furthermore, model was exported using the old template."}']"
-            );
-        }
-        else
-        {
-            Console.WriteLine(
-                "Warning: Scaffolding metadata has the old format. We cannot confirm that it contains items from a single manufacturer."
-            );
-            Console.WriteLine(
-                $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Scaffolding is exported using the old template. Single manufacturer of parts cannot therefore be confirmed!"}']"
-            );
-        }
+        Console.WriteLine("Warning: Scaffolding is using outdated metadata template.");
+        Console.WriteLine(
+            $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers (Haki and Aluhak). Furthermore, model was exported using the old template."}']"
+        );
     }
 
     private static float CalculateTotalWeightFromCsvPartEntries(
