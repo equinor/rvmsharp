@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using CadRevealFbxProvider.Attributes;
 using CadRevealFbxProvider.UserFriendlyLogger;
 using NUnit.Framework;
@@ -14,7 +15,7 @@ public class FbxProviderAttributeParserTests
     private readonly List<string> fileLinesTwoManufacturers = new List<string>
     {
         "Schedules-Export;;;",
-        "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+        "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
         ";;;;;;;;;;;;;;;;;;;;;;;;",
         ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
         "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -29,7 +30,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesNoItemCode = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
@@ -51,7 +52,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesNoItemCode = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123456",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
@@ -435,8 +436,53 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
+    public void ParseAttributes_MultipleManufacturersOldFormat_LogsWarningToTC()
+    {
+        // Arrange
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
+
+        // Act
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesTwoManufacturers.ToArray());
+        var consoleLog = stringWriter.ToString();
+
+        // Assert
+        Assert.That(
+            consoleLog.Contains(
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+        );
+    }
+
+    [Test]
+    [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
+    public void ParseAttributes_MultipleManufacturersNewFormat_LogsWarningToTC(string csvFileName)
+    {
+        // setup
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
+
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = true;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        var result = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
+        var consoleLog = stringWriter.ToString();
+
+        // assert// Assert
+        Assert.That(
+            consoleLog.Contains(
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+        );
+    }
+
+    [Test]
     // (line index)
-    [TestCase(0, "MAKI 450 Lattice Beam 2220 Pockets AL")]
+    [TestCase(0, "HAKI 450 Lattice Beam 2220 Pockets AL")]
     [TestCase(1, "Base Element BS 600 X 34 Hollow")]
     [TestCase(2, "Base Element BS 600 X 34 Hollow")]
     public void ParseAttributes_TwoManufacturers_ExtractsEnhancedDescription(int lineIndex, string enhancedDescr)
@@ -892,7 +938,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;Base Element;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -914,7 +960,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;;3.45 kg;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",

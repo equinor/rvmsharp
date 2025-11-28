@@ -85,6 +85,10 @@ public class ScaffoldingAttributeParser
             );
         }
 
+        var allColumnsHaveManufacturerHeader = validatedAttributeData.All(attrLine =>
+            attrLine.Headers.Any(h => h.Equals("Manufacturer", StringComparison.OrdinalIgnoreCase))
+        );
+
         var attributesDictionary = validatedAttributeData.ToDictionary(
             x => ScaffoldingCsvLineParser.ExtractKeyFromCsvRow(x, ScaffoldingCsvLineParser.ItemCodeColumnKey),
             v =>
@@ -181,6 +185,15 @@ public class ScaffoldingAttributeParser
                 return kvp;
             }
         );
+
+        if (allColumnsHaveManufacturerHeader)
+        {
+            CheckForMultipleManufacturers(attributesDictionary);
+        }
+        else
+        {
+            IssueWarningForOldFormat(attributesDictionary);
+        }
 
         float totalWeightCalculated = CalculateTotalWeightFromCsvPartEntries(attributesDictionary);
         entireScaffoldingMetadata.TryAddValue(
@@ -324,6 +337,51 @@ public class ScaffoldingAttributeParser
         );
 
         return removeCsvRowsWithoutKeyAttribute;
+    }
+
+    /// <summary>
+    /// Issues warnings if there are items from multiple manufacturers in the attributes dictionary
+    /// Assumes that "Manufacturer" column exists in the file,
+    /// For the old templates, use method IssueWarningForOldFormat instead
+    /// </summary>
+    /// <param name="attributesDictionary">Processed attributes as a dictionary with item code as key</param>
+    /// <returns></returns>
+    private static void CheckForMultipleManufacturers(
+        Dictionary<string, Dictionary<string, string>?> attributesDictionary
+    )
+    {
+        var manufacturers = attributesDictionary
+            .Where(a => a.Value != null)
+            .Select(av => av.Value!["Manufacturer"])
+            .Where(m => !string.IsNullOrEmpty(m))
+            .Distinct()
+            .ToList();
+
+        var manufacturersString = string.Join(", ", manufacturers);
+
+        if (manufacturers.Count > 1)
+        {
+            Console.WriteLine(
+                $"Warning: Items from {manufacturers.Count} manufacturers detected in the attribute file: {manufacturersString}"
+            );
+            var msgTeamCity = $"Using items from multiple manufacturers: {manufacturersString}. ";
+            Console.WriteLine($"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{msgTeamCity}']");
+        }
+    }
+
+    /// <summary>
+    /// Issues warnings regardless of manufacturers found, because the old template is deprecated
+    /// This method should be used when the column Manufacturers is not present
+    /// For the up-to-date template, use method CheckForMultipleManufacturers instead
+    /// </summary>
+    /// <param name="attributesDictionary">Processed attributes as a dictionary with item code as key</param>
+    /// <returns></returns>
+    private static void IssueWarningForOldFormat(Dictionary<string, Dictionary<string, string>?> attributesDictionary)
+    {
+        Console.WriteLine("Warning: Scaffolding is using outdated metadata template.");
+        Console.WriteLine(
+            $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers (Haki and Aluhak). Furthermore, model was exported using the old template."}']"
+        );
     }
 
     private static float CalculateTotalWeightFromCsvPartEntries(
