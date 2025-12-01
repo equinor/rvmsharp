@@ -380,7 +380,7 @@ public class ScaffoldingAttributeParser
     {
         Console.WriteLine("Warning: Scaffolding is using outdated metadata template.");
         Console.WriteLine(
-            $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Using items from multiple manufacturers (Haki and Aluhak). Furthermore, model was exported using the old template."}']"
+            $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Model was exported using the old template. Multiple manufacturers cannot be confirmed nor ruled out."}']"
         );
     }
 
