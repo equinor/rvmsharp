@@ -449,7 +449,7 @@ public class FbxProviderAttributeParserTests
         // Assert
         Assert.That(
             consoleLog.Contains(
-                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers",
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Model was exported using the old template",
                 StringComparison.InvariantCultureIgnoreCase
             )
         );
