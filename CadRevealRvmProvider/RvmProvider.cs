@@ -1,6 +1,7 @@
 ﻿namespace CadRevealRvmProvider;
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using BatchUtils;
 using Ben.Collections.Specialized;
 using CadRevealComposer;
@@ -81,6 +82,8 @@ public class RvmProvider : IModelFormatProvider
         Console.WriteLine(
             "CadRevealNodeCount: " + nodes.Length + ". TreeIndex count is " + treeIndexGenerator.PeekNextId
         );
+
+        AddMetadataForSurfaceUnits(nodes);
 
         Console.WriteLine($"Converted RVM files to Reveal nodes in {stopwatch.Elapsed}");
 
@@ -192,6 +195,57 @@ public class RvmProvider : IModelFormatProvider
             {
                 Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
             }
+        }
+    }
+
+    /// <summary>
+    /// Adds metadata for surface unit volumes to the Attributes of the given nodes.
+    /// </summary>
+    /// <remarks>
+    /// Surface unit volumes are identified by their parent node name containing "/A00-AREA"
+    /// </remarks>
+    /// <param name="nodes"></param>
+    public static void AddMetadataForSurfaceUnits(IReadOnlyList<CadRevealNode> nodes)
+    {
+#pragma warning disable SYSLIB1045 -- No need for optimizing this regex as it's not used in performance critical path
+        // Matches strings like "/12A34"
+        // This MAY not be the naming standard on all assets, but it's the best we have for now.
+        var regex = new Regex(@"^\/\d+[A-Z]\d+$");
+#pragma warning restore SYSLIB1045
+        // /A00-AREA
+        //   /A00-AREA/OFP
+        //     /A00-AREA/OFP/EL-472000_DECK-1
+        //       /1B41 <- This is a surface unit volume
+
+        var foundA00Area = false;
+        var foundSurfaceUnitVolumes = 0;
+        foreach (CadRevealNode cadRevealNode in nodes)
+        {
+            if (cadRevealNode.Parent?.Name.StartsWith("/A00-AREA", StringComparison.OrdinalIgnoreCase) != true)
+                continue;
+            foundA00Area = true;
+
+            if (!regex.IsMatch(cadRevealNode.Name))
+                continue;
+
+            var surfaceUnitVolumeName = cadRevealNode.Name.TrimStart('/');
+            cadRevealNode.Attributes.Add("IsSurfaceUnitVolume", "true"); // Optimize for hiding all surface unit volumes when needed
+            cadRevealNode.Attributes.Add("SurfaceUnitVolume", surfaceUnitVolumeName);
+            foundSurfaceUnitVolumes++;
+        }
+
+        if (foundA00Area && foundSurfaceUnitVolumes == 0)
+        {
+            Console.WriteLine(
+                "Warning: RVM files contained /A00-AREA nodes but no surface unit volumes were found in that file."
+            );
+        }
+
+        if (foundA00Area && foundSurfaceUnitVolumes > 0)
+        {
+            Console.WriteLine(
+                $"Added metadata for {foundSurfaceUnitVolumes} surface unit volumes found in /A00-AREA nodes."
+            );
         }
     }
 
