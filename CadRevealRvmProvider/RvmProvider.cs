@@ -207,11 +207,9 @@ public class RvmProvider : IModelFormatProvider
     /// <param name="nodes"></param>
     public static void AddMetadataForSurfaceUnits(IReadOnlyList<CadRevealNode> nodes)
     {
-#pragma warning disable SYSLIB1045 -- No need for optimizing this regex as it's not used in performance critical path
         // Matches strings like "/12A34"
         // This MAY not be the naming standard on all assets, but it's the best we have for now.
         var regex = new Regex(@"^\/\d+[A-Z]\d+$");
-#pragma warning restore SYSLIB1045
         // /A00-AREA
         //   /A00-AREA/OFP
         //     /A00-AREA/OFP/EL-472000_DECK-1
@@ -234,19 +232,14 @@ public class RvmProvider : IModelFormatProvider
             foundSurfaceUnitVolumes++;
         }
 
-        if (foundA00Area && foundSurfaceUnitVolumes == 0)
-        {
-            Console.WriteLine(
-                "Warning: RVM files contained /A00-AREA nodes but no surface unit volumes were found in that file."
-            );
-        }
+        if (!foundA00Area)
+            return;
 
-        if (foundA00Area && foundSurfaceUnitVolumes > 0)
-        {
-            Console.WriteLine(
-                $"Added metadata for {foundSurfaceUnitVolumes} surface unit volumes found in /A00-AREA nodes."
-            );
-        }
+        Console.WriteLine(
+            foundSurfaceUnitVolumes == 0
+                ? "Warning: RVM files contained /A00-AREA nodes but no surface unit volumes were found in that file."
+                : $"Added metadata for {foundSurfaceUnitVolumes} surface unit volumes found in /A00-AREA nodes."
+        );
     }
 
     /// <summary>
