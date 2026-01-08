@@ -1,6 +1,5 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
-using System;
 using System.Globalization;
 using Csv;
 using UserFriendlyLogger;
@@ -78,10 +77,8 @@ public class ScaffoldingAttributeParser
             var duplicatedKeysMsg = string.Join(", ", duplicatedKeys.Select(g => $"-- {g.Key} ({g.Count()}-times)"));
 
             throw new UserFriendlyLogException(
-                $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row, but contains multiple rows with the same value. This indicates an export error, or maybe some items very inserted using copy-paste and the ID was not regenerated? The following values are duplicated: {duplicatedKeysMsg}. ",
-                new ScaffoldingAttributeParsingException(
-                    $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row"
-                )
+                $"CSV table column: \"{ScaffoldingCsvLineParser.ItemCodeColumnKey}\" should be unique for each row, but contains multiple rows with the same value."
+                    + $"Remember to re-generate Ids when saving the file. This can happen when you copy-paste items without re-generating ids. The following values are duplicated: {duplicatedKeysMsg}. "
             );
         }
 
