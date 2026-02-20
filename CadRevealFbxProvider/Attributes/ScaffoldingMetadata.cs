@@ -197,7 +197,11 @@ public class ScaffoldingMetadata
         }
     }
 
-    public void ThrowIfWorkOrderFromFilenameInvalid(string filename)
+    // Filename checking for non-TEMP scaffolding files
+    // throws if filename is not compliant with the guidlines:
+    // Plant code (3 alphabetical letters) - work order number (digits only) - suffixes (optional, but a-zA-Z only, can be multiple, separated by "-")
+    // Work order number must match the work order number in the metadata
+    public void ThrowIfFilenameInvalid(string filename)
     {
         // this function is only called for work order scaffolding files
         // so calling this for temp scaffs must be by mistake, -> throw an exception
@@ -211,7 +215,7 @@ public class ScaffoldingMetadata
             );
         }
 
-        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:-|$)");
+        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:(-[a-zA-Z\d]+)+$|$)");
         if (match.Success)
         {
             string workOrderFromFilename = match.Groups[1].Value;
