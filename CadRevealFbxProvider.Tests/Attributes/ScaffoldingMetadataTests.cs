@@ -326,23 +326,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    [TestCase("/abc-123456789-woScaffCorrect", "woScaffCorrect")]
-    [TestCase("/abc-123456789", "")]
-    [TestCase("/abc-123456789-", "")]
-    [TestCase("/abc-123456789-suffix.with.dots", "suffix.with.dots")]
-    [TestCase("/abc-123456789--suffix--with-dashes", "-suffix--with-dashes")]
-    public void GetSuffixFromFilename_ExtractsCorrectSuffix(string fileNameWoExtension, string expectedResult)
-    {
-        // Arrange
-        var metadata = new ScaffoldingMetadata();
-
-        metadata.GetSuffixFromFilename(fileNameWoExtension);
-
-        Assert.That(metadata.NameSuffix, Is.EqualTo(expectedResult));
-    }
-
-    [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderNotPreceededByCode_Throws()
+    public void ThrowIfFilenameInvalid_WhenWorkOrderNotPreceededByCode_Throws()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -358,5 +342,21 @@ public class ScaffoldingMetadataTests
         HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
             metadata.ThrowIfFilenameInvalid(fileName1)
         );
+    }
+
+    [Test]
+    [TestCase("/abc-123456789-woScaffCorrect", "woScaffCorrect")]
+    [TestCase("/abc-123456789", "")]
+    [TestCase("/abc-123456789-", "")]
+    [TestCase("/abc-123456789-suffix.with.dots", "suffix.with.dots")]
+    [TestCase("/abc-123456789--suffix--with-dashes", "-suffix--with-dashes")]
+    public void GetSuffixFromFilename_ExtractsCorrectSuffix(string fileNameWoExtension, string expectedResult)
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+
+        metadata.GetSuffixFromFilename(fileNameWoExtension);
+
+        Assert.That(metadata.NameSuffix, Is.EqualTo(expectedResult));
     }
 }
