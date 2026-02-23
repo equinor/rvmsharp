@@ -121,9 +121,10 @@ public static class FbxWorkload
                 if (!isTemp)
                 {
                     // check if the WO from filename actually matches the metadata
+                    // check if the filename is complying with the guidlines
                     // for non-temp scaffs only
                     // crashes if there is a mismatch
-                    scaffoldingMetadata.ThrowIfWorkOrderFromFilenameInvalid(fileNameonly);
+                    scaffoldingMetadata.ThrowIfFilenameInvalid(fileNameonly);
                 }
                 scaffoldingMetadata.GetSuffixFromFilename(fileNameonly);
                 // We crash if we dont have expected values

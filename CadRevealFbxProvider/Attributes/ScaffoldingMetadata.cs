@@ -197,7 +197,11 @@ public class ScaffoldingMetadata
         }
     }
 
-    public void ThrowIfWorkOrderFromFilenameInvalid(string filename)
+    // Filename checking for non-TEMP scaffolding files
+    // throws if filename is not compliant with the guidelines:
+    // Plant code (usually 3 alphabetical letters) - work order number (digits only) - suffixes (optional, consist of alphanumeric characters, can be multiple, separated by "-")
+    // Work order number must match the work order number in the metadata
+    public void ThrowIfFilenameInvalid(string filename)
     {
         // this function is only called for work order scaffolding files
         // so calling this for temp scaffs must be by mistake, -> throw an exception
@@ -211,7 +215,7 @@ public class ScaffoldingMetadata
             );
         }
 
-        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:-|$)");
+        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:(-[a-zA-Z\d]+)+$|$)");
         if (match.Success)
         {
             string workOrderFromFilename = match.Groups[1].Value;
@@ -236,7 +240,7 @@ public class ScaffoldingMetadata
             throw new UserFriendlyLogException(
                 "",
                 new ScaffoldingFilenameException(
-                    $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename. Please check the naming guide."
+                    $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide."
                 )
             );
         }
