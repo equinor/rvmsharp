@@ -216,7 +216,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMatches_DoesNotThrow()
+    public void ThrowIfFilenameInvalid_WhenWorkOrderMatches_DoesNotThrow()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -232,7 +232,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMismatches_Throws()
+    public void ThrowIfFilenameInvalid_WhenWorkOrderMismatches_Throws()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -251,7 +251,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenFilenameCorrect_DoesNotThrow()
+    public void ThrowIfFilenameInvalid_WhenFilenameCorrect_DoesNotThrow()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -272,7 +272,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenFilenameNotMatchesTemplate_Throws()
+    public void ThrowIfFilenameInvalid_WhenFilenameNotMatchesTemplate_Throws()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -283,7 +283,7 @@ public class ScaffoldingMetadataTests
 
         // tested function expects filename without extension
 
-        var fileName1 = "BCA-12345678A12"; // NOT OK, work order should be digits only
+        var fileName1 = "BCA-12345678A12"; // NOT OK, work order should be digits only, we have seen architects mistakently enter WO like this sometimes
         var fileName2 = "BCA_12345678"; // underscore in filename
         var fileName3 = "BCA_"; // missing work order in filename
         var fileName4 = "BCA-12345678-A12-Del1.0"; // NOT OK, has dot in the suffix
@@ -303,7 +303,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenCallingOnTempScaff_Throws()
+    public void ThrowIfFilenameInvalid_WhenCallingOnTempScaff_Throws()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();

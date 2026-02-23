@@ -198,8 +198,8 @@ public class ScaffoldingMetadata
     }
 
     // Filename checking for non-TEMP scaffolding files
-    // throws if filename is not compliant with the guidlines:
-    // Plant code (3 alphabetical letters) - work order number (digits only) - suffixes (optional, but a-zA-Z only, can be multiple, separated by "-")
+    // throws if filename is not compliant with the guidelines:
+    // Plant code (usually 3 alphabetical letters) - work order number (digits only) - suffixes (optional, consist of alphanumeric characters, can be multiple, separated by "-")
     // Work order number must match the work order number in the metadata
     public void ThrowIfFilenameInvalid(string filename)
     {
@@ -240,7 +240,7 @@ public class ScaffoldingMetadata
             throw new UserFriendlyLogException(
                 "",
                 new ScaffoldingFilenameException(
-                    $"Scaffolding CSV file {filename} does not contain a correctly-formatted work order number in the filename. Please check the naming guide."
+                    $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide."
                 )
             );
         }
