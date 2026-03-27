@@ -1,10 +1,9 @@
 {
-  "$schema": "https://www.schemastore.org/dotnet-tools.json",
   "version": 1,
   "isRoot": true,
   "tools": {
     "csharpier": {
-      "version": "1.2.5",
+      "version": "1.2.6",
       "commands": [
         "csharpier"
       ],
