@@ -3,7 +3,7 @@ namespace CadRevealRvmProvider.Tests;
 using CadRevealComposer;
 
 [TestFixture]
-public class AdditionalMetadataCsvTests
+public class AdditionalMetadataCsvInjectorTests
 {
     private string _testDirectory = null!;
 
@@ -34,7 +34,7 @@ public class AdditionalMetadataCsvTests
         );
 
         // Act
-        var result = RvmProvider.LoadAdditionalMetadataFromCsv(new FileInfo(filePath));
+        var result = AdditionalMetadataCsvInjector.LoadAdditionalMetadataFromCsv(new FileInfo(filePath));
 
         // Assert
         Assert.That(result, Is.Not.Null);
@@ -69,7 +69,7 @@ public class AdditionalMetadataCsvTests
         };
 
         // Act
-        RvmProvider.AddCustomEchoAttributeMetadata([node1, node2], new FileInfo(filePath));
+        AdditionalMetadataCsvInjector.AddCustomEchoAttributeMetadata([node1, node2], new FileInfo(filePath));
 
         using (Assert.EnterMultipleScope())
         {
