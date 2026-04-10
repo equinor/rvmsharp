@@ -299,7 +299,7 @@ public class RvmProvider : IModelFormatProvider
 
         while (!reader.EndOfStream)
         {
-            var line = reader.ReadLine();
+            var line = reader.ReadLine()?.Trim();
             if (line == null)
                 continue;
             var values = line.Split(',');
@@ -307,6 +307,9 @@ public class RvmProvider : IModelFormatProvider
                 continue;
 
             var refNo = values[refNoIndex];
+            if (string.IsNullOrWhiteSpace(refNo))
+                continue;
+
             // Map all the attributes except the RefNo column
             var attrs = headers
                 .Select((h, i) => (h, i))
@@ -341,8 +344,14 @@ public class RvmProvider : IModelFormatProvider
                 continue;
 
             foreach ((string key, string value) in attrs)
-                node.Attributes.Add(attributePrefix + key, value);
-
+            {
+                if (!node.Attributes.TryAdd(attributePrefix + key, value))
+                {
+                    throw new Exception(
+                        $"Failed to add metadata attribute '{attributePrefix + key}' to node '{node.Name}' with RefNo '{refNo}' because the attribute already exists on this node. Existing attributes: {string.Join(", ", node.Attributes.Keys)}."
+                    );
+                }
+            }
             matched++;
         }
 
