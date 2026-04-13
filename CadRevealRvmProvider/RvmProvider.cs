@@ -29,7 +29,8 @@ public class RvmProvider : IModelFormatProvider
         NodeNameFiltering nodeNameFiltering
     )
     {
-        var workload = RvmWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
+        var filesToParseArray = filesToParse.ToArray();
+        var workload = RvmWorkload.CollectWorkload(filesToParseArray.Select(x => x.FullName).ToArray());
 
         Console.WriteLine("Reading RvmData");
         var rvmTimer = Stopwatch.StartNew();
@@ -84,6 +85,15 @@ public class RvmProvider : IModelFormatProvider
         );
 
         AddMetadataForSurfaceUnits(nodes);
+
+        // Temp solution to add custom metadata for equipment nodes based on matching RefNo with an additional metadata CSV file, until we have a better solution for custom metadata in place.
+        var additionalMetadataFiles = filesToParseArray.Where(x =>
+            x.Name.EndsWith("AdditionalMetadata.csv", StringComparison.OrdinalIgnoreCase)
+        );
+        foreach (FileInfo additionalMetadataCsv in additionalMetadataFiles)
+        {
+            AdditionalMetadataCsvInjector.AddCustomEchoAttributeMetadata(nodes, additionalMetadataCsv);
+        }
 
         Console.WriteLine($"Converted RVM files to Reveal nodes in {stopwatch.Elapsed}");
 
@@ -141,6 +151,7 @@ public class RvmProvider : IModelFormatProvider
                 $"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc)."
             );
         }
+
         RvmPyramidInstancer.Result[] pyramidInstancingResult;
         if (composerParameters.NoInstancing)
         {
