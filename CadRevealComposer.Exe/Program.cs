@@ -1,16 +1,16 @@
-﻿namespace CadRevealComposer.Exe;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using CadRevealComposer.Configuration;
+using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Utils;
 using CadRevealFbxProvider;
 using CadRevealObjProvider;
 using CadRevealRvmProvider;
 using CommandLine;
-using Configuration;
-using ModelFormatProvider;
-using Utils;
+
+namespace CadRevealComposer.Exe;
 
 public static class Program
 {
@@ -67,7 +67,8 @@ public static class Program
             options.SplitIntoZones,
             new NodeNameExcludeRegex(options.NodeNameExcludeRegex),
             options.SimplificationThreshold,
-            options.DevPrimitiveCacheFolder
+            options.DevPrimitiveCacheFolder,
+            options.SplittingStrategy
         );
 
         if (options.SplitIntoZones)

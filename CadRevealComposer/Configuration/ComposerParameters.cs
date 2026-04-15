@@ -1,6 +1,12 @@
+using System.IO;
+
 namespace CadRevealComposer.Configuration;
 
-using System.IO;
+public enum SplittingStrategy
+{
+    Octree,
+    KdTree,
+}
 
 public record ComposerParameters(
     bool NoInstancing,
@@ -8,7 +14,8 @@ public record ComposerParameters(
     bool SplitIntoZones,
     NodeNameExcludeRegex NodeNameExcludeRegex,
     float SimplificationThreshold,
-    DirectoryInfo? DevPrimitiveCacheFolder
+    DirectoryInfo? DevPrimitiveCacheFolder,
+    SplittingStrategy SplittingStrategy = SplittingStrategy.Octree
 );
 
 public record NodeNameExcludeRegex(string? Value);

@@ -1,26 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
+using System.Numerics;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 
 namespace CadRevealComposer.Operations.SectorSplitting;
 
-public class SectorSplitterOctree : ISectorSplitter
+/// <summary>
+/// K-D tree sector splitter that uses binary median split on the longest axis
+/// combined with visual importance weighting for node prioritization.
+/// </summary>
+public class SectorSplitterKdTree : ISectorSplitter
 {
-    private const long SectorEstimatedByteSizeBudget = 2_000_000; // bytes, Arbitrary value
-    private const long SectorEstimatesTrianglesBudget = 300_000; // triangles, Arbitrary value
-    private const long SectorEstimatedPrimitiveBudget = 5_000; // count, Arbitrary value
-    private const float DoNotChopSectorsSmallerThanMetersInDiameter = 17.4f; // Arbitrary value
-    private const float MinDiagonalSizeAtDepth_1 = 7; // arbitrary value for min size at depth 1
-    private const float MinDiagonalSizeAtDepth_2 = 4; // arbitrary value for min size at depth 2
-    private const float MinDiagonalSizeAtDepth_3 = 1.5f; // arbitrary value for min size at depth 3
-
-    private const float OutlierGroupingDistance = 20f; // arbitrary distance between nodes before we group them
-    private const int OutlierStartDepth = 20; // arbitrary depth for outlier sectors, just to ensure separation from the rest
-    private const int MinRemainingNodesToEnforceBudget = 10; // Prevent creating tiny sectors with very few nodes by allowing budget overrun if fewer nodes remain
+    private const int OutlierStartDepth = 20;
 
     public IEnumerable<InternalSector> SplitIntoSectors(
         APrimitive[] allGeometries,
@@ -28,7 +22,12 @@ public class SectorSplitterOctree : ISectorSplitter
     )
     {
         var allNodes = SplittingUtils.ConvertPrimitivesToNodes(allGeometries);
-        (Node[] regularNodes, Node[] outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes();
+
+        // Scale-relative outlier distance: max(20m, 5% of model diagonal)
+        var modelDiagonal = allNodes.CalculateBoundingBox().Diagonal;
+        var outlierDistance = Math.Max(20f, modelDiagonal * 0.05f);
+
+        (Node[] regularNodes, Node[] outlierNodes) = allNodes.SplitNodesIntoRegularAndOutlierNodes(outlierDistance);
         var boundingBoxEncapsulatingAllNodes = allNodes.CalculateBoundingBox();
         var boundingBoxEncapsulatingMostNodes = regularNodes.CalculateBoundingBox();
 
@@ -37,8 +36,13 @@ public class SectorSplitterOctree : ISectorSplitter
 
         yield return SplittingUtils.CreateRootSector(rootSectorId, rootPath, boundingBoxEncapsulatingAllNodes);
 
-        //Order nodes by diagonal size
-        var sortedNodes = regularNodes.OrderByDescending(n => n.Diagonal).ToArray();
+        // Sort by visual importance descending instead of diagonal
+        var sortedNodes = regularNodes.OrderByDescending(n => n.GetVisualImportance()).ToArray();
+
+        // Capture the root scene diagonal once for the LOD filter. Passing it unchanged through
+        // recursion gives a single predictable exponential decay, avoiding double-decay from
+        // the subtree diagonal shrinking at each recursive level.
+        var rootSceneDiagonal = boundingBoxEncapsulatingMostNodes.Diagonal;
 
         var sectors = SplitIntoSectorsRecursive(
                 sortedNodes,
@@ -46,7 +50,8 @@ public class SectorSplitterOctree : ISectorSplitter
                 rootPath,
                 rootSectorId,
                 sectorIdGenerator,
-                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes)
+                CalculateStartSplittingDepth(boundingBoxEncapsulatingMostNodes),
+                rootSceneDiagonal
             )
             .ToArray();
 
@@ -55,12 +60,19 @@ public class SectorSplitterOctree : ISectorSplitter
             yield return sector;
         }
 
-        // Add outliers to special outliers sector
-        var excludedOutliersCount = outlierNodes.Length;
-        if (excludedOutliersCount > 0)
+        if (outlierNodes.Length > 0)
         {
-            // Group and split outliers
-            var outlierSectors = HandleOutlierSplitting(outlierNodes, rootPath, rootSectorId, sectorIdGenerator);
+            var outlierGroupingDistance = Math.Max(20f, modelDiagonal * 0.05f);
+            // Outliers get their own scene diagonal from their bounding box
+            var outlierSceneDiagonal = outlierNodes.CalculateBoundingBox().Diagonal;
+            var outlierSectors = HandleOutlierSplitting(
+                outlierNodes,
+                rootPath,
+                rootSectorId,
+                sectorIdGenerator,
+                outlierGroupingDistance,
+                outlierSceneDiagonal
+            );
             foreach (var sector in outlierSectors)
             {
                 yield return sector;
@@ -78,17 +90,16 @@ public class SectorSplitterOctree : ISectorSplitter
         );
     }
 
-    /// <summary>
-    /// Group outliers by distance, and run splitting on each separate group
-    /// </summary>
     private IEnumerable<InternalSector> HandleOutlierSplitting(
         Node[] outlierNodes,
         string rootPath,
         uint rootSectorId,
-        SequentialIdGenerator sectorIdGenerator
+        SequentialIdGenerator sectorIdGenerator,
+        float outlierGroupingDistance,
+        float rootSceneDiagonal
     )
     {
-        var outlierGroups = SplittingUtils.GroupOutliersRecursive(outlierNodes, OutlierGroupingDistance);
+        var outlierGroups = SplittingUtils.GroupOutliersRecursive(outlierNodes, outlierGroupingDistance);
 
         using (new TeamCityLogBlock("Outlier Sectors"))
         {
@@ -96,17 +107,17 @@ public class SectorSplitterOctree : ISectorSplitter
             {
                 var outlierSectors = SplitIntoSectorsRecursive(
                         outlierGroup,
-                        OutlierStartDepth, // Arbitrary depth for outlier sectors, just to ensure separation from the rest
+                        OutlierStartDepth,
                         rootPath,
                         rootSectorId,
                         sectorIdGenerator,
-                        0 // Hackish: This is set to a value a lot lower than OutlierStartDepth to skip size checking in budget
+                        0,
+                        rootSceneDiagonal
                     )
                     .ToArray();
 
                 foreach (var sector in outlierSectors)
                 {
-                    // Mark this sector as an outlier sector
                     Console.WriteLine(
                         $"Outlier-sector with id {sector.SectorId}, path {sector.Path}, {sector.Geometries.Length} geometries added at depth {sector.Depth}."
                     );
@@ -132,21 +143,16 @@ public class SectorSplitterOctree : ISectorSplitter
         string parentPath,
         uint? parentSectorId,
         SequentialIdGenerator sectorIdGenerator,
-        int depthToStartSplittingGeometry
+        int depthToStartSplittingGeometry,
+        float rootSceneDiagonal
     )
     {
-        /* Recursively divides space into eight voxels of about equal size (each dimension X,Y,Z is divided in half).
-         * Note: Voxels might have partial overlap, to place nodes that is between two sectors without duplicating the data.
-         * Important: Geometries are grouped by NodeId and the group as a whole is placed into the same voxel (that encloses all the geometries in the group).
-         */
-
         if (nodes.Length == 0)
         {
             yield break;
         }
 
         var actualDepth = Math.Max(1, recursiveDepth - depthToStartSplittingGeometry + 1);
-
         var subtreeBoundingBox = nodes.CalculateBoundingBox();
 
         var mainVoxelNodes = Array.Empty<Node>();
@@ -157,16 +163,16 @@ public class SectorSplitterOctree : ISectorSplitter
         if (recursiveDepth < depthToStartSplittingGeometry)
         {
             subVoxelNodes = nodes;
-            // Mark sectors created at early depth before budget checking begins
             splitReason = SplitReason.EarlyDepth;
         }
         else
         {
-            // fill main voxel according to budget
+            // Use the stable root scene diagonal for LOD filtering, not the shrinking subtree diagonal
             var (additionalMainVoxelNodesByBudget, budgetSplitReason, budgetInfoResult) = GetNodesByBudget(
                 nodes.ToArray(),
-                SectorEstimatedByteSizeBudget,
-                actualDepth
+                SectorBudgets.EstimatedByteSizeBudget,
+                actualDepth,
+                rootSceneDiagonal
             );
             mainVoxelNodes = mainVoxelNodes.Concat(additionalMainVoxelNodesByBudget).ToArray();
             subVoxelNodes = nodes.Except(mainVoxelNodes).ToArray();
@@ -177,7 +183,6 @@ public class SectorSplitterOctree : ISectorSplitter
         if (!subVoxelNodes.Any())
         {
             var sectorId = (uint)sectorIdGenerator.GetNextId();
-
             yield return SplittingUtils.CreateSectorWithPrimitiveHandling(
                 mainVoxelNodes,
                 sectorId,
@@ -196,7 +201,6 @@ public class SectorSplitterOctree : ISectorSplitter
 
             var geometries = mainVoxelNodes.SelectMany(n => n.Geometries).ToArray();
 
-            // Should we keep empty sectors???? yes no?
             if (geometries.Any() || subVoxelNodes.Any())
             {
                 var sectorId = (uint)sectorIdGenerator.GetNextId();
@@ -217,25 +221,30 @@ public class SectorSplitterOctree : ISectorSplitter
                 parentSectorIdForChildren = sectorId;
             }
 
-            var subVoxelDiagonal = subVoxelNodes.CalculateBoundingBox().Diagonal;
-            var diagonalSmallerThanSplitThreshold = subVoxelDiagonal < DoNotChopSectorsSmallerThanMetersInDiameter;
-
             var sizeOfSubVoxelNodes = subVoxelNodes.Sum(x => x.EstimatedByteSize);
-            var byteSizeBelowBudget = sizeOfSubVoxelNodes < SectorEstimatedByteSizeBudget;
+            var byteSizeBelowBudget = sizeOfSubVoxelNodes < SectorBudgets.EstimatedByteSizeBudget;
 
-            if (diagonalSmallerThanSplitThreshold || byteSizeBelowBudget)
+            // No diagonal-based size threshold needed for the K-D tree (unlike the octree's
+            // DoNotChopSectorsSmallerThanMetersInDiameter). The octree's 8-way split creates up
+            // to 8 micro-sectors from a small volume — wasteful. The K-D tree's binary split only
+            // creates 2 children, and byteSizeBelowBudget naturally terminates after ⌈log₂(S/budget)⌉
+            // splits. Removing the diagonal guard also eliminates depth-only SizeThreshold chains
+            // that bloat the sector tree without adding spatial discrimination.
+            if (byteSizeBelowBudget)
             {
-                var sectors = SplitIntoSectorsRecursive(
-                    subVoxelNodes,
-                    recursiveDepth + 1,
-                    parentPathForChildren,
-                    parentSectorIdForChildren,
-                    sectorIdGenerator,
-                    depthToStartSplittingGeometry
-                );
-                foreach (var sector in sectors)
+                // Don't spatially split — recurse one level deeper (same as octree's SizeThreshold path)
+                foreach (
+                    var sector in SplitIntoSectorsRecursive(
+                        subVoxelNodes,
+                        recursiveDepth + 1,
+                        parentPathForChildren,
+                        parentSectorIdForChildren,
+                        sectorIdGenerator,
+                        depthToStartSplittingGeometry,
+                        rootSceneDiagonal
+                    )
+                )
                 {
-                    // Mark sectors that were created because size threshold was hit
                     if (sector.SplittingStats.SplitReason == SplitReason.None)
                     {
                         yield return sector with
@@ -252,93 +261,136 @@ public class SectorSplitterOctree : ISectorSplitter
                 yield break;
             }
 
-            var voxels = subVoxelNodes
-                .GroupBy(node => SplittingUtils.CalculateVoxelKeyForNode(node, subtreeBoundingBox))
-                .OrderBy(x => x.Key)
-                .ToImmutableList();
+            // Binary split on the longest axis at the median
+            var extents = subVoxelNodes.CalculateBoundingBox().Extents;
+            int longestAxis = GetLongestAxis(extents);
 
-            foreach (var voxelGroup in voxels)
+            var sorted = longestAxis switch
             {
-                if (voxelGroup.Key == SplittingUtils.MainVoxel)
-                {
-                    throw new Exception(
-                        "Main voxel should not appear here. Main voxel should be processed separately."
-                    );
-                }
+                0 => subVoxelNodes.OrderBy(n => n.BoundingBox.Center.X).ToArray(),
+                1 => subVoxelNodes.OrderBy(n => n.BoundingBox.Center.Y).ToArray(),
+                _ => subVoxelNodes.OrderBy(n => n.BoundingBox.Center.Z).ToArray(),
+            };
 
-                var sectors = SplitIntoSectorsRecursive(
-                    voxelGroup.ToArray(),
+            int mid = sorted.Length / 2;
+            var leftNodes = sorted[..mid];
+            var rightNodes = sorted[mid..];
+
+            // Recurse on left half
+            foreach (
+                var sector in SplitIntoSectorsRecursive(
+                    leftNodes,
                     recursiveDepth + 1,
                     parentPathForChildren,
                     parentSectorIdForChildren,
                     sectorIdGenerator,
-                    depthToStartSplittingGeometry
-                );
-                foreach (var sector in sectors)
+                    depthToStartSplittingGeometry,
+                    rootSceneDiagonal
+                )
+            )
+            {
+                if (sector.SplittingStats.SplitReason == SplitReason.None)
                 {
-                    // Mark sectors created through spatial subdivision if they don't have a more specific reason
-                    if (sector.SplittingStats.SplitReason == SplitReason.None)
+                    yield return sector with
                     {
-                        yield return sector with
-                        {
-                            SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.Spatial },
-                        };
-                    }
-                    else
+                        SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.KdTreeMedian },
+                    };
+                }
+                else
+                {
+                    yield return sector;
+                }
+            }
+
+            // Recurse on right half
+            foreach (
+                var sector in SplitIntoSectorsRecursive(
+                    rightNodes,
+                    recursiveDepth + 1,
+                    parentPathForChildren,
+                    parentSectorIdForChildren,
+                    sectorIdGenerator,
+                    depthToStartSplittingGeometry,
+                    rootSceneDiagonal
+                )
+            )
+            {
+                if (sector.SplittingStats.SplitReason == SplitReason.None)
+                {
+                    yield return sector with
                     {
-                        yield return sector;
-                    }
+                        SplittingStats = sector.SplittingStats with { SplitReason = SplitReason.KdTreeMedian },
+                    };
+                }
+                else
+                {
+                    yield return sector;
                 }
             }
         }
     }
 
+    /// <summary>
+    /// Returns 0 for X, 1 for Y, 2 for Z — whichever axis has the largest extent.
+    /// </summary>
+    public static int GetLongestAxis(Vector3 extents)
+    {
+        if (extents.X >= extents.Y && extents.X >= extents.Z)
+            return 0;
+        if (extents.Y >= extents.Z)
+            return 1;
+        return 2;
+    }
+
+    /// <summary>
+    /// K-D tree halves one axis per level (not three like the octree), so the diagonal
+    /// shrinks by roughly √2 per level instead of 2. We model this with /1.414 to start
+    /// budget-checking at the right depth — earlier than the octree for the same model size.
+    /// </summary>
     private static int CalculateStartSplittingDepth(BoundingBox boundingBox)
     {
-        // If we start splitting too low in the octree, we might end up with way too many sectors
-        // If we start splitting too high, we might get some large sectors with a lot of data, which always will be prioritized
-
         var diagonalAtDepth = boundingBox.Diagonal;
         int depth = 1;
-        // Todo: Arbitrary numbers in this method based on gut feeling.
-        // Assumes 3 levels of "LOD Splitting":
-        // 300x300 for Very large parts
-        // 150x150 for large parts
-        // 75x75 for > 1 meter parts
-        // 37,5 etc by budget
         const float level1SectorsMaxDiagonal = 500;
+        // √2 ≈ 1.414: average diagonal reduction per single-axis median split
+        const float diagonalReductionPerLevel = 1.414f;
         while (diagonalAtDepth > level1SectorsMaxDiagonal)
         {
-            diagonalAtDepth /= 2;
+            diagonalAtDepth /= diagonalReductionPerLevel;
             depth++;
         }
 
         Console.WriteLine(
-            $"Diagonal was: {boundingBox.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m"
+            $"[KdTree] Diagonal was: {boundingBox.Diagonal:F2}m. Starting splitting at depth {depth}. Expecting a diagonal of maximum {diagonalAtDepth:F2}m"
         );
         return depth;
     }
 
+    /// <summary>
+    /// Budget filling with continuous LOD filter based on visual importance.
+    /// Uses a smooth exponential curve instead of stepped MinDiagonalSizeAtDepth constants.
+    /// The sceneDiagonal parameter should be the stable root scene diagonal, not the current subtree's.
+    /// </summary>
     private static (IEnumerable<Node> nodes, SplitReason splitReason, BudgetInfo? budgetInfo) GetNodesByBudget(
         IReadOnlyList<Node> nodes,
         long byteSizeBudget,
-        int actualDepth
+        int actualDepth,
+        float sceneDiagonal
     )
     {
-        var selectedNodes = actualDepth switch
-        {
-            1 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_1).ToArray(),
-            2 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_2).ToArray(),
-            3 => nodes.Where(x => x.Diagonal >= MinDiagonalSizeAtDepth_3).ToArray(),
-            _ => nodes.ToArray(),
-        };
+        // Continuous LOD filter: exponentially decreasing minimum visual importance with depth.
+        float minVisualImportance = sceneDiagonal / 50f / MathF.Pow(2, actualDepth - 1);
+        if (minVisualImportance < 0.1f)
+            minVisualImportance = 0f;
 
-        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.Diagonal);
+        var selectedNodes = nodes.Where(x => x.GetVisualImportance() >= minVisualImportance).ToArray();
+
+        var nodesInPrioritizedOrder = selectedNodes.OrderByDescending(x => x.GetVisualImportance());
 
         var nodeArray = nodesInPrioritizedOrder.ToArray();
         var byteSizeBudgetLeft = byteSizeBudget;
-        var primitiveBudgetLeft = SectorEstimatedPrimitiveBudget;
-        var trianglesBudgetLeft = SectorEstimatesTrianglesBudget;
+        var primitiveBudgetLeft = (long)SectorBudgets.EstimatedPrimitiveBudget;
+        var trianglesBudgetLeft = (long)SectorBudgets.EstimatedTrianglesBudget;
         var resultNodes = new List<Node>();
         var splitReason = SplitReason.None;
         BudgetInfo? budgetInfo = null;
@@ -352,19 +404,17 @@ public class SectorSplitterOctree : ISectorSplitter
 
             resultNodes.Add(node);
 
-            // Check budget after processing this node - did we exceed the budget?
-            // Using < 0 because we want to allow nodes that bring us to exactly 0
             if (
                 (byteSizeBudgetLeft < 0 || primitiveBudgetLeft < 0 || trianglesBudgetLeft < 0)
-                && nodeArray.Length - i - 1 > MinRemainingNodesToEnforceBudget
+                && nodeArray.Length - i - 1 > SectorBudgets.MinRemainingNodesToEnforceBudget
             )
             {
-                (splitReason, budgetInfo) = DetermineBudgetExceededInfo(
+                (splitReason, budgetInfo) = SplittingUtils.DetermineBudgetExceededInfo(
                     byteSizeBudget,
                     byteSizeBudgetLeft,
-                    SectorEstimatedPrimitiveBudget,
+                    SectorBudgets.EstimatedPrimitiveBudget,
                     primitiveBudgetLeft,
-                    SectorEstimatesTrianglesBudget,
+                    SectorBudgets.EstimatedTrianglesBudget,
                     trianglesBudgetLeft
                 );
 
@@ -372,7 +422,6 @@ public class SectorSplitterOctree : ISectorSplitter
             }
         }
 
-        // If splitReason is still None, it means all nodes fit within budget - this is a natural leaf
         if (splitReason == SplitReason.None && resultNodes.Count > 0)
         {
             splitReason = SplitReason.Leaf;
@@ -380,25 +429,4 @@ public class SectorSplitterOctree : ISectorSplitter
 
         return (resultNodes, splitReason, budgetInfo);
     }
-
-    /// <summary>
-    /// Determines which budget(s) were exceeded and creates diagnostic information.
-    /// Delegates to <see cref="SplittingUtils.DetermineBudgetExceededInfo"/> for shared logic.
-    /// </summary>
-    public static (SplitReason splitReason, BudgetInfo budgetInfo) DetermineBudgetExceededInfo(
-        long byteSizeBudget,
-        long byteSizeBudgetLeft,
-        long primitiveBudget,
-        long primitiveBudgetLeft,
-        long trianglesBudget,
-        long trianglesBudgetLeft
-    ) =>
-        SplittingUtils.DetermineBudgetExceededInfo(
-            byteSizeBudget,
-            byteSizeBudgetLeft,
-            primitiveBudget,
-            primitiveBudgetLeft,
-            trianglesBudget,
-            trianglesBudgetLeft
-        );
 }

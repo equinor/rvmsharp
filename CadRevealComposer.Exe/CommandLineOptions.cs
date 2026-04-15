@@ -2,12 +2,13 @@
 // ReSharper disable MemberCanBePrivate.Global -- Unsure if CommandLineOptions handles this
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Global  -- Unsure if CommandLineOptions handles this
 
-namespace CadRevealComposer.Exe;
-
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.IO;
+using CadRevealComposer.Configuration;
 using CommandLine;
+
+namespace CadRevealComposer.Exe;
 
 // ReSharper disable once ClassNeverInstantiated.Global - Its instantiated by CommandLineUtils NuGet Package
 public class CommandLineOptions
@@ -121,6 +122,14 @@ public class CommandLineOptions
         HelpText = "DevTool: The path to the primitive cache folder. If not set the primitive-cache will be disabled. By default the DevCache will use the input folders name to determine the cache file."
     )]
     public DirectoryInfo? DevPrimitiveCacheFolder { get; init; } = null;
+
+    [Option(
+        longName: "SplittingStrategy",
+        Required = false,
+        Default = SplittingStrategy.KdTree,
+        HelpText = "The spatial splitting strategy to use for sector generation. Options: Octree , KdTree."
+    )]
+    public SplittingStrategy SplittingStrategy { get; init; } = SplittingStrategy.KdTree;
 
     public static void AssertValidOptions(CommandLineOptions options)
     {

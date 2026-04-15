@@ -1,6 +1,4 @@
-﻿namespace CadRevealComposer;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Contracts;
@@ -8,14 +6,16 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Configuration;
-using Devtools;
-using IdProviders;
-using ModelFormatProvider;
-using Operations;
-using Operations.SectorSplitting;
-using Primitives;
-using Utils;
+using CadRevealComposer.Configuration;
+using CadRevealComposer.Devtools;
+using CadRevealComposer.IdProviders;
+using CadRevealComposer.ModelFormatProvider;
+using CadRevealComposer.Operations;
+using CadRevealComposer.Operations.SectorSplitting;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
+
+namespace CadRevealComposer;
 
 public static class CadRevealComposerRunner
 {
@@ -220,7 +220,11 @@ public static class CadRevealComposerRunner
 
         ISectorSplitter splitter = composerParameters.SingleSector
             ? new SectorSplitterSingle()
-            : new SectorSplitterOctree();
+            : composerParameters.SplittingStrategy switch
+            {
+                SplittingStrategy.KdTree => new SectorSplitterKdTree(),
+                _ => new SectorSplitterOctree(), // Octree remains the default
+            };
 
         return splitter.SplitIntoSectors(allPrimitives, sectorIdGenerator).OrderBy(x => x.SectorId).ToArray();
     }

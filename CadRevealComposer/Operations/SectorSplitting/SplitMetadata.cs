@@ -1,6 +1,6 @@
-namespace CadRevealComposer.Operations.SectorSplitting;
-
 using System.Text.Json.Serialization;
+
+namespace CadRevealComposer.Operations.SectorSplitting;
 
 /// <summary>
 /// Indicates the reason why a sector was created or split.
@@ -67,6 +67,11 @@ public enum SplitReason
     /// Sector created at early recursion depth before budget checking begins.
     /// </summary>
     EarlyDepth,
+
+    /// <summary>
+    /// Split occurred due to K-D tree binary median split on the longest axis.
+    /// </summary>
+    KdTreeMedian,
 }
 
 /// <summary>

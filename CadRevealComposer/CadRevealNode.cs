@@ -1,12 +1,11 @@
-namespace CadRevealComposer;
-
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
-using Primitives;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
 using ProtoBuf;
-using Tessellation;
-using Utils;
+
+namespace CadRevealComposer;
 
 [ProtoContract(SkipConstructor = true)]
 public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: ProtoMember(2)] Vector3 Max)
@@ -28,6 +27,19 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     /// Can be used together with <see cref="Center"/>
     /// </summary>
     public Vector3 Extents => (Max - Min);
+
+    /// <summary>
+    /// Compute the axis-aligned bounding box surface area: 2(w·h + w·d + h·d).
+    /// Used by the visual importance calculator as a fallback for meshes and flat primitives.
+    /// </summary>
+    public float SurfaceArea
+    {
+        get
+        {
+            var e = Extents;
+            return 2f * (e.X * e.Y + e.X * e.Z + e.Y * e.Z);
+        }
+    }
 
     /// <summary>
     /// Combine two bounds

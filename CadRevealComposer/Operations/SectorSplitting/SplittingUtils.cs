@@ -1,11 +1,11 @@
-﻿namespace CadRevealComposer.Operations.SectorSplitting;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Primitives;
-using Utils;
+using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
+
+namespace CadRevealComposer.Operations.SectorSplitting;
 
 public static class SplittingUtils
 {
@@ -339,5 +339,49 @@ public static class SplittingUtils
             false,
             new SplittingStats(splitReason, primitiveCount, meshCount, instanceMeshCount, budgetInfo)
         );
+    }
+
+    /// <summary>
+    /// Determines which budget(s) were exceeded and creates diagnostic information.
+    /// Shared by both <see cref="SectorSplitterOctree"/> and <see cref="SectorSplitterKdTree"/>.
+    /// </summary>
+    /// <returns>A tuple containing the split reason and budget info with all budget values populated.</returns>
+    public static (SplitReason splitReason, BudgetInfo budgetInfo) DetermineBudgetExceededInfo(
+        long byteSizeBudget,
+        long byteSizeBudgetLeft,
+        long primitiveBudget,
+        long primitiveBudgetLeft,
+        long trianglesBudget,
+        long trianglesBudgetLeft
+    )
+    {
+        var byteSizeExceeded = byteSizeBudgetLeft <= 0;
+        var primitiveExceeded = primitiveBudgetLeft <= 0;
+        var trianglesExceeded = trianglesBudgetLeft <= 0;
+
+        var exceededCount = (byteSizeExceeded ? 1 : 0) + (primitiveExceeded ? 1 : 0) + (trianglesExceeded ? 1 : 0);
+
+        var splitReason = exceededCount switch
+        {
+            > 1 => SplitReason.BudgetMultiple,
+            1 when byteSizeExceeded => SplitReason.BudgetByteSize,
+            1 when primitiveExceeded => SplitReason.BudgetPrimitiveCount,
+            _ => SplitReason.BudgetTriangleCount,
+        };
+
+        var byteSizeUsed = byteSizeBudget - byteSizeBudgetLeft;
+        var primitiveCountUsed = primitiveBudget - primitiveBudgetLeft;
+        var triangleCountUsed = trianglesBudget - trianglesBudgetLeft;
+
+        var budgetInfo = new BudgetInfo(
+            ByteSizeBudget: byteSizeBudget,
+            ByteSizeUsed: byteSizeUsed,
+            PrimitiveCountBudget: primitiveBudget,
+            PrimitiveCountUsed: primitiveCountUsed,
+            TriangleCountBudget: trianglesBudget,
+            TriangleCountUsed: triangleCountUsed
+        );
+
+        return (splitReason, budgetInfo);
     }
 }
