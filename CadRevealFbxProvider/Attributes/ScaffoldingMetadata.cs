@@ -238,7 +238,7 @@ public class ScaffoldingMetadata
         else
         {
             throw new UserFriendlyLogException(
-                "",
+                $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide.",
                 new ScaffoldingFilenameException(
                     $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide."
                 )
