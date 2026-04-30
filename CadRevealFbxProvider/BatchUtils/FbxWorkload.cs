@@ -119,10 +119,7 @@ public static class FbxWorkload
                 if (fileNameonly.Length > 55)
                 {
                     throw new UserFriendlyLogException(
-                        $"Scaffolding file's {fileNameonly} filename is exceeding the maximum allowed length of 55 characters. Check the naming guide.",
-                        new ScaffoldingFilenameException(
-                            $"Scaffolding file's {fileNameonly} filename is exceeding the maximum allowed length of 55 characters. Please check the naming guide."
-                        )
+                        $"Scaffolding file's {fileNameonly} filename has {fileNameonly.Length()} characters and is exceeding the maximum allowed length of 55 characters. Check the naming guide."
                     );
                 }
 

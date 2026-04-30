@@ -228,20 +228,14 @@ public class ScaffoldingMetadata
             if (string.IsNullOrEmpty(workOrderFromFilename) || workOrderFromFilename != WorkOrder)
             {
                 throw new UserFriendlyLogException(
-                    $"Scaffolding work order {WorkOrder} extracted from the CSV file does not match the work order from filename {workOrderFromFilename}. Check if you stored the files under the correct name.",
-                    new ScaffoldingFilenameException(
-                        $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
-                    )
+                    $"Scaffolding work order {WorkOrder} extracted from the CSV file does not match the work order from filename {workOrderFromFilename}. Check if you stored the files under the correct name."
                 );
             }
         }
         else
         {
             throw new UserFriendlyLogException(
-                $"Scaffolding file's {filename} filename is not following the naming guide. Use only english alphabetic letters a-z or A-Z, digits 0-9 and dashes \"-\". For example, spaces, dots and special characters are not allowed. Check also the naming guide.",
-                new ScaffoldingFilenameException(
-                    $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide."
-                )
+                $"Scaffolding file's {filename} filename is not following the naming guide. Use only english alphabetic letters a-z or A-Z, digits 0-9 and dashes \"-\". For example, spaces, dots and special characters, such as æøå, are not allowed. Check also the naming guide."
             );
         }
     }
