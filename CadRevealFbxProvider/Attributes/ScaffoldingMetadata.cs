@@ -238,7 +238,7 @@ public class ScaffoldingMetadata
         else
         {
             throw new UserFriendlyLogException(
-                $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide.",
+                $"Scaffolding file's {filename} filename is not following the naming guide. Filename should consist of max 55 characters. Use only english alphabetic letters a-z or A-Z, digits 0-9 and dashes \"-\". For example, spaces, dots and special characters are not allowed. Check also the naming guide.",
                 new ScaffoldingFilenameException(
                     $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide."
                 )
