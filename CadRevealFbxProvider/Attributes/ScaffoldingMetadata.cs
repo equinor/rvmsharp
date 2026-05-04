@@ -208,14 +208,15 @@ public class ScaffoldingMetadata
         if (TempScaffoldingFlag)
         {
             throw new UserFriendlyLogException(
-                "Work order scaffolding processing called for temporary scaffolds. This must be a bug. Please, notify the Echo developing team.",
+                "Work order scaffolding processing routine called for temporary scaffolds. This must be a bug. Please, notify the Echo developing team.",
                 new Exception(
-                    "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files."
+                    "Scaffolding metadata implies we expect a temporary scaffolding file, but this method is only for work order scaffolding files. The flow should never get to this point."
                 )
             );
         }
 
-        var match = Regex.Match(filename, @"^[A-Z]{3,}-(\d+)(?:(-[a-zA-Z\d]+)+$|$)");
+        var regexPattern = @"^[A-Z]{3,}-(\d+)(?:(-[a-zA-Z\d]+)+$|$)";
+        var match = Regex.Match(filename, regexPattern);
         if (match.Success)
         {
             string workOrderFromFilename = match.Groups[1].Value;
@@ -230,7 +231,7 @@ public class ScaffoldingMetadata
                 throw new UserFriendlyLogException(
                     $"Scaffolding work order {WorkOrder} extracted from the CSV file does not match the work order from filename {workOrderFromFilename}. Check if you stored the files under the correct name.",
                     new ScaffoldingFilenameException(
-                        $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename}"
+                        $"Scaffolding metadata work order {WorkOrder} does not match the work order from filename {workOrderFromFilename} or the work order from filename is null."
                     )
                 );
             }
@@ -238,9 +239,9 @@ public class ScaffoldingMetadata
         else
         {
             throw new UserFriendlyLogException(
-                "",
+                $"Scaffolding file's {filename} filename is not following the naming guide. Use only english alphabetic letters a-z or A-Z, digits 0-9 and dashes \"-\". For example, spaces, dots and special characters, such as æøå, are not allowed. Check also the naming guide.",
                 new ScaffoldingFilenameException(
-                    $"Scaffolding file's {filename} filename is not following the naming guide. Please check the naming guide."
+                    $"Scaffolding file's {filename} filename is not matching the regex {regexPattern}, because it is not following the naming guide."
                 )
             );
         }
