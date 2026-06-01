@@ -34,6 +34,19 @@ static class Program
     {
         var workload = CollectWorkload(options);
 
+        var attributeExclusions = options.ExcludeAttributes
+            .Select(s =>
+            {
+                var idx = s.IndexOf('=');
+                if (idx < 1)
+                    throw new ArgumentException(
+                        $"Invalid --exclude-attribute value '{s}'. Expected format: 'AttributeKey=ValueRegex'.");
+                var key = s[..idx];
+                var pattern = new Regex(s[(idx + 1)..], RegexOptions.IgnoreCase);
+                return (Key: key, ValuePattern: pattern);
+            })
+            .ToList();
+
         using var parentProgressBar = new ProgressBar(2, "Converting RVM to OBJ");
 
         var rvmStore = ReadRvmData(workload);
@@ -53,8 +66,10 @@ static class Program
             rvmStore,
             options.Tolerance,
             options.Output,
+            attributeExclusions.Count > 0 ? attributeExclusions : null,
             ((i) => tessellationProgressBar.MaxTicks = i, () => tessellationProgressBar.Tick()),
-            ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick())
+            ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick()),
+            options.TagNaming
         );
         parentProgressBar.Tick();
         Console.WriteLine("Done!");
