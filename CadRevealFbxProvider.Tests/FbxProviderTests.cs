@@ -21,6 +21,8 @@ public class FbxProviderTests
     private const string InputDirectoryCorrectWithSuffix = "TestSamples/correctWithSuffix";
     private const string OutputDirectoryCorrect = "TestSamples/correct";
 
+    private const string InputDirectoryNoGeometry = "TestSamples/noGeometry";
+
     private static readonly ModelParameters ModelParameters = new(
         new ProjectId(1),
         new ModelId(1),
@@ -97,6 +99,18 @@ public class FbxProviderTests
             var color = primitives[0].Color;
             Assert.That(color, Is.EqualTo(expectedColor));
         }
+    }
+
+    [Test]
+    [TestCase(InputDirectoryNoGeometry)]
+    public void Process_ModelWithoutGeometry_ThrowsError(string dir)
+    {
+        // arrange
+        DirectoryInfo directoryInfo = new(dir);
+        var err = Assert.Catch(() => Process(directoryInfo, directoryInfo));
+        HelperFunctions.AssertThrowsCustomScaffoldingException<FbxGeometryException>(() =>
+            Process(directoryInfo, directoryInfo)
+        );
     }
 
     [TestCase(InputDirectoryCorrect)]
