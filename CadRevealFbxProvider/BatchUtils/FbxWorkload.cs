@@ -143,6 +143,13 @@ public static class FbxWorkload
             if (rootNodeConverted == null)
                 return [];
 
+            if (rootNodeConverted.BoundingBoxAxisAligned == null)
+            {
+                throw new UserFriendlyLogException(
+                    $"The FBX file {Path.GetFileName(fbxFilename)} has no bounding box. This may indicate that the model is empty (without geometry) or invalid. Verify the FBX export."
+                );
+            }
+
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
             // attach attribute info to the nodes if there is any
