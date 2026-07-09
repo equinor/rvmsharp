@@ -3,7 +3,7 @@
     using System;
 
     /// <summary>
-    /// Exception thrown when an error occurs when the scaffolding filename is not according to the specification.
+    /// Exception thrown when there is an issue with the FBX file or its content.
     /// </summary>
     public class FbxGeometryException : Exception
     {
