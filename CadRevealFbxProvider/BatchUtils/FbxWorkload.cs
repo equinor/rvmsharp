@@ -146,7 +146,10 @@ public static class FbxWorkload
             if (rootNodeConverted.BoundingBoxAxisAligned == null)
             {
                 throw new UserFriendlyLogException(
-                    $"The FBX file {Path.GetFileName(fbxFilename)} has no bounding box. This may indicate that the model is empty (without geometry) or invalid. Verify the FBX export."
+                    $"The FBX file {Path.GetFileName(fbxFilename)} has no bounding box. This may indicate that the model is empty (without geometry) or invalid. Verify the FBX export.",
+                    new FbxGeometryException(
+                        "The FBX file seems to have no nodes containing geometry as the bounding box of the model is null. Nodes without geometry might exist."
+                    )
                 );
             }
 
