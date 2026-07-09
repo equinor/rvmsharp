@@ -114,6 +114,16 @@ public static class FbxWorkload
             {
                 var lines = File.ReadAllLines(infoTextFilename);
                 var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
+
+                // check the length of the filename. Upload artifacts will fail with too long filenames
+                if (fileNameonly.Length > 55)
+                {
+                    throw new UserFriendlyLogException(
+                        $"Scaffolding file's {fileNameonly} filename has {fileNameonly.Length} characters and is exceeding the maximum allowed length of 55 characters. Check the naming guide.",
+                        new ScaffoldingFilenameException($"Filename too long: {fileNameonly}")
+                    );
+                }
+
                 var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
 
                 (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
