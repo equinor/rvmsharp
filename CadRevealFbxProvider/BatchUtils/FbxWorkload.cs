@@ -11,7 +11,7 @@ using UserFriendlyLogger;
 
 public static class FbxWorkload
 {
-    public static (string fbxFilename, string? attributeFilename)[] CollectWorkload(
+    public static (string fbxFilename, string? attributeFilename, string? stidMetadataFilename)[] CollectWorkload(
         IReadOnlyCollection<string> filesAndFolders,
         string? filter = null
     )
@@ -35,6 +35,7 @@ public static class FbxWorkload
                 files.Where(x =>
                     x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
                     || x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                    || x.Equals(".json", StringComparison.OrdinalIgnoreCase)
                 )
             ) // Append single files
             .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
@@ -42,17 +43,18 @@ public static class FbxWorkload
             .ToArray(); // Group by filename (rvm, txt)
 
         var workload = (
-            from filePair in inputFiles
-            select filePair.ToArray() into filePairStatic
-            let fbxFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".fbx"))
-            let csvFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".csv"))
-            select (fbxFilename, csvFilename)
+            from fileTouple in inputFiles
+            select fileTouple.ToArray() into fileToupleStatic
+            let fbxFilename = fileToupleStatic.FirstOrDefault(f => f.ToLower().EndsWith(".fbx"))
+            let csvFilename = fileToupleStatic.FirstOrDefault(f => f.ToLower().EndsWith(".csv"))
+            let jsonFilename = fileToupleStatic.FirstOrDefault(f => f.ToLower().EndsWith(".json"))
+            select (fbxFilename, csvFilename, jsonFilename)
         ).ToArray();
 
-        var result = new List<(string, string?)>();
-        foreach ((string? fbxFilename, string? attributeFilename) in workload)
+        var result = new List<(string, string?, string?)>();
+        foreach ((string? fbxFilename, string? attributeFilename, string? stidMetadataFilename) in workload)
         {
-            if (fbxFilename == null && attributeFilename == null)
+            if (fbxFilename == null && attributeFilename == null && stidMetadataFilename == null)
                 continue; // Nothing found
 
             if (fbxFilename == null)
@@ -62,14 +64,14 @@ public static class FbxWorkload
                 );
             }
             else
-                result.Add((fbxFilename, attributeFilename));
+                result.Add((fbxFilename, attributeFilename, stidMetadataFilename));
         }
 
         return result.ToArray();
     }
 
     public static (IReadOnlyList<CadRevealNode>, ModelMetadata?) ReadFbxData(
-        IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
+        IReadOnlyCollection<(string fbxFilename, string? txtFilename, string? stidMetadataFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         NodeNameFiltering nodeNameFiltering,
@@ -104,41 +106,61 @@ public static class FbxWorkload
 
         return (fbxNodesFlat, new ModelMetadata(metadata));
 
-        IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
+        IReadOnlyList<CadRevealNode> LoadFbxFile(
+            (string fbxFilename, string? attributeFilename, string? stidMetadataFilename) fileTupple
+        )
         {
-            (string fbxFilename, string? infoTextFilename) = filePair;
+            (string fbxFilename, string? infoTextFilename, string? stidMetadataFilename) = fileTupple;
 
             Dictionary<string, Dictionary<string, string>?>? attributes = null;
             // there could be an explicit test / determination if this current fbx is scaffolding or not
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
 
-                // check the length of the filename. Upload artifacts will fail with too long filenames
-                if (fileNameonly.Length > 55)
+                // default value for temp, because we have two different ways of determining it
+                // old pipeline: from the filename
+                // new pipleine: from stid metadata
+                var isTemp = false;
+
+                var isNewPipeline = (stidMetadataFilename != null);
+
+                // old pipeline, we perform checking of the scaffolding filename here, because we will later deduce some metadata from it
+                if (!isNewPipeline)
                 {
-                    throw new UserFriendlyLogException(
-                        $"Scaffolding file's {fileNameonly} filename has {fileNameonly.Length} characters and is exceeding the maximum allowed length of 55 characters. Check the naming guide.",
-                        new ScaffoldingFilenameException($"Filename too long: {fileNameonly}")
-                    );
+                    var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
+
+                    //check the length of the filename. Upload artifacts will fail with too long filenames
+                    if (fileNameonly.Length > 55)
+                    {
+                        throw new UserFriendlyLogException(
+                            $"Scaffolding file's {fileNameonly} filename has {fileNameonly.Length} characters and is exceeding the maximum allowed length of 55 characters. Check the naming guide.",
+                            new ScaffoldingFilenameException($"Filename too long: {fileNameonly}")
+                        );
+                    }
+
+                    isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
+
+                    (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
+
+                    if (!isTemp)
+                    {
+                        // check if the WO from filename actually matches the metadata
+                        // check if the filename is complying with the guidlines
+                        // for non-temp scaffs only
+                        // crashes if there is a mismatch
+                        scaffoldingMetadata.ThrowIfFilenameInvalid(fileNameonly);
+                    }
+                    scaffoldingMetadata.GetSuffixFromFilename(fileNameonly);
+                    // We crash if we dont have expected values
+                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
-
-                var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
-
-                (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
-
-                if (!isTemp)
+                else
                 {
-                    // check if the WO from filename actually matches the metadata
-                    // check if the filename is complying with the guidlines
-                    // for non-temp scaffs only
-                    // crashes if there is a mismatch
-                    scaffoldingMetadata.ThrowIfFilenameInvalid(fileNameonly);
+                    // parse stid-metadata.json to determine if the scaffolding has status temp or not
+                    //
+                    throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
                 }
-                scaffoldingMetadata.GetSuffixFromFilename(fileNameonly);
-                // We crash if we dont have expected values
-                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
