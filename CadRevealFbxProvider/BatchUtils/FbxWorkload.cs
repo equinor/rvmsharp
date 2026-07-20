@@ -129,7 +129,7 @@ public static class FbxWorkload
                 // old pipeline, we perform checking of the scaffolding filename here, because we will later deduce some metadata from it
                 if (!isNewPipeline)
                 {
-                    Trace.WriteLine($"Old pipeline, stid metadata filename does not exist");
+                    Console.WriteLine($"Old pipeline, stid metadata filename does not exist");
 
                     var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
 
@@ -162,7 +162,7 @@ public static class FbxWorkload
                 {
                     // parse stid-metadata.json to determine if the scaffolding has status temp or not
                     //
-                    Trace.WriteLine($"New pipeline, stid metadata filename exists: {stidMetadataFilename}");
+                    Console.WriteLine($"New pipeline, stid metadata filename exists: {stidMetadataFilename}");
                     throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
                 }
             }
