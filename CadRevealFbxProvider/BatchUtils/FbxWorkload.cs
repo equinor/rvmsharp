@@ -1,5 +1,6 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Attributes;
 using CadRevealComposer;
@@ -128,6 +129,8 @@ public static class FbxWorkload
                 // old pipeline, we perform checking of the scaffolding filename here, because we will later deduce some metadata from it
                 if (!isNewPipeline)
                 {
+                    Trace.WriteLine($"Old pipeline, stid metadata filename does not exist");
+
                     var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
 
                     //check the length of the filename. Upload artifacts will fail with too long filenames
@@ -159,6 +162,7 @@ public static class FbxWorkload
                 {
                     // parse stid-metadata.json to determine if the scaffolding has status temp or not
                     //
+                    Trace.WriteLine($"New pipeline, stid metadata filename exists: {stidMetadataFilename}");
                     throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
                 }
             }
