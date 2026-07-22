@@ -32,16 +32,17 @@ public static class FbxWorkload
         var inputFiles = directories
             .SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
             .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
+            .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.json"))) // Collect JSONs
             .Concat(
                 files.Where(x =>
                     x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
                     || x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
-                    || x.Equals(".json", StringComparison.OrdinalIgnoreCase)
+                    || x.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
                 )
             ) // Append single files
             .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
             .GroupBy(Path.GetFileNameWithoutExtension)
-            .ToArray(); // Group by filename (rvm, txt)
+            .ToArray(); // Group by filename (fbx, csv, json)
 
         var workload = (
             from fileTouple in inputFiles
@@ -124,10 +125,10 @@ public static class FbxWorkload
                 // new pipleine: from stid metadata
                 var isTemp = false;
 
-                var isNewPipeline = (stidMetadataFilename != null);
+                var isOldPipeline = (stidMetadataFilename == null);
 
                 // old pipeline, we perform checking of the scaffolding filename here, because we will later deduce some metadata from it
-                if (!isNewPipeline)
+                if (isOldPipeline)
                 {
                     Console.WriteLine($"Old pipeline, stid metadata filename does not exist");
 
@@ -163,7 +164,10 @@ public static class FbxWorkload
                     // parse stid-metadata.json to determine if the scaffolding has status temp or not
                     //
                     Console.WriteLine($"New pipeline, stid metadata filename exists: {stidMetadataFilename}");
-                    throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
+                    // throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
+
+                    // this is the new pipeline, stidMetadataFilename != null
+                    var linesStidMetadata = File.ReadAllLines(stidMetadataFilename!);
                 }
             }
 
