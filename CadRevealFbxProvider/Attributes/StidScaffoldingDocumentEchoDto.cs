@@ -1,7 +1,8 @@
 ﻿namespace CadRevealFbxProvider.Attributes
 {
     /// <summary>
-    /// Document metadata from STID
+    /// Document metadata from STID with additional computed fields relevant for Echo
+    /// This is a copy of the record with the same name from EchoModelDistribution project, which exports the json file
     /// </summary>
     public record StidScaffoldingDocumentEchoDto
     {
