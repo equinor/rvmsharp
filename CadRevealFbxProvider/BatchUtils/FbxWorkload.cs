@@ -167,7 +167,21 @@ public static class FbxWorkload
                     // throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
 
                     // this is the new pipeline, stidMetadataFilename != null
-                    var linesStidMetadata = File.ReadAllLines(stidMetadataFilename!);
+                    var stidMetadata = JsonUtils.JsonDeserializeFromFile<StidScaffoldingDocumentEchoDto>(
+                        stidMetadataFilename!
+                    );
+
+                    isTemp = stidMetadata.HasWorkOrderAssigned == false;
+                    (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
+
+                    if (scaffoldingMetadata.WorkOrder != stidMetadata.WorkOrderId)
+                    {
+                        throw new UserFriendlyLogException(
+                            $"Scaffolding work order number in STID {stidMetadata.WorkOrderId} differs from the work order number extracted from CSV file {scaffoldingMetadata.WorkOrder}"
+                        );
+                    }
+                    scaffoldingMetadata.NameSuffix = stidMetadata.DocTitle;
+                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
             }
 
