@@ -17,6 +17,9 @@ public static class JsonUtils
     public static T JsonDeserializeFromFile<T>(string filename)
     {
         var jsonData = File.ReadAllText(filename);
-        return JsonSerializer.Deserialize<T>(jsonData, new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+        var result = JsonSerializer.Deserialize<T>(jsonData, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        return result
+            ?? throw new JsonException($"Failed to deserialize JSON file '{filename}' to {typeof(T).FullName}.");
     }
 }
