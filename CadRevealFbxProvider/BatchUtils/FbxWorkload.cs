@@ -181,8 +181,11 @@ public static class FbxWorkload
 
                     if (!isTemp)
                     {
+                        var csvWorkOrder = scaffoldingMetadata.WorkOrder?.TrimStart('0') ?? string.Empty;
+                        // according to spec, this should come in trimmed
+                        var stidWorkOrder = stidMetadata.WorkOrderId;
                         // stidMetadata.WorkOrderId is trimmed from leading zeros
-                        if (scaffoldingMetadata.WorkOrder?.TrimStart('0') != stidMetadata.WorkOrderId)
+                        if (!string.Equals(csvWorkOrder, stidWorkOrder, StringComparison.Ordinal))
                         {
                             throw new UserFriendlyLogException(
                                 $"Scaffolding work order number in STID ({stidMetadata.WorkOrderId}) differs from the work order number extracted from CSV file ({scaffoldingMetadata.WorkOrder})"
