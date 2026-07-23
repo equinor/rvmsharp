@@ -1,6 +1,5 @@
 ﻿namespace CadRevealFbxProvider.BatchUtils;
 
-using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Attributes;
 using CadRevealComposer;
@@ -47,9 +46,15 @@ public static class FbxWorkload
         var workload = (
             from fileTouple in inputFiles
             select fileTouple.ToArray() into fileToupleStatic
-            let fbxFilename = fileToupleStatic.FirstOrDefault(f => f.ToLower().EndsWith(".fbx"))
-            let csvFilename = fileToupleStatic.FirstOrDefault(f => f.ToLower().EndsWith(".csv"))
-            let jsonFilename = fileToupleStatic.FirstOrDefault(f => f.ToLower().EndsWith(".json"))
+            let fbxFilename = fileToupleStatic.FirstOrDefault(f =>
+                f.ToLower().EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
+            )
+            let csvFilename = fileToupleStatic.FirstOrDefault(f =>
+                f.ToLower().EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+            )
+            let jsonFilename = fileToupleStatic.FirstOrDefault(f =>
+                f.ToLower().EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            )
             select (fbxFilename, csvFilename, jsonFilename)
         ).ToArray();
 
@@ -73,7 +78,7 @@ public static class FbxWorkload
     }
 
     public static (IReadOnlyList<CadRevealNode>, ModelMetadata?) ReadFbxData(
-        IReadOnlyCollection<(string fbxFilename, string? txtFilename, string? stidMetadataFilename)> workload,
+        IReadOnlyCollection<(string fbxFilename, string? attributeFilename, string? stidMetadataFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         NodeNameFiltering nodeNameFiltering,
@@ -122,7 +127,7 @@ public static class FbxWorkload
 
                 // default value for temp, because we have two different ways of determining it
                 // old pipeline: from the filename
-                // new pipleine: from stid metadata
+                // new pipeline: from stid metadata
                 var isTemp = false;
 
                 var isOldPipeline = (stidMetadataFilename == null);
@@ -130,7 +135,7 @@ public static class FbxWorkload
                 // old pipeline, we perform checking of the scaffolding filename here, because we will later deduce some metadata from it
                 if (isOldPipeline)
                 {
-                    Console.WriteLine($"Old pipeline, stid metadata filename does not exist");
+                    Console.WriteLine($"Old pipeline, STID metadata filename does not exist");
 
                     var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
 
@@ -150,7 +155,7 @@ public static class FbxWorkload
                     if (!isTemp)
                     {
                         // check if the WO from filename actually matches the metadata
-                        // check if the filename is complying with the guidlines
+                        // check if the filename is complying with the guidelines
                         // for non-temp scaffs only
                         // crashes if there is a mismatch
                         scaffoldingMetadata.ThrowIfFilenameInvalid(fileNameonly);
@@ -163,7 +168,7 @@ public static class FbxWorkload
                 {
                     // parse stid-metadata.json to determine if the scaffolding has status temp or not
                     //
-                    Console.WriteLine($"New pipeline, stid metadata filename exists: {stidMetadataFilename}");
+                    Console.WriteLine($"New pipeline, STID metadata filename exists: {stidMetadataFilename}");
                     // throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
 
                     // this is the new pipeline, stidMetadataFilename != null
@@ -174,12 +179,17 @@ public static class FbxWorkload
                     isTemp = stidMetadata.HasWorkOrderAssigned == false;
                     (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
 
-                    if (scaffoldingMetadata.WorkOrder != stidMetadata.WorkOrderId)
+                    if (!isTemp)
                     {
-                        throw new UserFriendlyLogException(
-                            $"Scaffolding work order number in STID {stidMetadata.WorkOrderId} differs from the work order number extracted from CSV file {scaffoldingMetadata.WorkOrder}"
-                        );
+                        // stidMetadata.WorkOrderId is trimmed from leading zeros
+                        if (scaffoldingMetadata.WorkOrder?.TrimStart('0') != stidMetadata.WorkOrderId)
+                        {
+                            throw new UserFriendlyLogException(
+                                $"Scaffolding work order number in STID ({stidMetadata.WorkOrderId}) differs from the work order number extracted from CSV file ({scaffoldingMetadata.WorkOrder})"
+                            );
+                        }
                     }
+
                     scaffoldingMetadata.NameSuffix = stidMetadata.DocTitle;
                     scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
