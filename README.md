@@ -102,5 +102,5 @@ To update the RvmSharp package on nuget check the internal docs: <https://github
 
 This project is based on [rvmparser](https://github.com/cdyk/rvmparser) by @cdyk
 
-This repository contains sample data from the Equinor ASA - Huldra Dataset <https://data.equinor.com/dataset/Huldra>. A
+This repository contains sample data from the Equinor ASA - Huldra Dataset <https://data.equinor.com>. A
 copy of the Huldra dataset license can be found [here](./TestSamples/Huldra/Equinor_open_data_sharing_license_-_Huldra.pdf).
