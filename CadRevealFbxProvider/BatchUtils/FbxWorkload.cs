@@ -188,7 +188,10 @@ public static class FbxWorkload
                         if (!string.Equals(csvWorkOrder, stidWorkOrder, StringComparison.Ordinal))
                         {
                             throw new UserFriendlyLogException(
-                                $"Scaffolding work order number in STID ({stidMetadata.WorkOrderId}) differs from the work order number extracted from CSV file ({scaffoldingMetadata.WorkOrder})"
+                                $"Scaffolding work order number in STID ({stidMetadata.WorkOrderId}) differs from the work order number extracted from CSV file ({scaffoldingMetadata.WorkOrder})",
+                                new ScaffoldingAttributeParsingException(
+                                    $"Scaffolding work order number mismatch -- STID WO: {stidMetadata.WorkOrderId}, CSV WO: {scaffoldingMetadata.WorkOrder}"
+                                )
                             );
                         }
                     }
