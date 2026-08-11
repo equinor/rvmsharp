@@ -44,16 +44,16 @@ public static class FbxWorkload
             .ToArray(); // Group by filename (fbx, csv, json)
 
         var workload = (
-            from fileTouple in inputFiles
-            select fileTouple.ToArray() into fileToupleStatic
-            let fbxFilename = fileToupleStatic.FirstOrDefault(f =>
-                f.ToLower().EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
+            from fileTuple in inputFiles
+            select fileTuple.ToArray() into fileTupleStatic
+            let fbxFilename = fileTupleStatic.FirstOrDefault(f =>
+                f.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
             )
-            let csvFilename = fileToupleStatic.FirstOrDefault(f =>
-                f.ToLower().EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+            let csvFilename = fileTupleStatic.FirstOrDefault(f =>
+                f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
             )
-            let jsonFilename = fileToupleStatic.FirstOrDefault(f =>
-                f.ToLower().EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            let jsonFilename = fileTupleStatic.FirstOrDefault(f =>
+                f.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
             )
             select (fbxFilename, csvFilename, jsonFilename)
         ).ToArray();
@@ -114,10 +114,10 @@ public static class FbxWorkload
         return (fbxNodesFlat, new ModelMetadata(metadata));
 
         IReadOnlyList<CadRevealNode> LoadFbxFile(
-            (string fbxFilename, string? attributeFilename, string? stidMetadataFilename) fileTupple
+            (string fbxFilename, string? attributeFilename, string? stidMetadataFilename) fileTuple
         )
         {
-            (string fbxFilename, string? infoTextFilename, string? stidMetadataFilename) = fileTupple;
+            (string fbxFilename, string? infoTextFilename, string? stidMetadataFilename) = fileTuple;
 
             Dictionary<string, Dictionary<string, string>?>? attributes = null;
             // there could be an explicit test / determination if this current fbx is scaffolding or not
@@ -166,12 +166,10 @@ public static class FbxWorkload
                 }
                 else
                 {
-                    // parse stid-metadata.json to determine if the scaffolding has status temp or not
-                    //
                     Console.WriteLine($"New pipeline, STID metadata filename exists: {stidMetadataFilename}");
-                    // throw new UserFriendlyLogException($"New STID metadata parsing not implemented yet.");
-
                     // this is the new pipeline, stidMetadataFilename != null
+
+                    // parse stid-metadata.json to determine if the scaffolding has status temp or not
                     var stidMetadata = JsonUtils.JsonDeserializeFromFile<StidScaffoldingDocumentEchoDto>(
                         stidMetadataFilename!
                     );
