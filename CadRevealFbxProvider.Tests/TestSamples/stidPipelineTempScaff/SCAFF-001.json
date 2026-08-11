@@ -21,7 +21,7 @@
       "fileName": "ABC-SCAFF-001-test.rvt"
     }
   ],
-  "workOrderId": null,
+  "workOrderId": "",
   "hasWorkOrderAssigned": false,
   "hasBeenValidatedSuccessfully": true,
   "plantDocNo": "E000-XYZ-00-ABC-000.000"

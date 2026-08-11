@@ -354,7 +354,7 @@ public class FbxProviderTests
     }
 
     [TestCase("TestSamples/stidPipelineWoScaff")]
-    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsMetadataHasNegativeTempFlag(string inputDir)
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsMetadataSetUpCorrectly(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
@@ -372,6 +372,7 @@ public class FbxProviderTests
 
         // assert
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
     }
 
     [TestCase("TestSamples/stidPipelineWoScaff_WoMismatch")]
