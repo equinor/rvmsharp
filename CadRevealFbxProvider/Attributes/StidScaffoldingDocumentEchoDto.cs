@@ -18,7 +18,7 @@
         /// <summary>
         /// WorkOrderId without zero padding.
         /// </summary>
-        public required string WorkOrderId { get; set; } = string.Empty;
+        public required string? WorkOrderId { get; set; }
 
         /// <summary>
         /// Similar to the "TEMP" from the old scaffolding system.
