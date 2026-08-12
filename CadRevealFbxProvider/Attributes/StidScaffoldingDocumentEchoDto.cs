@@ -11,6 +11,11 @@
     public record StidScaffoldingDocumentEchoDto
     {
         /// <summary>
+        /// The document number (document ID)
+        /// </summary>
+        public required string DocNo { get; init; }
+
+        /// <summary>
         /// Title of the document, here used as suffix after the algorithmically created document name
         /// </summary>
         public required string DocTitle { get; init; }
