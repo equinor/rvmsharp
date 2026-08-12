@@ -332,6 +332,69 @@ public class FbxProviderTests
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
+    [TestCase("TestSamples/stidPipelineTempScaff")]
+    public void ParseFiles_StidPipeline_TempScaffolding_ProcessingSucceedsMetadataHasPositiveTempFlag(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsMetadataSetUpCorrectly(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_WoMismatch")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenWoNumbersMismatch(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act & assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        );
+    }
+
     [Test]
     [TestCase(InputDirectoryCorrect)]
     [TestCase(InputDirectoryCorrectWithSuffix)]

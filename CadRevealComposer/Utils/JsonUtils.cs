@@ -13,4 +13,13 @@ public static class JsonUtils
         );
         File.WriteAllText(filename, jsonData);
     }
+
+    public static T JsonDeserializeFromFile<T>(string filename)
+    {
+        var jsonData = File.ReadAllText(filename);
+        var result = JsonSerializer.Deserialize<T>(jsonData, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        return result
+            ?? throw new JsonException($"Failed to deserialize JSON file '{filename}' to {typeof(T).FullName}.");
+    }
 }
