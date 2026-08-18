@@ -263,6 +263,7 @@ public class FbxProviderTests
         );
 
         Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", suffix), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", string.Empty), Is.True);
     }
 
     [TestCase(InputDirectoryCorrect)]
@@ -329,6 +330,9 @@ public class FbxProviderTests
         );
 
         // assert
+        // name suffix will not be tested.
+        // It is not extracted correctly from temp scaffoldings, but that is also irrelevant (old pipeline).
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", string.Empty), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
@@ -350,6 +354,9 @@ public class FbxProviderTests
         );
 
         // assert
+        // metadata is setup correctly (processing has succeeded)
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Temp model"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-001"), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
@@ -371,7 +378,9 @@ public class FbxProviderTests
         );
 
         // assert
+        // metadata is setup correctly (processing has succeeded)
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-002"), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
     }
 

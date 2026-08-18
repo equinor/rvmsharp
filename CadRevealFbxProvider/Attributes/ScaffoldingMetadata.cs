@@ -17,6 +17,8 @@ public class ScaffoldingMetadata
 
     public string? NameSuffix { get; set; }
 
+    public string? StidDocumentId { get; set; }
+
     private const string WorkOrderFieldName = "Scaffolding_WorkOrder_WorkOrderNumber";
     private const string BuildOpFieldName = "Scaffolding_WorkOrder_BuildOperationNumber";
     private const string DismantleOpFieldName = "Scaffolding_WorkOrder_DismantleOperationNumber";
@@ -25,6 +27,7 @@ public class ScaffoldingMetadata
     private const string TotalWeightCalculatedFieldName = "Scaffolding_TotalWeightCalc";
     private const string TempFlagFieldName = "Scaffolding_IsTemporary";
     private const string SuffixFieldName = "Scaffolding_NameSuffix";
+    private const string StidDocumentIdFieldName = "Scaffolding_StidDocumentId";
 
     private static readonly string[] MandatoryModelAttributesFromPartsNonTempScaff =
     [
@@ -39,7 +42,10 @@ public class ScaffoldingMetadata
 
     public static readonly int NumberOfModelAttributes =
         Enum.GetNames(typeof(AttributeEnum)).Length
-        + 1 /*file suffix*/
+        - 1 /* project number is not used in metadata */
+        + 1 /* name suffix aka human readable title */
+        + 1 /* temp flag */
+        + 1 /* stid document number*/
     ;
     public static readonly int NumberOfMandatoryModelAttributesFromPartsNonTempScaff =
         MandatoryModelAttributesFromPartsNonTempScaff.Length;
@@ -333,5 +339,6 @@ public class ScaffoldingMetadata
         targetDict.Add(TotalWeightCalculatedFieldName, TotalWeightCalculated!);
         targetDict.Add(TempFlagFieldName, TempScaffoldingFlag ? "true" : "false");
         targetDict.Add(SuffixFieldName, NameSuffix ?? "");
+        targetDict.Add(StidDocumentIdFieldName, StidDocumentId ?? "");
     }
 }

@@ -161,6 +161,7 @@ public static class FbxWorkload
                         scaffoldingMetadata.ThrowIfFilenameInvalid(fileNameonly);
                     }
                     scaffoldingMetadata.GetSuffixFromFilename(fileNameonly);
+                    scaffoldingMetadata.StidDocumentId = "";
                     // We crash if we dont have expected values
                     scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
@@ -193,7 +194,7 @@ public static class FbxWorkload
                             );
                         }
                     }
-
+                    scaffoldingMetadata.StidDocumentId = stidMetadata.DocNo;
                     scaffoldingMetadata.NameSuffix = stidMetadata.DocTitle;
                     scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
                 }
