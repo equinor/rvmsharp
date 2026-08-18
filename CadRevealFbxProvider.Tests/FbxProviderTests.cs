@@ -263,6 +263,7 @@ public class FbxProviderTests
         );
 
         Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", suffix), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", string.Empty), Is.True);
     }
 
     [TestCase(InputDirectoryCorrect)]
@@ -329,6 +330,8 @@ public class FbxProviderTests
         );
 
         // assert
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "test"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", string.Empty), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
