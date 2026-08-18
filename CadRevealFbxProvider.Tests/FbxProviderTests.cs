@@ -350,6 +350,9 @@ public class FbxProviderTests
         );
 
         // assert
+        // metadata is setup correctly (processing has succeeded)
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Temp model"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-001"), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
@@ -371,7 +374,9 @@ public class FbxProviderTests
         );
 
         // assert
+        // metadata is setup correctly (processing has succeeded)
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-002"), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
     }
 
