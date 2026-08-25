@@ -13,7 +13,8 @@ public record ModelParameters(
     ModelId ModelId,
     RevisionId RevisionId,
     InstancingThreshold InstancingThreshold,
-    TemplateCountLimit TemplateCountLimit
+    TemplateCountLimit TemplateCountLimit,
+    bool NoPrioritySectors
 );
 
 public record ProjectId(long Value);
