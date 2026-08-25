@@ -5,7 +5,6 @@ using System.Drawing;
 using System.Numerics;
 using Primitives;
 using ProtoBuf;
-using Tessellation;
 using Utils;
 
 [ProtoContract(SkipConstructor = true)]
@@ -28,6 +27,12 @@ public record BoundingBox([property: ProtoMember(1)] Vector3 Min, [property: Pro
     /// Can be used together with <see cref="Center"/>
     /// </summary>
     public Vector3 Extents => (Max - Min);
+
+    /// <summary>
+    /// The Volume of the bounding box
+    /// Expressed as Extents.X * Extents.Y * Extents.Z
+    /// </summary>
+    public float Volume => Extents.X * Extents.Y * Extents.Z;
 
     /// <summary>
     /// Combine two bounds
