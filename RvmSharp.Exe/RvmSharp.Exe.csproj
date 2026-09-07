@@ -16,5 +16,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RvmSharp\RvmSharp.csproj" />
+    <ProjectReference Include="..\CadRevealComposer\CadRevealComposer.csproj" />
+    <ProjectReference Include="..\CadRevealRvmProvider\CadRevealRvmProvider.csproj" />
   </ItemGroup>
 </Project>
