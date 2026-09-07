@@ -5,6 +5,7 @@ using CadRevealComposer.Utils;
 public class FacetGroupMatcherLogObject
 {
     private readonly List<FacetGroupMatchingResult> _facetGroupMatchingResults = new();
+    private readonly object _syncRoot = new();
 
     public void AddFacetGroupMatchingResult(
         long instancedCount,
@@ -15,17 +16,20 @@ public class FacetGroupMatcherLogObject
         double timeElapsed
     )
     {
-        _facetGroupMatchingResults.Add(
-            new FacetGroupMatchingResult()
-            {
-                InstanceCount = instancedCount,
-                NumberOfFacetGroups = numberOfFacetGroups,
-                TemplateCount = templateCount,
-                VertexCount = vertexCount,
-                Iterations = iterations,
-                TimeElapsed = timeElapsed,
-            }
-        );
+        lock (_syncRoot)
+        {
+            _facetGroupMatchingResults.Add(
+                new FacetGroupMatchingResult()
+                {
+                    InstanceCount = instancedCount,
+                    NumberOfFacetGroups = numberOfFacetGroups,
+                    TemplateCount = templateCount,
+                    VertexCount = vertexCount,
+                    Iterations = iterations,
+                    TimeElapsed = timeElapsed,
+                }
+            );
+        }
     }
 
     private class FacetGroupMatchingResult
@@ -40,9 +44,13 @@ public class FacetGroupMatcherLogObject
 
     public void LogFacetGroupMatchingResults()
     {
+        FacetGroupMatchingResult[] results;
+        lock (_syncRoot)
+            results = _facetGroupMatchingResults.ToArray();
+
         using (new TeamCityLogBlock("Facet group matching results"))
         {
-            foreach (var result in _facetGroupMatchingResults)
+            foreach (var result in results)
             {
                 var fraction = result.InstanceCount / (float)result.NumberOfFacetGroups;
                 Console.WriteLine(

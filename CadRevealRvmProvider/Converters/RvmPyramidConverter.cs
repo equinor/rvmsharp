@@ -56,7 +56,7 @@ public static class RvmPyramidConverter
     /// Q: What is "Pyramid" that has an equal Top plane size to its bottom plane, and has no offset...
     /// A: It is a box.
     /// </summary>
-    private static bool IsBoxShaped(RvmPyramid rvmPyramid)
+    public static bool IsBoxShaped(RvmPyramid rvmPyramid)
     {
         const double tolerance = 0.001f; // Arbitrary picked value
 

@@ -50,6 +50,51 @@ RvmSharp.Exe is a sample application using RvmSharp to process and export triang
 dotnet.exe run --configuration Release --project "RvmSharp.Exe/RvmSharp.Exe.csproj" -- --help # Replace '--help' with your arguments.
 ```
 
+### Native template and instance sidecars (pilot)
+
+The OBJ conversion can additionally write two JSON sidecars without changing
+the OBJ output:
+
+- `--native-instances-output <path>` writes local-space tessellated templates
+    and one placement record for every exported RVM primitive. A placement
+    retains the original RVM matrix, decomposed translation/quaternion/scale,
+    node path, inherited TXT attributes, material colour, and local/world bounds.
+- `--native-inventory-output <path>` writes per-native-kind and per-template
+    counts, bounds, and mesh complexity. Each template records its
+    `SingleVertexCount`, `SingleTriangleCount`, and
+    `SingleEstimatedBinaryBytes`, followed by the corresponding totals across
+    all placements of that template. It also writes `SemanticGroups`: a
+    PIPE-oriented catalog report keyed by normalized `Type`, `Spec` (falling
+    back to `Ispec`), and `Nom.diam (mm)`. Each semantic group contains its
+    exact geometry-template variants and one representative source placement.
+- `--native-instances-csv-output <path>` writes a compact, one-row-per-placement
+    CSV alternative. It contains template IDs, source metadata, colour, the full
+    4x4 matrix, decomposed transform values, bounds, and TXT attributes as a
+    single escaped JSON cell.
+- `--native-inventory-csv-output <path>` writes compact template, kind, and
+    summary CSV records. It deliberately omits mesh vertex/normal/index arrays;
+    use `--native-unique-obj` as the corresponding one-copy template geometry
+    artifact.
+
+Templates are keyed by a deterministic SHA-256 digest of primitive kind,
+local-space vertices, normals, and triangle indices. Consequently, repeated
+primitives with identical tessellated local geometry share one template while
+each source placement remains a separate instance. The manifest declares its
+matrix convention explicitly: `System.Numerics Matrix4x4 row-vector; local
+vertex is multiplied by matrix`.
+
+`Kind` (for example, `FacetGroup`) is an RVM tessellation category, not a
+catalog identity. `SemanticGroups` use attached TXT metadata for reporting,
+while exact template IDs remain the reuse identity for rendering. Missing TXT
+fields are recorded as `(missing)`; `RefNo`, node name, and tag are retained
+only in representative records and never used to split catalog groups.
+
+This is a raw RVM preservation path, not a replacement for the existing
+Blender box-proxy policy. It does not apply Blender cleanup, proxy fitting,
+merging, or octree-cell clipping. The EchoVRMeshRunner `rvmConvert` job option
+`nativeSidecars: true` writes both sidecars next to each OBJ as
+`<model>.rvm-instances.json` and `<model>.rvm-inventory.json`.
+
 ## Cad Reveal Composer
 
 The CAD Reveal Composer is a fast converter for RVM files into the Reveal formats used by

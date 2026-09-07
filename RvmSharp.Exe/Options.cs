@@ -22,4 +22,25 @@ internal class Options
 
     [Option("tag-naming", Default = false, Required = false, HelpText = "Name exported OBJ objects as 'Tag/ExtraInfo' (spaces replaced with dashes). Uses the nearest ancestor's Tag attribute as the base name. Requires a paired .txt attributes file.")]
     public bool TagNaming { get; init; }
+
+    [Option("native-instances-output", Required = false, HelpText = "Optional JSON sidecar containing local-space reusable templates and their original RVM placement transforms.")]
+    public string? NativeInstancesOutput { get; init; }
+
+    [Option("native-inventory-output", Required = false, HelpText = "Optional JSON sidecar containing native primitive/template counts, dimensions, and tessellated export-size estimates.")]
+    public string? NativeInventoryOutput { get; init; }
+
+    [Option("native-instances-csv-output", Required = false, HelpText = "Optional compact CSV sidecar containing native instance transforms and metadata. Replaces --native-instances-output when selected by the runner.")]
+    public string? NativeInstancesCsvOutput { get; init; }
+
+    [Option("native-inventory-csv-output", Required = false, HelpText = "Optional compact CSV sidecar containing native template and kind inventory records. Replaces --native-inventory-output when selected by the runner.")]
+    public string? NativeInventoryCsvOutput { get; init; }
+
+    [Option("native-remains-obj", Required = false, HelpText = "Optional OBJ containing only single-use native geometry placements.")]
+    public string? NativeRemainsObj { get; init; }
+
+    [Option("native-unique-obj", Required = false, HelpText = "Optional OBJ containing each reused native local-space geometry template once.")]
+    public string? NativeUniqueObj { get; init; }
+
+    [Option("native-template-usage-csv", Required = false, HelpText = "Optional CSV companion containing per-template reuse counts and tessellated size estimates.")]
+    public string? NativeTemplateUsageCsv { get; init; }
 }

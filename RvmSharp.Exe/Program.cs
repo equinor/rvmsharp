@@ -62,14 +62,30 @@ static class Program
         using var tessellationProgressBar = parentProgressBar.Spawn(1, "Tessellating");
         using var exportProgressBar = parentProgressBar.Spawn(1, "Exporting");
 
-        RvmObjExporter.ExportToObj(
+        if (options.NativeRemainsObj == null)
+        {
+            RvmObjExporter.ExportToObj(
+                rvmStore,
+                options.Tolerance,
+                options.Output,
+                attributeExclusions.Count > 0 ? attributeExclusions : null,
+                ((i) => tessellationProgressBar.MaxTicks = i, () => tessellationProgressBar.Tick()),
+                ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick()),
+                options.TagNaming
+            );
+        }
+
+        NativeInstanceExporter.Export(
             rvmStore,
             options.Tolerance,
-            options.Output,
             attributeExclusions.Count > 0 ? attributeExclusions : null,
-            ((i) => tessellationProgressBar.MaxTicks = i, () => tessellationProgressBar.Tick()),
-            ((i) => exportProgressBar.MaxTicks = i, () => exportProgressBar.Tick()),
-            options.TagNaming
+            options.NativeInstancesOutput,
+            options.NativeInventoryOutput,
+            options.NativeInstancesCsvOutput,
+            options.NativeInventoryCsvOutput,
+            options.NativeRemainsObj,
+            options.NativeUniqueObj,
+            options.NativeTemplateUsageCsv
         );
         parentProgressBar.Tick();
         Console.WriteLine("Done!");
