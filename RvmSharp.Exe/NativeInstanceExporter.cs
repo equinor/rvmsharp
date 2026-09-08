@@ -321,6 +321,7 @@ internal static class NativeInstanceExporter
             try
             {
                 var templateKind = primitive.Kind;
+                var emittedKind = primitive.Kind.ToString();
                 var templateUnitScale = primitive is RvmFacetGroup ? 1f : NativeTemplateUnitScale;
                 var converterRepresentation = GetConverterRepresentation(primitive, node, instanceId, warnings);
                 string? uniqueObjName = null;
@@ -354,9 +355,22 @@ internal static class NativeInstanceExporter
                     && localMesh != null)
                 {
                     var isPipe = IsPipeCylinder(converterRepresentation, localMesh);
-                    localMesh = isPipe ? CreateUnitPipeMesh(tolerance) : CreateUnitCylinderMesh(tolerance);
-                    instanceMatrix = unitCylinderInstanceMatrix;
-                    uniqueObjName = isPipe ? "PIPE" : "CYLINDER";
+                    var canonicalCylinderMesh = isPipe ? null : CreateUnitCylinderMesh(tolerance);
+                    if (canonicalCylinderMesh != null && IsFourSidedCappedCylinder(canonicalCylinderMesh)
+                        && TryCreateUnitBoxInstanceMatrix(cylinder, out var unitBoxMatrix))
+                    {
+                        localMesh = CreateUnitBoxMesh();
+                        instanceMatrix = unitBoxMatrix;
+                        templateKind = RvmPrimitiveKind.Box;
+                        emittedKind = RvmPrimitiveKind.Box.ToString();
+                        uniqueObjName = "CUBE";
+                    }
+                    else
+                    {
+                        localMesh = isPipe ? CreateUnitPipeMesh(tolerance) : canonicalCylinderMesh!;
+                        instanceMatrix = unitCylinderInstanceMatrix;
+                        uniqueObjName = isPipe ? "PIPE" : "CYLINDER";
+                    }
                 }
 
                 if (!Matrix4x4.Decompose(instanceMatrix, out var scale, out var rotation, out var translation))
@@ -391,7 +405,7 @@ internal static class NativeInstanceExporter
                 instances.Add(new NativeInstance(
                     instanceId,
                     template.Id,
-                    primitive.Kind.ToString(),
+                    emittedKind,
                     converterRepresentation,
                     fileIndex,
                     nodePath,
@@ -526,6 +540,9 @@ internal static class NativeInstanceExporter
         return !sourceMesh.Triangles.Any(index => MathF.Abs(sourceMesh.Normals[index].Z) > 0.999f);
     }
 
+    private static bool IsFourSidedCappedCylinder(RvmMesh mesh) => mesh.Vertices.Length == 16
+        && mesh.TriangleCount == 12;
+
     private static bool TryCreateUnitBoxInstanceMatrix(RvmBox box, out Matrix4x4 matrix)
     {
         if (!Matrix4x4.Decompose(box.Matrix, out var sourceScale, out var rotation, out var translation))
@@ -554,6 +571,23 @@ internal static class NativeInstanceExporter
         var boxScale = Vector3.Multiply(
             sourceScale,
             new Vector3(pyramid.BottomX, pyramid.BottomY, pyramid.Height));
+        matrix = Matrix4x4.CreateScale(boxScale)
+            * Matrix4x4.CreateFromQuaternion(rotation)
+            * Matrix4x4.CreateTranslation(translation);
+        return true;
+    }
+
+    private static bool TryCreateUnitBoxInstanceMatrix(RvmCylinder cylinder, out Matrix4x4 matrix)
+    {
+        if (!Matrix4x4.Decompose(cylinder.Matrix, out var sourceScale, out var rotation, out var translation))
+        {
+            matrix = default;
+            return false;
+        }
+
+        var boxScale = Vector3.Multiply(
+            sourceScale,
+            new Vector3(cylinder.Radius * 2, cylinder.Radius * 2, cylinder.Height));
         matrix = Matrix4x4.CreateScale(boxScale)
             * Matrix4x4.CreateFromQuaternion(rotation)
             * Matrix4x4.CreateTranslation(translation);
