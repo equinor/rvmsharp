@@ -323,6 +323,7 @@ internal static class NativeInstanceExporter
                 var templateKind = primitive.Kind;
                 var emittedKind = primitive.Kind.ToString();
                 var templateUnitScale = primitive is RvmFacetGroup ? 1f : NativeTemplateUnitScale;
+                var localBoundsScale = templateUnitScale;
                 var converterRepresentation = GetConverterRepresentation(primitive, node, instanceId, warnings);
                 string? uniqueObjName = null;
                 var localMesh = TessellateLocal(primitive, tolerance);
@@ -335,6 +336,16 @@ internal static class NativeInstanceExporter
                 }
                 else if (primitive is RvmCircularTorus circularTorus)
                     localMesh = TessellateLocal(circularTorus.WithSampleStartAngle(0), tolerance);
+                if (primitive is RvmFacetGroup && localMesh != null
+                    && TryCreateUnitBoxInstanceMatrix(localMesh, instanceMatrix, out var facetGroupBoxMatrix))
+                {
+                    localMesh = CreateUnitBoxMesh();
+                    instanceMatrix = facetGroupBoxMatrix;
+                    templateKind = RvmPrimitiveKind.Box;
+                    emittedKind = RvmPrimitiveKind.Box.ToString();
+                    templateUnitScale = NativeTemplateUnitScale;
+                    uniqueObjName = "CUBE";
+                }
                 if (primitive is RvmBox box && TryCreateUnitBoxInstanceMatrix(box, out var unitBoxInstanceMatrix))
                 {
                     localMesh = CreateUnitBoxMesh();
@@ -417,7 +428,7 @@ internal static class NativeInstanceExporter
                     new[] { rotation.X, rotation.Y, rotation.Z, rotation.W },
                     new[] { scale.X, scale.Y, scale.Z },
                     Matrix4x4.Decompose(instanceMatrix, out _, out _, out _),
-                    ToBounds(primitive.BoundingBoxLocal, templateUnitScale),
+                    ToBounds(primitive.BoundingBoxLocal, localBoundsScale),
                     ToBounds(primitive.CalculateAxisAlignedBoundingBox())));
             }
             catch (Exception exception) when (exception is ArgumentException or ArgumentOutOfRangeException)
@@ -542,6 +553,116 @@ internal static class NativeInstanceExporter
 
     private static bool IsFourSidedCappedCylinder(RvmMesh mesh) => mesh.Vertices.Length == 16
         && mesh.TriangleCount == 12;
+
+    private static bool TryCreateUnitBoxInstanceMatrix(
+        RvmMesh mesh,
+        Matrix4x4 primitiveMatrix,
+        out Matrix4x4 matrix)
+    {
+        if (mesh.Vertices.Length != 24 || mesh.TriangleCount != 12)
+        {
+            matrix = default;
+            return false;
+        }
+
+        var bounds = ToBounds(mesh.Vertices);
+        var size = new Vector3(
+            bounds.Max![0] - bounds.Min![0],
+            bounds.Max[1] - bounds.Min[1],
+            bounds.Max[2] - bounds.Min[2]);
+        var tolerance = Math.Max(1e-6f, size.Length() * 1e-5f);
+        var corners = new List<Vector3>(8);
+        foreach (var vertex in mesh.Vertices)
+        {
+            if (!corners.Any(corner => Vector3.DistanceSquared(corner, vertex) <= tolerance * tolerance))
+                corners.Add(vertex);
+        }
+
+        if (corners.Count != 8)
+        {
+            matrix = default;
+            return false;
+        }
+
+        for (var originIndex = 0; originIndex < corners.Count; originIndex++)
+        {
+            var origin = corners[originIndex];
+            var edges = corners.Where((_, index) => index != originIndex).Select(corner => corner - origin).ToArray();
+            for (var first = 0; first < edges.Length - 2; first++)
+            for (var second = first + 1; second < edges.Length - 1; second++)
+            for (var third = second + 1; third < edges.Length; third++)
+            {
+                var edgeX = edges[first];
+                var edgeY = edges[second];
+                var edgeZ = edges[third];
+                if (edgeX.Length() <= tolerance || edgeY.Length() <= tolerance || edgeZ.Length() <= tolerance)
+                    continue;
+
+                var expectedCorners = new[]
+                {
+                    origin, origin + edgeX, origin + edgeY, origin + edgeX + edgeY,
+                    origin + edgeZ, origin + edgeX + edgeZ, origin + edgeY + edgeZ,
+                    origin + edgeX + edgeY + edgeZ,
+                };
+                if (expectedCorners.Any(expected => !corners.Any(corner => Vector3.DistanceSquared(corner, expected) <= tolerance * tolerance)))
+                    continue;
+
+                if (!HasSixCubeFaces(mesh, expectedCorners, tolerance))
+                    continue;
+
+                var center = origin + (edgeX + edgeY + edgeZ) * 0.5f;
+                matrix = new Matrix4x4(
+                        edgeX.X, edgeX.Y, edgeX.Z, 0,
+                        edgeY.X, edgeY.Y, edgeY.Z, 0,
+                        edgeZ.X, edgeZ.Y, edgeZ.Z, 0,
+                        center.X, center.Y, center.Z, 1)
+                    * primitiveMatrix;
+                return true;
+            }
+        }
+
+        matrix = default;
+        return false;
+    }
+
+    private static bool HasSixCubeFaces(RvmMesh mesh, IReadOnlyList<Vector3> corners, float tolerance)
+    {
+        var vertexCorners = mesh.Vertices
+            .Select(vertex => Array.FindIndex(corners.ToArray(), corner =>
+                Vector3.DistanceSquared(corner, vertex) <= tolerance * tolerance))
+            .ToArray();
+        if (vertexCorners.Any(cornerIndex => cornerIndex < 0))
+            return false;
+
+        var faceCounts = new int[6];
+        foreach (var triangle in mesh.Triangles.Chunk(3))
+        {
+            if (triangle.Length != 3)
+                return false;
+
+            var triangleCorners = triangle.Select(vertexIndex => vertexCorners[vertexIndex]).ToArray();
+            if (triangleCorners.Distinct().Count() != 3)
+                return false;
+
+            var faceIndex = -1;
+            for (var axis = 0; axis < 3; axis++)
+            {
+                var coordinate = triangleCorners[0] >> axis & 1;
+                if (triangleCorners.All(corner => (corner >> axis & 1) == coordinate))
+                {
+                    if (faceIndex >= 0)
+                        return false;
+                    faceIndex = axis * 2 + coordinate;
+                }
+            }
+
+            if (faceIndex < 0)
+                return false;
+            faceCounts[faceIndex]++;
+        }
+
+        return faceCounts.All(count => count == 2);
+    }
 
     private static bool TryCreateUnitBoxInstanceMatrix(RvmBox box, out Matrix4x4 matrix)
     {
