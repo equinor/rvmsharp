@@ -22,6 +22,9 @@
     }
   ],
   "workOrderId": "12356789",
+  "buildOperationNumber": "67",
+  "dismantleOperationNumber": "9",
+  "workOrderNumberDismantle": "",
   "hasWorkOrderAssigned": true,
   "hasBeenValidatedSuccessfully": true,
   "plantDocNo": "E000-XYZ-00-ABC-000.000"
