@@ -404,6 +404,70 @@ public class FbxProviderTests
         );
     }
 
+    [TestCase("TestSamples/stidPipelineWoScaff_BuildOpMismatch")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenBuildOpNumbersMismatch(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act & assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        );
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_DismantleOpMissing")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsWhenDismantleOpMissing(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        // metadata is setup correctly (processing has succeeded)
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-005"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_MissingDismantleOpInStidOnly")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenDismantleOpMissingInStidOnly(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act & assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        );
+    }
+
     [Test]
     [TestCase(InputDirectoryCorrect)]
     [TestCase(InputDirectoryCorrectWithSuffix)]

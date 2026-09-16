@@ -193,6 +193,33 @@ public static class FbxWorkload
                                 )
                             );
                         }
+
+                        var csvBuildOperationNo =
+                            scaffoldingMetadata.BuildOperationNumber?.TrimStart('0') ?? string.Empty;
+                        var stidBuildOperationNo = stidMetadata.BuildOperationNumber?.TrimStart('0') ?? string.Empty;
+                        if (!string.Equals(csvBuildOperationNo, stidBuildOperationNo, StringComparison.Ordinal))
+                        {
+                            throw new UserFriendlyLogException(
+                                $"Scaffolding build operation number in STID ({stidMetadata.BuildOperationNumber}) differs from the build operation number extracted from CSV file ({scaffoldingMetadata.BuildOperationNumber})",
+                                new ScaffoldingAttributeParsingException(
+                                    $"Scaffolding build operation number mismatch -- STID BuildOpNo: {stidMetadata.BuildOperationNumber}, CSV BuildOpNo: {scaffoldingMetadata.BuildOperationNumber}"
+                                )
+                            );
+                        }
+
+                        var csvDismantleOperationNo =
+                            scaffoldingMetadata.DismantleOperationNumber?.TrimStart('0') ?? string.Empty;
+                        var stidDismantleOperationNo =
+                            stidMetadata.DismantleOperationNumber?.TrimStart('0') ?? string.Empty;
+                        if (!string.Equals(csvDismantleOperationNo, stidDismantleOperationNo, StringComparison.Ordinal))
+                        {
+                            throw new UserFriendlyLogException(
+                                $"Scaffolding dismantle operation number in STID ({stidMetadata.DismantleOperationNumber}) differs from the dismantle operation number extracted from CSV file ({scaffoldingMetadata.DismantleOperationNumber})",
+                                new ScaffoldingAttributeParsingException(
+                                    $"Scaffolding dismantle operation number mismatch -- STID DismantleOpNo: {stidMetadata.DismantleOperationNumber}, CSV DismantleOpNo: {scaffoldingMetadata.DismantleOperationNumber}"
+                                )
+                            );
+                        }
                     }
                     scaffoldingMetadata.StidDocumentId = stidMetadata.DocNo;
                     scaffoldingMetadata.NameSuffix = stidMetadata.DocTitle;

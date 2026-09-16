@@ -22,6 +22,9 @@
     }
   ],
   "workOrderId": "",
+  "buildOperationNumber": "",
+  "dismantleOperationNumber": "",
+  "workOrderNumberDismantle": "",
   "hasWorkOrderAssigned": false,
   "hasBeenValidatedSuccessfully": true,
   "plantDocNo": "E000-XYZ-00-ABC-000.000"

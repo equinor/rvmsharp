@@ -1,7 +1,7 @@
 {
   "plantCode": "ABC",
   "instCode": "ABC",
-  "docNo": "SCAFF-002",
+  "docNo": "SCAFF-005",
   "docType": "SCAFF",
   "docTitle": "Valid model",
   "docClass": "INTERNAL",
@@ -10,20 +10,20 @@
   "files": [
     {
       "blobId": "random-test-24fc491b454c.csv",
-      "fileName": "ABC-SCAFF-002-test.csv"
+      "fileName": "ABC-SCAFF-005-test.csv"
     },
     {
       "blobId": "random-test-36fec26d1b8e.fbx",
-      "fileName": "ABC-SCAFF-002-test.fbx"
+      "fileName": "ABC-SCAFF-005-test.fbx"
     },
     {
       "blobId": "random-test-7a0d6c6ee06b.rvt",
-      "fileName": "ABC-SCAFF-002-test.rvt"
+      "fileName": "ABC-SCAFF-005-test.rvt"
     }
   ],
   "workOrderId": "1235678",
   "buildOperationNumber": "67",
-  "dismantleOperationNumber": "9",
+  "dismantleOperationNumber": "",
   "workOrderNumberDismantle": "",
   "hasWorkOrderAssigned": true,
   "hasBeenValidatedSuccessfully": true,

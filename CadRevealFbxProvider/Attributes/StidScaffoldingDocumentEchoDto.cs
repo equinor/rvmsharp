@@ -21,6 +21,11 @@
         public required string DocTitle { get; init; }
 
         /// <summary>
+        /// Revision number of the scaffolding document in STID
+        /// </summary>
+        public required string? RevNo { get; set; }
+
+        /// <summary>
         /// WorkOrderId without zero padding.
         /// </summary>
         public required string? WorkOrderId { get; set; }
@@ -30,5 +35,20 @@
         /// When a scaffolding does not have a work order assigned we assume it is in planning phase and simplify some of the guards and checks on the scaffolding files.
         /// </summary>
         public required bool HasWorkOrderAssigned { get; set; } = false;
+
+        /// <summary>
+        /// Build operation number of the scaffolding document in STID
+        /// </summary>
+        public required string? BuildOperationNumber { get; set; }
+
+        /// <summary>
+        /// Sometimes, the dismantle operation can be registered in another work order
+        /// </summary>
+        public required string? WorkOrderNumberDismantle { get; set; }
+
+        /// <summary>
+        /// Dismantle operation number of the scaffolding document in STID
+        /// </summary>
+        public required string? DismantleOperationNumber { get; set; }
     }
 }
