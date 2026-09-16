@@ -404,8 +404,8 @@ public class FbxProviderTests
         );
     }
 
-    [TestCase("TestSamples/stidPipelineWoScaff_BuilOpMismatch")]
-    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenBuilOpNumbersMismatch(string inputDir)
+    [TestCase("TestSamples/stidPipelineWoScaff_BuildOpMismatch")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenBuildOpNumbersMismatch(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
@@ -424,8 +424,8 @@ public class FbxProviderTests
         );
     }
 
-    [TestCase("TestSamples/stidPipelineWoScaff_DismantleMissing")]
-    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsWhenDismantleMissing(string inputDir)
+    [TestCase("TestSamples/stidPipelineWoScaff_DismantleOpMissing")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsWhenDismantleOpMissing(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
@@ -448,8 +448,8 @@ public class FbxProviderTests
         Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
     }
 
-    [TestCase("TestSamples/stidPipelineWoScaff_MissingDismantleInStidOnly")]
-    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenDismantleMissingInStidOnly(string inputDir)
+    [TestCase("TestSamples/stidPipelineWoScaff_MissingDismantleOpInStidOnly")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenDismantleOpMissingInStidOnly(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
