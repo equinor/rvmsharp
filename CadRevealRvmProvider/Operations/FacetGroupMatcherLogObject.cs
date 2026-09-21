@@ -46,7 +46,7 @@ public class FacetGroupMatcherLogObject
             {
                 var fraction = result.InstanceCount / (float)result.NumberOfFacetGroups;
                 Console.WriteLine(
-                    $"\tFound {result.InstanceCount, 9:N0} instances in {result.InstanceCount, 7:N0} items ({fraction, 7:P1})."
+                    $"\tFound {result.InstanceCount, 9:N0} instances in {result.NumberOfFacetGroups, 7:N0} items ({fraction, 7:P1})."
                         + $" TC: {result.TemplateCount, 5:N0}, VC: {result.VertexCount, 6:N0}, IC: {result.Iterations, 10:N0} in {result.TimeElapsed, 6:N}s."
                 );
             }

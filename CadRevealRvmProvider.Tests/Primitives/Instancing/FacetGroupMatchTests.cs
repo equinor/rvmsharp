@@ -111,6 +111,85 @@ public class FacetGroupMatchTests
     }
 
     [Test]
+    public void MatchAllReusesPositionsAndKeepsPreparedDataWithPromotedTemplates()
+    {
+        int[] families = [0, 1, 1, 1, 0, 0];
+        var groups = families
+            .Select(
+                (family, index) =>
+                {
+                    var unused = new Vector3(float.NaN);
+                    var vertices = new[]
+                    {
+                        (unused, Vector3.Zero),
+                        (Vector3.Zero, Vector3.UnitZ),
+                        (Vector3.UnitX, Vector3.UnitZ),
+                        (Vector3.UnitY, Vector3.UnitZ),
+                        (Vector3.UnitZ, Vector3.UnitZ),
+                        (family == 0 ? Vector3.One : new Vector3(0.5f), Vector3.UnitZ),
+                        (unused, Vector3.Zero),
+                    };
+                    var contours = new[]
+                    {
+                        new RvmFacetGroup.RvmContour(new ArraySegment<(Vector3, Vector3)>(vertices, 0, 1)),
+                        new RvmFacetGroup.RvmContour(new ArraySegment<(Vector3, Vector3)>(vertices, 1, 5)),
+                    };
+                    return new RvmFacetGroup(
+                        1,
+                        index < 2
+                            ? Matrix4x4.Identity
+                            : Matrix4x4.CreateScale(1 + index * 0.1f, 1 + index * 0.2f, 1 + index * 0.3f)
+                                * Matrix4x4.CreateRotationZ(index * 0.2f)
+                                * Matrix4x4.CreateTranslation(index * 10, -index * 5, index * 2),
+                        // Conservative bounds make template encounter order deterministic despite parallel grouping.
+                        new RvmBoundingBox(Vector3.Zero, new Vector3(10 - index)),
+                        [new RvmFacetGroup.RvmPolygon(new ArraySegment<RvmFacetGroup.RvmContour>(contours, 1, 1))]
+                    );
+                }
+            )
+            .ToArray();
+
+        var results = RvmFacetGroupMatcher.MatchAll(groups, _ => true, 100);
+        var instances = results.OfType<RvmFacetGroupMatcher.InstancedResult>().ToArray();
+        Assert.That(instances, Has.Length.EqualTo(groups.Length));
+        Assert.That(results.OfType<RvmFacetGroupMatcher.TemplateResult>().Count(), Is.EqualTo(2));
+        foreach (var instance in instances)
+        {
+            var original = instance.FacetGroup.Polygons[0].Contours[0].Vertices;
+            var template = instance.Template.Polygons[0].Contours[0].Vertices;
+            for (var vertexIndex = 0; vertexIndex < original.Count; vertexIndex++)
+            {
+                var expected = Vector3.Transform(original[vertexIndex].Vertex, instance.FacetGroup.Matrix);
+                var actual = Vector3.Transform(template[vertexIndex].Vertex, instance.Transform);
+                Assert.That(Vector3.Distance(actual, expected), Is.LessThan(0.001f));
+                Assert.That(original[vertexIndex].Normal, Is.EqualTo(Vector3.UnitZ));
+            }
+        }
+    }
+
+    [Test]
+    public void MatchAllKeepsPlanarGroupsUninstanced()
+    {
+        var vertices = new[]
+        {
+            (Vector3.Zero, Vector3.UnitZ),
+            (Vector3.UnitX, Vector3.UnitZ),
+            (Vector3.UnitY, Vector3.UnitZ),
+            (Vector3.UnitX + Vector3.UnitY, Vector3.UnitZ),
+        };
+        var group = new RvmFacetGroup(
+            1,
+            Matrix4x4.Identity,
+            new RvmBoundingBox(Vector3.Zero, Vector3.One),
+            [new RvmFacetGroup.RvmPolygon(new[] { new RvmFacetGroup.RvmContour(vertices) })]
+        );
+
+        var results = RvmFacetGroupMatcher.MatchAll([group, group, group], _ => true, 100);
+        Assert.That(results, Has.Length.EqualTo(3));
+        Assert.That(results, Has.All.TypeOf<RvmFacetGroupMatcher.NotInstancedResult>());
+    }
+
+    [Test]
     public void MatchAllWithTemplateLimit()
     {
         var pipe1 = TestSampleLoader.LoadTestJson<RvmFacetGroup>("43907.json");

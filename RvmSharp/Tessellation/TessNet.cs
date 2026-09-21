@@ -16,7 +16,7 @@ public static class TessNet
         public readonly List<int> Indices = new List<int>();
     }
 
-    public static TessellateResult Tessellate(RvmContour[] contours)
+    public static TessellateResult Tessellate(ArraySegment<RvmContour> contours, Vector3 origin = default)
     {
         var tess = new Tess();
         Vec3 normal = default;
@@ -24,15 +24,21 @@ public static class TessNet
 
         foreach (var contour in contours)
         {
-            if (contour.Vertices.Length < 3)
+            if (contour.Vertices.Count < 3)
             {
                 // Skip degenerate contour with less than 3 vertices
                 continue;
             }
 
-            var cv = contour
-                .Vertices.Select(v => new ContourVertex(new Vec3(v.Vertex.X, v.Vertex.Y, v.Vertex.Z), v.Normal))
-                .ToArray();
+            // Recenter for float precision while building LibTess's input, avoiding translated contour copies.
+            // The caller must add origin back to the output positions; shared input vertices remain unchanged.
+            var cv = new ContourVertex[contour.Vertices.Count];
+            for (var vertexIndex = 0; vertexIndex < cv.Length; vertexIndex++)
+            {
+                var (vertex, vertexNormal) = contour.Vertices[vertexIndex];
+                var position = vertex - origin;
+                cv[vertexIndex] = new ContourVertex(new Vec3(position.X, position.Y, position.Z), vertexNormal);
+            }
             tess.AddContour(cv);
             var n = contour.Vertices[0].Normal;
             normal = new Vec3(n.X, n.Y, n.Z);
