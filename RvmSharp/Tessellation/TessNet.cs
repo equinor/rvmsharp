@@ -68,7 +68,7 @@ public static class TessNet
             indices[indexCount++] = third;
         }
 
-        if (indexCount != indices.Length)
+        if (indexCount != indices.Length) // If we had undefined elements, resize the array to the actual number of valid indices
             Array.Resize(ref indices, indexCount);
         result.Indices = indices;
 
