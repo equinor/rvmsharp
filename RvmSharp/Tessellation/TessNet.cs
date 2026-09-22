@@ -1,7 +1,6 @@
 ﻿namespace RvmSharp.Tessellation;
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using LibTessDotNet;
@@ -13,7 +12,7 @@ public static class TessNet
     {
         public Vector3[] VertexData = Array.Empty<Vector3>();
         public Vector3[] NormalData = Array.Empty<Vector3>();
-        public readonly List<int> Indices = new List<int>();
+        public int[] Indices = Array.Empty<int>();
     }
 
     public static TessellateResult Tessellate(ArraySegment<RvmContour> contours, Vector3 origin = default)
@@ -54,14 +53,24 @@ public static class TessNet
         result.VertexData = tess.Vertices.Select(v => new Vector3(v.Position.X, v.Position.Y, v.Position.Z)).ToArray();
         result.NormalData = tess.Vertices.Select(v => (Vector3)v.Data).ToArray();
 
-        for (var i = 0; i < tess.ElementCount; i++)
+        var indices = new int[tess.ElementCount * 3];
+        var indexCount = 0;
+        for (var elementIndex = 0; elementIndex < tess.ElementCount; elementIndex++)
         {
-            var t = new int[3];
-            Array.Copy(tess.Elements, i * 3, t, 0, 3);
-            if (t.Any(e => e == Tess.Undef))
+            var offset = elementIndex * 3;
+            var first = tess.Elements[offset];
+            var second = tess.Elements[offset + 1];
+            var third = tess.Elements[offset + 2];
+            if (first == Tess.Undef || second == Tess.Undef || third == Tess.Undef)
                 continue;
-            result.Indices.AddRange(t);
+            indices[indexCount++] = first;
+            indices[indexCount++] = second;
+            indices[indexCount++] = third;
         }
+
+        if (indexCount != indices.Length)
+            Array.Resize(ref indices, indexCount);
+        result.Indices = indices;
 
         return result;
     }
