@@ -168,6 +168,8 @@ public class FacetGroupMatchTests
     }
 
     [Test]
+    // Documents the solver's non-coplanar anchor requirement, not a desired restriction.
+    // Update this expectation when planar matching is intentionally supported.
     public void MatchAllKeepsPlanarGroupsUninstanced()
     {
         var vertices = new[]

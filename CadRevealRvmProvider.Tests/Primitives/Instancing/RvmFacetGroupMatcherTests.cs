@@ -87,6 +87,8 @@ public class RvmFacetGroupMatcherTests
         var source = new AlgebraUtils.TransformSource(first, second, third, fourth);
         var translation = new Vector3(10, 20, 30);
 
+        // This valid uniform scaling is rejected because the squared-coordinate scale solver is singular.
+        // Update the failure expectation when that limitation is fixed; rigid matching must still succeed.
         Assert.That(source.TryGetTransform(first, second * 2, third * 2, fourth * 2, out _), Is.False);
         Assert.That(
             source.TryGetTransform(
