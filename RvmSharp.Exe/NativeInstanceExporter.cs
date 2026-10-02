@@ -42,11 +42,14 @@ internal static class NativeInstanceExporter
         string? inventoryCsvOutput,
         string? remainsObjOutput,
         string? uniqueObjOutput,
+        int nativeObjectsPerFile,
         string? templateUsageCsvOutput)
     {
         if (manifestOutput == null && inventoryOutput == null && instancesCsvOutput == null && inventoryCsvOutput == null
             && remainsObjOutput == null && uniqueObjOutput == null && templateUsageCsvOutput == null)
             return;
+        if (nativeObjectsPerFile <= 0)
+            throw new ArgumentOutOfRangeException(nameof(nativeObjectsPerFile), "Must be greater than zero.");
 
         var templatesByKey = new Dictionary<string, NativeTemplate>();
         var instances = new List<NativeInstance>();
@@ -151,10 +154,10 @@ internal static class NativeInstanceExporter
             WriteInventoryCsv(inventoryCsvOutput, templates, summary);
 
         if (remainsObjOutput != null)
-            WriteRemainsObj(remainsObjOutput, templatesById, orderedInstances);
+            WriteRemainsObj(remainsObjOutput, templatesById, orderedInstances, nativeObjectsPerFile);
 
         if (uniqueObjOutput != null)
-            WriteUniqueObj(uniqueObjOutput, templates.Where(template => template.UseCount > 1));
+            WriteUniqueObj(uniqueObjOutput, templates.Where(template => template.UseCount > 1), nativeObjectsPerFile);
 
         if (templateUsageCsvOutput != null)
             WriteTemplateUsageCsv(templateUsageCsvOutput, templates);
@@ -907,34 +910,51 @@ internal static class NativeInstanceExporter
     private static void WriteRemainsObj(
         string outputPath,
         IReadOnlyDictionary<string, NativeTemplate> templatesById,
-        IReadOnlyList<NativeInstance> instances)
+        IReadOnlyList<NativeInstance> instances,
+        int objectsPerFile)
     {
-        EnsureOutputDirectory(outputPath);
-
-        using var exporter = new ObjExporter(outputPath);
-        foreach (var instance in instances.Where(instance => templatesById[instance.TemplateId].UseCount == 1))
+        foreach (var part in instances
+                     .Where(instance => templatesById[instance.TemplateId].UseCount == 1)
+                     .Chunk(objectsPerFile)
+                     .Select((instances, index) => (Instances: instances, Index: index + 1)))
         {
-            var template = templatesById[instance.TemplateId];
-            var mesh = ToMesh(template);
-            mesh.Apply(ToMatrix4x4(instance.Matrix));
-            exporter.StartObject(instance.Id);
-            exporter.StartGroup(instance.Id);
-            exporter.WriteMesh(mesh);
+            using var exporter = new ObjExporter(GetPartOutputPath(outputPath, part.Index));
+            foreach (var instance in part.Instances)
+            {
+                var template = templatesById[instance.TemplateId];
+                var mesh = ToMesh(template);
+                mesh.Apply(ToMatrix4x4(instance.Matrix));
+                exporter.StartObject(instance.Id);
+                exporter.StartGroup(instance.Id);
+                exporter.WriteMesh(mesh);
+            }
         }
     }
 
-    private static void WriteUniqueObj(string outputPath, IEnumerable<NativeTemplate> templates)
+    private static void WriteUniqueObj(string outputPath, IEnumerable<NativeTemplate> templates, int objectsPerFile)
     {
-        EnsureOutputDirectory(outputPath);
-
-        using var exporter = new ObjExporter(outputPath);
-        foreach (var template in templates)
+        foreach (var part in templates
+                     .Chunk(objectsPerFile)
+                     .Select((templates, index) => (Templates: templates, Index: index + 1)))
         {
-            var objectName = template.UniqueObjName ?? $"template_{template.Id}";
-            exporter.StartObject(objectName);
-            exporter.StartGroup(objectName);
-            exporter.WriteMesh(ToMesh(template));
+            using var exporter = new ObjExporter(GetPartOutputPath(outputPath, part.Index));
+            foreach (var template in part.Templates)
+            {
+                var objectName = $"template_{template.Id}";
+                exporter.StartObject(objectName);
+                exporter.StartGroup(objectName);
+                exporter.WriteMesh(ToMesh(template));
+            }
         }
+    }
+
+    private static string GetPartOutputPath(string outputPath, int partNumber)
+    {
+        var directory = Path.GetDirectoryName(outputPath);
+        var filename = Path.GetFileNameWithoutExtension(outputPath);
+        var extension = Path.GetExtension(outputPath);
+        var partFilename = filename[..filename.IndexOf('.')];
+        return Path.Combine(directory ?? string.Empty, $"{partFilename}.part{partNumber:D2}{filename[filename.IndexOf('.')..]}{extension}");
     }
 
     private static void WriteTemplateUsageCsv(string outputPath, IReadOnlyList<NativeTemplate> templates)

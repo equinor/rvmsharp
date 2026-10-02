@@ -85,6 +85,7 @@ static class Program
             options.NativeInventoryCsvOutput,
             options.NativeRemainsObj,
             options.NativeUniqueObj,
+            options.NativeObjectsPerFile,
             options.NativeTemplateUsageCsv
         );
         parentProgressBar.Tick();

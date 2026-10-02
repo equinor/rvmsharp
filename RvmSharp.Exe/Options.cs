@@ -41,6 +41,9 @@ internal class Options
     [Option("native-unique-obj", Required = false, HelpText = "Optional OBJ containing each reused native local-space geometry template once.")]
     public string? NativeUniqueObj { get; init; }
 
+    [Option("native-objects-per-file", Default = 500, Required = false, HelpText = "Maximum objects per native remains or unique OBJ part.")]
+    public int NativeObjectsPerFile { get; init; } = 500;
+
     [Option("native-template-usage-csv", Required = false, HelpText = "Optional CSV companion containing per-template reuse counts and tessellated size estimates.")]
     public string? NativeTemplateUsageCsv { get; init; }
 }
