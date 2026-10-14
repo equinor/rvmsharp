@@ -270,68 +270,99 @@ public static class AlgebraUtils
         out Matrix4x4 transform
     )
     {
-        var va12 = pa2 - pa1;
-        var va13 = pa3 - pa1;
-        var va14 = pa4 - pa1;
-        var vb12 = pb2 - pb1;
-        var vb13 = pb3 - pb1;
-        var vb14 = pb4 - pb1;
+        return new TransformSource(pa1, pa2, pa3, pa4).TryGetTransform(pb1, pb2, pb3, pb4, out transform);
+    }
 
-        var squaredBLengths = new Vector3(vb12.LengthSquared(), vb13.LengthSquared(), vb14.LengthSquared());
-        var squaredALengths = new Vector3(va12.LengthSquared(), va13.LengthSquared(), va14.LengthSquared());
-        var dist = (squaredALengths - squaredBLengths).Length();
-        var scale = Vector3.One;
-        if (!dist.ApproximatelyEquals(0, 0.001f))
+    /// <summary>
+    /// Caches source-only calculations when matching the same four anchors against many candidates.
+    /// </summary>
+    public readonly struct TransformSource
+    {
+        private readonly Vector3 pa1;
+        private readonly Vector3 pa2;
+        private readonly Vector3 pa3;
+        private readonly Vector3 pa4;
+        private readonly Vector3 va12;
+        private readonly Vector3 va13;
+        private readonly Vector3 squaredALengths;
+        private readonly Matrix4x4 scaleSolver;
+        private readonly bool canSolveScale;
+
+        public TransformSource(Vector3 pa1, Vector3 pa2, Vector3 pa3, Vector3 pa4)
         {
+            this.pa1 = pa1;
+            this.pa2 = pa2;
+            this.pa3 = pa3;
+            this.pa4 = pa4;
+            va12 = pa2 - pa1;
+            va13 = pa3 - pa1;
+            var va14 = pa4 - pa1;
+            squaredALengths = new Vector3(va12.LengthSquared(), va13.LengthSquared(), va14.LengthSquared());
             // csharpier-ignore -- Custom matrix formatting
             var vaMatrix = new Matrix4x4(
                 va12.X * va12.X, va12.Y * va12.Y, va12.Z * va12.Z, 0,
                 va13.X * va13.X, va13.Y * va13.Y, va13.Z * va13.Z, 0,
                 va14.X * va14.X, va14.Y * va14.Y, va14.Z * va14.Z, 0,
                 0, 0, 0, 1);
-
-            if (!Matrix4x4.Invert(vaMatrix, out var vaMatrixInverse))
-            {
-                transform = default;
-                return false;
-            }
-
-            var scaleSquared = Vector3.Transform(squaredBLengths, Matrix4x4.Transpose(vaMatrixInverse));
-            scale = new Vector3(MathF.Sqrt(scaleSquared.X), MathF.Sqrt(scaleSquared.Y), MathF.Sqrt(scaleSquared.Z));
+            canSolveScale = Matrix4x4.Invert(vaMatrix, out var inverse);
+            scaleSolver = Matrix4x4.Transpose(inverse);
         }
 
-        var va12Scaled = va12 * scale;
-        var va13Scaled = va13 * scale;
+        public bool TryGetTransform(Vector3 pb1, Vector3 pb2, Vector3 pb3, Vector3 pb4, out Matrix4x4 transform)
+        {
+            var vb12 = pb2 - pb1;
+            var vb13 = pb3 - pb1;
+            var vb14 = pb4 - pb1;
 
-        // 2 rotation va'1,va'2 -> vb1,vb2
-        var vaNormal = Vector3.Normalize(Vector3.Cross(va12Scaled, va13Scaled));
-        var vbNormal = Vector3.Normalize(Vector3.Cross(vb12, vb13));
-        var rot1 = vaNormal.FromToRotation(vbNormal);
+            var squaredBLengths = new Vector3(vb12.LengthSquared(), vb13.LengthSquared(), vb14.LengthSquared());
+            var dist = (squaredALengths - squaredBLengths).Length();
+            var scale = Vector3.One;
+            if (!dist.ApproximatelyEquals(0, 0.001f))
+            {
+                // A singular scale solver does not rule out a rigid match when the anchor lengths already agree.
+                if (!canSolveScale)
+                {
+                    transform = default;
+                    return false;
+                }
 
-        // 3 axis rotation: axis=vb2-vb1 va'3-va'1
-        var va12r1 = Vector3.Transform(va12Scaled, rot1);
-        var angle2 = va12r1.AngleTo(vb12);
+                var scaleSquared = Vector3.Transform(squaredBLengths, scaleSolver);
+                scale = new Vector3(MathF.Sqrt(scaleSquared.X), MathF.Sqrt(scaleSquared.Y), MathF.Sqrt(scaleSquared.Z));
+            }
 
-        var va12r1vb12cross = Vector3.Cross(va12r1, vb12);
-        var rotationNormal = Vector3.Normalize(Vector3.Cross(va12r1, vb12));
-        var rot2 = va12r1vb12cross.LengthSquared().ApproximatelyEquals(0)
-            ? Quaternion.Identity
-            : Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
+            var va12Scaled = va12 * scale;
+            var va13Scaled = va13 * scale;
 
-        var rotation = Quaternion.Normalize(rot2 * rot1);
+            // 2 rotation va'1,va'2 -> vb1,vb2
+            var vaNormal = Vector3.Normalize(Vector3.Cross(va12Scaled, va13Scaled));
+            var vbNormal = Vector3.Normalize(Vector3.Cross(vb12, vb13));
+            var rot1 = vaNormal.FromToRotation(vbNormal);
 
-        // translation
-        var translation = pb1 - Vector3.Transform(pa1 * scale, rotation);
+            // 3 axis rotation: axis=vb2-vb1 va'3-va'1
+            var va12r1 = Vector3.Transform(va12Scaled, rot1);
+            var angle2 = va12r1.AngleTo(vb12);
 
-        transform =
-            Matrix4x4.CreateScale(scale)
-            * Matrix4x4.CreateFromQuaternion(rotation)
-            * Matrix4x4.CreateTranslation(translation);
+            var va12r1vb12cross = Vector3.Cross(va12r1, vb12);
+            var rotationNormal = Vector3.Normalize(Vector3.Cross(va12r1, vb12));
+            var rot2 = va12r1vb12cross.LengthSquared().ApproximatelyEquals(0)
+                ? Quaternion.Identity
+                : Quaternion.CreateFromAxisAngle(rotationNormal, angle2);
 
-        const float OneMillimeter = 0.001f; // assumption: the data is in meters
-        return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), OneMillimeter)
-            && pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), OneMillimeter)
-            && pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), OneMillimeter)
-            && pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), OneMillimeter);
+            var rotation = Quaternion.Normalize(rot2 * rot1);
+
+            // translation
+            var translation = pb1 - Vector3.Transform(pa1 * scale, rotation);
+
+            transform =
+                Matrix4x4.CreateScale(scale)
+                * Matrix4x4.CreateFromQuaternion(rotation)
+                * Matrix4x4.CreateTranslation(translation);
+
+            const float OneMillimeter = 0.001f; // assumption: the data is in meters
+            return pb1.EqualsWithinTolerance(Vector3.Transform(pa1, transform), OneMillimeter)
+                && pb2.EqualsWithinTolerance(Vector3.Transform(pa2, transform), OneMillimeter)
+                && pb3.EqualsWithinTolerance(Vector3.Transform(pa3, transform), OneMillimeter)
+                && pb4.EqualsWithinTolerance(Vector3.Transform(pa4, transform), OneMillimeter);
+        }
     }
 }

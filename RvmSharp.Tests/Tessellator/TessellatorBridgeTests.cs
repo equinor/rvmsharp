@@ -1,5 +1,6 @@
 ﻿namespace RvmSharp.Tests.Tessellator;
 
+using System;
 using System.Numerics;
 using Commons.Utils;
 using NUnit.Framework;
@@ -13,6 +14,55 @@ public class TessellatorBridgeTests
         Min: Vector3.Zero,
         Max: Vector3.One
     );
+
+    [TestFixture]
+    public class TessellateFacetGroupTests
+    {
+        [Test]
+        public void TessellateFacetGroup_WithHole_UsesOnlyTheSegmentVertices()
+        {
+            var origin = new Vector3(10000, 20000, 3);
+            var vertices = new (Vector3 Vertex, Vector3 Normal)[]
+            {
+                (new Vector3(float.NaN), Vector3.Zero),
+                (origin, Vector3.UnitZ),
+                (origin + new Vector3(4, 0, 0), Vector3.UnitZ),
+                (origin + new Vector3(4, 4, 0), Vector3.UnitZ),
+                (origin + new Vector3(0, 4, 0), Vector3.UnitZ),
+                (origin + new Vector3(1, 1, 0), Vector3.UnitZ),
+                (origin + new Vector3(1, 3, 0), Vector3.UnitZ),
+                (origin + new Vector3(3, 3, 0), Vector3.UnitZ),
+                (origin + new Vector3(3, 1, 0), Vector3.UnitZ),
+                (new Vector3(float.NaN), Vector3.Zero),
+            };
+            var contours = new RvmFacetGroup.RvmContour[4];
+            contours[1] = new RvmFacetGroup.RvmContour(new ArraySegment<(Vector3, Vector3)>(vertices, 1, 4));
+            contours[2] = new RvmFacetGroup.RvmContour(new ArraySegment<(Vector3, Vector3)>(vertices, 5, 4));
+            var facetGroup = new RvmFacetGroup(
+                1,
+                Matrix4x4.Identity,
+                new RvmBoundingBox(origin, origin + new Vector3(4, 4, 0)),
+                [new RvmFacetGroup.RvmPolygon(new ArraySegment<RvmFacetGroup.RvmContour>(contours, 1, 2))]
+            );
+
+            var mesh = TessellatorBridge.TessellateWithoutApplyingMatrix(facetGroup, 1, 0.1f);
+
+            Assert.That(mesh, Is.Not.Null);
+            Assert.That(mesh.Triangles, Has.Length.EqualTo(24));
+            var area = 0.0f;
+            for (var triangleIndex = 0; triangleIndex < mesh.Triangles.Length; triangleIndex += 3)
+            {
+                var first = mesh.Vertices[mesh.Triangles[triangleIndex]];
+                var second = mesh.Vertices[mesh.Triangles[triangleIndex + 1]];
+                var third = mesh.Vertices[mesh.Triangles[triangleIndex + 2]];
+                area += Vector3.Cross(second - first, third - first).Length() / 2;
+            }
+            Assert.That(area, Is.EqualTo(12).Within(0.00001f));
+            Assert.That(mesh.Normals, Is.All.EqualTo(Vector3.UnitZ));
+            Assert.That(vertices[1].Vertex, Is.EqualTo(origin));
+            Assert.That(facetGroup.CalculateBoundingBoxFromVertexPositions(), Is.EqualTo(facetGroup.BoundingBoxLocal));
+        }
+    }
 
     [TestFixture]
     public class TessellateBoxTests

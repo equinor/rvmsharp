@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using CadRevealComposer.Utils;
 using Commons.Utils;
+using RvmSharp.Operations;
 using RvmSharp.Primitives;
 
 public static class RvmFacetGroupMatcher
@@ -19,21 +20,12 @@ public static class RvmFacetGroupMatcher
     public record TemplateResult(RvmFacetGroup FacetGroup, RvmFacetGroup Template, Matrix4x4 Transform)
         : InstancedResult(FacetGroup, Template, Transform);
 
-    /// <summary>
-    /// Mutable to allow fast sorting of templates by swapping properties.
-    /// </summary>
-    private class TemplateItem
+    private class TemplateItem(RvmFacetGroup original, RvmFacetGroup template, Matrix4x4 transform)
     {
-        public TemplateItem(RvmFacetGroup original, RvmFacetGroup template, Matrix4x4 transform)
-        {
-            Original = original;
-            Template = template;
-            Transform = transform;
-        }
-
-        public RvmFacetGroup Original { get; set; }
-        public RvmFacetGroup Template { get; set; }
-        public Matrix4x4 Transform { get; set; }
+        public RvmFacetGroup Original { get; } = original;
+        public RvmFacetGroup Template { get; } = template;
+        public Matrix4x4 Transform { get; } = transform;
+        public PreparedMatch Matching { get; } = new PreparedMatch(ReadPositions(template));
         public int MatchCount { get; set; }
         public int MatchAttempts { get; set; }
     }
@@ -50,13 +42,17 @@ public static class RvmFacetGroupMatcher
         // Calculate bounds for new bounding box
         var minBounds = new Vector3(float.MaxValue);
         var maxBounds = new Vector3(float.MinValue);
-        foreach (
-            var v in facetGroup.Polygons.SelectMany(p => p.Contours).SelectMany(c => c.Vertices).Select(vn => vn.Vertex)
-        )
+        foreach (var polygon in facetGroup.Polygons)
         {
-            var vt = Vector3.Transform(v, originalMatrix);
-            minBounds = Vector3.Min(vt, minBounds);
-            maxBounds = Vector3.Max(vt, maxBounds);
+            foreach (var contour in polygon.Contours)
+            {
+                foreach (var (vertex, _) in contour.Vertices)
+                {
+                    var transformedVertex = Vector3.Transform(vertex, originalMatrix);
+                    minBounds = Vector3.Min(transformedVertex, minBounds);
+                    maxBounds = Vector3.Max(transformedVertex, maxBounds);
+                }
+            }
         }
 
         var extents = (maxBounds - minBounds) / 2;
@@ -75,34 +71,8 @@ public static class RvmFacetGroupMatcher
             finalMatrix = originalMatrix * centerOffsetMatrix;
         }
 
-        // Transforming mesh normals requires some extra calculations.
-        // https://web.archive.org/web/20210628111622/https://paroj.github.io/gltut/Illumination/Tut09%20Normal%20Transformation.html
-        if (!Matrix4x4.Invert(finalMatrix, out var matrixInverted))
-            throw new ArgumentException($"Could not invert matrix {finalMatrix}");
-        var matrixInvertedTransposed = Matrix4x4.Transpose(matrixInverted);
-
-        var polygons = facetGroup
-            .Polygons.Select(p =>
-                p with
-                {
-                    Contours = p
-                        .Contours.Select(c => new RvmFacetGroup.RvmContour(
-                            c.Vertices.Select(vn =>
-                                    (
-                                        Vector3.Transform(vn.Vertex, finalMatrix),
-                                        Vector3.TransformNormal(vn.Normal, matrixInvertedTransposed)
-                                    )
-                                )
-                                .ToArray()
-                        ))
-                        .ToArray(),
-                }
-            )
-            .ToArray();
-
-        return facetGroup with
+        return facetGroup.TransformVertexData(finalMatrix) with
         {
-            Polygons = polygons,
             BoundingBoxLocal = new RvmBoundingBox(minBounds, maxBounds),
             Matrix = Matrix4x4.Identity,
         };
@@ -111,10 +81,7 @@ public static class RvmFacetGroupMatcher
     private static void PrintTemplateStats(IEnumerable<IGrouping<RvmFacetGroup, InstancedResult>> instanceGroups)
     {
         uint templateIndex = 0;
-        var templateStats = instanceGroups.Select(
-            // this was originally meant to use as index, but it does not work for the tests..
-            //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
-            t =>
+        var templateStats = instanceGroups.Select(t =>
             (
                 templateIndex++,
                 t.Count(),
@@ -283,7 +250,7 @@ public static class RvmFacetGroupMatcher
                 }
             }
 
-            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count));
 
             logObject.AddFacetGroupMatchingResult(
                 instancedCount,
@@ -335,29 +302,11 @@ public static class RvmFacetGroupMatcher
 
     private static List<Result> MatchFacetGroups(RvmFacetGroup[] facetGroups, out long iterationCounter)
     {
-        static void SwapItemData(TemplateItem a, TemplateItem b)
-        {
-            var aOriginal = a.Original;
-            var aTemplate = a.Template;
-            var aTransform = a.Transform;
-            var aMatchCount = a.MatchCount;
-            var aMatchAttempts = a.MatchAttempts;
-
-            a.Original = b.Original;
-            a.Template = b.Template;
-            a.Transform = b.Transform;
-            a.MatchCount = b.MatchCount;
-            a.MatchAttempts = b.MatchAttempts;
-
-            b.Original = aOriginal;
-            b.Template = aTemplate;
-            b.Transform = aTransform;
-            b.MatchCount = aMatchCount;
-            b.MatchAttempts = aMatchAttempts;
-        }
-
         var result = new List<Result>();
         var templateCandidates = new List<TemplateItem>(); // sorted high to low by explicit code
+        // Each bucket runs independently. Reuse positions across its many template attempts without baking normals,
+        // bounds, or a new contour hierarchy for every candidate. Keep world-space positions for the 1 mm tolerance.
+        var candidatePositions = Array.Empty<Vector3>();
 
         var iterCounter = 0L;
         var matchingTimer = Stopwatch.StartNew();
@@ -369,7 +318,7 @@ public static class RvmFacetGroupMatcher
             if (matchingTimer.Elapsed > target)
             {
                 var groupKey = CalculateKey(facetGroup);
-                var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+                var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count));
                 Console.WriteLine(
                     $"Grouping with {vertexCount} vertices taking a long time. More than {(int)target.TotalMinutes} minutes. Group key is: {groupKey}"
                 );
@@ -377,14 +326,20 @@ public static class RvmFacetGroupMatcher
             }
 
             var matchFoundFromPreviousTemplates = false;
-            var bakedFacetGroup = BakeTransformAndCenter(facetGroup, false, out _);
+            if (templateCandidates.Count > 0)
+            {
+                var positionCount = CountPositions(facetGroup);
+                if (candidatePositions.Length != positionCount)
+                    candidatePositions = new Vector3[positionCount];
+                CopyPositions(facetGroup, candidatePositions, applyMatrix: true);
+            }
 
             for (var i = 0; i < templateCandidates.Count; i++)
             {
                 var item = templateCandidates[i];
                 item.MatchAttempts++;
                 iterCounter++;
-                if (!Match(item.Template, bakedFacetGroup, out var transform))
+                if (!item.Matching.TryMatch(candidatePositions, out var transform))
                 {
                     continue;
                 }
@@ -402,7 +357,7 @@ public static class RvmFacetGroupMatcher
 
                 if (j != i) // swap items
                 {
-                    SwapItemData(item, templateCandidates[j]);
+                    (templateCandidates[i], templateCandidates[j]) = (templateCandidates[j], templateCandidates[i]);
                 }
 
                 matchFoundFromPreviousTemplates = true;
@@ -475,16 +430,16 @@ public static class RvmFacetGroupMatcher
     private static bool IsSpecialCaseVolumeTriangle(RvmFacetGroup facetGroup)
     {
         return facetGroup.Polygons.Length == 5
-            && facetGroup.Polygons[0].Contours.Length == 1
-            && facetGroup.Polygons[1].Contours.Length == 1
-            && facetGroup.Polygons[2].Contours.Length == 1
-            && facetGroup.Polygons[3].Contours.Length == 1
-            && facetGroup.Polygons[4].Contours.Length == 1
-            && facetGroup.Polygons[0].Contours[0].Vertices.Length == 3
-            && facetGroup.Polygons[1].Contours[0].Vertices.Length == 3
-            && facetGroup.Polygons[2].Contours[0].Vertices.Length == 4
-            && facetGroup.Polygons[3].Contours[0].Vertices.Length == 4
-            && facetGroup.Polygons[4].Contours[0].Vertices.Length == 4;
+            && facetGroup.Polygons[0].Contours.Count == 1
+            && facetGroup.Polygons[1].Contours.Count == 1
+            && facetGroup.Polygons[2].Contours.Count == 1
+            && facetGroup.Polygons[3].Contours.Count == 1
+            && facetGroup.Polygons[4].Contours.Count == 1
+            && facetGroup.Polygons[0].Contours[0].Vertices.Count == 3
+            && facetGroup.Polygons[1].Contours[0].Vertices.Count == 3
+            && facetGroup.Polygons[2].Contours[0].Vertices.Count == 4
+            && facetGroup.Polygons[3].Contours[0].Vertices.Count == 4
+            && facetGroup.Polygons[4].Contours[0].Vertices.Count == 4;
     }
 
     /// <summary>
@@ -524,10 +479,10 @@ public static class RvmFacetGroupMatcher
             for (var i = 0; i < facetGroup.Polygons.LongLength; i++)
             {
                 var contours = facetGroup.Polygons[i].Contours;
-                key = key * hashMultiplier + contours.LongLength;
-                for (var j = 0; j < contours.LongLength; j++)
+                key = key * hashMultiplier + contours.Count;
+                for (var j = 0; j < contours.Count; j++)
                 {
-                    key = key * hashMultiplier + contours[j].Vertices.LongLength;
+                    key = key * hashMultiplier + contours[j].Vertices.Count;
                 }
             }
 
@@ -541,6 +496,8 @@ public static class RvmFacetGroupMatcher
 
     /// <summary>
     /// Matches a to b and returns true if meshes are alike and sets transform so that a * transform = b.
+    ///
+    /// You should probably use <see cref="MatchAll"/> instead.
     /// </summary>
     /// <param name="aFacetGroup"></param>
     /// <param name="bFacetGroup"></param>
@@ -548,136 +505,144 @@ public static class RvmFacetGroupMatcher
     /// <returns></returns>
     public static bool Match(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, out Matrix4x4 outputTransform)
     {
-        if (GetPossibleAtoBTransform(aFacetGroup, bFacetGroup, out outputTransform))
-        {
-            return VerifyTransform(aFacetGroup, bFacetGroup, outputTransform);
-        }
-
-        outputTransform = default;
-        return false;
+        return new PreparedMatch(ReadPositions(aFacetGroup)).TryMatch(ReadPositions(bFacetGroup), out outputTransform);
     }
 
-    /// <summary>
-    /// For each vertex verify that a * transform = b.
-    /// </summary>
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static bool VerifyTransform(RvmFacetGroup aFacetGroup, RvmFacetGroup bFacetGroup, in Matrix4x4 transform)
+    private static int CountPositions(RvmFacetGroup group)
     {
-        // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
-
-        for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
+        var count = 0;
+        foreach (var polygon in group.Polygons)
         {
-            var aPolygon = aFacetGroup.Polygons[i];
-            var bPolygon = bFacetGroup.Polygons[i];
+            foreach (var contour in polygon.Contours)
+                count = checked(count + contour.Vertices.Count);
+        }
+        return count;
+    }
 
-            for (var j = 0; j < aPolygon.Contours.Length; j++)
+    private static Vector3[] ReadPositions(RvmFacetGroup group)
+    {
+        var positions = new Vector3[CountPositions(group)];
+        CopyPositions(group, positions, applyMatrix: false);
+        return positions;
+    }
+
+    private static void CopyPositions(RvmFacetGroup group, Span<Vector3> positions, bool applyMatrix)
+    {
+        var index = 0;
+        // Follow polygon views rather than backing-array order: parsing sorts the views for matching.
+        foreach (var polygon in group.Polygons)
+        {
+            foreach (var contour in polygon.Contours)
             {
-                var aContour = aPolygon.Contours[j];
-                var bContour = bPolygon.Contours[j];
-
-                for (var k = 0; k < aContour.Vertices.Length; k++)
+                foreach (var (vertex, _) in contour.Vertices)
                 {
-                    var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
-                    var vb = bContour.Vertices[k].Vertex;
-                    if (!transformedVector.EqualsWithinTolerance(vb, 0.001f))
-                    {
-                        return false;
-                    }
+                    positions[index++] = applyMatrix ? Vector3.Transform(vertex, group.Matrix) : vertex;
                 }
             }
         }
-
-        return true;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    private static bool GetPossibleAtoBTransform(
-        RvmFacetGroup aFacetGroup,
-        RvmFacetGroup bFacetGroup,
-        out Matrix4x4 transform
+    private sealed class PreparedMatch
+    {
+        private readonly Vector3[] positions;
+        private readonly (int First, int Second, int Third, int Fourth) anchors;
+        private readonly AlgebraUtils.TransformSource source;
+        private readonly bool hasAnchors;
+
+        public PreparedMatch(Vector3[] positions)
+        {
+            this.positions = positions;
+            // Anchor selection depends only on the template. Cache failures too: the current solver cannot
+            // match planar/degenerate templates, so rescanning them for every candidate cannot help.
+            hasAnchors = TryFindAnchors(positions, out anchors);
+            if (hasAnchors)
+                source = new AlgebraUtils.TransformSource(
+                    positions[anchors.First],
+                    positions[anchors.Second],
+                    positions[anchors.Third],
+                    positions[anchors.Fourth]
+                );
+        }
+
+        public bool TryMatch(ReadOnlySpan<Vector3> candidate, out Matrix4x4 transform)
+        {
+            // Position indices assume corresponding polygon/contour topology within each bucket.
+            if (
+                !hasAnchors
+                || candidate.Length != positions.Length
+                || !source.TryGetTransform(
+                    candidate[anchors.First],
+                    candidate[anchors.Second],
+                    candidate[anchors.Third],
+                    candidate[anchors.Fourth],
+                    out transform
+                )
+            )
+            {
+                transform = default;
+                return false;
+            }
+
+            // Anchors propose a transform, not a match. Every position must satisfy the 1 mm tolerance.
+            for (var index = 0; index < positions.Length; index++)
+            {
+                if (!Vector3.Transform(positions[index], transform).EqualsWithinTolerance(candidate[index], 0.001f))
+                    return false;
+            }
+            return true;
+        }
+    }
+
+    private static bool TryFindAnchors(
+        ReadOnlySpan<Vector3> positions,
+        out (int First, int Second, int Third, int Fourth) anchors
     )
     {
-        // REMARK: array bound checks are expensive -> polygons/contours/vertices count is assumed to be equal due to grouping by CalculateKey()
-
-        // REMARK: it is assumed that polygons are ordered to improve matching - see RvmParser
-
-        (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex1 = (Vector3.Zero, Vector3.Zero, false);
-        (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex2 = (Vector3.Zero, Vector3.Zero, false);
-        (Vector3 vertexA, Vector3 vertexB, bool isSet) testVertex3 = (Vector3.Zero, Vector3.Zero, false);
-
-        for (var i = 0; i < aFacetGroup.Polygons.Length; i++)
+        var first = -1;
+        var second = -1;
+        var third = -1;
+        for (var index = 0; index < positions.Length; index++)
         {
-            var aPolygon = aFacetGroup.Polygons[i];
-            var bPolygon = bFacetGroup.Polygons[i];
+            var vertex = positions[index];
+            const float factor = 0.001f;
+            if (
+                first >= 0 && positions[first].EqualsWithinFactor(vertex, factor)
+                || second >= 0 && positions[second].EqualsWithinFactor(vertex, factor)
+                || third >= 0 && positions[third].EqualsWithinFactor(vertex, factor)
+            )
+                continue;
 
-            for (var j = 0; j < aPolygon.Contours.Length; j++)
+            if (first < 0)
+                first = index;
+            else if (second < 0)
+                second = index;
+            else if (third < 0)
             {
-                var aContour = aPolygon.Contours[j];
-                var bContour = bPolygon.Contours[j];
-
-                for (var k = 0; k < aContour.Vertices.Length; k++)
+                var direction12 = Vector3.Normalize(positions[second] - positions[first]);
+                var direction13 = Vector3.Normalize(vertex - positions[first]);
+                if (!Vector3.Cross(direction12, direction13).LengthSquared().ApproximatelyEquals(0f))
+                    third = index;
+            }
+            else
+            {
+                var firstVertex = positions[first];
+                var secondVertex = positions[second];
+                var thirdVertex = positions[third];
+                // csharpier-ignore -- Keep matrix rows aligned for readability.
+                var matrix = new Matrix4x4(
+                    firstVertex.X, secondVertex.X, thirdVertex.X, vertex.X,
+                    firstVertex.Y, secondVertex.Y, thirdVertex.Y, vertex.Y,
+                    firstVertex.Z, secondVertex.Z, thirdVertex.Z, vertex.Z,
+                    1, 1, 1, 1);
+                if (!matrix.GetDeterminant().ApproximatelyEquals(0, 0.000_001f))
                 {
-                    var candidateVertexA = aContour.Vertices[k].Vertex;
-                    var candidateVertexB = bContour.Vertices[k].Vertex;
-
-                    const float factor = 0.001f; // 0.1%
-                    var isDuplicateVertex =
-                        testVertex1.isSet && testVertex1.vertexA.EqualsWithinFactor(candidateVertexA, factor)
-                        || testVertex2.isSet && testVertex2.vertexA.EqualsWithinFactor(candidateVertexA, factor)
-                        || testVertex3.isSet && testVertex3.vertexA.EqualsWithinFactor(candidateVertexA, factor);
-                    if (isDuplicateVertex)
-                    {
-                        // ignore duplicate vertex
-                    }
-                    else if (!testVertex1.isSet)
-                    {
-                        testVertex1 = (candidateVertexA, candidateVertexB, true);
-                    }
-                    else if (!testVertex2.isSet)
-                    {
-                        testVertex2 = (candidateVertexA, candidateVertexB, true);
-                    }
-                    else if (!testVertex3.isSet)
-                    {
-                        var va12 = Vector3.Normalize(testVertex2.vertexA - testVertex1.vertexA);
-                        var va13 = Vector3.Normalize(candidateVertexA - testVertex1.vertexA);
-                        if (!Vector3.Cross(va12, va13).LengthSquared().ApproximatelyEquals(0f))
-                        {
-                            testVertex3 = (candidateVertexA, candidateVertexB, true);
-                        }
-                    }
-                    else
-                    {
-                        // at this point all three test vertices are set
-                        // csharpier-ignore -- Matrix more readable as matrix
-                        var ma = new Matrix4x4(
-                            testVertex1.vertexA.X, testVertex2.vertexA.X, testVertex3.vertexA.X, candidateVertexA.X,
-                            testVertex1.vertexA.Y, testVertex2.vertexA.Y, testVertex3.vertexA.Y, candidateVertexA.Y,
-                            testVertex1.vertexA.Z, testVertex2.vertexA.Z, testVertex3.vertexA.Z, candidateVertexA.Z,
-                            1, 1, 1, 1);
-
-                        var determinant = ma.GetDeterminant();
-                        if (!determinant.ApproximatelyEquals(0, 0.000_001f))
-                        {
-                            return AlgebraUtils.GetTransform(
-                                testVertex1.vertexA,
-                                testVertex2.vertexA,
-                                testVertex3.vertexA,
-                                candidateVertexA,
-                                testVertex1.vertexB,
-                                testVertex2.vertexB,
-                                testVertex3.vertexB,
-                                candidateVertexB,
-                                out transform
-                            );
-                        }
-                    }
+                    anchors = (first, second, third, index);
+                    return true;
                 }
             }
         }
 
-        // TODO: 2d figure
-        transform = default;
+        anchors = default;
         return false;
     }
 }

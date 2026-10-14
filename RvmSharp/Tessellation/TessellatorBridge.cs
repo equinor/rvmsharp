@@ -756,11 +756,7 @@ public static class TessellatorBridge
 
             var vo = vertices.Count;
 
-            var adjustedContours = poly
-                .Contours.Select(v => new RvmContour(v.Vertices.Select(x => (x.Vertex - m, n: x.Normal)).ToArray()))
-                .ToArray();
-
-            var outJob = TessNet.Tessellate(adjustedContours);
+            var outJob = TessNet.Tessellate(poly.Contours, m);
 
             vertices.AddRange(outJob.VertexData.Select(v => v + m));
             normals.AddRange(outJob.NormalData);
