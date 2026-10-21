@@ -94,9 +94,15 @@ public static class AdditionalMetadataCsvInjector
 
             foreach ((string key, string value) in attrs)
             {
-                node.Attributes["EchoInjected_" + key] = "true";
+                var injectedAttributeKey = $"EchoInjected_{key}";
+                if (node.Attributes.ContainsKey(injectedAttributeKey))
+                    Console.WriteLine(
+                        $"Warning: Overwriting previously injected attribute '{injectedAttributeKey}' for node '{node.Name}' with RefNo '{refNo}'. This may not be intentional!"
+                    );
+                node.Attributes[injectedAttributeKey] = "true";
+
                 if (node.Attributes.TryGetValue(key, out var originalValue))
-                    node.Attributes["EchoReplaced_" + key + "_Original"] = originalValue;
+                    node.Attributes.TryAdd(key + "_Original", originalValue); // Uses TryAdd to avoid overwriting existing original value if multiple overrides exist on same part.
 
                 node.Attributes[key] = value;
             }
