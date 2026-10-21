@@ -86,9 +86,6 @@ public static class AdditionalMetadataCsvInjector
     {
         var matched = 0;
 
-        // Prefix here may be considered for removal in the future.
-        const string attributePrefix = "Echo_"; // Prefix to avoid potential conflicts with existing attributes
-
         foreach (var node in nodes)
         {
             var refNo = node.Attributes.GetValueOrNull("RefNo");
@@ -97,12 +94,11 @@ public static class AdditionalMetadataCsvInjector
 
             foreach ((string key, string value) in attrs)
             {
-                if (!node.Attributes.TryAdd(attributePrefix + key, value))
-                {
-                    throw new Exception(
-                        $"Failed to add metadata attribute '{attributePrefix + key}' to node '{node.Name}' with RefNo '{refNo}' because the attribute already exists on this node. Existing attributes: {string.Join(", ", node.Attributes.Keys)}."
-                    );
-                }
+                node.Attributes["EchoInjected_" + key] = "true";
+                if (node.Attributes.TryGetValue(key, out var originalValue))
+                    node.Attributes["EchoReplaced_" + key + "_Original"] = originalValue;
+
+                node.Attributes[key] = value;
             }
             matched++;
         }

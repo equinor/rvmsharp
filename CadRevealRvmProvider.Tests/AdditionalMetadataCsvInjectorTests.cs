@@ -74,9 +74,47 @@ public class AdditionalMetadataCsvInjectorTests
         using (Assert.EnterMultipleScope())
         {
             // Assert
-            Assert.That(node1.Attributes["Echo_Name"], Is.EqualTo("Pump A"));
-            Assert.That(node1.Attributes["Echo_Category"], Is.EqualTo("Mechanical"));
+            Assert.That(node1.Attributes["Name"], Is.EqualTo("Pump A"));
+            Assert.That(node1.Attributes["EchoInjected_Name"], Is.EqualTo("true"));
+            Assert.That(node1.Attributes["Category"], Is.EqualTo("Mechanical"));
+            Assert.That(node1.Attributes["EchoInjected_Category"], Is.EqualTo("true"));
+            Assert.That(node1.Attributes.ContainsKey("EchoReplaced_Name_Original"), Is.False);
+            Assert.That(node1.Attributes.ContainsKey("EchoReplaced_Category_Original"), Is.False);
             Assert.That(node2.Attributes, Has.Count.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public void ApplyMetadataToNodes_WhenAttributeAlreadyExists_ReplacesValueAndPreservesOriginal()
+    {
+        // Arrange
+        var node = new CadRevealNode
+        {
+            Name = "/Equipment/Pump",
+            TreeIndex = 1,
+            Parent = null,
+            Attributes = new Dictionary<string, string> { { "RefNo", "=123/321" }, { "Name", "Old Name" } },
+        };
+
+        var metadataByRefNo = new Dictionary<string, Dictionary<string, string>>
+        {
+            ["=123/321"] = new() { ["Name"] = "New Name", ["Category"] = "Mechanical" },
+        };
+
+        // Act
+        var matched = AdditionalMetadataCsvInjector.ApplyMetadataToNodes([node], metadataByRefNo);
+
+        using (Assert.EnterMultipleScope())
+        {
+            // Assert
+            Assert.That(matched, Is.EqualTo(1));
+            Assert.That(node.Attributes["Name"], Is.EqualTo("New Name"));
+            Assert.That(node.Attributes["EchoInjected_Name"], Is.EqualTo("true"));
+            Assert.That(node.Attributes["EchoReplaced_Name_Original"], Is.EqualTo("Old Name"));
+            Assert.That(node.Attributes["Category"], Is.EqualTo("Mechanical"));
+            Assert.That(node.Attributes["EchoInjected_Category"], Is.EqualTo("true"));
+            Assert.That(node.Attributes.ContainsKey("EchoReplaced_Category_Original"), Is.False);
+            Assert.That(node.Attributes["RefNo"], Is.EqualTo("=123/321"));
         }
     }
 }
