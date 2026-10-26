@@ -97,7 +97,7 @@ public static class AdditionalMetadataCsvInjector
                 var injectedAttributeKey = $"EchoInjected_{key}";
                 if (node.Attributes.ContainsKey(injectedAttributeKey))
                     Console.WriteLine(
-                        $"Warning: Overwriting previously injected attribute '{injectedAttributeKey}' for node '{node.Name}' with RefNo '{refNo}'. This may not be intentional!"
+                        $"Warning: Re-overwriting '{key}' for node '{node.Name}' with RefNo '{refNo}'. This may not be intentional!"
                     );
                 node.Attributes[injectedAttributeKey] = "true";
 
