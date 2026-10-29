@@ -78,6 +78,36 @@ public class RvmFacetGroupMatcherTests
     }
 
     [Test]
+    public void PreparedTransformAllowsRigidMatchesWithSingularScaleSolver()
+    {
+        var first = Vector3.Zero;
+        var second = new Vector3(1, 1, 0);
+        var third = new Vector3(1, -1, 0);
+        var fourth = Vector3.UnitZ;
+        var source = new AlgebraUtils.TransformSource(first, second, third, fourth);
+        var translation = new Vector3(10, 20, 30);
+
+        // This valid uniform scaling is rejected because the squared-coordinate scale solver is singular.
+        // Update the failure expectation when that limitation is fixed; rigid matching must still succeed.
+        Assert.That(source.TryGetTransform(first, second * 2, third * 2, fourth * 2, out _), Is.False);
+        Assert.That(
+            source.TryGetTransform(
+                first + translation,
+                second + translation,
+                third + translation,
+                fourth + translation,
+                out var transform
+            ),
+            Is.True
+        );
+        foreach (var vertex in new[] { first, second, third, fourth })
+            Assert.That(
+                Vector3.Distance(Vector3.Transform(vertex, transform), vertex + translation),
+                Is.LessThan(0.001f)
+            );
+    }
+
+    [Test]
     public void RotationPrecisionTest()
     {
         var meshA = TestSampleLoader.LoadTestJson<RvmFacetGroup>("simple_group.json");
