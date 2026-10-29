@@ -265,38 +265,7 @@ public static class RvmParser
                 primitive = new RvmLine(version, matrix, bBoxLocal, a, b);
                 break;
             case RvmPrimitiveKind.FacetGroup:
-                var polygonCount = ReadUint(stream);
-                var polygons = new RvmFacetGroup.RvmPolygon[polygonCount];
-                for (var i = 0; i < polygonCount; i++)
-                {
-                    var contourCount = ReadUint(stream);
-                    var contours = new RvmFacetGroup.RvmContour[contourCount];
-
-                    for (var k = 0; k < contourCount; k++)
-                    {
-                        var vertexCount = ReadUint(stream);
-                        var vertices = new (Vector3 Vertex, Vector3 Normal)[vertexCount];
-
-                        for (var n = 0; n < vertexCount; n++)
-                        {
-                            var vertex = ReadVector3(stream);
-                            var normal = ReadVector3(stream);
-                            vertices[n] = (vertex, normal);
-                        }
-
-                        contours[k] = new RvmFacetGroup.RvmContour(vertices);
-                    }
-
-                    polygons[i] = new RvmFacetGroup.RvmPolygon(contours);
-                }
-
-                // We order the polygons here so that we can have a better match rate when doing facet group matching.
-                // This simple change can improve facet matching depending on 3D model (~10% for Huldra), while the output is visually equal.
-                var polygonsOrdered = polygons
-                    .OrderBy(p => p.Contours.Length) // OrderBy uses a stable sorting algorithm which preserves original ordering upon ordering equals
-                    .ThenBy(p => p.Contours.Sum(c => c.Vertices.Length))
-                    .ToArray();
-                primitive = new RvmFacetGroup(version, matrix, bBoxLocal, polygonsOrdered);
+                primitive = new RvmFacetGroup(version, matrix, bBoxLocal, ReadFacetGroupPolygons(stream));
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unexpected Kind");
@@ -304,6 +273,53 @@ public static class RvmParser
 
         return primitive;
         // transform bb to world?
+    }
+
+    private static RvmFacetGroup.RvmPolygon[] ReadFacetGroupPolygons(Stream stream)
+    {
+        // Reads the polygons, contours, and vertices for a facet group from the stream into an optimized
+        // structure suitable for efficient access and shared buffers.
+
+        var polygonCount = ReadUint(stream);
+        var polygonRanges = new (int FirstContour, int ContourCount)[polygonCount];
+
+        // Counts are interleaved with vertex data, so we need a list instead of preallocating arrays.
+        var contourRanges = new List<(int FirstVertex, int VertexCount)>();
+        var vertices = new List<(Vector3 Vertex, Vector3 Normal)>();
+        for (var polygonIndex = 0; polygonIndex < polygonCount; polygonIndex++)
+        {
+            var contourCount = checked((int)ReadUint(stream));
+            polygonRanges[polygonIndex] = (contourRanges.Count, contourCount);
+
+            for (var contourIndex = 0; contourIndex < contourCount; contourIndex++)
+            {
+                var vertexCount = checked((int)ReadUint(stream));
+                contourRanges.Add((vertices.Count, vertexCount));
+                for (var vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+                {
+                    var vertex = ReadVector3(stream);
+                    var normal = ReadVector3(stream);
+                    vertices.Add((vertex, normal));
+                }
+            }
+        }
+
+        var vertexBuffer = vertices.ToArray();
+        var contours = contourRanges
+            .Select(range => new RvmFacetGroup.RvmContour(
+                new ArraySegment<(Vector3 Vertex, Vector3 Normal)>(vertexBuffer, range.FirstVertex, range.VertexCount)
+            ))
+            .ToArray();
+
+        // Sorting improves facet matching (~10% for Huldra) without changing the geometry.
+        // OrderBy/ThenBy preserve file order for ties. Only polygon views move; contour order and holes stay intact.
+        return polygonRanges
+            .Select(range => new RvmFacetGroup.RvmPolygon(
+                new ArraySegment<RvmFacetGroup.RvmContour>(contours, range.FirstContour, range.ContourCount)
+            ))
+            .OrderBy(polygon => polygon.Contours.Count)
+            .ThenBy(polygon => polygon.Contours.Sum(contour => contour.Vertices.Count))
+            .ToArray();
     }
 
     private static RvmNode ReadCntb(Stream stream)
