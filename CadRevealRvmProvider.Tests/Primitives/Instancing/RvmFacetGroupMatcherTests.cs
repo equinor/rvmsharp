@@ -11,6 +11,30 @@ using Utils;
 public class RvmFacetGroupMatcherTests
 {
     [Test]
+    public void TransformVertexDataNormalizesNormalsAndPreservesZeroNormals()
+    {
+        var sourceNormal = new Vector3(1, 1, 0);
+        var vertices = new[] { (Vector3.One, sourceNormal), (Vector3.Zero, Vector3.Zero) };
+        var contours = new[] { new RvmFacetGroup.RvmContour(vertices) };
+        var group = new RvmFacetGroup(
+            1,
+            Matrix4x4.Identity,
+            new RvmBoundingBox(Vector3.Zero, Vector3.One),
+            [new RvmFacetGroup.RvmPolygon(contours)]
+        );
+
+        var transformed = group.TransformVertexData(Matrix4x4.CreateScale(2, 3, 4));
+        var result = transformed.Polygons[0].Contours[0].Vertices;
+
+        var expectedNormal = Vector3.Normalize(new Vector3(1f / 2, 1f / 3, 0));
+        Assert.That(Vector3.Distance(result[0].Normal, expectedNormal), Is.LessThan(0.00001f));
+        Assert.That(result[0].Normal.Length(), Is.EqualTo(1).Within(0.00001f));
+        Assert.That(result[0].Vertex, Is.EqualTo(new Vector3(2, 3, 4)));
+        Assert.That(result[1].Normal, Is.EqualTo(Vector3.Zero));
+        Assert.That(group.Polygons[0].Contours[0].Vertices[0].Normal, Is.EqualTo(sourceNormal));
+    }
+
+    [Test]
     public void GetTransform()
     {
         var isMatch = AlgebraUtils.GetTransform(
