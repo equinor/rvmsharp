@@ -83,6 +83,7 @@ public class RvmParserTests
             [3],
             [0],
         ];
+        Vector2[] contourVertices = [new(0, 0), new(3, 0), new(3, 3), new(0, 3)];
         WriteUint((uint)polygonContourSizes.Length);
         for (var polygonIndex = 0; polygonIndex < polygonContourSizes.Length; polygonIndex++)
         {
@@ -93,8 +94,9 @@ public class RvmParserTests
                 WriteUint((uint)vertexCount);
                 for (var vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
                 {
-                    WriteFloat(polygonIndex * 10);
-                    WriteFloat(vertexIndex);
+                    var vertex = contourVertices[vertexIndex];
+                    WriteFloat(polygonIndex * 10 + vertex.X);
+                    WriteFloat(vertex.Y);
                     WriteFloat(0);
                     WriteFloat(0);
                     WriteFloat(0);
@@ -128,9 +130,17 @@ public class RvmParserTests
             contours.SelectMany(contour => contour.Vertices).Select(vertex => vertex.Normal),
             Is.All.EqualTo(Vector3.UnitZ)
         );
+        foreach (var contour in contours.Where(contour => contour.Vertices.Count > 0))
+        {
+            var vertices = contour.Vertices;
+            Assert.That(
+                Vector3.Cross(vertices[1].Vertex - vertices[0].Vertex, vertices[2].Vertex - vertices[0].Vertex).Z,
+                Is.GreaterThan(0)
+            );
+        }
         Assert.That(
             facetGroup.CalculateBoundingBoxFromVertexPositions(),
-            Is.EqualTo(new RvmBoundingBox(Vector3.Zero, new Vector3(40, 3, 0)))
+            Is.EqualTo(new RvmBoundingBox(Vector3.Zero, new Vector3(43, 3, 0)))
         );
         Assert.That(stream.Position, Is.EqualTo(stream.Length));
     }
