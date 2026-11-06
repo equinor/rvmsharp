@@ -68,6 +68,13 @@ public class CommandLineOptions
     )]
     public bool NoInstancing { get; init; }
 
+    [Option(
+        longName: "NoPrioritizedSectors",
+        Required = false,
+        HelpText = "Do not create prioritized sectors. Prioritized sectors only works in Echo's viewer."
+    )]
+    public bool NoPrioritizedSectors { get; init; }
+
     [Option(longName: "SingleSector", shortName: 's', Required = false, HelpText = "Create a single sector.")]
     public bool SingleSector { get; init; }
 

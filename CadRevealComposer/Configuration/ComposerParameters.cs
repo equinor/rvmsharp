@@ -8,7 +8,8 @@ public record ComposerParameters(
     bool SplitIntoZones,
     NodeNameExcludeRegex NodeNameExcludeRegex,
     float SimplificationThreshold,
-    DirectoryInfo? DevPrimitiveCacheFolder
+    DirectoryInfo? DevPrimitiveCacheFolder,
+    bool NoPrioritizedSectors = false
 );
 
 public record NodeNameExcludeRegex(string? Value);

@@ -86,7 +86,10 @@ public static class CadRevealComposerRunner
             // collect all nodes for later sector division of the entire scene
             nodesToExport.AddRange(cadRevealNodes);
 
-            PrioritySplittingUtils.SetPriorityForPrioritySplittingWithMutation(cadRevealNodes);
+            if (!composerParameters.NoPrioritizedSectors)
+            {
+                PrioritySplittingUtils.SetPriorityForPrioritySplittingWithMutation(cadRevealNodes);
+            }
 
             var inputGeometries = cadRevealNodes.AsParallel().AsOrdered().SelectMany(x => x.Geometries).ToArray();
 
@@ -98,6 +101,14 @@ public static class CadRevealComposerRunner
             );
             geometriesToProcess.AddRange(geometriesIncludingMeshes);
         }
+
+        var tagMarkerNodes = TagPositionMarkers.CreateMarkerNodesForTagsNotIn3D(
+            inputFolderPath.EnumerateFiles(),
+            nodesToExport,
+            treeIndexGenerator
+        );
+        nodesToExport.AddRange(tagMarkerNodes);
+        geometriesToProcess.AddRange(tagMarkerNodes.SelectMany(x => x.Geometries));
 
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
@@ -166,7 +177,9 @@ public static class CadRevealComposerRunner
         var normalSectors = PerformSectorSplitting(allPrimitives, composerParameters, sectorIdGenerator);
 
         // Then split into prioritized sectors, these are loaded on demand based on metadata in the Hierarchy database
-        var prioritizedSectors = PerformPrioritizedSectorSplitting(allPrimitives, sectorIdGenerator, rootSectorId);
+        var prioritizedSectors = composerParameters.NoPrioritizedSectors
+            ? []
+            : PerformPrioritizedSectorSplitting(allPrimitives, sectorIdGenerator, rootSectorId);
 
         var allSectors = normalSectors.Concat(prioritizedSectors).OrderBy(x => x.SectorId).ToArray();
 
