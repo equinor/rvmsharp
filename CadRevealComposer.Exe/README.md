@@ -24,6 +24,20 @@ Geometry data is read from RVM files and PDMS metadata from TXT files (tag data 
 
 - .glb files together constitutes the 3D model, including the primitives using gltf extensions.
 
+## Usage
+
+Run a conversion from the repository root:
+
+```sh
+dotnet run -c Release --project CadRevealComposer.Exe -- -i path/to/input -o path/to/output --ProjectId 1 --ModelId 1 --RevisionId 1  --SimplificationThreshold 0.01
+```
+
+To see all available parameters and their descriptions:
+
+```sh
+dotnet run -c Release --project CadRevealComposer.Exe -- --help
+```
+
 ## Dev Tools
 
 ### DevPrimitiveCache
@@ -43,7 +57,7 @@ Add the `--DevPrimitiveCacheFolder` parameter. Either with a full path, or a rel
 When this is added the first next run will check if there is a cache for the input folder you supplied. For instance: "hda_rvm", and load that if it exists.
 If it does NOT exist, we will process the files as normal but save a cache when the primitives are read. Then the next time you start the primitives should use the cache.
 
-#### Troubleshooting PrimitiveCache:
+#### Troubleshooting PrimitiveCache
 
 **The cache file fails to load:** Delete the cache file and build a new one. Its probably outdated.
 
