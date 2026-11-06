@@ -102,14 +102,6 @@ public static class CadRevealComposerRunner
             geometriesToProcess.AddRange(geometriesIncludingMeshes);
         }
 
-        var tagMarkerNodes = TagPositionMarkers.CreateMarkerNodesForTagsNotIn3D(
-            inputFolderPath.EnumerateFiles(),
-            nodesToExport,
-            treeIndexGenerator
-        );
-        nodesToExport.AddRange(tagMarkerNodes);
-        geometriesToProcess.AddRange(tagMarkerNodes.SelectMany(x => x.Geometries));
-
         // If there is no metadata for this model, the json will be empty
         Console.WriteLine("Exporting model metadata");
         SceneCreator.ExportModelMetadata(outputDirectory, metadataFromAllFiles);
