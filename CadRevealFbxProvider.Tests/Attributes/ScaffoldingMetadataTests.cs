@@ -97,7 +97,9 @@ public class ScaffoldingMetadataTests
         {
             Assert.DoesNotThrow(() => metadata.ThrowIfModelMetadataInvalid());
 
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() => metadataEmpty.ThrowIfModelMetadataInvalid());
+            HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+                metadataEmpty.ThrowIfModelMetadataInvalid()
+            );
         });
     }
 
@@ -155,7 +157,7 @@ public class ScaffoldingMetadataTests
         var targetDict = new Dictionary<string, string>();
 
         // Assert
-        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             metadataEmpty.TryWriteToGenericMetadataDict(targetDict)
         );
     }
@@ -214,7 +216,7 @@ public class ScaffoldingMetadataTests
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMatches_ThenDoesNotThrow()
+    public void ThrowIfFilenameInvalid_WhenWorkOrderMatches_DoesNotThrow()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -226,11 +228,11 @@ public class ScaffoldingMetadataTests
         var fileName = "BCA-12345678";
 
         // Act & Assert
-        Assert.DoesNotThrow(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName));
+        Assert.DoesNotThrow(() => metadata.ThrowIfFilenameInvalid(fileName));
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenWorkOrderMismatches_Throws()
+    public void ThrowIfFilenameInvalid_WhenWorkOrderMismatches_Throws()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -240,18 +242,68 @@ public class ScaffoldingMetadataTests
         metadata.TempScaffoldingFlag = false;
 
         // tested function expects filename without extension
-        var fileName1 = "BCA-1234567";
-        var fileName2 = "BCA_12345678";
-        var fileName3 = "BCA_";
+        var fileName1 = "BCA-1234567"; // mismatch between filename and metadata
 
         // Act & Assert
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
-        Assert.Throws<ScaffoldingFilenameException>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName3));
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName1)
+        );
     }
 
     [Test]
-    public void ThrowIfWorkOrderFromFilenameInvalid_WhenCallingOnTempScaff_Throws()
+    public void ThrowIfFilenameInvalid_WhenFilenameCorrect_DoesNotThrow()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = false;
+
+        // tested function expects filename without extension
+        var fileName1 = "BCA-12345678"; // OK, has no suffix
+        var fileName2 = "BCA-12345678-A12"; // OK, has 1 suffix
+        var fileName3 = "BCA-12345678-A12-Part1"; // OK, has 2 suffixes
+
+        // Act & Assert
+        Assert.DoesNotThrow(() => metadata.ThrowIfFilenameInvalid(fileName1));
+        Assert.DoesNotThrow(() => metadata.ThrowIfFilenameInvalid(fileName2));
+        Assert.DoesNotThrow(() => metadata.ThrowIfFilenameInvalid(fileName3));
+    }
+
+    [Test]
+    public void ThrowIfFilenameInvalid_WhenFilenameNotMatchesTemplate_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = false;
+
+        // tested function expects filename without extension
+
+        var fileName1 = "BCA-12345678A12"; // NOT OK, work order should be digits only, we have seen architects mistakently enter WO like this sometimes
+        var fileName2 = "BCA_12345678"; // underscore in filename
+        var fileName3 = "BCA_"; // missing work order in filename
+        var fileName4 = "BCA-12345678-A12-Del1.0"; // NOT OK, has dot in the suffix
+
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName1)
+        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName2)
+        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName3)
+        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName4)
+        );
+    }
+
+    [Test]
+    public void ThrowIfFilenameInvalid_WhenCallingOnTempScaff_Throws()
     {
         // Arrange
         var metadata = new ScaffoldingMetadata();
@@ -265,7 +317,46 @@ public class ScaffoldingMetadataTests
         var fileName2 = "BCA-TEMP-12345678";
 
         // Act & Assert
-        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName1));
-        Assert.Throws<Exception>(() => metadata.ThrowIfWorkOrderFromFilenameInvalid(fileName2));
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName1)
+        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName2)
+        );
+    }
+
+    [Test]
+    public void ThrowIfFilenameInvalid_WhenWorkOrderNotPreceededByCode_Throws()
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+        metadata.WorkOrder = "12345678";
+        metadata.BuildOperationNumber = "1010";
+        metadata.DismantleOperationNumber = "1011";
+        metadata.TempScaffoldingFlag = false;
+
+        // tested function expects filename without extension
+        var fileName1 = "-12345678";
+
+        // Act & Assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            metadata.ThrowIfFilenameInvalid(fileName1)
+        );
+    }
+
+    [Test]
+    [TestCase("/abc-123456789-woScaffCorrect", "woScaffCorrect")]
+    [TestCase("/abc-123456789", "")]
+    [TestCase("/abc-123456789-", "")]
+    [TestCase("/abc-123456789-suffix.with.dots", "suffix.with.dots")]
+    [TestCase("/abc-123456789--suffix--with-dashes", "-suffix--with-dashes")]
+    public void GetSuffixFromFilename_ExtractsCorrectSuffix(string fileNameWoExtension, string expectedResult)
+    {
+        // Arrange
+        var metadata = new ScaffoldingMetadata();
+
+        metadata.GetSuffixFromFilename(fileNameWoExtension);
+
+        Assert.That(metadata.NameSuffix, Is.EqualTo(expectedResult));
     }
 }

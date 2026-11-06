@@ -1,6 +1,7 @@
 ﻿namespace CadRevealRvmProvider;
 
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using BatchUtils;
 using Ben.Collections.Specialized;
 using CadRevealComposer;
@@ -28,7 +29,8 @@ public class RvmProvider : IModelFormatProvider
         NodeNameFiltering nodeNameFiltering
     )
     {
-        var workload = RvmWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
+        var filesToParseArray = filesToParse.ToArray();
+        var workload = RvmWorkload.CollectWorkload(filesToParseArray.Select(x => x.FullName).ToArray());
 
         Console.WriteLine("Reading RvmData");
         var rvmTimer = Stopwatch.StartNew();
@@ -81,6 +83,17 @@ public class RvmProvider : IModelFormatProvider
         Console.WriteLine(
             "CadRevealNodeCount: " + nodes.Length + ". TreeIndex count is " + treeIndexGenerator.PeekNextId
         );
+
+        AddMetadataForSurfaceUnits(nodes);
+
+        // Temp solution to add custom metadata for equipment nodes based on matching RefNo with an additional metadata CSV file, until we have a better solution for custom metadata in place.
+        var additionalMetadataFiles = filesToParseArray.Where(x =>
+            x.Name.EndsWith("AdditionalMetadata.csv", StringComparison.OrdinalIgnoreCase)
+        );
+        foreach (FileInfo additionalMetadataCsv in additionalMetadataFiles)
+        {
+            AdditionalMetadataCsvInjector.AddCustomEchoAttributeMetadata(nodes, additionalMetadataCsv);
+        }
 
         Console.WriteLine($"Converted RVM files to Reveal nodes in {stopwatch.Elapsed}");
 
@@ -138,6 +151,7 @@ public class RvmProvider : IModelFormatProvider
                 $"Found and ignored {diffCount} duplicate pyramids (including: position, mesh, parent, id, etc)."
             );
         }
+
         RvmPyramidInstancer.Result[] pyramidInstancingResult;
         if (composerParameters.NoInstancing)
         {
@@ -193,6 +207,50 @@ public class RvmProvider : IModelFormatProvider
                 Console.WriteLine($"Count of {group.Key.ToString().Split('.').Last()}: {group.Count()}");
             }
         }
+    }
+
+    /// <summary>
+    /// Adds metadata for surface unit volumes to the Attributes of the given nodes.
+    /// </summary>
+    /// <remarks>
+    /// Surface unit volumes are identified by their parent node name containing "/A00-AREA"
+    /// </remarks>
+    /// <param name="nodes"></param>
+    public static void AddMetadataForSurfaceUnits(IReadOnlyList<CadRevealNode> nodes)
+    {
+        // Matches strings like "/12A34"
+        // This MAY not be the naming standard on all assets, but it's the best we have for now.
+        var regex = new Regex(@"^\/\d+[A-Z]\d+$");
+        // /A00-AREA
+        //   /A00-AREA/OFP
+        //     /A00-AREA/OFP/EL-472000_DECK-1
+        //       /1B41 <- This is a surface unit volume
+
+        var foundA00Area = false;
+        var foundSurfaceUnitVolumes = 0;
+        foreach (CadRevealNode cadRevealNode in nodes)
+        {
+            if (cadRevealNode.Parent?.Name.StartsWith("/A00-AREA", StringComparison.OrdinalIgnoreCase) != true)
+                continue;
+            foundA00Area = true;
+
+            if (!regex.IsMatch(cadRevealNode.Name))
+                continue;
+
+            var surfaceUnitVolumeName = cadRevealNode.Name.TrimStart('/');
+            cadRevealNode.Attributes.Add("IsSurfaceUnitVolume", "true"); // Optimize for hiding all surface unit volumes when needed
+            cadRevealNode.Attributes.Add("SurfaceUnitVolume", surfaceUnitVolumeName);
+            foundSurfaceUnitVolumes++;
+        }
+
+        if (!foundA00Area)
+            return;
+
+        Console.WriteLine(
+            foundSurfaceUnitVolumes == 0
+                ? "Warning: RVM files contained /A00-AREA nodes but no surface unit volumes were found in that file."
+                : $"Added metadata for {foundSurfaceUnitVolumes} surface unit volumes found in /A00-AREA nodes."
+        );
     }
 
     /// <summary>

@@ -42,14 +42,10 @@ public static class HierarchyComposerConverter
         }
         var boundingBox = revealNode.BoundingBoxAxisAligned;
         bool hasMesh = revealNode.Geometries.Any();
-        AABB? aabb = null;
+        AabbItem? aabb = null;
         if (boundingBox != null)
         {
-            aabb = new AABB
-            {
-                min = new Vector3EfSerializable(boundingBox.Min),
-                max = new Vector3EfSerializable(boundingBox.Max),
-            };
+            aabb = new AabbItem(boundingBox.Min, boundingBox.Max);
         }
 
         // ReSharper disable once MergeIntoPattern

@@ -11,5 +11,5 @@ metadata:
 spec:
   type: service
   lifecycle: production
-  owner: team-holo-developers
+  owner: team-echo-3d-developers
   system: Echo

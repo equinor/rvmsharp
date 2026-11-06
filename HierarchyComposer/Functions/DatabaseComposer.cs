@@ -7,10 +7,35 @@ using System.IO;
 using System.Linq;
 using Extensions;
 using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Model;
+
+public class PdmsKeyValuePairCaseInsensitiveValue(string key, string value)
+    : IEquatable<PdmsKeyValuePairCaseInsensitiveValue>
+{
+    // ReSharper disable MemberCanBePrivate.Global // Used in Dictionary key comparison
+    public readonly string Key = key;
+    public readonly string Value = value;
+
+    // ReSharper restore MemberCanBePrivate.Global
+    public bool Equals(PdmsKeyValuePairCaseInsensitiveValue? other)
+    {
+        if (other == null)
+            return false;
+        return Key == other.Key && string.Equals(Value, other.Value, StringComparison.InvariantCultureIgnoreCase);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Key, Value.ToLowerInvariant());
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as PdmsKeyValuePairCaseInsensitiveValue);
+    }
+}
 
 public class DatabaseComposer
 {
@@ -36,10 +61,6 @@ public class DatabaseComposer
         };
         var connectionString = connectionStringBuilder.ToString();
 
-        var optionsBuilder = new DbContextOptionsBuilder<HierarchyContext>();
-        optionsBuilder.UseSqlite(connectionString);
-        CreateEmptyDatabase(optionsBuilder.Options);
-
         var jsonNodesWithoutPdms = inputNodes.Where(n => !n.PDMSData.Any()).ToArray();
         foreach (var jsonNode in jsonNodesWithoutPdms)
         {
@@ -55,24 +76,28 @@ public class DatabaseComposer
         var jsonAabbs = inputNodes.Where(jn => jn.AABB != null).Select(jn => jn.AABB!);
 
         _logger.LogInformation("Creating database model entries");
-        long pdmsEntryIdCounter = 0;
+        int pdmsEntryIdCounter = 0;
 
         var pdmsEntries = jsonPdmsKeyValuePairs
-            .GroupBy(kvp => kvp.GetGroupKey())
+            .Select(x => new PdmsKeyValuePairCaseInsensitiveValue(x.Key, x.Value))
+            .Distinct()
+            .OrderBy(x => x.Key)
+            .ThenBy(x => x.Value)
             .ToDictionary(
-                keySelector: g => g.Key,
-                elementSelector: g => new PDMSEntry()
+                keySelector: g => new PdmsKeyValuePairCaseInsensitiveValue(g.Key, g.Value),
+                elementSelector: g => new PdmsEntry
                 {
                     Id = ++pdmsEntryIdCounter,
-                    Key = g.First().Key,
-                    Value = g.First().Value,
+                    Key = g.Key,
+                    Value = g.Value,
                 }
             );
 
         var aabbIdCounter = 0;
+
         var aabbs = jsonAabbs
             .GroupBy(b => b.GetGroupKey())
-            .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First().CopyWithNewId(++aabbIdCounter));
+            .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First() with { Id = ++aabbIdCounter });
 
         var nodes = inputNodes
             .Select(inputNode => new Node
@@ -86,53 +111,98 @@ public class DatabaseComposer
                 HasMesh = inputNode.HasMesh,
                 ParentId = inputNode.ParentId,
                 TopNodeId = inputNode.TopNodeId,
-                NodePDMSEntry = inputNode
-                    .PDMSData.Select(kvp => new NodePDMSEntry
-                    {
-                        NodeId = inputNode.NodeId,
-                        PDMSEntryId = pdmsEntries[kvp.GetGroupKey()].Id,
-                    })
-                    .ToList(),
-                AABB = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()],
+                AABBId = inputNode.AABB == null ? null : aabbs[inputNode.AABB.GetGroupKey()].Id,
                 DiagnosticInfo = inputNode.OptionalDiagnosticInfo,
             })
             .ToDictionary(n => n.Id, n => n);
 
-        var nodePdmsEntries = nodes.Values.Where(n => n.NodePDMSEntry != null).SelectMany(n => n.NodePDMSEntry!);
+        var nodePdmsEntries = inputNodes
+            .SelectMany(node =>
+                node.PDMSData.Select(
+                    (
+                        pdmsKvp => new NodePdmsEntryMapItem()
+                        {
+                            NodeId = node.NodeId,
+                            PdmsEntryId = pdmsEntries[
+                                new PdmsKeyValuePairCaseInsensitiveValue(pdmsKvp.Key, pdmsKvp.Value)
+                            ].Id,
+                        }
+                    )
+                )
+            )
+            .ToArray();
 
         var sqliteComposeTimer = MopTimer.Create("Populating database and building index", _logger);
 
         using var connection = new SqliteConnection(connectionString);
         connection.Open();
+        _logger.LogInformation("Opened database. Sqlite Version: {Version}", connection.ServerVersion);
 
-        // ReSharper disable AccessToDisposedClosure
+        // Optimize SQLite for write speed before inserting anything
+        using (var pragmaCmd = connection.CreateCommand())
+        {
+            pragmaCmd.CommandText = "PRAGMA synchronous = OFF;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA journal_mode = MEMORY;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA locking_mode = EXCLUSIVE;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA temp_store = MEMORY;";
+            pragmaCmd.ExecuteNonQuery();
+            pragmaCmd.CommandText = "PRAGMA cache_size = -100000;"; // 100 MB cache
+            pragmaCmd.ExecuteNonQuery();
+        }
+
+        MopTimer.RunAndMeasure(
+            "Insert Nodes",
+            _logger,
+            () =>
+            {
+                using var tableCmd = connection.CreateCommand();
+                NodeTable.CreateTable(tableCmd);
+                using var transaction = connection.BeginTransaction();
+                using var batchCmd = connection.CreateCommand();
+                NodeTable.RawInsertBatch(batchCmd, nodes.Values);
+                transaction.Commit();
+
+                // We want to free up memory as soon as possible. Not profiled.
+                nodes.Clear();
+                GC.Collect();
+            }
+        );
+
         MopTimer.RunAndMeasure(
             "Insert PDMSEntries",
             _logger,
             () =>
             {
+                using var tableCmd = connection.CreateCommand();
+                PDMSEntryTable.CreateTable(tableCmd);
+
                 using var transaction = connection.BeginTransaction();
 
                 using var cmd = connection.CreateCommand();
-                PDMSEntry.RawInsertBatch(cmd, pdmsEntries.Values);
+                PDMSEntryTable.RawInsertBatch(cmd, pdmsEntries.Values.ToArray());
 
                 transaction.Commit();
+
+                // We want to free up memory as soon as possible. Not profiled.
+                pdmsEntries.Clear();
             }
         );
-
         MopTimer.RunAndMeasure(
             "Insert NodePDMSEntries",
             _logger,
             () =>
             {
-                using var transaction = connection.BeginTransaction();
+                using var tableCmd = connection.CreateCommand();
+                NodePdmsEntryTable.CreateTable(tableCmd);
 
-                using var cmd = connection.CreateCommand();
-                NodePDMSEntry.RawInsertBatch(cmd, nodePdmsEntries);
-
-                transaction.Commit();
+                NodePdmsEntryTable.RawInsertBatch(connection, nodePdmsEntries);
             }
         );
+        nodePdmsEntries = null;
+        GC.Collect();
 
         MopTimer.RunAndMeasure(
             "Insert AABBs",
@@ -142,48 +212,24 @@ public class DatabaseComposer
                 using var transaction = connection.BeginTransaction();
                 using var cmd = connection.CreateCommand();
 
-                // Manually creating a special R-Tree table to speed up queries on the AABB table, specifically
-                // finding AABBs based on a location. The sqlite rtree module auto-creates spatial indexes.
-                cmd.CommandText =
-                    "CREATE VIRTUAL TABLE AABBs USING rtree(Id, min_x, max_x, min_y, max_y, min_z, max_z)";
-                cmd.ExecuteNonQuery();
+                AabbTable.CreateTable(cmd);
 
-                AABB.RawInsertBatch(cmd, aabbs.Values);
+                AabbTable.RawInsertBatch(cmd, aabbs.Values);
 
                 transaction.Commit();
             }
         );
 
         MopTimer.RunAndMeasure(
-            "Insert Nodes",
+            "Creating additional indexes",
             _logger,
             () =>
             {
                 using var transaction = connection.BeginTransaction();
                 using var cmd = connection.CreateCommand();
-                Node.RawInsertBatch(cmd, nodes.Values);
-
-                transaction.Commit();
-            }
-        );
-
-        MopTimer.RunAndMeasure(
-            "Creating indexes",
-            _logger,
-            () =>
-            {
-                using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Value_index ON PDMSEntries (Value)"; // key index will just slow things down
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Value_nocase_index ON PDMSEntries (Value collate nocase)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX PDMSEntries_Key_index ON PDMSEntries (Key)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_Name_index ON Nodes (Name)";
-                cmd.ExecuteNonQuery();
-                cmd.CommandText = "CREATE INDEX Nodes_RefNo_Index ON Nodes (RefNoPrefix, RefNoDb, RefNoSequence)";
-                cmd.ExecuteNonQuery();
+                PDMSEntryTable.CreateIndexes(cmd);
+                NodeTable.CreateIndexes(cmd);
+                NodePdmsEntryTable.CreateIndexes(cmd);
                 transaction.Commit();
             }
         );
@@ -286,12 +332,5 @@ public class DatabaseComposer
 
             transaction.Commit();
         }
-    }
-
-    private static void CreateEmptyDatabase(DbContextOptions options)
-    {
-        using var context = new HierarchyContext(options);
-        if (!context.Database.EnsureCreated())
-            throw new Exception($"Could not create database");
     }
 }

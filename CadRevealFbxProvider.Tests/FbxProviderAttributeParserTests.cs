@@ -2,7 +2,9 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using CadRevealFbxProvider.Attributes;
+using CadRevealFbxProvider.UserFriendlyLogger;
 using NUnit.Framework;
 
 [TestFixture]
@@ -13,7 +15,7 @@ public class FbxProviderAttributeParserTests
     private readonly List<string> fileLinesTwoManufacturers = new List<string>
     {
         "Schedules-Export;;;",
-        "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+        "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
         ";;;;;;;;;;;;;;;;;;;;;;;;",
         ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
         "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -28,7 +30,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesNoItemCode = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
@@ -38,7 +40,9 @@ public class FbxProviderAttributeParserTests
         var targetDict = new Dictionary<string, string>();
 
         // Act & assert
-        Assert.Throws<Exception>(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray())
+        );
     }
 
     [Test]
@@ -48,7 +52,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesNoItemCode = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123456",
             "Base Element BS 600 X 34 Hollow;;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;",
@@ -61,8 +65,8 @@ public class FbxProviderAttributeParserTests
         Assert.DoesNotThrow(() => ScaffoldingAttributeParser.ParseAttributes(fileLinesNoItemCode.ToArray()));
     }
 
-    [TestCase("/fbx_test_model.csv")]
-    [TestCase("/fbx_test_model_with_header_on_row_two.csv")]
+    [TestCase("/legacy_test_model.csv")]
+    [TestCase("/legacy_test_model_with_header_on_row_two.csv")]
     public void ParseAttributes_ValidWorkOrderCsv_ExtractsCorrectAttributes(string csvFileName)
     {
         // setup
@@ -74,11 +78,7 @@ public class FbxProviderAttributeParserTests
         int countNodesWithMissingAttrib = 0;
         foreach (var attribute in attributes)
         {
-            if (attribute.Value != null)
-            {
-                Assert.That(attribute.Value, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
-            }
-            else
+            if (attribute.Value == null)
             {
                 countNodesWithMissingAttrib++;
             }
@@ -93,27 +93,24 @@ public class FbxProviderAttributeParserTests
         // checks code correctness and consistency
         Assert.That(
             ScaffoldingMetadata.NumberOfMandatoryModelAttributesFromPartsNonTempScaff,
-            Is.EqualTo(ScaffoldingAttributeParser.NumericHeadersSap.Count)
+            Is.EqualTo(ScaffoldingAttributeParser.AggregateAttributesPerModel_NumericHeadersSap.Count)
         );
+
+        void AssertContainsAllKeysIgnoreCase(List<string> attributeList)
+        {
+            foreach (var key in attributeList)
+            {
+                var att = attributes.First().Value;
+                if (att != null)
+                    if (!att.Any(el => el.Key.Equals(key, StringComparison.OrdinalIgnoreCase)))
+                        Assert.Fail($"Attribute '{key}' is missing in the parsed attributes!");
+            }
+        }
 
         // check if we missed some attributes from the template
-        Assert.That(
-            ScaffoldingAttributeParser.NumericHeadersSap.Count()
-                + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
-                + 1 /* key or Item Code */
-            ,
-            Is.EqualTo(attributes.First().Value?.Count)
-        );
-
-        var attributeCount =
-            ScaffoldingAttributeParser.NumericHeadersSap.Count()
-            + ScaffoldingAttributeParser.OtherManufacturerIndependentAttributesPerPart.Count()
-            + 1 /* key or Item Code */
-        ;
-        Assert.That(
-            attributes.All(attribute => attribute.Value == null || attribute.Value?.Count == attributeCount),
-            Is.True
-        );
+        AssertContainsAllKeysIgnoreCase(ScaffoldingAttributeParser.AggregateAttributesPerModel_NumericHeadersSap);
+        AssertContainsAllKeysIgnoreCase(ScaffoldingAttributeParser.OtherAggregateAttributesPerModel);
+        AssertContainsAllKeysIgnoreCase(ScaffoldingAttributeParser.OtherAttributesPerItem);
     }
 
     [TestCase("/abc-123456789-woScaffMissingData.csv")]
@@ -180,26 +177,53 @@ public class FbxProviderAttributeParserTests
         ScaffoldingMetadata metadata;
 
         // assert
-        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
         {
             (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
         });
     }
 
-    [TestCase("/missing_total_weight.csv")]
+    [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
+    public void ParseFiles_NewTemplate_Works(string csvFileName)
+    {
+        // setup
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = true;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        ScaffoldingMetadata metadata;
+
+        // assert
+        Assert.DoesNotThrow(() =>
+        {
+            (var attributes, metadata) = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
+            Assert.That(metadata.TotalWeight, Is.EqualTo("194.5"));
+            Assert.That(metadata.TotalWeightCalculated, Is.EqualTo("194.5"));
+
+            // assert that no item has 'Vekt' attributes, but 'Weight kg'
+            Assert.That(
+                attributes.All(a =>
+                    a.Value != null && !a.Value.ContainsKey("Vekt") && a.Value.ContainsKey("Weight kg")
+                ),
+                Is.True
+            );
+        });
+    }
+
+    [Test]
+    [TestCase("/missing_total_weight_line.csv")]
+    [TestCase("/missing_total_weight_entries.csv")]
     public void ParseAttributes_WorkOrderCsvMissingTotalWeight_ThrowsError(string csvFileName)
     {
         // arrange
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<ScaffoldingAttributeParsingException>(
-            () =>
-            {
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the key total weight is missing, but got none"
-        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
     }
 
     [TestCase("/wrong_name_key_attribute.csv")]
@@ -208,25 +232,28 @@ public class FbxProviderAttributeParserTests
         string infoTextFilename = _attributeDirectory.FullName + csvFileName;
         var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.Throws<Exception>(
-            () =>
-            {
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the key attribute is missing, but got none"
-        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<Exception>(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
     }
 
     [TestCase("/missing_data_key_attribute.csv")]
     public void ParseAttributes_ItemCodeDataMissingInCsv_ThrowsError(string csvFileName)
     {
-        Assert.Throws<Exception>(
+        var exc = Assert.Catch(
             () =>
             {
                 string infoTextFilename = _attributeDirectory.FullName + csvFileName;
                 var lines = File.ReadAllLines(infoTextFilename);
                 ScaffoldingAttributeParser.ParseAttributes(lines);
             },
+            "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
+        );
+
+        Assert.That(
+            exc,
+            Is.Not.Null,
             "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
         );
     }
@@ -252,7 +279,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesOneManufacturer = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -302,7 +329,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesOneManufacturer = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -334,7 +361,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesOneManufacturer = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -382,7 +409,7 @@ public class FbxProviderAttributeParserTests
         List<string> fileLinesOneManufacturer = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -409,8 +436,53 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
+    public void ParseAttributes_MultipleManufacturersOldFormat_LogsWarningToTC()
+    {
+        // Arrange
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
+
+        // Act
+        var result = ScaffoldingAttributeParser.ParseAttributes(fileLinesTwoManufacturers.ToArray());
+        var consoleLog = stringWriter.ToString();
+
+        // Assert
+        Assert.That(
+            consoleLog.Contains(
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Model was exported using the old template",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+        );
+    }
+
+    [Test]
+    [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
+    public void ParseAttributes_MultipleManufacturersNewFormat_LogsWarningToTC(string csvFileName)
+    {
+        // setup
+        var stringWriter = new StringWriter();
+        Console.SetOut(stringWriter);
+
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        bool tempFlag = true;
+
+        // act
+        var lines = File.ReadAllLines(infoTextFilename);
+        var result = ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag);
+        var consoleLog = stringWriter.ToString();
+
+        // assert// Assert
+        Assert.That(
+            consoleLog.Contains(
+                "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers",
+                StringComparison.InvariantCultureIgnoreCase
+            )
+        );
+    }
+
+    [Test]
     // (line index)
-    [TestCase(0, "MAKI 450 Lattice Beam 2220 Pockets AL")]
+    [TestCase(0, "HAKI 450 Lattice Beam 2220 Pockets AL")]
     [TestCase(1, "Base Element BS 600 X 34 Hollow")]
     [TestCase(2, "Base Element BS 600 X 34 Hollow")]
     public void ParseAttributes_TwoManufacturers_ExtractsEnhancedDescription(int lineIndex, string enhancedDescr)
@@ -438,7 +510,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123452",
@@ -466,7 +538,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123451", // Line with missing volume
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -494,7 +566,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -522,7 +594,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -550,7 +622,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;;;;;;;;123455", // Line with missing volume
@@ -579,7 +651,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123455",
@@ -608,7 +680,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451", // Line with missing build operation number
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -636,7 +708,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -663,7 +735,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -672,7 +744,7 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -684,7 +756,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123455", // Line with missing build operation number
@@ -694,7 +766,8 @@ public class FbxProviderAttributeParserTests
             "Grand total: 42;187.70 kg;;;;;;;;;;;;;;;;;;;;;;;",
         };
 
-        Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
+        // Act & Assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
             ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
         );
     }
@@ -707,7 +780,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123455",
@@ -736,7 +809,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451", // Line with missing dismantle operation number
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -764,7 +837,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -791,7 +864,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123452",
@@ -801,12 +874,9 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
-                ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -816,7 +886,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123455", // Line with missing dismantle operation number
@@ -827,12 +897,9 @@ public class FbxProviderAttributeParserTests
         };
 
         // Act & Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<ScaffoldingMetadataMissingFieldException>(() =>
-                ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingMetadataMissingFieldException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -843,7 +910,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length(m);Width(m);Height(m);Covering (Y or N);Covering material;Last Updated;Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class;Size (m\u00b3);Length (m);Width (m);Height (m);Covering (Y or N);Covering material;Last Updated;Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123451",
             "Alu Pipe 48,3 X 1,50;1.50 kg;1;12345678;0100;9000;;;;;;;;;56-LD-0026;;;9.76 m\u00b3;;;;;;;123455",
@@ -871,7 +938,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;Base Element;;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -881,13 +948,9 @@ public class FbxProviderAttributeParserTests
 
         // Act
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
-                "Error: should throw exception since we cannot have description for two or more manufacturers on the same part"
-            );
-        });
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -897,7 +960,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;MAKI Description;MAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;HAKI Description;HAKI Weight;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             ";450 Lattice Beam 2220 Pockets AL;9.90 kg;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;;3.45 kg;3.40 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",
@@ -907,13 +970,11 @@ public class FbxProviderAttributeParserTests
 
         // Act
         // Assert
-        Assert.Multiple(() =>
-        {
-            Assert.Throws<InvalidOperationException>(
-                () => ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray()),
-                "Error: should throw exception since we cannot have weight for two or more manufacturers on the same part"
-            );
-        });
+
+        // exception type was changed in this case from InvalidOperationException to ScaffoldingAttributeParsingException
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            ScaffoldingAttributeParser.ParseAttributes(fileLines.ToArray())
+        );
     }
 
     [Test]
@@ -924,7 +985,7 @@ public class FbxProviderAttributeParserTests
         var fileLines = new List<string>
         {
             "Schedules-Export;;;",
-            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length(m); Width(m); Height(m); Covering (Y or N); Covering material; Last Updated; Item code",
+            "Description;Weight kg;Count;Work order;Scaff build Operation number;Dismantle Operation number;Scaff tag number;Job pack;Project number;Planned build date;Completion date;Dismantle date;Area;Discipline;Purpose;Scaff type;Load class; Size (m³); Length (m); Width (m); Height (m); Covering (Y or N); Covering material; Last Updated; Item code",
             ";;;;;;;;;;;;;;;;;;;;;;;;",
             "Alu Pipe 48,3 X 2,00;1.50 kg;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123451",
             "Base Element BS 600 X 34 Hollow;;1;12345;0040;0380;Stillas 1 topp;11-AA-101A;1111;;;;F1;BH90210;Vaerbeskyttelse;Vaerbeskyttelse;2;15.50 m\u00b3;;;;;;;123452",

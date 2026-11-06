@@ -11,6 +11,7 @@ using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
 using CadRevealComposer.Utils;
 using Commons;
+using UserFriendlyLogger;
 
 public class FbxProvider : IModelFormatProvider
 {
@@ -21,44 +22,53 @@ public class FbxProvider : IModelFormatProvider
         NodeNameFiltering nodeNameFiltering
     )
     {
-        var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
-        if (!workload.Any())
+        try
         {
-            Console.WriteLine("Found no .fbx files. Skipping FBX Parser.");
-            return (new List<CadRevealNode>(), null);
+            var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
+            if (!workload.Any())
+            {
+                Console.WriteLine("Found no .fbx files. Skipping FBX Parser.");
+                return (new List<CadRevealNode>(), null);
+            }
+
+            var fbxTimer = Stopwatch.StartNew();
+
+            var teamCityReadFbxFilesLogBlock = new TeamCityLogBlock("Reading Fbx Files");
+            var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+            {
+                Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
+            });
+
+            var stringInternPool = new BenStringInternPool(new SharedInternPool());
+
+            (var nodes, var metadata) = FbxWorkload.ReadFbxData(
+                workload,
+                treeIndexGenerator,
+                instanceIdGenerator,
+                nodeNameFiltering,
+                progressReport,
+                stringInternPool
+            );
+            var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
+            teamCityReadFbxFilesLogBlock.CloseBlock();
+
+            if (workload.Length == 0)
+            {
+                // returns empty list if there are no rvm files to process
+                return (new List<CadRevealNode>(), null);
+            }
+
+            Console.WriteLine(
+                $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))"
+            );
+
+            return (nodes, metadata);
         }
-
-        var fbxTimer = Stopwatch.StartNew();
-
-        var teamCityReadFbxFilesLogBlock = new TeamCityLogBlock("Reading Fbx Files");
-        var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+        catch (Exception ex)
         {
-            Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
-        });
-
-        var stringInternPool = new BenStringInternPool(new SharedInternPool());
-
-        (var nodes, var metadata) = FbxWorkload.ReadFbxData(
-            workload,
-            treeIndexGenerator,
-            instanceIdGenerator,
-            nodeNameFiltering,
-            progressReport,
-            stringInternPool
-        );
-        var fileSizesTotal = workload.Sum(w => new FileInfo(w.fbxFilename).Length);
-        teamCityReadFbxFilesLogBlock.CloseBlock();
-
-        if (workload.Length == 0)
-        {
-            // returns empty list if there are no rvm files to process
-            return (new List<CadRevealNode>(), null);
+            UserFriendlyLoggerExceptionHandler.HandleException(ex);
+            throw;
         }
-        Console.WriteLine(
-            $"Read FbxData in {fbxTimer.Elapsed}. (~{fileSizesTotal / 1024 / 1024}mb of .fbx files (excluding evtl .csv file size))"
-        );
-
-        return (nodes, metadata);
     }
 
     public APrimitive[] ProcessGeometries(

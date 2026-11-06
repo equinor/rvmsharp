@@ -10,7 +10,6 @@ using Commons.Utils;
 using Configuration;
 using HierarchyComposer.Functions;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Operations;
 using Operations.SectorSplitting;
 using Primitives;
@@ -31,7 +30,8 @@ public static class SceneCreator
         float MaxNodeDiagonal,
         IReadOnlyList<APrimitive> Geometries,
         BoundingBox SubtreeBoundingBox,
-        BoundingBox? GeometryBoundingBox
+        BoundingBox? GeometryBoundingBox,
+        Operations.SectorSplitting.SplittingStats SplittingStats
     )
     {
         public long DownloadSize { get; init; }
@@ -48,9 +48,11 @@ public static class SceneCreator
     {
         var nodes = HierarchyComposerConverter.ConvertToHierarchyNodes(allNodes);
 
-        ILogger<DatabaseComposer> databaseLogger = NullLogger<DatabaseComposer>.Instance;
+        ILogger<DatabaseComposer> databaseLogger = LoggerFactory
+            .Create(builder => builder.AddConsole())
+            .CreateLogger<DatabaseComposer>();
         var exporter = new DatabaseComposer(databaseLogger);
-        exporter.ComposeDatabase(nodes.ToList(), Path.GetFullPath(databasePath));
+        exporter.ComposeDatabase(nodes, Path.GetFullPath(databasePath));
     }
 
     public static void AddPrioritizedSectorsToDatabase(
@@ -129,6 +131,7 @@ public static class SceneCreator
                 SectorEchoDevMetadata = new SectorEchoDevMetadata()
                 {
                     GeometryDistributions = new GeometryDistributionStats(sector.Geometries),
+                    SplittingStats = sector.SplittingStats,
                 },
             };
         }
@@ -181,7 +184,8 @@ public static class SceneCreator
             MaxNodeDiagonal: sector.MaxNodeDiagonal,
             Geometries: sector.Geometries,
             SubtreeBoundingBox: sector.SubtreeBoundingBox,
-            GeometryBoundingBox: sector.GeometryBoundingBox
+            GeometryBoundingBox: sector.GeometryBoundingBox,
+            SplittingStats: sector.SplittingStats
         );
 
         if (sectorFilename != null)

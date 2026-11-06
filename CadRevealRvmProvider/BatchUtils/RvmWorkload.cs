@@ -67,7 +67,13 @@ public static class RvmWorkload
     )
     {
         var progress = 0;
-        var redundantPdmsAttributesToExclude = new[] { "Name", "Position" };
+        var redundantPdmsAttributesToExclude = new[]
+        {
+            "Name",
+            "Position",
+            "Position wrt World", // Data exists on all parts and is not used in Echo now. Disabling to reduce size of hierarchy.db. Consider re-enabling in the future.
+            "Orientation", // Not sure what this is useful for. Consider re-enabling if asked.
+        };
 
         RvmFile ParseRvmFile((string rvmFilename, string? txtFilename) filePair)
         {

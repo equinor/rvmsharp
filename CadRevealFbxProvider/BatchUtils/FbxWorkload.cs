@@ -7,10 +7,11 @@ using CadRevealComposer.IdProviders;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Utils;
 using Commons;
+using UserFriendlyLogger;
 
 public static class FbxWorkload
 {
-    public static (string fbxFilename, string? attributeFilename)[] CollectWorkload(
+    public static (string fbxFilename, string? attributeFilename, string? stidMetadataFilename)[] CollectWorkload(
         IReadOnlyCollection<string> filesAndFolders,
         string? filter = null
     )
@@ -30,28 +31,37 @@ public static class FbxWorkload
         var inputFiles = directories
             .SelectMany(directory => Directory.GetFiles(directory, "*.fbx")) // Collect fbx files
             .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.csv"))) // Collect CSVs
+            .Concat(directories.SelectMany(directory => Directory.GetFiles(directory, "*.json"))) // Collect JSONs
             .Concat(
                 files.Where(x =>
                     x.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
                     || x.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+                    || x.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
                 )
             ) // Append single files
             .Where(f => regexFilter == null || regexFilter.IsMatch(Path.GetFileName(f))) // Filter by regex
             .GroupBy(Path.GetFileNameWithoutExtension)
-            .ToArray(); // Group by filename (rvm, txt)
+            .ToArray(); // Group by filename (fbx, csv, json)
 
         var workload = (
-            from filePair in inputFiles
-            select filePair.ToArray() into filePairStatic
-            let fbxFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".fbx"))
-            let csvFilename = filePairStatic.FirstOrDefault(f => f.ToLower().EndsWith(".csv"))
-            select (fbxFilename, csvFilename)
+            from fileTuple in inputFiles
+            select fileTuple.ToArray() into fileTupleStatic
+            let fbxFilename = fileTupleStatic.FirstOrDefault(f =>
+                f.EndsWith(".fbx", StringComparison.OrdinalIgnoreCase)
+            )
+            let csvFilename = fileTupleStatic.FirstOrDefault(f =>
+                f.EndsWith(".csv", StringComparison.OrdinalIgnoreCase)
+            )
+            let jsonFilename = fileTupleStatic.FirstOrDefault(f =>
+                f.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            )
+            select (fbxFilename, csvFilename, jsonFilename)
         ).ToArray();
 
-        var result = new List<(string, string?)>();
-        foreach ((string? fbxFilename, string? attributeFilename) in workload)
+        var result = new List<(string, string?, string?)>();
+        foreach ((string? fbxFilename, string? attributeFilename, string? stidMetadataFilename) in workload)
         {
-            if (fbxFilename == null && attributeFilename == null)
+            if (fbxFilename == null && attributeFilename == null && stidMetadataFilename == null)
                 continue; // Nothing found
 
             if (fbxFilename == null)
@@ -61,14 +71,14 @@ public static class FbxWorkload
                 );
             }
             else
-                result.Add((fbxFilename, attributeFilename));
+                result.Add((fbxFilename, attributeFilename, stidMetadataFilename));
         }
 
         return result.ToArray();
     }
 
     public static (IReadOnlyList<CadRevealNode>, ModelMetadata?) ReadFbxData(
-        IReadOnlyCollection<(string fbxFilename, string? txtFilename)> workload,
+        IReadOnlyCollection<(string fbxFilename, string? attributeFilename, string? stidMetadataFilename)> workload,
         TreeIndexGenerator treeIndexGenerator,
         InstanceIdGenerator instanceIdGenerator,
         NodeNameFiltering nodeNameFiltering,
@@ -83,7 +93,10 @@ public static class FbxWorkload
         if (!fbxImporter.HasValidSdk())
         {
             Console.WriteLine("Did not find valid SDK, cannot import FBX file.");
-            throw new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.");
+            throw new UserFriendlyLogException(
+                "FBX import failed due to an invalid import library, please notify the developing team.",
+                new Exception("FBX import failed due to outdated FBX SDK! Scene would be invalid, hence exiting.")
+            );
         }
 
         Dictionary<string, string> metadata = new();
@@ -100,30 +113,118 @@ public static class FbxWorkload
 
         return (fbxNodesFlat, new ModelMetadata(metadata));
 
-        IReadOnlyList<CadRevealNode> LoadFbxFile((string fbxFilename, string? attributeFilename) filePair)
+        IReadOnlyList<CadRevealNode> LoadFbxFile(
+            (string fbxFilename, string? attributeFilename, string? stidMetadataFilename) fileTuple
+        )
         {
-            (string fbxFilename, string? infoTextFilename) = filePair;
+            (string fbxFilename, string? infoTextFilename, string? stidMetadataFilename) = fileTuple;
 
             Dictionary<string, Dictionary<string, string>?>? attributes = null;
             // there could be an explicit test / determination if this current fbx is scaffolding or not
             if (infoTextFilename != null)
             {
                 var lines = File.ReadAllLines(infoTextFilename);
-                var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
-                var isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
 
-                (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
+                // default value for temp, because we have two different ways of determining it
+                // old pipeline: from the filename
+                // new pipeline: from stid metadata
+                var isTemp = false;
 
-                if (!isTemp)
+                var isOldPipeline = (stidMetadataFilename == null);
+
+                // old pipeline, we perform checking of the scaffolding filename here, because we will later deduce some metadata from it
+                if (isOldPipeline)
                 {
-                    // check if the WO from filename actually matches the metadata
-                    // for non-temp scaffs only
-                    // crashes if there is a mismatch
-                    scaffoldingMetadata.ThrowIfWorkOrderFromFilenameInvalid(fileNameonly);
-                }
+                    Console.WriteLine($"Old pipeline, STID metadata filename does not exist");
 
-                // We crash if we dont have expected values
-                scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
+                    var fileNameonly = Path.GetFileNameWithoutExtension(infoTextFilename);
+
+                    //check the length of the filename. Upload artifacts will fail with too long filenames
+                    if (fileNameonly.Length > 55)
+                    {
+                        throw new UserFriendlyLogException(
+                            $"Scaffolding file's {fileNameonly} filename has {fileNameonly.Length} characters and is exceeding the maximum allowed length of 55 characters. Check the naming guide.",
+                            new ScaffoldingFilenameException($"Filename too long: {fileNameonly}")
+                        );
+                    }
+
+                    isTemp = fileNameonly.Contains("TEMP", StringComparison.OrdinalIgnoreCase);
+
+                    (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
+
+                    if (!isTemp)
+                    {
+                        // check if the WO from filename actually matches the metadata
+                        // check if the filename is complying with the guidelines
+                        // for non-temp scaffs only
+                        // crashes if there is a mismatch
+                        scaffoldingMetadata.ThrowIfFilenameInvalid(fileNameonly);
+                    }
+                    scaffoldingMetadata.GetSuffixFromFilename(fileNameonly);
+                    scaffoldingMetadata.StidDocumentId = "";
+                    // We crash if we dont have expected values
+                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
+                }
+                else
+                {
+                    Console.WriteLine($"New pipeline, STID metadata filename exists: {stidMetadataFilename}");
+                    // this is the new pipeline, stidMetadataFilename != null
+
+                    // parse stid-metadata.json to determine if the scaffolding has status temp or not
+                    var stidMetadata = JsonUtils.JsonDeserializeFromFile<StidScaffoldingDocumentEchoDto>(
+                        stidMetadataFilename!
+                    );
+
+                    isTemp = stidMetadata.HasWorkOrderAssigned == false;
+                    (attributes, var scaffoldingMetadata) = ScaffoldingAttributeParser.ParseAttributes(lines, isTemp);
+
+                    if (!isTemp)
+                    {
+                        var csvWorkOrder = scaffoldingMetadata.WorkOrder?.TrimStart('0') ?? string.Empty;
+                        // according to spec, this should come in trimmed
+                        var stidWorkOrder = stidMetadata.WorkOrderId;
+                        // stidMetadata.WorkOrderId is trimmed from leading zeros
+                        if (!string.Equals(csvWorkOrder, stidWorkOrder, StringComparison.Ordinal))
+                        {
+                            throw new UserFriendlyLogException(
+                                $"Scaffolding work order number in STID ({stidMetadata.WorkOrderId}) differs from the work order number extracted from CSV file ({scaffoldingMetadata.WorkOrder})",
+                                new ScaffoldingAttributeParsingException(
+                                    $"Scaffolding work order number mismatch -- STID WO: {stidMetadata.WorkOrderId}, CSV WO: {scaffoldingMetadata.WorkOrder}"
+                                )
+                            );
+                        }
+
+                        var csvBuildOperationNo =
+                            scaffoldingMetadata.BuildOperationNumber?.TrimStart('0') ?? string.Empty;
+                        var stidBuildOperationNo = stidMetadata.BuildOperationNumber?.TrimStart('0') ?? string.Empty;
+                        if (!string.Equals(csvBuildOperationNo, stidBuildOperationNo, StringComparison.Ordinal))
+                        {
+                            throw new UserFriendlyLogException(
+                                $"Scaffolding build operation number in STID ({stidMetadata.BuildOperationNumber}) differs from the build operation number extracted from CSV file ({scaffoldingMetadata.BuildOperationNumber})",
+                                new ScaffoldingAttributeParsingException(
+                                    $"Scaffolding build operation number mismatch -- STID BuildOpNo: {stidMetadata.BuildOperationNumber}, CSV BuildOpNo: {scaffoldingMetadata.BuildOperationNumber}"
+                                )
+                            );
+                        }
+
+                        var csvDismantleOperationNo =
+                            scaffoldingMetadata.DismantleOperationNumber?.TrimStart('0') ?? string.Empty;
+                        var stidDismantleOperationNo =
+                            stidMetadata.DismantleOperationNumber?.TrimStart('0') ?? string.Empty;
+                        if (!string.Equals(csvDismantleOperationNo, stidDismantleOperationNo, StringComparison.Ordinal))
+                        {
+                            throw new UserFriendlyLogException(
+                                $"Scaffolding dismantle operation number in STID ({stidMetadata.DismantleOperationNumber}) differs from the dismantle operation number extracted from CSV file ({scaffoldingMetadata.DismantleOperationNumber})",
+                                new ScaffoldingAttributeParsingException(
+                                    $"Scaffolding dismantle operation number mismatch -- STID DismantleOpNo: {stidMetadata.DismantleOperationNumber}, CSV DismantleOpNo: {scaffoldingMetadata.DismantleOperationNumber}"
+                                )
+                            );
+                        }
+                    }
+                    scaffoldingMetadata.StidDocumentId = stidMetadata.DocNo;
+                    scaffoldingMetadata.NameSuffix = stidMetadata.DocTitle;
+                    scaffoldingMetadata.TryWriteToGenericMetadataDict(metadata);
+                }
             }
 
             var rootNodeOfModel = fbxImporter.LoadFile(fbxFilename);
@@ -137,6 +238,16 @@ public static class FbxWorkload
 
             if (rootNodeConverted == null)
                 return [];
+
+            if (rootNodeConverted.BoundingBoxAxisAligned == null)
+            {
+                throw new UserFriendlyLogException(
+                    $"The FBX file {Path.GetFileName(fbxFilename)} has no bounding box. This may indicate that the model is empty (without geometry) or invalid. Verify the FBX export.",
+                    new FbxGeometryException(
+                        "The FBX file seems to have no nodes containing geometry as the bounding box of the model is null. Nodes without geometry might exist."
+                    )
+                );
+            }
 
             var flatNodes = CadRevealNode.GetAllNodesFlat(rootNodeConverted).ToArray();
 
@@ -186,8 +297,8 @@ public static class FbxWorkload
                 }
 
                 if (totalMismatch)
-                    throw new Exception(
-                        $"FBX model {fbxFilename} and its attribute file {infoTextFilename} completely mismatch or all attributes in the attribute file have an issue -- read the log above for more info."
+                    throw new UserFriendlyLogException(
+                        $"No item in the attribute file {Path.GetFileName(infoTextFilename)} can be matched with its geometry in the FBX model {Path.GetFileName(fbxFilename)} based on the Item Code. Either the CSV and FBX do not belong together, or all rows in the CSV are invalid. Check if your CSV matches the CSV-template and if the required metadata are actually exported."
                     );
             }
 

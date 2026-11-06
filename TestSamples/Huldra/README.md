@@ -6,11 +6,9 @@ All files in this directory is under a separate permissive license. See [LICENSE
 
 ## Download Link
 
-The entire Huldra Dataset is Open, and can be downloaded from the Url below.
+The entire Huldra 3D Dataset is Open, and can be accessed from the Url below.
 
-<https://data.equinor.com/dataset/Huldra>
-
-If you are not an Equinor Employee you need to use the B2C Link, and allow popups.
+<https://data.equinor.com>
 
 ## Information about the Huldra dataset
 

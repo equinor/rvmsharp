@@ -17,7 +17,22 @@ public class RvmFacetGroupConverterTests
             Version: 2,
             Matrix: Matrix4x4.Identity,
             BoundingBoxLocal: new RvmBoundingBox(-Vector3.One, Vector3.One),
-            Polygons: null!
+            Polygons:
+            [
+                new RvmFacetGroup.RvmPolygon(
+                    new[]
+                    {
+                        new RvmFacetGroup.RvmContour(
+                            Vertices: new[]
+                            {
+                                (-Vector3.One, new Vector3(0.0f, 0.0f, -1.0f)),
+                                (new Vector3(-1.0f, -1.0f, 1.0f), new Vector3(0.0f, 0.0f, -1.0f)),
+                                (Vector3.One, new Vector3(0.0f, 0.0f, -1.0f)),
+                            }
+                        ),
+                    }
+                ),
+            ]
         );
     }
 

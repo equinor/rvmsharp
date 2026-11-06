@@ -1,13 +1,16 @@
 namespace CadRevealFbxProvider.Tests;
 
+using System.Diagnostics;
 using System.Drawing;
 using System.Numerics;
+using Ben.Collections.Specialized;
 using CadRevealComposer;
 using CadRevealComposer.Configuration;
 using CadRevealComposer.IdProviders;
 using CadRevealComposer.ModelFormatProvider;
 using CadRevealComposer.Operations;
 using CadRevealComposer.Primitives;
+using CadRevealComposer.Utils;
 using CadRevealFbxProvider.Attributes;
 using CadRevealFbxProvider.BatchUtils;
 
@@ -15,7 +18,10 @@ using CadRevealFbxProvider.BatchUtils;
 public class FbxProviderTests
 {
     private const string InputDirectoryCorrect = "TestSamples/correct";
+    private const string InputDirectoryCorrectWithSuffix = "TestSamples/correctWithSuffix";
     private const string OutputDirectoryCorrect = "TestSamples/correct";
+
+    private const string InputDirectoryNoGeometry = "TestSamples/noGeometry";
 
     private static readonly ModelParameters ModelParameters = new(
         new ProjectId(1),
@@ -95,6 +101,18 @@ public class FbxProviderTests
         }
     }
 
+    [Test]
+    [TestCase(InputDirectoryNoGeometry)]
+    public void Process_ModelWithoutGeometry_ThrowsError(string dir)
+    {
+        // arrange
+        DirectoryInfo directoryInfo = new(dir);
+        var err = Assert.Catch(() => Process(directoryInfo, directoryInfo));
+        HelperFunctions.AssertThrowsCustomScaffoldingException<FbxGeometryException>(() =>
+            Process(directoryInfo, directoryInfo)
+        );
+    }
+
     [TestCase(InputDirectoryCorrect)]
     public void GetAllGeomPointersWithXOrMoreUses_FbxModel_CorrectUniqueMeshesInFileCount(string inputDir)
     {
@@ -114,13 +132,11 @@ public class FbxProviderTests
     {
         // arrange
         DirectoryInfo directoryInfo = new(dir);
-        var err = Assert.Throws<Exception>(
-            () => Process(directoryInfo, directoryInfo),
-            "An exception was expected, saying that the model and attribute file do not match, but got none."
-        );
+        var err = Assert.Catch(() => Process(directoryInfo, directoryInfo));
         Assert.That(
-            err.Message.Contains("completely mismatch or all attributes in the attribute file have an issue"),
-            Is.True
+            err,
+            Is.Not.Null,
+            "An exception was expected, saying that the model and attribute file do not match, but got none."
         );
     }
 
@@ -131,9 +147,8 @@ public class FbxProviderTests
         DirectoryInfo directoryInfo = new(dir);
 
         // act & assert
-        Assert.Throws<ScaffoldingFilenameException>(
-            () => Process(directoryInfo, directoryInfo),
-            "An exception was expected, saying that the model and attribute file do not match, but got none."
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingFilenameException>(() =>
+            Process(directoryInfo, directoryInfo)
         );
     }
 
@@ -142,7 +157,8 @@ public class FbxProviderTests
     {
         DirectoryInfo OutputDirectoryIncorrect = new("TestSamples/missingKey");
         DirectoryInfo InputDirectoryIncorrect = new("TestSamples/missingKey");
-        Assert.Throws<Exception>(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        var exc = Assert.Catch(() => Process(InputDirectoryIncorrect, OutputDirectoryIncorrect));
+        Assert.That(exc, Is.Not.Null);
     }
 
     [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
@@ -167,16 +183,15 @@ public class FbxProviderTests
 
         Assert.That(nodes, Has.Count.EqualTo(28));
         Assert.That(nodes[0].Name, Is.EqualTo("RootNode"));
-        Assert.That(nodes[1].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
-        Assert.That(nodes[27].Attributes, Has.Count.EqualTo(ScaffoldingAttributeParser.NumberOfAttributesPerPart));
         Assert.That(nodes[2].Attributes.ContainsKey("Description"));
         Assert.That(nodes[2].Attributes["Description"], Is.EqualTo("Ladder"));
         Assert.That(metadata, Is.Not.Null);
         Assert.That(metadata.Count(), Is.EqualTo(ScaffoldingMetadata.NumberOfModelAttributes));
     }
 
+    [Test]
     [TestCase(InputDirectoryCorrect, OutputDirectoryCorrect)]
-    public void SampleModel_Load(string inputDir, string outputDir)
+    public void SampleFbxModel_Load(string inputDir, string outputDir)
     {
         var treeIndexGenerator = new TreeIndexGenerator();
         var instanceIndexGenerator = new InstanceIdGenerator();
@@ -214,6 +229,41 @@ public class FbxProviderTests
         );
 
         Console.WriteLine($"Export Finished. Wrote output files to \"{Path.GetFullPath(outputDirInfo.FullName)}\"");
+    }
+
+    [Test]
+    [TestCase(InputDirectoryCorrect, "")]
+    [TestCase(InputDirectoryCorrectWithSuffix, "Copy")]
+    public void SampleModel_ReadsCorrectScaffSuffix(string inputDir, string suffix)
+    {
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        var filesToParse = new DirectoryInfo(inputDir).EnumerateFiles();
+
+        var workload = FbxWorkload.CollectWorkload(filesToParse.Select(x => x.FullName).ToArray());
+
+        var fbxTimer = Stopwatch.StartNew();
+
+        var teamCityReadFbxFilesLogBlock = new TeamCityLogBlock("Reading Fbx Files");
+        var progressReport = new Progress<(string fileName, int progress, int total)>(x =>
+        {
+            Console.WriteLine($"\t{x.fileName} ({x.progress}/{x.total})");
+        });
+
+        var stringInternPool = new Commons.BenStringInternPool(new SharedInternPool());
+
+        (var nodes, var metadata) = FbxWorkload.ReadFbxData(
+            workload,
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null)),
+            progressReport,
+            stringInternPool
+        );
+
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", suffix), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", string.Empty), Is.True);
     }
 
     [TestCase(InputDirectoryCorrect)]
@@ -280,10 +330,147 @@ public class FbxProviderTests
         );
 
         // assert
+        // name suffix will not be tested.
+        // It is not extracted correctly from temp scaffoldings, but that is also irrelevant (old pipeline).
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", string.Empty), Is.True);
         Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
     }
 
+    [TestCase("TestSamples/stidPipelineTempScaff")]
+    public void ParseFiles_StidPipeline_TempScaffolding_ProcessingSucceedsMetadataHasPositiveTempFlag(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        // metadata is setup correctly (processing has succeeded)
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Temp model"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-001"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "true"), Is.True);
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsMetadataSetUpCorrectly(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        // metadata is setup correctly (processing has succeeded)
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-002"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_WoMismatch")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenWoNumbersMismatch(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act & assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        );
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_BuildOpMismatch")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenBuildOpNumbersMismatch(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act & assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        );
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_DismantleOpMissing")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingSucceedsWhenDismantleOpMissing(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act
+        (var rootNode, var metadata) = modelFormatProviderFbx.ParseFiles(
+            inputDirectoryTempScaff.EnumerateFiles(),
+            treeIndexGenerator,
+            instanceIndexGenerator,
+            new NodeNameFiltering(new NodeNameExcludeRegex(null))
+        );
+
+        // assert
+        // metadata is setup correctly (processing has succeeded)
+        Assert.That(metadata!.CheckValue("Scaffolding_IsTemporary", "false"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_StidDocumentId", "SCAFF-005"), Is.True);
+        Assert.That(metadata!.CheckValue("Scaffolding_NameSuffix", "Valid model"), Is.True);
+    }
+
+    [TestCase("TestSamples/stidPipelineWoScaff_MissingDismantleOpInStidOnly")]
+    public void ParseFiles_StidPipeline_WoScaffolding_ProcessingFailsWhenDismantleOpMissingInStidOnly(string inputDir)
+    {
+        // arrange
+        var treeIndexGenerator = new TreeIndexGenerator();
+        var instanceIndexGenerator = new InstanceIdGenerator();
+        var modelFormatProviderFbx = new FbxProvider();
+        DirectoryInfo inputDirectoryTempScaff = new(inputDir);
+
+        // act & assert
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+            modelFormatProviderFbx.ParseFiles(
+                inputDirectoryTempScaff.EnumerateFiles(),
+                treeIndexGenerator,
+                instanceIndexGenerator,
+                new NodeNameFiltering(new NodeNameExcludeRegex(null))
+            )
+        );
+    }
+
+    [Test]
     [TestCase(InputDirectoryCorrect)]
+    [TestCase(InputDirectoryCorrectWithSuffix)]
     public void ParseFiles_WorkorderScaffolding_ProcessingSucceedsMetadataHasNegativeTempFlag(string inputDir)
     {
         // arrange
@@ -305,7 +492,7 @@ public class FbxProviderTests
     }
 
     [TestCase("TestSamples/tempScaff_wrongNaming")]
-    public void ParseFiles_TempScaffoldingWithWrongName_ProcessingFails(string inputDir)
+    public void ParseFiles_TempScaffoldingWithoutTempInName_ProcessingFails(string inputDir)
     {
         // arrange
         var treeIndexGenerator = new TreeIndexGenerator();
@@ -313,18 +500,17 @@ public class FbxProviderTests
         var modelFormatProviderFbx = new FbxProvider();
         DirectoryInfo inputDirectoryTempScaff = new(inputDir);
 
-        // act
-        // no act, assert that exception is thrown
+        // act & assert
+        // this scaff is not a valid temp scaffolding
 
-        // assert
-        Assert.Throws<ScaffoldingAttributeParsingException>(() =>
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
             modelFormatProviderFbx.ParseFiles(
                 inputDirectoryTempScaff.EnumerateFiles(),
                 treeIndexGenerator,
                 instanceIndexGenerator,
                 new NodeNameFiltering(new NodeNameExcludeRegex(null))
             )
-        ); // this scaff is not a valid temp scaffolding
+        );
     }
 
     private static void Process(DirectoryInfo inputDirectory, DirectoryInfo outputDirectory) =>

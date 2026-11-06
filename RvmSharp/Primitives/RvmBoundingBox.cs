@@ -69,4 +69,31 @@ public record RvmBoundingBox(Vector3 Min, Vector3 Max)
         var max = rotatedBox.Aggregate(Vector3.Max);
         return new RvmBoundingBox(Min: min, Max: max);
     }
+
+    // keep this for future testing
+    // no longer needed after the export of rvm models is properly fixed
+    // for mode info see AB#255079ATE
+    /// <summary>
+    /// Transforms a local axis aligned bounding box to a world space axis aligned bounding box
+    /// As the local bounding box from the RVM file might not be correct (pre-rotated?), we remove rotation from the matrix before applying it
+    /// <remarks> When exporting RVM models is fixed, this method shall be used for testing and then can be removed again. </remarks>
+    /// </summary>
+    /// <param name="localBoundingBox">An axis aligned bounding box in the primitive's local space</param>
+    /// <param name="matrix"></param>
+    /// <returns>An axis aligned bounding box in world space, with cancelled rotation</returns>
+    public static RvmBoundingBox CalculateAxisAlignedBoundingBoxCancelRotation(
+        RvmBoundingBox localBoundingBox,
+        Matrix4x4 matrix
+    )
+    {
+        var box = localBoundingBox.GenerateBoxVertexes();
+        Matrix4x4.Decompose(matrix, out var scale, out var rotation, out var translation);
+        var reverseRotation = Matrix4x4.Transpose(Matrix4x4.CreateFromQuaternion(rotation));
+        var prerotatedBox = box.Select(vertex => Vector3.Transform(vertex, reverseRotation));
+        var rotatedBox = prerotatedBox.Select(vertex => Vector3.Transform(vertex, matrix)).ToArray();
+
+        var min = rotatedBox.Aggregate(Vector3.Min);
+        var max = rotatedBox.Aggregate(Vector3.Max);
+        return new RvmBoundingBox(Min: min, Max: max);
+    }
 };

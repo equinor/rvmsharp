@@ -283,7 +283,7 @@ public static class RvmFacetGroupMatcher
                 }
             }
 
-            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+            var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count));
 
             logObject.AddFacetGroupMatchingResult(
                 instancedCount,
@@ -369,7 +369,7 @@ public static class RvmFacetGroupMatcher
             if (matchingTimer.Elapsed > target)
             {
                 var groupKey = CalculateKey(facetGroup);
-                var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Length));
+                var vertexCount = facetGroups.First().Polygons.Sum(x => x.Contours.Sum(y => y.Vertices.Count));
                 Console.WriteLine(
                     $"Grouping with {vertexCount} vertices taking a long time. More than {(int)target.TotalMinutes} minutes. Group key is: {groupKey}"
                 );
@@ -475,16 +475,16 @@ public static class RvmFacetGroupMatcher
     private static bool IsSpecialCaseVolumeTriangle(RvmFacetGroup facetGroup)
     {
         return facetGroup.Polygons.Length == 5
-            && facetGroup.Polygons[0].Contours.Length == 1
-            && facetGroup.Polygons[1].Contours.Length == 1
-            && facetGroup.Polygons[2].Contours.Length == 1
-            && facetGroup.Polygons[3].Contours.Length == 1
-            && facetGroup.Polygons[4].Contours.Length == 1
-            && facetGroup.Polygons[0].Contours[0].Vertices.Length == 3
-            && facetGroup.Polygons[1].Contours[0].Vertices.Length == 3
-            && facetGroup.Polygons[2].Contours[0].Vertices.Length == 4
-            && facetGroup.Polygons[3].Contours[0].Vertices.Length == 4
-            && facetGroup.Polygons[4].Contours[0].Vertices.Length == 4;
+            && facetGroup.Polygons[0].Contours.Count == 1
+            && facetGroup.Polygons[1].Contours.Count == 1
+            && facetGroup.Polygons[2].Contours.Count == 1
+            && facetGroup.Polygons[3].Contours.Count == 1
+            && facetGroup.Polygons[4].Contours.Count == 1
+            && facetGroup.Polygons[0].Contours[0].Vertices.Count == 3
+            && facetGroup.Polygons[1].Contours[0].Vertices.Count == 3
+            && facetGroup.Polygons[2].Contours[0].Vertices.Count == 4
+            && facetGroup.Polygons[3].Contours[0].Vertices.Count == 4
+            && facetGroup.Polygons[4].Contours[0].Vertices.Count == 4;
     }
 
     /// <summary>
@@ -524,10 +524,10 @@ public static class RvmFacetGroupMatcher
             for (var i = 0; i < facetGroup.Polygons.LongLength; i++)
             {
                 var contours = facetGroup.Polygons[i].Contours;
-                key = key * hashMultiplier + contours.LongLength;
-                for (var j = 0; j < contours.LongLength; j++)
+                key = key * hashMultiplier + contours.Count;
+                for (var j = 0; j < contours.Count; j++)
                 {
-                    key = key * hashMultiplier + contours[j].Vertices.LongLength;
+                    key = key * hashMultiplier + contours[j].Vertices.Count;
                 }
             }
 
@@ -570,12 +570,12 @@ public static class RvmFacetGroupMatcher
             var aPolygon = aFacetGroup.Polygons[i];
             var bPolygon = bFacetGroup.Polygons[i];
 
-            for (var j = 0; j < aPolygon.Contours.Length; j++)
+            for (var j = 0; j < aPolygon.Contours.Count; j++)
             {
                 var aContour = aPolygon.Contours[j];
                 var bContour = bPolygon.Contours[j];
 
-                for (var k = 0; k < aContour.Vertices.Length; k++)
+                for (var k = 0; k < aContour.Vertices.Count; k++)
                 {
                     var transformedVector = Vector3.Transform(aContour.Vertices[k].Vertex, transform);
                     var vb = bContour.Vertices[k].Vertex;
@@ -610,12 +610,12 @@ public static class RvmFacetGroupMatcher
             var aPolygon = aFacetGroup.Polygons[i];
             var bPolygon = bFacetGroup.Polygons[i];
 
-            for (var j = 0; j < aPolygon.Contours.Length; j++)
+            for (var j = 0; j < aPolygon.Contours.Count; j++)
             {
                 var aContour = aPolygon.Contours[j];
                 var bContour = bPolygon.Contours[j];
 
-                for (var k = 0; k < aContour.Vertices.Length; k++)
+                for (var k = 0; k < aContour.Vertices.Count; k++)
                 {
                     var candidateVertexA = aContour.Vertices[k].Vertex;
                     var candidateVertexB = bContour.Vertices[k].Vertex;

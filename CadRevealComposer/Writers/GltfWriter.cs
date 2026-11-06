@@ -11,7 +11,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using Commons.Utils;
+using GltfWriterUtils;
 using Primitives;
+using SharpGLTF.Memory;
 using SharpGLTF.Schema2;
 
 /// <summary>
@@ -37,6 +39,7 @@ public static class GltfWriter
         {
             writeFunction(selectedPrimitives, model, scene);
         }
+
         return primitiveNumber;
     }
 
@@ -143,38 +146,18 @@ public static class GltfWriter
             var indexAccessor = model.CreateAccessor();
             var vertexAccessor = model.CreateAccessor();
 
-            indexAccessor.SetData(indexBuffer, 0, indexCount, DimensionType.SCALAR, EncodingType.UNSIGNED_INT, false);
-            vertexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+            indexAccessor.SetData(indexBuffer, 0, indexCount, AttFormat.Uint);
+            vertexAccessor.SetData(vertexBuffer, 0, vertexCount, AttFormat.Vec3Float);
 
             // create instance buffer accessors
             var treeIndexAccessor = model.CreateAccessor();
             var colorAccessor = model.CreateAccessor();
             var instanceMatrixAccessor = model.CreateAccessor();
 
-            treeIndexAccessor.SetData(
-                instanceBuffer,
-                0,
-                instanceCount,
-                DimensionType.SCALAR,
-                EncodingType.FLOAT,
-                false
-            );
-            colorAccessor.SetData(
-                instanceBuffer,
-                4,
-                instanceCount,
-                DimensionType.VEC4,
-                EncodingType.UNSIGNED_BYTE,
-                false
-            );
-            instanceMatrixAccessor.SetData(
-                instanceBuffer,
-                8,
-                instanceCount,
-                DimensionType.MAT4,
-                EncodingType.FLOAT,
-                false
-            );
+            var instanceBufferWrapper = new BufferViewAutoOffset(instanceBuffer, instanceCount);
+            treeIndexAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Float);
+            colorAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Vec4UByteNormalized);
+            instanceMatrixAccessor.SetDataAutoOffset(instanceBufferWrapper, AttFormat.Mat4x4Float);
 
             // create node
             var node = scene.CreateNode("InstanceMesh");
@@ -259,10 +242,11 @@ public static class GltfWriter
         var colorAccessor = model.CreateAccessor();
         var positionAccessor = model.CreateAccessor();
 
-        indexAccessor.SetData(indexBuffer, 0, indexCount, DimensionType.SCALAR, EncodingType.UNSIGNED_INT, false);
-        treeIndexAccessor.SetData(vertexBuffer, 0, vertexCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(vertexBuffer, 4, vertexCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, true);
-        positionAccessor.SetData(vertexBuffer, 8, vertexCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        indexAccessor.SetData(indexBuffer, 0, indexCount, AttFormat.Uint);
+        var vertexBufferWrapper = new BufferViewAutoOffset(vertexBuffer, vertexCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        positionAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
 
         // create node
         var node = scene.CreateNode("TriangleMesh");
@@ -281,8 +265,8 @@ public static class GltfWriter
 
         // create byte buffer
         const int byteStride = (1 + 1 + 16) * sizeof(float);
-        var bufferView = model.CreateBufferView(byteStride * boxCount, byteStride);
-        var buffer = bufferView.Content.AsSpan();
+        var vertexBufferView = model.CreateBufferView(byteStride * boxCount, byteStride);
+        var buffer = vertexBufferView.Content.AsSpan();
         var bufferPos = 0;
         foreach (var box in boxes)
         {
@@ -297,9 +281,10 @@ public static class GltfWriter
         var colorAccessor = model.CreateAccessor();
         var instanceMatrixAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, boxCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, boxCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        instanceMatrixAccessor.SetData(bufferView, 8, boxCount, DimensionType.MAT4, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(vertexBufferView, boxCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
 
         // create node
         var node = scene.CreateNode("BoxCollection");
@@ -333,10 +318,11 @@ public static class GltfWriter
         var instanceMatrixAccessor = model.CreateAccessor();
         var normalAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, circleCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, circleCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        instanceMatrixAccessor.SetData(bufferView, 8, circleCount, DimensionType.MAT4, EncodingType.FLOAT, false);
-        normalAccessor.SetData(bufferView, 72, circleCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, circleCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
+        normalAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
 
         // create node
         var node = scene.CreateNode("CircleCollection");
@@ -381,15 +367,16 @@ public static class GltfWriter
         var radiusAAccessor = model.CreateAccessor();
         var radiusBAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, coneCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, coneCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        angleAccessor.SetData(bufferView, 8, coneCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        arcAngleAccessor.SetData(bufferView, 12, coneCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        centerAAccessor.SetData(bufferView, 16, coneCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        centerBAccessor.SetData(bufferView, 28, coneCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        localXAxisAccessor.SetData(bufferView, 40, coneCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        radiusAAccessor.SetData(bufferView, 52, coneCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        radiusBAccessor.SetData(bufferView, 56, coneCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, coneCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        angleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        arcAngleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        centerAAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        centerBAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        localXAxisAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        radiusAAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        radiusBAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
 
         // create node
         var node = scene.CreateNode("ConeCollection");
@@ -435,13 +422,14 @@ public static class GltfWriter
         var radiusAAccessor = model.CreateAccessor();
         var radiusBAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, eccentricConeCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        centerAAccessor.SetData(bufferView, 8, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        centerBAccessor.SetData(bufferView, 20, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        normalAccessor.SetData(bufferView, 32, eccentricConeCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        radiusAAccessor.SetData(bufferView, 44, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        radiusBAccessor.SetData(bufferView, 48, eccentricConeCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, eccentricConeCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        centerAAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        centerBAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        normalAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        radiusAAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        radiusBAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
 
         // create node
         var node = scene.CreateNode("EccentricConeCollection");
@@ -485,20 +473,14 @@ public static class GltfWriter
         var centerAccessor = model.CreateAccessor();
         var normalAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, ellipsoidCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        horizontalRadiusAccessor.SetData(
-            bufferView,
-            8,
-            ellipsoidCount,
-            DimensionType.SCALAR,
-            EncodingType.FLOAT,
-            false
-        );
-        verticalRadiusAccessor.SetData(bufferView, 12, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        heightAccessor.SetData(bufferView, 16, ellipsoidCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        centerAccessor.SetData(bufferView, 20, ellipsoidCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        normalAccessor.SetData(bufferView, 32, ellipsoidCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, ellipsoidCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        horizontalRadiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        verticalRadiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        heightAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        centerAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        normalAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
 
         // create node
         var node = scene.CreateNode("EllipsoidSegmentCollection");
@@ -548,23 +530,17 @@ public static class GltfWriter
         var angleAccessor = model.CreateAccessor();
         var arcAngleAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(
-            bufferView,
-            4,
-            generalCylinderCount,
-            DimensionType.VEC4,
-            EncodingType.UNSIGNED_BYTE,
-            false
-        );
-        centerAAccessor.SetData(bufferView, 8, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        centerBAccessor.SetData(bufferView, 20, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        radiusAccessor.SetData(bufferView, 32, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        planeAAccessor.SetData(bufferView, 36, generalCylinderCount, DimensionType.VEC4, EncodingType.FLOAT, false);
-        planeBAccessor.SetData(bufferView, 52, generalCylinderCount, DimensionType.VEC4, EncodingType.FLOAT, false);
-        localXAxisAccessor.SetData(bufferView, 68, generalCylinderCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        angleAccessor.SetData(bufferView, 80, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        arcAngleAccessor.SetData(bufferView, 84, generalCylinderCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        var vertexDataWrapper = new BufferViewAutoOffset(bufferView, generalCylinderCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec4UByteNormalized);
+        centerAAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec3Float);
+        centerBAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec3Float);
+        radiusAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Float);
+        planeAAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec4Float);
+        planeBAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec4Float);
+        localXAxisAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Vec3Float);
+        angleAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Float);
+        arcAngleAccessor.SetDataAutoOffset(vertexDataWrapper, AttFormat.Float);
 
         // create node
         var node = scene.CreateNode("GeneralCylinderCollection");
@@ -611,13 +587,14 @@ public static class GltfWriter
         var normalAccessor = model.CreateAccessor();
         var thicknessAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, generalRingCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, generalRingCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        angleAccessor.SetData(bufferView, 8, generalRingCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        arcAngleAccessor.SetData(bufferView, 12, generalRingCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        instanceMatrixAccessor.SetData(bufferView, 16, generalRingCount, DimensionType.MAT4, EncodingType.FLOAT, false);
-        normalAccessor.SetData(bufferView, 80, generalRingCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        thicknessAccessor.SetData(bufferView, 92, generalRingCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, generalRingCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        angleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        arcAngleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
+        normalAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        thicknessAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
 
         // create node
         var node = scene.CreateNode("GeneralRingCollection");
@@ -653,9 +630,10 @@ public static class GltfWriter
         var colorAccessor = model.CreateAccessor();
         var instanceMatrixAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, nutCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, nutCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        instanceMatrixAccessor.SetData(bufferView, 8, nutCount, DimensionType.MAT4, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, nutCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
 
         // create node
         var node = scene.CreateNode("NutCollection");
@@ -687,9 +665,10 @@ public static class GltfWriter
         var colorAccessor = model.CreateAccessor();
         var instanceMatrixAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, quadCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, quadCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        instanceMatrixAccessor.SetData(bufferView, 8, quadCount, DimensionType.MAT4, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, quadCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
 
         // create node
         var node = scene.CreateNode("QuadCollection");
@@ -727,12 +706,13 @@ public static class GltfWriter
         var radiusAccessor = model.CreateAccessor();
         var tubeRadiusAccessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, torusCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, torusCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        arcAngleAccessor.SetData(bufferView, 8, torusCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        instanceMatrixAccessor.SetData(bufferView, 12, torusCount, DimensionType.MAT4, EncodingType.FLOAT, false);
-        radiusAccessor.SetData(bufferView, 76, torusCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        tubeRadiusAccessor.SetData(bufferView, 80, torusCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, torusCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        arcAngleAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        instanceMatrixAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Mat4x4Float);
+        radiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        tubeRadiusAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
 
         // create node
         var node = scene.CreateNode("TorusSegmentCollection");
@@ -773,12 +753,13 @@ public static class GltfWriter
         var vertex3Accessor = model.CreateAccessor();
         var vertex4Accessor = model.CreateAccessor();
 
-        treeIndexAccessor.SetData(bufferView, 0, trapeziumCount, DimensionType.SCALAR, EncodingType.FLOAT, false);
-        colorAccessor.SetData(bufferView, 4, trapeziumCount, DimensionType.VEC4, EncodingType.UNSIGNED_BYTE, false);
-        vertex1Accessor.SetData(bufferView, 8, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        vertex2Accessor.SetData(bufferView, 20, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        vertex3Accessor.SetData(bufferView, 32, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
-        vertex4Accessor.SetData(bufferView, 44, trapeziumCount, DimensionType.VEC3, EncodingType.FLOAT, false);
+        var vertexBufferWrapper = new BufferViewAutoOffset(bufferView, trapeziumCount);
+        treeIndexAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Float);
+        colorAccessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec4UByteNormalized);
+        vertex1Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        vertex2Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        vertex3Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
+        vertex4Accessor.SetDataAutoOffset(vertexBufferWrapper, AttFormat.Vec3Float);
 
         // create node
         var node = scene.CreateNode("TrapeziumCollection");
@@ -822,6 +803,7 @@ public static class GltfWriter
         {
             ThrowIfValueIsNotFinite(f);
         }
+
         // https://github.com/dotnet/runtime/blob/main/src/libraries/System.Private.CoreLib/src/System/Numerics/Matrix4x4.cs
         // writes Matrix4x4 memory byte layout directly to buffer
         var source = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref matrix, 1));
@@ -884,5 +866,37 @@ public static class GltfWriter
                 $"value was {value}, and cannot be serialized to gltf json."
             );
         }
+    }
+
+    /// <summary>
+    /// Helper for common AttributeFormats
+    /// </summary>
+    private static class AttFormat
+    {
+        // ReSharper disable once UnusedMember.Local -- kept for possible future use
+        public static readonly AttributeFormat Vec4UByte = new AttributeFormat(
+            DimensionType.VEC4,
+            EncodingType.UNSIGNED_BYTE
+        );
+
+        public static readonly AttributeFormat Vec4UByteNormalized = new AttributeFormat(
+            DimensionType.VEC4,
+            EncodingType.UNSIGNED_BYTE,
+            true
+        );
+
+        public static readonly AttributeFormat Mat4x4Float = new AttributeFormat(
+            DimensionType.MAT4,
+            EncodingType.FLOAT
+        );
+
+        public static readonly AttributeFormat Vec4Float = new AttributeFormat(DimensionType.VEC4, EncodingType.FLOAT);
+        public static readonly AttributeFormat Vec3Float = new AttributeFormat(DimensionType.VEC3, EncodingType.FLOAT);
+        public static readonly AttributeFormat Float = new AttributeFormat(DimensionType.SCALAR, EncodingType.FLOAT);
+
+        public static readonly AttributeFormat Uint = new AttributeFormat(
+            DimensionType.SCALAR,
+            EncodingType.UNSIGNED_INT
+        );
     }
 }

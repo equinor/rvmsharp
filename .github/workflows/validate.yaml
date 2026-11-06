@@ -2,12 +2,16 @@
 on:
   pull_request:
     branches: [ master ]
+
+permissions:
+  contents: read
+
 jobs:
   check_formatting:
     runs-on: windows-latest
     name: Check Formatting
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install tools
         run: |
           dotnet tool restore
@@ -21,13 +25,12 @@ jobs:
             Write-Host ""
             Write-Host "Tip: Install csharpier using 'dotnet tool restore', and run it using `dotnet csharpier format .` to autofix formatting."
           }
-
   build:
     name: Build and test
     runs-on: windows-latest
     strategy:
       matrix:
-        dotnet-version: [ '8.0.x' ]
+        dotnet-version: [ '10.0.x' ]
 
     steps:
       - uses: actions/checkout@v4
