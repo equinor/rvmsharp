@@ -115,12 +115,12 @@ public static class RvmFacetGroupMatcher
             // this was originally meant to use as index, but it does not work for the tests..
             //(((RvmFacetGroupWithProtoMesh)t.First().Template).ProtoMesh.TreeIndex
             t =>
-            (
-                templateIndex++,
-                t.Count(),
-                t.First().FacetGroup.Polygons.Count(),
-                t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))
-            )
+                (
+                    templateIndex++,
+                    t.Count(),
+                    t.First().FacetGroup.Polygons.Count(),
+                    t.First().FacetGroup.Polygons.Sum(p => p.Contours.Sum(c => c.Vertices.Count()))
+                )
         );
 
         using (new TeamCityLogBlock("Template Candidate Stats"))
