@@ -13,7 +13,12 @@ public class CameraPositioningTests
     {
         APrimitive[] geometries =
         {
-            new Box(Matrix4x4.Identity, uint.MaxValue, Color.Red, new BoundingBox(new Vector3(0, 0, 0), new Vector3(100, 50, 100)))
+            new Box(
+                Matrix4x4.Identity,
+                uint.MaxValue,
+                Color.Red,
+                new BoundingBox(new Vector3(0, 0, 0), new Vector3(100, 50, 100))
+            ),
         };
 
         var (position, target, direction) = CameraPositioning.CalculateInitialCamera(geometries);
@@ -27,7 +32,12 @@ public class CameraPositioningTests
     {
         APrimitive[] geometries =
         {
-            new Box(Matrix4x4.Identity, uint.MaxValue, Color.Red, new BoundingBox(new Vector3(0, 0, 0), new Vector3(50, 100, 100)))
+            new Box(
+                Matrix4x4.Identity,
+                uint.MaxValue,
+                Color.Red,
+                new BoundingBox(new Vector3(0, 0, 0), new Vector3(50, 100, 100))
+            ),
         };
 
         var (position, target, direction) = CameraPositioning.CalculateInitialCamera(geometries);
