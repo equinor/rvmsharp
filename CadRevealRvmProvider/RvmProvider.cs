@@ -95,6 +95,8 @@ public class RvmProvider : IModelFormatProvider
             AdditionalMetadataCsvInjector.AddCustomEchoAttributeMetadata(nodes, additionalMetadataCsv);
         }
 
+        TagMetadataInjector.EnrichFromFiles(nodes, filesToParseArray);
+
         Console.WriteLine($"Converted RVM files to Reveal nodes in {stopwatch.Elapsed}");
 
         return (nodes, null);
