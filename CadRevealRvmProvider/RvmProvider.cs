@@ -163,9 +163,8 @@ public class RvmProvider : IModelFormatProvider
         }
         else
         {
-            pyramidInstancingResult = RvmPyramidInstancer.Process(
-                uniqueProtoMeshesFromPyramid,
-                pyramids => pyramids.Length >= modelParameters.InstancingThreshold.Value
+            pyramidInstancingResult = RvmPyramidInstancer.Process(uniqueProtoMeshesFromPyramid, pyramids =>
+                pyramids.Length >= modelParameters.InstancingThreshold.Value
             );
             Console.WriteLine($"Pyramids instance matched in {stopwatch.Elapsed}");
             stopwatch.Restart();

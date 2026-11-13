@@ -194,8 +194,8 @@ public static class FbxWorkload
                             );
                         }
 
-                        var csvBuildOperationNo =
-                            scaffoldingMetadata.BuildOperationNumber?.TrimStart('0') ?? string.Empty;
+                        var csvBuildOperationNo = scaffoldingMetadata.BuildOperationNumber?.TrimStart('0')
+                            ?? string.Empty;
                         var stidBuildOperationNo = stidMetadata.BuildOperationNumber?.TrimStart('0') ?? string.Empty;
                         if (!string.Equals(csvBuildOperationNo, stidBuildOperationNo, StringComparison.Ordinal))
                         {
@@ -207,10 +207,10 @@ public static class FbxWorkload
                             );
                         }
 
-                        var csvDismantleOperationNo =
-                            scaffoldingMetadata.DismantleOperationNumber?.TrimStart('0') ?? string.Empty;
-                        var stidDismantleOperationNo =
-                            stidMetadata.DismantleOperationNumber?.TrimStart('0') ?? string.Empty;
+                        var csvDismantleOperationNo = scaffoldingMetadata.DismantleOperationNumber?.TrimStart('0')
+                            ?? string.Empty;
+                        var stidDismantleOperationNo = stidMetadata.DismantleOperationNumber?.TrimStart('0')
+                            ?? string.Empty;
                         if (!string.Equals(csvDismantleOperationNo, stidDismantleOperationNo, StringComparison.Ordinal))
                         {
                             throw new UserFriendlyLogException(
