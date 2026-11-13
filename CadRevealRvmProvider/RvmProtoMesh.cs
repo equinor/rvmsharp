@@ -4,31 +4,27 @@ using System.Drawing;
 using System.Numerics;
 using CadRevealComposer;
 using CadRevealComposer.Primitives;
-using ProtoBuf;
 using RvmSharp.Primitives;
 
 // instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
-[ProtoContract(SkipConstructor = true)]
-[ProtoInclude(1000, typeof(ProtoMeshFromFacetGroup))]
-[ProtoInclude(1001, typeof(ProtoMeshFromRvmPyramid))]
+#pragma warning disable PBN0013, PBN0014 // Intermediate types are tessellated and removed before primitive-cache serialization.
 public abstract record ProtoMesh(
-    [property: ProtoIgnore] RvmPrimitive RvmPrimitive,
+    RvmPrimitive RvmPrimitive,
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
+#pragma warning restore PBN0013, PBN0014
 
-[ProtoContract(SkipConstructor = true)]
 public sealed record ProtoMeshFromFacetGroup(
-    [property: ProtoIgnore] RvmFacetGroup FacetGroup,
+    RvmFacetGroup FacetGroup,
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : ProtoMesh(FacetGroup, TreeIndex, Color, AxisAlignedBoundingBox);
 
-[ProtoContract(SkipConstructor = true)]
 public sealed record ProtoMeshFromRvmPyramid(
-    [property: ProtoIgnore] RvmPyramid Pyramid,
+    RvmPyramid Pyramid,
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox

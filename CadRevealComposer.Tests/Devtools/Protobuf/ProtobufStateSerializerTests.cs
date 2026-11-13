@@ -3,7 +3,9 @@
 using System.Drawing;
 using System.Numerics;
 using CadRevealComposer.Devtools.Protobuf;
+using CadRevealRvmProvider;
 using Primitives;
+using RvmSharp.Primitives;
 using Tessellation;
 
 public class ProtobufStateSerializerTests
@@ -65,6 +67,26 @@ public class ProtobufStateSerializerTests
         APrimitive[] outputArray = RoundtripSerializeDeserialize(inputArray);
 
         Assert.That(outputArray, Is.EqualTo(inputArray));
+    }
+
+    [Test]
+    public void TestProtobufSerialization_RejectsIntermediateProtoMesh()
+    {
+        var facetGroup = new RvmFacetGroup(
+            2,
+            Matrix4x4.Identity,
+            new RvmBoundingBox(Vector3.One, Vector3.One),
+            Array.Empty<RvmFacetGroup.RvmPolygon>()
+        );
+        APrimitive[] primitives =
+        {
+            new ProtoMeshFromFacetGroup(facetGroup, 1337, SampleColor, SampleAxisAlignedBoundingBox),
+        };
+        using var memoryStream = new MemoryStream();
+
+        Assert.Throws<InvalidOperationException>(() =>
+            ProtobufStateSerializer.WriteAPrimitiveStateToStream(memoryStream, primitives)
+        );
     }
 
     private static APrimitive[] RoundtripSerializeDeserialize(APrimitive[] inputArray)

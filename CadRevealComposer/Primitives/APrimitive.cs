@@ -139,7 +139,7 @@ public sealed record InstancedMesh(
 public sealed record TriangleMesh(Mesh Mesh, uint TreeIndex, Color Color, BoundingBox AxisAlignedBoundingBox)
     : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
 
-[ProtoContract(SkipConstructor = true, IgnoreUnknownSubTypes = true)]
+[ProtoContract(SkipConstructor = true, IgnoreUnknownSubTypes = false)]
 [ProtoInclude(500, typeof(TriangleMesh))]
 [ProtoInclude(501, typeof(InstancedMesh))]
 [ProtoInclude(502, typeof(Trapezium))]
