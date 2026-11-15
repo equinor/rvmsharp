@@ -30,6 +30,38 @@ public sealed class TagMetadataRepository
         return _entries.TryGetValue(tag, out entry);
     }
 
+    public bool TryMatch(string tag, [NotNullWhen(true)] out TagMetadataEntry? entry)
+    {
+        var leadingWildcard = tag.StartsWith('*');
+        var trailingWildcard = tag.EndsWith('*');
+        if (!leadingWildcard && !trailingWildcard)
+            return TryGetValue(tag, out entry);
+
+        var start = leadingWildcard ? 1 : 0;
+        var end = trailingWildcard ? tag.Length - 1 : tag.Length;
+        var text = tag.Substring(start, Math.Max(0, end - start));
+        entry = null;
+        foreach (var (repositoryTag, candidate) in _entries)
+        {
+            var matches = leadingWildcard && trailingWildcard
+                ? repositoryTag.Contains(text, StringComparison.Ordinal)
+                : leadingWildcard
+                    ? repositoryTag.EndsWith(text, StringComparison.Ordinal)
+                    : repositoryTag.StartsWith(text, StringComparison.Ordinal);
+            if (!matches)
+                continue;
+
+            if (entry != null)
+                throw new InvalidDataException(
+                    $"Tag pattern '{tag}' matches multiple repository tags: '{entry.TagNo}' and '{repositoryTag}'."
+                );
+
+            entry = candidate;
+        }
+
+        return entry != null;
+    }
+
     public static TagMetadataRepository Load(FileInfo file)
     {
         try

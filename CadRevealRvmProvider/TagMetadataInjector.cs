@@ -58,8 +58,7 @@ public static class TagMetadataInjector
             if (!node.Attributes.TryGetValue("Tag", out var tag))
                 continue;
 
-            // does not take wildcards into account
-            if (string.IsNullOrWhiteSpace(tag) || !repository.TryGetValue(tag, out var entry))
+            if (string.IsNullOrWhiteSpace(tag) || !repository.TryMatch(tag, out var entry))
             {
                 node.Attributes.Remove("Tag");
                 removed++;
