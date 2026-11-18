@@ -32,11 +32,14 @@ public sealed class TagMetadataRepository
 
     public IReadOnlyList<TagMetadataEntry> FindMatches(string tag)
     {
-        // matching of wildcards in only allowed for category 6, i.e. type "LINE"
         var leadingWildcard = tag.StartsWith('*');
         var trailingWildcard = tag.EndsWith('*');
+
+        // not a wildcard, matching allowed for all categories
         if (!leadingWildcard && !trailingWildcard)
-            return TryGetValue(tag, out var entry) && entry.CategoryId == 6 ? [entry] : [];
+            return TryGetValue(tag, out var entry) ? [entry] : [];
+
+        // matching of wildcards in only allowed for category 6, i.e. type "LINE"
 
         var start = leadingWildcard ? 1 : 0;
         var end = trailingWildcard ? tag.Length - 1 : tag.Length;
