@@ -58,7 +58,10 @@ public static class TagMetadataInjector
             if (!node.Attributes.TryGetValue("Tag", out var tag))
                 continue;
 
-            if (string.IsNullOrWhiteSpace(tag) || !repository.TryMatch(tag, out var entry))
+            var matches = string.IsNullOrWhiteSpace(tag)
+                ? Array.Empty<TagMetadataEntry>()
+                : repository.FindMatches(tag);
+            if (matches.Count == 0)
             {
                 node.Attributes.Remove("Tag");
                 removed++;
@@ -66,6 +69,18 @@ public static class TagMetadataInjector
             }
 
             matched++;
+            var entry = matches[0];
+            if (
+                matches.Count != 1
+                && matches.Any(candidate =>
+                    candidate.CategoryId != entry.CategoryId
+                    || candidate.CategoryDescription != entry.CategoryDescription
+                    || candidate.System != entry.System
+                // || candidate.TagStatus != entry.TagStatus -- removing status from comparison for now
+                )
+            )
+                continue;
+
             var added = false;
             foreach (var (key, value) in GetAttributes(entry))
             {
@@ -87,7 +102,6 @@ public static class TagMetadataInjector
     {
         yield return ("TagMetadata.CategoryId", entry.CategoryId?.ToString(CultureInfo.InvariantCulture));
         yield return ("TagMetadata.CategoryDescription", entry.CategoryDescription);
-        yield return ("TagMetadata.ProjectCode", entry.ProjectCode);
         yield return ("TagMetadata.System", entry.System);
     }
 }

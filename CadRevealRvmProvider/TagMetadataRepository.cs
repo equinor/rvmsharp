@@ -8,8 +8,8 @@ public sealed record TagMetadataEntry(
     [property: JsonPropertyName("TAG_NO")] string? TagNo,
     [property: JsonPropertyName("TAG_CATEGORY")] int? CategoryId,
     [property: JsonPropertyName("TAG_CATEGORY_DESCRIPTION")] string? CategoryDescription,
-    [property: JsonPropertyName("PROJECT_CODE")] string? ProjectCode,
-    [property: JsonPropertyName("SYSTEM")] string? System
+    [property: JsonPropertyName("SYSTEM")] string? System,
+    [property: JsonPropertyName("TAG_STATUS")] string? TagStatus = null
 );
 
 public sealed class TagMetadataRepository
@@ -30,36 +30,39 @@ public sealed class TagMetadataRepository
         return _entries.TryGetValue(tag, out entry);
     }
 
-    public bool TryMatch(string tag, [NotNullWhen(true)] out TagMetadataEntry? entry)
+    public IReadOnlyList<TagMetadataEntry> FindMatches(string tag)
     {
+        // matching of wildcards in only allowed for category 6, i.e. type "LINE"
         var leadingWildcard = tag.StartsWith('*');
         var trailingWildcard = tag.EndsWith('*');
         if (!leadingWildcard && !trailingWildcard)
-            return TryGetValue(tag, out entry);
+            return TryGetValue(tag, out var entry) && entry.CategoryId == 6 ? [entry] : [];
 
         var start = leadingWildcard ? 1 : 0;
         var end = trailingWildcard ? tag.Length - 1 : tag.Length;
-        var text = tag.Substring(start, Math.Max(0, end - start));
-        entry = null;
+        var tagCoreToMatch = tag.Substring(start, Math.Max(0, end - start));
+
+        var matches = new List<TagMetadataEntry>();
         foreach (var (repositoryTag, candidate) in _entries)
         {
-            var matches = leadingWildcard && trailingWildcard
-                ? repositoryTag.Contains(text, StringComparison.Ordinal)
-                : leadingWildcard
-                    ? repositoryTag.EndsWith(text, StringComparison.Ordinal)
-                    : repositoryTag.StartsWith(text, StringComparison.Ordinal);
-            if (!matches)
+            if (candidate.CategoryId != 6)
                 continue;
 
-            if (entry != null)
-                throw new InvalidDataException(
-                    $"Tag pattern '{tag}' matches multiple repository tags: '{entry.TagNo}' and '{repositoryTag}'."
-                );
-
-            entry = candidate;
+            var isMatch =
+                leadingWildcard && trailingWildcard ? repositoryTag.Contains(tagCoreToMatch, StringComparison.Ordinal)
+                : leadingWildcard ? repositoryTag.EndsWith(tagCoreToMatch, StringComparison.Ordinal)
+                : repositoryTag.StartsWith(tagCoreToMatch, StringComparison.Ordinal);
+            if (isMatch)
+                matches.Add(candidate);
         }
 
-        return entry != null;
+        // TODO: check if this is OK
+        // if there are any A (asb) tags, then we remove other tags (H, historic, probably).
+        // OBS: Did not check if there are alternative statuses than A and H
+        if (matches.Any(m => m.TagStatus == "A"))
+            matches = matches.Where(m => m.TagStatus == "A").ToList();
+
+        return matches;
     }
 
     public static TagMetadataRepository Load(FileInfo file)
