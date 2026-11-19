@@ -241,21 +241,13 @@ public class FbxProviderAttributeParserTests
     [TestCase("/missing_data_key_attribute.csv")]
     public void ParseAttributes_ItemCodeDataMissingInCsv_ThrowsError(string csvFileName)
     {
-        var exc = Assert.Catch(
-            () =>
-            {
-                string infoTextFilename = _attributeDirectory.FullName + csvFileName;
-                var lines = File.ReadAllLines(infoTextFilename);
-                ScaffoldingAttributeParser.ParseAttributes(lines);
-            },
-            "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
-        );
+        string infoTextFilename = _attributeDirectory.FullName + csvFileName;
+        var lines = File.ReadAllLines(infoTextFilename);
 
-        Assert.That(
-            exc,
-            Is.Not.Null,
-            "Was expecting an exception saying that the data in the key attribute column are missing, but got none"
-        );
+        HelperFunctions.AssertThrowsCustomScaffoldingException<ScaffoldingAttributeParsingException>(() =>
+        {
+            ScaffoldingAttributeParser.ParseAttributes(lines);
+        });
     }
 
     // Testing matrix

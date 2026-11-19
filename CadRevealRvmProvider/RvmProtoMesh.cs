@@ -7,12 +7,14 @@ using CadRevealComposer.Primitives;
 using RvmSharp.Primitives;
 
 // instancing processing - converted to GLTF model in the end (InstancedMesh/TriangleMesh)
+#pragma warning disable PBN0013, PBN0014 // Intermediate types are tessellated and removed before primitive-cache serialization.
 public abstract record ProtoMesh(
     RvmPrimitive RvmPrimitive,
     uint TreeIndex,
     Color Color,
     BoundingBox AxisAlignedBoundingBox
 ) : APrimitive(TreeIndex, Color, AxisAlignedBoundingBox, 0, null);
+#pragma warning restore PBN0013, PBN0014
 
 public sealed record ProtoMeshFromFacetGroup(
     RvmFacetGroup FacetGroup,

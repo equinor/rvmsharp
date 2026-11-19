@@ -23,3 +23,7 @@
 # Script TempFiles
 /scripts/outputs/**
 /scripts/work_temp/
+
+# MacOS
+.DS_Store
+Thumbs.db

@@ -68,10 +68,8 @@ public class DatabaseComposer
             jsonNode.PDMSData["Info:"] = "No E3D data available for selected part.";
         }
 
-        var jsonPdmsKeyValuePairs = MopTimer.RunAndMeasure(
-            "Collecting PDMS data",
-            _logger,
-            () => inputNodes.SelectMany(n => n.PDMSData).ToArray()
+        var jsonPdmsKeyValuePairs = MopTimer.RunAndMeasure("Collecting PDMS data", _logger, () =>
+            inputNodes.SelectMany(n => n.PDMSData).ToArray()
         );
         var jsonAabbs = inputNodes.Where(jn => jn.AABB != null).Select(jn => jn.AABB!);
 
@@ -153,142 +151,114 @@ public class DatabaseComposer
             pragmaCmd.ExecuteNonQuery();
         }
 
-        MopTimer.RunAndMeasure(
-            "Insert Nodes",
-            _logger,
-            () =>
-            {
-                using var tableCmd = connection.CreateCommand();
-                NodeTable.CreateTable(tableCmd);
-                using var transaction = connection.BeginTransaction();
-                using var batchCmd = connection.CreateCommand();
-                NodeTable.RawInsertBatch(batchCmd, nodes.Values);
-                transaction.Commit();
+        MopTimer.RunAndMeasure("Insert Nodes", _logger, () =>
+        {
+            using var tableCmd = connection.CreateCommand();
+            NodeTable.CreateTable(tableCmd);
+            using var transaction = connection.BeginTransaction();
+            using var batchCmd = connection.CreateCommand();
+            NodeTable.RawInsertBatch(batchCmd, nodes.Values);
+            transaction.Commit();
 
-                // We want to free up memory as soon as possible. Not profiled.
-                nodes.Clear();
-                GC.Collect();
-            }
-        );
+            // We want to free up memory as soon as possible. Not profiled.
+            nodes.Clear();
+            GC.Collect();
+        });
 
-        MopTimer.RunAndMeasure(
-            "Insert PDMSEntries",
-            _logger,
-            () =>
-            {
-                using var tableCmd = connection.CreateCommand();
-                PDMSEntryTable.CreateTable(tableCmd);
+        MopTimer.RunAndMeasure("Insert PDMSEntries", _logger, () =>
+        {
+            using var tableCmd = connection.CreateCommand();
+            PDMSEntryTable.CreateTable(tableCmd);
 
-                using var transaction = connection.BeginTransaction();
+            using var transaction = connection.BeginTransaction();
 
-                using var cmd = connection.CreateCommand();
-                PDMSEntryTable.RawInsertBatch(cmd, pdmsEntries.Values.ToArray());
+            using var cmd = connection.CreateCommand();
+            PDMSEntryTable.RawInsertBatch(cmd, pdmsEntries.Values.ToArray());
 
-                transaction.Commit();
+            transaction.Commit();
 
-                // We want to free up memory as soon as possible. Not profiled.
-                pdmsEntries.Clear();
-            }
-        );
-        MopTimer.RunAndMeasure(
-            "Insert NodePDMSEntries",
-            _logger,
-            () =>
-            {
-                using var tableCmd = connection.CreateCommand();
-                NodePdmsEntryTable.CreateTable(tableCmd);
+            // We want to free up memory as soon as possible. Not profiled.
+            pdmsEntries.Clear();
+        });
+        MopTimer.RunAndMeasure("Insert NodePDMSEntries", _logger, () =>
+        {
+            using var tableCmd = connection.CreateCommand();
+            NodePdmsEntryTable.CreateTable(tableCmd);
 
-                NodePdmsEntryTable.RawInsertBatch(connection, nodePdmsEntries);
-            }
-        );
+            NodePdmsEntryTable.RawInsertBatch(connection, nodePdmsEntries);
+        });
         nodePdmsEntries = null;
         GC.Collect();
 
-        MopTimer.RunAndMeasure(
-            "Insert AABBs",
-            _logger,
-            () =>
-            {
-                using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
+        MopTimer.RunAndMeasure("Insert AABBs", _logger, () =>
+        {
+            using var transaction = connection.BeginTransaction();
+            using var cmd = connection.CreateCommand();
 
-                AabbTable.CreateTable(cmd);
+            AabbTable.CreateTable(cmd);
 
-                AabbTable.RawInsertBatch(cmd, aabbs.Values);
+            AabbTable.RawInsertBatch(cmd, aabbs.Values);
 
-                transaction.Commit();
-            }
-        );
+            transaction.Commit();
+        });
 
-        MopTimer.RunAndMeasure(
-            "Creating additional indexes",
-            _logger,
-            () =>
-            {
-                using var transaction = connection.BeginTransaction();
-                using var cmd = connection.CreateCommand();
-                PDMSEntryTable.CreateIndexes(cmd);
-                NodeTable.CreateIndexes(cmd);
-                NodePdmsEntryTable.CreateIndexes(cmd);
-                transaction.Commit();
-            }
-        );
+        MopTimer.RunAndMeasure("Creating additional indexes", _logger, () =>
+        {
+            using var transaction = connection.BeginTransaction();
+            using var cmd = connection.CreateCommand();
+            PDMSEntryTable.CreateIndexes(cmd);
+            NodeTable.CreateIndexes(cmd);
+            NodePdmsEntryTable.CreateIndexes(cmd);
+            transaction.Commit();
+        });
 
-        MopTimer.RunAndMeasure(
-            "Optimizing Database",
-            _logger,
-            () =>
-            {
-                // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
-                using var cmd = connection.CreateCommand();
-                // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
-                cmd.CommandText = "pragma analyze";
-                cmd.ExecuteNonQuery();
-                // Optimize the database. Actual performance gains of this have not been checked.
-                cmd.CommandText = "pragma optimize";
-                cmd.ExecuteNonQuery();
-            }
-        );
+        MopTimer.RunAndMeasure("Optimizing Database", _logger, () =>
+        {
+            // Run Sqlite Optimizing methods once. This may be superstition. The operations are usually quick (<1 second).
+            using var cmd = connection.CreateCommand();
+            // Analyze the database. Actual performance gains of this on a "fresh database" have not been checked.
+            cmd.CommandText = "pragma analyze";
+            cmd.ExecuteNonQuery();
+            // Optimize the database. Actual performance gains of this have not been checked.
+            cmd.CommandText = "pragma optimize";
+            cmd.ExecuteNonQuery();
+        });
 
-        MopTimer.RunAndMeasure(
-            "VACUUM Database",
-            _logger,
-            () =>
-            {
+        MopTimer.RunAndMeasure("VACUUM Database", _logger, () =>
+        {
 #if DEBUG
-                // Ignore in debug mode to run faster
-                return;
+            // Ignore in debug mode to run faster
+            return;
 #else
-                // Vacuum completely recreates the database but removes all "Extra Data" from it.
-                // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
-                using var vacuumCmds = connection.CreateCommand();
+            // Vacuum completely recreates the database but removes all "Extra Data" from it.
+            // Its a quite slow operation but might fix the "First query is super slow issue" on the hierarchy service.
+            using var vacuumCmds = connection.CreateCommand();
 
-                vacuumCmds.CommandText = "PRAGMA page_count";
-                var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar()!;
-                var timer = Stopwatch.StartNew();
-                // Vacuum the database. This is quite slow!
-                vacuumCmds.CommandText = "VACUUM";
-                vacuumCmds.ExecuteNonQuery();
-                vacuumCmds.CommandText = "PRAGMA page_count";
-                var pageCountAfterVacuum = (Int64)vacuumCmds.ExecuteScalar()!;
+            vacuumCmds.CommandText = "PRAGMA page_count";
+            var pageCountBeforeVacuum = (Int64)vacuumCmds.ExecuteScalar()!;
+            var timer = Stopwatch.StartNew();
+            // Vacuum the database. This is quite slow!
+            vacuumCmds.CommandText = "VACUUM";
+            vacuumCmds.ExecuteNonQuery();
+            vacuumCmds.CommandText = "PRAGMA page_count";
+            var pageCountAfterVacuum = (Int64)vacuumCmds.ExecuteScalar()!;
 
-                // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
-                vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
-                vacuumCmds.ExecuteNonQuery();
+            // Disable auto_vacuum explicitly as we expect no more data to be written to the database after this.
+            vacuumCmds.CommandText = "PRAGMA auto_vacuum = NONE";
+            vacuumCmds.ExecuteNonQuery();
 
-                // Analyze only a subset of the data when doing optimize queries.
-                // See more at:  https://sqlite.org/pragma.html#pragma_analysis_limit
-                // Recommended values are between 100-1000.
-                vacuumCmds.CommandText = "PRAGMA analysis_limit = 1000";
-                vacuumCmds.ExecuteNonQuery();
+            // Analyze only a subset of the data when doing optimize queries.
+            // See more at:  https://sqlite.org/pragma.html#pragma_analysis_limit
+            // Recommended values are between 100-1000.
+            vacuumCmds.CommandText = "PRAGMA analysis_limit = 1000";
+            vacuumCmds.ExecuteNonQuery();
 
-                // FUTURE: Consider if we should disable VACUUM in dev builds if its too slow, its not really needed there.
-                Console.WriteLine(
-                    $"VACUUM finished in {timer.Elapsed}. Reduced size from {pageCountBeforeVacuum} to {pageCountAfterVacuum}"
-                );
+            // FUTURE: Consider if we should disable VACUUM in dev builds if its too slow, its not really needed there.
+            Console.WriteLine(
+                $"VACUUM finished in {timer.Elapsed}. Reduced size from {pageCountBeforeVacuum} to {pageCountAfterVacuum}"
+            );
 #endif
-            }
-        );
+        });
 
         // ReSharper restore AccessToDisposedClosure
         sqliteComposeTimer.LogCompletion();

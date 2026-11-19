@@ -251,8 +251,8 @@ public class PrimitiveGeometryDetector
 
         // Find two linearly independent corner radial vectors
         Vector3 v1 = (cornerVertices.Count > 0) ? cornerVertices[0].x : new Vector3();
-        Vector3 v2 =
-            cornerVertices.FirstOrDefault(x => Vector3.Cross(x.x, v1).LengthSquared() > 0.01f)?.x ?? new Vector3();
+        Vector3 v2 = cornerVertices.FirstOrDefault(x => Vector3.Cross(x.x, v1).LengthSquared() > 0.01f)?.x
+            ?? new Vector3();
 
         // Add and subtract the corner vectors to find the vectors pointing normal to the quadratic faces
         Vector3 u1 = Vector3.Normalize(v1 + v2);

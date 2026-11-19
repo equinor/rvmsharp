@@ -25,8 +25,10 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
                         TriangleCountInTrapeziums += 2;
                         break;
                     case TorusSegment torusSegment:
-                        TriangleCountInTorusSegments +=
-                            TorusSegmentTessellator.Tessellate(torusSegment)?.Mesh.TriangleCount ?? 0;
+                        TriangleCountInTorusSegments += TorusSegmentTessellator
+                            .Tessellate(torusSegment)
+                            ?.Mesh.TriangleCount
+                            ?? 0;
                         break;
                     case Quad:
                         TriangleCountInQuads += 2;
@@ -35,8 +37,10 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
                         TriangleCountInNuts += 24;
                         break;
                     case GeneralRing generalRing:
-                        TriangleCountInGeneralRings +=
-                            GeneralRingTessellator.Tessellate(generalRing)?.Mesh.TriangleCount ?? 0;
+                        TriangleCountInGeneralRings += GeneralRingTessellator
+                            .Tessellate(generalRing)
+                            ?.Mesh.TriangleCount
+                            ?? 0;
                         break;
                     case EllipsoidSegment:
                         TriangleCountInEllipsoidSegments += 4;
@@ -51,8 +55,10 @@ public class GeometryDistributionNodeStats : IGeometryDistributionNodeStats
                         TriangleCountInBoxes += BoxTessellator.Tessellate(box)?.Mesh.TriangleCount ?? 0;
                         break;
                     case EccentricCone eccentricCone:
-                        TriangleCountInEccentricCones +=
-                            EccentricConeTessellator.Tessellate(eccentricCone)?.Mesh.TriangleCount ?? 0;
+                        TriangleCountInEccentricCones += EccentricConeTessellator
+                            .Tessellate(eccentricCone)
+                            ?.Mesh.TriangleCount
+                            ?? 0;
                         break;
                 }
             }
