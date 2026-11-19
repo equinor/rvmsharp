@@ -1,4 +1,4 @@
-﻿namespace RvmSharp.Exe;
+namespace RvmSharp.Exe;
 
 using System.Collections.Generic;
 using CommandLine;
@@ -46,4 +46,13 @@ internal class Options
 
     [Option("native-template-usage-csv", Required = false, HelpText = "Optional CSV companion containing per-template reuse counts and tessellated size estimates.")]
     public string? NativeTemplateUsageCsv { get; init; }
+
+    [Option("native-metadata-output", Required = false, HelpText = "Write deferred node/object metadata to JSONL and compact instance CSV. Requires CSV output and one source RVM.")]
+    public string? NativeMetadataOutput { get; init; }
+
+    [Option("native-run-id", Required = false, HelpText = "Shared export run UUID; generated for standalone compact exports if omitted.")]
+    public string? NativeRunId { get; init; }
+
+    [Option("native-source-id", Required = false, HelpText = "Unique source name within the export run; defaults to the input RVM filename without its extension.")]
+    public string? NativeSourceId { get; init; }
 }

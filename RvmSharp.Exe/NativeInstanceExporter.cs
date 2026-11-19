@@ -43,7 +43,11 @@ internal static class NativeInstanceExporter
         string? remainsObjOutput,
         string? uniqueObjOutput,
         int nativeObjectsPerFile,
-        string? templateUsageCsvOutput)
+        string? templateUsageCsvOutput,
+        string? metadataOutput = null,
+        string? runId = null,
+        string? sourceId = null,
+        string[]? sourceFiles = null)
     {
         if (manifestOutput == null && inventoryOutput == null && instancesCsvOutput == null && inventoryCsvOutput == null
             && remainsObjOutput == null && uniqueObjOutput == null && templateUsageCsvOutput == null)
@@ -54,6 +58,10 @@ internal static class NativeInstanceExporter
         var templatesByKey = new Dictionary<string, NativeTemplate>();
         var instances = new List<NativeInstance>();
         var warnings = new List<string>();
+        var metadata = metadataOutput == null ? null : new DeferredMetadata(
+            runId ?? Guid.NewGuid().ToString(),
+            sourceId ?? Path.GetFileNameWithoutExtension(sourceFiles?.Single() ?? ""),
+            sourceFiles?.Single() ?? "");
         var facetGroupMatches = MatchFacetGroups(rvmStore, attributeExclusions);
 
         for (var fileIndex = 0; fileIndex < rvmStore.RvmFiles.Count; fileIndex++)
@@ -71,11 +79,24 @@ internal static class NativeInstanceExporter
                     facetGroupMatches,
                     templatesByKey,
                     instances,
-                    warnings);
+                    warnings,
+                    metadata);
             }
         }
 
         MergeCircularTorusRoundingTemplates(templatesByKey, instances, warnings);
+        if (metadata != null)
+        {
+            for (var index = 0; index < instances.Count; index++)
+            {
+                var instance = instances[index];
+                var objectId = (index + 1).ToString(CultureInfo.InvariantCulture);
+                var compactId = $"{metadata.SourceId}:o{objectId}";
+                metadata.Objects.Add(compactId, new DeferredObject(objectId,
+                    metadata.InstanceNodes[instance.Id], instance));
+                instances[index] = instance with { Id = compactId };
+            }
+        }
         var templates = templatesByKey.Values.OrderBy(template => template.Id, StringComparer.Ordinal).ToArray();
         var orderedInstances = instances.OrderBy(instance => instance.Id, StringComparer.Ordinal).ToArray();
         var templatesById = templates.ToDictionary(template => template.Id, StringComparer.Ordinal);
@@ -148,7 +169,7 @@ internal static class NativeInstanceExporter
         }
 
         if (instancesCsvOutput != null)
-            WriteInstancesCsv(instancesCsvOutput, orderedInstances);
+            WriteInstancesCsv(instancesCsvOutput, orderedInstances, metadata);
 
         if (inventoryCsvOutput != null)
             WriteInventoryCsv(inventoryCsvOutput, templates, summary);
@@ -161,6 +182,22 @@ internal static class NativeInstanceExporter
 
         if (templateUsageCsvOutput != null)
             WriteTemplateUsageCsv(templateUsageCsvOutput, templates);
+
+        if (metadata != null)
+        {
+            WriteDeferredMetadata(metadataOutput!, metadata);
+            WriteJson(instancesCsvOutput! + ".manifest.json", new
+            {
+                schemaVersion = 1,
+                format = "RvmCompactInstances",
+                runId = metadata.RunId,
+                sourceIds = new[] { metadata.SourceId },
+                instanceCount = orderedInstances.Length,
+                units = "metres",
+                matrixConvention = "System.Numerics row-vector",
+                complete = true,
+            });
+        }
     }
 
     private static IReadOnlyDictionary<RvmFacetGroup, FacetGroupMatch> MatchFacetGroups(
@@ -304,7 +341,9 @@ internal static class NativeInstanceExporter
         IReadOnlyDictionary<RvmFacetGroup, FacetGroupMatch> facetGroupMatches,
         Dictionary<string, NativeTemplate> templatesByKey,
         List<NativeInstance> instances,
-        List<string> warnings)
+        List<string> warnings,
+        DeferredMetadata? metadata = null,
+        int? parentNodeId = null)
     {
         if (group is not RvmNode node)
             return;
@@ -317,6 +356,7 @@ internal static class NativeInstanceExporter
             attributes[key] = value;
 
         var nodePath = $"{path}/{node.Name}";
+        var nodeId = metadata?.AddNode(parentNodeId, nodePath, node.Name, fileIndex, attributes);
         var primitiveIndex = 0;
         foreach (var primitive in node.Children.OfType<RvmPrimitive>())
         {
@@ -433,6 +473,8 @@ internal static class NativeInstanceExporter
                     Matrix4x4.Decompose(instanceMatrix, out _, out _, out _),
                     ToBounds(primitive.BoundingBoxLocal, localBoundsScale),
                     ToBounds(primitive.CalculateAxisAlignedBoundingBox())));
+                if (metadata != null)
+                    metadata.InstanceNodes.Add(instanceId, nodeId!.Value);
             }
             catch (Exception exception) when (exception is ArgumentException or ArgumentOutOfRangeException)
             {
@@ -453,7 +495,9 @@ internal static class NativeInstanceExporter
                 facetGroupMatches,
                 templatesByKey,
                 instances,
-                warnings);
+                warnings,
+                metadata,
+                nodeId);
         }
     }
 
@@ -980,12 +1024,17 @@ internal static class NativeInstanceExporter
         }
     }
 
-    private static void WriteInstancesCsv(string outputPath, IReadOnlyList<NativeInstance> instances)
+    private static void WriteInstancesCsv(string outputPath, IReadOnlyList<NativeInstance> instances,
+        DeferredMetadata? metadata = null)
     {
         EnsureOutputDirectory(outputPath);
 
         using var writer = new StreamWriter(outputPath, false, new System.Text.UTF8Encoding(false));
-        writer.WriteLine("instanceId,templateId,kind,converterRepresentation,sourceFileIndex,nodePath,nodeName,colorR,colorG,colorB,colorA,m11,m12,m13,m14,m21,m22,m23,m24,m31,m32,m33,m34,m41,m42,m43,m44,translationX,translationY,translationZ,rotationX,rotationY,rotationZ,rotationW,scaleX,scaleY,scaleZ,transformDecomposable,localMinX,localMinY,localMinZ,localMaxX,localMaxY,localMaxZ,worldMinX,worldMinY,worldMinZ,worldMaxX,worldMaxY,worldMaxZ,attributesJson");
+        var columns = "instanceId,templateId,kind,converterRepresentation,sourceFileIndex,nodePath,nodeName,colorR,colorG,colorB,colorA,m11,m12,m13,m14,m21,m22,m23,m24,m31,m32,m33,m34,m41,m42,m43,m44,translationX,translationY,translationZ,rotationX,rotationY,rotationZ,rotationW,scaleX,scaleY,scaleZ,transformDecomposable,localMinX,localMinY,localMinZ,localMaxX,localMaxY,localMaxZ,worldMinX,worldMinY,worldMinZ,worldMaxX,worldMaxY,worldMaxZ,attributesJson".Split(',');
+        var deferredColumns = new HashSet<string> { "sourceFileIndex", "nodePath", "nodeName", "attributesJson" };
+        writer.WriteLine(metadata == null ? string.Join(",", columns) : string.Join(",",
+            columns.Where(column => !deferredColumns.Contains(column))
+                .Concat(new[] { "sourceId", "sourceObjectId", "processingAttributesJson", "Area", "Discipline" })));
         foreach (var instance in instances)
         {
             var values = new List<string>
@@ -1003,8 +1052,71 @@ internal static class NativeInstanceExporter
             values.AddRange(FormatBounds(instance.LocalBounds));
             values.AddRange(FormatBounds(instance.WorldBounds));
             values.Add(JsonSerializer.Serialize(instance.Attributes));
+            if (metadata != null)
+            {
+                values = values.Where((value, index) => !deferredColumns.Contains(columns[index])).ToList();
+                values.Add(metadata.SourceId);
+                values.Add(metadata.Objects[instance.Id].SourceObjectId);
+                values.Add("{}");
+                values.Add(instance.Attributes.GetValueOrDefault("Area", ""));
+                values.Add(instance.Attributes.GetValueOrDefault("Discipline", ""));
+            }
             writer.WriteLine(string.Join(",", values.Select(EscapeCsv)));
         }
+    }
+
+    private sealed record DeferredNode(int NodeId, int? ParentNodeId, string NodePath,
+        string NodeName, int SourceFileIndex, SortedDictionary<string, string> Attributes);
+
+    private sealed record DeferredObject(string SourceObjectId, int NodeId, NativeInstance Original);
+
+    private sealed class DeferredMetadata(string runId, string sourceId, string sourcePath)
+    {
+        internal string RunId { get; } = runId;
+        internal string SourceId { get; } = sourceId;
+        internal string SourcePath { get; } = sourcePath;
+        internal List<DeferredNode> Nodes { get; } = new();
+        internal Dictionary<string, int> InstanceNodes { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, DeferredObject> Objects { get; } = new(StringComparer.Ordinal);
+
+        internal int AddNode(int? parent, string path, string name, int fileIndex,
+            SortedDictionary<string, string> attributes)
+        {
+            var id = Nodes.Count + 1;
+            Nodes.Add(new DeferredNode(id, parent, path, name, fileIndex, attributes));
+            return id;
+        }
+    }
+
+    private static void WriteDeferredMetadata(string outputPath, DeferredMetadata metadata)
+    {
+        EnsureOutputDirectory(outputPath);
+        var temporary = outputPath + ".tmp";
+        using (var writer = new StreamWriter(temporary, false, new System.Text.UTF8Encoding(false)))
+        {
+            writer.WriteLine(JsonSerializer.Serialize(new
+            {
+                recordType = "header", schemaVersion = 1, format = "RvmDeferredMetadata",
+                runId = metadata.RunId, sourceId = metadata.SourceId,
+                sourcePath = metadata.SourcePath, nodeCount = metadata.Nodes.Count,
+                objectCount = metadata.Objects.Count,
+            }));
+            foreach (var node in metadata.Nodes)
+                writer.WriteLine(JsonSerializer.Serialize(new
+                {
+                    recordType = "node", nodeId = node.NodeId, parentNodeId = node.ParentNodeId,
+                    nodePath = node.NodePath, nodeName = node.NodeName,
+                    sourceFileIndex = node.SourceFileIndex, attributes = node.Attributes,
+                }));
+            foreach (var source in metadata.Objects.Values)
+                writer.WriteLine(JsonSerializer.Serialize(new
+                {
+                    recordType = "object", sourceObjectId = source.SourceObjectId,
+                    nodeId = source.NodeId, originalInstanceId = source.Original.Id,
+                    kind = source.Original.Kind, converterRepresentation = source.Original.ConverterRepresentation,
+                }));
+        }
+        File.Move(temporary, outputPath, true);
     }
 
     private static void WriteInventoryCsv(string outputPath, IReadOnlyList<NativeTemplate> templates, NativeSummary summary)

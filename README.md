@@ -95,6 +95,38 @@ merging, or octree-cell clipping. The EchoVRMeshRunner `rvmConvert` job option
 `nativeSidecars: true` writes both sidecars next to each OBJ as
 `<model>.rvm-instances.json` and `<model>.rvm-inventory.json`.
 
+### Deferred metadata and compact processing CSVs
+
+Add `--native-metadata-output <folder>/4S-PIPE.jsonl` alongside
+`--native-instances-csv-output` to separate business metadata from geometry
+processing. This mode requires exactly one RVM source per converter invocation
+and does not support simultaneous JSON instance/inventory output. Supply the
+companion TXT file under the same `-i` option to retain inherited attributes.
+
+`--native-run-id <UUID>` and `--native-source-id <source-stem>` let the
+outer runner assign identity across concurrent converter processes. Standalone
+exports generate a run UUID and default to the input RVM filename without its
+extension, such as `4S-PIPE`. Placement IDs use `<source-stem>:o<object-id>`.
+Run UUIDs have no cross-run stability promise. EchoVRMeshRunner coordinates both values and the
+separate metadata directory via `nativeCompactMetadata` and `metadataPath`.
+
+The processing CSV retains full matrices, decomposed transforms, bounds,
+colors and geometry classification. Immutable `sourceId`/`sourceObjectId`
+columns link each placement to deferred metadata; `processingAttributesJson`
+contains only processing annotations. Original names, paths and effective
+inherited attributes are written once per hierarchy node in JSONL. Object
+records map original primitives to nodes and retain the original verbose IDs.
+Geometry template hashes remain separate from business-object identity.
+
+The adjacent `<instances.csv>.manifest.json` declares compact schema v1, run
+identity, source IDs, matrix convention and row count. It is written last to
+mark completion and must stay beside its CSV. JSONL metadata can remain in a
+different folder throughout processing. Use the repository's
+`Scripts/Metadata/Rehydrate-Instance-Metadata.py` with `--input`,
+`--metadata-path` and `--output` to restore rich final CSVs without restoring
+stale geometry values. Existing rich CSV and JSON exports are unchanged when
+deferred metadata is not selected.
+
 ## Cad Reveal Composer
 
 The CAD Reveal Composer is a fast converter for RVM files into the Reveal formats used by

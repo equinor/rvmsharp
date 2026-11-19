@@ -1,4 +1,4 @@
-﻿namespace RvmSharp.Exe;
+namespace RvmSharp.Exe;
 
 using System;
 using System.Collections.Generic;
@@ -33,6 +33,12 @@ static class Program
     private static int RunOptionsAndReturnExitCode(Options options)
     {
         var workload = CollectWorkload(options);
+        if (options.NativeMetadataOutput != null && (workload.Length != 1
+            || options.NativeInstancesCsvOutput == null || options.NativeInstancesOutput != null
+            || options.NativeInventoryOutput != null
+            || (options.NativeSourceId != null && string.IsNullOrWhiteSpace(options.NativeSourceId))
+            || (options.NativeRunId != null && !Guid.TryParse(options.NativeRunId, out _))))
+            throw new ArgumentException("Deferred metadata requires one source RVM, CSV output, a nonempty source name and a valid run UUID (if supplied); JSON output is not supported.");
 
         var attributeExclusions = options.ExcludeAttributes
             .Select(s =>
@@ -86,7 +92,11 @@ static class Program
             options.NativeRemainsObj,
             options.NativeUniqueObj,
             options.NativeObjectsPerFile,
-            options.NativeTemplateUsageCsv
+            options.NativeTemplateUsageCsv,
+            options.NativeMetadataOutput,
+            options.NativeRunId,
+            options.NativeSourceId,
+            workload.Select(source => source.rvmFilename).ToArray()
         );
         parentProgressBar.Tick();
         Console.WriteLine("Done!");
