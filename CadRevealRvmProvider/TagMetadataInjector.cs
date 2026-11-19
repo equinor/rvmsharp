@@ -58,6 +58,9 @@ public static class TagMetadataInjector
             if (!node.Attributes.TryGetValue("Tag", out var tag))
                 continue;
 
+            // For now keep the original Tag value as PdmsTag so we can debug
+            node.Attributes.Add("PdmsTag", tag); // intentionally throws if the key already exists for some reason
+
             var matches = string.IsNullOrWhiteSpace(tag)
                 ? Array.Empty<TagMetadataEntry>()
                 : repository.FindMatches(tag);
