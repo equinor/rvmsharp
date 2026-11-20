@@ -8,6 +8,9 @@ internal class Options
     [Option('i', "input", Required = true, HelpText = "Input file or folder, can specify multiple items")]
     public IEnumerable<string> Inputs { get; init; } = [];
 
+    [Option("input-list", Required = false, HelpText = "Text file naming one further input file or folder per line, for input sets too long for a command line.")]
+    public string? InputList { get; init; }
+
     [Option('f', "filter", Required = false, HelpText = "Regex filter to match files in input folder")]
     public string? Filter { get; init; }
 
@@ -55,4 +58,16 @@ internal class Options
 
     [Option("native-source-id", Required = false, HelpText = "Unique source name within the export run; defaults to the input RVM filename without its extension.")]
     public string? NativeSourceId { get; init; }
+
+    [Option("native-reuse-probe", Default = false, Required = false, HelpText = "Measure facet-group reuse across all inputs for several match modes and tolerances, write the JSON report to --output and exit without exporting.")]
+    public bool NativeReuseProbe { get; init; }
+
+    [Option("native-facet-catalog-build", Default = false, Required = false, HelpText = "Build a model-wide facet-group template catalog from all inputs into the --output folder and exit without exporting. Run once over every source before the per-file exports that use --native-facet-catalog.")]
+    public bool NativeFacetCatalogBuild { get; init; }
+
+    [Option("native-facet-tolerance", Default = NativeFacetCatalog.DefaultTolerance, Required = false, HelpText = "Largest distance in metres between a catalog template and any facet group placed with it. Used with --native-facet-catalog-build.")]
+    public double NativeFacetTolerance { get; init; } = NativeFacetCatalog.DefaultTolerance;
+
+    [Option("native-facet-catalog", Required = false, HelpText = "Folder written by --native-facet-catalog-build. Facet groups take their template id, geometry and placement from the catalog, so equal parts share one template across files.")]
+    public string? NativeFacetCatalogPath { get; init; }
 }

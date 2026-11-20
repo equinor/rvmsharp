@@ -53,6 +53,21 @@ static class Program
             })
             .ToList();
 
+        if (options.NativeReuseProbe)
+        {
+            NativeReuseProbe.Run(workload, attributeExclusions.Count > 0 ? attributeExclusions : null, options.Output);
+            return 0;
+        }
+
+        if (options.NativeFacetCatalogBuild)
+        {
+            NativeFacetCatalog.Build(
+                workload.Select(source => source.rvmFilename).ToArray(),
+                options.Output,
+                options.NativeFacetTolerance);
+            return 0;
+        }
+
         using var parentProgressBar = new ProgressBar(2, "Converting RVM to OBJ");
 
         var rvmStore = ReadRvmData(workload);
@@ -96,7 +111,8 @@ static class Program
             options.NativeMetadataOutput,
             options.NativeRunId,
             options.NativeSourceId,
-            workload.Select(source => source.rvmFilename).ToArray()
+            workload.Select(source => source.rvmFilename).ToArray(),
+            options.NativeFacetCatalogPath
         );
         parentProgressBar.Tick();
         Console.WriteLine("Done!");
@@ -106,9 +122,15 @@ static class Program
     private static (string rvmFilename, string? txtFilename)[] CollectWorkload(Options options)
     {
         var regexFilter = options.Filter != null ? new Regex(options.Filter) : null;
-        var directories = options.Inputs.Where(Directory.Exists).ToArray();
-        var files = options.Inputs.Where(File.Exists).ToArray();
-        var missingInputs = options.Inputs.Where(i => !files.Contains(i) && !directories.Contains(i)).ToArray();
+        var inputs = options.InputList == null
+            ? options.Inputs.ToArray()
+            : options.Inputs
+                .Concat(File.ReadLines(options.InputList).Select(line => line.Trim()).Where(line => line.Length > 0))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        var directories = inputs.Where(Directory.Exists).ToArray();
+        var files = inputs.Where(File.Exists).ToArray();
+        var missingInputs = inputs.Where(i => !files.Contains(i) && !directories.Contains(i)).ToArray();
 
         if (missingInputs.Any())
         {

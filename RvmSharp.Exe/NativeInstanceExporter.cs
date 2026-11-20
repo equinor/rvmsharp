@@ -47,13 +47,16 @@ internal static class NativeInstanceExporter
         string? metadataOutput = null,
         string? runId = null,
         string? sourceId = null,
-        string[]? sourceFiles = null)
+        string[]? sourceFiles = null,
+        string? facetCatalog = null)
     {
         if (manifestOutput == null && inventoryOutput == null && instancesCsvOutput == null && inventoryCsvOutput == null
             && remainsObjOutput == null && uniqueObjOutput == null && templateUsageCsvOutput == null)
             return;
         if (nativeObjectsPerFile <= 0)
             throw new ArgumentOutOfRangeException(nameof(nativeObjectsPerFile), "Must be greater than zero.");
+        if (facetCatalog != null && sourceFiles?.Length != rvmStore.RvmFiles.Count)
+            throw new ArgumentException("A facet catalog needs the source file name of every input.");
 
         var templatesByKey = new Dictionary<string, NativeTemplate>();
         var instances = new List<NativeInstance>();
@@ -62,11 +65,18 @@ internal static class NativeInstanceExporter
             runId ?? Guid.NewGuid().ToString(),
             sourceId ?? Path.GetFileNameWithoutExtension(sourceFiles?.Single() ?? ""),
             sourceFiles?.Single() ?? "");
-        var facetGroupMatches = MatchFacetGroups(rvmStore, attributeExclusions);
+        using var catalog = facetCatalog == null ? null : new NativeFacetCatalog.Reader(facetCatalog);
+        var catalogTemplateIds = new HashSet<string>(StringComparer.Ordinal);
+        var facetGroupMatches = catalog == null
+            ? MatchFacetGroups(rvmStore, attributeExclusions)
+            : new Dictionary<RvmFacetGroup, FacetGroupMatch>(FacetGroupReferenceComparer.Instance);
 
         for (var fileIndex = 0; fileIndex < rvmStore.RvmFiles.Count; fileIndex++)
         {
             var rootChildren = rvmStore.RvmFiles[fileIndex].Model.Children;
+            var catalogPlacements = catalog?.Placements(
+                rvmStore.RvmFiles[fileIndex],
+                NativeFacetCatalog.SourceId(sourceFiles![fileIndex]));
             for (var childIndex = 0; childIndex < rootChildren.Count; childIndex++)
             {
                 CollectInstances(
@@ -80,7 +90,10 @@ internal static class NativeInstanceExporter
                     templatesByKey,
                     instances,
                     warnings,
-                    metadata);
+                    metadata,
+                    catalog: catalog,
+                    catalogPlacements: catalogPlacements,
+                    catalogTemplateIds: catalogTemplateIds);
             }
         }
 
@@ -174,11 +187,17 @@ internal static class NativeInstanceExporter
         if (inventoryCsvOutput != null)
             WriteInventoryCsv(inventoryCsvOutput, templates, summary);
 
+        // Catalog templates always go to the unique OBJ, also when this file uses them once:
+        // the same template id may be placed many times in other files.
         if (remainsObjOutput != null)
-            WriteRemainsObj(remainsObjOutput, templatesById, orderedInstances, nativeObjectsPerFile);
+            WriteRemainsObj(remainsObjOutput, templatesById,
+                orderedInstances.Where(instance => !catalogTemplateIds.Contains(instance.TemplateId)).ToArray(),
+                nativeObjectsPerFile);
 
         if (uniqueObjOutput != null)
-            WriteUniqueObj(uniqueObjOutput, templates.Where(template => template.UseCount > 1), nativeObjectsPerFile);
+            WriteUniqueObj(uniqueObjOutput,
+                templates.Where(template => template.UseCount > 1 || catalogTemplateIds.Contains(template.Id)),
+                nativeObjectsPerFile);
 
         if (templateUsageCsvOutput != null)
             WriteTemplateUsageCsv(templateUsageCsvOutput, templates);
@@ -343,7 +362,10 @@ internal static class NativeInstanceExporter
         List<NativeInstance> instances,
         List<string> warnings,
         DeferredMetadata? metadata = null,
-        int? parentNodeId = null)
+        int? parentNodeId = null,
+        NativeFacetCatalog.Reader? catalog = null,
+        IReadOnlyDictionary<RvmFacetGroup, NativeFacetCatalog.Placement>? catalogPlacements = null,
+        HashSet<string>? catalogTemplateIds = null)
     {
         if (group is not RvmNode node)
             return;
@@ -369,8 +391,16 @@ internal static class NativeInstanceExporter
                 var localBoundsScale = templateUnitScale;
                 var converterRepresentation = GetConverterRepresentation(primitive, node, instanceId, warnings);
                 string? uniqueObjName = null;
-                var localMesh = TessellateLocal(primitive, tolerance);
-                var instanceMatrix = NormalizeMatrixForMetreTemplate(primitive.Matrix, templateUnitScale);
+                NativeFacetCatalog.Placement? catalogPlacement = primitive is RvmFacetGroup cataloguedGroup
+                    && catalogPlacements != null
+                    && catalogPlacements.TryGetValue(cataloguedGroup, out var foundPlacement)
+                        ? foundPlacement
+                        : null;
+                var catalogTemplateKey = catalogPlacement is { } placed ? catalog!.TemplateKey(placed.TemplateIndex) : null;
+                // A catalog template's mesh is only read when this file first places it.
+                var localMesh = catalogPlacement == null ? TessellateLocal(primitive, tolerance) : null;
+                var instanceMatrix = catalogPlacement?.Matrix
+                    ?? NormalizeMatrixForMetreTemplate(primitive.Matrix, templateUnitScale);
                 if (primitive is RvmFacetGroup facetGroup
                     && facetGroupMatches.TryGetValue(facetGroup, out var facetGroupMatch))
                 {
@@ -435,13 +465,13 @@ internal static class NativeInstanceExporter
                     translation = Vector3.Zero;
                 }
 
-                if (localMesh == null)
+                if (localMesh == null && catalogPlacement == null)
                 {
                     warnings.Add($"{instanceId}: {primitive.Kind} has no tessellated mesh and was omitted.");
                     continue;
                 }
 
-                var templateKey = CalculateTemplateKey(templateKind, localMesh);
+                var templateKey = catalogTemplateKey ?? CalculateTemplateKey(templateKind, localMesh!);
                 if (!templatesByKey.TryGetValue(templateKey, out var template))
                 {
                     template = CreateTemplate(
@@ -449,9 +479,11 @@ internal static class NativeInstanceExporter
                         templateKind,
                         converterRepresentation,
                         uniqueObjName,
-                        localMesh,
+                        localMesh ?? catalog!.ReadMesh(catalogPlacement!.Value.TemplateIndex),
                         templateUnitScale);
                     templatesByKey.Add(templateKey, template);
+                    if (catalogPlacement != null)
+                        catalogTemplateIds!.Add(template.Id);
                 }
                 template = template with { UseCount = template.UseCount + 1 };
                 templatesByKey[templateKey] = template;
@@ -497,11 +529,22 @@ internal static class NativeInstanceExporter
                 instances,
                 warnings,
                 metadata,
-                nodeId);
+                nodeId,
+                catalog,
+                catalogPlacements,
+                catalogTemplateIds);
         }
     }
 
-    private static bool IsExcluded(RvmNode node, IReadOnlyList<(string Key, Regex ValuePattern)>? exclusions)
+    /// <summary>Whether the export places this facet group as a unit-cube instance.</summary>
+    internal static bool IsUnitBox(RvmFacetGroup facetGroup)
+    {
+        var mesh = TessellateLocal(facetGroup, 0);
+        return mesh != null
+            && TryCreateUnitBoxInstanceMatrix(mesh, NormalizeMatrixForMetreTemplate(facetGroup.Matrix, 1f), out _);
+    }
+
+    internal static bool IsExcluded(RvmNode node, IReadOnlyList<(string Key, Regex ValuePattern)>? exclusions)
     {
         return exclusions != null && exclusions.Any(exclusion =>
             node.Attributes.TryGetValue(exclusion.Key, out var value) && exclusion.ValuePattern.IsMatch(value));
@@ -804,7 +847,7 @@ internal static class NativeInstanceExporter
             mesh.Triangles);
     }
 
-    private static string CalculateTemplateKey(RvmPrimitiveKind kind, RvmMesh mesh)
+    internal static string CalculateTemplateKey(RvmPrimitiveKind kind, RvmMesh mesh)
     {
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Append(hash, (int)kind);
