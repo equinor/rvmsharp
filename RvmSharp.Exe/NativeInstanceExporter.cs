@@ -48,10 +48,13 @@ internal static class NativeInstanceExporter
         string? runId = null,
         string? sourceId = null,
         string[]? sourceFiles = null,
-        string? facetCatalog = null)
+        string? facetCatalog = null,
+        bool remainsInUnique = false,
+        string? referenceObjOutput = null)
     {
         if (manifestOutput == null && inventoryOutput == null && instancesCsvOutput == null && inventoryCsvOutput == null
-            && remainsObjOutput == null && uniqueObjOutput == null && templateUsageCsvOutput == null)
+            && remainsObjOutput == null && uniqueObjOutput == null && templateUsageCsvOutput == null
+            && referenceObjOutput == null)
             return;
         if (nativeObjectsPerFile <= 0)
             throw new ArgumentOutOfRangeException(nameof(nativeObjectsPerFile), "Must be greater than zero.");
@@ -70,6 +73,9 @@ internal static class NativeInstanceExporter
         var facetGroupMatches = catalog == null
             ? MatchFacetGroups(rvmStore, attributeExclusions)
             : new Dictionary<RvmFacetGroup, FacetGroupMatch>(FacetGroupReferenceComparer.Instance);
+        // Source primitives of the exported objects, in export order, for the reference OBJ.
+        var referencePrimitives = referenceObjOutput == null ? null : new List<(string Id, RvmPrimitive Primitive)>();
+        var referenceIds = new Dictionary<string, string>(StringComparer.Ordinal);
 
         for (var fileIndex = 0; fileIndex < rvmStore.RvmFiles.Count; fileIndex++)
         {
@@ -93,21 +99,37 @@ internal static class NativeInstanceExporter
                     metadata,
                     catalog: catalog,
                     catalogPlacements: catalogPlacements,
-                    catalogTemplateIds: catalogTemplateIds);
+                    catalogTemplateIds: catalogTemplateIds,
+                    referencePrimitives: referencePrimitives);
             }
         }
 
         MergeCircularTorusRoundingTemplates(templatesByKey, instances, warnings);
         if (metadata != null)
         {
+            string? ownerId = null;
+            string? ownerObjectId = null;
+            // Object ids count source objects only, so a primitive keeps its id whether or not the
+            // catalog replaced it by several parts.
+            var objectNumber = 0;
             for (var index = 0; index < instances.Count; index++)
             {
                 var instance = instances[index];
-                var objectId = (index + 1).ToString(CultureInfo.InvariantCulture);
+                // Further primitive parts belong to the source object of the part before them.
+                if (instance.Primitive is { PartIndex: > 0 } part)
+                {
+                    var partId = PartInstanceId(ownerId!, part.PartIndex);
+                    metadata.PartObjectIds.Add(partId, ownerObjectId!);
+                    instances[index] = instance with { Id = partId };
+                    continue;
+                }
+                var objectId = (++objectNumber).ToString(CultureInfo.InvariantCulture);
                 var compactId = $"{metadata.SourceId}:o{objectId}";
                 metadata.Objects.Add(compactId, new DeferredObject(objectId,
                     metadata.InstanceNodes[instance.Id], instance));
+                referenceIds[instance.Id] = compactId;
                 instances[index] = instance with { Id = compactId };
+                (ownerId, ownerObjectId) = (compactId, objectId);
             }
         }
         var templates = templatesByKey.Values.OrderBy(template => template.Id, StringComparer.Ordinal).ToArray();
@@ -187,20 +209,26 @@ internal static class NativeInstanceExporter
         if (inventoryCsvOutput != null)
             WriteInventoryCsv(inventoryCsvOutput, templates, summary);
 
-        // Catalog templates always go to the unique OBJ, also when this file uses them once:
-        // the same template id may be placed many times in other files.
-        if (remainsObjOutput != null)
+        // Catalog templates go to neither OBJ: the unique join reads them from the catalog, which
+        // holds each once for the whole model. With remainsInUnique, single-use templates go to
+        // the unique OBJ as local-space templates, so one unique join covers all geometry.
+        if (remainsObjOutput != null && !remainsInUnique)
             WriteRemainsObj(remainsObjOutput, templatesById,
                 orderedInstances.Where(instance => !catalogTemplateIds.Contains(instance.TemplateId)).ToArray(),
                 nativeObjectsPerFile);
 
         if (uniqueObjOutput != null)
             WriteUniqueObj(uniqueObjOutput,
-                templates.Where(template => template.UseCount > 1 || catalogTemplateIds.Contains(template.Id)),
+                templates.Where(template => (remainsInUnique || template.UseCount > 1)
+                    && !catalogTemplateIds.Contains(template.Id)),
                 nativeObjectsPerFile);
 
         if (templateUsageCsvOutput != null)
             WriteTemplateUsageCsv(templateUsageCsvOutput, templates);
+
+        if (referenceObjOutput != null)
+            WriteReferenceObj(referenceObjOutput, referencePrimitives!, referenceIds, tolerance, nativeObjectsPerFile,
+                warnings);
 
         if (metadata != null)
         {
@@ -365,7 +393,8 @@ internal static class NativeInstanceExporter
         int? parentNodeId = null,
         NativeFacetCatalog.Reader? catalog = null,
         IReadOnlyDictionary<RvmFacetGroup, NativeFacetCatalog.Placement>? catalogPlacements = null,
-        HashSet<string>? catalogTemplateIds = null)
+        HashSet<string>? catalogTemplateIds = null,
+        List<(string Id, RvmPrimitive Primitive)>? referencePrimitives = null)
     {
         if (group is not RvmNode node)
             return;
@@ -397,6 +426,13 @@ internal static class NativeInstanceExporter
                         ? foundPlacement
                         : null;
                 var catalogTemplateKey = catalogPlacement is { } placed ? catalog!.TemplateKey(placed.TemplateIndex) : null;
+                if (catalogPlacement is { } fitted && catalog!.Primitive(fitted.TemplateIndex) is { } primitiveFit)
+                {
+                    AddPrimitiveParts(primitiveFit, fitted.Matrix, instanceId, fileIndex, nodePath, node, attributes,
+                        tolerance, templatesByKey, instances, metadata, nodeId);
+                    referencePrimitives?.Add((instanceId, primitive));
+                    continue;
+                }
                 // A catalog template's mesh is only read when this file first places it.
                 var localMesh = catalogPlacement == null ? TessellateLocal(primitive, tolerance) : null;
                 var instanceMatrix = catalogPlacement?.Matrix
@@ -507,6 +543,7 @@ internal static class NativeInstanceExporter
                     ToBounds(primitive.CalculateAxisAlignedBoundingBox())));
                 if (metadata != null)
                     metadata.InstanceNodes.Add(instanceId, nodeId!.Value);
+                referencePrimitives?.Add((instanceId, primitive));
             }
             catch (Exception exception) when (exception is ArgumentException or ArgumentOutOfRangeException)
             {
@@ -532,7 +569,8 @@ internal static class NativeInstanceExporter
                 nodeId,
                 catalog,
                 catalogPlacements,
-                catalogTemplateIds);
+                catalogTemplateIds,
+                referencePrimitives);
         }
     }
 
@@ -542,6 +580,134 @@ internal static class NativeInstanceExporter
         var mesh = TessellateLocal(facetGroup, 0);
         return mesh != null
             && TryCreateUnitBoxInstanceMatrix(mesh, NormalizeMatrixForMetreTemplate(facetGroup.Matrix, 1f), out _);
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(PrimitivePartKind, float),
+        (RvmPrimitiveKind Kind, RvmMesh Mesh, string Key, string ObjectName, bool Boxed)> UnitTemplates = new();
+
+    /// <summary>
+    /// Places a catalog template that the catalog replaced by unit primitives: one instance per part,
+    /// sharing the existing CUBE and CYLINDER templates. Further parts get a <c>::part-NNN</c> suffix.
+    /// </summary>
+    private static void AddPrimitiveParts(
+        PrimitiveFit fit,
+        Matrix4x4 placement,
+        string instanceId,
+        int fileIndex,
+        string nodePath,
+        RvmNode node,
+        SortedDictionary<string, string> attributes,
+        float tolerance,
+        Dictionary<string, NativeTemplate> templatesByKey,
+        List<NativeInstance> instances,
+        DeferredMetadata? metadata,
+        int? nodeId)
+    {
+        var color = ToColor(PdmsColors.TryGetColorByCode(node.MaterialId, out var found) ? found : Color.Magenta);
+        for (var index = 0; index < fit.Parts.Length; index++)
+        {
+            var part = fit.Parts[index];
+            var unit = UnitTemplates.GetOrAdd((part.Kind, tolerance), static key =>
+            {
+                if (key.Item1 == PrimitivePartKind.Cube)
+                {
+                    var box = CreateUnitBoxMesh();
+                    return (RvmPrimitiveKind.Box, box, CalculateTemplateKey(RvmPrimitiveKind.Box, box), "CUBE", false);
+                }
+                // At coarse tolerances the cylinder export already uses a box; do the same.
+                var cylinder = CreateUnitCylinderMesh(key.Item2);
+                if (IsFourSidedCappedCylinder(cylinder))
+                {
+                    var box = CreateUnitBoxMesh();
+                    return (RvmPrimitiveKind.Box, box, CalculateTemplateKey(RvmPrimitiveKind.Box, box), "CUBE", true);
+                }
+                return (RvmPrimitiveKind.Cylinder, cylinder, CalculateTemplateKey(RvmPrimitiveKind.Cylinder, cylinder),
+                    "CYLINDER", false);
+            });
+            var partMatrix = unit.Boxed ? Matrix4x4.CreateScale(2, 2, 1) * part.Matrix : part.Matrix;
+            if (!templatesByKey.TryGetValue(unit.Key, out var template))
+                template = CreateTemplate(unit.Key, unit.Kind, "NativePrimitive", unit.ObjectName, unit.Mesh,
+                    NativeTemplateUnitScale);
+            template = template with { UseCount = template.UseCount + 1 };
+            templatesByKey[unit.Key] = template;
+
+            var matrix = partMatrix * placement;
+            var decomposable = Matrix4x4.Decompose(matrix, out var scale, out var rotation, out var translation);
+            if (!decomposable)
+            {
+                scale = Vector3.One;
+                rotation = Quaternion.Identity;
+                translation = Vector3.Zero;
+            }
+            var localBounds = unit.Kind == RvmPrimitiveKind.Box
+                ? new Bounds([-0.5f, -0.5f, -0.5f], [0.5f, 0.5f, 0.5f])
+                : new Bounds([-1f, -1f, -0.5f], [1f, 1f, 0.5f]);
+            var id = index == 0 ? instanceId : PartInstanceId(instanceId, index);
+            instances.Add(new NativeInstance(
+                id,
+                template.Id,
+                unit.Kind.ToString(),
+                "NativePrimitive:" + fit.Replacement,
+                fileIndex,
+                nodePath,
+                node.Name,
+                attributes,
+                color,
+                ToMatrix(matrix),
+                new[] { translation.X, translation.Y, translation.Z },
+                new[] { rotation.X, rotation.Y, rotation.Z, rotation.W },
+                new[] { scale.X, scale.Y, scale.Z },
+                decomposable,
+                localBounds,
+                TransformBounds(localBounds, matrix))
+            {
+                Primitive = new PrimitivePartInfo(fit.Replacement, index, fit.Parts.Length),
+            });
+            metadata?.InstanceNodes.Add(id, nodeId!.Value);
+        }
+    }
+
+    private static string PartInstanceId(string instanceId, int partIndex) =>
+        $"{instanceId}::part-{partIndex + 1:D3}";
+
+    private static Bounds TransformBounds(Bounds bounds, Matrix4x4 matrix)
+    {
+        var minimum = new Vector3(float.MaxValue);
+        var maximum = new Vector3(float.MinValue);
+        for (var corner = 0; corner < 8; corner++)
+        {
+            var point = Vector3.Transform(new Vector3(
+                (corner & 1) == 0 ? bounds.Min![0] : bounds.Max![0],
+                (corner & 2) == 0 ? bounds.Min![1] : bounds.Max![1],
+                (corner & 4) == 0 ? bounds.Min![2] : bounds.Max![2]), matrix);
+            minimum = Vector3.Min(minimum, point);
+            maximum = Vector3.Max(maximum, point);
+        }
+        return new Bounds([minimum.X, minimum.Y, minimum.Z], [maximum.X, maximum.Y, maximum.Z]);
+    }
+
+    /// <summary>Processing annotations of a primitive part, in the namespace the metadata rehydration accepts.</summary>
+    private static SortedDictionary<string, object> PrimitiveAnnotations(NativeInstance instance)
+    {
+        var part = instance.Primitive!;
+        var separator = instance.Id.IndexOf("::part-", StringComparison.Ordinal);
+        return new SortedDictionary<string, object>(StringComparer.Ordinal)
+        {
+            ["NativePrimitivePartCount"] = part.PartCount,
+            ["NativePrimitivePartIndex"] = part.PartIndex,
+            ["NativePrimitiveReplacement"] = part.Replacement,
+            ["NativePrimitiveSourceInstanceId"] = separator < 0 ? instance.Id : instance.Id[..separator],
+        };
+    }
+
+    private static SortedDictionary<string, object> AttributesWithAnnotations(NativeInstance instance)
+    {
+        var merged = new SortedDictionary<string, object>(StringComparer.Ordinal);
+        foreach (var (key, value) in instance.Attributes)
+            merged[key] = value;
+        foreach (var (key, value) in PrimitiveAnnotations(instance))
+            merged[key] = value;
+        return merged;
     }
 
     internal static bool IsExcluded(RvmNode node, IReadOnlyList<(string Key, Regex ValuePattern)>? exclusions)
@@ -1018,6 +1184,46 @@ internal static class NativeInstanceExporter
         }
     }
 
+    /// <summary>
+    /// Every exported source primitive tessellated straight from the RVM, in world space and named
+    /// by its instance id: the reference the processed output is compared against.
+    /// </summary>
+    private static void WriteReferenceObj(
+        string outputPath,
+        IReadOnlyList<(string Id, RvmPrimitive Primitive)> primitives,
+        IReadOnlyDictionary<string, string> ids,
+        float tolerance,
+        int objectsPerFile,
+        ICollection<string> warnings)
+    {
+        EnsureOutputDirectory(outputPath);
+        foreach (var part in primitives
+                     .Chunk(objectsPerFile)
+                     .Select((chunk, index) => (Primitives: chunk, Index: index + 1)))
+        {
+            using var exporter = new ObjExporter(GetPartOutputPath(outputPath, part.Index));
+            foreach (var (id, primitive) in part.Primitives)
+            {
+                RvmMesh? mesh;
+                try
+                {
+                    mesh = TessellatorBridge.Tessellate(primitive, tolerance);
+                }
+                catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+                {
+                    warnings.Add($"{id}: no reference mesh ({exception.Message}).");
+                    continue;
+                }
+                if (mesh == null)
+                    continue;
+                var name = ids.GetValueOrDefault(id, id);
+                exporter.StartObject(name);
+                exporter.StartGroup(name);
+                exporter.WriteMesh(mesh);
+            }
+        }
+    }
+
     private static void WriteUniqueObj(string outputPath, IEnumerable<NativeTemplate> templates, int objectsPerFile)
     {
         foreach (var part in templates
@@ -1094,13 +1300,17 @@ internal static class NativeInstanceExporter
             values.Add(instance.TransformDecomposable ? "true" : "false");
             values.AddRange(FormatBounds(instance.LocalBounds));
             values.AddRange(FormatBounds(instance.WorldBounds));
-            values.Add(JsonSerializer.Serialize(instance.Attributes));
+            values.Add(metadata == null && instance.Primitive != null
+                ? JsonSerializer.Serialize(AttributesWithAnnotations(instance))
+                : JsonSerializer.Serialize(instance.Attributes));
             if (metadata != null)
             {
                 values = values.Where((value, index) => !deferredColumns.Contains(columns[index])).ToList();
                 values.Add(metadata.SourceId);
-                values.Add(metadata.Objects[instance.Id].SourceObjectId);
-                values.Add("{}");
+                values.Add(metadata.Objects.TryGetValue(instance.Id, out var source)
+                    ? source.SourceObjectId
+                    : metadata.PartObjectIds[instance.Id]);
+                values.Add(instance.Primitive == null ? "{}" : JsonSerializer.Serialize(PrimitiveAnnotations(instance)));
                 values.Add(instance.Attributes.GetValueOrDefault("Area", ""));
                 values.Add(instance.Attributes.GetValueOrDefault("Discipline", ""));
             }
@@ -1121,6 +1331,7 @@ internal static class NativeInstanceExporter
         internal List<DeferredNode> Nodes { get; } = new();
         internal Dictionary<string, int> InstanceNodes { get; } = new(StringComparer.Ordinal);
         internal Dictionary<string, DeferredObject> Objects { get; } = new(StringComparer.Ordinal);
+        internal Dictionary<string, string> PartObjectIds { get; } = new(StringComparer.Ordinal);
 
         internal int AddNode(int? parent, string path, string name, int fileIndex,
             SortedDictionary<string, string> attributes)
@@ -1315,7 +1526,12 @@ internal static class NativeInstanceExporter
         float[] Scale,
         bool TransformDecomposable,
         Bounds LocalBounds,
-        Bounds WorldBounds);
+        Bounds WorldBounds)
+    {
+        public PrimitivePartInfo? Primitive { get; init; }
+    }
+
+    private sealed record PrimitivePartInfo(string Replacement, int PartIndex, int PartCount);
 
     private sealed record KindInventory(
         string Kind,

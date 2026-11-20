@@ -62,11 +62,28 @@ static class Program
         if (options.NativeFacetCatalogBuild)
         {
             NativeFacetCatalog.Build(
-                workload.Select(source => source.rvmFilename).ToArray(),
+                workload.Select(source => (source.rvmFilename, source.txtFilename)).ToArray(),
                 options.Output,
-                options.NativeFacetTolerance);
+                options.NativeFacetTolerance,
+                options.NativePrimitiveReplacement
+                    ? new PrimitiveFitOptions
+                    {
+                        Unhinted = options.NativePrimitiveUnhinted,
+                        MaxVolumeError = options.NativePrimitiveMaxVolumeError,
+                        MinProfileIoU = options.NativePrimitiveMinProfileIoU,
+                        FilletShare = options.NativePrimitiveFilletShare,
+                        CubeMaxVertices = options.NativePrimitiveCubeMaxVertices,
+                        MaxGap = options.NativePrimitiveMaxGap,
+                        MaxMissingGap = options.NativePrimitiveMaxMissingGap,
+                        NearBoxMaxMissingFraction = options.NativePrimitiveNearBoxMaxMissing,
+                    }
+                    : null);
             return 0;
         }
+        if (options.NativePrimitiveReplacement)
+            throw new ArgumentException("--native-primitive-replacement only applies with --native-facet-catalog-build.");
+        if (options.NativeRemainsInUnique && (options.NativeFacetCatalogPath == null || options.NativeUniqueObj == null))
+            throw new ArgumentException("--native-remains-in-unique requires --native-facet-catalog and --native-unique-obj.");
 
         using var parentProgressBar = new ProgressBar(2, "Converting RVM to OBJ");
 
@@ -112,7 +129,9 @@ static class Program
             options.NativeRunId,
             options.NativeSourceId,
             workload.Select(source => source.rvmFilename).ToArray(),
-            options.NativeFacetCatalogPath
+            options.NativeFacetCatalogPath,
+            options.NativeRemainsInUnique,
+            options.NativeReferenceObj
         );
         parentProgressBar.Tick();
         Console.WriteLine("Done!");

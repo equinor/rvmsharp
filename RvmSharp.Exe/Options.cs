@@ -70,4 +70,37 @@ internal class Options
 
     [Option("native-facet-catalog", Required = false, HelpText = "Folder written by --native-facet-catalog-build. Facet groups take their template id, geometry and placement from the catalog, so equal parts share one template across files.")]
     public string? NativeFacetCatalogPath { get; init; }
+
+    [Option("native-reference-obj", Required = false, HelpText = "Also write every exported source primitive tessellated straight from the RVM (no catalog, no primitive replacement), in world space and named by its instance id, for comparison with the processed output. Split into partNN files by --native-objects-per-file.")]
+    public string? NativeReferenceObj { get; init; }
+
+    [Option("native-remains-in-unique", Default = false, Required = false, HelpText = "Write single-use templates to --native-unique-obj in local space, like reused ones, instead of placed geometry in --native-remains-obj. Requires --native-facet-catalog and --native-unique-obj.")]
+    public bool NativeRemainsInUnique { get; init; }
+
+    [Option("native-primitive-replacement", Default = false, Required = false, HelpText = "With --native-facet-catalog-build: replace catalog templates that are boxes, round bars or rectilinear section profiles by unit cube and cylinder placements, when exact within the tolerances below. Section profiles are read from the paired .txt attributes.")]
+    public bool NativePrimitiveReplacement { get; init; }
+
+    [Option("native-primitive-unhinted", Default = false, Required = false, HelpText = "Also split prisms outside section nodes into boxes, and accept any profile shape under a section node.")]
+    public bool NativePrimitiveUnhinted { get; init; }
+
+    [Option("native-primitive-max-volume-error", Default = 0.12, Required = false, HelpText = "Largest relative volume difference between a replaced template and its primitives.")]
+    public double NativePrimitiveMaxVolumeError { get; init; } = 0.12;
+
+    [Option("native-primitive-min-profile-iou", Default = 0.82, Required = false, HelpText = "Smallest overlap (intersection over union) between a section profile and its boxes.")]
+    public double NativePrimitiveMinProfileIoU { get; init; } = 0.82;
+
+    [Option("native-primitive-fillet-share", Default = 0.15, Required = false, HelpText = "Largest share of a profile's outline that fillets and chamfers may take before it counts as non-rectilinear.")]
+    public double NativePrimitiveFilletShare { get; init; } = 0.15;
+
+    [Option("native-primitive-cube-max-vertices", Default = 4096, Required = false, HelpText = "Safety limit on the vertex count of a template tested as one box.")]
+    public int NativePrimitiveCubeMaxVertices { get; init; } = 4096;
+
+    [Option("native-primitive-max-gap", Default = 0.005, Required = false, HelpText = "Largest distance in metres by which a replacement may stick out of the source surface. Rejects squared-off mitres, filled notches and filled holes.")]
+    public double NativePrimitiveMaxGap { get; init; } = 0.005;
+
+    [Option("native-primitive-max-missing-gap", Default = 0.02, Required = false, HelpText = "Largest distance in metres from the source surface to its replacement. Rejects filled-in rounded cut-outs; root fillets pass.")]
+    public double NativePrimitiveMaxMissingGap { get; init; } = 0.02;
+
+    [Option("native-primitive-near-box-max-missing", Default = 0.08, Required = false, HelpText = "Largest share of a box's volume the source may lack (grooves, snipes) when it passes the gap check.")]
+    public double NativePrimitiveNearBoxMaxMissing { get; init; } = 0.08;
 }
