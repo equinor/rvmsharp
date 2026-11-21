@@ -11,7 +11,7 @@ public static class PrioritySplittingUtils
     /// <summary>
     /// These disciplines have limited amount of data and high highlighting value.
     /// </summary>
-    private static readonly string[] PrioritizedDisciplines = ["PIPE", "ELEC", "SAFE", "INST", "TELE"];
+    private static readonly string[] PrioritizedDisciplines = ["PIPE", "ELEC", "SAFE", "INST", "TELE", "MECH"];
 
     public static void SetPriorityForPrioritySplittingWithMutation(IReadOnlyList<CadRevealNode> nodes)
     {
@@ -48,10 +48,30 @@ public static class PrioritySplittingUtils
     {
         foreach (var node in nodes)
         {
-            var allChildren = CadRevealNode.GetAllNodesFlat(node);
-            foreach (var child in allChildren)
+            var allChildren = CadRevealNode.GetAllNodesFlat(node).ToList();
+
+            if (node.Attributes["Discipline"] == "MECH" && allChildren.Count > 10)
             {
-                child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+                // This code assumes the nodes that get here are "Tag" nodes.
+                // Prioritize the largest geometries, to avoid the priority sector being too large
+                var geometriesToPrioritize = allChildren
+                    .SelectMany(childNode => childNode.Geometries.Select(primitive => (childNode, primitive)))
+                    .OrderByDescending(nx => nx.primitive.AxisAlignedBoundingBox.Volume) // Volume here is arbitrary. It will prioritize diagonal "beams". But may be better than just "Diagonal"?
+                    .Take((int)Math.Clamp(allChildren.Count * 0.4f, min: 5, max: 100)); // Arbitrary values
+
+                foreach ((CadRevealNode childNode, APrimitive primitive) in geometriesToPrioritize)
+                {
+                    childNode.Geometries = childNode
+                        .Geometries.Select(g => g == primitive ? g with { Priority = 1 } : g)
+                        .ToArray();
+                }
+            }
+            else
+            {
+                foreach (var child in allChildren)
+                {
+                    child.Geometries = child.Geometries.Select(g => g with { Priority = 1 }).ToArray();
+                }
             }
         }
     }
