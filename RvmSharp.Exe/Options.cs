@@ -101,6 +101,9 @@ internal class Options
     [Option("native-primitive-max-missing-gap", Default = 0.02, Required = false, HelpText = "Largest distance in metres from the source surface to its replacement. Rejects filled-in rounded cut-outs; root fillets pass.")]
     public double NativePrimitiveMaxMissingGap { get; init; } = 0.02;
 
+    [Option("native-primitive-box-max-parts", Default = 5, Required = false, HelpText = "Most unit cubes an exact box decomposition may use: templates whose faces all lie in three perpendicular directions (L-panels, notched plates, stacked blocks, channels) are split into boxes with no change in shape. 0 disables it.")]
+    public int NativePrimitiveBoxMaxParts { get; init; } = 5;
+
     [Option("native-primitive-near-box-max-missing", Default = 0.08, Required = false, HelpText = "Largest share of a box's volume the source may lack (grooves, snipes) when it passes the gap check.")]
     public double NativePrimitiveNearBoxMaxMissing { get; init; } = 0.08;
 }

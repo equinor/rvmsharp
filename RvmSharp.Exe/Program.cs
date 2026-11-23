@@ -74,6 +74,7 @@ static class Program
                         FilletShare = options.NativePrimitiveFilletShare,
                         CubeMaxVertices = options.NativePrimitiveCubeMaxVertices,
                         MaxGap = options.NativePrimitiveMaxGap,
+                        BoxMaxParts = options.NativePrimitiveBoxMaxParts,
                         MaxMissingGap = options.NativePrimitiveMaxMissingGap,
                         NearBoxMaxMissingFraction = options.NativePrimitiveNearBoxMaxMissing,
                     }

@@ -47,6 +47,12 @@ internal sealed record PrimitiveFitOptions
     public int MaxParts { get; init; } = 8;
 
     /// <summary>
+    /// Most unit cubes an exact box decomposition may use. Shapes whose faces lie in three
+    /// perpendicular directions are split into boxes with no change in shape; 0 disables it.
+    /// </summary>
+    public int BoxMaxParts { get; init; } = 5;
+
+    /// <summary>
     /// Largest distance, in metres, between a replacement's surface and the source surface where the
     /// replacement sticks out of the source solid. Squared-off mitres, filled notches and holes fail it;
     /// grooves, snipes and fillets pass.
@@ -107,7 +113,7 @@ internal readonly record struct D3(double X, double Y, double Z)
 /// directly from the faces; no sampling is involved. The input is the template's polygons and
 /// its tessellated mesh in the same frame.
 /// </summary>
-internal static class NativePrimitiveFitter
+internal static partial class NativePrimitiveFitter
 {
     private const double SideDot = 1e-3;
     private const double EndDot = 0.9999;
@@ -178,6 +184,11 @@ internal static class NativePrimitiveFitter
         var directions = Directions(faces);
         if (directions == null)
             return PrimitiveOutcome.Kept("curved");
+
+        // Shapes built only from faces in three perpendicular directions are exactly a union of
+        // boxes; that exact split wins over every approximate fit below.
+        if (options.BoxMaxParts > 0 && TryBoxes(faces, directions, mesh, options.BoxMaxParts, out var boxes))
+            return PrimitiveOutcome.Replaced(boxes);
 
         var prisms = new List<Prism>();
         foreach (var (direction, _) in directions)
@@ -652,6 +663,10 @@ internal static class NativePrimitiveFitter
             if (axis.Length < 0.1)
                 continue;
             axis = axis.Normalized();
+            // A mitred prism has at least one end face that is neither a side nor square to the
+            // axis; box-built shapes with steps along the axis are not mitred.
+            if (!faces.Any(face => Math.Abs(face.Normal.Dot(axis)) is >= SideDot and < EndDot))
+                continue;
             if (!TryPrism(faces, points, axis, tolerance, square: false, out var prism))
                 continue;
             var outline = prism.Loops.SelectMany(loop => loop).ToArray();

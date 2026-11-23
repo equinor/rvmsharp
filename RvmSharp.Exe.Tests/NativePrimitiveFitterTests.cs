@@ -248,11 +248,21 @@ public class NativePrimitiveFitterTests
     public void HollowRectangularSectionBecomesItsOuterBox()
     {
         var section = Prism(Rectangle(0.05f, 0.03f), Rectangle(0.045f, 0.025f).AsEnumerable().Reverse().ToList());
-        var outcome = Fit(section, ProfileFamily.Hollow);
+        var outcome = Fit(section, ProfileFamily.Hollow, Options with { BoxMaxParts = 0 });
 
         Assert.That(outcome.Fit?.Replacement, Is.EqualTo("CLOSED_SHELL"), outcome.Outcome);
         Assert.That(outcome.Fit!.Parts, Has.Length.EqualTo(1));
         AssertSameBounds(section, outcome.Fit);
+    }
+
+    [Test]
+    public void SharpCorneredHollowSectionIsSplitExactly()
+    {
+        var section = Prism(Rectangle(0.05f, 0.03f), Rectangle(0.045f, 0.025f).AsEnumerable().Reverse().ToList());
+        var outcome = Fit(section, ProfileFamily.Hollow);
+
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_4"), outcome.Outcome);
+        AssertSameVolume(section, outcome.Fit!);
     }
 
     [Test]
@@ -319,13 +329,17 @@ public class NativePrimitiveFitterTests
     }
 
     [Test]
-    public void LongPlateWithSmallCutOutIsKept()
+    public void LongPlateWithSmallCutOutIsKeptOrSplitExactly()
     {
-        // 5 m x 0.75 m x 30 mm with a 90 mm square cut-out near one end, as found in 1P-STRU.
+        // 5 m x 0.75 m x 30 mm with a 90 mm square cut-out near one end, as found in 1P-STRU: never
+        // one filled box, but four exact boxes around the hole.
         var hole = new List<Vector2> { new(4.2f, 0.1f), new(4.2f, 0.19f), new(4.29f, 0.19f), new(4.29f, 0.1f) };
         var plate = Prism([new(0, 0), new(5f, 0), new(5f, 0.75f), new(0, 0.75f)], hole, length: 0.03f);
 
-        Assert.That(Fit(plate, ProfileFamily.Any).Fit, Is.Null);
+        Assert.That(Fit(plate, ProfileFamily.Any, Options with { BoxMaxParts = 0 }).Fit, Is.Null);
+        var outcome = Fit(plate, ProfileFamily.Any);
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_4"), outcome.Outcome);
+        AssertSameVolume(plate, outcome.Fit!);
     }
 
     [Test]
@@ -421,11 +435,123 @@ public class NativePrimitiveFitterTests
     }
 
     [Test]
-    public void UnhintedPlateIsNotSplit()
+    public void UnhintedPlateIsSplitExactly()
     {
+        // An L-shaped plate outside any section node: box-built, so split exactly regardless of hints.
         var plate = Prism(Angle(), length: 0.01f);
+        var outcome = Fit(plate, ProfileFamily.None);
 
-        Assert.That(Fit(plate, ProfileFamily.None).Fit, Is.Null);
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_2"), outcome.Outcome);
+        AssertSameVolume(plate, outcome.Fit!);
+    }
+
+    /// <summary>
+    /// A closed solid made of grid cells: every cell face between a filled and an empty cell becomes
+    /// an outward-facing quad, so planes end up split into several polygons as in RVM data.
+    /// </summary>
+    private static RvmFacetGroup Voxels(float[] xs, float[] ys, float[] zs, Func<int, int, int, bool> filled)
+    {
+        bool At(int i, int j, int k) =>
+            i >= 0 && j >= 0 && k >= 0 && i < xs.Length - 1 && j < ys.Length - 1 && k < zs.Length - 1 && filled(i, j, k);
+        var polygons = new List<RvmFacetGroup.RvmPolygon>();
+        var coordinates = new[] { xs, ys, zs };
+        for (var i = 0; i < xs.Length - 1; i++)
+        for (var j = 0; j < ys.Length - 1; j++)
+        for (var k = 0; k < zs.Length - 1; k++)
+        {
+            if (!filled(i, j, k))
+                continue;
+            var cell = new[] { i, j, k };
+            for (var axis = 0; axis < 3; axis++)
+            for (var side = 0; side < 2; side++)
+            {
+                var neighbour = (int[])cell.Clone();
+                neighbour[axis] += side == 0 ? -1 : 1;
+                if (At(neighbour[0], neighbour[1], neighbour[2]))
+                    continue;
+                var (u, v) = ((axis + 1) % 3, (axis + 2) % 3);
+                var corners = new Vector3[4];
+                for (var corner = 0; corner < 4; corner++)
+                {
+                    var point = new float[3];
+                    point[axis] = coordinates[axis][cell[axis] + side];
+                    point[u] = coordinates[u][cell[u] + (corner is 1 or 2 ? 1 : 0)];
+                    point[v] = coordinates[v][cell[v] + (corner >= 2 ? 1 : 0)];
+                    corners[corner] = new Vector3(point[0], point[1], point[2]);
+                }
+                var outward = new Vector3(axis == 0 ? 1 : 0, axis == 1 ? 1 : 0, axis == 2 ? 1 : 0) * (side == 0 ? -1 : 1);
+                if (Vector3.Dot(Normal(corners), outward) < 0)
+                    corners = corners.Reverse().ToArray();
+                polygons.Add(Polygon(corners));
+            }
+        }
+        return new RvmFacetGroup(1, Placement, new RvmBoundingBox(Vector3.Zero, Vector3.One), polygons.ToArray());
+    }
+
+    private static void AssertSameVolume(RvmFacetGroup facetGroup, PrimitiveFit fit)
+    {
+        var mesh = NativePrimitiveFitter.Mesh(facetGroup)!;
+        double volume = 0;
+        for (var index = 0; index < mesh.Triangles.Length; index += 3)
+        {
+            var a = mesh.Vertices[mesh.Triangles[index]];
+            var b = mesh.Vertices[mesh.Triangles[index + 1]];
+            var c = mesh.Vertices[mesh.Triangles[index + 2]];
+            volume += Vector3.Dot(a, Vector3.Cross(b, c)) / 6.0;
+        }
+        Assert.That(fit.Parts.Sum(PartVolume), Is.EqualTo(Math.Abs(volume)).Within(Math.Abs(volume) * 1e-4));
+    }
+
+    [Test]
+    public void PlateWithPartialDepthCornerNotchIsThreeBoxes()
+    {
+        // 1 x 0.6 x 0.1 plate; a 0.2 x 0.2 corner is cut 0.05 deep: not an extrusion in any direction.
+        var plate = Voxels([0, 0.8f, 1], [0, 0.4f, 0.6f], [0, 0.05f, 0.1f], (i, j, k) => !(i == 1 && j == 1 && k == 1));
+        var outcome = Fit(plate, ProfileFamily.None);
+
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_3"), outcome.Outcome);
+        AssertSameBounds(plate, outcome.Fit!);
+        AssertSameVolume(plate, outcome.Fit!);
+    }
+
+    [Test]
+    public void OffsetStackedBlocksAreTwoBoxes()
+    {
+        // A 0.4 x 0.3 x 0.2 block with a 0.2 x 0.3 x 0.1 block on one end of its top.
+        var blocks = Voxels([0, 0.2f, 0.4f], [0, 0.3f], [0, 0.2f, 0.3f], (i, _, k) => k == 0 || i == 1);
+        var outcome = Fit(blocks, ProfileFamily.None);
+
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_2"), outcome.Outcome);
+        AssertSameBounds(blocks, outcome.Fit!);
+        AssertSameVolume(blocks, outcome.Fit!);
+    }
+
+    [Test]
+    public void BoxSplitIntoSeveralFacesIsOneBox()
+    {
+        var box = Voxels([0, 0.1f, 0.25f, 0.5f], [0, 0.3f], [0, 0.05f, 0.2f], (_, _, _) => true);
+        var outcome = Fit(box, ProfileFamily.None);
+
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_1"), outcome.Outcome);
+        AssertSameBounds(box, outcome.Fit!);
+    }
+
+    [Test]
+    public void BoxSplitIsSkippedAboveTheCap()
+    {
+        // A 3 x 3 checkerboard of pillars on a base plate needs more than 5 boxes.
+        var comb = Voxels(
+            [0, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f],
+            [0, 0.1f, 0.2f, 0.3f, 0.4f, 0.5f],
+            [0, 0.02f, 0.2f],
+            (i, j, k) => k == 0 || (i % 2 == 0 && j % 2 == 0)
+        );
+
+        Assert.That(Fit(comb, ProfileFamily.None).Fit?.Replacement ?? "", Does.Not.StartWith("BOXES"));
+        var wide = Fit(comb, ProfileFamily.None, Options with { BoxMaxParts = 12 });
+        Assert.That(wide.Fit?.Replacement, Is.EqualTo("BOXES_10"), wide.Outcome);
+        AssertSameBounds(comb, wide.Fit!);
+        AssertSameVolume(comb, wide.Fit!);
     }
 
     [Test]
