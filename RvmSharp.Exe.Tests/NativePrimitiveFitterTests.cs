@@ -233,7 +233,21 @@ public class NativePrimitiveFitterTests
     [Test]
     public void ProfileOfAnotherFamilyIsKept()
     {
-        Assert.That(Fit(Prism(IBeam()), ProfileFamily.L).Outcome, Does.StartWith("kept:family"));
+        Assert.That(
+            Fit(Prism(IBeam()), ProfileFamily.L, Options with { SnapBoxMaxParts = 0 }).Outcome,
+            Does.StartWith("kept:family")
+        );
+    }
+
+    [Test]
+    public void ProfileOfAnotherFamilyIsSnappedToBoxes()
+    {
+        // Snap boxes are checked against the geometry, not the section family.
+        var outcome = Fit(Prism(IBeam()), ProfileFamily.L);
+
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("SNAPBOXES_3"), outcome.Outcome);
+        // Flanges 0.1 x 0.01 twice and web 0.006 x 0.18; the root fillets are dropped.
+        Assert.That(outcome.Fit!.Parts.Sum(PartVolume), Is.EqualTo((2 * 0.1 * 0.01 + 0.006 * 0.18) * Length).Within(1e-6));
     }
 
     [Test]
@@ -332,11 +346,12 @@ public class NativePrimitiveFitterTests
     public void LongPlateWithSmallCutOutIsKeptOrSplitExactly()
     {
         // 5 m x 0.75 m x 30 mm with a 90 mm square cut-out near one end, as found in 1P-STRU: never
-        // one filled box, but four exact boxes around the hole.
+        // one filled box by CubeLike, but four exact boxes around the hole. (Snap boxes alone would
+        // fill it: its 45 mm gap is within their 50 mm limit, but the exact split is tried first.)
         var hole = new List<Vector2> { new(4.2f, 0.1f), new(4.2f, 0.19f), new(4.29f, 0.19f), new(4.29f, 0.1f) };
         var plate = Prism([new(0, 0), new(5f, 0), new(5f, 0.75f), new(0, 0.75f)], hole, length: 0.03f);
 
-        Assert.That(Fit(plate, ProfileFamily.Any, Options with { BoxMaxParts = 0 }).Fit, Is.Null);
+        Assert.That(Fit(plate, ProfileFamily.Any, Options with { BoxMaxParts = 0, SnapBoxMaxParts = 0 }).Fit, Is.Null);
         var outcome = Fit(plate, ProfileFamily.Any);
         Assert.That(outcome.Fit?.Replacement, Is.EqualTo("BOXES_4"), outcome.Outcome);
         AssertSameVolume(plate, outcome.Fit!);
@@ -594,6 +609,98 @@ public class NativePrimitiveFitterTests
 
         Assert.That(outcome.Fit?.Replacement, Is.EqualTo("CUBELIKE"), outcome.Outcome);
         Assert.That(PartVolume(outcome.Fit!.Parts.Single()), Is.EqualTo(0.5 * 0.3 * 0.2).Within(1e-6));
+    }
+
+    /// <summary>
+    /// A plate of the outline (in y and z) from a back face at x = slope * z to a flat front at
+    /// x = thickness: a panel whose back is tilted, as modelled in hand-made architectural parts.
+    /// </summary>
+    private static RvmFacetGroup TaperedPlate(IReadOnlyList<Vector2> outline, float thickness, float slope)
+    {
+        Vector3 Back(Vector2 p) => new(slope * p.Y, p.X, p.Y);
+        Vector3 Front(Vector2 p) => new(thickness, p.X, p.Y);
+        var polygons = new List<RvmFacetGroup.RvmPolygon>();
+        for (var index = 0; index < outline.Count; index++)
+        {
+            var a = outline[index];
+            var b = outline[(index + 1) % outline.Count];
+            polygons.Add(Polygon([Back(a), Back(b), Front(b), Front(a)]));
+        }
+        polygons.Add(Polygon(outline.Reverse().Select(Back).ToArray()));
+        polygons.Add(Polygon(outline.Select(Front).ToArray()));
+        return new RvmFacetGroup(1, Placement, new RvmBoundingBox(Vector3.Zero, Vector3.One), polygons.ToArray());
+    }
+
+    [Test]
+    public void NotchedPanelWithTiltedBackIsSnappedToTwoBoxes()
+    {
+        // A 3 m x 4.85 m panel with a 0.9 x 1.1 m corner notch, 214 mm thick at the bottom; its back
+        // is tilted 0.57 degrees, so it is 48.5 mm thinner at the top.
+        List<Vector2> outline = [new(0, 0), new(3f, 0), new(3f, 4.85f), new(0.9f, 4.85f), new(0.9f, 3.75f), new(0, 3.75f)];
+        var panel = TaperedPlate(outline, 0.214f, 0.01f);
+
+        Assert.That(Fit(panel, ProfileFamily.None, Options with { SnapBoxMaxParts = 0 }).Fit, Is.Null);
+        var outcome = Fit(panel, ProfileFamily.None);
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("SNAPBOXES_2"), outcome.Outcome);
+    }
+
+    [Test]
+    public void PlateWithRoundedCornersIsSnappedToOneBox()
+    {
+        // 510 x 510 x 16 mm with 50 mm corner radii in two segments: the box corners stick out 21 mm.
+        var outline = new List<Vector2>();
+        foreach (var (centre, from) in new[] { (new Vector2(0.46f, 0.05f), -90f), (new(0.46f, 0.46f), 0f), (new(0.05f, 0.46f), 90f), (new(0.05f, 0.05f), 180f) })
+        {
+            Vector2 At(float degrees) => centre + 0.05f * new Vector2(MathF.Cos(degrees * MathF.PI / 180), MathF.Sin(degrees * MathF.PI / 180));
+            outline.Add(At(from));
+            Arc(outline, centre, 0.05f, from, from + 90, 2);
+            outline.Add(At(from + 90));
+        }
+        var plate = Prism(outline, length: 0.016f);
+
+        Assert.That(Fit(plate, ProfileFamily.None, Options with { SnapBoxMaxParts = 0 }).Fit, Is.Null);
+        var outcome = Fit(plate, ProfileFamily.None);
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("SNAPBOXES_1"), outcome.Outcome);
+        Assert.That(PartVolume(outcome.Fit!.Parts.Single()), Is.EqualTo(0.51 * 0.51 * 0.016).Within(1e-6));
+    }
+
+    [Test]
+    public void AngleWithSlightlyTiltedEndIsSnappedToTwoBoxes()
+    {
+        // One end is cut 0.57 degrees off square: too little to be a mitre, too much for a prism.
+        var angle = Prism(Angle(), mitre: 0.01f);
+
+        Assert.That(Fit(angle, ProfileFamily.L, Options with { SnapBoxMaxParts = 0 }).Fit, Is.Null);
+        var outcome = Fit(angle, ProfileFamily.L);
+        Assert.That(outcome.Fit?.Replacement, Is.EqualTo("SNAPBOXES_2"), outcome.Outcome);
+    }
+
+    [Test]
+    public void FaceTiltedBeyondTheSnapAngleIsKept()
+    {
+        // A 3 m x 1 m plate whose back is tilted 3 degrees.
+        List<Vector2> outline = [new(0, 0), new(3f, 0), new(3f, 1f), new(0, 1f)];
+        var plate = TaperedPlate(outline, 0.2f, MathF.Tan(3 * MathF.PI / 180));
+
+        var outcome = Fit(plate, ProfileFamily.None);
+        Assert.That(outcome.Fit, Is.Null, outcome.Outcome);
+        Assert.That(outcome.Outcome, Does.EndWith("snap-aligned"));
+        Assert.That(Fit(plate, ProfileFamily.None, Options with { SnapBoxMaxAngle = 5 }).Fit?.Replacement, Is.EqualTo("SNAPBOXES_1"));
+    }
+
+    [TestCase(6f, true)]
+    [TestCase(12f, false)]
+    public void WedgePanelIsSnappedOnlyWithinTheGap(float height, bool snapped)
+    {
+        // A 250 mm panel whose back is tilted 0.57 degrees: a box at the middle of the tilt is
+        // height / 200 off at either end, over the 50 mm limit for the 12 m panel.
+        List<Vector2> outline = [new(0, 0), new(2f, 0), new(2f, height), new(0, height)];
+        var outcome = Fit(TaperedPlate(outline, 0.25f, 0.01f), ProfileFamily.None);
+
+        if (snapped)
+            Assert.That(outcome.Fit?.Replacement, Is.EqualTo("SNAPBOXES_1"), outcome.Outcome);
+        else
+            Assert.That(outcome.Outcome, Does.EndWith("snap-gap"));
     }
 
     [TestCase("/GB/T11263-HW150X150X7X10-Q235B", "IH")]

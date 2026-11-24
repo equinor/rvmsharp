@@ -81,6 +81,18 @@ internal static partial class NativePrimitiveFitter
         if (!(cellVolume > 0) || Math.Abs(cellVolume - meshVolume) > BoxVolumeTolerance * meshVolume)
             return false;
 
+        var best = MergeBest(inside, size);
+        if (best == null || best.Count > maxParts)
+            return false;
+
+        var parts = CubeParts(best, axes, coordinates);
+        fit = new PrimitiveFit("BOXES_" + parts.Length, parts, Math.Abs(cellVolume - meshVolume) / meshVolume, 1);
+        return true;
+    }
+
+    /// <summary>The fewest boxes greedy merging finds over every axis order and mirror.</summary>
+    private static List<Cuboid>? MergeBest(bool[] inside, int[] size)
+    {
         // Greedy merging depends on axis order and scan direction, so try every order, each
         // mirrored along every combination of axes (only the plain orders on very large grids).
         List<Cuboid>? best = null;
@@ -94,12 +106,17 @@ internal static partial class NativePrimitiveFitter
                 if (best != null && cuboids.Count >= best.Count)
                     continue;
                 best = mirror == 0 ? cuboids : cuboids.Select(cuboid => Unmirror(cuboid, size, mirror)).ToList();
+                if (best.Count == 1)
+                    return best;
             }
         }
-        if (best == null || best.Count > maxParts)
-            return false;
+        return best;
+    }
 
-        var parts = best.Select(cuboid =>
+    /// <summary>Unit cube placements of grid boxes in the frame <paramref name="axes"/>.</summary>
+    private static PrimitivePart[] CubeParts(List<Cuboid> cuboids, D3[] axes, double[][] coordinates) =>
+        cuboids
+            .Select(cuboid =>
             {
                 var low = new double[3];
                 var high = new double[3];
@@ -109,16 +126,15 @@ internal static partial class NativePrimitiveFitter
                     high[axis] = coordinates[axis][cuboid.High[axis]];
                 }
                 var origin =
-                    axes[0] * ((low[0] + high[0]) / 2) + axes[1] * ((low[1] + high[1]) / 2) + axes[2] * ((low[2] + high[2]) / 2);
+                    axes[0] * ((low[0] + high[0]) / 2)
+                    + axes[1] * ((low[1] + high[1]) / 2)
+                    + axes[2] * ((low[2] + high[2]) / 2);
                 return new PrimitivePart(
                     PrimitivePartKind.Cube,
                     Placement(axes[0], high[0] - low[0], axes[1], high[1] - low[1], axes[2], high[2] - low[2], origin)
                 );
             })
             .ToArray();
-        fit = new PrimitiveFit("BOXES_" + parts.Length, parts, Math.Abs(cellVolume - meshVolume) / meshVolume, 1);
-        return true;
-    }
 
     private static readonly int[][] AxisOrders =
     [

@@ -106,4 +106,13 @@ internal class Options
 
     [Option("native-primitive-near-box-max-missing", Default = 0.08, Required = false, HelpText = "Largest share of a box's volume the source may lack (grooves, snipes) when it passes the gap check.")]
     public double NativePrimitiveNearBoxMaxMissing { get; init; } = 0.08;
+
+    [Option("native-primitive-snap-box-max-parts", Default = 5, Required = false, HelpText = "Most unit cubes a snap-box decomposition may use, tried only on templates every other fit keeps: faces within --native-primitive-snap-box-max-angle of three perpendicular directions are snapped to box faces, and small features (fillets, chamfers, snipes, small holes) are squared off or filled within the snap-box gap. 0 disables it.")]
+    public int NativePrimitiveSnapBoxMaxParts { get; init; } = 5;
+
+    [Option("native-primitive-snap-box-max-angle", Default = 2.0, Required = false, HelpText = "Largest tilt in degrees of a face that the snap-box decomposition snaps to a box face.")]
+    public double NativePrimitiveSnapBoxMaxAngle { get; init; } = 2.0;
+
+    [Option("native-primitive-snap-box-max-gap", Default = 0.05, Required = false, HelpText = "Upper limit in metres on the snap-box gap, which is 5% of the template's largest dimension and at least --native-primitive-max-gap.")]
+    public double NativePrimitiveSnapBoxMaxGap { get; init; } = 0.05;
 }

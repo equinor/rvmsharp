@@ -53,6 +53,25 @@ internal sealed record PrimitiveFitOptions
     public int BoxMaxParts { get; init; } = 5;
 
     /// <summary>
+    /// Most unit cubes a snap-box decomposition may use; 0 disables it. It is tried only on templates
+    /// every other fit keeps: faces within <see cref="SnapBoxMaxAngle"/> of three perpendicular
+    /// directions are snapped to them, and smaller features (fillets, chamfers, snipes, small holes)
+    /// are squared off or filled when they stay within the snap-box gap.
+    /// </summary>
+    public int SnapBoxMaxParts { get; init; } = 5;
+
+    /// <summary>Largest tilt, in degrees, of a face that is snapped to a box face.</summary>
+    public double SnapBoxMaxAngle { get; init; } = 2;
+
+    /// <summary>Snap-box gap as a share of the template's largest dimension, at least <see cref="MaxGap"/>.</summary>
+    public double SnapBoxGapShare { get; init; } = 0.05;
+
+    /// <summary>Upper limit, in metres, on the snap-box gap.</summary>
+    public double SnapBoxMaxGap { get; init; } = 0.05;
+
+    public double SnapBoxMaxVolumeError { get; init; } = 0.08;
+
+    /// <summary>
     /// Largest distance, in metres, between a replacement's surface and the source surface where the
     /// replacement sticks out of the source solid. Squared-off mitres, filled notches and holes fail it;
     /// grooves, snipes and fillets pass.
@@ -224,9 +243,15 @@ internal static partial class NativePrimitiveFitter
         var cube = CubeLike(mesh, directions, options, tolerance);
         if (cube.Fit != null && !WithinGap(cube.Fit, mesh, options))
             cube = PrimitiveOutcome.Kept("cube-gap");
-        if (cube.Fit != null || rejected == null)
+        if (cube.Fit != null)
             return cube;
-        return new PrimitiveOutcome(rejected.Value.Outcome + "/" + cube.Outcome["kept:".Length..], null);
+        var kept = rejected == null ? cube.Outcome : rejected.Value.Outcome + "/" + cube.Outcome["kept:".Length..];
+        if (options.SnapBoxMaxParts <= 0)
+            return new PrimitiveOutcome(kept, null);
+        // Last resort: the template is almost a union of boxes, apart from small features.
+        if (TrySnapBoxes(faces, directions, mesh, options, out var snapBoxes, out var snapFailure))
+            return PrimitiveOutcome.Replaced(snapBoxes);
+        return new PrimitiveOutcome(kept + "/snap-" + snapFailure, null);
     }
 
     /// <summary>

@@ -77,6 +77,9 @@ static class Program
                         BoxMaxParts = options.NativePrimitiveBoxMaxParts,
                         MaxMissingGap = options.NativePrimitiveMaxMissingGap,
                         NearBoxMaxMissingFraction = options.NativePrimitiveNearBoxMaxMissing,
+                        SnapBoxMaxParts = options.NativePrimitiveSnapBoxMaxParts,
+                        SnapBoxMaxAngle = options.NativePrimitiveSnapBoxMaxAngle,
+                        SnapBoxMaxGap = options.NativePrimitiveSnapBoxMaxGap,
                     }
                     : null);
             return 0;
