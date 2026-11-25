@@ -14,7 +14,7 @@ using Containers;
 /// </summary>
 /// <param name="Version">RVM Version. Unknown use</param>
 /// <param name="Name">The nodes name in the Hierarchy</param>
-/// <param name="Translation">Unknown use.</param>
+/// <param name="Translation">Node translation in metres. Unknown use as primitives carry their own transforms.</param>
 /// <param name="MaterialId">What material does this Node have? (Color)</param>
 public record RvmNode(uint Version, string Name, Vector3 Translation, uint MaterialId) : RvmGroup(Version)
 {

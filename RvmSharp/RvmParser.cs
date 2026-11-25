@@ -18,35 +18,6 @@ using Utils;
 
 public static class RvmParser
 {
-    /// <summary>
-    /// These are the known bytes we have seen in v4 nodes. We have no documentation on what the data represents.
-    /// Add docs to the code if you find out what the data represents.
-    /// </summary>
-    // csharpier-ignore -- Dont reformat
-    private static readonly byte[][] KnownV4Bytes = new byte[][]
-    {
-        [
-            0x00, 0x00, 0x00, 0x00, 0x78, 0xB5, 0x8C, 0x52, 0x44, 0x15, 0xAF, 0x1D, 0x78, 0xB5, 0x8C, 0x46, 0x44, 0x15,
-            0xAF, 0x1D, 0x78, 0xB5, 0x8C, 0x61, 0x44, 0x15, 0xAF, 0x1D
-        ],
-        [
-            0x00, 0x00, 0x00, 0x00, 0x45, 0x6D, 0x20, 0x76, 0x42, 0xBB, 0x77, 0xCF, 0x50, 0x49, 0xB8, 0x02, 0x40, 0xFF,
-            0xFB, 0x4C, 0xFF, 0xDB, 0x9D, 0xB8, 0x40, 0xDA, 0x01, 0x9B
-        ],
-        [
-            0x00, 0x00, 0x00, 0x00, 0x2F, 0x1E, 0x55, 0x56, 0x40, 0xF7, 0x81, 0x05, 0xC5, 0x0A, 0x09, 0x8F, 0x43, 0x43,
-            0x09, 0xDF, 0xFF, 0x9C, 0xB1, 0x9D, 0x40, 0xDC, 0xE2, 0xD5
-        ],
-        [
-            0x00, 0x00, 0x00, 0x00, 0x48, 0xD5, 0x3D, 0xA5, 0x42, 0xBB, 0x79, 0xAE, 0xE6, 0x02, 0x39, 0x76, 0x40, 0xF7,
-            0x63, 0xA6, 0xEB, 0x56, 0xBD, 0xD3, 0x40, 0xDA, 0x01, 0x39
-        ],
-        [
-            0x00, 0x00, 0x00, 0x00, 0x2C, 0x9A, 0xEB, 0x9A, 0x42, 0xBE, 0x90, 0xD6, 0x04, 0x18, 0x93, 0x74, 0x40, 0xF7,
-            0x34, 0xE0, 0xC6, 0x69, 0x8E, 0x42, 0x40, 0xD9, 0x5F, 0x3B
-        ]
-    };
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static uint ReadUint(Stream stream)
     {
@@ -68,6 +39,29 @@ public static class RvmParser
         if (BitConverter.IsLittleEndian)
             bytes.Reverse();
         return BitConverter.ToSingle(bytes);
+    }
+
+    /// <summary>
+    /// Reads a double stored as two big-endian 32-bit words, low word first.
+    /// </summary>
+    private static double ReadWordSwappedDouble(Stream stream)
+    {
+        ulong lowWord = ReadUint(stream);
+        ulong highWord = ReadUint(stream);
+        return BitConverter.Int64BitsToDouble((long)(highWord << 32 | lowWord));
+    }
+
+    /// <summary>
+    /// Reads three word-swapped doubles in millimetres and converts them to metres before rounding to float.
+    /// </summary>
+    private static Vector3 ReadDoubleTranslationInMeters(Stream stream)
+    {
+        const double mmToM = 0.001;
+        return new Vector3(
+            (float)(ReadWordSwappedDouble(stream) * mmToM),
+            (float)(ReadWordSwappedDouble(stream) * mmToM),
+            (float)(ReadWordSwappedDouble(stream) * mmToM)
+        );
     }
 
     private static string ReadChunkHeader(
@@ -94,6 +88,27 @@ public static class RvmParser
         nextHeaderOffset = ReadUint(stream);
         dunno = ReadUint(stream);
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Fails when a chunk was not read exactly up to the next chunk header, which means the chunk format is not
+    /// fully understood. Without this check the parser misreads the following bytes and fails later with a
+    /// misleading error.
+    /// </summary>
+    private static void EnsureChunkEnd(Stream stream, uint nextHeaderOffset, string chunkId, string nameForDebugging)
+    {
+        var position = stream.Position;
+        if (position == nextHeaderOffset)
+            return;
+
+        var difference = nextHeaderOffset - position;
+        var problem =
+            difference > 0
+                ? $"{difference} bytes were left unread"
+                : $"{-difference} bytes past the next chunk header were read";
+        throw new InvalidDataException(
+            $"{chunkId} chunk in \"{nameForDebugging}\" ended at 0x{position:x8}, but the next chunk header is at 0x{nextHeaderOffset:x8}: {problem}."
+        );
     }
 
     private static Vector3 ReadVector3(Stream stream)
@@ -322,7 +337,7 @@ public static class RvmParser
             .ToArray();
     }
 
-    private static RvmNode ReadCntb(Stream stream)
+    private static RvmNode ReadCntb(Stream stream, uint cntbNextHeaderOffset)
     {
         var version = ReadUint(stream);
         GuardKnownVersion(version);
@@ -332,48 +347,50 @@ public static class RvmParser
         var translation = new Vector3(ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM, ReadFloat(stream) * mmToM);
 
         var materialId = ReadUint(stream);
-        if (version == 3)
+        if (version is 3 or 4)
         {
+            // In v3 "_insuobst" exports these bytes are 57 02 00 00 regardless of the node's OBST value.
+            // We believe byte 1 is transparency-related and 2 is some other rendering flag. 3 and 4 are always 0 in the seen data.
+            // Consume them without interpreting them in v3; v4 expects zero before its double translation.
             Span<byte> bytes = stackalloc byte[4];
             stream.ReadExactly(bytes);
-            // Ignore the bytes for now.
-            // Byte 1 may be transparency
-            // byte 2 may be a type identifier
-            // Byte 3 and 4 are always 0 in the known data with version 3
-        }
-        else if (version == 4)
-        {
-            Console.WriteLine("--- Node with name " + name + " was a v4 node"); // TODO: Remove me when we have more controll of the v4 nodes. Currently may be related to "ARCHIV 1, but not known"
-            Span<byte> bytes = stackalloc byte[4 * 7];
-            stream.ReadExactly(bytes);
+            // We just consume these bytes without interpreting them for now.
 
-            var bytesArray = bytes.ToArray();
-
-            if (!IsKnownVersion4Node(bytesArray))
+            // V4 nodes have a trailing double-precision translation after these 4 bytes.
+            if (version == 4)
             {
-                Console.Error.WriteLine(
-                    "New bytes in version 4 cntb. Was: "
-                        + String.Join(",", bytesArray.Select(x => "0x" + x.ToString("X")).ToArray())
-                        + "\n Please update the C# code to allow the new values. This error only exists to try to decipher the values in the v4 format."
-                );
+                // Note: v4 nodes seem to indicate the node is very far from the origin, hence the need for double-precision translation values.
+                // This is not really supported in most float32 based viewers (including Echo), and is 99.999% of the time a 3D modelling error, not a genuine need for double-precision translation.
+                // We can consider excluding all v4 primitive nodes in the future.
+
+                // Convert to metres before rounding to float to preserve precision for large coordinates.
+                translation = ReadDoubleTranslationInMeters(stream);
             }
         }
 
+        // The CNTB offset points to the first child chunk, not past the matching CNTE.
+        EnsureChunkEnd(stream, cntbNextHeaderOffset, "CNTB", name);
+
         var group = new RvmNode(version, name, translation, materialId);
 
-        uint unusedNextHeaderOffset;
+        uint nextHeaderOffset;
+        // ReSharper disable once NotAccessedOutParameterVariable -- This value is always 1 in all known data.
         uint dontKnowWhatThisValueDoes;
 
-        var id = ReadChunkHeader(stream, name, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+        var id = ReadChunkHeader(stream, name, out nextHeaderOffset, out dontKnowWhatThisValueDoes);
         while (id != "CNTE")
         {
             switch (id)
             {
                 case "CNTB":
-                    group.AddChild(ReadCntb(stream));
+                    group.AddChild(ReadCntb(stream, nextHeaderOffset));
                     break;
                 case "PRIM":
                     var primitive = ReadPrimitive(stream);
+                    if (version == 4)
+                        primitive = ReadVersion4PrimitiveTrailer(stream, primitive, nextHeaderOffset);
+                    EnsureChunkEnd(stream, nextHeaderOffset, id, name);
+
                     if (Matrix4x4Helpers.MatrixContainsInfiniteValue(primitive.Matrix))
                     {
                         // This handles an issue on Oseberg where some models contained infite values. Not seen elsewhere.
@@ -396,31 +413,47 @@ public static class RvmParser
                 // -- add a field for storing opacity if this should be supported by rendering
                 case "OBST":
                     ReadPrimitive(stream, true);
+                    EnsureChunkEnd(stream, nextHeaderOffset, id, name);
                     Console.WriteLine("Encountered OBST chunk, skipping.");
                     break;
                 case "INSU":
                     ReadPrimitive(stream, true);
+                    EnsureChunkEnd(stream, nextHeaderOffset, id, name);
                     Console.WriteLine("Encountered INSU chunk, skipping.");
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {id}");
             }
 
-            id = ReadChunkHeader(stream, name, out unusedNextHeaderOffset, out dontKnowWhatThisValueDoes);
+            id = ReadChunkHeader(stream, name, out nextHeaderOffset, out dontKnowWhatThisValueDoes);
         }
 
-        if (id == "CNTE")
-        {
-            // ReSharper disable once UnusedVariable
-            var endVersion = ReadUint(stream);
-        }
+        // ReSharper disable once UnusedVariable
+        var endVersion = ReadUint(stream);
+        EnsureChunkEnd(stream, nextHeaderOffset, id, name);
 
         return group;
     }
 
-    private static bool IsKnownVersion4Node(byte[] bytesArray)
+    /// <summary>
+    /// Some primitives in v4 nodes end with a double-precision copy of the matrix translation, in millimetres, but
+    /// files with v4 nodes have also been parsed without it. The chunk header's absolute next-chunk offset tells
+    /// whether the trailer is present; any other leftover bytes are reported by <see cref="EnsureChunkEnd"/>.
+    /// OBST and INSU chunks in v4 nodes have not been observed, so they are not handled here.
+    /// </summary>
+    private static RvmPrimitive ReadVersion4PrimitiveTrailer(
+        Stream stream,
+        RvmPrimitive primitive,
+        uint nextHeaderOffset
+    )
     {
-        return KnownV4Bytes.Any(x => x.SequenceEqual(bytesArray));
+        const int trailerSize = 3 * sizeof(double);
+        if (nextHeaderOffset - stream.Position != trailerSize)
+            return primitive;
+
+        var matrix = primitive.Matrix;
+        matrix.Translation = ReadDoubleTranslationInMeters(stream);
+        return primitive with { Matrix = matrix };
     }
 
     private static RvmColor ReadColor(Stream stream)
@@ -445,42 +478,56 @@ public static class RvmParser
         return new RvmFile.RvmHeader(version, info, note, date, user, encoding);
     }
 
+    /// <summary>
+    /// Reads an RVM file. The stream must be seekable, because chunk boundaries are validated against the
+    /// absolute offsets in the chunk headers.
+    /// </summary>
     public static RvmFile ReadRvm(Stream stream)
     {
-        uint len,
-            dunno;
+        // Chunk-boundary validation needs Position, but the parser does not seek. If seeking is needed we can make the check optional.
+        if (!stream.CanSeek)
+            throw new ArgumentException("RVM parsing requires a seekable stream.", nameof(stream));
 
-        var head = ReadChunkHeader(stream, "HEADER", out len, out dunno);
+        uint nextHeaderOffset;
+
+        // ReSharper disable once NotAccessedOutParameterVariable -- Observed as 1 in all sampled files. Unknown use.
+        uint dontKnowWhatThisRepresents;
+
+        var head = ReadChunkHeader(stream, "HEADER", out nextHeaderOffset, out dontKnowWhatThisRepresents);
         if (head != "HEAD")
             throw new IOException($"Expected HEAD, found {head}");
         var header = ReadHead(stream);
-        var modl = ReadChunkHeader(stream, "MODL", out len, out dunno);
+        EnsureChunkEnd(stream, nextHeaderOffset, head, "file header");
+        var modl = ReadChunkHeader(stream, "MODL", out nextHeaderOffset, out dontKnowWhatThisRepresents);
         if (modl != "MODL")
             throw new IOException($"Expected MODL, found {modl}");
         var modelParameters = ReadModelParameters(stream);
+        EnsureChunkEnd(stream, nextHeaderOffset, modl, modelParameters.name);
         var modelChildren = new List<RvmNode>();
         var modelPrimitives = new List<RvmPrimitive>();
         var modelColors = new List<RvmColor>();
 
-        var chunk = ReadChunkHeader(stream, "CHUNK HEADER", out len, out dunno);
+        var chunk = ReadChunkHeader(stream, "CHUNK HEADER", out nextHeaderOffset, out dontKnowWhatThisRepresents);
         while (chunk != "END:")
         {
             switch (chunk)
             {
                 case "CNTB":
-                    modelChildren.Add(ReadCntb(stream));
+                    modelChildren.Add(ReadCntb(stream, nextHeaderOffset));
                     break;
                 case "PRIM":
                     modelPrimitives.Add(ReadPrimitive(stream));
+                    EnsureChunkEnd(stream, nextHeaderOffset, chunk, modelParameters.name);
                     break;
                 case "COLR":
                     modelColors.Add(ReadColor(stream));
+                    EnsureChunkEnd(stream, nextHeaderOffset, chunk, modelParameters.name);
                     break;
                 default:
                     throw new NotImplementedException($"Unknown chunk: {chunk}");
             }
 
-            chunk = ReadChunkHeader(stream, "CHUNK", out len, out dunno);
+            chunk = ReadChunkHeader(stream, "CHUNK", out nextHeaderOffset, out dontKnowWhatThisRepresents);
         }
 
         return new RvmFile(
