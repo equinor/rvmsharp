@@ -123,7 +123,9 @@ public class RvmParserTests
     }
 
     [Test]
-    public void ReadRvm_WhenNodeIsVersion4_UsesDoublePrecisionTranslations()
+    [TestCase(0L)]
+    [TestCase(0x100000000L)]
+    public void ReadRvm_WhenNodeIsVersion4_UsesDoublePrecisionTranslations(long positionOffset)
     {
         // Word-swapped doubles (mm) copied from a real v4 node and its facet group primitive.
         // csharpier-ignore -- Keep byte formatting
@@ -133,7 +135,7 @@ public class RvmParserTests
             0xCC, 0x13, 0xB8, 0x9C, 0x0B, 0xC6, 0x40, 0xF7, 0x2D, 0xE0
         ];
         var expectedTranslation = new Vector3(-6674391f, -4133526f, 94.942045f);
-        using var writer = new RvmTestWriter();
+        using var writer = new RvmTestWriter(positionOffset);
         var stream = writer.Stream;
 
         void WriteFacetGroupPrim(bool withDoubleTranslation)
@@ -169,7 +171,7 @@ public class RvmParserTests
         writer.WriteChunk("CNTE");
         writer.WriteUint(1);
         writer.WriteChunk("END:");
-        stream.Position = 0;
+        stream.Position = writer.PositionOffset;
 
         var node = RvmParser.ReadRvm(stream).Model.Children.Single();
 
@@ -256,7 +258,15 @@ public class RvmParserTests
     {
         private long _pendingNextHeaderOffsetPosition = -1;
 
-        public MemoryStream Stream { get; } = new();
+        public long PositionOffset { get; }
+        public Stream Stream { get; }
+
+        public RvmTestWriter(long positionOffset = 0)
+        {
+            PositionOffset = positionOffset;
+            var memoryStream = new MemoryStream();
+            Stream = positionOffset == 0 ? memoryStream : new OffsetStream(memoryStream, positionOffset);
+        }
 
         public void WriteUint(uint value)
         {
@@ -297,5 +307,43 @@ public class RvmParserTests
         }
 
         public void Dispose() => Stream.Dispose();
+    }
+
+    // Simulates positions past 4 GiB so offset-wrap tests need only a small in-memory file.
+    private sealed class OffsetStream : Stream
+    {
+        private readonly Stream _inner;
+        private readonly long _positionOffset;
+
+        public OffsetStream(Stream inner, long positionOffset)
+        {
+            _inner = inner;
+            _positionOffset = positionOffset;
+        }
+
+        public override bool CanRead => _inner.CanRead;
+        public override bool CanSeek => _inner.CanSeek;
+        public override bool CanWrite => _inner.CanWrite;
+        public override long Length => _positionOffset + _inner.Length;
+
+        public override long Position
+        {
+            get => _positionOffset + _inner.Position;
+            set => _inner.Position = value - _positionOffset;
+        }
+
+        public override void Flush() => _inner.Flush();
+
+        public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, count);
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            var innerOffset = origin == SeekOrigin.Begin ? offset - _positionOffset : offset;
+            return _positionOffset + _inner.Seek(innerOffset, origin);
+        }
+
+        public override void SetLength(long value) => _inner.SetLength(value - _positionOffset);
+
+        public override void Write(byte[] buffer, int offset, int count) => _inner.Write(buffer, offset, count);
     }
 }

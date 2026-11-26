@@ -91,6 +91,16 @@ public static class RvmParser
     }
 
     /// <summary>
+    /// Calculates the distance to a chunk header using the RVM format's 32-bit absolute offsets, which wrap at 4 GiB.
+    /// Narrowing the stream position before subtracting keeps the distance correct across that wrap.
+    /// </summary>
+    /// <param name="nextHeaderOffset">The next chunk's offset as stored in the RVM header.</param>
+    /// <param name="position">The stream's current absolute position.</param>
+    /// <returns>The wrapped unsigned distance from the current position to the next chunk header.</returns>
+    private static uint GetWrappedOffsetDifference(uint nextHeaderOffset, long position) =>
+        unchecked(nextHeaderOffset - (uint)position);
+
+    /// <summary>
     /// Fails when a chunk was not read exactly up to the next chunk header, which means the chunk format is not
     /// fully understood. Without this check the parser misreads the following bytes and fails later with a
     /// misleading error.
@@ -98,10 +108,11 @@ public static class RvmParser
     private static void EnsureChunkEnd(Stream stream, uint nextHeaderOffset, string chunkId, string nameForDebugging)
     {
         var position = stream.Position;
-        if (position == nextHeaderOffset)
+        var wrappedDifference = GetWrappedOffsetDifference(nextHeaderOffset, position);
+        var difference = unchecked((int)wrappedDifference);
+        if (difference == 0)
             return;
 
-        var difference = nextHeaderOffset - position;
         var problem =
             difference > 0
                 ? $"{difference} bytes were left unread"
@@ -447,8 +458,9 @@ public static class RvmParser
         uint nextHeaderOffset
     )
     {
-        const int trailerSize = 3 * sizeof(double);
-        if (nextHeaderOffset - stream.Position != trailerSize)
+        const uint trailerSize = 3 * sizeof(double);
+        var remainingBytes = GetWrappedOffsetDifference(nextHeaderOffset, stream.Position);
+        if (remainingBytes != trailerSize)
             return primitive;
 
         var matrix = primitive.Matrix;
