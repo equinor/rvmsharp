@@ -447,6 +447,44 @@ public class FbxProviderAttributeParserTests
         );
     }
 
+    [TestCase("Maker's [parts]|", "Maker|'s |[parts|]||")]
+    [TestCase(
+        "Maker ##teamcity[buildProblem description='injected']",
+        "Maker ##teamcity|[buildProblem description=|'injected|'|]",
+        TestName = "ParseAttributes_WhenManufacturerContainsServiceMessage_LogsEscapedWarningToTC"
+    )]
+    public void ParseAttributes_WhenManufacturerContainsSpecialCharacters_LogsEscapedWarningToTC(
+        string manufacturer,
+        string escapedManufacturer
+    )
+    {
+        var lines = File.ReadAllLines(Path.Combine(_attributeDirectory.FullName, "ABC-TEMP-all-scaffs-manuf-test.csv"));
+        lines = lines.Select(line => line.StartsWith("HAKI;") ? manufacturer + line[4..] : line).ToArray();
+        var originalOut = Console.Out;
+        using var output = new StringWriter();
+        try
+        {
+            Console.SetOut(output);
+
+            ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag: true);
+
+            Assert.That(
+                output.ToString(),
+                Does.Contain(
+                        $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers: {escapedManufacturer},"
+                    )
+                    .And.Contain(
+                        $"##teamcity[message text='Warning: Items from 5 manufacturers detected in the attribute file: {escapedManufacturer},"
+                    )
+                    .And.Not.Contain("##teamcity[buildProblem")
+            );
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
     [Test]
     [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
     public void ParseAttributes_MultipleManufacturersNewFormat_LogsWarningToTC(string csvFileName)
