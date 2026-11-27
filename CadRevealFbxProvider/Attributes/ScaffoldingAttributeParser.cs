@@ -359,7 +359,7 @@ public class ScaffoldingAttributeParser
 
         if (manufacturers.Count > 1)
         {
-            Console.WriteLine(
+            TeamCityServiceMessages.WriteMessage(
                 $"Warning: Items from {manufacturers.Count} manufacturers detected in the attribute file: {manufacturersString}"
             );
             var msgTeamCity = $"Using items from multiple manufacturers: {manufacturersString}. ";

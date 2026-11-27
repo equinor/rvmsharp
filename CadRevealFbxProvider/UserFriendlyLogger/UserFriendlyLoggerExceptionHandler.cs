@@ -16,7 +16,7 @@ public class UserFriendlyLoggerExceptionHandler
             message = ex.Message;
         }
 
-        Console.WriteLine("Fbx parsing failed: Error: " + ex);
+        TeamCityServiceMessages.WriteMessage("Fbx parsing failed: Error: " + ex);
         TeamCityServiceMessages.SetParameter("Scaffolding_ErrorMessage", message);
     }
 }
