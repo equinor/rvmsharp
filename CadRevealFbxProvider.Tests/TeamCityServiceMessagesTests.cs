@@ -39,7 +39,8 @@ public class TeamCityServiceMessagesTests
     [TestCase("100% of [%build.number%] (%%)", "100%% of |[%%build.number%%|] (%%%%)")]
     [TestCase(
         "\r\n##teamcity[buildProblem description='injected']",
-        "|r|n##teamcity|[buildProblem description=|'injected|'|]"
+        "|r|n##teamcity|[buildProblem description=|'injected|'|]",
+        TestName = "HandleException_WhenUserFriendlyMessageContainsServiceMessage_WritesEscapedErrorParameter"
     )]
     public void HandleException_WhenUserFriendlyMessageContainsSpecialCharacters_WritesEscapedErrorParameter(
         string message,

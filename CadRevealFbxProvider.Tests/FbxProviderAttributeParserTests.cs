@@ -450,7 +450,8 @@ public class FbxProviderAttributeParserTests
     [TestCase("Maker's [parts]|", "Maker|'s |[parts|]||")]
     [TestCase(
         "Maker ##teamcity[buildProblem description='injected']",
-        "Maker ##teamcity|[buildProblem description=|'injected|'|]"
+        "Maker ##teamcity|[buildProblem description=|'injected|'|]",
+        TestName = "ParseAttributes_WhenManufacturerContainsServiceMessage_LogsEscapedWarningToTC"
     )]
     public void ParseAttributes_WhenManufacturerContainsSpecialCharacters_LogsEscapedWarningToTC(
         string manufacturer,
