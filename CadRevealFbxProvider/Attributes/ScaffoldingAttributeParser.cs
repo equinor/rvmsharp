@@ -1,6 +1,7 @@
 ﻿namespace CadRevealFbxProvider.Attributes;
 
 using System.Globalization;
+using CadRevealComposer.Utils;
 using Csv;
 using UserFriendlyLogger;
 
@@ -362,7 +363,7 @@ public class ScaffoldingAttributeParser
                 $"Warning: Items from {manufacturers.Count} manufacturers detected in the attribute file: {manufacturersString}"
             );
             var msgTeamCity = $"Using items from multiple manufacturers: {manufacturersString}. ";
-            Console.WriteLine($"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{msgTeamCity}']");
+            TeamCityServiceMessages.SetParameter("Scaffolding_WarningMessage", msgTeamCity);
         }
     }
 
@@ -376,8 +377,9 @@ public class ScaffoldingAttributeParser
     private static void IssueWarningForOldFormat(Dictionary<string, Dictionary<string, string>?> attributesDictionary)
     {
         Console.WriteLine("Warning: Scaffolding is using outdated metadata template.");
-        Console.WriteLine(
-            $"##teamcity[setParameter name='Scaffolding_WarningMessage' value='{"Model was exported using the old template. Multiple manufacturers cannot be confirmed nor ruled out."}']"
+        TeamCityServiceMessages.SetParameter(
+            "Scaffolding_WarningMessage",
+            "Model was exported using the old template. Multiple manufacturers cannot be confirmed nor ruled out."
         );
     }
 

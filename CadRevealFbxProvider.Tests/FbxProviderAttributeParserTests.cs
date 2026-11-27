@@ -448,6 +448,32 @@ public class FbxProviderAttributeParserTests
     }
 
     [Test]
+    public void ParseAttributes_WhenManufacturerContainsSpecialCharacters_LogsEscapedWarningToTC()
+    {
+        var lines = File.ReadAllLines(Path.Combine(_attributeDirectory.FullName, "ABC-TEMP-all-scaffs-manuf-test.csv"));
+        lines = lines.Select(line => line.StartsWith("HAKI;") ? "Maker's [parts]|" + line[4..] : line).ToArray();
+        var originalOut = Console.Out;
+        using var output = new StringWriter();
+        try
+        {
+            Console.SetOut(output);
+
+            ScaffoldingAttributeParser.ParseAttributes(lines, tempFlag: true);
+
+            Assert.That(
+                output.ToString(),
+                Does.Contain(
+                    "##teamcity[setParameter name='Scaffolding_WarningMessage' value='Using items from multiple manufacturers: Maker|'s |[parts|]||,"
+                )
+            );
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Test]
     [TestCase("/ABC-TEMP-all-scaffs-manuf-test.csv")]
     public void ParseAttributes_MultipleManufacturersNewFormat_LogsWarningToTC(string csvFileName)
     {

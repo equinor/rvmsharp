@@ -1,5 +1,7 @@
 ﻿namespace CadRevealFbxProvider.UserFriendlyLogger;
 
+using CadRevealComposer.Utils;
+
 public class UserFriendlyLoggerExceptionHandler
 {
     public static void HandleException(Exception ex)
@@ -14,8 +16,7 @@ public class UserFriendlyLoggerExceptionHandler
             message = ex.Message;
         }
 
-        var escapedMessage = message.Replace("'", "|'"); // Escape single quotes for TeamCity
         Console.WriteLine("Fbx parsing failed: Error: " + ex);
-        Console.WriteLine($"##teamcity[setParameter name='Scaffolding_ErrorMessage' value='{escapedMessage}']");
+        TeamCityServiceMessages.SetParameter("Scaffolding_ErrorMessage", message);
     }
 }
